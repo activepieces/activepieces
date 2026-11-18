@@ -113,6 +113,24 @@ describe('triggerOnAllPlatforms for official piece events', () => {
         expect(queuedJobs().map((job) => job.data.webhookId).sort()).toEqual([firstDestinationId, secondDestinationId].sort())
     })
 
+    it('logs how many deliveries were sent, failed and skipped', async () => {
+        const first = await createTestContext(app, ENTITLED_PLAN)
+        const second = await createTestContext(app, ENTITLED_PLAN)
+        const unentitled = await createTestContext(app, { plan: { eventStreamingEnabled: false } })
+        await subscribe({ platformId: first.platform.id })
+        await subscribe({ platformId: second.platform.id })
+        await subscribe({ platformId: unentitled.platform.id })
+        addSpy.mockRejectedValueOnce(new Error('queue unavailable'))
+        const infoSpy = vi.spyOn(app.log, 'info')
+
+        await eventDestinationService(app.log).triggerOnAllPlatforms({ addedPieces: [added('@test/a', '1.0.0')] })
+
+        expect(infoSpy).toHaveBeenCalledWith(
+            { changeCount: 1, deliveryCount: 1, failedDeliveryCount: 1, skippedPlatformCount: 1 },
+            '[eventDestinationService#triggerOnAllPlatforms] Finished sending piece events',
+        )
+    })
+
     it('unsubscribed, disabled and unentitled destinations get nothing', async () => {
         const unsubscribed = await createTestContext(app, ENTITLED_PLAN)
         const disabled = await createTestContext(app, ENTITLED_PLAN)

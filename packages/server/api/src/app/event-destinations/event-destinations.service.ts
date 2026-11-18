@@ -44,6 +44,7 @@ const FLOW_RUN_EVENT_ACTIONS: ReadonlySet<ApplicationEventName> = new Set([
 const PIECE_EVENTS = [ApplicationEventName.OFFICIAL_PIECE_ADDED, ApplicationEventName.OFFICIAL_PIECE_MINOR_VERSION_ADDED, ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED]
 const PIECE_EVENT_DISPATCH_CHUNK_SIZE = 25
 const PIECE_EVENT_DESTINATION_PAGE_SIZE = 100
+const EMPTY_DESTINATION_DELIVERY_RESULT: DestinationDeliveryResult = { deliveryCount: 0, failedDeliveryCount: 0, skippedPlatformCount: 0 }
 
 const WEBHOOK_PATH_MARKER = '/v1/webhooks/'
 
@@ -247,12 +248,19 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
         }
         const webhookUrlPrefix = await domainHelper.getPublicApiUrl({ path: 'v1/webhooks' })
         let cursorRequest: Cursor = null
+        let totalDestinationDeliveryResult: DestinationDeliveryResult = EMPTY_DESTINATION_DELIVERY_RESULT
         do {
             const page = await eventDestinationService(log).listSubscribedToEvents({ events: PIECE_EVENTS, cursorRequest, limit: PIECE_EVENT_DESTINATION_PAGE_SIZE })
-            await triggerPieceEventsForDestinations({ log, destinations: page.data, changes, webhookUrlPrefix })
+            const destinationDeliveryResult = await triggerPieceEventsForDestinations({ log, destinations: page.data, changes, webhookUrlPrefix })
+            totalDestinationDeliveryResult = addDestinationDeliveryResults({ currentTotal: totalDestinationDeliveryResult, toAdd: destinationDeliveryResult })
             cursorRequest = page.next
         } while (!isNil(cursorRequest))
-        log.info({ changeCount: changes.length }, '[eventDestinationService#triggerOnAllPlatforms] Sent piece events')
+        log.info({
+            changeCount: changes.length,
+            deliveryCount: totalDestinationDeliveryResult.deliveryCount,
+            failedDeliveryCount: totalDestinationDeliveryResult.failedDeliveryCount,
+            skippedPlatformCount: totalDestinationDeliveryResult.skippedPlatformCount,
+        }, '[eventDestinationService#triggerOnAllPlatforms] Finished sending piece events')
     },
     resolveDeliveryHeaders: async ({ platformId, destinationId, destinationUrl }: ResolveDeliveryHeadersParams): Promise<EventDestinationHeaders | null> => {
         const destination = await eventDestinationRepo().findOneBy({ id: destinationId, platformId, url: destinationUrl })
@@ -410,19 +418,22 @@ function deliveryJobFields({ format, hasHeaders }: DeliveryJobFieldsParams): Pic
     }
 }
 
-async function triggerPieceEventsForDestinations({ log, destinations, changes, webhookUrlPrefix }: TriggerPieceEventsForDestinationsParams): Promise<void> {
+async function triggerPieceEventsForDestinations({ log, destinations, changes, webhookUrlPrefix }: TriggerPieceEventsForDestinationsParams): Promise<DestinationDeliveryResult> {
     if (destinations.length === 0) {
-        return
+        return EMPTY_DESTINATION_DELIVERY_RESULT
     }
     const destinationsByPlatform = groupBy(destinations, (destination) => destination.platformId)
     const entitledPlatformIds = new Set(await eventDestinationHooks.get(log).fetchPlatformIdsWithEventStreamingEnabled({ platformIds: Object.keys(destinationsByPlatform) }))
+    let destinationDeliveryResult: DestinationDeliveryResult = EMPTY_DESTINATION_DELIVERY_RESULT
     for (const [platformId, platformDestinations] of Object.entries(destinationsByPlatform)) {
         if (!entitledPlatformIds.has(platformId)) {
+            log.info({ platform: { id: platformId } }, '[eventDestinationService#triggerPieceEventsForDestinations] Skipped piece events: the platform plan does not include Event Streaming')
+            destinationDeliveryResult = addDestinationDeliveryResults({ currentTotal: destinationDeliveryResult, toAdd: { ...EMPTY_DESTINATION_DELIVERY_RESULT, skippedPlatformCount: 1 } })
             continue
         }
         const deliveries = planPieceEventDeliveries({ platformId, destinations: platformDestinations, changes, webhookUrlPrefix })
         for (const batch of chunk(deliveries, PIECE_EVENT_DISPATCH_CHUNK_SIZE)) {
-            await Promise.all(batch.map(async ({ destination, internalFlowId, body }) => {
+            const succeeded = await Promise.all(batch.map(async ({ destination, internalFlowId, body }) => {
                 const { error } = await tryCatch(() => dispatchEventToDestination({
                     log,
                     platformId,
@@ -440,8 +451,20 @@ async function triggerPieceEventsForDestinations({ log, destinations, changes, w
                         error: error.message,
                     }, '[eventDestinationService#triggerPieceEventsForDestinations] Piece event delivery failed, continuing with the other deliveries')
                 }
+                return error === null
             }))
+            const failedDeliveryCount = succeeded.filter((didSucceed) => !didSucceed).length
+            destinationDeliveryResult = addDestinationDeliveryResults({ currentTotal: destinationDeliveryResult, toAdd: { deliveryCount: succeeded.length - failedDeliveryCount, failedDeliveryCount, skippedPlatformCount: 0 } })
         }
+    }
+    return destinationDeliveryResult
+}
+
+function addDestinationDeliveryResults({ currentTotal, toAdd }: AddDestinationDeliveryResultsParams): DestinationDeliveryResult {
+    return {
+        deliveryCount: currentTotal.deliveryCount + toAdd.deliveryCount,
+        failedDeliveryCount: currentTotal.failedDeliveryCount + toAdd.failedDeliveryCount,
+        skippedPlatformCount: currentTotal.skippedPlatformCount + toAdd.skippedPlatformCount,
     }
 }
 
@@ -910,6 +933,17 @@ type ListSubscribedToEventsParams = {
     events: ApplicationEventName[]
     cursorRequest: Cursor
     limit: number
+}
+
+type DestinationDeliveryResult = {
+    deliveryCount: number
+    failedDeliveryCount: number
+    skippedPlatformCount: number
+}
+
+type AddDestinationDeliveryResultsParams = {
+    currentTotal: DestinationDeliveryResult
+    toAdd: DestinationDeliveryResult
 }
 
 type TriggerPieceEventsForDestinationsParams = {
