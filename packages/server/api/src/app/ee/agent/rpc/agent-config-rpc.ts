@@ -288,8 +288,10 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
                 conversationId: conversation.id,
                 context: await agentHelpers.usageContextOf({ source: conversation.source, projectId: runProjectId, agentId: conversation.agentId, flowRunId: conversation.flowRunId, userId: conversation.userId }),
             }
+            const deadline = agentCompaction.startDeadline()
             const compacted = await tryCatch(() => onFirstModelThatAnswers({
                 models: compactionModels,
+                deadline,
                 billing: compactionBilling,
                 log,
                 run: ({ model, candidate }) => agentCompaction.compactMessages({
@@ -302,6 +304,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
                     summarizer: { provider: candidate.config.provider, modelId: candidate.modelId },
                     log,
                     billing: compactionBilling,
+                    deadline,
                 }),
             }))
             if (compacted.error) {
@@ -388,14 +391,14 @@ function smallestContextProvider({ configs }: { configs: GetProviderConfigRespon
     return configs.reduce((smallest, config) => aiProviderUtils.getMaxContextTokens({ provider: config.provider }) < aiProviderUtils.getMaxContextTokens({ provider: smallest.provider }) ? config : smallest).provider
 }
 
-async function onFirstModelThatAnswers<T>({ models, billing, run, log }: { models: CompactionCandidate[], billing: ActivepiecesAiBilling, run: (params: { model: LanguageModel, candidate: CompactionCandidate }) => Promise<T>, log: FastifyBaseLogger }): Promise<T> {
+async function onFirstModelThatAnswers<T>({ models, deadline, billing, run, log }: { models: CompactionCandidate[], deadline: AbortSignal, billing: ActivepiecesAiBilling, run: (params: { model: LanguageModel, candidate: CompactionCandidate }) => Promise<T>, log: FastifyBaseLogger }): Promise<T> {
     for (const [index, candidate] of models.entries()) {
         const attempt = await tryCatch(() => run({ model: aiUtils.createModel({ credentials: candidate.config, modelId: candidate.modelId, providerConfigId: candidate.config.configId, billing, usageOnly: true }), candidate }))
         if (attempt.error === null) {
             return attempt.data
         }
         const isLast = index === models.length - 1
-        if (isLast || !isFallbackWorthy(aiProviderSignal.fromError(attempt.error))) {
+        if (isLast || deadline.aborted || !isFallbackWorthy(aiProviderSignal.fromError(attempt.error))) {
             throw attempt.error
         }
         log.warn({ error: attempt.error, candidateIndex: index, model: { id: candidate.modelId } }, '[agentRpc#getAgentConfig] Compaction model failed, trying the next one in the tier')

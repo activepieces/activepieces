@@ -437,6 +437,22 @@ describe('agentCompaction with reserved tokens', () => {
         expect(request?.maxOutputTokens).toBe(4_000)
         expect(request?.abortSignal).toBeInstanceOf(AbortSignal)
     })
+
+    it('uses the caller deadline so fallback attempts share one time budget', async () => {
+        const deadline = new AbortController().signal
+        await agentCompaction.compactMessages({
+            messages: makeMessages(40, 20_000),
+            existingSummary: null,
+            summarizedUpToIndex: null,
+            provider: AIProviderName.ANTHROPIC,
+            reservedTokens: RESERVED_TOKENS,
+            model: summaryModel,
+            summarizer: SUMMARIZER,
+            log: silentLog,
+            deadline,
+        })
+        expect(vi.mocked(generateText).mock.calls.at(-1)?.[0].abortSignal).toBe(deadline)
+    })
 })
 
 async function compactRepeatedly({ messages, passes }: { messages: ModelMessage[], passes: number }): Promise<number[]> {

@@ -74,7 +74,7 @@ function snapToSafeMessageBoundary({ messages, rawCutoff }: {
     return idx
 }
 
-async function compactMessages({ messages, existingSummary, summarizedUpToIndex, provider, reservedTokens, model, summarizer, log, billing }: {
+async function compactMessages({ messages, existingSummary, summarizedUpToIndex, provider, reservedTokens, model, summarizer, log, billing, deadline = startDeadline() }: {
     messages: ModelMessage[]
     existingSummary: string | null
     summarizedUpToIndex: number | null
@@ -84,6 +84,7 @@ async function compactMessages({ messages, existingSummary, summarizedUpToIndex,
     summarizer: { provider: AIProviderName, modelId: string }
     log: FastifyBaseLogger
     billing?: ActivepiecesAiBilling
+    deadline?: AbortSignal
 }): Promise<{ summary: string, summarizedUpToIndex: number }> {
     const recentWindowSize = recentWindowSizeFor({
         messages,
@@ -134,10 +135,14 @@ async function compactMessages({ messages, existingSummary, summarizedUpToIndex,
         prompt: contentToSummarize,
         providerOptions: agentAiUtils.buildProviderOptions({ provider: summarizer.provider, thinkingBudget: 0, modelId: summarizer.modelId, disableThinking: true }),
         maxOutputTokens: SUMMARY_OUTPUT_RESERVE_TOKENS,
-        abortSignal: AbortSignal.timeout(COMPACTION_TIMEOUT_MS),
+        abortSignal: deadline,
     })
 
     return { summary: text, summarizedUpToIndex: newCutoffIndex }
+}
+
+function startDeadline(): AbortSignal {
+    return AbortSignal.timeout(COMPACTION_TIMEOUT_MS)
 }
 
 function cutoffForOnePass({ messages, startIndex, windowCutoffIndex }: {
@@ -293,4 +298,5 @@ export const agentCompaction = {
     shouldCompact,
     compactMessages,
     buildCompactedPayload,
+    startDeadline,
 }
