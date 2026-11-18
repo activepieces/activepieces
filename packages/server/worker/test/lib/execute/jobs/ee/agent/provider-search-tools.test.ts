@@ -7,17 +7,15 @@ import { createProviderSearchTools } from '../../../../../../src/lib/execute/job
 describe('ap_web_search over the provider\'s own search', () => {
     afterEach(() => {
         vi.useRealTimers()
-        vi.restoreAllMocks()
     })
 
-    it('gives up on a slow search with a result the agent can carry on from', async () => {
+    it('tells the model a slow search timed out after 45 seconds', async () => {
         vi.useFakeTimers()
-        vi.spyOn(AbortSignal, 'timeout').mockImplementation(fakeTimeoutSignal)
-        const pending = runSearch({ search: hangUntilAborted, taintState: { tainted: false } })
+        const pending = runSearch({ search: hangUntilAborted, taintState: { tainted: false } }).catch((error: Error) => error.message)
 
         await vi.advanceTimersByTimeAsync(45_000)
 
-        expect(await pending).toEqual({ content: [{ type: 'text', text: expect.stringMatching(/^Web search failed: no answer within 45 seconds/) }] })
+        expect(await pending).toMatch(/timed out after 45 seconds.*retry/)
     })
 
     it('taints the turn before the model sees a single result', async () => {
@@ -62,12 +60,6 @@ describe('ap_web_search over the provider\'s own search', () => {
         expect(taintState.tainted).toBe(true)
     })
 })
-
-function fakeTimeoutSignal(ms: number): AbortSignal {
-    const controller = new AbortController()
-    setTimeout(() => controller.abort(new DOMException('The operation was aborted due to timeout', 'TimeoutError')), ms)
-    return controller.signal
-}
 
 function hangUntilAborted({ abortSignal }: { abortSignal: AbortSignal }): Promise<WebSearchResult> {
     return new Promise((_resolve, reject) => {
