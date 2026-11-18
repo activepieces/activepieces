@@ -38,7 +38,7 @@ function reset(): void {
 }
 
 function runtimeContextOf({ billing }: { billing?: ActivepiecesAiBilling }): AiTraceContext {
-    const ids = isNil(billing) ? idsFromWideEvent() : idsFromBilling({ billing })
+    const ids = { ...runLabelsFromWideEvent(), ...(isNil(billing) ? idsFromWideEvent() : idsFromBilling({ billing })) }
     const groups = {
         ...(isNil(ids.platformId) ? {} : { platform: ids.platformId }),
         ...(isNil(ids.projectId) ? {} : { project: ids.projectId }),
@@ -70,9 +70,15 @@ function idsFromWideEvent(): TraceIds {
         conversationId: fieldOf({ group: context['conversation'], key: 'id' }),
         platformId: fieldOf({ group: context['platform'], key: 'id' }),
         projectId: fieldOf({ group: context['project'], key: 'id' }),
-        runSource: fieldOf({ group: context['agentRun'], key: 'source' }),
-        tierId: fieldOf({ group: context['agentRun'], key: 'tierId' }),
-        tierModel: fieldOf({ group: context['agentRun'], key: 'tierModel' }),
+    }
+}
+
+function runLabelsFromWideEvent(): TraceIds {
+    const agentRun = wideEvent.current()?.getContext()['agentRun']
+    return {
+        runSource: fieldOf({ group: agentRun, key: 'source' }),
+        tierId: fieldOf({ group: agentRun, key: 'tierId' }),
+        tierModel: fieldOf({ group: agentRun, key: 'tierModel' }),
     }
 }
 
