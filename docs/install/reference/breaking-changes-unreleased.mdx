@@ -8,6 +8,19 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Brave Search 0.2.0: Web Search is no longer an AI agent tool
+
+**Web Search** is now shown only in the flow builder. AI agents and MCP clients get **Search the Web** instead, which returns a compact result list (title, URL, description, age, extra snippets) rather than Brave's full raw response.
+
+After you upgrade:
+
+- Existing flows that use Web Search keep working unchanged.
+- Web Search now checks **Count** (1–20) and the query length before calling Brave, so out-of-range values fail with a clear message instead of Brave's 422 error.
+
+#### What you need to do
+
+- Agents that used Web Search as a tool: switch to Search the Web.
+
 #### Fireflies.ai 0.2.0: three find actions are no longer AI agent tools, and Upload Audio returns a smaller output
 
 **Find Meeting by ID**, **Find Recent Meeting** and **Find Meeting by Call Details** are now shown only in the flow builder. AI agents and MCP clients get **Get Meeting**, **Get Meeting Summary** and **Find Meetings** instead.
