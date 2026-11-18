@@ -459,6 +459,14 @@ export const trashGdriveFileActionOutputSchema: OutputSchema = {
 export const newFileTriggerOutputSchema: OutputSchema = {
   fields: [
     {
+      key: 'content',
+      label: 'File Content',
+    },
+    {
+      key: 'contentError',
+      label: 'File Content Error',
+    },
+    {
       key: 'name',
       label: 'File Name',
     },

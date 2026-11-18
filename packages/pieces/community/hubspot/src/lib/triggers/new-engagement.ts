@@ -13,53 +13,82 @@ import {
 	Property,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, isNil } from '@activepieces/pieces-framework';
+import { hubspotPolling } from '../common/polling';
 
-type Props = {
-	eventType?: string;
-};
-
-type EngagementResponse = {
-	results: Array<Record<string, any>>;
-	hasMore: boolean;
-	offset: string;
-};
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
-		const eventType = propsValue.eventType;
-		const engagements = [];
+		const token = getHubspotAccessToken(auth);
+		const isTestMode = lastFetchEpochMS === 0;
+		const engagements = isTestMode
+			? await fetchSampleEngagements({ token })
+			: await fetchEngagementsModifiedSince({ token, since: lastFetchEpochMS });
 
-		let hasMore = true;
-		const qs: QueryParams = { limit: '100' };
-		do {
-			const response = await httpClient.sendRequest<EngagementResponse>({
-				method: HttpMethod.GET,
-				url: 'https://api.hubapi.com/engagements/v1/engagements/paged',
-				queryParams: qs,
-				authentication: {
-					type: AuthenticationType.BEARER_TOKEN,
-					token: getHubspotAccessToken(auth),
-				},
-			});
-			hasMore = response.body.hasMore;
-			qs.offset = response.body.offset;
-			for (const engagement of response.body.results) {
-				engagements.push(engagement);
-			}
-		} while (hasMore);
-
-		const filteredEngagements = eventType
-			? engagements.filter((engagement) => engagement.engagement.type === eventType)
-			: engagements;
-
-		return filteredEngagements.map((item) => ({
-			epochMilliSeconds: item.engagement.createdAt as number,
+		const matching = engagements.filter(
+			(item) =>
+				Number.isFinite(item.engagement.createdAt) &&
+				item.engagement.createdAt > lastFetchEpochMS &&
+				(!propsValue.eventType || item.engagement.type === propsValue.eventType),
+		);
+		const unique = [...new Map(matching.map((item) => [item.engagement.id, item])).values()];
+		const oldestFirst = unique.sort(
+			(a, b) => a.engagement.createdAt - b.engagement.createdAt || a.engagement.id - b.engagement.id,
+		);
+		const ordered = isTestMode ? oldestFirst.reverse() : oldestFirst;
+		return ordered.map((item) => ({
+			epochMilliSeconds: item.engagement.createdAt,
 			data: item,
 		}));
 	},
 };
+
+async function getEngagements({ token, path, queryParams }: { token: string; path: string; queryParams: QueryParams }) {
+	const response = await httpClient.sendRequest<EngagementResponse>({
+		method: HttpMethod.GET,
+		url: `https://api.hubapi.com/engagements/v1/engagements/${path}`,
+		queryParams,
+		authentication: {
+			type: AuthenticationType.BEARER_TOKEN,
+			token,
+		},
+	});
+	return response.body;
+}
+
+async function fetchSampleEngagements({ token }: { token: string }): Promise<Engagement[]> {
+	const recent = await getEngagements({ token, path: 'recent/modified', queryParams: { count: String(RECENT_PAGE_SIZE) } });
+	if (recent.results.length > 0) {
+		return recent.results;
+	}
+	const firstPage = await getEngagements({ token, path: 'paged', queryParams: { limit: String(RECENT_PAGE_SIZE) } });
+	return firstPage.results;
+}
+
+async function fetchEngagementsModifiedSince({ token, since }: { token: string; since: number }): Promise<Engagement[]> {
+	const deadline = hubspotPolling.createPollDeadline();
+	let engagements: Engagement[] = [];
+	let offset: string | undefined;
+	for (;;) {
+		const queryParams: QueryParams = { count: String(RECENT_PAGE_SIZE), since: since.toString() };
+		if (offset) {
+			queryParams.offset = offset;
+		}
+		const page = await getEngagements({ token, path: 'recent/modified', queryParams });
+		engagements = [...engagements, ...page.results];
+		offset = isNil(page.offset) ? undefined : String(page.offset);
+		if (!page.hasMore || isNil(offset) || page.results.length === 0) {
+			return engagements;
+		}
+		if (engagements.length >= RECENT_MAX_RESULTS || deadline.reached()) {
+			console.warn(
+				`[hubspot] recent engagements read stopped after ${engagements.length} records (10,000 result cap or poll deadline)`,
+			);
+			return engagements;
+		}
+	}
+}
 
 export const newEngagementTrigger = createTrigger({
 	auth: hubspotAuth,
@@ -69,7 +98,7 @@ export const newEngagementTrigger = createTrigger({
 	description: 'Triggers when a new engagement is created.',
 	aiMetadata: {
 		description:
-			'Fires when a new engagement (interaction) is created in HubSpot, optionally filtered to a single type: Note, Task, Meeting, Email, or Call. Polls the Engagements API and emits each engagement with its metadata and associations to contacts, companies, and deals. Represents a logged activity or touchpoint on a CRM record.',
+			'Fires when a new engagement (interaction) is created in HubSpot, optionally filtered to a single type: Note, Task, Meeting, Email, or Call. Polls the recently created or modified engagements (HubSpot keeps the last 30 days there) and emits each engagement with its metadata and associations to contacts, companies, and deals. Represents a logged activity or touchpoint on a CRM record.',
 	},
 	type: TriggerStrategy.POLLING,
 	props: {
@@ -111,7 +140,7 @@ export const newEngagementTrigger = createTrigger({
 		await pollingHelper.onDisable(polling, context);
 	},
 	async test(context) {
-		return await pollingHelper.test(polling, context);
+		return hubspotPolling.sampleOldestToNewest({ items: await pollingHelper.test(polling, context) });
 	},
 	async run(context) {
 		return await pollingHelper.poll(polling, context);
@@ -142,3 +171,20 @@ export const newEngagementTrigger = createTrigger({
 		},
 	},
 });
+
+const RECENT_PAGE_SIZE = 100;
+const RECENT_MAX_RESULTS = 10_000;
+
+type Props = {
+	eventType?: string;
+};
+
+type Engagement = {
+	engagement: { id: number; createdAt: number; type: string } & Record<string, unknown>;
+} & Record<string, unknown>;
+
+type EngagementResponse = {
+	results: Engagement[];
+	hasMore: boolean;
+	offset?: string | number;
+};

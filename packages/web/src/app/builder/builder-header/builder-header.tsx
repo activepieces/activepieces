@@ -124,7 +124,7 @@ export const BuilderHeader = ({ isFlowLocked }: { isFlowLocked: boolean }) => {
           )}
           {!embedState.hideFlowNameInBuilder && (
             <BreadcrumbItem>
-              <BreadcrumbPage>
+              <BreadcrumbPage role={undefined} aria-disabled={undefined}>
                 <div
                   className={cn('flex items-center gap-1 text-sm', {
                     'max-w-[500px]': !isEditingFlowName || readonly,
@@ -167,7 +167,12 @@ export const BuilderHeader = ({ isFlowLocked }: { isFlowLocked: boolean }) => {
                     onMoveTo={(folderId) => moveToFolderClientSide(folderId)}
                     onDuplicate={() => {}}
                   >
-                    <Button variant="ghost" size="icon-xs">
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      data-testid="builder-flow-menu"
+                      aria-label={t('Actions')}
+                    >
                       <ChevronDown className="h-4 w-4 text-gray-11" />
                     </Button>
                   </FlowActionMenu>

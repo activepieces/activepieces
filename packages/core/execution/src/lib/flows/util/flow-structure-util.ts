@@ -1,7 +1,7 @@
 import { AgentPieceProps, AgentPieceTool, AgentTool, AgentToolType } from '@activepieces/core-piece-types'
 import { connectionTemplate, isNil, isObject, unique } from '@activepieces/core-utils'
 import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
-import { BranchCondition, BranchedAction, BranchExecutionType, CodeAction, emptyCondition, FlowAction, FlowActionType, PieceAction } from '../actions/action'
+import { BranchCondition, BranchedAction, BranchExecutionType, CodeAction, emptyCondition, FlowAction, FlowActionType, PieceAction, ProcessInBatchesAction } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { FlowTrigger, FlowTriggerType } from '../triggers/trigger'
 
@@ -21,6 +21,7 @@ function isStepAction(step: Step): step is FlowAction {
     return step.type === FlowActionType.CODE
         || step.type === FlowActionType.PIECE
         || step.type === FlowActionType.LOOP_ON_ITEMS
+        || step.type === FlowActionType.PROCESS_IN_BATCHES
         || step.type === FlowActionType.ROUTER
         || step.type === FlowActionType.AI_ROUTER
 }
@@ -89,7 +90,8 @@ function transferStep<T extends Step>(
 ): Step {
     const updatedStep = transferFunction(step as T)
     switch (updatedStep.type) {
-        case FlowActionType.LOOP_ON_ITEMS: {
+        case FlowActionType.LOOP_ON_ITEMS:
+        case FlowActionType.PROCESS_IN_BATCHES: {
             const { firstLoopAction } = updatedStep
             if (firstLoopAction) {
                 updatedStep.firstLoopAction = transferStep(
@@ -193,6 +195,10 @@ function getAllChildSteps(action: Step): Step[] {
         ...action,
         nextAction: undefined,
     })
+}
+
+function getBatchSteps(step: Step): ProcessInBatchesAction[] {
+    return getAllSteps(step).filter((candidate): candidate is ProcessInBatchesAction => candidate.type === FlowActionType.PROCESS_IN_BATCHES)
 }
 
 function hasContinueOnFailureBranches(step: Step): step is CodeAction | PieceAction {
@@ -382,6 +388,7 @@ export const flowStructureUtil = {
     findUnusedNames,
     getAllNextActionsWithoutChildren,
     getAllChildSteps,
+    getBatchSteps,
     hasContinueOnFailureBranches,
     getSkippedStepNames,
     isSkipped,

@@ -1,6 +1,7 @@
 import { isNil } from '@activepieces/core-utils';
 import { DragMoveEvent, useDndMonitor, useDroppable } from '@dnd-kit/core';
 import { Handle, Position } from '@xyflow/react';
+import { t } from 'i18next';
 import { Plus } from 'lucide-react';
 import React, { useId, useState } from 'react';
 
@@ -39,13 +40,18 @@ const ApBigAddButtonCanvasNode = React.memo(
     const isShowingDropIndicator = !isNil(activeDraggingStep);
     useDndMonitor({
       onDragMove(event: DragMoveEvent) {
-        setIsStepInsideDropzone(event.over?.id === draggableId);
+        const isOver = event.over?.id === draggableId;
+        if (isOver !== isIsStepInsideDropzone) {
+          setIsStepInsideDropzone(isOver);
+        }
       },
       onDragEnd() {
         setIsStepInsideDropzone(false);
       },
     });
     const stepNodeSize = flowCanvasConsts.STEP_NODE_SIZE[canvasOrientation];
+    const slotAttributes =
+      flowCanvasUtils.slotAttributesFromAddButtonData(data);
     return (
       <>
         {
@@ -93,6 +99,9 @@ const ApBigAddButtonCanvasNode = React.memo(
                         <span>
                           <Button
                             variant="ghost"
+                            aria-label={t('Add step')}
+                            data-testid="add-action-button"
+                            {...slotAttributes}
                             className={cn(
                               'w-full h-full flex items-center rounded-xl border-gray-6 border-solid border',
                               {
@@ -127,6 +136,8 @@ const ApBigAddButtonCanvasNode = React.memo(
                       }}
                       className=" absolute "
                       ref={setNodeRef}
+                      data-testid="step-drop-zone"
+                      {...slotAttributes}
                     >
                       {' '}
                     </div>

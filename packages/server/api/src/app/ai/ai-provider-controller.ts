@@ -70,6 +70,12 @@ export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
         })
         return { status }
     })
+    app.post('/:id/refresh-models', RefreshAIProviderModels, async (request) => {
+        return aiProviderService(app.log).refreshModels({
+            platformId: request.principal.platform.id,
+            providerId: request.params.id,
+        })
+    })
     app.post('/:id', UpdateAIProvider, async (request) => {
         const platformId = request.principal.platform.id
         const service = aiProviderService(app.log)
@@ -228,6 +234,23 @@ const CreateAIProvider = {
         body: CreateAIProviderRequest,
         response: {
             [StatusCodes.OK]: AIProviderWithoutSensitiveData,
+        },
+    },
+}
+
+const RefreshAIProviderModels = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+    },
+    schema: {
+        tags: ['ai-providers'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Read the model list of an AI provider key again from the provider, save it, and return the models.',
+        params: z.object({
+            id: z.string(),
+        }),
+        response: {
+            [StatusCodes.OK]: z.array(AIProviderModel),
         },
     },
 }

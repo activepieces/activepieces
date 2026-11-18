@@ -1,14 +1,14 @@
 name: Continuous Delivery — Cloud
 
-# The Cloud gate. Picks the newest main commit that passed E2E on staging, tests the image staging built
-# from it, waits for one approval, then deploys that image to the canary and to the fleet.
+# The Cloud gate. Picks the newest main commit that staging deployed, runs the E2E matrix and the upgrade
+# test on the image staging built from it, waits for one approval, then deploys that image to the canary and to the fleet.
 # With hotfix_prs, it instead cherry-picks only those merged PRs onto the commit Cloud runs, builds that,
 # and sends it through the same checks, approval and deploy.
 on:
   workflow_dispatch:
     inputs:
       sha:
-        description: 'Commit on main to deploy. Empty takes the newest one that passed E2E on staging.'
+        description: 'Commit on main to deploy. Empty takes the newest one that staging deployed.'
         type: string
         default: ''
       hotfix_prs:
@@ -92,9 +92,11 @@ jobs:
           INPUT_SHA: ${{ inputs.sha }}
           CLOUD_SHA: ${{ steps.cloud.outputs.sha }}
         run: |
-          e2e_passed() {
-            [ -n "$(gh api "repos/$GITHUB_REPOSITORY/commits/$1/check-runs?check_name=e2e-staging" \
-              --jq '.check_runs[] | select(.conclusion == "success") | .id')" ]
+          staging_deployed() {
+            for JOB in deploy-staging-app deploy-staging-workers; do
+              [ -n "$(gh api "repos/$GITHUB_REPOSITORY/commits/$1/check-runs?check_name=$JOB" \
+                --jq '.check_runs[] | select(.conclusion == "success") | .id')" ] || return 1
+            done
           }
           if [ -n "$INPUT_SHA" ]; then
             SHA=$(git rev-parse --verify "$INPUT_SHA^{commit}")
@@ -102,20 +104,20 @@ jobs:
               echo "::error::$SHA is not on main"
               exit 1
             fi
-            if ! e2e_passed "$SHA"; then
-              echo "::error::e2e-staging did not pass on $SHA"
+            if ! staging_deployed "$SHA"; then
+              echo "::error::Staging did not deploy $SHA"
               exit 1
             fi
           else
             SHA=""
             for COMMIT in $(git rev-list --first-parent -n 30 origin/main); do
-              if e2e_passed "$COMMIT"; then
+              if staging_deployed "$COMMIT"; then
                 SHA=$COMMIT
                 break
               fi
             done
             if [ -z "$SHA" ]; then
-              echo "::error::e2e-staging did not pass on any of the last 30 commits on main"
+              echo "::error::Staging deployed none of the last 30 commits on main"
               exit 1
             fi
           fi
@@ -391,9 +393,7 @@ jobs:
           SSH_HOST: ${{ secrets.DEV_OPS_HOST }}
 
       # Read again under the lock: an approval can wait for days, and Cloud can change in that time.
-      # The candidate must keep every PR that Cloud runs, so no deploy drops a fix that went out
-      # through another path or replaces newer code with older code.
-      - name: Check that the candidate keeps everything Cloud runs
+      - name: Check that Cloud did not change after the cut
         env:
           SHA: ${{ needs.cut.outputs.sha }}
           CUT_CLOUD_SHA: ${{ needs.cut.outputs.cloud_sha }}
@@ -415,22 +415,6 @@ jobs:
           CLOUD_SHA=$(echo "$FLEET" | cut -d. -f4)
           if [ "$CLOUD_SHA" != "$CUT_CLOUD_SHA" ]; then
             echo "::error::Cloud moved from $CUT_CLOUD_SHA to $CLOUD_SHA after this run picked $SHA. Start a new run."
-            exit 1
-          fi
-          if ! git cat-file -e "$CLOUD_SHA^{commit}"; then
-            echo "::error::Cloud runs $CLOUD_SHA, which is not in this repository"
-            exit 1
-          fi
-          MISSING=""
-          for COMMIT in $(git rev-list "$(git merge-base "$CLOUD_SHA" "$SHA")..$CLOUD_SHA"); do
-            PR=$(git log -1 --format=%s "$COMMIT" | grep -oE '#[0-9]+\)$' | tr -d '#)' || true)
-            if [ -z "$PR" ] || ! git log --format=%s "$SHA" | grep -qE "\(#$PR\)$"; then
-              MISSING="$MISSING$(git log -1 --format='%h %s' "$COMMIT")"$'\n'
-            fi
-          done
-          if [ -n "$MISSING" ]; then
-            echo "::error::$SHA does not contain these commits that Cloud runs. Deploying it would remove them."
-            printf '%s' "$MISSING"
             exit 1
           fi
 

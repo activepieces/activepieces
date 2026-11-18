@@ -44,6 +44,7 @@ const noopLogger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn(
 
 const BLOCK: AiUsageBlock = {
     v: 1,
+    platformId: 'platform-1',
     origin: AiUsageOrigin.FLOW_STEP,
     environment: AiUsageEnvironment.TESTING,
     projectId: 'project-1',
