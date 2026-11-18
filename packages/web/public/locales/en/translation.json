@@ -4025,6 +4025,6 @@
   "Invite teammates, earn {credits} more": "Invite teammates, earn {credits} more",
   "Invite teammates, earn {credits} credits": "Invite teammates, earn {credits} credits",
   "Congrats 🎉 You got {credits} extra credits": "Congrats 🎉 You got {credits} extra credits",
-  "{email} joined your team.": "{email} joined your team.",
+  "{count, plural, =1 {A teammate} other {# teammates}} joined your team.": "{count, plural, =1 {A teammate} other {# teammates}} joined your team.",
   "Invite rewards earned": "Invite rewards earned"
 }

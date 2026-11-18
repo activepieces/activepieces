@@ -1,6 +1,6 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
-import { EMPTY_INVITE_REWARD_SUMMARY, InviteRewardSummary, TelemetryEventName } from '@activepieces/shared'
+import { TelemetryEventName } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { userIdentityRepository } from '../../authentication/user-identity/user-identity-service'
 import { SystemJobName } from '../../helper/system-jobs/common'
@@ -52,14 +52,6 @@ export const inviteRewardService = (log: FastifyBaseLogger) => ({
                 payload: { platformId, credits: result.credits, rewardsEarned: result.rewardsEarned },
             },
         })
-    },
-
-    async getSummary({ platformId }: { platformId: string }): Promise<InviteRewardSummary> {
-        const creds = await autumnConsole.getCreds(log, platformId)
-        if (isNil(creds)) {
-            return EMPTY_INVITE_REWARD_SUMMARY
-        }
-        return autumnConsole.listInviteRewards(creds)
     },
 })
 

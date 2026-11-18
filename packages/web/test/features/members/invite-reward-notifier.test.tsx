@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render } from '@testing-library/react';
-import dayjs from 'dayjs';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const toastSuccess = vi.hoisted(() => vi.fn());
+const rewards = vi.hoisted(() => ({ rewardsEarned: 1 }));
 
 vi.mock('i18next', async (importOriginal) => ({
   ...(await importOriginal<typeof import('i18next')>()),
@@ -17,32 +17,53 @@ vi.mock('@/components/providers/telemetry-provider', () => ({
 vi.mock('@/features/members/hooks/use-invite-rewards', () => ({
   useInviteRewards: () => ({
     platformId: 'platform_1',
-    rewards: [
-      reward({ id: 'recent', daysAgo: 1 }),
-      reward({ id: 'old', daysAgo: 30 }),
-    ],
+    maxRewards: 4,
+    creditsPerInvite: 1000,
+    rewardsEarned: rewards.rewardsEarned,
   }),
 }));
 
 import { InviteRewardNotifier } from '@/features/members/components/invite-reward/invite-reward';
 
 describe('InviteRewardNotifier', () => {
-  it('announces only rewards granted in the last week', () => {
-    render(
-      <QueryClientProvider client={new QueryClient()}>
-        <InviteRewardNotifier />
-      </QueryClientProvider>,
-    );
+  beforeEach(() => {
+    toastSuccess.mockReset();
+    localStorage.clear();
+    rewards.rewardsEarned = 1;
+  });
+
+  it('stays quiet the first time it sees a platform', () => {
+    renderNotifier();
+
+    expect(toastSuccess).not.toHaveBeenCalled();
+  });
+
+  it('announces a reward earned since the last visit', () => {
+    localStorage.setItem('ap-invite-rewards-seen-count:platform_1', '1');
+    rewards.rewardsEarned = 2;
+
+    renderNotifier();
 
     expect(toastSuccess).toHaveBeenCalledTimes(1);
   });
+
+  it('stays quiet when the count went down, so a restarted count never announces rewards that were not paid', () => {
+    localStorage.setItem('ap-invite-rewards-seen-count:platform_1', '4');
+    rewards.rewardsEarned = 2;
+
+    renderNotifier();
+
+    expect(toastSuccess).not.toHaveBeenCalled();
+    expect(
+      localStorage.getItem('ap-invite-rewards-seen-count:platform_1'),
+    ).toBe('4');
+  });
 });
 
-function reward({ id, daysAgo }: { id: string; daysAgo: number }) {
-  return {
-    id,
-    email: `${id}@example.com`,
-    credits: 1000,
-    created: dayjs().subtract(daysAgo, 'day').toISOString(),
-  };
+function renderNotifier() {
+  return render(
+    <QueryClientProvider client={new QueryClient()}>
+      <InviteRewardNotifier />
+    </QueryClientProvider>,
+  );
 }

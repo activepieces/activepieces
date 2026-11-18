@@ -22,7 +22,6 @@ vi.mock('@/features/members/hooks/use-invite-rewards', () => ({
     rewardsEarned: offer.rewardsEarned,
     maxRewards: 4,
     rewardsLeft: 4 - offer.rewardsEarned,
-    rewards: [],
   }),
 }));
 vi.mock('@/features/members/components/invite-user/invite-user-dialog', () => ({

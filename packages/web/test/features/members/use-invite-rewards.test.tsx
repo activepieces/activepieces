@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { ApEdition, InviteRewardSummary } from '@activepieces/shared';
+import { ApEdition, InviteRewardsInfo } from '@activepieces/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';
 import { ReactNode } from 'react';
@@ -14,7 +14,7 @@ const state = vi.hoisted(() => ({
   invitedSeats: 0,
 }));
 
-const getSummary = vi.fn();
+const getBillingInfo = vi.fn();
 
 vi.mock('@/hooks/flags-hooks', () => ({
   flagsHooks: { useFlag: () => ({ data: state.edition }) },
@@ -39,8 +39,8 @@ vi.mock('@/hooks/platform-hooks', () => ({
     }),
   },
 }));
-vi.mock('@/features/members/api/invite-rewards-api', () => ({
-  inviteRewardsApi: { getSummary: () => getSummary() },
+vi.mock('@/features/billing/api/billing-plans-api', () => ({
+  platformBillingApi: { getSubscriptionInfo: () => getBillingInfo() },
 }));
 
 import { useInviteRewards } from '@/features/members/hooks/use-invite-rewards';
@@ -49,7 +49,7 @@ describe('useInviteRewards', () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
-    getSummary.mockReset();
+    getBillingInfo.mockReset();
     state.edition = ApEdition.CLOUD;
     state.isPlatformAdmin = true;
     state.usersLimit = 5;
@@ -66,7 +66,7 @@ describe('useInviteRewards', () => {
   });
 
   it('shows the offer on an eligible platform with rewards and seats left', async () => {
-    getSummary.mockResolvedValue(summary({ rewards: [granted('a')] }));
+    getBillingInfo.mockResolvedValue(billingInfo({ rewardsEarned: 1 }));
 
     const { result } = renderHook(() => useInviteRewards(), { wrapper });
 
@@ -78,7 +78,7 @@ describe('useInviteRewards', () => {
   it('counts rewards left under the cap, however few seats are free', async () => {
     state.activeUsers = 3;
     state.invitedSeats = 1;
-    getSummary.mockResolvedValue(summary({ rewards: [] }));
+    getBillingInfo.mockResolvedValue(billingInfo({ rewardsEarned: 0 }));
 
     const { result } = renderHook(() => useInviteRewards(), { wrapper });
 
@@ -88,7 +88,7 @@ describe('useInviteRewards', () => {
 
   it('hides the offer once every seat is taken', async () => {
     state.activeUsers = 5;
-    getSummary.mockResolvedValue(summary({ rewards: [] }));
+    getBillingInfo.mockResolvedValue(billingInfo({ rewardsEarned: 0 }));
 
     const { result } = renderHook(() => useInviteRewards(), { wrapper });
 
@@ -100,7 +100,7 @@ describe('useInviteRewards', () => {
     state.usersLimit = 10;
     state.scheduledUsersLimit = 5;
     state.activeUsers = 5;
-    getSummary.mockResolvedValue(summary({ rewards: [] }));
+    getBillingInfo.mockResolvedValue(billingInfo({ rewardsEarned: 0 }));
 
     const { result } = renderHook(() => useInviteRewards(), { wrapper });
 
@@ -109,7 +109,7 @@ describe('useInviteRewards', () => {
   });
 
   it('knows the platform while the rewards are still loading', () => {
-    getSummary.mockReturnValue(new Promise(() => undefined));
+    getBillingInfo.mockReturnValue(new Promise(() => undefined));
 
     const { result } = renderHook(() => useInviteRewards(), { wrapper });
 
@@ -118,9 +118,7 @@ describe('useInviteRewards', () => {
   });
 
   it('hides the offer once all four rewards are earned', async () => {
-    getSummary.mockResolvedValue(
-      summary({ rewards: ['a', 'b', 'c', 'd'].map(granted) }),
-    );
+    getBillingInfo.mockResolvedValue(billingInfo({ rewardsEarned: 4 }));
 
     const { result } = renderHook(() => useInviteRewards(), { wrapper });
 
@@ -128,15 +126,14 @@ describe('useInviteRewards', () => {
     expect(result.current.visible).toBe(false);
   });
 
-  it('keeps the earned rewards after the platform upgrades, but stops offering', async () => {
-    getSummary.mockResolvedValue(
-      summary({ eligible: false, rewards: [granted('a')] }),
-    );
+  it('offers nothing on a plan without reward slots', async () => {
+    getBillingInfo.mockResolvedValue({ inviteRewards: null });
 
     const { result } = renderHook(() => useInviteRewards(), { wrapper });
 
-    await waitFor(() => expect(result.current.rewardsEarned).toBe(1));
+    await waitFor(() => expect(getBillingInfo).toHaveBeenCalled());
     expect(result.current.visible).toBe(false);
+    expect(result.current.maxRewards).toBe(0);
   });
 
   it('never asks the server outside Cloud', async () => {
@@ -145,7 +142,7 @@ describe('useInviteRewards', () => {
     const { result } = renderHook(() => useInviteRewards(), { wrapper });
 
     expect(result.current.visible).toBe(false);
-    expect(getSummary).not.toHaveBeenCalled();
+    expect(getBillingInfo).not.toHaveBeenCalled();
   });
 
   it('never asks the server for a non-admin', async () => {
@@ -154,7 +151,7 @@ describe('useInviteRewards', () => {
     const { result } = renderHook(() => useInviteRewards(), { wrapper });
 
     expect(result.current.visible).toBe(false);
-    expect(getSummary).not.toHaveBeenCalled();
+    expect(getBillingInfo).not.toHaveBeenCalled();
   });
 
   function wrapper({ children }: { children: ReactNode }) {
@@ -164,21 +161,10 @@ describe('useInviteRewards', () => {
   }
 });
 
-function summary({
-  eligible = true,
-  rewards,
-}: {
-  eligible?: boolean;
-  rewards: InviteRewardSummary['rewards'];
-}): InviteRewardSummary {
-  return { eligible, creditsPerInvite: 1000, maxRewards: 4, rewards };
-}
-
-function granted(id: string): InviteRewardSummary['rewards'][number] {
+function billingInfo({ rewardsEarned }: { rewardsEarned: number }): {
+  inviteRewards: InviteRewardsInfo;
+} {
   return {
-    id,
-    created: '2026-11-05T00:00:00.000Z',
-    email: `${id}@example.com`,
-    credits: 1000,
+    inviteRewards: { maxRewards: 4, rewardsEarned, creditsPerInvite: 1000 },
   };
 }

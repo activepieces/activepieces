@@ -1,7 +1,6 @@
 import { apId } from '@activepieces/core-utils'
-import { InvitationStatus, InvitationType, InviteRewardSummary, PlatformRole, PrincipalType } from '@activepieces/shared'
+import { InvitationStatus, InvitationType, PlatformRole, PrincipalType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
-import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { inviteRewardService } from '../../../../src/app/ee/invite-reward/invite-reward.service'
 import { autumnConsole } from '../../../../src/app/ee/platform/platform-plan/billing-providers/autumn-utils'
@@ -9,7 +8,7 @@ import { systemJobsSchedule } from '../../../../src/app/helper/system-jobs/syste
 import { billingProvider } from '../../../../src/app/platform/billing-provider'
 import { userInvitationsService } from '../../../../src/app/user-invitations/user-invitation.service'
 import { generateMockToken } from '../../../helpers/auth'
-import { createMockUserIdentity, mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
+import { createMockUserIdentity, mockAndSaveBasicSetup } from '../../../helpers/mocks'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
@@ -28,7 +27,6 @@ beforeEach(() => {
     vi.restoreAllMocks()
     vi.spyOn(autumnConsole, 'getCreds').mockResolvedValue(CREDS)
     vi.spyOn(autumnConsole, 'grantInviteReward').mockResolvedValue({ granted: true, credits: 1000, rewardsEarned: 1 })
-    vi.spyOn(autumnConsole, 'listInviteRewards').mockResolvedValue(consoleRewards({ rewards: [] }))
     mockProvider({})
 })
 
@@ -139,45 +137,6 @@ describe('Invite reward', () => {
             await vi.waitFor(async () => expect(await systemJobsSchedule(mockLog).getJobState(jobId)).toBe('delayed'))
         })
     })
-
-    describe('GET /v1/invite-rewards', () => {
-        it('returns the console summary', async () => {
-            const { token } = await setupPlatform()
-            vi.mocked(autumnConsole.listInviteRewards).mockResolvedValue(consoleRewards({
-                rewards: [{ id: 'r1', email: 'a@example.com', credits: 1000, created: '2026-11-08T00:00:00.000Z' }],
-            }))
-
-            const response = await getSummary({ token })
-
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(response?.json()).toEqual({
-                eligible: true,
-                creditsPerInvite: 1000,
-                maxRewards: 4,
-                rewards: [{ id: 'r1', email: 'a@example.com', credits: 1000, created: '2026-11-08T00:00:00.000Z' }],
-            })
-        })
-
-        it('reports not eligible when the platform has no billing account', async () => {
-            const { token } = await setupPlatform()
-            vi.mocked(autumnConsole.getCreds).mockResolvedValue(null)
-
-            const response = await getSummary({ token })
-
-            expect(response?.json()).toEqual({ eligible: false, creditsPerInvite: 0, maxRewards: 0, rewards: [] })
-            expect(autumnConsole.listInviteRewards).not.toHaveBeenCalled()
-        })
-
-        it('rejects a platform member who is not an admin', async () => {
-            const { mockPlatform } = await setupPlatform()
-            const { mockUser } = await mockBasicUser({ user: { platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER } })
-            const token = await generateMockToken({ id: mockUser.id, type: PrincipalType.USER, platform: { id: mockPlatform.id } })
-
-            const response = await getSummary({ token })
-
-            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
-        })
-    })
 })
 
 async function setupPlatform() {
@@ -214,14 +173,6 @@ async function joinAsNewMember({ platformId }: { platformId: string }): Promise<
     await databaseConnection().getRepository('user_identity').save(identity)
     await provisionInvite({ email: identity.email, platformId })
     return identity.email
-}
-
-async function getSummary({ token }: { token: string }) {
-    return app?.inject({ method: 'GET', url: '/api/v1/invite-rewards', headers: { authorization: `Bearer ${token}` } })
-}
-
-function consoleRewards({ rewards }: { rewards: InviteRewardSummary['rewards'] }): InviteRewardSummary {
-    return { eligible: true, creditsPerInvite: 1000, maxRewards: 4, rewards }
 }
 
 const CREDS = { autumnCustomerId: 'cus_test', autumnApiKey: 'key_test' }

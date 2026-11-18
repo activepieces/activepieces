@@ -1,7 +1,6 @@
 import { isNil, tryCatchSync } from '@activepieces/core-utils';
 import { InviteRewardSurface, TelemetryEventName } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
-import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { ArrowRight, Gift, UserPlus, X } from 'lucide-react';
 import { ReactNode, useEffect, useState } from 'react';
@@ -121,38 +120,36 @@ export function InviteRewardBillingLink() {
 }
 
 export function InviteRewardNotifier() {
-  const { platformId, rewards } = useInviteRewards();
+  const { platformId, rewardsEarned, maxRewards, creditsPerInvite } =
+    useInviteRewards();
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (rewards.length === 0) {
+    if (maxRewards === 0) {
       return;
     }
-    const seen = readSeenRewardIds(platformId);
-    const unseen = rewards.filter(
-      (reward) =>
-        !seen.includes(reward.id) &&
-        dayjs().diff(reward.created, 'day') < TOAST_RECENT_DAYS,
-    );
-    if (unseen.length === 0) {
+    const seen = readSeenRewardCount(platformId);
+    if (!isNil(seen) && rewardsEarned <= seen) {
       return;
     }
-    unseen.forEach((reward) =>
-      toast.success(
-        t('Congrats 🎉 You got {credits} extra credits', {
-          credits: billingUtils.formatCredits(reward.credits),
-        }),
-        {
-          description: t('{email} joined your team.', { email: reward.email }),
-        },
-      ),
+    writeSeenRewardCount({ platformId, count: rewardsEarned });
+    if (isNil(seen)) {
+      return;
+    }
+    const newRewards = rewardsEarned - seen;
+    toast.success(
+      t('Congrats 🎉 You got {credits} extra credits', {
+        credits: billingUtils.formatCredits(newRewards * creditsPerInvite),
+      }),
+      {
+        description: t(
+          '{count, plural, =1 {A teammate} other {# teammates}} joined your team.',
+          { count: newRewards },
+        ),
+      },
     );
-    writeSeenRewardIds({
-      platformId,
-      ids: [...seen, ...unseen.map((reward) => reward.id)],
-    });
     refreshBillingCaches(queryClient);
-  }, [platformId, rewards, queryClient]);
+  }, [platformId, rewardsEarned, maxRewards, creditsPerInvite, queryClient]);
 
   return null;
 }
@@ -180,31 +177,28 @@ function seenStorageKey(platformId: string): string {
   return `${SEEN_STORAGE_PREFIX}:${platformId}`;
 }
 
-function readSeenRewardIds(platformId: string): string[] {
-  const { data } = tryCatchSync((): unknown => {
-    const raw = localStorage.getItem(seenStorageKey(platformId));
-    return isNil(raw) ? [] : JSON.parse(raw);
-  });
-  return Array.isArray(data)
-    ? data.filter((id): id is string => typeof id === 'string')
-    : [];
+function readSeenRewardCount(platformId: string): number | null {
+  const { data } = tryCatchSync((): unknown =>
+    localStorage.getItem(seenStorageKey(platformId)),
+  );
+  const count = typeof data === 'string' ? Number(data) : Number.NaN;
+  return Number.isInteger(count) ? count : null;
 }
 
-function writeSeenRewardIds({
+function writeSeenRewardCount({
   platformId,
-  ids,
+  count,
 }: {
   platformId: string;
-  ids: string[];
+  count: number;
 }): void {
   tryCatchSync(() =>
-    localStorage.setItem(seenStorageKey(platformId), JSON.stringify(ids)),
+    localStorage.setItem(seenStorageKey(platformId), String(count)),
   );
 }
 
-const SEEN_STORAGE_PREFIX = 'ap-invite-reward-seen';
+const SEEN_STORAGE_PREFIX = 'ap-invite-rewards-seen-count';
 const CARD_DISMISSAL_DAYS = 7;
-const TOAST_RECENT_DAYS = 7;
 const cardDismissal = timedDismissal.create({
   storageKeyPrefix: 'ap-invite-reward-card-dismissed',
   durationHours: CARD_DISMISSAL_DAYS * 24,

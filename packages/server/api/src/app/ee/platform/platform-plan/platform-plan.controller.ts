@@ -168,6 +168,7 @@ async function getBillingInformation(log: FastifyBaseLogger, platformId: string)
         includedSeats,
         additionalSeats,
         selfServeTrial,
+        inviteRewards: overview.inviteRewards ?? null,
     }
 }
 

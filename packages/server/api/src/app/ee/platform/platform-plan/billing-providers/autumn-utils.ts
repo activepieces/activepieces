@@ -1,6 +1,6 @@
 import { assertNotNullOrUndefined, isEmpty, isNil, tryCatch } from '@activepieces/core-utils'
 import { apVersionUtil, safeHttp } from '@activepieces/server-utils'
-import { ApEdition, ConsumableFeatureId, FeatureFlagId, InviteRewardSummary, isFreeLegacyEligible, PlanName, PlatformPlanLimits, PurchasablePlan, SelfServeTrialDates, UnconsumableFeatureId } from '@activepieces/shared'
+import { ApEdition, ConsumableFeatureId, FeatureFlagId, isFreeLegacyEligible, PlanName, PlatformPlanLimits, PurchasablePlan, SelfServeTrialDates, UnconsumableFeatureId } from '@activepieces/shared'
 import {
     AggregateEventsRange,
     type AggregateEventsResponse,
@@ -417,14 +417,6 @@ export const autumnConsole = {
             path: '/api/v1/invite-rewards',
             token: consoleSecretOrThrow(),
             body: { autumnCustomerId, inviteeEmail },
-        })
-    },
-    async listInviteRewards({ autumnCustomerId, autumnApiKey }: ConsoleCustomerCall): Promise<InviteRewardSummary> {
-        return consoleRequest<InviteRewardSummary>({
-            method: 'get',
-            path: '/api/v1/invite-rewards',
-            token: autumnApiKey,
-            query: { autumnCustomerId },
         })
     },
     async getCreds(log: FastifyBaseLogger, platformId: string): Promise<ConsoleCustomerCall | null> {

@@ -188,28 +188,3 @@ export const notStartedSelfServeTrial = (state: NotStartedSelfServeTrial['state'
     endsAt: null,
     seatGraceEndsAt: null,
 })
-
-export const InviteReward = z.object({
-    id: z.string(),
-    created: z.string(),
-    email: z.string(),
-    credits: z.number(),
-})
-
-export type InviteReward = z.infer<typeof InviteReward>
-
-export const InviteRewardSummary = z.object({
-    eligible: z.boolean(),
-    creditsPerInvite: z.number(),
-    maxRewards: z.number(),
-    rewards: z.array(InviteReward),
-})
-
-export type InviteRewardSummary = z.infer<typeof InviteRewardSummary>
-
-export const EMPTY_INVITE_REWARD_SUMMARY: InviteRewardSummary = {
-    eligible: false,
-    creditsPerInvite: 0,
-    maxRewards: 0,
-    rewards: [],
-}

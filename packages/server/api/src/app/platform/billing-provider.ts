@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode, isNil, PlatformUsageMetric, tryCatch } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
-import { ApEdition, AppSumoCreditsBillableFeature, CancellationReason, ConsumableFeatureId, ConsumableProductAutoTopupParams, CreditsBillableFeature, FlowRun, notStartedSelfServeTrial, PurchasablePlan, RunEnvironment, SeatsBillableFeature, SelfServeTrialInfo, SelfServeTrialState, UnconsumableFeatureId } from '@activepieces/shared'
+import { ApEdition, AppSumoCreditsBillableFeature, CancellationReason, ConsumableFeatureId, ConsumableProductAutoTopupParams, CreditsBillableFeature, FlowRun, InviteRewardsInfo, notStartedSelfServeTrial, PurchasablePlan, RunEnvironment, SeatsBillableFeature, SelfServeTrialInfo, SelfServeTrialState, UnconsumableFeatureId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { AiUsageBlock } from '../ai/usage/ai-usage-block'
 import { hooksFactory } from '../helper/hooks-factory'
@@ -170,6 +170,7 @@ export function emptyBillingOverview({ startDate, endDate, unavailable = false }
         seatsFeature: null,
         includedSeats: null,
         additionalSeats: null,
+        inviteRewards: null,
         unavailable,
     }
 }
@@ -374,6 +375,7 @@ export type BillingOverview = BillingInfo & {
     seatsFeature: SeatsBillableFeature | null
     includedSeats: number | null
     additionalSeats: number | null
+    inviteRewards: InviteRewardsInfo | null
     unavailable: boolean
 }
 
