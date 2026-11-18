@@ -170,14 +170,29 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 name: pieceMetadata.name,
                 platformId,
             })
-            const pieceRow = {
-                id: apId(),
+            const pieceRow: Omit<PieceMetadataSchema, 'updated'> = {
+                id: pieceType === PieceType.OFFICIAL ? pieceMetadata.id ?? apId() : apId(),
+                created: createdDate,
+                projectUsage: pieceType === PieceType.OFFICIAL ? pieceMetadata.projectUsage ?? 0 : 0,
+                name: pieceMetadata.name,
+                displayName: pieceMetadata.displayName,
+                logoUrl: pieceMetadata.logoUrl,
+                description: pieceMetadata.description,
+                version: pieceMetadata.version,
+                authors: pieceMetadata.authors,
+                auth: pieceMetadata.auth,
+                actions: pieceMetadata.actions,
+                triggers: pieceMetadata.triggers,
+                categories: pieceMetadata.categories,
+                deprecated: pieceMetadata.deprecated,
+                minimumSupportedRelease: pieceMetadata.minimumSupportedRelease,
+                maximumSupportedRelease: pieceMetadata.maximumSupportedRelease,
+                contextInfo: pieceMetadata.contextInfo,
+                i18n: pieceMetadata.i18n,
                 packageType,
                 pieceType,
                 archiveId,
                 platformId,
-                created: createdDate,
-                ...pieceMetadata,
             }
             const savedPiece = await transaction(async (entityManager) => {
                 const piece = await pieceRepos(entityManager).save(pieceRow)
@@ -617,7 +632,7 @@ type FindFlowsUsingPieceParams = {
 }
 
 type CreateParams = {
-    pieceMetadata: PieceMetadata
+    pieceMetadata: PieceMetadata & { projectUsage?: number }
     platformId?: string
     projectId?: string
     packageType: PackageType
