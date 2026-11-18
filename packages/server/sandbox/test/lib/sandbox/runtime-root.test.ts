@@ -58,6 +58,7 @@ describe('sandboxRuntimeRoot', () => {
             executables: [src('bin/node'), src('bin/deno')],
             optionalExecutables: [src('bin/missing-tool')],
             directories: [src('node_modules')],
+            companionLibraries: [],
             dataFiles: [],
         }
     }
@@ -162,6 +163,23 @@ describe('sandboxRuntimeRoot', () => {
         expect(listFiles(rootPath).some((file) => file.endsWith('absent.pem'))).toBe(false)
     })
 
+    it('copies C library companions that sit next to libc even though no listed program links them', async () => {
+        writeSourceFile({ relative: 'lib/libresolv.so.2', mode: 0o644 })
+        await sandboxRuntimeRoot.build({
+            log: createMockLogger(),
+            rootPath,
+            sources: { ...sources(), companionLibraries: ['libresolv.so.2', 'libabsent.so.1'] },
+            listSharedLibraries: fakeLdd(),
+        })
+        const files = listFiles(rootPath)
+        expect(files.some((file) => file.endsWith('lib/libresolv.so.2'))).toBe(true)
+        expect(files.some((file) => file.endsWith('libabsent.so.1'))).toBe(false)
+    })
+
+    it('lists the resolver library among the default companions, which native piece addons load', () => {
+        expect(sandboxRuntimeRoot.defaultSources({ env: {}, execPath: '/usr/local/bin/node' }).companionLibraries).toEqual(expect.arrayContaining(['libresolv.so.2', 'libnss_dns.so.2', 'librt.so.1']))
+    })
+
     it('removes the staging folder when a copy fails', async () => {
         const ldd = async ({ file }: { file: string }): Promise<LddResult | null> => file === src('lib') ? { libraries: [], missing: [] } : fakeLdd()({ file })
         await expect(sandboxRuntimeRoot.build({
@@ -211,7 +229,7 @@ describe('sandboxRuntimeRoot', () => {
             await sandboxRuntimeRoot.build({
                 log: createMockLogger(),
                 rootPath,
-                sources: { executables: [process.execPath], optionalExecutables: [], directories: [], dataFiles: [] },
+                sources: { executables: [process.execPath], optionalExecutables: [], directories: [], companionLibraries: [], dataFiles: [] },
             })
             const loader = ['/lib64/ld-linux-x86-64.so.2', '/lib/ld-linux-aarch64.so.1'].find((candidate) => listFiles(rootPath).includes(candidate.slice(1)))
             expect(loader).toBeDefined()

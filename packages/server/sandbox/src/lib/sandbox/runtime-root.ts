@@ -86,7 +86,10 @@ async function planRuntimeRoot({ sources, listSharedLibraries }: PlanParams): Pr
     }))
     const addonLibraries = await Promise.all(nativeAddons.map(async (addon) => (await listSharedLibraries({ file: addon }))?.libraries ?? []))
 
-    const boxPaths = unique({ values: [...executables, ...requiredLibraries.flat(), ...addonLibraries.flat(), ...dataFiles] })
+    const linkedLibraries = [...requiredLibraries.flat(), ...addonLibraries.flat()]
+    const companionLibraries = await findCompanionLibraries({ linkedLibraries, names: sources.companionLibraries })
+
+    const boxPaths = unique({ values: [...executables, ...linkedLibraries, ...companionLibraries, ...dataFiles] })
         .filter((boxPath) => !directories.some((directory) => boxPath.startsWith(`${directory}/`)))
         .sort()
 
@@ -116,6 +119,14 @@ async function findNativeAddons({ directory }: { directory: string }): Promise<s
     return entries
         .filter((entry) => entry.isFile() && entry.name.endsWith('.node'))
         .map((entry) => path.join(entry.parentPath, entry.name))
+}
+
+async function findCompanionLibraries({ linkedLibraries, names }: { linkedLibraries: string[], names: string[] }): Promise<string[]> {
+    const libc = linkedLibraries.find((library) => path.basename(library) === C_LIBRARY_NAME)
+    if (isNil(libc)) {
+        return []
+    }
+    return filterExisting({ paths: names.map((name) => path.join(path.dirname(libc), name)) })
 }
 
 async function filterExisting({ paths }: { paths: string[] }): Promise<string[]> {
@@ -153,6 +164,7 @@ function defaultSources({ env, execPath }: { env: NodeJS.ProcessEnv, execPath: s
         executables: [execPath, ...(isNil(denoPath) ? [] : [denoPath])],
         optionalExecutables: ['/bin/sh', '/usr/bin/pdftoppm'],
         directories: ['/usr/src/node_modules'],
+        companionLibraries: C_LIBRARY_COMPANIONS,
         dataFiles: isNil(extraCaCerts) || !isMountedInBox({ filePath: extraCaCerts }) ? [] : [path.posix.normalize(extraCaCerts)],
     }
 }
@@ -176,12 +188,32 @@ export const sandboxRuntimeRoot = {
 
 export const SANDBOX_RUNTIME_ROOT_PATH = '/var/lib/activepieces/sandbox-root'
 const MANIFEST_FILE = '.manifest.json'
+const C_LIBRARY_NAME = 'libc.so.6'
+const C_LIBRARY_COMPANIONS = [
+    'libanl.so.1',
+    'libatomic.so.1',
+    'libBrokenLocale.so.1',
+    'libdl.so.2',
+    'libgcc_s.so.1',
+    'libm.so.6',
+    'libmvec.so.1',
+    'libnsl.so.1',
+    'libnss_compat.so.2',
+    'libnss_dns.so.2',
+    'libnss_files.so.2',
+    'libpthread.so.0',
+    'libresolv.so.2',
+    'librt.so.1',
+    'libstdc++.so.6',
+    'libutil.so.1',
+]
 const BOX_MOUNT_ROOTS = ['/usr', '/lib', '/lib64', '/bin']
 
 export type RuntimeRootSources = {
     executables: string[]
     optionalExecutables: string[]
     directories: string[]
+    companionLibraries: string[]
     dataFiles: string[]
 }
 
