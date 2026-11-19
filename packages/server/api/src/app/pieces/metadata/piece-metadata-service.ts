@@ -157,8 +157,8 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
             publishCacheRefresh = true,
         }: CreateParams): Promise<CreatedPieceVersion> {
             const { piece, previousVersion: previousVersionSeenBeforeInsert } = await insertPieceVersion({ pieceMetadata, platformId, packageType, pieceType, archiveId })
-            const looksLikeNewOfficialPiece = isNil(previousVersionSeenBeforeInsert) && isNil(platformId)
-            const previousVersion = looksLikeNewOfficialPiece && !(await isFirstToAnnounceNewPiece({ piece }))
+            const noOfficialVersionBeforeInsert = isNil(previousVersionSeenBeforeInsert) && isNil(platformId)
+            const previousVersion = noOfficialVersionBeforeInsert && !(await isFirstToAnnounceNewPiece({ piece }))
                 ? await findPreviousOfficialVersion({ piece })
                 : previousVersionSeenBeforeInsert
             log.info({ piece: { name: pieceMetadata.name, version: pieceMetadata.version, previousVersion, type: pieceType }, platform: { id: platformId } }, '[pieceMetadataService#create] Piece version installed')
