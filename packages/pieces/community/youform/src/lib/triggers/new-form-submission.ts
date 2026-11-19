@@ -1,8 +1,11 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import {
+  createTrigger,
+  isNil,
+  TriggerStrategy,
+} from '@activepieces/pieces-framework';
 import { youformAuth } from '../auth';
 import { youformProps } from '../common/props';
 import { youformApi } from '../common/api';
-import { isNil } from '@activepieces/pieces-framework';
 import { newSubmissionOutputSchema } from '../output-schemas';
 
 const TRIGGER_KEY = 'youform-new-submission-trigger';
@@ -13,14 +16,17 @@ export const newSubmissionTrigger = createTrigger({
   classification: 'READ',
   auth: youformAuth,
   displayName: 'New Submission',
-  description: 'Triggers When a new submission is recieved.',
+  description: 'Triggers when a form receives a new submission.',
   aiMetadata: {
     description:
       'Fires when a respondent submits the selected Youform form. The event represents a single completed form submission and emits its full payload, including the submitted answers and submission metadata.',
   },
   type: TriggerStrategy.WEBHOOK,
   props: {
-    formId: youformProps.formId({ required: true }),
+    formId: youformProps.formId({
+      required: true,
+      description: 'New submissions to this form start the flow.',
+    }),
   },
   async onEnable(context) {
     const { formId } = context.propsValue;
@@ -46,9 +52,6 @@ export const newSubmissionTrigger = createTrigger({
     }
   },
   async run(context) {
-    return [context.payload.body];
-  },
-  async test(context) {
     return [context.payload.body];
   },
   sampleData: undefined,
