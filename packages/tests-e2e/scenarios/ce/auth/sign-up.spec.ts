@@ -21,6 +21,7 @@ test.describe('Sign up', {
 
     await page.reload();
     await signUpPage.expectSignedInAs(invitation.email);
+    await page.close();
   });
 
   test('uninvited email sees sign up is restricted', async ({ page, cleanup }) => {
