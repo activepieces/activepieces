@@ -19,7 +19,7 @@ A persistent, project-scoped key-value store that piece steps read/write during 
 
 ### Gotchas
 - Value size check (`object-sizeof` > 512 KB → HTTP 413) happens in the controller before the DB. The engine runs the same check first and throws `StorageLimitError`.
-- **The 128-char limit counts the scoped key.** The Storage piece checks the raw key, but the API checks the scoped key (POST only), so a put with a Flow-scope key over 101 chars, or a Run-scope key over 75, fails with `StorageInvalidKeyError`.
+- **The 128-char limit counts the scoped key.** The Storage piece checks the raw key, but the API checks the scoped key (POST only), so a put with a Flow-scope key over 101 chars, or a Run-scope key over 75, fails with `StorageInvalidKeyError`. A step test leaves a Run-scope key only 63, because it uses the 33-char `testRunId` instead of a 21-char run id.
 - **Nothing expires a store entry.** Only a piece delete removes one: the Storage piece's Remove action, or `context.store.delete`. There is no TTL, no UI and no user-facing route. Flow deletion and project deletion leave the rows: `store-entry` has no foreign key to `project`, and `deleteProjectLinkedEntities` skips it. Run-scope keys and Callable Flow's `callableFlow_<runId>` keys ([subflows](../flows-execution/subflows.md)) add rows that nothing removes.
 - No list endpoint — it's an opaque cache, not a queryable dataset.
 - `value` is nullable; a piece can store `null`/`undefined`. Values run through `sanitizeObjectForPostgresql` before storage.

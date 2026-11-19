@@ -39,7 +39,7 @@ You can mix plain text, mentions, and functions in the same input. The function'
 
 For text arguments, **quotes are optional**. The editor accepts both styles and gives you the same result:
 
-- Without quotes: `combine(John; Smith; -)` → `John-Smith`
+- Without quotes: `combine(John;Smith;-)` → `John-Smith`
 - With quotes: `combine("John"; "Smith"; "-")` → `John-Smith`
 
 Unquoted text keeps any spaces you type around it, so don't type a space after the `;` separator.
@@ -51,10 +51,10 @@ Use whichever feels natural. Quotes are useful when:
 
 **Empty or whitespace-only values are the one case where quotes are required.** Without quotes, the editor treats an empty or blank slot as a missing value, so:
 
-- For an **empty string**, write `""` — e.g. `coalesce(""; John)` → `John`
-- For a **single space** as a separator, write `" "` — e.g. `combine(John; Smith; " ")` → `John Smith`
+- For an **empty string**, write `""` — e.g. `coalesce("";John)` → `John`
+- For a **single space** as a separator, write `" "` — e.g. `combine(John;Smith;" ")` → `John Smith`
 
-Without quotes, `combine(John; Smith;  )` shows the error *combine() is missing value 3 — fill in all values*.
+Without quotes, `combine(John;Smith; )` shows the error *combine() is missing value 3 — fill in all values*.
 
 ## Recipes
 
@@ -72,7 +72,7 @@ Use `uppercase` if you want everything in caps (`"SARA MITCHELL"`), or `lowercas
 
 ### Format a date for display
 
-`format_date(order.created_at; MMM DD, YYYY)` → `"Jan 15, 2025"`
+`format_date(order.created_at; "MMM DD, YYYY")` → `"Jan 15, 2025"`
 
 For a fully written-out date, use `format_date_long(order.created_at)` → `"Wednesday, January 15, 2025"`.
 
@@ -108,7 +108,7 @@ The second argument is how many decimal places to keep.
 
 ### Sum a number field across a list
 
-`sum(line_items; amount)` → adds up the `amount` field of every item in the list. Use `average` for the mean, or `max_in_list` / `min_in_list` for extremes.
+`sum(line_items; "amount")` → adds up the `amount` field of every item in the list. Use `average` for the mean, or `max_in_list` / `min_in_list` for extremes.
 
 ### Compute days between two dates
 
