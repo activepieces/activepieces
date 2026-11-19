@@ -1,5 +1,5 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { skyvernAuth } from '../common/auth';
 import { skyvernApiCall } from '../common/client';
 
@@ -8,22 +8,30 @@ export const runAgentTaskAction = createAction({
 	name: 'run-agent-task',
 	classification: 'WRITE',
 	displayName: 'Run Agent Task',
-	description: 'Runs task with specified prompt.',
+	description: 'Starts a browser agent that does a task you describe.',
 	audience: 'both',
-	aiMetadata: { description: 'Launches a Skyvern browser-automation agent task from a natural-language prompt to navigate and act on a website, optionally starting at a given URL and extracting structured data via a schema. Use to have an AI agent perform a web task (browse, fill forms, click) rather than running a predefined workflow. Each call starts a new asynchronous run, so it is not idempotent; the response returns a run identifier you poll separately with Get Workflow/Task Run.', idempotent: false },
+	aiMetadata: { description: 'Launches a Skyvern browser-automation agent task from a natural-language prompt to navigate and act on a website, optionally starting at a given URL and extracting structured data via a schema. Use to have an AI agent perform a web task (browse, fill forms, click) rather than running a predefined workflow. Each call starts a new asynchronous run, so it is not idempotent; the response returns a run identifier you poll separately with Get Run.', idempotent: false },
 	props: {
+		runInfo: Property.MarkDown({
+			value:
+				'The task runs in the background. Pass the returned run ID to **Get Run** to read its result.',
+			variant: MarkdownVariant.INFO,
+		}),
 		prompt: Property.ShortText({
 			displayName: 'Prompt',
-			description: 'The goal or task description for Skyvern to accomplish.',
+			description: 'What the agent should do, in plain words.',
+			placeholder: 'Find the cheapest flight to London',
 			required: true,
 		}),
 		url: Property.ShortText({
-			displayName: 'URL',
-			description: 'The starting URL for the task.',
+			displayName: 'Start URL',
+			description: 'Leave empty to let Skyvern find a starting page.',
+			placeholder: 'https://www.example.com',
 			required: false,
 		}),
 		engine: Property.StaticDropdown({
 			displayName: 'Engine',
+			description: 'The AI agent that drives the browser.',
 			required: false,
 			options: {
 				disabled: false,
@@ -35,13 +43,15 @@ export const runAgentTaskAction = createAction({
 				],
 			},
 		}),
-		webhookUrl: Property.ShortText({
-			displayName: 'Webhook Callback URL',
-			description: 'URL to send task status updates to after a run is finished.',
+		dataExtractionSchema: Property.Json({
+			displayName: 'Data to Extract',
 			required: false,
+			description: 'JSON Schema of the data the agent should return.',
 		}),
 		proxyLocation: Property.StaticDropdown({
 			displayName: 'Proxy Location',
+			description: 'Where the browser traffic appears to come from.',
+			advanced: true,
 			required: false,
 			options: {
 				disabled: false,
@@ -70,15 +80,26 @@ export const runAgentTaskAction = createAction({
 		maxSteps: Property.Number({
 			displayName: 'Max Steps',
 			required: false,
-			description:
-				'Maximum number of steps the task can take. Task will fail if it exceeds this number.',
+			advanced: true,
+			description: 'The task fails after this many steps. More steps can cost more.',
 		}),
-		dataExtractionSchema: Property.Json({
-			displayName: 'Data Extraction Schema',
+		webhookUrl: Property.ShortText({
+			displayName: 'Webhook Callback URL',
+			description: 'Skyvern sends the run result here when it finishes.',
+			placeholder: 'https://example.com/skyvern-webhook',
+			advanced: true,
 			required: false,
-			description: 'The schema for data to be extracted from the webpage.',
 		}),
 	},
+	propertyGroups: [
+		{
+			key: 'task',
+			display: 'section',
+			label: 'Task',
+			icon: 'text',
+			props: ['runInfo', 'prompt', 'url', 'engine', 'dataExtractionSchema'],
+		},
+	],
 	async run(context) {
 		const { prompt, proxyLocation, url, webhookUrl, dataExtractionSchema, maxSteps, engine } =
 			context.propsValue;

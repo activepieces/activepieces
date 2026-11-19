@@ -53,6 +53,14 @@ export const workflowId = Property.Dropdown({
 			page++;
 		} while (hasMore);
 
+		if (workflows.length === 0) {
+			return {
+				disabled: false,
+				options: [],
+				placeholder: 'No workflows found. Create one in Skyvern first.',
+			};
+		}
+
 		return {
 			disabled: false,
 			options: workflows.map((workflow) => ({
