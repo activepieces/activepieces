@@ -3,6 +3,7 @@ import { slackAuth } from '../auth';
 import { getTeamId, getUserId, SlackAuthValue } from '../common/auth-helpers';
 import { appWebhookSetupInfo } from '../common/props';
 import { newDirectMessageTriggerOutputSchema } from '../output-schemas';
+import { isNewMessageEvent } from '../common/message-events';
 
 
 
@@ -62,6 +63,10 @@ export const newDirectMessageTrigger = createTrigger({
 		if (payloadBody.event.channel_type !== 'im') {
 			return [];
 		}
+
+		if (!isNewMessageEvent(payloadBody.event)) {
+			return [];
+		}
 		// check for bot messages
 		if (
 			(context.propsValue.ignoreBots && payloadBody.event.bot_id) ||
@@ -76,6 +81,7 @@ export const newDirectMessageTrigger = createTrigger({
 
 type PayloadBody = {
 	event: {
+		subtype?: string;
 		channel: string;
 		bot_id?: string;
 		user: string;

@@ -3,6 +3,7 @@ import { appWebhookSetupInfo, singleSelectChannelInfo, slackChannel, onlyBotChan
 import { slackAuth } from '../auth';
 import { getTeamId, SlackAuthValue } from '../common/auth-helpers';
 import { newMessageInChannelTriggerOutputSchema } from '../output-schemas';
+import { isNewMessageEvent } from '../common/message-events';
 
 
 
@@ -65,6 +66,10 @@ export const newMessageInChannelTrigger = createTrigger({
 		if (!['channel','group'].includes(payloadBody.event.channel_type)) {
 			return [];
 		}
+
+		if (!isNewMessageEvent(payloadBody.event)) {
+			return [];
+		}
 		
 		if (payloadBody.event.channel === context.propsValue.channel) {
 			// check for bot messages
@@ -80,6 +85,7 @@ export const newMessageInChannelTrigger = createTrigger({
 
 type PayloadBody = {
 	event: {
+		subtype?: string;
 		channel: string;
 		bot_id?: string;
 		channel_type:string

@@ -8,6 +8,7 @@ import { slackAuth } from '../auth';
 import { parseCommand } from '../common/utils';
 import { getTeamId, SlackAuthValue } from '../common/auth-helpers';
 import { newCommandTriggerOutputSchema } from '../output-schemas';
+import { isNewMessageEvent } from '../common/message-events';
 
 export const newCommand = createTrigger({
   auth: slackAuth,
@@ -95,6 +96,10 @@ export const newCommand = createTrigger({
 			return [];
 		}
 
+		if (!isNewMessageEvent(payloadBody.event)) {
+			return [];
+		}
+
     // Check if we should process this channel
     if (
       !(channels.length === 0 || channels.includes(payloadBody.event.channel))
@@ -130,6 +135,7 @@ export const newCommand = createTrigger({
 
 type PayloadBody = {
   event: {
+		subtype?: string;
     channel: string;
     bot_id?: string;
     text?: string;

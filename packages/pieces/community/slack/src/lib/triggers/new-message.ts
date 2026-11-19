@@ -3,6 +3,7 @@ import { slackAuth } from '../auth';
 import { getTeamId, SlackAuthValue } from '../common/auth-helpers';
 import { appWebhookSetupInfo } from '../common/props';
 import { newMessageTriggerOutputSchema } from '../output-schemas';
+import { isNewMessageEvent } from '../common/message-events';
 
 export const newMessageTrigger = createTrigger({
 	auth: slackAuth,
@@ -45,6 +46,10 @@ export const newMessageTrigger = createTrigger({
 			return [];
 		}
 
+		if (!isNewMessageEvent(payloadBody.event)) {
+			return [];
+		}
+
 		// check for bot messages
 		if (context.propsValue.ignoreBots && payloadBody.event.bot_id) {
 			return [];
@@ -55,6 +60,7 @@ export const newMessageTrigger = createTrigger({
 
 type PayloadBody = {
 	event: {
+		subtype?: string;
 		channel: string;
 		bot_id?: string;
 		channel_type:string

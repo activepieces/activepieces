@@ -7,6 +7,7 @@ import { slackAuth } from '../auth';
 import { appWebhookSetupInfo, userId } from '../common/props';
 import { getTeamId, getUserId, SlackAuthValue } from '../common/auth-helpers';
 import { newMentionInDirectMessageTriggerOutputSchema } from '../output-schemas';
+import { isNewMessageEvent } from '../common/message-events';
 
 export const newMentionInDirectMessageTrigger = createTrigger({
   auth: slackAuth,
@@ -75,6 +76,10 @@ export const newMentionInDirectMessageTrigger = createTrigger({
       return [];
     }
 
+    if (!isNewMessageEvent(payloadBody.event)) {
+    	return [];
+    }
+
     // check for bot messages
     if (
       (context.propsValue.ignoreBots && payloadBody.event.bot_id) ||
@@ -98,6 +103,7 @@ export const newMentionInDirectMessageTrigger = createTrigger({
 
 type PayloadBody = {
   event: {
+		subtype?: string;
     channel: string;
     bot_id?: string;
     user: string;

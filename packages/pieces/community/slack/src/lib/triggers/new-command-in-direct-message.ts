@@ -8,6 +8,7 @@ import { slackAuth } from '../auth';
 import { parseCommand } from '../common/utils';
 import { getTeamId, getUserId, SlackAuthValue } from '../common/auth-helpers';
 import { newCommandInDirectMessageTriggerOutputSchema } from '../output-schemas';
+import { isNewMessageEvent } from '../common/message-events';
 
 export const newCommandInDirectMessageTrigger = createTrigger({
   auth: slackAuth,
@@ -92,6 +93,10 @@ export const newCommandInDirectMessageTrigger = createTrigger({
         return [];
     }
 
+    if (!isNewMessageEvent(payloadBody.event)) {
+    	return [];
+    }
+
     // Check for bot messages if configured to ignore them
 		if (
 			(context.propsValue.ignoreBots && payloadBody.event.bot_id) ||
@@ -123,6 +128,7 @@ export const newCommandInDirectMessageTrigger = createTrigger({
 
 type PayloadBody = {
   event: {
+		subtype?: string;
     channel: string;
     bot_id?: string;
     text?: string;
