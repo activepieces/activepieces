@@ -429,8 +429,8 @@ async function triggerPieceEventsForDestinations({ log, destinations, changes, w
             log.info({ platform: { id: platformId } }, '[eventDestinationService#triggerPieceEventsForDestinations] Skipped piece events: the platform plan does not include Event Streaming')
             continue
         }
-        const deliveries = planPieceEventDeliveries({ platformId, destinations: platformDestinations, changes, webhookUrlPrefix })
-        for (const batch of chunk(deliveries, PIECE_EVENT_DISPATCH_CHUNK_SIZE)) {
+        const pieceEvents = buildPieceEventsForDestinations({ platformId, destinations: platformDestinations, changes, webhookUrlPrefix })
+        for (const batch of chunk(pieceEvents, PIECE_EVENT_DISPATCH_CHUNK_SIZE)) {
             const succeeded = await Promise.all(batch.map(async ({ destination, internalFlowId, body }) => {
                 const { data: accepted, error } = await tryCatch(() => dispatchEventToDestination({
                     log,
@@ -502,7 +502,7 @@ function pieceChangeType({ previousVersion, version }: PieceChangeTypeParams): P
     }
 }
 
-function planPieceEventDeliveries({ platformId, destinations, changes, webhookUrlPrefix }: PlanPieceEventDeliveriesParams): PieceEventDelivery[] {
+function buildPieceEventsForDestinations({ platformId, destinations, changes, webhookUrlPrefix }: BuildPieceEventsForDestinationsParams): PieceEventForDestination[] {
     return changes.flatMap((change) => {
         const event = toPieceEvent({ platformId, change })
         return destinations
@@ -959,14 +959,14 @@ type PieceChangeTypeParams = {
     version: string
 }
 
-type PlanPieceEventDeliveriesParams = {
+type BuildPieceEventsForDestinationsParams = {
     platformId: PlatformId
     destinations: EventDestinationSchema[]
     changes: OfficialPieceEventData['piece'][]
     webhookUrlPrefix: string
 }
 
-type PieceEventDelivery = ClassifiedDestination & {
+type PieceEventForDestination = ClassifiedDestination & {
     body: DeliveryBody
 }
 
