@@ -23,6 +23,8 @@ services:
     env_file: .env
     environment:
       - AP_CONTAINER_TYPE=WORKER
+    # A stopping worker finishes its running flows first: AP_FLOW_TIMEOUT_SECONDS + 105 s.
+    stop_grace_period: 705s
     deploy:
       replicas: 5
     volumes:
