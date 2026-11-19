@@ -252,7 +252,7 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
     async deleteConversation({ id, platformId, userId }: ConversationIdentifier): Promise<void> {
         const conversation = await this.getConversationOrThrow({ id, platformId, userId })
         if (conversation.status === AgentConversationStatus.STREAMING) {
-            await agentApprovalGate.requestCancel({ conversationId: id, reason: AgentAbortReason.CONVERSATION_DELETED })
+            await agentApprovalGate.requestCancel({ conversationId: id, runId: conversation.activeRunId ?? undefined, reason: AgentAbortReason.CONVERSATION_DELETED })
             await agentHelpers.conversationRepo().update(id, {
                 status: AgentConversationStatus.IDLE,
             })

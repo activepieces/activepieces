@@ -1,6 +1,5 @@
 import { AgentAbortReason } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { z } from 'zod'
 import { distributedStore } from '../../database/redis-connections'
 import { pubsub } from '../../helper/pubsub'
 
@@ -14,7 +13,6 @@ const CANCEL_KEY_PREFIX = 'chat-cancel:'
 const AVAILABLE_CONNECTIONS_PREFIX = 'chat-conn-avail:'
 const SELECTED_CONNECTION_PREFIX = 'chat-conn-sel:'
 const PENDING_GATE_PREFIX = 'chat-pending-gate:v2:'
-const AgentAbortReasonSchema = z.enum(AgentAbortReason)
 
 function decisionKey(gateId: string): string {
     return `${KEY_PREFIX}${gateId}`
@@ -92,21 +90,17 @@ async function waitForDecision({ gateId, timeoutMs }: { gateId: string, timeoutM
     })
 }
 
-async function requestCancel({ conversationId, runId, reason }: { conversationId: string, runId?: string, reason: AgentAbortReason }): Promise<void> {
-    const key = runId ? `${CANCEL_KEY_PREFIX}${conversationId}:${runId}` : `${CANCEL_KEY_PREFIX}${conversationId}`
-    await distributedStore.put(key, { cancelled: true, reason }, CANCEL_TTL_SECONDS)
+function cancelKey({ conversationId, runId }: { conversationId: string, runId?: string }): string {
+    return runId ? `${CANCEL_KEY_PREFIX}${conversationId}:${runId}` : `${CANCEL_KEY_PREFIX}${conversationId}`
 }
 
-async function getCancelReason({ conversationId, runId }: { conversationId: string, runId?: string }): Promise<AgentAbortReason | null> {
-    const key = runId
-        ? `${CANCEL_KEY_PREFIX}${conversationId}:${runId}`
-        : `${CANCEL_KEY_PREFIX}${conversationId}`
-    const raw = await distributedStore.get<{ cancelled: boolean, reason?: unknown }>(key)
-    if (raw?.cancelled !== true) {
-        return null
-    }
-    const parsed = AgentAbortReasonSchema.safeParse(raw.reason)
-    return parsed.success ? parsed.data : AgentAbortReason.USER_CANCEL
+async function requestCancel({ conversationId, runId, reason }: { conversationId: string, runId?: string, reason: AgentAbortReason }): Promise<void> {
+    const keys = runId ? [cancelKey({ conversationId }), cancelKey({ conversationId, runId })] : [cancelKey({ conversationId })]
+    await Promise.all(keys.map((key) => distributedStore.put(key, { cancelled: true, reason }, CANCEL_TTL_SECONDS)))
+}
+
+async function getCancel({ conversationId, runId }: { conversationId: string, runId?: string }): Promise<{ reason?: string } | null> {
+    return distributedStore.get<{ reason?: string }>(cancelKey({ conversationId, runId }))
 }
 
 async function clearCancel({ conversationId }: { conversationId: string }): Promise<void> {
@@ -177,7 +171,7 @@ export const agentApprovalGate = {
     consumeApproval,
     waitForDecision,
     requestCancel,
-    getCancelReason,
+    getCancel,
     clearCancel,
     storeAvailableConnections,
     getAvailableConnections,

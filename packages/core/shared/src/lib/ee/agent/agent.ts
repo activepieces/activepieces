@@ -26,6 +26,8 @@ enum AgentAbortReason {
     WALL_CLOCK = 'wall_clock',
 }
 
+const AgentAbortReasonSchema = z.enum(AgentAbortReason)
+
 enum AgentVisibility {
     PROJECT = 'PROJECT',
     RESTRICTED = 'RESTRICTED',
@@ -179,6 +181,7 @@ export {
     agentUtils,
     AgentConfig,
     AgentAbortReason,
+    AgentAbortReasonSchema,
     AgentIcon,
     AgentVisibility,
     CreateAgentRequest,

@@ -177,8 +177,8 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
                 return { result: false }
             }
             const runId = typeof input.toolInput.runId === 'string' ? input.toolInput.runId : undefined
-            const cancelReason = await agentApprovalGate.getCancelReason({ conversationId, runId })
-            return isNil(cancelReason) ? { result: false } : { result: true, cancelReason }
+            const cancel = await agentApprovalGate.getCancel({ conversationId, runId })
+            return isNil(cancel) ? { result: false } : { result: true, ...spreadIfDefined('cancelReason', cancel.reason) }
         }
         if (input.toolName === '__approval_wait') {
             const gateId = input.toolInput.gateId
