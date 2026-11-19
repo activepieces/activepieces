@@ -44,7 +44,7 @@ const FLOW_RUN_EVENT_ACTIONS: ReadonlySet<ApplicationEventName> = new Set([
 const PIECE_EVENTS = [ApplicationEventName.OFFICIAL_PIECE_ADDED, ApplicationEventName.OFFICIAL_PIECE_MINOR_VERSION_ADDED, ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED]
 const PIECE_EVENT_DISPATCH_CHUNK_SIZE = 25
 const PIECE_EVENT_DESTINATION_PAGE_SIZE = 100
-const EMPTY_DESTINATION_DELIVERY_RESULT: DestinationDeliveryResult = { deliveryCount: 0, failedDeliveryCount: 0, skippedPlatformCount: 0 }
+const EMPTY_DESTINATION_DELIVERY_RESULT: DestinationDeliveryResult = { deliveryCount: 0, failedDeliveryCount: 0 }
 
 const WEBHOOK_PATH_MARKER = '/v1/webhooks/'
 
@@ -259,7 +259,6 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
             changeCount: changes.length,
             deliveryCount: totalDestinationDeliveryResult.deliveryCount,
             failedDeliveryCount: totalDestinationDeliveryResult.failedDeliveryCount,
-            skippedPlatformCount: totalDestinationDeliveryResult.skippedPlatformCount,
         }, '[eventDestinationService#triggerOnAllPlatforms] Finished sending piece events')
     },
     resolveDeliveryHeaders: async ({ platformId, destinationId, destinationUrl }: ResolveDeliveryHeadersParams): Promise<EventDestinationHeaders | null> => {
@@ -428,13 +427,12 @@ async function triggerPieceEventsForDestinations({ log, destinations, changes, w
     for (const [platformId, platformDestinations] of Object.entries(destinationsByPlatform)) {
         if (!entitledPlatformIds.has(platformId)) {
             log.info({ platform: { id: platformId } }, '[eventDestinationService#triggerPieceEventsForDestinations] Skipped piece events: the platform plan does not include Event Streaming')
-            destinationDeliveryResult = addDestinationDeliveryResults({ currentTotal: destinationDeliveryResult, toAdd: { ...EMPTY_DESTINATION_DELIVERY_RESULT, skippedPlatformCount: 1 } })
             continue
         }
         const deliveries = planPieceEventDeliveries({ platformId, destinations: platformDestinations, changes, webhookUrlPrefix })
         for (const batch of chunk(deliveries, PIECE_EVENT_DISPATCH_CHUNK_SIZE)) {
             const succeeded = await Promise.all(batch.map(async ({ destination, internalFlowId, body }) => {
-                const { error } = await tryCatch(() => dispatchEventToDestination({
+                const { data: accepted, error } = await tryCatch(() => dispatchEventToDestination({
                     log,
                     platformId,
                     destinationId: destination.id,
@@ -451,10 +449,10 @@ async function triggerPieceEventsForDestinations({ log, destinations, changes, w
                         error: error.message,
                     }, '[eventDestinationService#triggerPieceEventsForDestinations] Piece event delivery failed, continuing with the other deliveries')
                 }
-                return error === null
+                return error === null && accepted
             }))
             const failedDeliveryCount = succeeded.filter((didSucceed) => !didSucceed).length
-            destinationDeliveryResult = addDestinationDeliveryResults({ currentTotal: destinationDeliveryResult, toAdd: { deliveryCount: succeeded.length - failedDeliveryCount, failedDeliveryCount, skippedPlatformCount: 0 } })
+            destinationDeliveryResult = addDestinationDeliveryResults({ currentTotal: destinationDeliveryResult, toAdd: { deliveryCount: succeeded.length - failedDeliveryCount, failedDeliveryCount } })
         }
     }
     return destinationDeliveryResult
@@ -464,7 +462,6 @@ function addDestinationDeliveryResults({ currentTotal, toAdd }: AddDestinationDe
     return {
         deliveryCount: currentTotal.deliveryCount + toAdd.deliveryCount,
         failedDeliveryCount: currentTotal.failedDeliveryCount + toAdd.failedDeliveryCount,
-        skippedPlatformCount: currentTotal.skippedPlatformCount + toAdd.skippedPlatformCount,
     }
 }
 
@@ -541,7 +538,7 @@ const dispatchEventToDestination = async ({
     format,
     storedHeaders,
     body,
-}: DispatchEventParams): Promise<void> => {
+}: DispatchEventParams): Promise<boolean> => {
     if (!isNil(internalFlowId)) {
         const { data: headers, error } = await tryCatch(() => decryptBoundHeaders({ headers: storedHeaders, destinationId, destinationUrl, log }))
         if (error !== null) {
@@ -550,12 +547,12 @@ const dispatchEventToDestination = async ({
                 flow: { id: internalFlowId },
                 error: error.message,
             }, '[eventDestinationService#dispatchEventToDestination] Stored headers could not be decrypted, dropping the event for the internal handler flow')
-            return
+            return false
         }
         if (isNil(headers)) {
-            return
+            return false
         }
-        await dispatchToInternalFlow({
+        const outcome = await dispatchToInternalFlow({
             log,
             destinationId,
             destinationUrl,
@@ -563,7 +560,7 @@ const dispatchEventToDestination = async ({
             body,
             headers,
         })
-        return
+        return isNil(outcome.errorCode) && !isNil(outcome.status) && outcome.status < StatusCodes.BAD_REQUEST
     }
     await jobQueue(log).add({
         type: JobType.ONE_TIME,
@@ -579,6 +576,7 @@ const dispatchEventToDestination = async ({
             jobType: WorkerJobType.EVENT_DESTINATION,
         },
     })
+    return true
 }
 
 const postToDestination = async ({ log, url, body, headers, format }: PostToDestinationParams): Promise<DeliveryOutcome> => {
@@ -938,7 +936,6 @@ type ListSubscribedToEventsParams = {
 type DestinationDeliveryResult = {
     deliveryCount: number
     failedDeliveryCount: number
-    skippedPlatformCount: number
 }
 
 type AddDestinationDeliveryResultsParams = {

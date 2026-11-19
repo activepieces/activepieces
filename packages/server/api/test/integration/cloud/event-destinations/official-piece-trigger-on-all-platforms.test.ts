@@ -1,9 +1,11 @@
+import { apId } from '@activepieces/core-utils'
 import { ApplicationEventName, EventDestinationScope, PieceChangeType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { eventDestinationEntitlementHooks } from '../../../../src/app/ee/platform-webhooks/event-destination-entitlement-hooks'
 import { EventDestinationHooks, eventDestinationHooks } from '../../../../src/app/event-destinations/event-destinations-hooks'
 import { AddedPiece, eventDestinationService } from '../../../../src/app/event-destinations/event-destinations.service'
+import { domainHelper } from '../../../../src/app/helper/domain-helper'
 import * as jobQueueModule from '../../../../src/app/workers/job-queue/job-queue'
 import { db } from '../../../helpers/db'
 import { createMockEventDestination } from '../../../helpers/mocks'
@@ -113,7 +115,7 @@ describe('triggerOnAllPlatforms for official piece events', () => {
         expect(queuedJobs().map((job) => job.data.webhookId).sort()).toEqual([firstDestinationId, secondDestinationId].sort())
     })
 
-    it('logs how many deliveries were sent, failed and skipped', async () => {
+    it('logs how many deliveries were sent and failed, and each skipped platform', async () => {
         const first = await createTestContext(app, ENTITLED_PLAN)
         const second = await createTestContext(app, ENTITLED_PLAN)
         const unentitled = await createTestContext(app, { plan: { eventStreamingEnabled: false } })
@@ -126,7 +128,32 @@ describe('triggerOnAllPlatforms for official piece events', () => {
         await eventDestinationService(app.log).triggerOnAllPlatforms({ addedPieces: [added('@test/a', '1.0.0')] })
 
         expect(infoSpy).toHaveBeenCalledWith(
-            { changeCount: 1, deliveryCount: 1, failedDeliveryCount: 1, skippedPlatformCount: 1 },
+            { changeCount: 1, deliveryCount: 1, failedDeliveryCount: 1 },
+            '[eventDestinationService#triggerOnAllPlatforms] Finished sending piece events',
+        )
+        expect(infoSpy).toHaveBeenCalledWith(
+            { platform: { id: unentitled.platform.id } },
+            '[eventDestinationService#triggerPieceEventsForDestinations] Skipped piece events: the platform plan does not include Event Streaming',
+        )
+    })
+
+    it('counts an event the internal handler flow did not accept as failed', async () => {
+        const ctx = await createTestContext(app, ENTITLED_PLAN)
+        const webhookUrlPrefix = await domainHelper.getPublicApiUrl({ path: 'v1/webhooks' })
+        const destination = createMockEventDestination({
+            platformId: ctx.platform.id,
+            events: PIECE_EVENTS,
+            enabled: true,
+            scope: EventDestinationScope.PLATFORM,
+            url: `${webhookUrlPrefix}/${apId()}`,
+        })
+        await db.save('event_destination', destination)
+        const infoSpy = vi.spyOn(app.log, 'info')
+
+        await eventDestinationService(app.log).triggerOnAllPlatforms({ addedPieces: [added('@test/a', '1.0.0')] })
+
+        expect(infoSpy).toHaveBeenCalledWith(
+            { changeCount: 1, deliveryCount: 0, failedDeliveryCount: 1 },
             '[eventDestinationService#triggerOnAllPlatforms] Finished sending piece events',
         )
     })
