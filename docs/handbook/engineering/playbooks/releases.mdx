@@ -8,7 +8,7 @@ All changes flow through a staging environment before reaching production. There
 ## How It Works
 
 1. **Merge to `main`** — `continuous-delivery-stg.yml` builds a `version.sha.beta` image, and deploys it to **staging** (`stg.activepieces.com`).
-2. **By hand** — `continuous-delivery-cloud.yml` (the Cloud gate) picks the newest `main` commit that staging deployed, runs the E2E matrix and the upgrade test on the image staging built from it, and waits for one approval.
+2. **By hand** — `continuous-delivery-cloud.yml` (the Cloud gate) picks the tip of `main` (the run stops if staging has not deployed it), runs the E2E matrix and the upgrade test on the image staging built from it, and waits for one approval.
 3. **On approval** — the gate deploys that same image to the canary, then to the whole production fleet.
 4. **Self-hosted** — `release-self-hosted.yml`, by hand. The weekly `continuous-delivery-release.yml` is disabled.
 
@@ -29,7 +29,7 @@ All changes flow through a staging environment before reaching production. There
 
   The run stops when a PR is not merged into `main`, is already on Cloud, does not apply cleanly, or changes a migration (set `allow_migrations` only when the migration needs nothing Cloud lacks). A hotfix deploy records no Linear release; the next full gate run does. No step checks that its candidate contains every picked PR, so check it before you approve that run.
 
-  To ship all of `main` at once instead, leave `hotfix_prs` empty: the gate takes the newest commit that staging deployed, or the commit named in `sha`.
+  To ship all of `main` at once instead, leave `hotfix_prs` empty: the gate takes the tip of `main`, or the commit named in `sha`. Staging must have deployed that commit, so start the gate after its staging deploy is green.
 
 If Cloud is down and the gate is too slow, use `emergency-cloud-deploy.yml`. To go back to an earlier image, use `continuous-delivery-rollback.yml`.
 
@@ -56,9 +56,9 @@ To run any workflow manually, go to the repo's **Actions** tab, select the workf
 
 | Trigger | What happens |
 |---|---|
-| **Manual dispatch** | Picks the newest `main` commit whose `deploy-staging-app` and `deploy-staging-workers` checks passed, or the `main` commit named in `sha`, which staging must also have deployed. `skip_migration_check` lets a breaking migration through. |
+| **Manual dispatch** | Picks the tip of `main`, or the `main` commit named in `sha`. The run stops unless that commit's `deploy-staging-app` and `deploy-staging-workers` checks passed. `skip_migration_check` lets a breaking migration through. |
 
-The gate has no schedule yet. A daily run (Sunday to Thursday, 8 AM UTC) comes back when the E2E suite covers more of the product; the `cut` job already stops a scheduled run when every Cloud host runs the candidate.
+The gate has no schedule yet. A daily run (Sunday to Thursday, 8 AM UTC) comes back when the E2E suite covers more of the product; a scheduled run picks the newest `main` commit whose staging deploy checks passed, not the tip, and the `cut` job already stops it when every Cloud host runs the candidate.
 
 Then, for the candidate:
 

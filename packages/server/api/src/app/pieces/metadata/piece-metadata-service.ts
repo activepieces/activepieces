@@ -344,14 +344,29 @@ async function insertPieceVersion({ pieceMetadata, platformId, packageType, piec
     }
     const previousVersion = previousVersionOf({ versions: existingVersions, version: pieceMetadata.version })
     const oldestCreated = existingVersions.reduce<string | null>((oldest, existing) => isNil(oldest) || existing.created < oldest ? existing.created : oldest, null)
-    const pieceRow = {
-        id: apId(),
+    const pieceRow: Omit<PieceMetadataSchema, 'updated'> = {
+        id: pieceType === PieceType.OFFICIAL ? pieceMetadata.id ?? apId() : apId(),
+        created: oldestCreated ?? dayjs().toISOString(),
+        projectUsage: pieceType === PieceType.OFFICIAL ? pieceMetadata.projectUsage ?? 0 : 0,
+        name: pieceMetadata.name,
+        displayName: pieceMetadata.displayName,
+        logoUrl: pieceMetadata.logoUrl,
+        description: pieceMetadata.description,
+        version: pieceMetadata.version,
+        authors: pieceMetadata.authors,
+        auth: pieceMetadata.auth,
+        actions: pieceMetadata.actions,
+        triggers: pieceMetadata.triggers,
+        categories: pieceMetadata.categories,
+        deprecated: pieceMetadata.deprecated,
+        minimumSupportedRelease: pieceMetadata.minimumSupportedRelease,
+        maximumSupportedRelease: pieceMetadata.maximumSupportedRelease,
+        contextInfo: pieceMetadata.contextInfo,
+        i18n: pieceMetadata.i18n,
         packageType,
         pieceType,
         archiveId,
         platformId,
-        created: oldestCreated ?? dayjs().toISOString(),
-        ...pieceMetadata,
     }
     const piece = await transaction(async (entityManager) => {
         const { raw: insertedRows } = await pieceRepos(entityManager).createQueryBuilder().insert().into('piece_metadata').values(pieceRow).orIgnore().returning('id').execute()
@@ -658,7 +673,7 @@ type PreviousVersionOfParams = {
 type InsertPieceVersionParams = Omit<CreateParams, 'publishCacheRefresh' | 'projectId'>
 
 type CreateParams = {
-    pieceMetadata: PieceMetadata
+    pieceMetadata: PieceMetadata & { projectUsage?: number }
     platformId?: string
     projectId?: string
     packageType: PackageType

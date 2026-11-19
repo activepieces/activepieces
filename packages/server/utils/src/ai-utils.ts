@@ -9,6 +9,8 @@ import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { createOpenRouter, OpenRouterChatSettings } from '@openrouter/ai-sdk-provider'
 import { EmbeddingModel, generateText, ImageModel, LanguageModel, ToolSet } from 'ai'
 import { billedEmbeddingModel, billedLanguageModel } from './activepieces-ai-cost'
+import { agentAiUtils } from './agent-ai-utils'
+import { agentProviderOptions } from './agent-provider-options'
 import { keyHealthReporterFor } from './ai-provider-key-health'
 import { modelTierCatalog } from './model-tier-catalog'
 
@@ -83,9 +85,11 @@ async function searchWeb({ credentials, modelId, providerConfigId, billing, turn
     const { text, sources } = await generateText({
         model: createModel({ credentials, modelId, billing, turnAlreadyCharged, usageOnly, webSearchEnabled: true, ...spreadIfDefined('providerConfigId', providerConfigId) }),
         tools: buildWebSearchTools({ provider: credentials.provider, model: modelId }),
+        providerOptions: agentProviderOptions.buildProviderOptions({ provider: credentials.provider, thinkingBudget: 0, modelId, disableThinking: true }),
         system,
         prompt,
         abortSignal,
+        ...agentAiUtils.buildTelemetry({ functionId: 'web-search', ...spreadIfDefined('billing', billing) }),
     })
     const pages = sources.flatMap((source) => source.sourceType === 'url' ? [{ url: source.url, title: source.title ?? '' }] : [])
     return { text, sources: [...new Map(pages.map((page) => [page.url, page])).values()] }

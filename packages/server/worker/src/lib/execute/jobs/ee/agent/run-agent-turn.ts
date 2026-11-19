@@ -68,7 +68,7 @@ export function drainOf({ state }: { state: StepContentState }): StreamDrain {
     return { lastStepSentContent: state.sentWhenFailed ?? state.sentInStep }
 }
 
-export async function runAgentTurn({ models, fastModel, systemPrompt, messages, tools, allToolNames, tier, phaseState, abortSignal, log, sinks, stopWhen, stepCeiling, creditsLeft, priorToolCalls, onModelOutcome, onStepModel, skills }: RunAgentTurnParams): Promise<AgentTurnResult> {
+export async function runAgentTurn({ models, fastModel, systemPrompt, messages, tools, allToolNames, phaseState, abortSignal, log, sinks, stopWhen, stepCeiling, creditsLeft, priorToolCalls, onModelOutcome, onStepModel, skills }: RunAgentTurnParams): Promise<AgentTurnResult> {
     const drainStream = sinks?.drainStream ?? ((result: ReturnType<typeof streamText>) => result.consumeStream())
     const onProgress = sinks?.onProgress ?? (() => {})
     const baseStopCondition = stopWhen ?? isLoopFinished()
@@ -194,7 +194,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
                 activeTools,
                 ...spreadIfDefined('toolChoice', toolChoice),
                 maxOutputTokens: thinkingOff ? stepBudget.maxOutputTokensWithoutThinking : stepBudget.maxOutputTokens,
-                providerOptions: agentAiUtils.buildProviderOptions({ provider: stepModel.provider, tier: { id: tier.id, thinkingBudget: stepBudget.thinkingBudget }, modelId: stepModel.modelId, disableThinking: thinkingOff }),
+                providerOptions: agentAiUtils.buildProviderOptions({ provider: stepModel.provider, thinkingBudget: stepBudget.thinkingBudget, modelId: stepModel.modelId, disableThinking: thinkingOff }),
                 ...stepContext,
             }
         },
