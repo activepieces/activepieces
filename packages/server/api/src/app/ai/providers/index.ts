@@ -8,7 +8,7 @@ import { cloudflareGatewayProvider } from './cloudflare-gateway-provider'
 import { cohereProvider } from './cohere-provider'
 import { googleProvider } from './google-provider'
 import { mistralProvider } from './mistral-provider'
-import { openAICompatibleProvider } from './openai-compatible-gateway-provider'
+import { litellmProvider, openAICompatibleProvider } from './openai-compatible-gateway-provider'
 import { openAiCompatibleVendor } from './openai-compatible-vendor'
 import { openaiProvider } from './openai-provider'
 import { openRouterProvider } from './openrouter-provider'
@@ -22,6 +22,7 @@ export const aiProviders: Record<AIProviderName, AIProviderStrategy<AIProviderAu
     [AIProviderName.GOOGLE]: googleProvider,
     [AIProviderName.CLOUDFLARE_GATEWAY]: cloudflareGatewayProvider,
     [AIProviderName.CUSTOM]: openAICompatibleProvider,
+    [AIProviderName.LITELLM]: litellmProvider,
     [AIProviderName.BEDROCK]: bedrockProvider,
     [AIProviderName.VERTEX]: vertexProvider,
     [AIProviderName.MISTRAL]: mistralProvider,

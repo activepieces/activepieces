@@ -272,6 +272,7 @@ function TierRow({
           {!tier.locked && (
             <Switch
               {...adminControl(AdminControl.MCP_TIER_TOGGLE)}
+              data-testid={`mcp-tool-tier-${tier.id}`}
               checked={editable.length > 0 && editableOn === editable.length}
               indeterminate={isPartial}
               disabled={readOnly || offForPlatform}

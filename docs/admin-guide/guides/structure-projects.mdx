@@ -23,7 +23,7 @@ In Activepieces, you have two types of projects:
 
 **Personal projects:** A personal project has a single member, its owner, so no other member of the platform sees its flows, connections, or tables. It gives users a safe space to experiment and try new ideas without affecting shared company projects or data.  However, as with every project, platform admins and operators can still access it. Operators are automatically granted Editor access to every project on the platform, including personal ones, letting them view and modify its flows, connections, tables, and variables.
 
-New users get a personal project on signup by default. Platform admins can turn this off with **Automatic personal project creation** on the **Platform Admin → Projects** page — useful when you provision users into team projects manually, for example through SSO or SCIM. While it is off, new users start without a personal project and land on a team project they have been given access to instead.
+New users get a personal project on signup by default. Platform admins can turn this off with **Auto-create personal projects** in the **Personal projects** section of **Platform Admin → Users → Roles & Access** — useful when you provision users into team projects manually, for example through SSO or SCIM. While it is off, new users start without a personal project and land on a team project they have been given access to instead.
 
 ![personal-project-creation](https://cdn.activepieces.com/assets/personal-project-creation.png "personal-project-creation")
 
@@ -35,6 +35,8 @@ New users get a personal project on signup by default. Platform admins can turn 
 
 - **Creating A New Project**
 
+Only platform admins can create projects. The quickest way is the **+** beside **Projects** in the left sidebar. You can also create one from Platform Admin:
+
 **Step 1**: Navigate to the platform admin on the lower left of your dashboard
 
 **Step 2**: Click on **Projects** on the left sidebar
@@ -45,7 +47,7 @@ New users get a personal project on signup by default. Platform admins can turn 
 
 **Step 5:** Add alert receiver email (This person receives emails when there is a flow failure in that project)
 
-**Step 6:** Add [Global Connection](https://app.mintlify.com/activepieces/activepieces/editor/ginika%2Fdraft-aug-31/~/766e454b-da15-4ea1-9e26-de1c537fc45b) (if needed)
+**Step 6:** Add [Global Connection](/admin-guide/guides/global-connections) (if needed)
 
 **Step 7:** Click **Create Project**
 
@@ -53,9 +55,11 @@ New users get a personal project on signup by default. Platform admins can turn 
 
 - **Managing Projects**
 
-**How to rename/edit a project:** To rename/edit a project, click on the pencil icon beside the project. You will be able to edit the project name.
+**How to rename/edit a project:** On **Platform Admin → Projects**, click on the pencil icon beside the project. You will be able to edit the project name. You can also rename the project you are in from **Project Settings → General**.
 
 <video src="https://cdn.activepieces.com/videos/docs/Edit-Projects.mp4" controls />
+
+**How to delete a project:** On **Platform Admin → Projects**, select the checkbox of the project, click **Delete**, and confirm. Only platform admins can delete projects. You cannot select the project that you have open. A default project is not deleted: remove it from the default projects on **Platform Admin → Users → Roles & Access** first.
 
 **Global Connection:** You can also add or remove a global connection from a project. However, note that removing a global connection from a project that has a flow using it will break that flow.
 
@@ -101,7 +105,7 @@ Here you can:
 
 - Edit the project name and change the theme color of the project
 - Find and identify your project based on your SaaS ID 
-- Set your [**Maximum concurrent jobs**](https://app.mintlify.com/activepieces/activepieces/editor/ginika%2Fdraft-aug-31/~/c4b347fd-41d6-4c46-bbb5-58b31c7d9b86): Maximum number of flows that can run at the same time for your project
+- Set your [**Maximum concurrent jobs**](/admin-guide/guides/manage-concurrency): Maximum number of flows that can run at the same time for your project
 - Set **Active Flows Limit:** Maximum number of enabled flows in your project. Leave empty for no limit.
 
 **Members**
@@ -132,7 +136,7 @@ Platform Admin → Pieces = Where platform admin controls pieces that are availa
 
 **Environment**
 
-The Environment settings let you connect a project to a Git repository and manage [project releases](https://app.mintlify.com/activepieces/activepieces/editor/ginika%2Fdraft-aug-31/~/75eedf3e-853e-40f7-9be3-e4e61b448d4d). This is useful for teams that want a more controlled way to manage and track changes to their automations.
+The Environment settings let you connect a project to a Git repository and manage [project releases](/admin-guide/guides/project-releases). This is useful for teams that want a more controlled way to manage and track changes to their automations.
 
 The page contains two main options: **Git and Releases.**
 

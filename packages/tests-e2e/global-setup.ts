@@ -37,6 +37,10 @@ async function globalSetup(config: FullConfig) {
     await context.storageState({ path: STORAGE_STATE });
     const session = e2eApi.readSession();
 
+    if (process.env.E2E_LICENSE_KEY) {
+      await activateLicense({ page, token: session.token, licenseKey: process.env.E2E_LICENSE_KEY });
+    }
+
     if (process.env.E2E_PIECES_MANIFEST) {
       await installPieceArchives({ page, token: session.token, manifestPath: process.env.E2E_PIECES_MANIFEST });
     }
@@ -57,6 +61,17 @@ async function globalSetup(config: FullConfig) {
 }
 
 export default globalSetup;
+
+async function activateLicense({ page, token, licenseKey }: { page: Page; token: string; licenseKey: string }) {
+  const response = await page.request.post('/api/v1/platform-billing/activate', {
+    headers: { Authorization: `Bearer ${token}` },
+    data: { licenseKey },
+  });
+  if (!response.ok()) {
+    throw new Error(`Activating E2E_LICENSE_KEY failed with ${response.status()}: ${(await response.text()).replaceAll(licenseKey, '***')}`);
+  }
+  console.log('✓ Activated E2E_LICENSE_KEY on the platform');
+}
 
 async function installPieceArchives({ page, token, manifestPath }: { page: Page; token: string; manifestPath: string }) {
   const pieces: { name: string; version: string; filename: string }[] = JSON.parse(readFileSync(manifestPath, 'utf-8'));
