@@ -29,7 +29,7 @@ Once inserted, a function looks like this in the input:
 <img width="450" src="/resources/using-formulas-anatomy.png" alt="A function badge with function name, argument slots, and semicolon separators" />
 
 - The **function name** appears as a pill on the left.
-- Arguments are separated by **semicolons (`;`)**, not commas.
+- Arguments are separated by **semicolons (`;`)**, not commas. In unquoted text a comma stays part of the value: `combine(John,Smith," ")` returns `John,Smith," "`.
 - A matching pill closes the function on the right.
 - A **preview panel** below the input shows the evaluated result while you edit. If the function has a type problem (e.g. passing text where a number is expected), the panel shows the error.
 
@@ -138,7 +138,7 @@ If you see a red error message under the input, it usually means one of:
 - **Type mismatch** — you passed text where a number is expected, or similar. Wrap the value in `to_number(...)` or `to_date(...)` if it needs converting.
 - **Unknown function** — the function name was renamed or removed. Re-insert it with `/` to pick a current name.
 
-The flow won't run a step whose function is in error — fix it before publishing.
+Fix every error the preview shows before publishing. Only the editor checks the number of values: when the flow runs, `uppercase(a; b)` still returns `A` with no error. An unknown function or an empty slot between semicolons does fail the step.
 
 ## See also
 
