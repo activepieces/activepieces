@@ -1,7 +1,7 @@
 import { AgentPieceProps, AgentPieceTool, AgentTool, AgentToolType } from '@activepieces/core-piece-types'
 import { connectionTemplate, isNil, isObject, unique } from '@activepieces/core-utils'
 import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
-import { BranchCondition, BranchedAction, BranchExecutionType, CodeAction, emptyCondition, FlowAction, FlowActionType, PieceAction } from '../actions/action'
+import { BranchCondition, BranchedAction, BranchExecutionType, CodeAction, emptyCondition, FlowAction, FlowActionType, PieceAction, ProcessInBatchesAction } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { FlowTrigger, FlowTriggerType } from '../triggers/trigger'
 
@@ -197,6 +197,10 @@ function getAllChildSteps(action: Step): Step[] {
     })
 }
 
+function getBatchSteps(step: Step): ProcessInBatchesAction[] {
+    return getAllSteps(step).filter((candidate): candidate is ProcessInBatchesAction => candidate.type === FlowActionType.PROCESS_IN_BATCHES)
+}
+
 function hasContinueOnFailureBranches(step: Step): step is CodeAction | PieceAction {
     if (step.type !== FlowActionType.CODE && step.type !== FlowActionType.PIECE) {
         return false
@@ -384,6 +388,7 @@ export const flowStructureUtil = {
     findUnusedNames,
     getAllNextActionsWithoutChildren,
     getAllChildSteps,
+    getBatchSteps,
     hasContinueOnFailureBranches,
     getSkippedStepNames,
     isSkipped,

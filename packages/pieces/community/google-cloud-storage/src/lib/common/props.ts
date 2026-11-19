@@ -1,4 +1,4 @@
-import { Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { Property } from '@activepieces/pieces-framework';
 import { gcsCommon } from './client';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { googleCloudStorageAuth } from './auth';
@@ -8,7 +8,7 @@ export const bucketDropdown = Property.Dropdown<string,true,typeof googleCloudSt
   required: true,
   refreshers: ['projectId'],
   auth: googleCloudStorageAuth,
-  options: async ({ auth, projectId }) => {
+  options: async ({ auth, projectId }, ctx) => {
     if (!auth || !projectId) {
       return {
         disabled: true,
@@ -20,11 +20,11 @@ export const bucketDropdown = Property.Dropdown<string,true,typeof googleCloudSt
     }
 
     try {
-      const authValue = auth as OAuth2PropertyValue;
+      const accessToken = await gcsCommon.getAccessToken({ auth, server: ctx.server });
       const response = await gcsCommon.makeRequest(
         HttpMethod.GET,
         `/b?project=${projectId}`,
-        authValue.access_token
+        accessToken
       );
 
       return {
@@ -51,7 +51,7 @@ export const objectDropdown = (bucketProperty: string) =>
     required: true,   
     auth: googleCloudStorageAuth,
     refreshers: [bucketProperty],
-    options: async ({ auth, [bucketProperty]: bucket }) => {
+    options: async ({ auth, [bucketProperty]: bucket }, ctx) => {
       if (!auth || !bucket) {
         return {
           disabled: true,
@@ -63,11 +63,11 @@ export const objectDropdown = (bucketProperty: string) =>
       }
 
       try {
-        const authValue = auth as OAuth2PropertyValue;
+        const accessToken = await gcsCommon.getAccessToken({ auth, server: ctx.server });
         const response = await gcsCommon.makeRequest(
           HttpMethod.GET,
           `/b/${bucket}/o?maxResults=100`,
-          authValue.access_token
+          accessToken
         );
 
         return {
@@ -93,7 +93,7 @@ export const projectIdProperty = Property.Dropdown<string,true,typeof googleClou
   required: true,
   auth: googleCloudStorageAuth,
   refreshers: [],
-  options: async ({ auth }) => {
+  options: async ({ auth }, ctx) => {
     if (!auth) {
       return {
         disabled: true,
@@ -103,12 +103,12 @@ export const projectIdProperty = Property.Dropdown<string,true,typeof googleClou
     }
 
     try {
-      const authValue = auth as OAuth2PropertyValue;
+      const accessToken = await gcsCommon.getAccessToken({ auth, server: ctx.server });
       // Use Google Cloud Resource Manager API to list projects
       const response = await gcsCommon.makeRequest(
         HttpMethod.GET,
         'https://cloudresourcemanager.googleapis.com/v1/projects?filter=lifecycleState:ACTIVE',
-        authValue.access_token
+        accessToken
       );
 
       return {

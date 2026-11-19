@@ -39,7 +39,7 @@ describe('scrapeSingleUrl', () => {
       html: '<h1>Page</h1>',
     });
     expect(apify.call).toHaveBeenCalledTimes(1);
-    expect(apify.call).toHaveBeenCalledWith(expect.objectContaining({ startUrls: [{ url }], crawlerType: 'cheerio' }));
+    expect(apify.call).toHaveBeenCalledWith(expect.objectContaining({ startUrls: [{ url }], crawlerType: 'cheerio' }), { log: null });
   });
 
   test.each([
