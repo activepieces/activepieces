@@ -55,6 +55,7 @@ function assertSandboxEnv(env: Record<string, string>): void {
 
 const isolateBinaryPath = path.resolve(process.cwd(), 'packages/server/api/src/assets', getIsolateExecutableName())
 const etcDir = path.resolve(process.cwd(), 'packages/server/api/src/assets/etc')
+const sandboxLauncherPath = process.env.AP_SANDBOX_LAUNCHER_PATH ?? '/usr/local/bin/ap-sandbox-launcher'
 
 export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDirectory: string, boxId: number): SandboxProcessMaker {
     return {
@@ -122,6 +123,7 @@ export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDire
                 ...envArgs,
                 '--run',
                 '--',
+                sandboxLauncherPath,
                 process.execPath,
                 ...engineNodeArgs(resourceLimits),
                 engineSandboxPath,
