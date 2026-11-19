@@ -74,7 +74,7 @@ export const runWorkflowAction = createAction({
 		},
 	],
 	async run(context) {
-		const { workflowId, webhookUrl, proxyLocation, parameters } = context.propsValue;
+		const { workflowId, title, webhookUrl, proxyLocation, parameters } = context.propsValue;
 
 		const response = await skyvernApiCall({
 			apiKey: context.auth.secret_text,
@@ -82,6 +82,7 @@ export const runWorkflowAction = createAction({
 			resourceUri: `/run/workflows`,
 			body: {
 				workflow_id: workflowId,
+				title,
 				proxy_location: proxyLocation,
 				parameters,
 				webhook_url: webhookUrl,
