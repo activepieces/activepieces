@@ -6,7 +6,7 @@ import { e2eFlows } from '../../../fixtures/flows';
 test.describe('Replace connection at scale', () => {
   test.skip(!process.env.E2E_REPLACE_CONNECTION_LOAD, 'Set E2E_REPLACE_CONNECTION_LOAD=true to run this load test');
 
-  test('replaces one Hugging Face connection in 200 published flows from the Connections page', async ({ page, request, session, flowCleanup, connectionCleanup }) => {
+  test('replaces one Hugging Face connection in 200 published flows from the Connections page', async ({ page, request, session, cleanup }) => {
     test.setTimeout(LOAD_TEST_TIMEOUT_MS);
     const api = createApiClient({ request, session });
 
@@ -15,9 +15,9 @@ test.describe('Replace connection at scale', () => {
       api.getPieceVersion(HUGGING_FACE_PIECE),
     ]);
     const sourceConnection = await api.createHuggingFaceConnection(e2eFlows.uniqueName('HF source'));
-    connectionCleanup.track(sourceConnection.id);
+    cleanup.track({ resource: 'app-connections', id: sourceConnection.id });
     const targetConnection = await api.createHuggingFaceConnection(e2eFlows.uniqueName('HF target'));
-    connectionCleanup.track(targetConnection.id);
+    cleanup.track({ resource: 'app-connections', id: targetConnection.id });
 
     const seedStartedAt = Date.now();
     await runWithConcurrency({
@@ -30,7 +30,7 @@ test.describe('Replace connection at scale', () => {
           huggingFaceVersion,
           connectionExternalId: sourceConnection.externalId,
         }),
-        onCreated: (flowId) => flowCleanup.track(flowId),
+        onCreated: (flowId) => cleanup.track({ resource: 'flows', id: flowId }),
       }),
     });
     logTiming(`Created and published ${FLOW_COUNT} flows`, seedStartedAt);

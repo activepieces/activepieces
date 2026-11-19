@@ -9,6 +9,7 @@ import React, { useState } from 'react';
 import { StatusDot, adminSurface } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { WorkerHealth, workerHealthUtils } from '@/lib/statuses';
 import { cn } from '@/lib/utils';
 
 import { AddItemsDialog } from './add-items-dialog';
@@ -218,7 +219,8 @@ function GroupStatus({
   waiting: number;
   inUse: boolean;
 }) {
-  const down = online === 0 && inUse;
+  const health = workerHealthUtils.ofGroup({ online, inUse });
+  const down = health === WorkerHealth.OFFLINE;
   const parts =
     online > 0
       ? [
@@ -246,10 +248,7 @@ function GroupStatus({
     ));
   return (
     <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm max-sm:gap-x-3">
-      <StatusDot
-        tone={down ? 'danger' : online > 0 ? 'success' : 'neutral'}
-        className="mr-0.5 shrink-0"
-      />
+      <StatusDot status={health} className="mr-0.5 shrink-0" />
       {items.map((item, i) => (
         <span key={i} className="inline-flex items-center gap-1.5">
           {i > 0 && (

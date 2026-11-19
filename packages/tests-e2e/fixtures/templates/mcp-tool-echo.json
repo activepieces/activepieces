@@ -1,0 +1,66 @@
+{
+  "name": "MCP tool echo",
+  "flows": [
+    {
+      "displayName": "MCP tool echo",
+      "schemaVersion": null,
+      "notes": null,
+      "trigger": {
+        "name": "trigger",
+        "type": "PIECE_TRIGGER",
+        "valid": true,
+        "displayName": "MCP Tool",
+        "settings": {
+          "pieceName": "@activepieces/piece-mcp",
+          "pieceVersion": "0.0.21",
+          "triggerName": "mcp_tool",
+          "input": {
+            "toolName": "e2e_echo",
+            "toolDescription": "Echoes the value it gets.",
+            "inputSchema": [
+              {
+                "name": "value",
+                "description": "The value to echo",
+                "type": "Text",
+                "required": true
+              }
+            ],
+            "returnsResponse": true
+          },
+          "propertySettings": {}
+        },
+        "nextAction": {
+          "name": "step_1",
+          "type": "PIECE",
+          "valid": true,
+          "displayName": "Reply to MCP Client",
+          "settings": {
+            "pieceName": "@activepieces/piece-mcp",
+            "pieceVersion": "0.0.21",
+            "actionName": "reply_to_mcp_client",
+            "input": {
+              "mode": "simple",
+              "response": {
+                "response": {
+                  "echo": "{{trigger['output']['value']}}"
+                }
+              },
+              "respond": "stop"
+            },
+            "propertySettings": {},
+            "errorHandlingOptions": {
+              "continueOnFailure": {
+                "value": false
+              },
+              "retryOnFailure": {
+                "value": false
+              }
+            }
+          },
+          "lastUpdatedDate": "2026-11-16T00:00:00.000Z"
+        },
+        "lastUpdatedDate": "2026-11-16T00:00:00.000Z"
+      }
+    }
+  ]
+}
