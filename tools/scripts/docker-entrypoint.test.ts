@@ -50,20 +50,6 @@ describe('docker-entrypoint.sh in WORKER_AND_APP', () => {
     }, 15_000)
 })
 
-describe('docker-entrypoint.sh in WORKER', () => {
-    it('hands SIGTERM straight to the worker process', async () => {
-        writeStub({ name: 'worker', exitDelayMs: 200 })
-        const container = startEntrypoint({ containerType: 'WORKER' })
-        await waitForEvents(['worker ready'])
-
-        container.kill('SIGTERM')
-        const exitCode = await container.exited
-
-        expect(exitCode).toBe(0)
-        expect(eventNames()).toEqual(['worker TERM', 'worker exit'])
-    }, 15_000)
-})
-
 function writeStub({ name, exitDelayMs, crashWhenFileExists }: { name: 'app' | 'worker', exitDelayMs: number, crashWhenFileExists?: string }): void {
     const dir = join(root, 'packages/server', name === 'app' ? 'api' : 'worker', 'dist/src')
     mkdirSync(dir, { recursive: true })

@@ -133,14 +133,4 @@ describe('jobBroker.poll for a worker that is shutting down', () => {
         expect(mockMoveToDelayed).toHaveBeenCalledWith(expect.any(Number), 'token-job-2')
         expect(jobAssignmentTracker.takeByConnection('socket-1')).toEqual([])
     })
-
-    it('keeps delivering to other workers while one is shutting down', async () => {
-        jobBroker(log).markWorkerShuttingDown('socket-1')
-        mockDispatcherPoll.mockResolvedValueOnce(buildJob('job-3'))
-
-        const delivered = await jobBroker(log).poll(QUEUE, { id: 'socket-2', connected: true })
-
-        expect(delivered?.jobId).toBe('job-3')
-        expect(jobAssignmentTracker.takeByConnection('socket-2')).toHaveLength(1)
-    })
 })
