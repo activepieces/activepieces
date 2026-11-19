@@ -4,9 +4,10 @@ import {
   Property,
   DynamicPropsValue,
 } from '@activepieces/pieces-framework';
-import { bitlyApiCall } from '../common/client';
+import { bitlyApiCall, normalizeBitlinkId, requireGuid } from '../common/client';
 import { bitlyAuth } from '../common/auth';
-import { groupGuid } from '../common/props';
+import { groupGuid, optionalText } from '../common/props';
+import { qrCodeOutputSchema } from '../common/schemas';
 
 export const createQrCodeAction = createAction({
   auth: bitlyAuth,
@@ -14,7 +15,8 @@ export const createQrCodeAction = createAction({
   classification: 'WRITE',
   displayName: 'Create QR Code',
   description: 'Generate a customized QR code for a Bitlink.',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: qrCodeOutputSchema,
   aiMetadata: { description: 'Creates a styled QR code that points either to a raw long URL or to an existing Bitlink (selected via the destination type), with extensive optional customization of colors, dot patterns, corners, gradients, frames, branding, and error correction. Use to generate a scannable QR for a destination. Not idempotent: each call creates a new QR code.', idempotent: false },
   props: {
     group_guid: groupGuid,
@@ -37,9 +39,7 @@ export const createQrCodeAction = createAction({
       props: async (
         propsValue: Record<string, unknown>,
       ) => {
-        const destination_type = propsValue[
-          'destination_type'
-        ] as unknown as string;
+        const destination_type = propsValue['destination_type'];
         const props: DynamicPropsValue = {};
         if (destination_type === 'long_url') {
           props['long_url'] = Property.ShortText({
@@ -245,155 +245,113 @@ export const createQrCodeAction = createAction({
       required: false,
       defaultValue: true,
     }),
-    error_correction: Property.StaticDropdown({
+    error_correction: Property.StaticDropdown<string>({
       displayName: 'Specs: Error Correction',
       required: false,
       options: {
         options: [
-          { label: 'Low (1)', value: 1 },
-          { label: 'Medium (2)', value: 2 },
-          { label: 'Quartile (3)', value: 3 },
-          { label: 'High (4)', value: 4 },
+          { label: 'Low (1)', value: '1' },
+          { label: 'Medium (2)', value: '2' },
+          { label: 'Quartile (3)', value: '3' },
+          { label: 'High (4)', value: '4' },
         ],
       },
     }),
   },
   async run(context) {
     const props = context.propsValue;
+    const groupGuidValue = requireGuid({ value: props.group_guid, label: 'Group' });
+    const destination = buildQrDestination({
+      longUrl: props.destination?.['long_url'],
+      bitlinkId: props.destination?.['bitlink_id'],
+    });
 
-    try {
-      const body: any = {
-        group_guid: props.group_guid,
-        destination: { ...props.destination },
-      };
-      if (props.title) body.title = props.title;
-      if (props.archived) body.archived = props.archived;
+    const corners = compact({
+      corner_1: corner({ shape: props.corner_1_shape, inner: props.corner_1_inner_color, outer: props.corner_1_outer_color }),
+      corner_2: corner({ shape: props.corner_2_shape, inner: props.corner_2_inner_color, outer: props.corner_2_outer_color }),
+      corner_3: corner({ shape: props.corner_3_shape, inner: props.corner_3_inner_color, outer: props.corner_3_outer_color }),
+    });
 
-      const customizations: any = {};
-      if (props.background_color)
-        customizations.background_color = props.background_color;
-      if (props.dot_pattern_color)
-        customizations.dot_pattern_color = props.dot_pattern_color;
-      if (props.dot_pattern_type)
-        customizations.dot_pattern_type = props.dot_pattern_type;
+    const gradientColors = [
+      ...(optionalText(props.gradient_color_1) ? [{ color: optionalText(props.gradient_color_1), offset: 0 }] : []),
+      ...(optionalText(props.gradient_color_2) ? [{ color: optionalText(props.gradient_color_2), offset: 100 }] : []),
+    ];
+    const gradient = compact({
+      style: optionalText(props.gradient_style),
+      angle: typeof props.gradient_angle === 'number' ? props.gradient_angle : undefined,
+      exclude_corners: props.gradient_exclude_corners === true ? true : undefined,
+      colors: gradientColors.length > 0 ? gradientColors : undefined,
+    });
 
-      const corners: any = {};
-      if (
-        props.corner_1_shape ||
-        props.corner_1_inner_color ||
-        props.corner_1_outer_color
-      )
-        corners.corner_1 = {
-          shape: props.corner_1_shape,
-          inner_color: props.corner_1_inner_color,
-          outer_color: props.corner_1_outer_color,
-        };
-      if (
-        props.corner_2_shape ||
-        props.corner_2_inner_color ||
-        props.corner_2_outer_color
-      )
-        corners.corner_2 = {
-          shape: props.corner_2_shape,
-          inner_color: props.corner_2_inner_color,
-          outer_color: props.corner_2_outer_color,
-        };
-      if (
-        props.corner_3_shape ||
-        props.corner_3_inner_color ||
-        props.corner_3_outer_color
-      )
-        corners.corner_3 = {
-          shape: props.corner_3_shape,
-          inner_color: props.corner_3_inner_color,
-          outer_color: props.corner_3_outer_color,
-        };
-      if (Object.keys(corners).length > 0) customizations.corners = corners;
+    const frame = compact({
+      id: optionalText(props.frame_id),
+      colors: compact({
+        primary: optionalText(props.frame_primary_color),
+        secondary: optionalText(props.frame_secondary_color),
+        background: optionalText(props.frame_background_color),
+      }),
+      text: optionalText(props.frame_text) ? { primary: { content: optionalText(props.frame_text) } } : undefined,
+    });
 
-      const gradient: any = {};
-      if (props.gradient_style) gradient.style = props.gradient_style;
-      if (props.gradient_angle) gradient.angle = props.gradient_angle;
-      if (props.gradient_exclude_corners)
-        gradient.exclude_corners = props.gradient_exclude_corners;
-      
-      // Build gradient colors array from individual color inputs
-      if (props.gradient_color_1 || props.gradient_color_2) {
-        const colors = [];
-        if (props.gradient_color_1) {
-          colors.push({ color: props.gradient_color_1, offset: 0 });
-        }
-        if (props.gradient_color_2) {
-          colors.push({ color: props.gradient_color_2, offset: 100 });
-        }
-        gradient.colors = colors;
-      }
-      if (Object.keys(gradient).length > 0) customizations.gradient = gradient;
+    const customizations = compact({
+      background_color: optionalText(props.background_color),
+      dot_pattern_color: optionalText(props.dot_pattern_color),
+      dot_pattern_type: optionalText(props.dot_pattern_type),
+      corners,
+      gradient,
+      frame,
+      branding: typeof props.bitly_brand === 'boolean' ? { bitly_brand: props.bitly_brand } : undefined,
+      logo: optionalText(props.logo_image_guid) ? { image_guid: optionalText(props.logo_image_guid) } : undefined,
+      spec_settings: compact({ error_correction: parseErrorCorrection(props.error_correction) }),
+    });
 
-      const frame: any = {};
-      if (props.frame_id) frame.id = props.frame_id;
-      const frameColors: any = {};
-      if (props.frame_primary_color)
-        frameColors.primary = props.frame_primary_color;
-      if (props.frame_secondary_color)
-        frameColors.secondary = props.frame_secondary_color;
-      if (props.frame_background_color)
-        frameColors.background = props.frame_background_color;
-      if (Object.keys(frameColors).length > 0) frame.colors = frameColors;
-      if (props.frame_text)
-        frame.text = { primary: { content: props.frame_text } };
-      if (Object.keys(frame).length > 0) customizations.frame = frame;
-
-      const branding: any = {};
-      if (props.bitly_brand !== undefined)
-        branding.bitly_brand = props.bitly_brand;
-      if (Object.keys(branding).length > 0) customizations.branding = branding;
-
-      const logo: any = {};
-      if (props.logo_image_guid) logo.image_guid = props.logo_image_guid;
-      if (Object.keys(logo).length > 0) customizations.logo = logo;
-
-      const specSettings: any = {};
-      if (props.error_correction)
-        specSettings.error_correction = props.error_correction;
-      if (Object.keys(specSettings).length > 0)
-        customizations.spec_settings = specSettings;
-
-      if (Object.keys(customizations).length > 0)
-        body.render_customizations = customizations;
-
-      return await bitlyApiCall({
-        method: HttpMethod.POST,
-        auth: context.auth.props,
-        resourceUri: '/qr-codes',
-        body,
-      });
-    } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.description ||
-        error.response?.data?.message ||
-        error.message;
-
-      if (error.response?.status === 429) {
-        throw new Error(
-          'Rate limit exceeded. Please wait before trying again.'
-        );
-      }
-
-      if (error.response?.status === 422) {
-        throw new Error(
-          `Unprocessable Entity: ${errorMessage}. Please check the format of your Long URL or other inputs.`
-        );
-      }
-
-      if (error.response?.status === 401 || error.response?.status === 403) {
-        throw new Error(
-          `Authentication failed or forbidden: ${errorMessage}. Please check your Access Token and permissions.`
-        );
-      }
-
-      throw new Error(
-        `Failed to create QR Code: ${errorMessage || 'Unknown error occurred'}`
-      );
-    }
+    return bitlyApiCall({
+      method: HttpMethod.POST,
+      auth: context.auth.props,
+      resourceUri: '/qr-codes',
+      body: {
+        group_guid: groupGuidValue,
+        destination,
+        ...(optionalText(props.title) ? { title: optionalText(props.title) } : {}),
+        ...(props.archived === true ? { archived: true } : {}),
+        ...(customizations ? { render_customizations: customizations } : {}),
+      },
+      operation: 'create QR code',
+    });
   },
 });
+
+export function buildQrDestination({ longUrl, bitlinkId }: { longUrl: unknown; bitlinkId: unknown }): Record<string, string> {
+  const url = optionalText(longUrl);
+  const bitlink = optionalText(bitlinkId);
+  if (url && bitlink) {
+    throw new Error('Provide either a Long URL or a Bitlink ID as the QR code destination, not both.');
+  }
+  if (bitlink) {
+    return { bitlink_id: normalizeBitlinkId(bitlink) };
+  }
+  if (!url || !/^https?:\/\//i.test(url)) {
+    throw new Error("A destination is required: a Long URL starting with 'http://' or 'https://', or a Bitlink ID.");
+  }
+  return { long_url: url };
+}
+
+function corner({ shape, inner, outer }: { shape: unknown; inner: unknown; outer: unknown }): Record<string, unknown> | undefined {
+  return compact({ shape: optionalText(shape), inner_color: optionalText(inner), outer_color: optionalText(outer) });
+}
+
+function parseErrorCorrection(value: unknown): number | undefined {
+  if (value === undefined || value === null || value === '') {
+    return undefined;
+  }
+  const level = Number(value);
+  if (![1, 2, 3, 4].includes(level)) {
+    throw new Error('Error Correction must be 1, 2, 3 or 4.');
+  }
+  return level;
+}
+
+function compact(record: Record<string, unknown>): Record<string, unknown> | undefined {
+  const entries = Object.entries(record).filter(([, v]) => v !== undefined);
+  return entries.length === 0 ? undefined : Object.fromEntries(entries);
+}

@@ -1,10 +1,9 @@
-import { createTrigger, TriggerStrategy, Property, isNil } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { bitlyAuth } from '../common/auth';
-import { bitlyApiCall } from '../common/client';
+import { bitlyApiCall, BitlyAuthProps, requireGuid } from '../common/client';
 import { groupGuid } from '../common/props';
-
-const LAST_BITLINK_IDS_KEY = 'bitly-last-bitlink-ids';
+import { BitlyLink, BitlyPagination, newBitlinkOutputSchema } from '../common/schemas';
 
 export const newBitlinkCreatedTrigger = createTrigger({
   auth: bitlyAuth,
@@ -16,6 +15,7 @@ export const newBitlinkCreatedTrigger = createTrigger({
     description: 'Fires when a new Bitlink appears in the selected group, detected by polling. Represents a newly created short link, optionally narrowed to those whose title or tags match a filter and optionally including archived links.',
   },
   type: TriggerStrategy.POLLING,
+  outputSchema: newBitlinkOutputSchema,
   props: {
     pollingInterval: Property.StaticDropdown({
       displayName: 'Polling Interval',
@@ -57,258 +57,57 @@ export const newBitlinkCreatedTrigger = createTrigger({
   },
 
   async onEnable(context) {
-    const { group_guid } = context.propsValue;
-    const { accessToken } = context.auth.props;
-
-    try {
-      const response = await bitlyApiCall<{ links: BitlyLink[] }>({
-        auth: { accessToken },
-        method: HttpMethod.GET,
-        resourceUri: `/groups/${group_guid}/bitlinks`,
-        query: {
-          size: 50,
-          archived: context.propsValue.includeArchived ? 'both' : 'off',
-        },
-      });
-
-      if (context.isRepublish && !isNil(await context.store.get(LAST_BITLINK_IDS_KEY))) {
-        return;
-      }
-
-      const linkIds = response.links.map((link) => link.id);
-      await context.store.put<string[]>(LAST_BITLINK_IDS_KEY, linkIds);
-      
-      console.log(`Bitly New Bitlink trigger initialized with ${linkIds.length} existing links`);
-    } catch (error: any) {
-      if (error.response?.status === 401) {
-        throw new Error(
-          'Authentication failed: Please check your access token. Make sure your token has permission to access Bitlinks.'
-        );
-      }
-      
-      if (error.response?.status === 403) {
-        throw new Error(
-          'Access denied: You do not have permission to list Bitlinks. Please check your Bitly account permissions.'
-        );
-      }
-      
-      throw new Error(
-        `Failed to initialize Bitlink monitoring: ${error.message || 'Unknown error occurred'}. Please check your Bitly connection.`
-      );
+    if (context.isRepublish && (await context.store.get<PollState>(STATE_KEY))) {
+      return;
     }
+    const guid = requireGuid({ value: context.propsValue.group_guid, label: 'Group' });
+    const response = await bitlyApiCall<{ links?: BitlyLink[] }>({
+      auth: context.auth.props,
+      method: HttpMethod.GET,
+      resourceUri: `/groups/${guid}/bitlinks`,
+      query: { size: PAGE_SIZE, archived: 'both' },
+      operation: 'list Bitlinks',
+    });
+    await context.store.put<PollState>(STATE_KEY, nextState({ previous: undefined, links: response.links ?? [] }));
   },
 
-  async onDisable() {
-    console.log('Bitly New Bitlink trigger disabled and cleaned up');
+  async onDisable(context) {
+    await context.store.delete(STATE_KEY);
+    await context.store.delete(LEGACY_STATE_KEY);
   },
 
   async run(context) {
-    const { group_guid, titleFilter, tagFilter, includeArchived } = context.propsValue;
-    const { accessToken } = context.auth.props;
-    
-    try {
-      const previousLinkIds = await context.store.get<string[]>(LAST_BITLINK_IDS_KEY) || [];
-
-      const response = await bitlyApiCall<{ links: BitlyLink[] }>({
-        auth: { accessToken },
-        method: HttpMethod.GET,
-        resourceUri: `/groups/${group_guid}/bitlinks`,
-        query: {
-          size: 50,
-          archived: includeArchived ? 'both' : 'off',
-        },
-      });
-
-      const allLinks = response.links || [];
-      const currentLinkIds = allLinks.map((l) => l.id);
-
-      await context.store.put<string[]>(LAST_BITLINK_IDS_KEY, currentLinkIds);
-
-      let newLinks = allLinks.filter((link) => !previousLinkIds.includes(link.id));
-
-      if (titleFilter && titleFilter.trim()) {
-        const filterText = titleFilter.trim().toLowerCase();
-        newLinks = newLinks.filter((link) => 
-          link.title && link.title.toLowerCase().includes(filterText)
-        );
-      }
-
-      if (tagFilter && tagFilter.trim()) {
-        const filterTag = tagFilter.trim().toLowerCase();
-        newLinks = newLinks.filter((link) => 
-          link.tags && Array.isArray(link.tags) && 
-          link.tags.some(tag => tag.toLowerCase().includes(filterTag))
-        );
-      }
-
-      const processedLinks = newLinks.map((link) => ({
-        id: link.id,
-        link: link.link,
-        longUrl: link.long_url,
-        title: link.title,
-        tags: link.tags || [],
-        
-        isArchived: link.archived,
-        
-        createdAt: link.created_at,
-        modifiedAt: link.modified_at,
-        
-        customBitlinks: link.custom_bitlinks || [],
-        
-        references: {
-          group: link.references?.group,
-        },
-        
-        rawLinkData: link,
-        
-        triggerInfo: {
-          detectedAt: new Date().toISOString(),
-          source: 'bitly',
-          type: 'new_bitlink',
-        },
-      }));
-
-      return processedLinks;
-    } catch (error: any) {
-      if (error.response?.status === 401) {
-        throw new Error(
-          'Authentication failed: Your access token may have expired. Please check your Bitly authentication.'
-        );
-      }
-      
-      if (error.response?.status === 429) {
-        throw new Error(
-          'Rate limit exceeded: Bitly API rate limit reached. Consider increasing your polling interval.'
-        );
-      }
-      
-      if (error.response?.status === 403) {
-        throw new Error(
-          'Access denied: You do not have permission to list Bitlinks. Please check your account permissions.'
-        );
-      }
-      
-      throw new Error(
-        `Failed to check for new Bitlinks: ${error.message || 'Unknown error occurred'}. The trigger will retry on the next polling interval.`
-      );
+    const { titleFilter, tagFilter, includeArchived } = context.propsValue;
+    const guid = requireGuid({ value: context.propsValue.group_guid, label: 'Group' });
+    const state = await context.store.get<PollState>(STATE_KEY);
+    const { fresh, newState } = state
+      ? await pollSinceCheckpoint({ auth: context.auth.props, guid, state })
+      : await pollLegacy({
+          auth: context.auth.props,
+          guid,
+          legacyIds: (await context.store.get<string[]>(LEGACY_STATE_KEY)) ?? undefined,
+        });
+    await context.store.put<PollState>(STATE_KEY, newState);
+    if (!state) {
+      await context.store.delete(LEGACY_STATE_KEY);
     }
+    const detectedAt = new Date().toISOString();
+    return filterLinks({ links: fresh, titleFilter, tagFilter, includeArchived: includeArchived === true })
+      .sort((a, b) => createdSeconds(a) - createdSeconds(b))
+      .map((link) => toTriggerItem({ link, detectedAt }));
   },
 
   async test(context) {
-    const { group_guid, includeArchived } = context.propsValue;
-    const { accessToken } = context.auth.props;
-
-    try {
-      const response = await bitlyApiCall<{ links: BitlyLink[] }>({
-        auth: { accessToken },
-        method: HttpMethod.GET,
-        resourceUri: `/groups/${group_guid}/bitlinks`,
-        query: {
-          size: 1,
-          archived: includeArchived ? 'both' : 'off',
-        },
-      });
-
-      const links = response.links || [];
-      
-      if (links.length > 0) {
-        const testLink = links[0];
-        return [
-          {
-            id: testLink.id,
-            link: testLink.link,
-            longUrl: testLink.long_url,
-            title: testLink.title,
-            tags: testLink.tags || [],
-            isArchived: testLink.archived,
-            createdAt: testLink.created_at,
-            modifiedAt: testLink.modified_at,
-            customBitlinks: testLink.custom_bitlinks || [],
-            references: {
-              group: testLink.references?.group,
-            },
-            rawLinkData: testLink,
-            triggerInfo: {
-              detectedAt: new Date().toISOString(),
-              source: 'bitly',
-              type: 'new_bitlink',
-            },
-          },
-        ];
-      } else {
-        return [
-          {
-            id: 'bit.ly/test123',
-            link: 'https://bit.ly/test123',
-            longUrl: 'https://example.com/very-long-url',
-            title: 'Sample Bitlink',
-            tags: ['sample', 'test'],
-            isArchived: false,
-            createdAt: '2025-01-15T10:00:00+0000',
-            modifiedAt: '2025-01-15T10:00:00+0000',
-            customBitlinks: [],
-            references: {
-              group: 'Ba1bc23dE4F',
-            },
-            rawLinkData: {
-              id: 'bit.ly/test123',
-              link: 'https://bit.ly/test123',
-              long_url: 'https://example.com/very-long-url',
-              title: 'Sample Bitlink',
-              tags: ['sample', 'test'],
-              archived: false,
-              created_at: '2025-01-15T10:00:00+0000',
-              modified_at: '2025-01-15T10:00:00+0000',
-              custom_bitlinks: [],
-              references: {
-                group: 'Ba1bc23dE4F',
-              },
-            },
-            triggerInfo: {
-              detectedAt: new Date().toISOString(),
-              source: 'bitly',
-              type: 'new_bitlink',
-            },
-          },
-        ];
-      }
-    } catch (error: any) {
-      return [
-        {
-          id: 'bit.ly/test123',
-          link: 'https://bit.ly/test123',
-          longUrl: 'https://example.com/test-url',
-          title: 'Test Bitlink',
-          tags: ['test'],
-          isArchived: false,
-          createdAt: '2025-01-15T10:00:00+0000',
-          modifiedAt: '2025-01-15T10:00:00+0000',
-          customBitlinks: [],
-          references: {
-            group: 'Ba1bc23dE4F',
-          },
-          rawLinkData: {
-            id: 'bit.ly/test123',
-            link: 'https://bit.ly/test123',
-            long_url: 'https://example.com/test-url',
-            title: 'Test Bitlink',
-            tags: ['test'],
-            archived: false,
-            created_at: '2025-01-15T10:00:00+0000',
-            modified_at: '2025-01-15T10:00:00+0000',
-            custom_bitlinks: [],
-            references: {
-              group: 'Ba1bc23dE4F',
-            },
-          },
-          triggerInfo: {
-            detectedAt: new Date().toISOString(),
-            source: 'bitly',
-            type: 'new_bitlink',
-          },
-        },
-      ];
-    }
+    const guid = requireGuid({ value: context.propsValue.group_guid, label: 'Group' });
+    const response = await bitlyApiCall<{ links?: BitlyLink[] }>({
+      auth: context.auth.props,
+      method: HttpMethod.GET,
+      resourceUri: `/groups/${guid}/bitlinks`,
+      query: { size: 5, archived: context.propsValue.includeArchived ? 'both' : 'off' },
+      operation: 'list Bitlinks',
+    });
+    const detectedAt = new Date().toISOString();
+    return (response.links ?? []).map((link) => toTriggerItem({ link, detectedAt }));
   },
 
   sampleData: {
@@ -346,21 +145,138 @@ export const newBitlinkCreatedTrigger = createTrigger({
   },
 });
 
-/**
- * Interface for Bitly link data structure
- */
-interface BitlyLink {
-  id: string;
-  link: string;
-  long_url: string;
-  title: string;
-  tags: string[];
-  archived: boolean;
-  created_at: string;
-  modified_at: string;
-  custom_bitlinks: string[];
-  references: {
-    group: string;
-  };
-  [key: string]: any;
+async function pollSinceCheckpoint({
+  auth,
+  guid,
+  state,
+}: {
+  auth: BitlyAuthProps;
+  guid: string;
+  state: PollState;
+}): Promise<{ fresh: BitlyLink[]; newState: PollState }> {
+  const links = await fetchAllSince({ auth, guid, createdAfter: Math.max(0, state.checkpoint - OVERLAP_SECONDS) });
+  const fresh = links.filter((link) => state.seen[link.id] === undefined);
+  return { fresh, newState: nextState({ previous: state, links }) };
 }
+
+async function pollLegacy({
+  auth,
+  guid,
+  legacyIds,
+}: {
+  auth: BitlyAuthProps;
+  guid: string;
+  legacyIds: string[] | undefined;
+}): Promise<{ fresh: BitlyLink[]; newState: PollState }> {
+  const response = await bitlyApiCall<{ links?: BitlyLink[] }>({
+    auth,
+    method: HttpMethod.GET,
+    resourceUri: `/groups/${guid}/bitlinks`,
+    query: { size: PAGE_SIZE, archived: 'both' },
+    operation: 'list Bitlinks',
+  });
+  const links = response.links ?? [];
+  const known = new Set(legacyIds ?? links.map((link) => link.id));
+  return {
+    fresh: links.filter((link) => !known.has(link.id)),
+    newState: nextState({ previous: undefined, links }),
+  };
+}
+
+async function fetchAllSince({
+  auth,
+  guid,
+  createdAfter,
+}: {
+  auth: BitlyAuthProps;
+  guid: string;
+  createdAfter: number;
+}): Promise<BitlyLink[]> {
+  const pages: BitlyLink[][] = [];
+  let cursor: string | undefined;
+  for (let page = 0; page < MAX_PAGES; page++) {
+    const response = await bitlyApiCall<{ links?: BitlyLink[]; pagination?: BitlyPagination }>({
+      auth,
+      method: HttpMethod.GET,
+      resourceUri: `/groups/${guid}/bitlinks`,
+      query: { size: PAGE_SIZE, archived: 'both', created_after: createdAfter > 0 ? createdAfter : undefined, search_after: cursor },
+      operation: 'list Bitlinks',
+    });
+    pages.push(response.links ?? []);
+    cursor = response.pagination?.search_after || undefined;
+    if (!cursor) {
+      return pages.flat();
+    }
+  }
+  return pages.flat();
+}
+
+function nextState({ previous, links }: { previous: PollState | undefined; links: BitlyLink[] }): PollState {
+  const newest = links.reduce((max, link) => Math.max(max, createdSeconds(link)), previous?.checkpoint ?? 0);
+  const checkpoint = newest;
+  const windowStart = checkpoint - OVERLAP_SECONDS;
+  const merged: Record<string, number> = {
+    ...(previous?.seen ?? {}),
+    ...Object.fromEntries(links.map((link) => [link.id, createdSeconds(link)])),
+  };
+  const seen = Object.fromEntries(Object.entries(merged).filter(([, created]) => created >= windowStart));
+  return { checkpoint, seen };
+}
+
+function filterLinks({
+  links,
+  titleFilter,
+  tagFilter,
+  includeArchived,
+}: {
+  links: BitlyLink[];
+  titleFilter: string | undefined;
+  tagFilter: string | undefined;
+  includeArchived: boolean;
+}): BitlyLink[] {
+  const title = titleFilter?.trim().toLowerCase();
+  const tag = tagFilter?.trim().toLowerCase();
+  return links.filter(
+    (link) =>
+      (includeArchived || link.archived !== true) &&
+      (!title || (link.title ?? '').toLowerCase().includes(title)) &&
+      (!tag || (link.tags ?? []).some((t) => t.toLowerCase().includes(tag)))
+  );
+}
+
+function createdSeconds(link: BitlyLink): number {
+  if (!link.created_at) {
+    return 0;
+  }
+  const iso = link.created_at.replace(/([+-]\d{2})(\d{2})$/, '$1:$2');
+  const ms = Date.parse(iso);
+  return Number.isNaN(ms) ? 0 : Math.floor(ms / 1000);
+}
+
+function toTriggerItem({ link, detectedAt }: { link: BitlyLink; detectedAt: string }) {
+  return {
+    id: link.id,
+    link: link.link,
+    longUrl: link.long_url,
+    title: link.title,
+    tags: link.tags ?? [],
+    isArchived: link.archived,
+    createdAt: link.created_at,
+    modifiedAt: link.modified_at,
+    customBitlinks: link.custom_bitlinks ?? [],
+    references: { group: link.references?.group },
+    rawLinkData: link,
+    triggerInfo: { detectedAt, source: 'bitly', type: 'new_bitlink' },
+  };
+}
+
+const STATE_KEY = 'bitly-new-bitlink-state';
+const LEGACY_STATE_KEY = 'bitly-last-bitlink-ids';
+const PAGE_SIZE = 100;
+const MAX_PAGES = 20;
+const OVERLAP_SECONDS = 120;
+
+type PollState = {
+  checkpoint: number;
+  seen: Record<string, number>;
+};
