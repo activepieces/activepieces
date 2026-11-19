@@ -1,52 +1,34 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { signNowAuth, getSignNowBearerToken } from '../common/auth';
-import { getUserId, registerWebhook, unregisterWebhook } from '../common/webhook';
+import { createTrigger } from '@activepieces/pieces-framework';
+import { signNowWebhook } from '../common/webhook';
+import { signNowSchemas } from '../common/schemas';
 
-const STORE_KEY = 'sign_now_new_document_subscription_id';
+const SAMPLE_DATA = {
+  meta: {
+    timestamp: 1661430936,
+    event: 'user.document.create',
+    environment: 'https://api.signnow.com',
+    initiator_id: 'b2c3d4e5f67890123456789abcdef0123456789a',
+    callback_url: 'https://cloud.activepieces.com/api/v1/webhooks/FLOW_ID',
+  },
+  content: {
+    document_id: 'a1b2c3d4e5f67890123456789abcdef012345678',
+    document_name: 'Contract.pdf',
+    user_id: 'b2c3d4e5f67890123456789abcdef0123456789a',
+  },
+};
 
 export const newDocumentTrigger = createTrigger({
-  auth: signNowAuth,
   name: 'new_document',
-  displayName: 'New Document',
-  description: 'Triggers when a document has been uploaded to SignNow.',
-  aiMetadata: {
+  classification: 'READ',
+  sampleData: SAMPLE_DATA,
+  ...signNowWebhook.webhookTriggerConfig({
+    displayName: 'New Document',
     description:
-      'Fires when a new document is created/uploaded in the connected SignNow account, signaling that a fresh document is now available to act on (e.g. send for signing).',
-  },
-  props: {},
-  type: TriggerStrategy.WEBHOOK,
-  async onEnable(context) {
-    const token = getSignNowBearerToken(context.auth);
-    const userId = await getUserId(token);
-    const subscriptionId = await registerWebhook(
-      context.auth,
-      'user.document.create',
-      userId,
-      context.webhookUrl
-    );
-    await context.store.put(STORE_KEY, subscriptionId);
-  },
-  async onDisable(context) {
-    const subscriptionId = await context.store.get<string>(STORE_KEY);
-    if (subscriptionId) {
-      await unregisterWebhook(context.auth, subscriptionId);
-      await context.store.delete(STORE_KEY);
-    }
-  },
-  async run(context) {
-    return [context.payload.body];
-  },
-  sampleData: {
-    meta: {
-      timestamp: 1661430936,
-      event: 'user.document.create',
-      environment: 'https://api.signnow.com',
-      callback_url: 'https://your-callback-url.com',
-    },
-    content: {
-      document_id: 'a1b2c3d4e5f67890123456789abcdef012345678',
-      document_name: 'Contract.pdf',
-      user_id: 'b2c3d4e5f67890123456789abcdef0123456789a',
-    },
-  },
+      'Triggers when a document is created in your SignNow account, including documents created by this piece. Each trigger uses one of the 10 active webhooks SignNow allows without an API plan.',
+    aiDescription:
+      'Fires when a document is created in the connected SignNow account (user.document.create), including uploads and template copies made by this piece, so avoid flows that create documents from this event. Emits the document ID, name and owner. Retried deliveries of the same event are ignored.',
+    event: 'user.document.create',
+    storeKey: 'sign_now_new_document_subscription_id',
+    outputSchema: signNowSchemas.documentEvent({ withInitiator: false }),
+  }),
 });
