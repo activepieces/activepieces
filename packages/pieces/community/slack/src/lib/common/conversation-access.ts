@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import { isNil, Store, tryCatch } from '@activepieces/pieces-framework';
 import { ErrorCode, WebAPIPlatformError, WebClient, WebClientOptions } from '@slack/web-api';
 import { getBotToken, getBotUserId, getUserToken, SlackAuthValue } from './auth-helpers';
@@ -6,14 +7,35 @@ export async function connectionCanSee({ auth, store, connectedUserId, channel, 
   if (eventNamesConnection({ auth, connectedUserId, eventAuthorizations })) {
     return true;
   }
-  const cacheKey = `conversation-access:${connectedUserId}:${channel}`;
+  const cacheKey = buildCacheKey({ auth, connectedUserId, channel });
   const cachedAnswer = await readFreshCachedAnswer({ store, cacheKey, channelType });
   if (!isNil(cachedAnswer)) {
     return cachedAnswer;
   }
-  const slackAnswer = await askSlackIfConnectionCanSee({ auth, channel });
-  await store.put<CachedAccessAnswer>(cacheKey, { answer: slackAnswer, checkedAt: Date.now() });
-  return slackAnswer;
+  const canSee = await askSlackIfConnectionCanSee({ auth, channel });
+  if (cacheLifetimeMs({ channelType, canSee }) > 0) {
+    await store.put<CachedAccessAnswer>(cacheKey, { canSee, checkedAt: Date.now() });
+  }
+  return canSee;
+}
+
+function buildCacheKey({ auth, connectedUserId, channel }: {
+  auth: SlackAuthValue;
+  connectedUserId: string;
+  channel: string;
+}): string {
+  const botIdentity = getBotUserId(auth) ?? crypto.createHash('sha256').update(getBotToken(auth)).digest('hex').slice(0, 16);
+  return `conversation-access:${connectedUserId}:${botIdentity}:${channel}`;
+}
+
+function cacheLifetimeMs({ channelType, canSee }: { channelType: string; canSee: boolean }): number {
+  if (channelType === 'im') {
+    return DIRECT_MESSAGE_ANSWER_LIFETIME_MS;
+  }
+  if (channelType === 'group' && !canSee) {
+    return PRIVATE_CHANNEL_NO_ANSWER_LIFETIME_MS;
+  }
+  return 0;
 }
 
 function eventNamesConnection({ auth, connectedUserId, eventAuthorizations }: {
@@ -33,11 +55,14 @@ async function readFreshCachedAnswer({ store, cacheKey, channelType }: {
   channelType: string;
 }): Promise<boolean | undefined> {
   const cachedAnswer = await store.get<CachedAccessAnswer>(cacheKey);
-  const cacheLifetimeMs = CACHE_LIFETIME_MS_BY_CHANNEL_TYPE[channelType] ?? 0;
-  if (isNil(cachedAnswer) || Date.now() - cachedAnswer.checkedAt >= cacheLifetimeMs) {
+  if (isNil(cachedAnswer)) {
     return undefined;
   }
-  return cachedAnswer.answer;
+  const lifetimeMs = cacheLifetimeMs({ channelType, canSee: cachedAnswer.canSee });
+  if (Date.now() - cachedAnswer.checkedAt >= lifetimeMs) {
+    return undefined;
+  }
+  return cachedAnswer.canSee;
 }
 
 async function askSlackIfConnectionCanSee({ auth, channel }: { auth: SlackAuthValue; channel: string }): Promise<boolean> {
@@ -90,17 +115,13 @@ function isSlackPlatformError(error: Error): error is WebAPIPlatformError {
 
 const SLACK_NO_ACCESS_ERRORS = ['channel_not_found', 'not_in_channel', 'access_denied', 'no_permission'];
 const SLACK_CLIENT_OPTIONS: WebClientOptions = { timeout: 5_000, retryConfig: { retries: 0 }, rejectRateLimitedCalls: true };
-const DIRECT_MESSAGE_CACHE_LIFETIME_MS = 24 * 60 * 60 * 1000;
-const PRIVATE_CHANNEL_CACHE_LIFETIME_MS = 2 * 60 * 1000;
-const CACHE_LIFETIME_MS_BY_CHANNEL_TYPE: Record<string, number> = {
-  im: DIRECT_MESSAGE_CACHE_LIFETIME_MS,
-  group: PRIVATE_CHANNEL_CACHE_LIFETIME_MS,
-};
+const DIRECT_MESSAGE_ANSWER_LIFETIME_MS = 24 * 60 * 60 * 1000;
+const PRIVATE_CHANNEL_NO_ANSWER_LIFETIME_MS = 2 * 60 * 1000;
 
 type SlackAccessAnswer = 'allowed' | 'denied' | 'missingScope';
 
 type CachedAccessAnswer = {
-  answer: boolean;
+  canSee: boolean;
   checkedAt: number;
 };
 

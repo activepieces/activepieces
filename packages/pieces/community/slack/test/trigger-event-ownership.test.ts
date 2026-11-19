@@ -29,6 +29,7 @@ const BOT_TOKEN = 'xoxb-workspace-bot';
 const USER_B_TOKEN = 'xoxp-user-b';
 const USER_D_TOKEN = 'xoxp-user-d';
 const CUSTOM_BOT_TOKEN = 'xoxb-custom-bot-without-read-scopes';
+const OTHER_BOT_TOKEN = 'xoxb-other-bot';
 const TRIGGER_TIMEOUT_MS = 60_000;
 const TRIGGER_BUDGET_HEADROOM_MS = 15_000;
 const MAX_SLACK_CALLS_PER_CHECK = 3;
@@ -135,10 +136,34 @@ describe("Slack triggers on user B's connection only fire for events B's connect
     expect(slackApi.calls.length).toBe(callsAfterFirstMessage);
   });
 
-  it('asks Slack again once a private-channel answer is older than two minutes', async () => {
-    vi.useFakeTimers({ toFake: ['Date'] });
+  it('stops firing on the next private-channel message once B is removed from the channel', async () => {
     const store = inMemoryStore();
     const event = channelMessage({ channel: 'G0B', channelType: 'group' });
+    expect(await newMessageTrigger.run(triggerContext({ event, store }))).toHaveLength(1);
+    slackApi.conversationsVisibleToToken.get(USER_B_TOKEN)?.delete('G0B');
+    try {
+      expect(await newMessageTrigger.run(triggerContext({ event, store }))).toEqual([]);
+    }
+    finally {
+      slackApi.conversationsVisibleToToken.get(USER_B_TOKEN)?.add('G0B');
+    }
+  });
+
+  it('keeps a private-channel no for two minutes', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    const store = inMemoryStore();
+    const event = channelMessage({ channel: 'G0A', channelType: 'group' });
+    await newMessageTrigger.run(triggerContext({ event, store }));
+    const callsAfterFirstMessage = slackApi.calls.length;
+    vi.setSystemTime(Date.now() + 2 * 60 * 1000 - 1);
+    await newMessageTrigger.run(triggerContext({ event, store }));
+    expect(slackApi.calls.length).toBe(callsAfterFirstMessage);
+  });
+
+  it('asks Slack again once a private-channel no is older than two minutes', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    const store = inMemoryStore();
+    const event = channelMessage({ channel: 'G0A', channelType: 'group' });
     await newMessageTrigger.run(triggerContext({ event, store }));
     const callsAfterFirstMessage = slackApi.calls.length;
     vi.setSystemTime(Date.now() + 2 * 60 * 1000 + 1);
@@ -173,6 +198,14 @@ describe("Slack triggers on user B's connection only fire for events B's connect
     const event = directMessage({ channel: 'D0B_C', user: 'UC' });
     expect(await newDirectMessageTrigger.run(triggerContext({ event, store }))).toHaveLength(1);
     expect(await newDirectMessageTrigger.run(triggerContext({ event, store, connection: userDConnection() }))).toEqual([]);
+  });
+
+  it('does not reuse an answer from one bot after the flow switches to a connection with the same user and another bot', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => Response.json({ ok: true, user_id: 'UB' })));
+    const store = inMemoryStore();
+    const event = directMessage({ channel: 'D0C_BOT', user: 'UC' });
+    expect(await newDirectMessageTrigger.run(triggerContext({ event, store, connection: customConnection({ botToken: BOT_TOKEN, userToken: USER_B_TOKEN }) }))).toHaveLength(1);
+    expect(await newDirectMessageTrigger.run(triggerContext({ event, store, connection: customConnection({ botToken: OTHER_BOT_TOKEN, userToken: USER_B_TOKEN }) }))).toEqual([]);
   });
 
   it("fires 'New Direct Message' on a bot-only connection whose bot can read the DM but has no read scopes", async () => {
@@ -271,7 +304,11 @@ function userDConnection() {
 }
 
 function customBotConnection() {
-  return { type: 'CUSTOM_AUTH', props: { botToken: CUSTOM_BOT_TOKEN } };
+  return customConnection({ botToken: CUSTOM_BOT_TOKEN });
+}
+
+function customConnection({ botToken, userToken }: { botToken: string; userToken?: string }) {
+  return { type: 'CUSTOM_AUTH', props: { botToken, userToken } };
 }
 
 function triggerContext({ event, authorizations, store = inMemoryStore(), connection = userBConnection() }: {
