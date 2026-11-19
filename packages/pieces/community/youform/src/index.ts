@@ -18,6 +18,12 @@ export const youform = createPiece({
     createCustomApiCallAction({
       auth: youformAuth,
       baseUrl: () => youformClient.baseUrl(),
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${youformClient.baseUrl()}`,
+          placeholder: '/forms',
+        },
+      },
       authMapping: async (auth) => ({
         Authorization: `Bearer ${auth.secret_text}`,
       }),
