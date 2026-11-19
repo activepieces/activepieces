@@ -21,8 +21,8 @@ export const httpOauth2Auth = PieceAuth.OAuth2({
     }),
     scopes: Property.ShortText({
       displayName: 'Scopes',
-      required: true,
-      description: 'Separate scopes with spaces.',
+      required: false,
+      description: 'Separate scopes with spaces. Leave empty if your provider does not use scopes; no scope is sent then.',
     }),
   },
 });
