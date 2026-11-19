@@ -1,7 +1,15 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { sendpulseApiCall } from '../common/client';
+import { createAction, OutputSchema, Property } from '@activepieces/pieces-framework';
+import { isRecord, normalizeEmail, sendpulseApiCall } from '../common/client';
 import { sendpulseAuth } from '../common/auth';
+
+const outputSchema: OutputSchema = {
+  fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
+    { key: 'message', label: 'Message' },
+    { key: 'email', label: 'Email', format: 'email' },
+  ],
+};
 
 export const deleteContactAction = createAction({
   auth: sendpulseAuth,
@@ -18,33 +26,24 @@ export const deleteContactAction = createAction({
       required: true,
     }),
   },
-
+  outputSchema,
   async run(context) {
-    const { email } = context.propsValue;
+    const email = normalizeEmail(context.propsValue.email);
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      throw new Error(`Invalid email format: ${email}`);
+    const result = await sendpulseApiCall<unknown>({
+      method: HttpMethod.DELETE,
+      auth: context.auth.props,
+      resourceUri: `/emails/${encodeURIComponent(email)}`,
+      operation: 'delete contact',
+    });
+
+    if (!isRecord(result) || result['result'] !== true) {
+      throw new Error(`SendPulse delete contact failed: unexpected response ${JSON.stringify(result)}`);
     }
-
-    try {
-      const result = await sendpulseApiCall<{ result: boolean }>({
-        method: HttpMethod.DELETE,
-        auth: context.auth.props,
-        resourceUri: `/emails/${encodeURIComponent(email)}`,
-      });
-
-      if (result.result) {
-        return {
-          success: true,
-          message: `Contact ${email} deleted from all mailing lists`,
-          email,
-        };
-      }
-
-      throw new Error('SendPulse API returned failure');
-    } catch (error: any) {
-      throw new Error(`Failed to delete contact: ${error.message || 'Unknown error'}`);
-    }
+    return {
+      success: true,
+      message: `Contact ${email} deleted from all mailing lists`,
+      email,
+    };
   },
 });

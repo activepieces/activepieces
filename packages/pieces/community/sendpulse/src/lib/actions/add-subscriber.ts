@@ -1,8 +1,29 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { sendpulseApiCall } from '../common/client';
+import { createAction, OutputSchema, Property } from '@activepieces/pieces-framework';
+import { isRecord, normalizeEmail, parseMailingListId, sendpulseApiCall } from '../common/client';
 import { sendpulseAuth } from '../common/auth';
 import { mailingListDropdown } from '../common/props';
+
+function toTagIds(tags: unknown[] | undefined): number[] {
+  return (tags ?? []).map((tag) => {
+    const num = Number(tag);
+    if (tag === '' || tag === null || !Number.isInteger(num)) {
+      throw new Error(`Invalid tag ID: ${String(tag)}. Tag IDs must be numbers.`);
+    }
+    return num;
+  });
+}
+
+const outputSchema: OutputSchema = {
+  fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
+    { key: 'message', label: 'Message' },
+    { key: 'email', label: 'Email', format: 'email' },
+    { key: 'mailingListId', label: 'Mailing List ID' },
+    { key: 'variables', label: 'Variables', dynamicKey: true },
+    { key: 'tags', label: 'Tag IDs' },
+  ],
+};
 
 export const addSubscriberAction = createAction({
   auth: sendpulseAuth,
@@ -11,7 +32,7 @@ export const addSubscriberAction = createAction({
   displayName: 'Add Subscriber',
   description: 'Add subscriber to mailing list',
   audience: 'both',
-  aiMetadata: { description: 'Adds an email contact to a specific SendPulse mailing list (address book), optionally attaching subscriber variables (e.g. name, phone) and numeric tag IDs. Use to enroll a new contact into a list; requires the target mailing list ID and a valid email. Not idempotent — each call re-submits the contact to the list.', idempotent: false },
+  aiMetadata: { description: 'Adds an email contact to a specific SendPulse mailing list (address book), optionally attaching subscriber variables (e.g. name, phone) and numeric tag IDs. Use to enroll a new contact into a list; requires the numeric mailing list ID (from List Mailing Lists) and a valid email. Not idempotent — each call re-submits the contact to the list.', idempotent: false },
   props: {
     mailingListId: mailingListDropdown,
     email: Property.ShortText({
@@ -30,57 +51,35 @@ export const addSubscriberAction = createAction({
       required: false,
     }),
   },
-
+  outputSchema,
   async run(context) {
-    const { mailingListId, email, variables, tags } = context.propsValue;
+    const { mailingListId, variables, tags } = context.propsValue;
+    const listId = parseMailingListId(mailingListId);
+    const email = normalizeEmail(context.propsValue.email);
+    const tagIds = toTagIds(tags);
+    const hasVariables = isRecord(variables) && Object.keys(variables).length > 0;
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      throw new Error(`Invalid email format: ${email}`);
+    const result = await sendpulseApiCall<unknown>({
+      method: HttpMethod.POST,
+      auth: context.auth.props,
+      resourceUri: `/addressbooks/${listId}/emails`,
+      operation: 'add subscriber',
+      body: {
+        emails: [hasVariables ? { email, variables } : { email }],
+        ...(tagIds.length > 0 ? { tags: tagIds } : {}),
+      },
+    });
+
+    if (!isRecord(result) || result['result'] !== true) {
+      throw new Error(`SendPulse add subscriber failed: unexpected response ${JSON.stringify(result)}`);
     }
-
-    const emailObject: any = { email };
-    if (variables && Object.keys(variables).length > 0) {
-      emailObject.variables = variables;
-    }
-
-    const requestBody: any = {
-      emails: [emailObject],
+    return {
+      success: true,
+      message: 'Subscriber added successfully',
+      email,
+      variables: hasVariables ? variables : {},
+      mailingListId,
+      tags: tagIds,
     };
-
-    if (tags && tags.length > 0) {
-      const tagNumbers = tags.map((tag) => {
-        const num = Number(tag);
-        if (isNaN(num)) {
-          throw new Error(`Invalid tag ID: ${tag}. Tag IDs must be numbers.`);
-        }
-        return num;
-      });
-      requestBody.tags = tagNumbers;
-    }
-
-    try {
-      const result = await sendpulseApiCall<{ result: boolean }>({
-        method: HttpMethod.POST,
-        auth: context.auth.props,
-        resourceUri: `/addressbooks/${mailingListId}/emails`,
-        body: requestBody,
-      });
-
-      if (result.result === true) {
-        return {
-          success: true,
-          message: 'Subscriber added successfully',
-          email,
-          variables: variables || {},
-          mailingListId,
-          tags: requestBody.tags || [],
-        };
-      }
-
-      throw new Error('SendPulse API returned failure');
-    } catch (error: any) {
-      throw new Error(`Failed to add subscriber: ${error.message || 'Unknown error'}`);
-    }
   },
 });
