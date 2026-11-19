@@ -59,6 +59,8 @@ jobs:
           fi
 
       - name: Merge latest main
+        env:
+          AP_WRITE_TRANSLATION_PATHS: 'true'
         run: |
           git fetch origin main
           if ! git merge --no-edit origin/main; then

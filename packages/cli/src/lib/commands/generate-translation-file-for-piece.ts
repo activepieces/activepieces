@@ -83,7 +83,9 @@ const generateTranslationFile = async (pieceName: string) => {
     const i18nFolder = join(pieceRoot, 'src', 'i18n')
     await makeFolderRecursive(i18nFolder);
     await writeFile(join(i18nFolder, 'translation.json'), JSON.stringify(i18n, null, 2));
-    await translationPathsUtils.write({ repoRoot: cwd(), pieceRoot, piece: metadata });
+    if (translationPathsUtils.requested({ env: process.env })) {
+      await translationPathsUtils.write({ repoRoot: cwd(), pieceRoot, piece: metadata });
+    }
     console.log(chalk.yellow('✨'), `Translation file for piece created in ${i18nFolder}`);
   } catch (error) {
     console.error(chalk.red('❌'), `Error generating translation file for piece ${pieceName}, make sure you built the piece`,error);

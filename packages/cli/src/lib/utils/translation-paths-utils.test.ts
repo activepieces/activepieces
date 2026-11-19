@@ -22,6 +22,13 @@ describe('translationPathsUtils', () => {
         triggers: {},
     }
 
+    it('is written only when the nightly job asks for it', () => {
+        const requested = (value: string | undefined) => translationPathsUtils.requested({ env: { AP_WRITE_TRANSLATION_PATHS: value } })
+
+        expect(['true', 'TRUE', ' true '].map(requested)).toEqual([true, true, true])
+        expect([undefined, '', 'false', '1'].map(requested)).toEqual([false, false, false, false])
+    })
+
     it('keeps the file outside the piece folder, mirroring the piece group', () => {
         const file = translationPathsUtils.filePath({ repoRoot: '/repo', pieceRoot: '/repo/packages/pieces/community/dropbox' })
 

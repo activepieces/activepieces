@@ -3,6 +3,10 @@ import { dirname, join, relative } from 'node:path'
 import { pieceTranslationPaths } from '@activepieces/pieces-framework'
 
 export const translationPathsUtils = {
+    requested({ env }: { env: Record<string, string | undefined> }): boolean {
+        return (env[WRITE_PATHS_ENV] ?? '').trim().toLowerCase() === 'true'
+    },
+
     filePath({ repoRoot, pieceRoot }: FilePathParams): string {
         const pieceLocation = relative(join(repoRoot, 'packages', 'pieces'), pieceRoot)
         return join(repoRoot, PATHS_FOLDER, `${pieceLocation}.json`)
@@ -19,6 +23,7 @@ export const translationPathsUtils = {
 }
 
 const PATHS_FOLDER = join('tools', 'i18n-paths')
+const WRITE_PATHS_ENV = 'AP_WRITE_TRANSLATION_PATHS'
 
 type FilePathParams = {
     repoRoot: string

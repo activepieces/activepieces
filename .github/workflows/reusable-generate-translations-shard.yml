@@ -63,6 +63,8 @@ jobs:
           fi
 
       - name: Generate translation files for shard
+        env:
+          AP_WRITE_TRANSLATION_PATHS: 'true'
         run: |
           npm run cli pieces generate-translation-file-for-all-pieces -- --shard-index ${{ inputs.shard_index }} --shard-total ${{ inputs.shard_total }}
 
