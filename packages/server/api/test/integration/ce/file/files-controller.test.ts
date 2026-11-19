@@ -5,6 +5,7 @@ import { StatusCodes } from 'http-status-codes'
 import { vi } from 'vitest'
 import { fileService } from '../../../../src/app/file/file.service'
 import { filesService } from '../../../../src/app/file/files-service'
+import { signedFileTransport } from '../../../../src/app/file/signed-file-transport'
 import { generateMockToken } from '../../../helpers/auth'
 import { mockAndSaveBasicSetup } from '../../../helpers/mocks'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
@@ -201,6 +202,121 @@ describe('Files Controller', () => {
                 StatusCodes.CONFLICT,
                 StatusCodes.INTERNAL_SERVER_ERROR,
             ]).toContain(response?.statusCode)
+        })
+
+        describe('signed-url upload mode', () => {
+            const S3_URL = 'https://bucket.s3.example.com/key?X-Amz-Signature=abc'
+
+            afterEach(() => {
+                vi.unstubAllEnvs()
+                vi.restoreAllMocks()
+            })
+
+            function redirectAllUploadsToS3(): void {
+                vi.stubEnv('AP_FILE_STORAGE_LOCATION', 'S3')
+                vi.spyOn(signedFileTransport, 'shouldRedirectForType').mockReturnValue(true)
+                vi.spyOn(signedFileTransport, 'maybeRedirectToS3Put').mockImplementation(async ({ reply }) => {
+                    await reply.status(StatusCodes.TEMPORARY_REDIRECT).header('Location', S3_URL).send()
+                    return true
+                })
+            }
+
+            async function engineTokenForNewProject(): Promise<{ engineToken: string, projectId: string }> {
+                const { mockProject, mockPlatform } = await mockAndSaveBasicSetup()
+                const engineToken = await generateMockToken({
+                    type: PrincipalType.ENGINE,
+                    id: apId(),
+                    projectId: mockProject.id,
+                    platform: { id: mockPlatform.id },
+                })
+                return { engineToken, projectId: mockProject.id }
+            }
+
+            it('redirects a body-less request to S3 and records the declared size', async () => {
+                redirectAllUploadsToS3()
+                const { engineToken, projectId } = await engineTokenForNewProject()
+                const fileId = apId()
+
+                const response = await app!.inject({
+                    method: 'PUT',
+                    url: `/api/v1/files/${fileId}`,
+                    query: { token: engineToken },
+                    headers: {
+                        'content-type': 'application/octet-stream',
+                        'x-ap-file-type': FileType.FLOW_RUN_LOG_SLICE,
+                        'x-ap-upload-mode': 'signed-url',
+                        'x-ap-file-size': String(30 * 1024 * 1024),
+                    },
+                })
+
+                expect(response.statusCode).toBe(StatusCodes.TEMPORARY_REDIRECT)
+                expect(response.headers.location).toBe(S3_URL)
+                expect(response.headers['x-ap-file-read-url']).toContain(`/v1/files/${fileId}?token=`)
+                const file = await fileService(app!.log).getFileOrThrow({ fileId, projectId })
+                expect(file.size).toBe(30 * 1024 * 1024)
+                expect(file.type).toBe(FileType.FLOW_RUN_LOG_SLICE)
+            })
+
+            it('answers 204 without saving anything when signed URLs are off, so the engine sends the body', async () => {
+                const { engineToken, projectId } = await engineTokenForNewProject()
+                const fileId = apId()
+
+                const response = await app!.inject({
+                    method: 'PUT',
+                    url: `/api/v1/files/${fileId}`,
+                    query: { token: engineToken },
+                    headers: {
+                        'content-type': 'application/octet-stream',
+                        'x-ap-file-type': FileType.FLOW_RUN_LOG_SLICE,
+                        'x-ap-upload-mode': 'signed-url',
+                        'x-ap-file-size': '1024',
+                    },
+                })
+
+                expect(response.statusCode).toBe(StatusCodes.NO_CONTENT)
+                expect(await fileService(app!.log).exists({ fileId, projectId })).toBe(false)
+            })
+
+            it.each(['', '-1', '1.5', 'abc'])('rejects an x-ap-file-size of "%s"', async (size) => {
+                redirectAllUploadsToS3()
+                const { engineToken } = await engineTokenForNewProject()
+
+                const response = await app!.inject({
+                    method: 'PUT',
+                    url: `/api/v1/files/${apId()}`,
+                    query: { token: engineToken },
+                    headers: {
+                        'content-type': 'application/octet-stream',
+                        'x-ap-file-type': FileType.FLOW_RUN_LOG_SLICE,
+                        'x-ap-upload-mode': 'signed-url',
+                        'x-ap-file-size': size,
+                    },
+                })
+
+                expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+            })
+
+            it('still redirects a request that carries the body, for engines that predate signed-url mode', async () => {
+                redirectAllUploadsToS3()
+                const { engineToken, projectId } = await engineTokenForNewProject()
+                const fileId = apId()
+                const body = Buffer.from('legacy-engine-body')
+
+                const response = await app!.inject({
+                    method: 'PUT',
+                    url: `/api/v1/files/${fileId}`,
+                    query: { token: engineToken },
+                    headers: {
+                        'content-type': 'application/octet-stream',
+                        'x-ap-file-type': FileType.FLOW_RUN_LOG_SLICE,
+                    },
+                    payload: body,
+                })
+
+                expect(response.statusCode).toBe(StatusCodes.TEMPORARY_REDIRECT)
+                const file = await fileService(app!.log).getFileOrThrow({ fileId, projectId })
+                expect(file.size).toBe(body.length)
+            })
         })
     })
 

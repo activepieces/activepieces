@@ -1,6 +1,6 @@
 import { promisify } from 'node:util'
 import { zstdDecompress as zstdDecompressCallback } from 'node:zlib'
-import { EngineFileNotFoundError, EngineGenericError, ExecutionError, ExecutionErrorType, FileCompression, FileType, isZstdCompressed } from '@activepieces/shared'
+import { EngineFileNotFoundError, EngineGenericError, ExecutionError, ExecutionErrorType, FileCompression, FileLocation, FileType, isZstdCompressed } from '@activepieces/shared'
 import { retryFetch } from './retry-fetch'
 
 const zstdDecompress = promisify(zstdDecompressCallback)
@@ -9,6 +9,9 @@ const READ_URL_HEADER = 'x-ap-file-read-url'
 const FILE_TYPE_HEADER = 'x-ap-file-type'
 const FILE_NAME_HEADER = 'x-ap-file-name'
 const FILE_NAME_ENCODED_HEADER = 'x-ap-file-name-encoded'
+const FILE_SIZE_HEADER = 'x-ap-file-size'
+const UPLOAD_MODE_HEADER = 'x-ap-upload-mode'
+const SIGNED_URL_UPLOAD_MODE = 'signed-url'
 
 export const engineFileApi = {
     async upload({ engineToken, apiUrl, fileId, type, fileName, compression, data }: UploadParams): Promise<UploadResult> {
@@ -17,6 +20,24 @@ export const engineFileApi = {
         const headers = buildPutHeaders({ type, fileName, compression, contentLength: data.length })
         const body = toRequestBody(data)
 
+        if (signedUrlUploadsEnabled()) {
+            const signedUrlResponse = await retryFetch(putUrl, {
+                method: 'PUT',
+                headers: {
+                    ...buildPutHeaders({ type, fileName, compression }),
+                    [UPLOAD_MODE_HEADER]: SIGNED_URL_UPLOAD_MODE,
+                    [FILE_SIZE_HEADER]: String(data.length),
+                },
+                redirect: 'manual',
+            })
+            if (isRedirect(signedUrlResponse)) {
+                return uploadToSignedUrl({ fileId, redirect: signedUrlResponse, body, headers })
+            }
+            if (!signedUrlResponse.ok) {
+                return resolveUploadReadUrl(fileId, signedUrlResponse)
+            }
+        }
+
         const initial = await retryFetch(putUrl, {
             method: 'PUT',
             body,
@@ -24,28 +45,8 @@ export const engineFileApi = {
             redirect: 'manual',
         })
 
-        if (initial.status >= 300 && initial.status < 400) {
-            const location = initial.headers.get('location')
-            if (!location) {
-                throw new EngineGenericError('EngineFileUploadError', 'Server returned a redirect without a Location header')
-            }
-            const s3Response = await retryFetch(location, {
-                method: 'PUT',
-                body,
-                headers: stripApHeaders(headers),
-                redirect: 'follow',
-            })
-            if (!s3Response.ok) {
-                throw new EngineGenericError(
-                    'EngineFileUploadError',
-                    `Failed to upload to signed S3 URL for ${fileId}: ${s3Response.status} ${s3Response.statusText}`,
-                )
-            }
-            const readUrlFromHeader = initial.headers.get(READ_URL_HEADER)
-            if (!readUrlFromHeader) {
-                throw new EngineGenericError('EngineFileUploadError', `Server redirect response missing ${READ_URL_HEADER} header`)
-            }
-            return { fileId, readUrl: readUrlFromHeader }
+        if (isRedirect(initial)) {
+            return uploadToSignedUrl({ fileId, redirect: initial, body, headers })
         }
 
         return resolveUploadReadUrl(fileId, initial)
@@ -80,6 +81,38 @@ export const engineFileApi = {
         }
         return raw
     },
+}
+
+function signedUrlUploadsEnabled(): boolean {
+    return process.env.AP_S3_USE_SIGNED_URLS === 'true' && process.env.AP_FILE_STORAGE_LOCATION === FileLocation.S3
+}
+
+function isRedirect(response: Response): boolean {
+    return response.status >= 300 && response.status < 400
+}
+
+async function uploadToSignedUrl({ fileId, redirect, body, headers }: UploadToSignedUrlParams): Promise<UploadResult> {
+    const location = redirect.headers.get('location')
+    if (!location) {
+        throw new EngineGenericError('EngineFileUploadError', 'Server returned a redirect without a Location header')
+    }
+    const s3Response = await retryFetch(location, {
+        method: 'PUT',
+        body,
+        headers: stripApHeaders(headers),
+        redirect: 'follow',
+    })
+    if (!s3Response.ok) {
+        throw new EngineGenericError(
+            'EngineFileUploadError',
+            `Failed to upload to signed S3 URL for ${fileId}: ${s3Response.status} ${s3Response.statusText}`,
+        )
+    }
+    const readUrlFromHeader = redirect.headers.get(READ_URL_HEADER)
+    if (!readUrlFromHeader) {
+        throw new EngineGenericError('EngineFileUploadError', `Server redirect response missing ${READ_URL_HEADER} header`)
+    }
+    return { fileId, readUrl: readUrlFromHeader }
 }
 
 async function resolveUploadReadUrl(fileId: string, response: Response): Promise<UploadResult> {
@@ -172,6 +205,13 @@ type UploadParams = {
 type UploadResult = {
     fileId: string
     readUrl: string
+}
+
+type UploadToSignedUrlParams = {
+    fileId: string
+    redirect: Response
+    body: BodyInit
+    headers: Record<string, string>
 }
 
 type DownloadFileParams = {

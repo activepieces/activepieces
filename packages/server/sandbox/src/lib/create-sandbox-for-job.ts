@@ -86,6 +86,8 @@ function baseEnv({ settings, networkMode }: { settings: SandboxSettings, network
         ...spreadIfDefined('AP_FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB', settings.FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB?.toString()),
         ...spreadIfDefined('AP_FLOW_RUN_LOG_SLICE_THRESHOLD_KB', settings.FLOW_RUN_LOG_SLICE_THRESHOLD_KB?.toString()),
         AP_MAX_FILE_SIZE_MB: String(settings.MAX_FILE_SIZE_MB),
+        AP_FILE_STORAGE_LOCATION: settings.FILE_STORAGE_LOCATION,
+        AP_S3_USE_SIGNED_URLS: settings.S3_USE_SIGNED_URLS,
         NODE_PATH: '/usr/src/node_modules',
         AP_NETWORK_MODE: networkMode,
         ...(settings.ENFORCE_CONNECTION_PIECE_BINDING ? { AP_ENFORCE_CONNECTION_PIECE_BINDING: 'true' } : {}),
