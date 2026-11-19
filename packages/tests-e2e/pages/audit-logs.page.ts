@@ -13,12 +13,14 @@ export class AuditLogsPage extends BasePage {
   }
 
   async filterBy({ filter, option }: { filter: 'Action' | 'Performed By' | 'Project'; option: string }): Promise<void> {
-    await this.page.getByRole('button', { name: new RegExp(`^${filter}`) }).click();
+    const trigger = this.page.getByRole('button', { name: new RegExp(`^${filter}`) });
+    await trigger.click();
     await this.page.getByPlaceholder(filter, { exact: true }).fill(option);
     const listed = this.page.waitForResponse(isAuditEventsList);
     await this.page.getByRole('option', { name: option, exact: true }).click();
     await listed;
     await this.page.keyboard.press('Escape');
+    await expect(trigger).toBeFocused();
   }
 
   async filterByCreated(preset: string): Promise<void> {
