@@ -365,6 +365,7 @@ export type ResumeFlowStepRequest = {
 
 export type ExecuteAgentToolResponse = {
     result: unknown
+    cancelReason?: string
 }
 
 export type SendAgentEmailRequest = {
