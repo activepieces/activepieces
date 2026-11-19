@@ -1,16 +1,29 @@
 function create({ token, projectId, readOnly = false, fetchImpl = fetch, sleep = wait }: CreateParams): CrowdinClient {
     const base = `${API}/projects/${projectId}`
 
+    async function send({ method, path, body }: RequestParams): Promise<Response> {
+        return fetchImpl(`${base}${path}`, {
+            method,
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: body === undefined ? undefined : JSON.stringify(body),
+        })
+    }
+
     async function request<T>({ method, path, body }: RequestParams): Promise<T> {
         if (readOnly && method !== 'GET') {
             throw new Error(`Crowdin client is read-only, refusing ${method} ${path}`)
         }
         for (let attempt = 0; ; attempt++) {
-            const response = await fetchImpl(`${base}${path}`, {
-                method,
-                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: body === undefined ? undefined : JSON.stringify(body),
+            const response = await send({ method, path, body }).catch((error: unknown) => {
+                if (method === 'POST' || attempt >= MAX_RETRIES) {
+                    throw error
+                }
+                return null
             })
+            if (response === null) {
+                await sleep(RETRY_DELAY_MS * (attempt + 1))
+                continue
+            }
             const retryable = BUSY_STATUSES.includes(response.status) || (method !== 'POST' && SERVER_ERROR_STATUSES.includes(response.status))
             if (retryable && attempt < MAX_RETRIES) {
                 await sleep(RETRY_DELAY_MS * (attempt + 1))

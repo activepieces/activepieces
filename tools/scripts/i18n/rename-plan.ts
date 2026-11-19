@@ -46,7 +46,7 @@ function match({ changes, crowdinStrings }: MatchParams): MatchResult {
     }
 }
 
-function decide({ change, stringId, translationsByLanguage, approvalsByLanguage, autoApprovers }: DecideParams): RenameAction {
+function decide({ change, stringId, translationsByLanguage, approvalsByLanguage, pendingReviewLanguages, autoApprovers }: DecideParams): RenameAction {
     const base = {
         stringId,
         oldText: change.oldEnglish,
@@ -58,14 +58,14 @@ function decide({ change, stringId, translationsByLanguage, approvalsByLanguage,
     }
     const translatedLanguages = Object.keys(translationsByLanguage).filter((language) => translationsByLanguage[language].some((translation) => translation.stringId === stringId))
     if (TRIVIAL_CLASSES.includes(change.changeClass)) {
-        return { ...base, updateOption: 'keep_translations_and_approvals', keptLanguages: translatedLanguages, clearedLanguages: [], reapproveOnUndo: [], needsReview: false }
+        return { ...base, updateOption: 'keep_translations_and_approvals', keptLanguages: translatedLanguages, clearedLanguages: [], reapproveOnUndo: [], humanApprovedLanguages: [], needsReview: false }
     }
     const humanApprovedIds = (language: string): number[] => (approvalsByLanguage[language] ?? [])
         .filter((approval) => approval.stringId === stringId && !isAuto({ userName: approval.userName, autoApprovers }))
         .map(({ translationId }) => translationId)
-    const keptLanguages = translatedLanguages.filter((language) => humanApprovedIds(language).length > 0)
+    const keptLanguages = translatedLanguages.filter((language) => humanApprovedIds(language).length > 0 || pendingReviewLanguages.includes(language))
     if (keptLanguages.length === 0) {
-        return { ...base, updateOption: 'clear_translations_and_approvals', keptLanguages: [], clearedLanguages: [], reapproveOnUndo: [], needsReview: false }
+        return { ...base, updateOption: 'clear_translations_and_approvals', keptLanguages: [], clearedLanguages: [], reapproveOnUndo: [], humanApprovedLanguages: [], needsReview: false }
     }
     return {
         ...base,
@@ -73,6 +73,7 @@ function decide({ change, stringId, translationsByLanguage, approvalsByLanguage,
         keptLanguages,
         clearedLanguages: translatedLanguages.filter((language) => !keptLanguages.includes(language)),
         reapproveOnUndo: keptLanguages.flatMap((language) => humanApprovedIds(language)),
+        humanApprovedLanguages: keptLanguages.filter((language) => humanApprovedIds(language).length > 0),
         needsReview: true,
     }
 }
@@ -101,7 +102,7 @@ function skipReason({ change, crowdinStrings }: { change: ChangedString, crowdin
     }
     const holders = crowdinStrings.filter(({ text }) => text === change.oldEnglish)
     if (holders.length === 0) {
-        return 'not-in-crowdin'
+        return crowdinStrings.filter(({ text }) => text === change.newEnglish).length === 1 ? 'only-new-in-crowdin' : 'not-in-crowdin'
     }
     if (holders.length > 1) {
         return 'ambiguous'
@@ -177,7 +178,7 @@ export type ChangeClass = 'case-only' | 'punct-whitespace-only' | 'reworded'
 
 export type RenameBlocker = 'old-still-used' | 'new-already-existed' | 'old-splits' | 'new-merges'
 
-export type SkipReason = RenameBlocker | 'long-key' | 'not-in-crowdin' | 'ambiguous' | 'new-already-in-crowdin'
+export type SkipReason = RenameBlocker | 'long-key' | 'not-in-crowdin' | 'only-new-in-crowdin' | 'ambiguous' | 'new-already-in-crowdin'
 
 export type UpdateOption = 'keep_translations_and_approvals' | 'keep_translations' | 'clear_translations_and_approvals'
 
@@ -234,6 +235,7 @@ export type RenameAction = {
     keptLanguages: string[]
     clearedLanguages: string[]
     reapproveOnUndo: number[]
+    humanApprovedLanguages: string[]
     needsReview: boolean
 }
 
@@ -255,6 +257,7 @@ type MatchParams = {
 type DecideParams = MatchedChange & {
     translationsByLanguage: Record<string, CrowdinTranslation[]>
     approvalsByLanguage: Record<string, CrowdinApproval[]>
+    pendingReviewLanguages: string[]
     autoApprovers: string[]
 }
 

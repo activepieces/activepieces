@@ -165,6 +165,18 @@ describe('match', () => {
     })
 })
 
+describe('match after an earlier run', () => {
+    it('tells apart a string of which Crowdin holds only the new English', () => {
+        const result = renamePlan.match({
+            changes: [change({ oldEnglish: 'Folder', newEnglish: 'Folder Path' })],
+            crowdinStrings: [{ id: 1, text: 'Folder Path', identifier: 'Folder Path' }],
+        })
+
+        expect(result.matched).toEqual([])
+        expect(result.skipped.map(({ reason }) => reason)).toEqual(['only-new-in-crowdin'])
+    })
+})
+
 describe('decide', () => {
     const translations = {
         ja: [{ translationId: 10, stringId: 1, userName: 'human' }, { translationId: 11, stringId: 1, userName: 'robot' }],
@@ -176,11 +188,12 @@ describe('decide', () => {
         de: [{ translationId: 20, stringId: 1, userName: 'robot' }],
         fr: [],
     }
-    const decide = ({ oldEnglish, newEnglish, approvalsByLanguage = approvals }: { oldEnglish: string, newEnglish: string, approvalsByLanguage?: typeof approvals }) => renamePlan.decide({
+    const decide = ({ oldEnglish, newEnglish, approvalsByLanguage = approvals, pendingReviewLanguages = [] }: { oldEnglish: string, newEnglish: string, approvalsByLanguage?: typeof approvals, pendingReviewLanguages?: string[] }) => renamePlan.decide({
         change: change({ oldEnglish, newEnglish }),
         stringId: 1,
         translationsByLanguage: translations,
         approvalsByLanguage,
+        pendingReviewLanguages,
         autoApprovers: ['robot'],
     })
 
@@ -216,6 +229,40 @@ describe('decide', () => {
             keptLanguages: [],
             clearedLanguages: [],
             needsReview: false,
+        })
+    })
+
+    it('flags only the kept languages for review', () => {
+        expect(decide({ oldEnglish: 'Upload a file', newEnglish: 'Send a file' }).humanApprovedLanguages).toEqual(['ja'])
+    })
+
+    it('keeps a language that still waits for review after an earlier rewording and does not flag it twice', () => {
+        const approvalsByLanguage = { ...approvals, ja: [] }
+
+        expect(decide({ oldEnglish: 'Upload a file', newEnglish: 'Send a file', approvalsByLanguage, pendingReviewLanguages: ['ja'] })).toMatchObject({
+            updateOption: 'keep_translations',
+            keptLanguages: ['ja'],
+            clearedLanguages: ['de'],
+            reapproveOnUndo: [],
+            humanApprovedLanguages: [],
+            needsReview: true,
+        })
+    })
+
+    it('flags a language again when a new human approval is dropped while an older review is still open', () => {
+        expect(decide({ oldEnglish: 'Upload a file', newEnglish: 'Send a file', pendingReviewLanguages: ['ja'] })).toMatchObject({
+            keptLanguages: ['ja'],
+            reapproveOnUndo: [10],
+            humanApprovedLanguages: ['ja'],
+        })
+    })
+
+    it('ignores a review that waits in a language with no translation', () => {
+        const approvalsByLanguage = { ...approvals, ja: [] }
+
+        expect(decide({ oldEnglish: 'Upload a file', newEnglish: 'Send a file', approvalsByLanguage, pendingReviewLanguages: ['fr'] })).toMatchObject({
+            updateOption: 'clear_translations_and_approvals',
+            keptLanguages: [],
         })
     })
 

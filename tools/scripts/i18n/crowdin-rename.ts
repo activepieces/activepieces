@@ -2,7 +2,7 @@ import { execFileSync } from 'child_process'
 import { randomUUID } from 'crypto'
 import { appendFileSync, existsSync, readFileSync } from 'fs'
 import { CrowdinClient, crowdinClient } from './crowdin-client'
-import { ChangedString, CrowdinApproval, CrowdinString, CrowdinTranslation, RenameAction, renamePlan } from './rename-plan'
+import { ChangedString, CrowdinApproval, CrowdinString, CrowdinTranslation, MatchedChange, RenameAction, renamePlan } from './rename-plan'
 
 async function run({ client, pieces, autoApprovers, dryRun, journal }: RunParams): Promise<RunCounts> {
     const project = await client.get<{ data: { targetLanguageIds: string[] } }>({ path: '' })
@@ -26,6 +26,14 @@ async function undo({ client, lines, journal }: UndoParams): Promise<UndoCounts>
     return counts
 }
 
+function dryRunOf({ value }: { value: string | undefined }): boolean | null {
+    const normalised = (value ?? '').trim().toLowerCase()
+    if (normalised === 'true') {
+        return true
+    }
+    return normalised === '' || normalised === 'false' ? false : null
+}
+
 function exitCode({ counts, dryRun }: { counts: RunCounts, dryRun: boolean }): number {
     return !dryRun && counts.failed > 0 && counts.writes === 0 ? 1 : 0
 }
@@ -33,7 +41,8 @@ function exitCode({ counts, dryRun }: { counts: RunCounts, dryRun: boolean }): n
 function summarize({ lines, counts, dryRun }: SummarizeParams): string {
     const renames = lines.filter((line) => line.kind === 'rename')
     const review = renames.filter((line) => line.needsReview === true && (line.status === 'renamed' || line.status === 'would-rename'))
-    const problems = lines.filter((line) => line.kind === 'skip' || line.status === 'error' || line.status === 'precondition-failed')
+    const onlyNew = lines.filter((line) => line.kind === 'skip' && line.status === 'only-new-in-crowdin')
+    const problems = lines.filter((line) => (line.kind === 'skip' && line.status !== 'only-new-in-crowdin') || line.status === 'error' || line.status === 'precondition-failed')
     const heading = dryRun ? '## Crowdin rename (dry run, nothing written)' : '## Crowdin rename'
     const reviewHeading = dryRun
         ? '### Translations kept after a rewording (a Crowdin issue would ask a translator to review each)'
@@ -55,7 +64,17 @@ function summarize({ lines, counts, dryRun }: SummarizeParams): string {
         '|---|---|---|',
         ...problems.map((line) => `| ${line.piece} | ${cell(line.before?.text)} | ${line.kind === 'skip' ? line.status : `${line.kind} ${line.status}: ${cell(line.message)}`} |`),
     ]
-    return [heading, '', totals, ...reviewTable, ...problemTable, ''].join('\n')
+    const onlyNewTable = onlyNew.length === 0 ? [] : [
+        '',
+        '### Crowdin holds only the new English',
+        '',
+        'Nothing was written for these. Either an earlier run already renamed the string, or a Crowdin sync replaced the string and its translations are gone. If an earlier run stopped part-way through a rewording, translations of the old English may still be on the string: check that run\'s journal.',
+        '',
+        '| Piece | Old English | New English |',
+        '|---|---|---|',
+        ...onlyNew.map((line) => `| ${line.piece} | ${cell(line.before?.text)} | ${cell(line.after?.text)} |`),
+    ]
+    return [heading, '', totals, ...reviewTable, ...problemTable, ...onlyNewTable, ''].join('\n')
 }
 
 function pieceOf({ pathsFile }: { pathsFile: string }): string {
@@ -82,9 +101,10 @@ async function renamePiece({ client, piece, files, languages, autoApprovers, dry
         }
         const translationsByLanguage: Record<string, CrowdinTranslation[]> = await readPerLanguage({ client, languages, pathFor: (language) => `/languages/${language}/translations?fileId=${fileId}` })
         const approvalsByLanguage: Record<string, CrowdinApproval[]> = await readPerLanguage({ client, languages, pathFor: (language) => `/approvals?fileId=${fileId}&languageId=${language}` })
+        const pendingReviewByString = await readPendingReview({ client, matched })
         let counts: RunCounts = { ...EMPTY_COUNTS, skipped: skipped.length }
         for (const { change, stringId } of matched) {
-            const action = renamePlan.decide({ change, stringId, translationsByLanguage, approvalsByLanguage, autoApprovers })
+            const action = renamePlan.decide({ change, stringId, translationsByLanguage, approvalsByLanguage, pendingReviewLanguages: pendingReviewByString.get(stringId) ?? [], autoApprovers })
             const actionCounts = await applyRename({ client, piece: piece.piece, fileId, action, dryRun, journal })
             counts = addCounts({ left: counts, right: actionCounts })
         }
@@ -126,26 +146,34 @@ async function applyRename({ client, piece, fileId, action, dryRun, journal }: A
         return { ...EMPTY_COUNTS, failed: 1 }
     }
     journal({ ...line, status: 'renamed', before: checked.before })
-    const cleanup = await cleanupPaths({ client, action })
+    const cleanup = await cleanupTargets({ client, action })
     cleanup.problems.forEach((message) => journal({ kind: 'cleanup', piece, fileId, stringId: action.stringId, status: 'error', message }))
     let counts: RunCounts = { ...EMPTY_COUNTS, renamed: 1, writes: 1, failed: cleanup.problems.length }
-    for (const path of cleanup.paths) {
+    const unclearedLanguages: string[] = []
+    for (const { path, language } of cleanup.targets) {
         const deleted = await deleteIfPresent({ client, path })
-        journal({ kind: 'cleanup', piece, fileId, stringId: action.stringId, status: deleted.ok ? 'deleted' : 'error', message: deleted.ok ? path : `${path}: ${deleted.message}` })
+        journal({ kind: 'cleanup', piece, fileId, stringId: action.stringId, language, status: deleted.ok ? 'deleted' : 'error', message: deleted.ok ? path : `${path}: ${deleted.message}` })
         counts = addCounts({ left: counts, right: deleted.ok ? { ...EMPTY_COUNTS, writes: 1 } : { ...EMPTY_COUNTS, failed: 1 } })
+        if (!deleted.ok && action.clearedLanguages.includes(language)) {
+            unclearedLanguages.push(language)
+        }
     }
-    for (const language of action.needsReview ? action.keptLanguages : []) {
+    const issues = [
+        ...action.humanApprovedLanguages.map((language) => ({ language, prefix: REVIEW_ISSUE_PREFIX, request: REVIEW_REQUEST })),
+        ...unclearedLanguages.map((language) => ({ language, prefix: UNCLEARED_ISSUE_PREFIX, request: UNCLEARED_REQUEST })),
+    ]
+    for (const { language, prefix, request } of issues) {
         const marker = randomUUID()
         const issueLine: Omit<JournalLine, 'status'> = { kind: 'review-issue', piece, fileId, stringId: action.stringId, language, before: checked.before, after, issueMarker: marker }
         journal({ ...issueLine, status: 'opening' })
-        const opened = await openReviewIssue({ client, action, language, marker })
+        const opened = await openReviewIssue({ client, action, language, text: issueText({ prefix, request, oldText: action.oldText, newText: action.newText, marker }) })
         journal({ ...issueLine, status: opened.ok ? 'opened' : 'error', issueId: opened.ok ? opened.issueId : undefined, message: opened.ok ? undefined : opened.message })
         counts = addCounts({ left: counts, right: opened.ok ? { ...EMPTY_COUNTS, writes: 1 } : { ...EMPTY_COUNTS, failed: 1 } })
     }
     return counts
 }
 
-async function openReviewIssue({ client, action, language, marker }: { client: CrowdinClient, action: RenameAction, language: string, marker: string }): Promise<OpenedIssue> {
+async function openReviewIssue({ client, action, language, text }: { client: CrowdinClient, action: RenameAction, language: string, text: string }): Promise<OpenedIssue> {
     try {
         const created = await client.post<{ data: { id: number } }>({
             path: '/comments',
@@ -154,7 +182,7 @@ async function openReviewIssue({ client, action, language, marker }: { client: C
                 targetLanguageId: language,
                 type: 'issue',
                 issueType: 'translation_mistake',
-                text: reviewIssueText({ oldText: action.oldText, newText: action.newText, marker }),
+                text,
             },
         })
         return { ok: true, issueId: created.data.id }
@@ -164,14 +192,14 @@ async function openReviewIssue({ client, action, language, marker }: { client: C
     }
 }
 
-function reviewIssueText({ oldText, newText, marker }: { oldText: string, newText: string, marker: string }): string {
+function issueText({ prefix, request, oldText, newText, marker }: { prefix: string, request: string, oldText: string, newText: string, marker: string }): string {
     return [
-        REVIEW_ISSUE_PREFIX,
+        prefix,
         '',
         `Old English: ${oldText}`,
         `New English: ${newText}`,
         '',
-        'This translation was written for the old English and is no longer approved. Please check it against the new English, correct it if needed, approve it, then resolve this issue.',
+        request,
         '',
         `Reference: ${marker}`,
     ].join('\n')
@@ -251,14 +279,14 @@ async function readString({ client, stringId }: { client: CrowdinClient, stringI
     }
 }
 
-async function cleanupPaths({ client, action }: { client: CrowdinClient, action: RenameAction }): Promise<{ paths: string[], problems: string[] }> {
-    const cleared = action.clearedLanguages.map((language) => `/translations?stringId=${action.stringId}&languageId=${language}`)
+async function cleanupTargets({ client, action }: { client: CrowdinClient, action: RenameAction }): Promise<{ targets: CleanupTarget[], problems: string[] }> {
+    const cleared = action.clearedLanguages.map((language) => ({ path: `/translations?stringId=${action.stringId}&languageId=${language}`, language }))
     if (action.updateOption !== 'keep_translations') {
-        return { paths: cleared, problems: [] }
+        return { targets: cleared, problems: [] }
     }
-    const machine: string[] = []
+    const machine: CleanupTarget[] = []
     const problems: string[] = []
-    for (const language of action.keptLanguages) {
+    for (const language of action.humanApprovedLanguages) {
         try {
             const rows = await client.list<{ id: number, user?: { username?: string } | null }>({ path: `/translations?stringId=${action.stringId}&languageId=${language}` })
             const ids = renamePlan.machineTranslationIds({
@@ -266,13 +294,22 @@ async function cleanupPaths({ client, action }: { client: CrowdinClient, action:
                 humanApprovedIds: action.reapproveOnUndo,
                 autoApprovers: action.autoApprovers,
             })
-            machine.push(...ids.map((id) => `/translations/${id}`))
+            machine.push(...ids.map((id) => ({ path: `/translations/${id}`, language })))
         }
         catch (error) {
             problems.push(`could not list ${language} translations of string ${action.stringId}: ${messageOf({ error })}`)
         }
     }
-    return { paths: [...cleared, ...machine], problems }
+    return { targets: [...cleared, ...machine], problems }
+}
+
+async function readPendingReview({ client, matched }: { client: CrowdinClient, matched: MatchedChange[] }): Promise<Map<number, string[]>> {
+    const languagesByString = new Map<number, string[]>()
+    for (const { stringId } of matched.filter(({ change }) => change.changeClass === 'reworded')) {
+        const unresolved = await client.list<{ languageId: string, text: string }>({ path: `/comments?stringId=${stringId}&type=issue&issueStatus=unresolved` })
+        languagesByString.set(stringId, [...new Set(unresolved.filter(({ text }) => text.includes(REVIEW_ISSUE_PREFIX)).map(({ languageId }) => languageId))])
+    }
+    return languagesByString
 }
 
 async function deleteIfPresent({ client, path }: { client: CrowdinClient, path: string }): Promise<{ ok: true } | { ok: false, message: string }> {
@@ -436,7 +473,12 @@ async function main(): Promise<void> {
         report({ summary: '## Crowdin rename\n\nSkipped: CROWDIN_RENAME_TOKEN or CROWDIN_PROJECT_ID is not set.\n', outputs: { renamed: 0, failed: 0 } })
         return
     }
-    const dryRun = process.env.CROWDIN_RENAME_DRY_RUN === 'true'
+    const dryRun = dryRunOf({ value: process.env.CROWDIN_RENAME_DRY_RUN })
+    if (dryRun === null) {
+        report({ summary: '## Crowdin rename\n\nStopped before any change in Crowdin: CROWDIN_RENAME_DRY_RUN must be true or false.\n', outputs: { renamed: 0, failed: 1 } })
+        process.exitCode = 1
+        return
+    }
     try {
         await renameOrUndo({ token, projectId, dryRun })
     }
@@ -481,10 +523,13 @@ async function renameOrUndo({ token, projectId, dryRun }: { token: string, proje
 const PATHS_FOLDER = 'tools/i18n-paths'
 const MAX_CELL_LENGTH = 120
 const REVIEW_ISSUE_PREFIX = 'The English text of this string changed (automatic note from the Activepieces translations job).'
+const REVIEW_REQUEST = 'This translation was written for the old English and is no longer approved. Please check it against the new English, correct it if needed, approve it, then resolve this issue.'
+const UNCLEARED_ISSUE_PREFIX = 'The old translation of this string could not be removed (automatic note from the Activepieces translations job).'
+const UNCLEARED_REQUEST = 'The English changed and this translation was written for the old English. Nobody approved it, and the job could not delete it. Please delete or correct it, then resolve this issue.'
 const GIT_MAX_BUFFER = 256 * 1024 * 1024
 const EMPTY_COUNTS: RunCounts = { renamed: 0, wouldRename: 0, skipped: 0, failed: 0, writes: 0 }
 
-export const crowdinRename = { run, undo, exitCode, summarize, pieceOf, changedPieces }
+export const crowdinRename = { run, undo, exitCode, dryRunOf, summarize, pieceOf, changedPieces }
 
 export type JournalLine = {
     kind: 'rename' | 'pending' | 'skip' | 'cleanup' | 'review-issue' | 'undo' | 'piece-error'
@@ -518,6 +563,11 @@ type Journal = (line: JournalLine) => void
 type StringText = {
     identifier: string
     text: string
+}
+
+type CleanupTarget = {
+    path: string
+    language: string
 }
 
 type OpenedIssue = { ok: true, issueId: number } | { ok: false, message: string }

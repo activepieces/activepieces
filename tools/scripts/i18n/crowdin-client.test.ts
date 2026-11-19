@@ -3,7 +3,7 @@ import { crowdinClient, CrowdinError } from './crowdin-client'
 
 const respond = ({ status = 200, body = {} }: { status?: number, body?: unknown }): Response => new Response(JSON.stringify(body), { status })
 
-const stubFetch = ({ responses }: { responses: Response[] }) => {
+const stubFetch = ({ responses }: { responses: (Response | Error)[] }) => {
     const calls: { url: string, method: string, body: string | null, authorization: string | null }[] = []
     const queue = [...responses]
     const fetchImpl = async (url: string, init: RequestInit): Promise<Response> => {
@@ -11,6 +11,9 @@ const stubFetch = ({ responses }: { responses: Response[] }) => {
         const next = queue.shift()
         if (next === undefined) {
             throw new Error('no response queued')
+        }
+        if (next instanceof Error) {
+            throw next
         }
         return next
     }
@@ -58,6 +61,47 @@ describe('crowdinClient', () => {
 
         expect(error).toBeInstanceOf(CrowdinError)
         expect(error instanceof CrowdinError ? error.status : null).toBe(429)
+    })
+
+    it('retries a read after the connection drops', async () => {
+        const { calls, fetchImpl } = stubFetch({ responses: [new TypeError('fetch failed: ECONNRESET'), respond({ body: { data: { id: 7 } } })] })
+        const client = crowdinClient.create({ token: 't', projectId: '42', fetchImpl, sleep: noSleep })
+
+        const result = await client.get<{ data: { id: number } }>({ path: '/strings/7' })
+
+        expect(result.data.id).toBe(7)
+        expect(calls.length).toBe(2)
+    })
+
+    it('retries a rename and a delete after the connection drops', async () => {
+        const { calls, fetchImpl } = stubFetch({ responses: [new TypeError('fetch failed: ECONNRESET'), respond({}), new TypeError('fetch failed: ECONNRESET'), respond({ status: 204 })] })
+        const client = crowdinClient.create({ token: 't', projectId: '42', fetchImpl, sleep: noSleep })
+
+        await client.patch({ path: '/strings/7?updateOption=keep_translations', body: [{ op: 'replace', path: '/text', value: 'New' }] })
+        await client.del({ path: '/translations/5' })
+
+        expect(calls.map(({ method }) => method)).toEqual(['PATCH', 'PATCH', 'DELETE', 'DELETE'])
+    })
+
+    it('does not repeat a POST after the connection drops', async () => {
+        const { calls, fetchImpl } = stubFetch({ responses: [new TypeError('fetch failed: ECONNRESET'), respond({ body: { data: { id: 1 } } })] })
+        const client = crowdinClient.create({ token: 't', projectId: '42', fetchImpl, sleep: noSleep })
+
+        const error = await client.post({ path: '/approvals', body: { translationId: 1 } }).catch((e: unknown) => e)
+
+        expect(calls.length).toBe(1)
+        expect(error instanceof Error ? error.message : '').toContain('ECONNRESET')
+    })
+
+    it('gives up on a connection that keeps dropping and reports the last error', async () => {
+        const { calls, fetchImpl } = stubFetch({ responses: Array.from({ length: 6 }, () => new TypeError('fetch failed: ECONNRESET')) })
+        const client = crowdinClient.create({ token: 'secret-token', projectId: '42', fetchImpl, sleep: noSleep })
+
+        const error = await client.get({ path: '/strings/7' }).catch((e: unknown) => e)
+
+        expect(calls.length).toBe(6)
+        expect(error instanceof Error ? error.message : '').toContain('ECONNRESET')
+        expect(error instanceof Error ? error.message : '').not.toContain('secret-token')
     })
 
     it('does not retry a refused call', async () => {
