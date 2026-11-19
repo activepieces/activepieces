@@ -73,11 +73,13 @@ export class VariablesPage extends BasePage {
   }
 
   async filterByName(name: string): Promise<void> {
-    await this.page.getByRole('button', { name: /^Name/ }).click();
+    const trigger = this.page.getByRole('button', { name: /^Name/ });
+    await trigger.click();
     const listed = this.page.waitForResponse((response) => isVariablesList(response) && new URL(response.url()).searchParams.get('name') === name);
     await this.page.getByPlaceholder('Search', { exact: true }).fill(name);
     await listed;
     await this.page.keyboard.press('Escape');
+    await expect(trigger).toBeFocused();
   }
 
   async filterByOwner({ label, email }: { label: string; email: string }): Promise<void> {
