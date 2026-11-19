@@ -4,15 +4,21 @@ import { asSchema, jsonSchema, JSONValue, Schema, tool, ToolExecutionOptions, To
 import { z } from 'zod'
 import { cardTitleFields, plainJsonSchema, stableStringify } from './tool-primitives'
 
-export function buildSkillSurface({ tools: registry, surface, guides, onSkillLoaded, canAffordPaidTool, wasRerouted = (): boolean => false }: {
+export function buildSkillSurface({ tools: registry, surface, guides, onSkillLoaded, canAffordPaidTool, wasRerouted = (): boolean => false, preloadedSkills = [] }: {
     tools: ToolSet
     surface: SkillSurface
     guides: Record<string, string>
     onSkillLoaded: (skill: AgentSkill) => void
     canAffordPaidTool: () => boolean
     wasRerouted?: (toolCallId: string) => boolean
+    preloadedSkills?: string[]
 }): SkillSurfaceResult {
-    const loadedSkills = new Set<string>()
+    const preloaded = preloadedSkills.flatMap((name) => {
+        const skill = agentToolSkills.findSkill({ name })
+        return skill === undefined ? [] : [skill]
+    })
+    preloaded.forEach(onSkillLoaded)
+    const loadedSkills = new Set<string>(preloaded.map((skill) => skill.name))
     const skillTools = createSkillTools({ registry, surface, guides, loadedSkills, onSkillLoaded, canAffordPaidTool, wasRerouted })
     const surfaceTools = { ...registry, ...skillTools }
     const allToolNames = Object.keys(surfaceTools)

@@ -260,8 +260,16 @@ export type SaveAgentFileResponse = {
 export type UpdateAgentProgressRequest = {
     conversationId: string
     runId?: string
-    uiMessages: unknown[]
+    uiMessages?: unknown[]
     messages?: unknown[]
+    turn?: AgentProgressTurn
+}
+
+export type AgentProgressTurn = {
+    baseMessageCount: number
+    messages: unknown[]
+    baseUiMessageCount: number
+    uiMessages: unknown[]
 }
 
 export type HeartbeatAgentConversationRequest = {

@@ -261,6 +261,7 @@ export function ProvidersTab() {
         {!locked && (
           <Button
             onClick={() => openConnect()}
+            data-testid="ai-provider-add-key"
             {...adminControl(AdminControl.AI_PROVIDER_KEY_OPEN)}
           >
             <Plus className="size-4" />
@@ -647,7 +648,6 @@ function ProviderTileGrid({
         <ProviderTile
           key={info.provider}
           info={info}
-          recommended={RECOMMENDED_PROVIDERS.includes(info.provider)}
           onConnect={() => onConnect(info.provider)}
         />
       ))}
@@ -657,11 +657,9 @@ function ProviderTileGrid({
 
 function ProviderTile({
   info,
-  recommended,
   onConnect,
 }: {
   info: AiProviderInfo;
-  recommended: boolean;
   onConnect: () => void;
 }) {
   return (
@@ -671,7 +669,6 @@ function ProviderTile({
       className={cn(
         adminSurface.card,
         'group flex min-w-0 items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-8',
-        recommended && 'border-accent-8',
       )}
       {...adminControl(AdminControl.AI_PROVIDER_OPEN)}
     >
@@ -754,11 +751,6 @@ const CONFIG_TAB_PARAM = 'tab';
 
 const PROVIDER_FACES_SHOWN = 5;
 
-const RECOMMENDED_PROVIDERS: AIProviderName[] = [
-  AIProviderName.ANTHROPIC,
-  AIProviderName.OPENAI,
-];
-
 const PROVIDERS_BY_IMPORTANCE: AIProviderName[] = [
   AIProviderName.ANTHROPIC,
   AIProviderName.OPENAI,
@@ -778,5 +770,6 @@ const PROVIDERS_BY_IMPORTANCE: AIProviderName[] = [
   AIProviderName.MINIMAX,
   AIProviderName.ZAI,
   AIProviderName.CLOUDFLARE_GATEWAY,
+  AIProviderName.LITELLM,
   AIProviderName.CUSTOM,
 ];
