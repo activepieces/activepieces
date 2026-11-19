@@ -46,6 +46,16 @@ function isTipTapDocument(value: unknown): value is TipTapPayloadBody {
     );
 }
 
+function isEmptyJsonInput(value: unknown): boolean {
+    if (value === undefined || value === null) {
+        return true;
+    }
+    if (typeof value === 'string') {
+        return value.trim() === '';
+    }
+    return typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === 0;
+}
+
 function resolveTipTapBody(input: unknown): { body: TipTapPayloadBody } | undefined {
     if (typeof input !== 'object' || input === null) {
         return undefined;
@@ -152,6 +162,9 @@ export const createPost = createAction({
         }
 
         const validTipTapBody = resolveTipTapBody(tiptap_body_json);
+        if (validTipTapBody === undefined && !isEmptyJsonInput(tiptap_body_json)) {
+            throw new Error('TipTap Body is not a TipTap document. Use { "type": "doc", "content": [...] } or leave it empty.');
+        }
         const emptyBody: { body: TipTapPayloadBody } = {
             body: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "" }] }] }
         };
