@@ -8,7 +8,7 @@ export const afforai = createPiece({
   description:
     'Helps you search, summarize, and translate knowledge from hundreds of documents to help you produce trustworthy research.',
   auth: afforaiAuth,
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/afforai.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ["kishanprmr","abuaboud"],
