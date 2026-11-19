@@ -16,7 +16,7 @@ export const circle = createPiece({
 	logoUrl: 'https://cdn.activepieces.com/pieces/circle.png',
 	description: 'Circle.so is a platform for creating and managing communities.',
 	auth: circleAuth,
-	minimumSupportedRelease: '0.36.1',
+	minimumSupportedRelease: '0.88.2',
 	authors: ['onyedikachi-david', 'kishanprmr'],
 	actions: [
 		createPost,
@@ -30,8 +30,14 @@ export const circle = createPiece({
 			baseUrl: () => BASE_URL,
 			authMapping: async (auth) => {
 				return {
-					Authorization: `Bearer ${auth}`,
+					Authorization: `Bearer ${auth.secret_text}`,
 				};
+			},
+			props: {
+				url: {
+					description: `Full URL, or a path relative to ${BASE_URL}`,
+					placeholder: '/spaces',
+				},
 			},
 		}),
 	],
