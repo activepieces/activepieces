@@ -43,7 +43,9 @@ function buildImapClient(auth: ImapAuth): ImapFlow {
     tls: { rejectUnauthorized: auth.props.validateCertificates },
   };
 
-  return new ImapFlow({ ...imapConfig, logger: false });
+  const client = new ImapFlow({ ...imapConfig, logger: false });
+  client.on('error', () => undefined);
+  return client;
 }
 
 async function confirmEmailExists(
@@ -272,12 +274,18 @@ async function performImapOperation<T>(
         'Failed to perform IMAP operation'
     );
   } finally {
-    try {
-      if (imapClient?.usable) {
-        await imapClient.logout();
+    if (imapClient) {
+      try {
+        if (imapClient.usable) {
+          await imapClient.logout();
+        } else {
+          imapClient.close();
+        }
+      } catch {
+        try {
+          imapClient.close();
+        } catch {}
       }
-    } catch (e) {
-      // Ignore logout errors during cleanup
     }
   }
 }
@@ -343,6 +351,7 @@ export {
   type Message,
 
   // Helper functions
+  buildImapClient,
   performImapOperation,
   performMailboxOperation,
 
