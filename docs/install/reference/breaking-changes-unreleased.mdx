@@ -8,6 +8,22 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### SavvyCal 0.3.0: event searches return every status, and output keys that were always empty are removed
+
+**List Events** with an empty **State** now returns events in every status, as its description said. Before, SavvyCal applied its own default: only events awaiting approval when there were some, otherwise only confirmed events. Its **Start After**, **Start Before** and **Scheduling Links** filters now apply too; SavvyCal used to ignore them. **Find Events by Attendee Email** now searches past and upcoming events in every status, instead of upcoming confirmed events only.
+
+The **New Event** trigger now fills its output for Event Changed, Attendee Added, Attendee Canceled and Attendee Rescheduled, which used to arrive empty. For the three attendee events, the attendee fields describe the attendee who was added, canceled or rescheduled. With **Scheduling Links** selected, events that have no scheduling link no longer go through.
+
+Output keys that SavvyCal never returns, and that were therefore always empty, are removed: `url`, `created_at` and `updated_at` from scheduling links, `slug`, `created_at` and `updated_at` from **Get Current User**, and `team_id`, `team_name` and `updated_at` from **List Workflows**.
+
+#### What you need to do
+
+- List Events steps with an empty State that should only see confirmed events: pick **Confirmed** in State.
+- Find Events by Attendee Email steps that should only see upcoming confirmed events: filter the result on `state` and `start_at`.
+- Steps that map one of the removed keys: remove the mapping. It was always empty.
+
+Steps keep running on the version they were built with until you upgrade them.
+
 #### Fireflies.ai 0.2.0: three find actions are no longer AI agent tools, and Upload Audio returns a smaller output
 
 **Find Meeting by ID**, **Find Recent Meeting** and **Find Meeting by Call Details** are now shown only in the flow builder. AI agents and MCP clients get **Get Meeting**, **Get Meeting Summary** and **Find Meetings** instead.

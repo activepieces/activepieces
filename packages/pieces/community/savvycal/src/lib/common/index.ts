@@ -375,8 +375,8 @@ const EARLIEST_DATE = '2000-01-01';
 const LATEST_DATE = '2100-12-31';
 
 export const LINK_USAGE_OPTIONS = [
-  { label: 'Multi-use', value: 'recurring' },
-  { label: 'Single-use', value: 'single' },
+  { label: 'Multi-Use', value: 'recurring' },
+  { label: 'Single-Use', value: 'single' },
 ];
 
 export type AttendeeNames = {

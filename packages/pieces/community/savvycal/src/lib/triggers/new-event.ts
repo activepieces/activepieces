@@ -202,7 +202,7 @@ export const newEventTrigger = createTrigger({
 
     const selectedLinkIds = context.propsValue.link_ids;
     const linkId = unwrapped.event.link?.id;
-    if (selectedLinkIds && selectedLinkIds.length > 0 && linkId != null && !selectedLinkIds.includes(linkId)) return [];
+    if (selectedLinkIds && selectedLinkIds.length > 0 && (linkId == null || !selectedLinkIds.includes(linkId))) return [];
 
     return [flattenEventWebhook({ type: body.type, unwrapped })];
   },

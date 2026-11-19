@@ -20,7 +20,7 @@ export const listEventsAction = createAction({
         options: [
           { label: 'Upcoming', value: 'upcoming' },
           { label: 'Past', value: 'past' },
-          { label: 'All (past and upcoming)', value: 'all' },
+          { label: 'All (Past and Upcoming)', value: 'all' },
         ],
       },
     }),
