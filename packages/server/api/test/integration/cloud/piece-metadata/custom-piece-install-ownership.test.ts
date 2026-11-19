@@ -51,7 +51,7 @@ describe('Custom piece install', () => {
     it('does not overwrite an existing row when its metadata reuses that row id', async () => {
         const installer = await mockAndSaveBasicSetup()
         const officialName = '@test/piece-official'
-        const official = await pieceMetadataService(app!.log).create({
+        const { piece: official } = await pieceMetadataService(app!.log).create({
             pieceMetadata: createMockPieceMetadata({ name: officialName, version: '1.0.0', pieceType: PieceType.OFFICIAL, packageType: PackageType.REGISTRY, platformId: undefined }),
             packageType: PackageType.REGISTRY,
             pieceType: PieceType.OFFICIAL,
