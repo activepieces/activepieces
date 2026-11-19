@@ -7,13 +7,15 @@ export const getRunAction = createAction({
 	auth: skyvernAuth,
 	name: 'get-run',
 	classification: 'READ',
-	displayName: 'Get Workflow/Task Run',
-	description: 'Retrieves a workflow or task run by ID.',
+	displayName: 'Get Run',
+	description: 'Gets the status and result of a task or workflow run.',
 	audience: 'both',
 	aiMetadata: { description: 'Retrieves the current status and details of a Skyvern workflow or task run by its run ID. Use to poll a run started via Run Agent Task or Run Workflow until it completes and to read its results. Read-only and idempotent.', idempotent: true },
 	props: {
 		runId: Property.ShortText({
-			displayName: 'Workflow/Task Run ID',
+			displayName: 'Run ID',
+			description: 'The run ID from a Run Agent Task or Run Workflow step.',
+			placeholder: 'tsk_v2_486305187432193504',
 			required: true,
 		}),
 	},
