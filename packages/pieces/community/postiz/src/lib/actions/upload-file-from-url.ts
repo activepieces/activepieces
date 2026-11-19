@@ -1,7 +1,26 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { postizAuth } from '../common/auth';
-import { postizApiCall } from '../common';
+import { postizApiCall, requireText } from '../common';
+
+function checkFileUrl({ value }: { value: unknown }): string {
+  const url = requireText({ value, label: 'File URL' });
+  let pathname: string;
+  try {
+    pathname = new URL(url).pathname;
+  } catch {
+    throw new Error(`File URL is not a valid URL: ${url}`);
+  }
+  const lastSegment = pathname.split('/').pop() ?? '';
+  if (!lastSegment.includes('.')) {
+    return url;
+  }
+  const extension = lastSegment.split('.').pop()?.toLowerCase() ?? '';
+  if (!ALLOWED_EXTENSIONS.includes(extension)) {
+    throw new Error(`File URL must end in one of: ${ALLOWED_EXTENSIONS.join(', ')}.`);
+  }
+  return url;
+}
 
 export const uploadFileFromUrl = createAction({
   auth: postizAuth,
@@ -12,8 +31,15 @@ export const uploadFileFromUrl = createAction({
     'Upload a media file from a URL to Postiz. Returns the file path to use when creating posts.',
   audience: 'both',
   aiMetadata: {
-    description: 'Downloads an image or video from a public URL and uploads it into Postiz media storage, returning a file path to attach to Create Post. Use this first whenever a post needs media. Requires a publicly reachable file URL. Not idempotent — each call uploads a new media file.',
+    description: 'Downloads an image or video from a public URL and uploads it into Postiz media storage, returning the media ID and path to attach to a post. Use this first whenever a post needs media. Requires a publicly reachable file URL whose path ends in png, jpg, jpeg, gif, webp or mp4. Not idempotent — each call uploads a new media file.',
     idempotent: false,
+  },
+  outputSchema: {
+    fields: [
+      { key: 'id', label: 'Media ID' },
+      { key: 'name', label: 'Name' },
+      { key: 'path', label: 'Path', format: 'url' },
+    ],
   },
   props: {
     url: Property.ShortText({
@@ -37,7 +63,7 @@ export const uploadFileFromUrl = createAction({
       method: HttpMethod.POST,
       path: '/upload-from-url',
       body: {
-        url: context.propsValue.url,
+        url: checkFileUrl({ value: context.propsValue.url }),
       },
     });
 
@@ -46,9 +72,8 @@ export const uploadFileFromUrl = createAction({
       id: file.id,
       name: file.name,
       path: file.path,
-      organization_id: file.organizationId,
-      created_at: file.createdAt,
-      updated_at: file.updatedAt,
     };
   },
 });
+
+const ALLOWED_EXTENSIONS = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'mp4'];
