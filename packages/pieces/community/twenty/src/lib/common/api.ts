@@ -133,14 +133,9 @@ async function findCompanies({
         { field: 'name', operator: 'ilike', value: name },
         {
           field: 'domainName.primaryLinkUrl',
-          operator: 'in',
+          operator: 'ilike',
           value: domainName
-            ? [
-                ...new Set([
-                  domainName,
-                  domainName.replace(/^https?:\/\//i, ''),
-                ]),
-              ]
+            ? domainName.replace(/^https?:\/\//i, '')
             : undefined,
         },
       ],
