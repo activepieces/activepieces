@@ -2,7 +2,7 @@ import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
 import { gmailAuth, createGoogleClient, getUserEmail } from '../auth';
 import { gmail as googleGmail } from '@googleapis/gmail';
 import { GmailMime } from '../common/mime';
-import { parseStream } from '../common/data';
+import { parseRawMessage } from '../common/data';
 import { gmailForwardMessageActionOutputSchema } from '../output-schemas';
 
 export const gmailForwardMessageAction = createAction({
@@ -63,9 +63,7 @@ export const gmailForwardMessageAction = createAction({
         throw new Error('Could not fetch the original message to forward.');
       }
 
-      const parsed = await parseStream(
-        Buffer.from(original.data.raw, 'base64').toString('utf-8')
-      );
+      const parsed = await parseRawMessage(original.data.raw);
 
       const originalSubject = parsed.subject || '';
       const forwardSubject = originalSubject.toLowerCase().startsWith('fwd:')

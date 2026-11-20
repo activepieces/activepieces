@@ -2,17 +2,13 @@ import {
   createTrigger,
   TriggerStrategy,
   FilesService,
-  isNil,
 } from '@activepieces/pieces-framework';
 import { GmailLabel } from '../common/models';
 import { GmailProps } from '../common/props';
 import { gmailAuth, createGoogleClient, GmailAuthValue } from '../auth';
-import {
-  parseStream,
-  convertAttachment,
-  getFirstFiveOrAll,
-} from '../common/data';
-import { gmail as googleGmail } from '@googleapis/gmail';
+import { parseRawMessage, convertAttachment } from '../common/data';
+import { gmailMessagePoll } from '../common/message-poll';
+import { gmail as googleGmail, gmail_v1 } from '@googleapis/gmail';
 import { gmailNewEmailReceivedTriggerOutputSchema } from '../output-schemas';
 
 export const gmailNewEmailTrigger = createTrigger({
@@ -36,46 +32,78 @@ export const gmailNewEmailTrigger = createTrigger({
   sampleData: {},
   type: TriggerStrategy.POLLING,
   async onEnable(context) {
-    if (context.isRepublish && !isNil(await context.store.get('lastPoll'))) {
-      return;
-    }
-    await context.store.put('lastPoll', Date.now());
+    await gmailMessagePoll.enable({
+      store: context.store,
+      isRepublish: context.isRepublish,
+    });
   },
-  async onDisable(context) {
+  async onDisable() {
     return;
   },
   async run(context) {
-    const lastFetchEpochMS = (await context.store.get<number>('lastPoll')) ?? 0;
-
-    const items = await pollRecentMessages({
-      auth: context.auth,
-      props: context.propsValue,
-      files: context.files,
-      lastFetchEpochMS: lastFetchEpochMS,
+    const gmail = await createGmail(context.auth);
+    return gmailMessagePoll.poll({
+      gmail,
+      store: context.store,
+      query: buildQuery(context.propsValue),
+      labelId: context.propsValue.label?.id,
+      toItems: (message) =>
+        toEmailItems({ gmail, message, files: context.files }),
     });
-
-    const newLastEpochMilliSeconds = items.reduce(
-      (acc, item) => Math.max(acc, item.epochMilliSeconds),
-      lastFetchEpochMS
-    );
-    await context.store.put('lastPoll', newLastEpochMilliSeconds);
-    return items
-      .filter((f) => f.epochMilliSeconds > lastFetchEpochMS)
-      .map((item) => item.data);
   },
   async test(context) {
-    const lastFetchEpochMS = (await context.store.get<number>('lastPoll')) ?? 0;
-
-    const items = await pollRecentMessages({
-      auth: context.auth,
-      props: context.propsValue,
-      files: context.files,
-      lastFetchEpochMS: lastFetchEpochMS,
+    const gmail = await createGmail(context.auth);
+    return gmailMessagePoll.sample({
+      gmail,
+      query: buildQuery(context.propsValue),
+      labelId: context.propsValue.label?.id,
+      toItems: (message) =>
+        toEmailItems({ gmail, message, files: context.files }),
     });
-
-    return getFirstFiveOrAll(items.map((item) => item.data));
   },
 });
+
+async function createGmail(auth: GmailAuthValue): Promise<gmail_v1.Gmail> {
+  const authClient = await createGoogleClient(auth);
+  return googleGmail({ version: 'v1', auth: authClient });
+}
+
+function buildQuery(props: PropsValue): string[] {
+  return [
+    ...(props.from ? [`from:(${props.from})`] : []),
+    ...(props.to ? [`to:(${props.to})`] : []),
+    ...(props.subject ? [`subject:(${props.subject})`] : []),
+    ...(props.category ? [`category:${props.category}`] : []),
+  ];
+}
+
+async function toEmailItems({
+  gmail,
+  message,
+  files,
+}: {
+  gmail: gmail_v1.Gmail;
+  message: gmail_v1.Schema$Message;
+  files: FilesService;
+}): Promise<unknown[]> {
+  const threadResponse = await gmail.users.threads.get({
+    userId: 'me',
+    id: message.threadId ?? '',
+  });
+  const parsedMail = await parseRawMessage(message.raw);
+  return [
+    {
+      message: {
+        id: message.id,
+        ...parsedMail,
+        attachments: await convertAttachment(parsedMail.attachments, files),
+      },
+      thread: {
+        data: threadResponse.data,
+      },
+    },
+  ];
+}
 
 interface PropsValue {
   from: string | undefined;
@@ -83,96 +111,4 @@ interface PropsValue {
   subject: string | undefined;
   label: GmailLabel | undefined;
   category: string | undefined;
-}
-
-async function pollRecentMessages({
-  auth,
-  props,
-  files,
-  lastFetchEpochMS,
-}: {
-  auth: GmailAuthValue;
-  props: PropsValue;
-  files: FilesService;
-  lastFetchEpochMS: number;
-}): Promise<
-  {
-    epochMilliSeconds: number;
-    data: unknown;
-  }[]
-> {
-  const authClient = await createGoogleClient(auth);
-
-  const gmail = googleGmail({ version: 'v1', auth: authClient });
-
-  // construct query
-  const query = [];
-  const maxResults = lastFetchEpochMS === 0 ? 5 : 20;
-  const afterUnixSeconds = Math.floor(lastFetchEpochMS / 1000);
-
-  if (props.from) query.push(`from:(${props.from})`);
-  if (props.to) query.push(`to:(${props.to})`);
-  if (props.subject) query.push(`subject:(${props.subject})`);
-  if (props.label) query.push(`label:${props.label.name}`);
-  if (props.category) query.push(`category:${props.category}`);
-  if (afterUnixSeconds != null && afterUnixSeconds > 0)
-    query.push(`after:${afterUnixSeconds}`);
-
-  // List Messages
-  const messagesResponse = await gmail.users.messages.list({
-    userId: 'me',
-    q: query.join(' '),
-    maxResults,
-  });
-
-  // Reverse to process oldest-first so partial progress doesn't skip messages
-  const messages = (messagesResponse.data.messages || []).slice().reverse();
-
-  const pollingResponse = [];
-  for (const message of messages) {
-    try {
-      const rawMailResponse = await gmail.users.messages.get({
-        userId: 'me',
-        id: message.id!,
-        format: 'raw',
-      });
-      const threadResponse = await gmail.users.threads.get({
-        userId: 'me',
-        id: message.threadId!,
-      });
-
-      const parsedMailResponse = await parseStream(
-        Buffer.from(rawMailResponse.data.raw as string, 'base64').toString(
-          'utf-8'
-        )
-      );
-
-      pollingResponse.push({
-        epochMilliSeconds: Number(rawMailResponse.data.internalDate),
-        data: {
-          message: {
-            ...parsedMailResponse,
-            attachments: await convertAttachment(
-              parsedMailResponse.attachments,
-              files
-            ),
-          },
-          thread: {
-            data: threadResponse.data,
-          },
-        },
-      });
-    } catch (error: any) {
-      const isRateLimit =
-        error.status === 429 ||
-        (error.status === 403 &&
-          /quota|rate.?limit/i.test(error.message ?? ''));
-      if (isRateLimit) {
-        break;
-      }
-      throw error;
-    }
-  }
-
-  return pollingResponse;
 }

@@ -1,7 +1,7 @@
 import { createAction, FilesService } from '@activepieces/pieces-framework';
 import { gmailAuth, createGoogleClient, GmailAuthValue } from '../auth';
 import { gmail as googleGmail } from '@googleapis/gmail';
-import { convertAttachment, parseStream } from '../common/data';
+import { convertAttachment, parseRawMessage } from '../common/data';
 import { GmailProps } from '../common/props';
 import { gmailGetMailActionOutputSchema } from '../output-schemas';
 
@@ -45,9 +45,7 @@ export async function getGmailMessage({
     format: 'raw',
   });
 
-  const parsedMailResponse = await parseStream(
-    Buffer.from(rawMailResponse.data.raw as string, 'base64').toString('utf-8')
-  );
+  const parsedMailResponse = await parseRawMessage(rawMailResponse.data.raw);
 
   return {
     id: messageId,

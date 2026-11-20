@@ -428,22 +428,8 @@ export const gmailGetMailActionOutputSchema: OutputSchema = {
     {
       key: 'attachments',
       label: 'Attachments',
-      labelKey: 'filename',
-      listItems: [
-        {
-          key: 'filename',
-          label: 'Filename',
-        },
-        {
-          key: 'contentType',
-          label: 'Content Type',
-        },
-        {
-          key: 'size',
-          label: 'Size',
-          format: 'filesize',
-        },
-      ],
+      labelKey: 'fileName',
+      listItems: attachmentFields,
     },
   ],
 };
@@ -500,14 +486,14 @@ export const newAttachmentTriggerOutputSchema: OutputSchema = {
       value: 'message.to.text',
     },
     {
-      key: 'messageId',
+      key: 'id',
       label: 'Message ID',
-      value: 'message.messageId',
+      value: 'message.id',
     },
     {
-      key: 'id',
-      label: 'Gmail Message ID',
-      value: 'message.id',
+      key: 'messageId',
+      label: 'RFC Message-ID',
+      value: 'message.messageId',
     },
     {
       key: 'fromDetails',
@@ -755,25 +741,8 @@ export const newLabeledEmailTriggerOutputSchema: OutputSchema = {
       key: 'attachments',
       label: 'Attachments',
       value: 'data.message.attachments',
-      labelKey: 'filename',
-      listItems: [
-        {
-          key: 'filename',
-          label: 'Filename',
-          value: 'filename',
-        },
-        {
-          key: 'contentType',
-          label: 'Content Type',
-          value: 'contentType',
-        },
-        {
-          key: 'size',
-          label: 'Size',
-          value: 'size',
-          format: 'filesize',
-        },
-      ],
+      labelKey: 'fileName',
+      listItems: attachmentFields,
     },
     {
       key: 'thread',
