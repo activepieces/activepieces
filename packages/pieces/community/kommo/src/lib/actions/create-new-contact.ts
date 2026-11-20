@@ -15,33 +15,66 @@ export const createContactAction = createAction({
   name: 'create_contact',
   classification: 'WRITE',
   displayName: 'Create New Contact',
-  description: 'Add a new contact.',
+  description: 'Creates a new contact.',
   audience: 'both',
   aiMetadata: { description: 'Creates a new contact in a Kommo CRM account with name, optional email/phone (stored as custom fields), responsible user, and tags. Use when adding a person not already in the CRM; consider finding the contact first to avoid duplicates. Not idempotent — each call creates a separate contact even with identical input.', idempotent: false },
+  propertyGroups: [
+    {
+      key: 'name',
+      display: 'section',
+      label: 'Name',
+      icon: 'user',
+      props: ['name', 'first_name', 'last_name'],
+    },
+    {
+      key: 'details',
+      display: 'section',
+      label: 'Details',
+      icon: 'inbox',
+      props: ['email', 'phone', 'responsible_user_id'],
+    },
+    {
+      key: 'tags',
+      display: 'section',
+      label: 'Tags',
+      icon: 'tag',
+      props: ['tags_to_add'],
+    },
+  ],
   props: {
     name: Property.ShortText({
       displayName: 'Full Name',
+      placeholder: 'Jane Doe',
       required: true,
     }),
     first_name: Property.ShortText({
       displayName: 'First Name',
+      placeholder: 'Jane',
       required: false,
+      width: 'half',
     }),
     last_name: Property.ShortText({
       displayName: 'Last Name',
+      placeholder: 'Doe',
       required: false,
+      width: 'half',
     }),
     email: Property.ShortText({
       displayName: 'Email',
+      placeholder: 'jane@example.com',
       required: false,
+      width: 'half',
     }),
     phone: Property.ShortText({
       displayName: 'Phone',
+      placeholder: '+1 555 123 4567',
       required: false,
+      width: 'half',
     }),
     responsible_user_id: userDropdown(),
     tags_to_add: Property.Array({
       displayName: 'Tags to Add',
+      description: 'Tag names to add to the contact.',
       required: false,
     })
   },

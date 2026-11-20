@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { kommoAuth } from '../auth';
 import { makeRequest } from '../common';
@@ -18,37 +18,82 @@ export const updateContactAction = createAction({
   description: 'Updates an existing contact.',
   audience: 'both',
   aiMetadata: { description: 'Updates an existing Kommo CRM contact identified by contact ID, changing only the supplied fields (name, email/phone, responsible user) and adding or removing tags. Use to amend a known contact; resolve the contact ID first via Find Contact if unknown. Idempotent — repeating the same update yields the same contact state, though tag add/delete depends on the current tag set.', idempotent: true },
+  propertyGroups: [
+    {
+      key: 'contact',
+      display: 'section',
+      label: 'Contact to Update',
+      icon: 'user',
+      props: ['contactId', 'changes_info'],
+    },
+    {
+      key: 'name',
+      display: 'section',
+      label: 'Name',
+      icon: 'type',
+      props: ['name', 'first_name', 'last_name'],
+    },
+    {
+      key: 'details',
+      display: 'section',
+      label: 'Details',
+      icon: 'inbox',
+      props: ['email', 'phone', 'responsible_user_id'],
+    },
+    {
+      key: 'tags',
+      display: 'section',
+      label: 'Tags',
+      icon: 'tag',
+      props: ['tags_to_add', 'tags_to_delete'],
+    },
+  ],
   props: {
     contactId: contactDropdown,
+    changes_info: Property.MarkDown({
+      value: 'Fields left empty keep their current value.',
+      variant: MarkdownVariant.INFO,
+    }),
     name: Property.ShortText({
       displayName: 'Full Name',
+      placeholder: 'Jane Doe',
       required: false,
     }),
     first_name: Property.ShortText({
       displayName: 'First Name',
+      placeholder: 'Jane',
       required: false,
+      width: 'half',
     }),
     last_name: Property.ShortText({
       displayName: 'Last Name',
+      placeholder: 'Doe',
       required: false,
+      width: 'half',
     }),
     email: Property.ShortText({
       displayName: 'Email',
+      description: "Replaces the contact's current email.",
+      placeholder: 'jane@example.com',
       required: false,
+      width: 'half',
     }),
     phone: Property.ShortText({
       displayName: 'Phone',
+      description: "Replaces the contact's current phone number.",
+      placeholder: '+1 555 123 4567',
       required: false,
+      width: 'half',
     }),
     responsible_user_id: userDropdown(),
     tags_to_add: Property.Array({
       displayName: 'Tags to Add',
-      description: 'List of tag names or IDs to add.',
+      description: 'Tag names to add to the contact.',
       required: false,
     }),
     tags_to_delete: Property.Array({
-      displayName: 'Tags to Delete',
-      description: 'List of tag names or IDs to remove.',
+      displayName: 'Tags to Remove',
+      description: 'Tag names to remove from the contact.',
       required: false,
     })
   },
