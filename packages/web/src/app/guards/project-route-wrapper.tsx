@@ -5,11 +5,10 @@ import { Navigate, useParams, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { projectCollectionUtils } from '@/features/projects';
+import { RouteHandle } from '@/lib/shell-handle';
 
 import { authenticationSession } from '../../lib/authentication-session';
-import { AllowOnlyLoggedInUserOnlyGuard } from '../components/allow-logged-in-user-only-guard';
 import { NoProjectsState } from '../components/no-projects-state';
-import { ProjectDashboardLayout } from '../components/project-layout';
 
 export const TokenCheckerWrapper: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -50,11 +49,7 @@ const RedirectToCurrentProjectRoute: React.FC<
   const params = useParams();
   const [searchParams] = useSearchParams();
   if (isNil(currentProjectId)) {
-    return (
-      <ProjectDashboardLayout>
-        <NoProjectsState />
-      </ProjectDashboardLayout>
-    );
+    return <NoProjectsState />;
   }
 
   const pathWithParams = `${path.startsWith('/') ? path : `/${path}`}`.replace(
@@ -77,28 +72,26 @@ const RedirectToCurrentProjectRoute: React.FC<
 interface ProjectRouterWrapperProps {
   path: string;
   element: React.ReactNode;
+  handle: RouteHandle;
 }
 
 export const ProjectRouterWrapper = ({
   element,
   path,
+  handle,
 }: ProjectRouterWrapperProps) => [
   {
     path: `/projects/:projectId${path.startsWith('/') ? path : `/${path}`}`,
-    element: (
-      <AllowOnlyLoggedInUserOnlyGuard>
-        <TokenCheckerWrapper>{element}</TokenCheckerWrapper>
-      </AllowOnlyLoggedInUserOnlyGuard>
-    ),
+    handle,
+    element: <TokenCheckerWrapper>{element}</TokenCheckerWrapper>,
   },
   {
     path,
+    handle,
     element: (
-      <AllowOnlyLoggedInUserOnlyGuard>
-        <RedirectToCurrentProjectRoute path={path}>
-          {element}
-        </RedirectToCurrentProjectRoute>
-      </AllowOnlyLoggedInUserOnlyGuard>
+      <RedirectToCurrentProjectRoute path={path}>
+        {element}
+      </RedirectToCurrentProjectRoute>
     ),
   },
 ];
