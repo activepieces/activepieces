@@ -30,6 +30,7 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
       undefined,
     );
     const valueToRestore = useRef<unknown>(undefined);
+    const dropValueIfNotListed = useRef(false);
     const optionsRequestId = useRef(0);
     const fullListRequestId = useRef(0);
     const propertyPath =
@@ -45,9 +46,12 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
       placeholder: t('Select an option'),
       options: [],
     });
-    const { propertyLoadingFinished, propertyLoadingStarted } = useContext(
-      DynamicPropertiesContext,
-    );
+    const {
+      propertyLoadingFinished,
+      propertyLoadingStarted,
+      authReconnectCount,
+    } = useContext(DynamicPropertiesContext);
+    const previousAuthReconnectCount = useRef(authReconnectCount);
     const { mutate, isPending, error } = piecesHooks.usePieceOptions<
       PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN
     >({
@@ -106,6 +110,32 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
       }
     };
 
+    const dropValueNotInOptions = (options: DropdownState<unknown>) => {
+      const currentValue = props.form.getValues(propertyPath);
+      if (
+        isNil(currentValue) ||
+        options.disabled ||
+        props.shouldRefreshOnSearch
+      ) {
+        return;
+      }
+      const isListed = (value: unknown) =>
+        options.options.some((option) => deepEqual(option.value, value));
+      if (!props.multiple) {
+        if (!isListed(currentValue)) {
+          props.onChange(null);
+        }
+        return;
+      }
+      if (!Array.isArray(currentValue)) {
+        return;
+      }
+      const listedValues = currentValue.filter(isListed);
+      if (listedValues.length !== currentValue.length) {
+        props.onChange(listedValues.length > 0 ? listedValues : null);
+      }
+    };
+
     const refresh = (term?: string) => {
       const input: Record<string, unknown> = {};
       refreshersWithAuth.forEach((refresher, index) => {
@@ -145,6 +175,10 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
               fullListId === fullListRequestId.current
             ) {
               restoreValueIfStillInOptions(response.options);
+              if (dropValueIfNotListed.current) {
+                dropValueIfNotListed.current = false;
+                dropValueNotInOptions(response.options);
+              }
             }
           },
         },
@@ -161,12 +195,16 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
         }
         firstDropdownState.current = undefined;
         props.onChange(null);
+      } else if (previousAuthReconnectCount.current !== authReconnectCount) {
+        firstDropdownState.current = undefined;
+        dropValueIfNotListed.current = true;
       }
 
       previousValues.current = refresherValues;
+      previousAuthReconnectCount.current = authReconnectCount;
       isFirstRender.current = false;
       refresh();
-    }, refresherValues);
+    }, [...refresherValues, authReconnectCount]);
 
     const selectOptions = dropdownState.options.map((option) => ({
       label: option.label,

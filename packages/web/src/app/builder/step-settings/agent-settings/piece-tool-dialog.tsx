@@ -2,7 +2,7 @@ import { isNil } from '@activepieces/core-utils';
 import { AgentTool, mcpToolNameUtils } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronLeft } from 'lucide-react';
-import { useMemo, useEffect } from 'react';
+import { useMemo, useEffect, useContext } from 'react';
 import { toast } from 'sonner';
 import { useDebounce } from 'use-debounce';
 
@@ -30,6 +30,11 @@ import {
   stepsHooks,
   PieceStepMetadataWithSuggestions,
 } from '@/features/pieces';
+
+import {
+  DynamicPropertiesContext,
+  DynamicPropertiesProvider,
+} from '../../piece-properties/dynamic-properties-context';
 
 import { PredefinedInputsForm } from './predefined-inputs-form';
 
@@ -223,26 +228,45 @@ export function AgentPieceDialog({
           <DialogTitle>{renderDialogHeaderContent()}</DialogTitle>
         </DialogHeader>
 
-        {renderDialogMainContent()}
+        <DynamicPropertiesProvider key={selectedPage}>
+          {renderDialogMainContent()}
 
-        {selectedPage === 'action-inputs' && (
-          <DialogFooter className="border-t p-4 mt-auto">
-            <DialogClose asChild>
-              <Button type="button" variant="outline">
-                {t('Close')}
-              </Button>
-            </DialogClose>
-            <Button
-              loading={false}
-              disabled={!authIsSetValue}
-              type="button"
-              onClick={handleSave}
-            >
-              {editingPieceTool ? t('Update Tool') : t('Add Tool')}
-            </Button>
-          </DialogFooter>
-        )}
+          {selectedPage === 'action-inputs' && (
+            <DialogFooter className="border-t p-4 mt-auto">
+              <DialogClose asChild>
+                <Button type="button" variant="outline">
+                  {t('Close')}
+                </Button>
+              </DialogClose>
+              <SaveToolButton
+                disabled={!authIsSetValue}
+                isEditing={!isNil(editingPieceTool)}
+                onSave={handleSave}
+              />
+            </DialogFooter>
+          )}
+        </DynamicPropertiesProvider>
       </DialogContent>
     </Dialog>
   );
 }
+
+function SaveToolButton({ disabled, isEditing, onSave }: SaveToolButtonProps) {
+  const { isLoadingDynamicProperties } = useContext(DynamicPropertiesContext);
+  return (
+    <Button
+      loading={false}
+      disabled={disabled || isLoadingDynamicProperties}
+      type="button"
+      onClick={onSave}
+    >
+      {isEditing ? t('Update Tool') : t('Add Tool')}
+    </Button>
+  );
+}
+
+type SaveToolButtonProps = {
+  disabled: boolean;
+  isEditing: boolean;
+  onSave: () => void;
+};
