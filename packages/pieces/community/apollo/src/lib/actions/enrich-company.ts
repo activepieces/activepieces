@@ -9,22 +9,33 @@ import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 export const enrichCompany = createAction({
   name: 'enrichCompany',
   classification: 'READ',
-  description: '',
+  description: "Get a company's profile from its website domain.",
   audience: 'both',
   aiMetadata: {
     description: 'Look up and enrich a single company in the Apollo database by its web domain, returning the organization profile. Use when you have a company domain and need firmographic details. Read-only and idempotent; an optional project-store cache may return a previously fetched result for the same domain.',
     idempotent: true,
   },
   displayName: 'Enrich Company',
+  propertyGroups: [
+    {
+      key: 'company',
+      display: 'section',
+      label: 'Company',
+      icon: 'tag',
+      props: ['domain'],
+    },
+  ],
   props: {
     domain: Property.ShortText({
       displayName: 'Domain',
-      description: '',
+      description: 'Company website domain only, without https:// or www.',
+      placeholder: 'apollo.io',
       required: true,
     }),
     cacheResponse: Property.Checkbox({
       displayName: 'Cache Response',
-      description: 'Store the response in the project store for future use.',
+      description: 'Reuse a saved result for the same input. Saved results never expire.',
+      advanced: true,
       required: false,
       defaultValue: true,
     }),
@@ -44,7 +55,7 @@ export const enrichCompany = createAction({
       organization: Record<string, unknown>;
     }>({
       method: HttpMethod.GET,
-      url: `https://api.apollo.io/v1/organizations/enrich?domain=${propsValue.domain}`,
+      url: `https://api.apollo.io/v1/organizations/enrich?domain=${encodeURIComponent(propsValue.domain)}`,
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': `${auth.secret_text}`,

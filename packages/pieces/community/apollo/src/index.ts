@@ -13,7 +13,7 @@ export const apollo = createPiece({
   auth: apolloAuth,
   description:
     'AI sales platform for prospecting, lead gen, and deal automation. Close more deals, faster, with smart data.',
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/apollo.png',
   authors: ['abuaboud', 'sanket-a11y'],
   actions: [
@@ -26,6 +26,13 @@ export const apollo = createPiece({
     createCustomApiCallAction({
       auth: apolloAuth,
       baseUrl: () => 'https://api.apollo.io/api/v1',
+      props: {
+        url: {
+          description:
+            'Full URL, or a path relative to https://api.apollo.io/api/v1',
+          placeholder: '/mixed_companies/search',
+        },
+      },
       authMapping: async (auth) => {
         return {
           'x-api-key': auth.secret_text,

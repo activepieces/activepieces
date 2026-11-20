@@ -1,6 +1,7 @@
 import { apolloAuth } from '../auth';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import {
+  MarkdownVariant,
   Property,
   StoreScope,
   createAction,
@@ -11,53 +12,85 @@ export const organizationSearch = createAction({
   name: 'organizationSearch',
   classification: 'SEARCH',
   displayName: 'Organization Search',
-  description:
-    'Search for companies in the Apollo database with various filters',
+  description: 'Find companies in Apollo by name, location, size and more.',
   audience: 'both',
   aiMetadata: {
     description: 'Search the Apollo database for companies using filters such as name, location, employee-count range, domain, and industry tags. Use to discover organizations or to resolve a company to its Apollo organization ID for downstream actions. Read-only and idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'company',
+      display: 'section',
+      label: 'Company',
+      icon: 'tag',
+      props: [
+        'filters_info',
+        'q_organization_name',
+        'q_organization_domains',
+        'organization_ids',
+        'organization_industry_tag_ids',
+      ],
+    },
+    {
+      key: 'location_size',
+      display: 'section',
+      label: 'Location and Size',
+      icon: 'location',
+      props: [
+        'organization_locations',
+        'organization_not_locations',
+        'organization_num_employees_ranges',
+      ],
+    },
+  ],
   props: {
+    filters_info: Property.MarkDown({
+      value: 'Every filter on this step is optional. Empty filters are ignored.',
+      variant: MarkdownVariant.INFO,
+    }),
     q_organization_name: Property.ShortText({
       displayName: 'Organization Name',
-      description: 'Search by organization name',
+      description: 'Matches part of the company name.',
+      placeholder: 'Apollo',
       required: false,
     }),
     organization_locations: Property.Array({
       displayName: 'Organization Locations',
-      description: 'Filter by locations (e.g., texas, tokyo)',
+      description: 'Headquarters locations, such as texas or tokyo.',
       required: false,
     }),
     organization_not_locations: Property.Array({
       displayName: 'Exclude Locations',
-      description: 'Exclude specific locations (e.g., minnesota)',
+      description: 'Headquarters locations to leave out, such as minnesota.',
       required: false,
     }),
     organization_num_employees_ranges: Property.Array({
       displayName: 'Employee Count Ranges',
-      description: 'Filter by employee count ranges (e.g., "1,10", "250,500")',
+      description: 'Ranges as min,max, such as 1,10 or 250,500.',
       required: false,
     }),
     organization_ids: Property.Array({
       displayName: 'Organization IDs',
-      description: 'Filter by specific organization IDs',
+      description: 'Apollo organization IDs to include.',
       required: false,
     }),
     q_organization_domains: Property.Array({
-      displayName: 'Domains',
-      description: 'Filter by organization domains',
+      displayName: 'Organization Domains',
+      description: 'Company website domains, such as apollo.io.',
       required: false,
     }),
     organization_industry_tag_ids: Property.Array({
       displayName: 'Industry Tag IDs',
-      description: 'Filter by industry tag IDs',
+      description: 'Apollo industry tag IDs to include.',
       required: false,
     }),
     cacheResponse: Property.Checkbox({
       displayName: 'Cache Response',
-      description: 'Store the response in the project store for future use.',
+      description:
+        'Reuse a saved result for the same input. Saved results never expire.',
       required: false,
+      advanced: true,
       defaultValue: false,
     }),
   },
