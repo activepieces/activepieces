@@ -1,11 +1,12 @@
+import { isNil } from '@activepieces/pieces-framework';
 import {
   ImapFlow,
   type CopyResponseObject,
+  type FetchMessageObject,
   type ListResponse,
   type MailboxLockObject,
 } from 'imapflow';
 import { type Attachment, type ParsedMail, simpleParser } from 'mailparser';
-import { Readable } from 'stream';
 import dayjs from 'dayjs';
 
 import { type ImapAuth } from './auth';
@@ -145,7 +146,7 @@ async function deleteEmail<T extends { success: boolean }>({
   )) as T;
 }
 
-async function fetchEmails<T extends Message[]>({
+async function fetchEmails({
   auth,
   lastPoll,
   mailbox,
@@ -153,26 +154,51 @@ async function fetchEmails<T extends Message[]>({
   auth: ImapAuth;
   lastPoll: number;
   mailbox: string;
-}): Promise<T> {
-  return (await performMailboxOperation(auth, mailbox, async (imapClient) => {
-    const messages = [];
-    const since =
+}): Promise<Message[]> {
+  return performMailboxOperation(auth, mailbox, async (imapClient) => {
+    const after =
       lastPoll === 0
-        ? dayjs().subtract(DEFAULT_LOOKBACK_HOURS, 'hour').toISOString()
-        : dayjs(lastPoll).toISOString();
-    const res = imapClient.fetch({ since }, { source: true });
-
-    for await (const message of res) {
-      const { source, uid } = message;
-      const castedItem = await parseStream(source as unknown as Readable);
-      messages.push({
-        data: { ...castedItem, uid },
-        epochMilliSeconds: dayjs(castedItem.date).valueOf(),
-      });
+        ? dayjs().subtract(DEFAULT_LOOKBACK_HOURS, 'hour').valueOf()
+        : lastPoll;
+    const candidates = await imapClient.fetchAll(
+      { since: dayjs(after).subtract(1, 'day').toDate() },
+      { uid: true, internalDate: true }
+    );
+    const newUids = candidates
+      .filter((message) => (arrivalEpoch(message) ?? Infinity) > after)
+      .map((message) => message.uid);
+    if (newUids.length === 0) {
+      return [];
     }
 
-    return messages;
-  })) as T;
+    const downloaded = await imapClient.fetchAll(
+      newUids.join(','),
+      { uid: true, internalDate: true, source: true },
+      { uid: true }
+    );
+    const messages = await Promise.all(
+      downloaded.map(async (message) => {
+        if (isNil(message.source)) {
+          return [];
+        }
+        const parsed = await simpleParser(message.source);
+        return [
+          {
+            data: { ...parsed, uid: message.uid },
+            epochMilliSeconds:
+              arrivalEpoch(message) ?? dayjs(parsed.date).valueOf(),
+          },
+        ];
+      })
+    );
+    return messages.flat();
+  });
+}
+
+function arrivalEpoch(message: FetchMessageObject): number | undefined {
+  return isNil(message.internalDate)
+    ? undefined
+    : dayjs(message.internalDate).valueOf();
 }
 
 async function fetchMailboxes<T extends ListResponse[]>(
@@ -213,18 +239,6 @@ async function moveEmail<T extends { success: boolean; newUid?: number }>({
     },
     { readOnly: false }
   )) as T;
-}
-
-async function parseStream(stream: Readable) {
-  return new Promise<ParsedMail>((resolve, reject) => {
-    simpleParser(stream, (err, parsed) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(parsed);
-      }
-    });
-  });
 }
 
 async function performImapOperation<T>(
