@@ -6,6 +6,7 @@ import {
 } from '@activepieces/pieces-framework';
 import {
   AppConnectionScope,
+  AppConnectionStatus,
   AppConnectionType,
   AppConnectionWithoutSensitiveData,
 } from '@activepieces/shared';
@@ -50,11 +51,25 @@ vi.mock('@/features/pieces', async () => ({
     .piecesHooks,
 }));
 
-const dialogPieces: PieceMetadataModel[] = [];
+const dialogRenders: DialogRender[] = [];
 vi.mock('@/app/connections/create-edit-connection-dialog', () => ({
-  CreateOrEditConnectionDialog: ({ piece }: { piece: PieceMetadataModel }) => {
-    dialogPieces.push(piece);
-    return <div data-testid="connection-dialog">{piece.version}</div>;
+  CreateOrEditConnectionDialog: ({
+    piece,
+    open,
+    reconnectConnection,
+  }: {
+    piece: PieceMetadataModel;
+    open: boolean;
+    reconnectConnection: AppConnectionWithoutSensitiveData | null;
+  }) => {
+    dialogRenders.push({
+      version: piece.version,
+      open,
+      reconnecting: reconnectConnection !== null,
+    });
+    return open ? (
+      <div data-testid="connection-dialog">{piece.version}</div>
+    ) : null;
   },
 }));
 vi.mock('@/components/ui/tooltip', () => ({
@@ -62,7 +77,45 @@ vi.mock('@/components/ui/tooltip', () => ({
   TooltipTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
   TooltipContent: () => null,
 }));
+vi.mock('@/components/ui/select', () => ({
+  Select: ({ children }: { children: ReactNode }) => <>{children}</>,
+  SelectTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
+  SelectValue: ({ children }: { children: ReactNode }) => <>{children}</>,
+  SelectContent: ({ children }: { children: ReactNode }) => <>{children}</>,
+  SelectItem: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  SelectAction: ({
+    children,
+    onClick,
+  }: {
+    children: ReactNode;
+    onClick: () => void;
+  }) => <button onClick={onClick}>{children}</button>,
+}));
+vi.mock('@/components/custom/searchable-select', () => ({
+  SearchableSelect: () => null,
+}));
+vi.mock('@/components/custom/permission-needed-tooltip', () => ({
+  PermissionNeededTooltip: ({ children }: { children: ReactNode }) => (
+    <>{children}</>
+  ),
+}));
+vi.mock('@/hooks/authorization-hooks', () => ({
+  useAuthorization: () => ({ checkAccess: () => true }),
+  useIsPlatformAdmin: () => false,
+}));
+vi.mock('@/features/connections', () => ({
+  appConnectionsQueries: {
+    useAppConnections: () => ({
+      data: { data: [gmailConnection()] },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    }),
+  },
+  appConnectionUtils: { getConnectionAccountIdentifier: () => null },
+}));
 
+import { ConnectionSelect } from '@/app/connections/connection-select';
 import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
 
 describe('ReconnectButtonDialog piece version', () => {
@@ -70,7 +123,7 @@ describe('ReconnectButtonDialog piece version', () => {
 
   beforeEach(() => {
     get.mockReset();
-    dialogPieces.length = 0;
+    dialogRenders.length = 0;
     queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
     });
@@ -88,8 +141,8 @@ describe('ReconnectButtonDialog piece version', () => {
 
     await openReconnect(gmailConnection());
 
-    expect(dialogPieces.at(-1)?.version).toBe(LATEST_VERSION);
-    expect(dialogPieces.every((p) => p.version === LATEST_VERSION)).toBe(true);
+    expect(dialogRenders.at(-1)?.version).toBe(LATEST_VERSION);
+    expect(dialogRenders.every((r) => r.version === LATEST_VERSION)).toBe(true);
   });
 
   it('keeps the stored version when the latest renames the OAuth2 props', async () => {
@@ -108,7 +161,7 @@ describe('ReconnectButtonDialog piece version', () => {
 
     await openReconnect(gmailConnection());
 
-    expect(dialogPieces.at(-1)?.version).toBe(STORED_VERSION);
+    expect(dialogRenders.at(-1)?.version).toBe(STORED_VERSION);
   });
 
   it('keeps the stored version when the latest no longer offers OAuth2', async () => {
@@ -122,7 +175,7 @@ describe('ReconnectButtonDialog piece version', () => {
 
     await openReconnect(gmailConnection());
 
-    expect(dialogPieces.at(-1)?.version).toBe(STORED_VERSION);
+    expect(dialogRenders.at(-1)?.version).toBe(STORED_VERSION);
   });
 
   it('keeps the stored version when the latest is older than the stored one', async () => {
@@ -133,7 +186,7 @@ describe('ReconnectButtonDialog piece version', () => {
 
     await openReconnect(gmailConnection());
 
-    expect(dialogPieces.at(-1)?.version).toBe(STORED_VERSION);
+    expect(dialogRenders.at(-1)?.version).toBe(STORED_VERSION);
   });
 
   it('keeps the stored version when the latest fails to load', async () => {
@@ -144,7 +197,7 @@ describe('ReconnectButtonDialog piece version', () => {
 
     await openReconnect(gmailConnection());
 
-    expect(dialogPieces.at(-1)?.version).toBe(STORED_VERSION);
+    expect(dialogRenders.at(-1)?.version).toBe(STORED_VERSION);
   });
 
   it('reconnects a custom-auth connection at its stored version without loading the latest', async () => {
@@ -157,7 +210,7 @@ describe('ReconnectButtonDialog piece version', () => {
       gmailConnection({ type: AppConnectionType.CUSTOM_AUTH }),
     );
 
-    expect(dialogPieces.at(-1)?.version).toBe(STORED_VERSION);
+    expect(dialogRenders.at(-1)?.version).toBe(STORED_VERSION);
     expect(get).toHaveBeenCalledTimes(1);
     expect(get).toHaveBeenCalledWith(
       expect.objectContaining({ version: STORED_VERSION }),
@@ -175,7 +228,7 @@ describe('ReconnectButtonDialog piece version', () => {
     await waitFor(() => expect(get).toHaveBeenCalledTimes(2));
     await new Promise((resolve) => setTimeout(resolve, 20));
 
-    expect(dialogPieces).toHaveLength(0);
+    expect(dialogRenders).toHaveLength(0);
   });
 
   function servePieces({
@@ -212,6 +265,68 @@ describe('ReconnectButtonDialog piece version', () => {
     fireEvent.click(screen.getByRole('button'));
     await screen.findByTestId('connection-dialog');
   }
+});
+
+describe('ConnectionSelect piece version', () => {
+  let queryClient: QueryClient;
+
+  beforeEach(() => {
+    get.mockReset();
+    dialogRenders.length = 0;
+    queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    get.mockImplementation(({ version }: { version?: string }) =>
+      Promise.resolve(
+        version === undefined
+          ? gmail({ version: LATEST_VERSION, scope: LATEST_SCOPES })
+          : gmail({ version: STORED_VERSION, scope: STORED_SCOPES }),
+      ),
+    );
+  });
+
+  afterEach(() => {
+    queryClient.clear();
+  });
+
+  it('reconnects at the latest version while Create Connection keeps the step version', async () => {
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ConnectionSelect
+          piece={gmail({ version: STORED_VERSION, scope: STORED_SCOPES })}
+          value={`{{connections['${gmailConnection().externalId}']}}`}
+          onChange={() => undefined}
+        />
+      </QueryClientProvider>,
+    );
+    const createConnection = await screen.findByText('Create Connection');
+    const reconnect = screen
+      .getAllByRole('button')
+      .find((button) => !button.contains(createConnection));
+    fireEvent.click(reconnect!);
+
+    await screen.findByTestId('connection-dialog');
+    expect(dialogRenders.at(-1)).toEqual({
+      version: LATEST_VERSION,
+      open: true,
+      reconnecting: true,
+    });
+    expect(
+      dialogRenders
+        .filter((r) => r.open && r.reconnecting)
+        .every((r) => r.version === LATEST_VERSION),
+    ).toBe(true);
+
+    fireEvent.click(screen.getByText('Create Connection'));
+
+    await waitFor(() =>
+      expect(dialogRenders.at(-1)).toEqual({
+        version: STORED_VERSION,
+        open: true,
+        reconnecting: false,
+      }),
+    );
+  });
 });
 
 function gmail({
@@ -251,6 +366,7 @@ function gmailConnection(
     pieceName: PIECE_NAME,
     pieceVersion: STORED_VERSION,
     type: AppConnectionType.OAUTH2,
+    status: AppConnectionStatus.ACTIVE,
     scope: AppConnectionScope.PROJECT,
     projectIds: ['project_1'],
     ...overrides,
@@ -266,6 +382,12 @@ function notFoundError(): AxiosError {
     config: { headers: new AxiosHeaders() },
   });
 }
+
+type DialogRender = {
+  version: string;
+  open: boolean;
+  reconnecting: boolean;
+};
 
 const PIECE_NAME = '@activepieces/piece-gmail';
 const STORED_VERSION = '0.12.10';
