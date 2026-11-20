@@ -6,5 +6,6 @@ export * from './piece';
 export * from './piece-metadata';
 export * from './output-schema';
 export * from './i18n'
+export * from './i18n-paths'
 export * from './context/versioning'
 export * from './test'
