@@ -1,8 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { pdfmonkeyAuth } from '../common/auth';
 import { pdfmonkeyOperations } from '../common/operations';
 import { pdfmonkeySchemas } from '../common/output-schemas';
-import { documentIdText, fileNameProp } from '../common/props';
+import { documentIdText } from '../common/props';
 
 export const updateDocumentAction = createAction({
   auth: pdfmonkeyAuth,
@@ -19,29 +19,43 @@ export const updateDocumentAction = createAction({
   outputSchema: pdfmonkeySchemas.document,
   props: {
     document_id: documentIdText,
+    keep_info: Property.MarkDown({
+      value: 'Fields left empty keep their current value.',
+      variant: MarkdownVariant.INFO,
+    }),
     template_id: Property.ShortText({
       displayName: 'Template ID',
-      description: 'Switch the document to another template. Leave empty to keep the current one.',
+      description: 'Switch to another template. Find IDs with List Templates.',
+      placeholder: '07fdc6bb-8eff-4d1a-9cc6-9083775905df',
       required: false,
     }),
     payload: Property.Json({
       displayName: 'Payload',
-      description: 'New data for the document, as a JSON object. Replaces the whole payload. Leave empty to keep it.',
+      description: 'New data for the document. Replaces the whole payload.',
       required: false,
     }),
     meta: Property.Json({
       displayName: 'Meta',
-      description: 'New metadata, as a JSON object. Replaces all meta keys. Leave empty to keep it.',
+      description: 'New metadata. Replaces all existing meta keys.',
       required: false,
     }),
-    file_name: fileNameProp,
+    file_name: Property.ShortText({
+      displayName: 'Custom File Name',
+      description: 'New name for the generated file.',
+      placeholder: 'Invoice 2026-001.pdf',
+      required: false,
+    }),
     generate: Property.Checkbox({
       displayName: 'Generate Now',
-      description: 'Queue the document for generation after the update (sets its status to pending).',
+      description: 'Queue the document to generate again after the update.',
       required: false,
       defaultValue: false,
     }),
   },
+  propertyGroups: [
+    { key: 'document', display: 'section', label: 'Document', icon: 'file', props: ['document_id'] },
+    { key: 'changes', display: 'section', label: 'Changes', icon: 'sliders', props: ['keep_info', 'template_id', 'file_name', 'payload', 'meta', 'generate'] },
+  ],
   async run({ auth, propsValue }) {
     return pdfmonkeyOperations.updateDocument({
       auth,
