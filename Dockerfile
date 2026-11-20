@@ -30,7 +30,8 @@ RUN apt-get update && \
         curl \
         ca-certificates \
         iptables \
-        libcap2 && \
+        libcap2 \
+        libseccomp-dev && \
     rm -rf /var/lib/apt/lists/*
 
 # Download, extract, and clean up bun in a single layer so the zip never ships
@@ -87,6 +88,9 @@ RUN --mount=type=cache,target=/root/.bun/install/cache \
 # Copy remaining source code (turbo config, etc.)
 COPY . .
 
+# Build the sandbox seccomp launcher (SRE-342 workstream C), static-linked for the image arch.
+RUN make -C packages/server/api/src/assets/sandbox-launcher
+
 # Build frontend, engine, server API, and worker
 RUN NODE_OPTIONS=--max-old-space-size=4096 npx turbo run build --filter=web --filter=@activepieces/engine --filter=api --filter=worker
 
@@ -129,6 +133,7 @@ WORKDIR /usr/src/app
 
 # Copy static configuration files first (better layer caching)
 COPY --from=build /usr/src/app/packages/server/api/src/assets/default.cf /usr/local/etc/isolate
+COPY --from=build /usr/src/app/packages/server/api/src/assets/sandbox-launcher/ap-sandbox-launcher /usr/local/bin/ap-sandbox-launcher
 COPY docker-entrypoint.sh .
 
 # Copy root config files needed for dependency resolution

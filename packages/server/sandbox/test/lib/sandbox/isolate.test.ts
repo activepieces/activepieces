@@ -222,19 +222,29 @@ describe('isolateProcess', () => {
             expect(args).toContain('--share-net')
         })
 
-        it('runs node with engine path at /root/common/<basename>', async () => {
+        it('runs node through the seccomp launcher with engine path at /root/common/<basename>', async () => {
             await callCreate({ enginePath: '/any/where/engine-main.js' })
             const args: string[] = spawnMock.mock.calls[0][1]
             const runIndex = args.indexOf('--run')
             expect(args.slice(runIndex)).toEqual([
                 '--run',
                 '--',
+                '/usr/local/bin/ap-sandbox-launcher',
                 process.execPath,
                 '--no-node-snapshot',
                 '--expose-gc',
                 '--max-old-space-size=256',
                 '/root/common/engine-main.js',
             ])
+        })
+
+        it('runs the launcher immediately before node, so the seccomp filter wraps the engine', async () => {
+            await callCreate()
+            const args: string[] = spawnMock.mock.calls[0][1]
+            const launcherIndex = args.indexOf('/usr/local/bin/ap-sandbox-launcher')
+            expect(launcherIndex).toBeGreaterThan(-1)
+            expect(args[launcherIndex - 1]).toBe('--')
+            expect(args[launcherIndex + 1]).toBe(process.execPath)
         })
 
         it('spawns with shell: false', async () => {
