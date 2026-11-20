@@ -15,11 +15,11 @@ const projectReleaseRepo = repoFactory(ProjectReleaseEntity)
 
 export const projectReleaseService = {
     async create(request: CreateProjectReleaseParams): Promise<ProjectRelease> {
-        const { platformId, projectId, ownerId, params, log } = request
+        const { platformId, projectId, userId, params, log } = request
         const lockKey = `project-release:${params.projectId}`
         const lock = await memoryLock.acquire(lockKey)
         try {
-            const diffs = await findDiffStates({ projectId, userId: ownerId, platformId, params, log })
+            const diffs = await findDiffStates({ projectId, userId, platformId, params, log })
             const flowIdsToApply = params.selectedFlowsIds ?? diffs.flows.map((flow) => flow.flowState.id)
             const filteredDiffs = await projectDiffService.filterFlows(flowIdsToApply, diffs)
             await projectStateService(log).apply({
@@ -34,7 +34,7 @@ export const projectReleaseService = {
                 created: new Date().toISOString(),
                 updated: new Date().toISOString(),
                 projectId,
-                importedBy: ownerId,
+                importedBy: userId,
                 fileId,
                 name: params.name,
                 description: params.description,
@@ -188,7 +188,7 @@ async function assertTargetProjectOwnedByPlatform({ targetProjectId, platformId,
 type CreateProjectReleaseParams = {
     platformId: PlatformId
     projectId: ProjectId
-    ownerId: ApId
+    userId: ApId
     params: CreateProjectReleaseRequestBody
     log: FastifyBaseLogger
 }
