@@ -675,6 +675,9 @@
       "@activepieces/piece-help-scout": [
         "packages/pieces/community/help-scout/src/index.ts"
       ],
+      "@activepieces/piece-hermoso": [
+        "packages/pieces/community/hermoso/src/index.ts"
+      ],
       "@activepieces/piece-heygen": [
         "packages/pieces/community/heygen/src/index.ts"
       ],

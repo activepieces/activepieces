@@ -4488,6 +4488,18 @@
         "vitest": "5.0.5",
       },
     },
+    "packages/pieces/community/hermoso": {
+      "name": "@activepieces/piece-hermoso",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+        "vitest": "5.0.5",
+      },
+    },
     "packages/pieces/community/heygen": {
       "name": "@activepieces/piece-heygen",
       "version": "0.2.2",
@@ -12228,6 +12240,8 @@
     "@activepieces/piece-hedy": ["@activepieces/piece-hedy@workspace:packages/pieces/community/hedy"],
 
     "@activepieces/piece-help-scout": ["@activepieces/piece-help-scout@workspace:packages/pieces/community/help-scout"],
+
+    "@activepieces/piece-hermoso": ["@activepieces/piece-hermoso@workspace:packages/pieces/community/hermoso"],
 
     "@activepieces/piece-heygen": ["@activepieces/piece-heygen@workspace:packages/pieces/community/heygen"],
 
