@@ -44,6 +44,29 @@ async function listForms({
   });
 }
 
+async function listAllForms({
+  auth,
+}: {
+  auth: YouformAuthValue;
+}): Promise<YouformForm[]> {
+  let forms: YouformForm[] = [];
+  let page = 1;
+  while (page <= MAX_FORM_PAGES) {
+    const response = await listForms({ auth, page });
+    const paginator = response.data;
+    forms = [...forms, ...paginator.data];
+    const reachedEnd =
+      paginator.data.length === 0 ||
+      !paginator.next_page_url ||
+      page >= (paginator.last_page ?? page);
+    if (reachedEnd) {
+      break;
+    }
+    page = page + 1;
+  }
+  return forms;
+}
+
 async function getForm({
   auth,
   formSlug,
@@ -134,9 +157,12 @@ async function deleteWebhook({
   });
 }
 
+const MAX_FORM_PAGES = 50;
+
 export const youformApi = {
   getMe,
   listForms,
+  listAllForms,
   getForm,
   listSubmissions,
   createWebhook,
