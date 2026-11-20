@@ -53,7 +53,7 @@ export const mailChimpNewCampaignTrigger = createTrigger({
   name: 'new_campaign',
   classification: 'READ',
   displayName: 'New Campaign',
-  description: 'Fires when a new campaign is created or sent',
+  description: 'Fires when a campaign is sent to this audience',
   aiMetadata: {
     description: 'Fires on a campaign event tied to the selected audience (list) — when a campaign is created or sent. The event carries the campaign id, title, subject, send time, and status.',
   },

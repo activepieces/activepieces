@@ -14,31 +14,47 @@ export const mailchimpCommon = {
     auth: mailchimpAuth,
     displayName: 'Audience',
     refreshers: [],
-    description: 'Audience you want to add the contact to',
+    description: 'Your Mailchimp audience, also called a list.',
     required: true,
     options: async ({ auth }) => {
       if (!auth) {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please select a connection',
+          placeholder: 'Please connect your account first',
         };
       }
 
       const authProp = auth as OAuth2PropertyValue;
-      const listResponse = (await mailchimpCommon.getUserLists(
-        authProp
-      )) as any;
+      try {
+        const listResponse = (await mailchimpCommon.getUserLists(
+          authProp
+        )) as any;
 
-      const options = listResponse.lists.map((list: any) => ({
-        label: list.name,
-        value: list.id,
-      }));
+        const options = listResponse.lists.map((list: any) => ({
+          label: list.name,
+          value: list.id,
+        }));
 
-      return {
-        disabled: false,
-        options,
-      };
+        if (options.length === 0) {
+          return {
+            disabled: false,
+            options: [],
+            placeholder: 'No audiences found.',
+          };
+        }
+
+        return {
+          disabled: false,
+          options,
+        };
+      } catch {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load audiences. Check your connection.',
+        };
+      }
     },
   }),
   getUserLists: async (authProp: OAuth2PropertyValue) => {
@@ -61,31 +77,47 @@ export const mailchimpCommon = {
     auth: mailchimpAuth,
     displayName: 'Campaign',
     refreshers: [],
-    description: 'Select the campaign to get information for',
+    description: 'Only sent campaigns have a report.',
     required: true,
     options: async ({ auth }) => {
       if (!auth) {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please select a connection',
+          placeholder: 'Please connect your account first',
         };
       }
 
       const authProp = auth as OAuth2PropertyValue;
-      const campaignResponse = (await mailchimpCommon.getUserCampaigns(
-        authProp
-      )) as any;
+      try {
+        const campaignResponse = (await mailchimpCommon.getUserCampaigns(
+          authProp
+        )) as any;
 
-      const options = campaignResponse.campaigns.map((campaign: any) => ({
-        label: `${campaign.settings?.title || campaign.id} (${campaign.status})`,
-        value: campaign.id,
-      }));
+        const options = campaignResponse.campaigns.map((campaign: any) => ({
+          label: `${campaign.settings?.title || campaign.id} (${readableCampaignStatus(campaign.status)})`,
+          value: campaign.id,
+        }));
 
-      return {
-        disabled: false,
-        options,
-      };
+        if (options.length === 0) {
+          return {
+            disabled: false,
+            options: [],
+            placeholder: 'No campaigns found.',
+          };
+        }
+
+        return {
+          disabled: false,
+          options,
+        };
+      } catch {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load campaigns. Check your connection.',
+        };
+      }
     },
   }),
 
@@ -110,33 +142,49 @@ export const mailchimpCommon = {
     auth: mailchimpAuth,
     displayName: 'Campaign',
     refreshers: [],
-    description: 'Select the draft campaign to send',
+    description: 'Only draft campaigns are listed.',
     required: true,
     options: async ({ auth }) => {
       if (!auth) {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please select a connection',
+          placeholder: 'Please connect your account first',
         };
       }
 
       const authProp = auth as OAuth2PropertyValue;
-      // Mailchimp only accepts the send action on campaigns in "save" (draft) status.
-      const campaignResponse = (await mailchimpCommon.getUserCampaigns(
-        authProp,
-        { status: 'save' }
-      )) as any;
+      try {
+        // Mailchimp only accepts the send action on campaigns in "save" (draft) status.
+        const campaignResponse = (await mailchimpCommon.getUserCampaigns(
+          authProp,
+          { status: 'save' }
+        )) as any;
 
-      const options = campaignResponse.campaigns.map((campaign: any) => ({
-        label: `${campaign.settings?.title || campaign.id}`,
-        value: campaign.id,
-      }));
+        const options = campaignResponse.campaigns.map((campaign: any) => ({
+          label: `${campaign.settings?.title || campaign.id}`,
+          value: campaign.id,
+        }));
 
-      return {
-        disabled: false,
-        options,
-      };
+        if (options.length === 0) {
+          return {
+            disabled: false,
+            options: [],
+            placeholder: 'No draft campaigns found.',
+          };
+        }
+
+        return {
+          disabled: false,
+          options,
+        };
+      } catch {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load draft campaigns. Check your connection.',
+        };
+      }
     },
   }),
 
@@ -144,31 +192,47 @@ export const mailchimpCommon = {
     auth: mailchimpAuth,
     displayName: 'Store',
     refreshers: [],
-    description: 'Select the e-commerce store',
+    description: 'An e-commerce store connected to Mailchimp.',
     required: true,
     options: async ({ auth }) => {
       if (!auth) {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please select a connection',
+          placeholder: 'Please connect your account first',
         };
       }
 
       const authProp = auth as OAuth2PropertyValue;
-      const storeResponse = (await mailchimpCommon.getUserStores(
-        authProp
-      )) as any;
+      try {
+        const storeResponse = (await mailchimpCommon.getUserStores(
+          authProp
+        )) as any;
 
-      const options = storeResponse.stores.map((store: any) => ({
-        label: `${store.name} (${store.id})`,
-        value: store.id,
-      }));
+        const options = storeResponse.stores.map((store: any) => ({
+          label: `${store.name} (${store.id})`,
+          value: store.id,
+        }));
 
-      return {
-        disabled: false,
-        options,
-      };
+        if (options.length === 0) {
+          return {
+            disabled: false,
+            options: [],
+            placeholder: 'No stores found.',
+          };
+        }
+
+        return {
+          disabled: false,
+          options,
+        };
+      } catch {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load stores. Check your connection.',
+        };
+      }
     },
   }),
 
@@ -244,6 +308,29 @@ export const mailchimpCommon = {
     return crypto.createHash('md5').update(email.toLowerCase()).digest('hex');
   },
 };
+
+function readableCampaignStatus(status: string): string {
+  switch (status) {
+    case 'save':
+      return 'Draft';
+    case 'paused':
+      return 'Paused';
+    case 'schedule':
+      return 'Scheduled';
+    case 'sending':
+      return 'Sending';
+    case 'sent':
+      return 'Sent';
+    case 'canceled':
+      return 'Canceled';
+    case 'canceling':
+      return 'Canceling';
+    case 'archived':
+      return 'Archived';
+    default:
+      return status;
+  }
+}
 
 type TriggerRequestParams = {
   server: string;

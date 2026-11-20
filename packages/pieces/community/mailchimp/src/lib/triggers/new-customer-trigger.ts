@@ -107,7 +107,7 @@ export const mailChimpNewCustomerTrigger = createTrigger({
   name: 'new_customer',
   classification: 'READ',
   displayName: 'New Customer',
-  description: 'Fires when a new customer is added to a connected store',
+  description: 'Fires when a new customer is added to this audience',
   aiMetadata: {
     description: 'Fires when a new e-commerce customer is added to a connected Mailchimp store. The event carries the customer id, email, name, and store/order context.',
   },

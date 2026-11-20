@@ -8,19 +8,37 @@ export const removeSubscriberFromTag = createAction({
   name: 'remove_subscriber_from_tag',
   classification: 'WRITE',
   displayName: 'Remove Subscriber from Tag',
-  description: 'Remove a subscriber from a specific tag in your Mailchimp audience.',
+  description: 'Remove a subscriber from a specific tag in your Mailchimp audience',
   audience: 'both',
   aiMetadata: { description: 'Deactivates a tag on a subscriber, identified by email within a given audience (list). Use to un-segment or un-label a contact. Idempotent: removing a tag the member does not have leaves the state unchanged.', idempotent: true },
+  propertyGroups: [
+    {
+      key: 'subscriber',
+      display: 'section',
+      label: 'Subscriber',
+      icon: 'user',
+      props: ['list_id', 'email'],
+    },
+    {
+      key: 'tag',
+      display: 'section',
+      label: 'Tag',
+      icon: 'tag',
+      props: ['tag_name'],
+    },
+  ],
   props: {
     list_id: mailchimpCommon.mailChimpListIdDropdown,
     email: Property.ShortText({
       displayName: 'Email Address',
-      description: 'The email address of the subscriber to remove from the tag',
+      description: 'Must already be in the audience.',
+      placeholder: 'jane@example.com',
       required: true,
     }),
     tag_name: Property.ShortText({
       displayName: 'Tag Name',
-      description: 'The name of the tag to remove the subscriber from',
+      description: 'The tag to take off this subscriber.',
+      placeholder: 'Customers',
       required: true,
     }),
   },
@@ -52,21 +70,17 @@ export const removeSubscriberFromTag = createAction({
 
       if (!response.ok) {
         let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-        
-        try {
-          const errorText = await response.text();
-          if (errorText && errorText.trim()) {
+        const errorText = await response.text();
+        if (errorText && errorText.trim()) {
+          try {
             const errorData = JSON.parse(errorText);
             errorMessage = errorData.detail || errorData.title || errorData.message || errorText;
-          }
-        } catch (parseError) {
-          const errorText = await response.text();
-          if (errorText && errorText.trim()) {
+          } catch {
             errorMessage = errorText;
           }
         }
 
-        throw new Error(`Failed to remove subscriber from tag: ${errorMessage}`);
+        throw new Error(errorMessage);
       }
 
       let result;
