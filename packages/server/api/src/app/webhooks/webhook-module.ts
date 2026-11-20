@@ -21,24 +21,25 @@ export const webhookModule: FastifyPluginAsync = async (app) => {
         return Readable.from(raw)
     })
 
-    app.addContentTypeParser(
-        'application/json',
-        { parseAs: 'string' },
-        (_req, body: string, done) => {
-            if (body == null || body.trim() === '') {
-                return done(null, {})
-            }
-      
-            try {
-                done(null, JSON.parse(body))
-            }
-            catch (err) {
-                const error: Error & { statusCode?: number } = err instanceof Error ? err : new Error('JSON parsing failed')
-                error.statusCode = 400
-                done(error, undefined)
-            }
-        },
-    )
+    const parseJsonWebhookBody = (_req: FastifyRequest, body: string, done: (err: Error | null, body?: unknown) => void) => {
+        if (body == null || body.trim() === '') {
+            return done(null, {})
+        }
+
+        try {
+            done(null, JSON.parse(body))
+        }
+        catch (err) {
+            const error: Error & { statusCode?: number } = err instanceof Error ? err : new Error('JSON parsing failed')
+            error.statusCode = 400
+            done(error, undefined)
+        }
+    }
+
+    app.addContentTypeParser('application/json', { parseAs: 'string' }, parseJsonWebhookBody)
+    // Support RFC 6839 structured +json media types (e.g. application/cloudevents+json,
+    // application/cloudevents-batch+json) on webhook routes.
+    app.addContentTypeParser(/^application\/[^\s;]+\+json$/i, { parseAs: 'string' }, parseJsonWebhookBody)
 
     // Binary bodies pass through as a raw stream so webhook-request-converter can stream them
     // straight to storage instead of buffering the whole file in memory.
