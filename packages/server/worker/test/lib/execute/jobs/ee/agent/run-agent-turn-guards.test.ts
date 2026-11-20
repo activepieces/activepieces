@@ -99,6 +99,17 @@ describe('classifyAgentRunError', () => {
         expect(classify(apiError({ statusCode: 400, message: 'Invalid model name passed in model=prod-smart' }), AIProviderName.LITELLM)).toBe('user')
     })
 
+    it('blames the conversation, not the platform, when the model\'s content filter blocks a streamed reply on the managed key', () => {
+        const streamed = new Error(JSON.stringify({ code: 403, message: 'Output data may contain inappropriate content.', metadata: { error_type: 'content_policy_violation', provider_code: 'data_inspection_failed' } }))
+        expect(classify(streamed, AIProviderName.ACTIVEPIECES)).toBe('user')
+        expect(classify(streamed, AIProviderName.OPENROUTER)).toBe('user')
+    })
+
+    it('blames the conversation when the managed key\'s provider rejects a request for content policy', () => {
+        const rejected = apiError({ statusCode: 403, message: 'Forbidden', responseBody: '{"error":{"code":403,"message":"Input may contain inappropriate content.","metadata":{"error_type":"content_policy_violation"}}}' })
+        expect(classify(rejected, AIProviderName.ACTIVEPIECES)).toBe('user')
+    })
+
     it('keeps a 400 we caused internal, so an illegal tool name is not laundered as user config', () => {
         expect(classify(apiError({ statusCode: 400, message: "tools.0.name: should match pattern '^[a-zA-Z0-9_.-]{1,64}$'" }))).toBe('internal')
     })
