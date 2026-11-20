@@ -163,8 +163,11 @@ silently. Worker groups is the last page on the old full-page teaser.
   A feature sold on a tier not in `FeatureTier` (AI Center is on Plus) needs that tier added there first.
 - **`platform.admin.page.viewed` fires from the route's `SuspenseWrapper`**, which no redirect renders, so a
   page route without one (Billing's Stripe return pages) is never counted. `page` is the route pattern, not
-  the URL, and `locked` is true only under the sample overlay, not on a crowned page that locks another way.
-  Renaming a route therefore starts a new series in PostHog; the old one stops, it does not move.
+  the URL, so renaming a route starts a new series in PostHog; the old one stops, it does not move.
+  `locked` is true only under a route-level sample overlay or when the route passes
+  `<SuspenseWrapper lockedBy="<feature>">`. A page that locks inside itself (AI Center Providers since
+  #15948) needs `lockedBy`, or every locked view reports `locked: false`, as Providers did from 2026-10-13.
+  A `PlanFeatureGuard` must sit inside `SuspenseWrapper`, not around it, or a locked view sends no event.
 - **A new admin action control reports its click by carrying `adminControl(AdminControl.AREA_THING_ACTION)`** (decision
   `000046`). Spread it on the element that receives the click and add the member to the `AdminControl` enum in
   `src/lib/admin-control.ts`, with the id `area.thing.action` as its value; a test pins the id naming, the

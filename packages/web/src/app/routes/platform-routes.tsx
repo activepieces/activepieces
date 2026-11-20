@@ -10,8 +10,10 @@ import { PlatformLayout } from '../components/platform-layout';
 import { LegacyPathRedirect } from './platform/legacy-path-redirect';
 import { LegacyTabRedirect } from './platform/legacy-tab-redirect';
 import {
+  PlanFeature,
   PlanFeatureGuard,
   PlanFeatureSample,
+  usePlanFeatureLocked,
 } from './platform/plan-feature-sample';
 import { useAdminControlClicks } from './platform/use-admin-control-clicks';
 import { useAdminPageViewed } from './platform/use-admin-page-viewed';
@@ -168,7 +170,7 @@ export const platformRoutes = [
       <PlatformLayout>
         <PageTitle title="AI Center">
           <LegacyTabRedirect basePath="/platform/ai" tabPaths={AI_TAB_PATHS}>
-            <SuspenseWrapper>
+            <SuspenseWrapper lockedBy="aiProviders">
               <AIProvidersPage section="providers" />
             </SuspenseWrapper>
           </LegacyTabRedirect>
@@ -493,11 +495,11 @@ export const platformRoutes = [
     element: (
       <PlatformLayout>
         <PageTitle title="Single sign-on">
-          <PlanFeatureGuard feature="sso">
-            <SuspenseWrapper>
+          <SuspenseWrapper lockedBy="sso">
+            <PlanFeatureGuard feature="sso">
               <SamlSetupPage />
-            </SuspenseWrapper>
-          </PlanFeatureGuard>
+            </PlanFeatureGuard>
+          </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
     ),
@@ -647,11 +649,11 @@ export const platformRoutes = [
     element: (
       <PlatformLayout>
         <PageTitle title={title}>
-          <PlanFeatureGuard feature="eventStreaming">
-            <SuspenseWrapper>
+          <SuspenseWrapper lockedBy="eventStreaming">
+            <PlanFeatureGuard feature="eventStreaming">
               <EventDestinationFormPage />
-            </SuspenseWrapper>
-          </PlanFeatureGuard>
+            </PlanFeatureGuard>
+          </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
     ),
@@ -663,9 +665,16 @@ export const platformRoutes = [
   ].map((path) => ({ path, element: <LegacyPathRedirect /> })),
 ];
 
-function SuspenseWrapper({ children }: { children: React.ReactNode }) {
+function SuspenseWrapper({
+  children,
+  lockedBy,
+}: {
+  children: React.ReactNode;
+  lockedBy?: PlanFeature;
+}) {
   const page = useAdminPage();
-  useAdminPageViewed(page);
+  const lockedByPlan = usePlanFeatureLocked(lockedBy);
+  useAdminPageViewed({ page, lockedByPlan });
   useAdminControlClicks(page);
   return <Suspense fallback={<RouteLoadingBar />}>{children}</Suspense>;
 }
