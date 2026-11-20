@@ -66,6 +66,7 @@ The condensed rules in this file (Quick Auth Reference, Quick Piece Definition T
 | Your first action in this piece (full file shape) | `action-patterns.md` |
 | A trigger — polling, webhook, handshake, or renewal | `trigger-patterns.md` |
 | **Choosing which prop component, display mode, or layout/grouping fits a use case** | `property-ui-selection.md` |
+| **Improving an existing piece's step forms** (copy, Advanced placement, what reviewers flag, the `check-step-form.mjs` scanner) | `step-form-review.md` |
 | The exact syntax of a prop type (dropdowns, dynamic, arrays, files) | `props-patterns.md` |
 | Shared API helper, pagination, or `createCustomApiCallAction` | `common-patterns.md` |
 | An advanced UX pattern (source selectors, AWS-style auth) | `ux-guidelines.md` |

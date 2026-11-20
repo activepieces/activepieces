@@ -71,6 +71,10 @@ Matter-of-fact, second-person, verb-first. No "Click here". No "Please". No hype
 - **Empty states**: state the fact, then the action. *"No flows yet. Create your first flow to start automating."*
 - **Do**: "Your flow is live.", "Add a step", "Connect your Google account"
 - **Don't**: "Awesome! 🎉 Your flow is now live!", "Click here to add a step", "Please authorize Google"
+- **Text must fit its box.** When text is longer than its container, change the container — full width, a Markdown block, stacked fields, an option `description` — or shorten the text. Clipped text is never the third option. The three limits below are that rule measured.
+- **Field help text is 70 characters max.** Step-form descriptions under inputs truncate to `... show more` past 70 characters, so one short sentence per field. Longer guidance goes in a Markdown block, not a description.
+- **Half-width fields are ~20 characters wide** in the step panel. Reserve them for short values. If the value or its help text outgrows that, stack the fields full width instead.
+- **Dropdown labels hold one idea.** The trigger shows roughly 40 characters and only the label, so never pack a human name and its code into one label. Options take a `description` that renders as a dimmed second line and is searchable: the recognisable value goes in the label, the code or pattern goes there.
 
 ## Quick-reference tokens
 
