@@ -1,4 +1,4 @@
-import { DropdownState, Property } from '@activepieces/pieces-framework';
+import { DropdownState, Property, tryCatch } from '@activepieces/pieces-framework';
 
 import { opnformAuth } from '../auth';
 import { opnformApi } from './api';
@@ -6,7 +6,7 @@ import { opnformApi } from './api';
 function workspaceId<R extends boolean>({
 	required,
 	displayName = 'Workspace',
-	description = 'Workspace Name',
+	description = 'Workspace the form belongs to.',
 }: PropParams<R>) {
 	return Property.Dropdown({
 		auth: opnformAuth,
@@ -16,9 +16,15 @@ function workspaceId<R extends boolean>({
 		refreshers: [],
 		options: async ({ auth }) => {
 			if (!auth) {
-				return disabledOptions({ placeholder: 'Connect Opnform account' });
+				return disabledOptions({ placeholder: 'Connect your Opnform account first' });
 			}
-			const workspaces = await opnformApi.listWorkspaces({ auth });
+			const { data: workspaces, error } = await tryCatch(() => opnformApi.listWorkspaces({ auth }));
+			if (error) {
+				return disabledOptions({ placeholder: 'Failed to load workspaces. Check your connection.' });
+			}
+			if (workspaces.length === 0) {
+				return { disabled: false, options: [], placeholder: 'No workspaces found' };
+			}
 			return {
 				disabled: false,
 				placeholder: 'Select workspace',
@@ -31,7 +37,7 @@ function workspaceId<R extends boolean>({
 function formId<R extends boolean>({
 	required,
 	displayName = 'Form',
-	description = 'Form Name',
+	description = 'Form in the selected workspace.',
 }: PropParams<R>) {
 	return Property.Dropdown({
 		auth: opnformAuth,
@@ -41,12 +47,20 @@ function formId<R extends boolean>({
 		refreshers: ['workspaceId'],
 		options: async ({ auth, workspaceId }) => {
 			if (!auth) {
-				return disabledOptions({ placeholder: 'Connect Opnform account' });
+				return disabledOptions({ placeholder: 'Connect your Opnform account first' });
 			}
 			if (!workspaceId) {
-				return disabledOptions({ placeholder: 'Select workspace' });
+				return disabledOptions({ placeholder: 'Select a workspace first' });
 			}
-			const forms = await opnformApi.listForms({ auth, workspaceId: String(workspaceId) });
+			const { data: forms, error } = await tryCatch(() =>
+				opnformApi.listForms({ auth, workspaceId: String(workspaceId) }),
+			);
+			if (error) {
+				return disabledOptions({ placeholder: 'Failed to load forms. Check your connection.' });
+			}
+			if (forms.length === 0) {
+				return { disabled: false, options: [], placeholder: 'No forms in this workspace' };
+			}
 			return {
 				disabled: false,
 				placeholder: 'Select form',

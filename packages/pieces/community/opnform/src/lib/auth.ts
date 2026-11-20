@@ -3,17 +3,19 @@ import { opnformApi } from './common/api';
 
 export const opnformAuth = PieceAuth.CustomAuth({
     description:
-        'Please use your Opnform API Key. [Click here for create API Key](https://opnform.com/home?user-settings=access-tokens)\n\nGrant the abilities the steps you use need: workspaces-read/write, workspace-users-read/write, forms-read/write and manage-integrations.',
+        'Connect with an Opnform access token (your API key).\n\n1. In Opnform, open [Settings → Access Tokens](https://opnform.com/home?user-settings=access-tokens).\n2. Create a token with the abilities your steps need: workspaces-read/write, workspace-users-read/write, forms-read/write and manage-integrations.\n3. Paste the token below.',
     required: true,
     props: {
-        baseApiUrl: Property.ShortText({
-            displayName: `Base URL`,
-            description: `Default value is 'https://api.opnform.com'.`,
-            required: false,
-        }),
         apiKey: PieceAuth.SecretText({
             displayName: 'API Key',
+            description: 'The access token you created in Opnform.',
             required: true,
+        }),
+        baseApiUrl: Property.ShortText({
+            displayName: `Base URL`,
+            description: 'Only for self-hosted Opnform. Leave empty for opnform.com.',
+            placeholder: 'https://forms.example.com/api',
+            required: false,
         }),
     },
     validate: async ({ auth }) => {

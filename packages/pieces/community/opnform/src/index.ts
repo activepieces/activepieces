@@ -18,6 +18,12 @@ export const opnform = createPiece({
         createCustomApiCallAction({
             auth: opnformAuth,
             baseUrl: (auth) => opnformClient.baseUrl({ auth }),
+            props: {
+                url: {
+                    description: 'Full URL, or a path relative to your Opnform API URL.',
+                    placeholder: '/open/workspaces',
+                },
+            },
             authMapping: async (auth) => {
                 return {
                     Authorization: `Bearer ${auth.props.apiKey}`,
