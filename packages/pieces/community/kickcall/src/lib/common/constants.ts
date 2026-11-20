@@ -1,0 +1,1 @@
+export const KICKCALL_BASE_URL = 'https://api-app.kickcall.ai';
