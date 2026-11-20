@@ -602,8 +602,13 @@ export const gmailNewEmailReceivedTriggerOutputSchema: OutputSchema = {
       format: 'html',
     },
     {
-      key: 'messageId',
+      key: 'id',
       label: 'Message ID',
+      value: 'message.id',
+    },
+    {
+      key: 'messageId',
+      label: 'RFC Message-ID',
       value: 'message.messageId',
     },
     {

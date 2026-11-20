@@ -11,7 +11,9 @@ async function enable({
   if (isRepublish && !isNil(await store.get(LAST_POLL_KEY))) {
     return;
   }
-  await store.put(LAST_POLL_KEY, Date.now());
+  const now = Date.now();
+  await store.put(LAST_POLL_KEY, now);
+  await store.put(SINCE_KEY, now);
   await store.delete(SEEN_KEY);
 }
 
@@ -34,12 +36,16 @@ async function poll<T>({
     await store.put(LAST_POLL_KEY, startedAt);
     return [];
   }
+  const storedSince = await store.get<number>(SINCE_KEY);
+  const since = storedSince ?? lastPoll;
+  if (isNil(storedSince)) {
+    await store.put(SINCE_KEY, since);
+  }
   const seen = await store.get<SeenMessage[]>(SEEN_KEY);
   const seenIds = new Set((seen ?? []).map((message) => message.id));
-  const afterSeconds = Math.floor((lastPoll - LATE_WINDOW_MS) / 1000);
   const ids = await listMessageIds({
     gmail,
-    query: [...query, `after:${afterSeconds}`],
+    query: [...query, `after:${searchFromSeconds(lastPoll)}`],
     labelId,
   });
   const pending = ids.filter((id) => !seenIds.has(id)).reverse();
@@ -53,8 +59,7 @@ async function poll<T>({
     const { data, error } = await tryCatch(async () => {
       const message = await getRawMessage({ gmail, id });
       const epoch = Number(message.internalDate);
-      const isNew = !isNil(seen) || epoch > lastPoll;
-      return { epoch, items: isNew ? await toItems(message) : [] };
+      return { epoch, items: epoch > since ? await toItems(message) : [] };
     });
     if (error) {
       if (isRateLimitError(error)) {
@@ -74,7 +79,7 @@ async function poll<T>({
   await store.put(
     SEEN_KEY,
     [...(seen ?? []), ...handled].filter(
-      (message) => message.epoch > newLastPoll - LATE_WINDOW_MS
+      (message) => message.epoch >= (searchFromSeconds(newLastPoll) - 1) * 1000
     )
   );
   return items;
@@ -151,6 +156,10 @@ async function getRawMessage({
   return response.data;
 }
 
+function searchFromSeconds(lastPoll: number): number {
+  return Math.floor((lastPoll - LATE_WINDOW_MS) / 1000);
+}
+
 function isRateLimitError(error: unknown): boolean {
   if (typeof error !== 'object' || error === null || !('status' in error)) {
     return false;
@@ -169,6 +178,7 @@ export const gmailMessagePoll = { enable, poll, sample };
 
 const LAST_POLL_KEY = 'lastPoll';
 const SEEN_KEY = 'seenMessages';
+const SINCE_KEY = 'since';
 const LATE_WINDOW_MS = 10 * 60 * 1000;
 const TIME_BUDGET_MS = 40 * 1000;
 const PAGE_SIZE = 500;

@@ -228,13 +228,15 @@ async function listLabelHistory({
         .filter((added) => added.message?.labelIds?.includes(labelId))
         .map((added) => ({ message: added.message, arrivedWithLabel: true }));
       for (const { message, arrivedWithLabel } of [...labelled, ...arrived]) {
-        if (message?.id && !entries.has(message.id)) {
-          entries.set(message.id, {
-            messageId: message.id,
-            historyId: recordId,
-            arrivedWithLabel,
-          });
+        if (!message?.id) {
+          continue;
         }
+        const existing = entries.get(message.id);
+        entries.set(message.id, {
+          messageId: message.id,
+          historyId: existing?.historyId ?? recordId,
+          arrivedWithLabel: arrivedWithLabel || !!existing?.arrivedWithLabel,
+        });
       }
     }
     historyId = response.data.historyId ?? historyId;
