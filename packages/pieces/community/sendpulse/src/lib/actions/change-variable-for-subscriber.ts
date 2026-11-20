@@ -1,13 +1,31 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, OutputSchema, Property } from '@activepieces/pieces-framework';
 import { sendpulseAuth } from '../common/auth';
-import { sendpulseApiCall } from '../common/client';
+import { isRecord, normalizeEmail, parseMailingListId, sendpulseApiCall, SendPulseAuthProps } from '../common/client';
 import { mailingListDropdown } from '../common/props';
 
-type SendpulseVariable = {
-  name: string;
-  type: string;
-};
+async function fetchVariables({ auth, listId }: { auth: SendPulseAuthProps; listId: string }): Promise<{ name: string; type: string }[]> {
+  const response = await sendpulseApiCall<unknown>({
+    auth,
+    method: HttpMethod.GET,
+    resourceUri: `/addressbooks/${listId}/variables`,
+    operation: 'list mailing list variables',
+  });
+  return (Array.isArray(response) ? response : []).flatMap((item) =>
+    isRecord(item) && typeof item['name'] === 'string'
+      ? [{ name: item['name'], type: typeof item['type'] === 'string' ? item['type'] : 'string' }]
+      : [],
+  );
+}
+
+function assertValueMatchesType({ variableName, variableValue, variableType }: { variableName: string; variableValue: string; variableType: string }): void {
+  if (variableType === 'number' && (variableValue.trim() === '' || isNaN(Number(variableValue)))) {
+    throw new Error(`Variable "${variableName}" expects a number, but got: ${variableValue}`);
+  }
+  if (variableType === 'date' && !/^\d{4}-\d{2}-\d{2}$/.test(variableValue) && isNaN(Date.parse(variableValue))) {
+    throw new Error(`Variable "${variableName}" expects a date format (YYYY-MM-DD), but got: ${variableValue}`);
+  }
+}
 
 const variableDropdown = Property.Dropdown({
   auth: sendpulseAuth,
@@ -25,38 +43,42 @@ const variableDropdown = Property.Dropdown({
     }
 
     try {
-      const variables = await sendpulseApiCall<SendpulseVariable[]>({
-        auth: auth as any,
-        method: HttpMethod.GET,
-        resourceUri: `/addressbooks/${mailingListId}/variables`,
-      });
+      const variables = await fetchVariables({ auth: auth.props, listId: parseMailingListId(mailingListId) });
+      const options = variables
+        .filter((variable) => variable.name !== 'email')
+        .map((variable) => ({
+          label: `${variable.name} (${variable.type})`,
+          value: variable.name,
+        }));
 
-      if (!variables.length) {
+      if (!options.length) {
         return {
           disabled: true,
           options: [],
           placeholder: 'No variables found in this mailing list',
         };
       }
-
-      return {
-        disabled: false,
-        options: variables
-          .filter(variable => variable.name !== 'email')
-          .map((variable) => ({
-            label: `${variable.name} (${variable.type})`,
-            value: variable.name,
-          })),
-      };
-    } catch (error: any) {
+      return { disabled: false, options };
+    } catch (error) {
       return {
         disabled: true,
         options: [],
-        placeholder: `Failed to load variables: ${error.message}`,
+        placeholder: `Failed to load variables: ${error instanceof Error ? error.message : String(error)}`,
       };
     }
   },
 });
+
+const outputSchema: OutputSchema = {
+  fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
+    { key: 'message', label: 'Message' },
+    { key: 'email', label: 'Email', format: 'email' },
+    { key: 'variableName', label: 'Variable Name' },
+    { key: 'variableValue', label: 'Variable Value' },
+    { key: 'variableType', label: 'Variable Type' },
+  ],
+};
 
 export const changeVariableForSubscriberAction = createAction({
   auth: sendpulseAuth,
@@ -64,8 +86,7 @@ export const changeVariableForSubscriberAction = createAction({
   classification: 'WRITE',
   displayName: 'Change Variable for Subscriber',
   description: 'Update subscriber variable',
-  audience: 'both',
-  aiMetadata: { description: 'Sets a single named variable (custom field) to a given value for one subscriber, identified by email, within a specific SendPulse mailing list. Use to overwrite a single field value; the variable must already exist on the list and its type (number/date) is validated against the value. Idempotent — repeating with the same value leaves the field unchanged.', idempotent: true },
+  audience: 'human',
   props: {
     mailingListId: mailingListDropdown,
     email: Property.ShortText({
@@ -80,76 +101,40 @@ export const changeVariableForSubscriberAction = createAction({
       required: true,
     }),
   },
-
+  outputSchema,
   async run(context) {
-    const { mailingListId, email, variableName, variableValue } = context.propsValue;
+    const { mailingListId, variableName, variableValue } = context.propsValue;
+    const listId = parseMailingListId(mailingListId);
+    const email = normalizeEmail(context.propsValue.email);
+    const auth = context.auth.props;
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      throw new Error(`Invalid email format: ${email}`);
-    }
-
-    let variableType: string | null = null;
-    try {
-      const variables = await sendpulseApiCall<SendpulseVariable[]>({
-        auth: context.auth.props,
-        method: HttpMethod.GET,
-        resourceUri: `/addressbooks/${mailingListId}/variables`,
-      });
-      
-      const variable = variables.find(v => v.name === variableName);
-      if (variable) {
-        variableType = variable.type;
-      }
-    } catch (error) {
-      // Continue without type validation if variable fetch fails
-    }
-
+    const variables = await fetchVariables({ auth, listId });
+    const variableType = variables.find((variable) => variable.name === variableName)?.type ?? null;
     if (variableType) {
-      if (variableType === 'number' && isNaN(Number(variableValue))) {
-        throw new Error(`Variable "${variableName}" expects a number, but got: ${variableValue}`);
-      }
-      
-      if (variableType === 'date') {
-        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-        if (!dateRegex.test(variableValue) && !Date.parse(variableValue)) {
-          throw new Error(`Variable "${variableName}" expects a date format (YYYY-MM-DD), but got: ${variableValue}`);
-        }
-      }
+      assertValueMatchesType({ variableName, variableValue, variableType });
     }
 
-    const body = {
+    const result = await sendpulseApiCall<unknown>({
+      method: HttpMethod.POST,
+      auth,
+      resourceUri: `/addressbooks/${listId}/emails/variable`,
+      operation: 'update subscriber variable',
+      body: {
+        email,
+        variables: [{ name: variableName, value: variableValue }],
+      },
+    });
+
+    if (!isRecord(result) || result['result'] !== true) {
+      throw new Error(`SendPulse update variable failed: unexpected response ${JSON.stringify(result)}`);
+    }
+    return {
+      success: true,
+      message: `Variable "${variableName}" updated for ${email}`,
       email,
-      variables: [
-        {
-          name: variableName,
-          value: variableValue,
-        },
-      ],
+      variableName,
+      variableValue,
+      variableType,
     };
-
-    try {
-      const result = await sendpulseApiCall<{ result: boolean }>({
-        method: HttpMethod.POST,
-        auth: context.auth.props,
-        resourceUri: `/addressbooks/${mailingListId}/emails/variable`,
-        body,
-      });
-
-      if (result.result) {
-        return {
-          success: true,
-          message: `Variable "${variableName}" updated for ${email}`,
-          email,
-          variableName,
-          variableValue,
-          variableType,
-        };
-      } else {
-        throw new Error('SendPulse API returned failure');
-      }
-    } catch (error: any) {
-      throw new Error(`Failed to update variable: ${error.message || 'Unknown error'}`);
-    }
   },
 });

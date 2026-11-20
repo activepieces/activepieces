@@ -1,12 +1,35 @@
-import {
-  createTrigger,
-  TriggerStrategy,
-  WebhookResponse,
-} from '@activepieces/pieces-framework';
+import { createTrigger, OutputSchema, TriggerStrategy } from '@activepieces/pieces-framework';
 import { sendpulseAuth } from '../common/auth';
-import { sendpulseApiCall } from '../common/client';
+import { createWebhook, deleteWebhook, epochToIso, parseMailingListId, readWebhookEvents, readWebhookEmail } from '../common/client';
 import { mailingListDropdown } from '../common/props';
-import { HttpMethod } from '@activepieces/pieces-common';
+
+const WEBHOOK_ACTION = 'unsubscribe';
+
+const sampleData = {
+  id: 'unsub@example.com_1496827872',
+  email: 'unsub@example.com',
+  mailingListId: '123456',
+  taskId: '3668141',
+  fromAll: false,
+  reason: 'Manual unsubscribe',
+  categories: 'newsletter',
+  unsubscribedAt: '2017-06-07T09:31:12.000Z',
+  timestamp: '1496827872',
+};
+
+const outputSchema: OutputSchema = {
+  fields: [
+    { key: 'id', label: 'Event ID' },
+    { key: 'email', label: 'Email', format: 'email' },
+    { key: 'mailingListId', label: 'Mailing List ID' },
+    { key: 'taskId', label: 'Campaign Task ID' },
+    { key: 'fromAll', label: 'Unsubscribed From All', format: 'boolean' },
+    { key: 'reason', label: 'Reason' },
+    { key: 'categories', label: 'Categories' },
+    { key: 'unsubscribedAt', label: 'Unsubscribed At', format: 'datetime' },
+    { key: 'timestamp', label: 'Unix Timestamp' },
+  ],
+};
 
 export const newUnsubscriberTrigger = createTrigger({
   auth: sendpulseAuth,
@@ -21,121 +44,47 @@ export const newUnsubscriberTrigger = createTrigger({
   props: {
     mailingListId: mailingListDropdown,
   },
-
+  outputSchema,
   async onEnable(context) {
-    const { mailingListId } = context.propsValue;
-    
-    try {
-      const webhookResponse = await sendpulseApiCall<{
-        success: boolean;
-        data: Array<{ id: number; action: string; url: string }>;
-      }>({
-        method: HttpMethod.POST,
-        auth: context.auth.props,
-        resourceUri: '/v2/email-service/webhook',
-        body: {
-          url: context.webhookUrl,
-          actions: ['unsubscribe'],
-        },
-      });
-
-      if (webhookResponse.success && webhookResponse.data?.length > 0) {
-        const webhook = webhookResponse.data.find(w => w.action === 'unsubscribe');
-        if (webhook) {
-          await context.store.put('webhook_id', webhook.id);
-          await context.store.put('mailing_list_id', mailingListId);
-        }
-      } else {
-        throw new Error('Failed to create webhook');
-      }
-    } catch (error: any) {
-      throw new Error(`Failed to enable unsubscriber trigger: ${error.message}`);
-    }
+    parseMailingListId(context.propsValue.mailingListId);
+    const webhookId = await createWebhook({ auth: context.auth.props, url: context.webhookUrl, action: WEBHOOK_ACTION });
+    await context.store.put('webhook_id', webhookId);
   },
 
   async onDisable(context) {
-    try {
-      const webhookId = await context.store.get('webhook_id');
-      
-      if (webhookId) {
-        await sendpulseApiCall({
-          method: HttpMethod.DELETE,
-          auth: context.auth.props,
-          resourceUri: `/v2/email-service/webhook/${webhookId}`,
-        });
-        
-        await context.store.delete('webhook_id');
-        await context.store.delete('mailing_list_id');
-      }
-    } catch (error) {
-      console.warn('Failed to delete webhook during disable:', error);
+    const webhookId = await context.store.get<string | number>('webhook_id');
+    if (webhookId !== null && webhookId !== undefined) {
+      await deleteWebhook({ auth: context.auth.props, webhookId: String(webhookId) });
     }
+    await context.store.delete('webhook_id');
+    await context.store.delete('mailing_list_id');
   },
 
   async run(context) {
-    const storedListId = await context.store.get('mailing_list_id');
-    
-    interface UnsubscribePayload {
-      task_id: string;
-      timestamp: string;
-      from_all: string;
-      email: string;
-      reason: string | null;
-      book_id: string;
-      event: string;
-      categories: string;
-    }
-
-    const payload = context.payload.body as UnsubscribePayload | UnsubscribePayload[];
-    
-    const payloads = Array.isArray(payload) ? payload : [payload];
-    
-    const results = [];
-    
-    for (const item of payloads) {
-      if (item.event === 'unsubscribe' && item.book_id === storedListId) {
-        results.push({
-          id: `${item.email}_${item.timestamp}`,
-          email: item.email,
-          mailingListId: item.book_id,
-          taskId: item.task_id,
-          fromAll: item.from_all === '1',
-          reason: item.reason || 'No reason provided',
-          categories: item.categories || '',
-          unsubscribedAt: new Date(parseInt(item.timestamp) * 1000).toISOString(),
-          timestamp: item.timestamp,
-        });
-      }
-    }
-
-    return results;
+    const listId = parseMailingListId(context.propsValue.mailingListId);
+    return readWebhookEvents(context.payload.body)
+      .filter((item) => item['event'] === WEBHOOK_ACTION && String(item['book_id']) === listId)
+      .map((item) => {
+        const email = readWebhookEmail(item);
+        const timestamp = item['timestamp'] === undefined || item['timestamp'] === null ? '' : String(item['timestamp']);
+        const reason = item['reason'];
+        return {
+          id: `${email}_${timestamp}`,
+          email,
+          mailingListId: String(item['book_id']),
+          taskId: item['task_id'] === undefined || item['task_id'] === null ? null : String(item['task_id']),
+          fromAll: String(item['from_all']) === '1' || item['from_all'] === true,
+          reason: typeof reason === 'string' && reason.length > 0 ? reason : 'No reason provided',
+          categories: typeof item['categories'] === 'string' ? item['categories'] : '',
+          unsubscribedAt: epochToIso(item['timestamp']),
+          timestamp,
+        };
+      });
   },
 
   async test() {
-    return [
-      {
-        id: 'test-unsubscribe@example.com_1496827872',
-        email: 'test-unsubscribe@example.com',
-        mailingListId: '123456',
-        taskId: '3668141',
-        fromAll: true,
-        reason: 'User clicked unsubscribe link',
-        categories: '',
-        unsubscribedAt: new Date().toISOString(),
-        timestamp: '1496827872',
-      },
-    ];
+    return [sampleData];
   },
 
-  sampleData: {
-    id: 'unsub@example.com_1496827872',
-    email: 'unsub@example.com',
-    mailingListId: '123456',
-    taskId: '3668141',
-    fromAll: false,
-    reason: 'Manual unsubscribe',
-    categories: 'newsletter',
-    unsubscribedAt: '2023-06-01T12:30:00.000Z',
-    timestamp: '1496827872',
-  },
+  sampleData,
 });
