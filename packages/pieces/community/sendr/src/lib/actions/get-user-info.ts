@@ -15,7 +15,7 @@ export const getUserInfo = createAction({
     const response = await httpClient.sendRequest({
             method: HttpMethod.GET,
             url:  'https://api.sendr.io/seat/me',
-            headers: { Authorization: `Bearer ${context.auth.secret_text}` },
+            headers: { 'X-API-Key': context.auth.secret_text },
           });
     return flattenObject(response.body);
   },

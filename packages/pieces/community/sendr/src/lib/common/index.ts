@@ -1,4 +1,4 @@
-import { httpClient, HttpMethod, AuthenticationType, HttpMessageBody, HttpResponse } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod, HttpMessageBody, HttpResponse } from '@activepieces/pieces-common';
 import { Property } from '@activepieces/pieces-framework';
 import { sendrAuth } from '../auth';
 
@@ -20,10 +20,7 @@ export async function sendrApiCall<T extends HttpMessageBody>({
   return await httpClient.sendRequest<T>({
     method,
     url: `${BASE_URL}${path}`,
-    authentication: {
-      type: AuthenticationType.BEARER_TOKEN,
-      token,
-    },
+    headers: { 'X-API-Key': token },
     queryParams,
     body,
   });
