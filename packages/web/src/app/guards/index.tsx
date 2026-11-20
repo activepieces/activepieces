@@ -1,10 +1,12 @@
 import { Permission } from '@activepieces/core-utils';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import {
+  Navigate,
   Outlet,
   RouterProvider,
   createBrowserRouter,
   createMemoryRouter,
+  useLocation,
 } from 'react-router-dom';
 
 import { PageTitle } from '@/app/components/page-title';
@@ -14,6 +16,10 @@ import { projectRoutes } from '@/app/routes/project-routes';
 import { publicRoutes, templateRoutes } from '@/app/routes/public-routes';
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
 import { useEmbedding } from '@/components/providers/embed-provider';
+import {
+  chatPanelUtils,
+  useChatPanel,
+} from '@/features/workspace/lib/chat-panel-open';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { shellHandles } from '@/lib/shell-handle';
 
@@ -26,30 +32,14 @@ import { DefaultRoute } from './default-route';
 import { RoutePermissionGuard } from './permission-guard';
 import { TokenCheckerWrapper } from './project-route-wrapper';
 
-const ChatWithAIPage = lazyWithRetry(
-  () =>
-    import('@/app/routes/chat-with-ai').then((m) => ({
-      default: m.ChatWithAIPage,
-    })),
-  'chat-with-ai',
-);
-
-function chatElement() {
-  return (
-    <PageTitle title="Chat">
-      <Suspense fallback={<RouteLoadingBar />}>
-        <ChatWithAIPage />
-      </Suspense>
-    </PageTitle>
-  );
-}
+const chatElement = <PageTitle title="Chat">{null}</PageTitle>;
 
 const chatRoutes = [
-  { path: '/chat', handle: shellHandles.chat, element: chatElement() },
+  { path: '/chat', handle: shellHandles.chat, element: <ChatHome /> },
   {
     path: '/chat/:conversationId',
     handle: shellHandles.chat,
-    element: chatElement(),
+    element: chatElement,
   },
 ];
 
@@ -145,6 +135,7 @@ const browserRouter = createBrowserRouter(routes);
 const ApRouter = () => {
   const { embedState } = useEmbedding();
   const router = embedState.isEmbedded ? memoryRouter : browserRouter;
+  useEffect(() => chatPanelUtils.followRouter(router), [router]);
   return <RouterProvider router={router}></RouterProvider>;
 };
 
@@ -157,6 +148,21 @@ function AppRoot() {
       <AppToaster />
     </>
   );
+}
+
+function ChatHome() {
+  const conversationId = useChatPanel((s) => s.conversationId);
+  const { state } = useLocation();
+  if (conversationId !== null) {
+    return (
+      <Navigate
+        to={chatPanelUtils.routeFor(conversationId)}
+        replace
+        state={state}
+      />
+    );
+  }
+  return chatElement;
 }
 
 function withErrorElement<T extends object>(route: T) {
