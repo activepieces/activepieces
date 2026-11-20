@@ -73,13 +73,15 @@ export const documentIdDropdown = Property.Dropdown({
 
 export const documentIdText = Property.ShortText({
   displayName: 'Document ID',
-  description: 'The document ID (a UUID), e.g. from Generate Document or List Documents.',
+  description: 'The document ID (a UUID), from Generate Document or List Documents.',
+  placeholder: '472b1c2e-6a4b-4f04-ad78-0aa040fd9f09',
   required: true,
 });
 
 export const templateIdText = Property.ShortText({
   displayName: 'Template ID',
   description: 'The template ID (a UUID). Use List Templates to find it.',
+  placeholder: '07fdc6bb-8eff-4d1a-9cc6-9083775905df',
   required: true,
 });
 

@@ -22,6 +22,7 @@ export const downloadDocumentAction = createAction({
     file_name: Property.ShortText({
       displayName: 'File Name',
       description: 'Name for the downloaded file. Defaults to the document file name.',
+      placeholder: 'Invoice 2026-001.pdf',
       required: false,
     }),
   },
