@@ -19,6 +19,13 @@ export const gravityforms = createPiece({
     createCustomApiCallAction({
       auth: gravityFormsAuth,
       baseUrl: (auth) => (auth ? gravityFormsClient.baseUrl({ auth }) : ''),
+      props: {
+        url: {
+          description:
+            "Full URL, or a path relative to your site's /wp-json/gf/v2 address.",
+          placeholder: '/forms',
+        },
+      },
       authMapping: async (auth) => ({
         Authorization: `Basic ${Buffer.from(`${auth.props.consumerKey}:${auth.props.consumerSecret}`).toString('base64')}`,
       }),
