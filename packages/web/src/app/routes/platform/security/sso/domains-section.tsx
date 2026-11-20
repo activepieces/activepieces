@@ -45,13 +45,18 @@ import { DomainVerificationStatus } from '@/lib/statuses';
 export const DomainsSection = ({ platform, refetch }: DomainsSectionProps) => {
   const samlConnected = !!platform.federatedAuthProviders?.saml;
   const [verifyOpen, setVerifyOpen] = useState(false);
+  const { cloud } = useSignInMethods(platform);
 
   return (
     <AdminSection
       title={t('Domain')}
-      description={t(
-        "Verify your company's email domain to set up single sign-on.",
-      )}
+      description={
+        cloud
+          ? t(
+              "Verify your company's email domain to control how its people sign in.",
+            )
+          : t("Verify your company's email domain to set up single sign-on.")
+      }
     >
       {platform.ssoDomain && platform.ssoDomainVerification ? (
         <SettingsPanel flush>
@@ -99,8 +104,8 @@ const DomainRow = ({
   samlConnected,
   onContinueVerifying,
 }: DomainRowProps) => {
-  const samlIsOnlyMethod =
-    useSignInMethods(platform).isOnlyWorkingMethod('saml');
+  const { cloud, isOnlyWorkingMethod } = useSignInMethods(platform);
+  const samlIsOnlyMethod = isOnlyWorkingMethod('saml');
   const [dnsRecordOpen, setDnsRecordOpen] = useState(false);
   const verified = verification.status === SsoDomainVerificationStatus.VERIFIED;
   const day = Math.min(7, dayjs().diff(verification.createdAt, 'day') + 1);
@@ -162,19 +167,12 @@ const DomainRow = ({
                   })
                 : t('Remove {domain}?', { domain })
             }
-            message={
-              verified
-                ? samlConnected
-                  ? t(
-                      'People who use single sign-on will have to sign in another way.',
-                    )
-                  : t(
-                      "To set up single sign-on later, you'll need to verify the domain again with a new DNS record.",
-                    )
-                : t(
-                    'The domain and its DNS record are discarded. You can start again anytime.',
-                  )
-            }
+            message={describeRemovingSsoDomain({
+              domain,
+              verified,
+              samlConnected,
+              cloud,
+            })}
             warning={
               verified && samlConnected ? (
                 <SamlDeletionWarning blocked={samlIsOnlyMethod} />
@@ -239,6 +237,35 @@ const DomainRow = ({
   );
 };
 
+function describeRemovingSsoDomain({
+  domain,
+  verified,
+  samlConnected,
+  cloud,
+}: DescribeRemovingSsoDomainParams): string {
+  if (!verified) {
+    return t(
+      'The domain and its DNS record are discarded. You can start again anytime.',
+    );
+  }
+  if (!cloud) {
+    return samlConnected
+      ? t('People who use single sign-on will have to sign in another way.')
+      : t(
+          "To set up single sign-on later, you'll need to verify the domain again with a new DNS record.",
+        );
+  }
+  return samlConnected
+    ? t(
+        "Single sign-on will stop working, and you'll lose control of how people at {domain} sign in until you verify it again with a new DNS record.",
+        { domain },
+      )
+    : t(
+        "You'll lose control of how people at {domain} sign in until you verify it again with a new DNS record.",
+        { domain },
+      );
+}
+
 type DomainsSectionProps = {
   platform: PlatformWithoutSensitiveData;
   refetch: () => Promise<void>;
@@ -251,4 +278,11 @@ type DomainRowProps = {
   verification: SsoDomainVerification;
   samlConnected: boolean;
   onContinueVerifying: () => void;
+};
+
+type DescribeRemovingSsoDomainParams = {
+  domain: string;
+  verified: boolean;
+  samlConnected: boolean;
+  cloud: boolean;
 };
