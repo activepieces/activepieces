@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, MarkdownVariant, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { netlifyAuth } from '../common/auth';
 import { netlifySchemas } from '../common/output-schemas';
 import { netlifyProps } from '../common/props';
@@ -9,12 +9,13 @@ export const newDeploySucceeded = createTrigger({
   name: 'new_deploy_succeeded',
   classification: 'READ',
   displayName: 'New Deploy Succeeded',
-  description: 'Fires when a new site version has successfully deployed.',
+  description: 'Fires when a deploy finishes successfully on your Netlify site.',
   aiMetadata: {
     description: 'Fires when a deploy on the selected Netlify site finishes successfully (the Deploy succeeded notification, event deploy_created). Use it to run follow-up steps after a site is published, e.g. cache purges, notifications or downstream syncs.',
   },
   props: {
-    siteId: netlifyProps.siteDropdown({ description: 'Select the site to watch for deploys.' }),
+    siteId: netlifyProps.siteDropdown({ description: 'The site to watch.' }),
+    scopeNote: Property.MarkDown({ value: 'Fires for every branch and deploy preview, not only production. Check **Branch** or **Context** in the output to narrow it down.', variant: MarkdownVariant.INFO }),
   },
   outputSchema: netlifySchemas.deploy,
   sampleData: {

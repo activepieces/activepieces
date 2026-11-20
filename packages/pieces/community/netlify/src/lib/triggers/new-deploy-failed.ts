@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, MarkdownVariant, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { netlifyAuth } from '../common/auth';
 import { netlifySchemas } from '../common/output-schemas';
 import { netlifyProps } from '../common/props';
@@ -14,7 +14,8 @@ export const newDeployFailed = createTrigger({
     description: 'Fires when a deploy on the selected Netlify site fails to build or publish (the deploy_failed event); the payload includes the error message. Use it to alert on or remediate broken deploys.',
   },
   props: {
-    siteId: netlifyProps.siteDropdown({ description: 'Select the site to watch for deploys.' }),
+    siteId: netlifyProps.siteDropdown({ description: 'The site to watch.' }),
+    scopeNote: Property.MarkDown({ value: 'Fires for every branch and deploy preview, not only production. Check **Branch** or **Context** in the output to narrow it down.', variant: MarkdownVariant.INFO }),
   },
   outputSchema: netlifySchemas.deploy,
   sampleData: {
