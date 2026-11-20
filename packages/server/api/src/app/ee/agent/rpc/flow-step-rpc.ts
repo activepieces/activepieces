@@ -23,11 +23,15 @@ export const flowStepRpc = (log: FastifyBaseLogger) => ({
     },
 
     async resumeFlowStep(input: ResumeFlowStepRequest): Promise<void> {
+        const resumeFields = { conversation: { id: input.conversationId }, flowRun: { id: input.flowRunId }, waitpoint: { id: input.waitpointId } }
         const conversation = await agentHelpers.conversationRepo().findOneBy({ id: input.conversationId })
-        if (conversation?.source !== AgentRunSource.FLOW_STEP || isNil(conversation.projectId)) {
+        if (isNil(conversation)) {
+            log.warn(resumeFields, '[agentRpc#resumeFlowStep] The conversation is gone, most likely deleted with its agent, so there is nothing left to resume')
+            return
+        }
+        if (conversation.source !== AgentRunSource.FLOW_STEP || isNil(conversation.projectId)) {
             throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'Only a flow-step run can resume a flow' } })
         }
-        const resumeFields = { conversation: { id: input.conversationId }, flowRun: { id: input.flowRunId }, waitpoint: { id: input.waitpointId } }
         const flowRun = await flowRunService(log).getOne({ id: input.flowRunId, projectId: conversation.projectId })
         if (isNil(flowRun)) {
             log.warn(resumeFields, '[agentRpc#resumeFlowStep] That flow run is gone from this project, so there is nothing left to resume')
