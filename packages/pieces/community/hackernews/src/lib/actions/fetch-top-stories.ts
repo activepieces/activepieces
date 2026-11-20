@@ -8,7 +8,7 @@ export const fetchTopStoriesAction = createAction({
 	outputSchema: fetchTopStoriesOutputSchema,
 	classification: 'SEARCH',
 	displayName: 'Fetch Top Stories',
-	description: 'Fetch top stories from hackernews',
+	description: 'Get the current top stories on Hacker News.',
 	audience: 'human',
 	aiMetadata: {
 		description:
@@ -18,8 +18,9 @@ export const fetchTopStoriesAction = createAction({
 	props: {
 		number_of_stories: Property.Number({
 			displayName: 'Number of Stories',
-			description: undefined,
+			description: 'How many stories to return, from the top (up to 500).',
 			required: true,
+			defaultValue: 10,
 		}),
 	},
 	async run({ propsValue }) {
