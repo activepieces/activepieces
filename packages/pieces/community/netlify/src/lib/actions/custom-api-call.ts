@@ -18,7 +18,8 @@ export const customApiCall = createAction({
   props: {
     url: Property.ShortText({
       displayName: 'URL',
-      description: 'Path under https://api.netlify.com/api/v1, e.g. /sites or /sites/{site_id}/deploys. Full URLs must use that base.',
+      description: 'Path under https://api.netlify.com/api/v1, or a full URL on that base.',
+      placeholder: '/sites/{site_id}/deploys',
       required: true,
     }),
     method: Property.StaticDropdown({
@@ -30,9 +31,13 @@ export const customApiCall = createAction({
       },
     }),
     headers: Property.Object({ displayName: 'Headers', description: 'Extra headers. Authorization always comes from the connection.', required: false }),
-    queryParams: Property.Object({ displayName: 'Query Parameters', required: false }),
+    queryParams: Property.Object({ displayName: 'Query Parameters', description: 'Added to the URL as ?key=value pairs.', required: false }),
     body: Property.Json({ displayName: 'Body', description: 'JSON body for POST, PUT and PATCH.', required: false }),
   },
+  propertyGroups: [
+    { key: 'request', display: 'section', label: 'Request', icon: 'send', props: ['method', 'url', 'headers', 'queryParams'] },
+    { key: 'payload', display: 'section', label: 'Data to send', icon: 'code', props: ['body'] },
+  ],
   async run({ auth, propsValue }) {
     const response = await netlifyClient.request({
       auth,
