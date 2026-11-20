@@ -10,7 +10,7 @@ function siteDropdown({ includeUnverified }: { includeUnverified: boolean }) {
     displayName: 'Site URL',
     description: includeUnverified
       ? 'The Search Console property. Unverified properties are listed too.'
-      : 'The Search Console property. Only properties you have verified access to are listed.',
+      : 'Only verified properties are listed; unverified ones return no data.',
     required: true,
     refreshers: [],
     refreshOnSearch: false,
@@ -94,21 +94,34 @@ function feedpathText() {
   });
 }
 
-function dataState() {
+function dataState({ description, advanced, humanLabels }: BuilderOptions = {}) {
+  const humanLabelByValue: Record<string, string> = {
+    final: 'Final',
+    all: 'All (includes fresh data)',
+    hourly_all: 'Hourly',
+  };
   return Property.StaticDropdown({
     displayName: 'Data State',
     description:
+      description ??
       'Which data to include. "final" (default) has only finalized data; "all" adds fresh, still-changing data from the last days; "hourly_all" is required for the hour dimension and is selected automatically when you group by hour.',
     required: false,
-    options: { options: DATA_STATES.map((value) => ({ label: value, value })) },
+    ...(advanced !== undefined ? { advanced } : {}),
+    options: {
+      options: DATA_STATES.map((value) => ({
+        label: humanLabels === true ? humanLabelByValue[value] ?? value : value,
+        value,
+      })),
+    },
   });
 }
 
-function searchType() {
+function searchType({ description, advanced }: BuilderOptions = {}) {
   return Property.StaticDropdown({
     displayName: 'Search Type',
-    description: 'The Google surface to report on. Defaults to "web". Discover and Google News have no search queries.',
+    description: description ?? 'The Google surface to report on. Defaults to "web". Discover and Google News have no search queries.',
     required: false,
+    ...(advanced !== undefined ? { advanced } : {}),
     options: {
       options: [
         { label: 'Web', value: 'web' },
@@ -122,11 +135,12 @@ function searchType() {
   });
 }
 
-function aggregationType() {
+function aggregationType({ description, advanced }: BuilderOptions = {}) {
   return Property.StaticDropdown({
     displayName: 'Aggregation Type',
-    description: 'How results are aggregated. Defaults to "auto". "byProperty" cannot be used with the page dimension or a page filter.',
+    description: description ?? 'How results are aggregated. Defaults to "auto". "byProperty" cannot be used with the page dimension or a page filter.',
     required: false,
+    ...(advanced !== undefined ? { advanced } : {}),
     options: {
       options: [
         { label: 'Auto', value: 'auto' },
@@ -138,11 +152,12 @@ function aggregationType() {
   });
 }
 
-function filtersProp() {
+function filtersProp({ description, advanced, humanLabels }: BuilderOptions = {}) {
   return Property.Array({
     displayName: 'Filters',
-    description: 'Optional filters. All filters are combined with AND.',
+    description: description ?? 'Optional filters. All filters are combined with AND.',
     required: false,
+    ...(advanced !== undefined ? { advanced } : {}),
     properties: {
       dimension: Property.StaticDropdown({
         displayName: 'Dimension',
@@ -152,7 +167,7 @@ function filtersProp() {
           options: [
             { label: 'Query', value: 'query' },
             { label: 'Page', value: 'page' },
-            { label: 'Country (ISO 3166-1 alpha-3, e.g. "usa")', value: 'country' },
+            { label: humanLabels === true ? 'Country' : 'Country (ISO 3166-1 alpha-3, e.g. "usa")', value: 'country' },
             { label: 'Device', value: 'device' },
             { label: 'Search Appearance', value: 'searchAppearance' },
           ],
@@ -203,3 +218,5 @@ export const commonProps = {
   filters: filtersProp,
   dimensionsMulti,
 };
+
+type BuilderOptions = { description?: string; advanced?: boolean; humanLabels?: boolean };
