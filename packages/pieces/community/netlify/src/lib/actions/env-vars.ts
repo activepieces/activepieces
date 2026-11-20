@@ -49,7 +49,7 @@ function setFields() {
     }),
     isSecret: Property.Checkbox({
       displayName: 'Secret',
-      description: 'Hide the value in Netlify. Applies only when the variable is created.',
+      description: 'Hide the value in Netlify. Needs one deploy context; creation only.',
       required: false,
       defaultValue: false,
     }),
