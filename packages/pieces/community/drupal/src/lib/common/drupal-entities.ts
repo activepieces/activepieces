@@ -29,7 +29,7 @@ async function fetchEntityTypes(auth: DrupalAuthType, context: 'reading' | 'edit
     return {
       disabled: true,
       options: [],
-      placeholder: 'Please configure authentication first',
+      placeholder: 'Connect your Drupal account first',
     };
   }
 
@@ -37,14 +37,14 @@ async function fetchEntityTypes(auth: DrupalAuthType, context: 'reading' | 'edit
   const type = context === 'editing'
     ? 'form'
     : 'view';
-  const response = await makeJsonApiRequest(auth, `${auth.props.website_url}/jsonapi/entity_${type}_display/entity_${type}_display`, HttpMethod.GET);
-  const data = (response.body as any).data || [];
-  const allowedEntityTypes: string[] = [];
-  data.forEach((entityType: any) => {
-    allowedEntityTypes.push(entityType.attributes.targetEntityType + '--' + entityType.attributes.bundle);
-  });
-
   try {
+    const displayResponse = await makeJsonApiRequest(auth, `${auth.props.website_url}/jsonapi/entity_${type}_display/entity_${type}_display`, HttpMethod.GET);
+    const displayData = (displayResponse.body as any).data || [];
+    const allowedEntityTypes: string[] = [];
+    displayData.forEach((entityType: any) => {
+      allowedEntityTypes.push(entityType.attributes.targetEntityType + '--' + entityType.attributes.bundle);
+    });
+
     const response = await makeJsonApiRequest(auth, `${auth.props.website_url}/jsonapi`, HttpMethod.GET);
 
     if (response.status === 200) {
@@ -89,7 +89,7 @@ async function fetchEntityTypes(auth: DrupalAuthType, context: 'reading' | 'edit
   return {
     disabled: true,
     options: [],
-    placeholder: 'Error loading entity types',
+    placeholder: 'Could not load entity types',
   };
 }
 
@@ -98,7 +98,7 @@ export async function fetchEntityTypesForReading(auth?: DrupalAuthType) {
     return {
       disabled: true,
       options: [],
-      placeholder: 'Please configure authentication first',
+      placeholder: 'Connect your Drupal account first',
     };
   }
   return await fetchEntityTypes(auth, 'reading');
@@ -109,7 +109,7 @@ export async function fetchEntityTypesForEditing(auth?: DrupalAuthType) {
     return {
       disabled: true,
       options: [],
-      placeholder: 'Please configure authentication first',
+      placeholder: 'Connect your Drupal account first',
     };
   }
   return await fetchEntityTypes(auth, 'editing');
@@ -268,7 +268,7 @@ export async function isEntitySupportingWorkflow(auth: DrupalAuthType, entityTyp
         if (!entityTypes) {
           return;
         }
-        if (entityTypes[entityType].includes(bundle)) {
+        if (entityTypes[entityType]?.includes(bundle)) {
           found = true;
         }
       });
@@ -432,7 +432,7 @@ export async function buildFieldProperties(
 
     if (availableFields.length === 0) {
       properties['no_fields'] = Property.MarkDown({
-        value: 'No editable fields found for this entity type.'
+        value: 'This type has no fields this step can edit.'
       });
       return properties;
     }
@@ -482,7 +482,7 @@ export async function buildFieldProperties(
   } catch (e) {
     console.error('Failed to generate field properties', e);
     properties['error'] = Property.MarkDown({
-      value: 'Failed to load fields. Please check your authentication and entity type selection.'
+      value: 'Could not load the fields. Check your connection and the selected type.'
     });
   }
 
