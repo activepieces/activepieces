@@ -4,6 +4,7 @@ import path from 'path'
 import { arch } from 'process'
 import { execPromise } from '../utils/exec'
 import { engineNodeArgs } from './node-args'
+import { sandboxRuntimeRoot } from './runtime-root'
 import { CreateSandboxProcessParams, SandboxLogger, SandboxMount, SandboxProcessMaker } from './types'
 
 export function getIsolateExecutableName(nodeArch: NodeJS.Architecture = arch): string {
@@ -79,6 +80,7 @@ export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDire
             }
             assertSandboxEnv(sandboxEnv)
 
+            const runtimeRootPath = await sandboxRuntimeRoot.ensure({ log })
             await execPromise(`${isolateBinaryPath} --box-id=${boxId} --cleanup`)
             await execPromise(`${isolateBinaryPath} --box-id=${boxId} --init`)
 
@@ -97,14 +99,8 @@ export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDire
 
             const args = [
                 '--no-default-dirs',
-                '--dir=/bin/',
-                '--dir=/lib/',
-                '--dir=/lib64/:maybe',
-                '--dir=/usr/bin/',
-                '--dir=/usr/lib/',
-                '--dir=/usr/local/',
+                ...sandboxRuntimeRoot.mountArgs({ rootPath: runtimeRootPath }),
                 `--dir=/etc/=${etcDir}`,
-                '--dir=/usr/src/node_modules/',
                 '--dir=proc=proc:fs',
                 '--dir=/dev=/dev:dev',
                 // isolate uses /box internally as its initial working dir, even when --chdir overrides it.
