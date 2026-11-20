@@ -249,7 +249,9 @@ async function pollAndExecute(apiClient: WorkerToApiContract, runtime: Runtime, 
     const workerLog = logger.child({ workerIndex })
     workerLog.info('Polling worker started')
 
-    while (polling && connectionGeneration === generation) {
+    const isCurrentConnection = (): boolean => polling && connectionGeneration === generation
+
+    while (isCurrentConnection()) {
         markPollLoopIteration({ workerIndex, busy: false })
         if (!versionChecker.connectedAppVersionIsCompatible(workerLog)) {
             await sleep(VERSION_MISMATCH_POLL_PAUSE_MS)
@@ -261,6 +263,10 @@ async function pollAndExecute(apiClient: WorkerToApiContract, runtime: Runtime, 
             workerLog.error({ error: machineError }, 'Failed to build machine info')
             await sleep(20000)
             continue
+        }
+
+        if (!isCurrentConnection()) {
+            break
         }
 
         const { data: job, error: pollError } = await tryCatch(() => apiClient.poll(machineInfo))

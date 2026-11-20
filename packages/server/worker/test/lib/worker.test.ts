@@ -715,6 +715,53 @@ describe('worker integration', () => {
         }, 15_000)
     })
 
+    describe('poll loop of a dropped connection', () => {
+        it('does not poll for a job once its connection was replaced', async () => {
+            const realFetch = globalThis.fetch
+            let releaseHeldProbe: () => void = () => undefined
+            let firstPollLoopProbeHeld = false
+            vi.spyOn(globalThis, 'fetch').mockImplementation((input, init) => {
+                const url = typeof input === 'string' ? input : input.toString()
+                if (!url.endsWith('/v1/health')) {
+                    return realFetch(input, init)
+                }
+                const isFirstPollLoopProbe = createdRuntimes.length === 1 && !firstPollLoopProbeHeld
+                if (!isFirstPollLoopProbe) {
+                    return Promise.resolve(new Response('{}', { status: 200 }))
+                }
+                firstPollLoopProbeHeld = true
+                return new Promise((resolve) => {
+                    releaseHeldProbe = () => resolve(new Response('{}', { status: 200 }))
+                })
+            })
+
+            const serverSockets: Socket[] = []
+            ioServer.on('connection', (serverSocket) => serverSockets.push(serverSocket))
+            let pollCount = 0
+            registerRpcServer({
+                poll: vi.fn(() => {
+                    pollCount++
+                    return new Promise<null>(() => undefined)
+                }),
+            })
+
+            worker.start({
+                apiUrl: `http://127.0.0.1:${port}/api/`,
+                socketUrl: { url: `http://127.0.0.1:${port}`, path: '/api/socket.io' },
+                workerToken: 'test-token',
+            })
+
+            await waitFor(() => firstPollLoopProbeHeld)
+            serverSockets[0].disconnect(true)
+            await waitFor(() => createdRuntimes.length === 2 && pollCount === 1)
+
+            releaseHeldProbe()
+            await new Promise<void>((resolve) => setTimeout(resolve, 500))
+
+            expect(pollCount).toBe(1)
+        }, 15_000)
+    })
+
     describe('health endpoint', () => {
         let healthPort: number
 
