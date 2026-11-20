@@ -280,8 +280,8 @@ export const excelCommon = {
 		worksheetId: string;
 		tableId: string;
 		cloud?: string | null;
-	}) {
-		const response = await httpClient.sendRequest({
+	}): Promise<string[]> {
+		const response = await httpClient.sendRequest<{ value: { name: string }[] }>({
 			method: HttpMethod.GET,
 			url: `${getGraphBaseUrl(cloud)}/v1.0${drivePath}/items/${workbookId}/workbook/worksheets/${encodeURIComponent(worksheetId)}/tables/${encodeURIComponent(tableId)}/columns`,
 			authentication: {
@@ -290,8 +290,7 @@ export const excelCommon = {
 			},
 		});
 
-		const columnNames = response.body['value'].map((column: { name: any }) => column.name);
-		return columnNames;
+		return response.body.value.map((column) => column.name);
 	},
 	getLastUsedRow: async function (
 		workbookId: string,
