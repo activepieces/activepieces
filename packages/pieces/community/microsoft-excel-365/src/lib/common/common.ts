@@ -103,7 +103,7 @@ export const excelCommon = {
 			const tables: { id: string; name: string }[] = (
 				await httpClient.sendRequest<{ value: { id: string; name: string }[] }>({
 					method: HttpMethod.GET,
-					url: `${excelCommon.getBaseUrl(cloud)}/items/${workbook_id}/workbook/worksheets/${worksheet_id}/tables`,
+					url: `${excelCommon.getBaseUrl(cloud)}/items/${workbook_id}/workbook/worksheets/${encodeURIComponent(String(worksheet_id))}/tables`,
 					authentication: {
 						type: AuthenticationType.BEARER_TOKEN,
 						token: authProp['access_token'],
@@ -256,7 +256,7 @@ export const excelCommon = {
 			values: (string | number | boolean)[][];
 		}>({
 			method: HttpMethod.GET,
-			url: `${excelCommon.getBaseUrl(cloud)}/items/${workbookId}/workbook/worksheets/${worksheetId}/usedRange(valuesOnly=true)`,
+			url: `${excelCommon.getBaseUrl(cloud)}/items/${workbookId}/workbook/worksheets/${encodeURIComponent(worksheetId)}/usedRange(valuesOnly=true)`,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
 				token: accessToken,
@@ -274,7 +274,7 @@ export const excelCommon = {
 	) {
 		const response = await httpClient.sendRequest({
 			method: HttpMethod.GET,
-			url: `${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}/columns`,
+			url: `${drivePath}/items/${workbookId}/workbook/worksheets/${encodeURIComponent(worksheetId)}/tables/${tableId}/columns`,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
 				token: accessToken,
@@ -290,7 +290,7 @@ export const excelCommon = {
 		accessToken: string,
 		cloud?: string | null
 	): Promise<number> {
-		const url = `${excelCommon.getBaseUrl(cloud)}/items/${workbookId}/workbook/worksheets/${worksheetId}/usedRange`;
+		const url = `${excelCommon.getBaseUrl(cloud)}/items/${workbookId}/workbook/worksheets/${encodeURIComponent(worksheetId)}/usedRange`;
 
 		const request: HttpRequest = {
 			method: HttpMethod.GET,
@@ -314,7 +314,7 @@ export const excelCommon = {
 		accessToken: string,
 		cloud?: string | null
 	): Promise<string> {
-		const url = `${excelCommon.getBaseUrl(cloud)}/items/${workbookId}/workbook/worksheets/${worksheetId}/usedRange`;
+		const url = `${excelCommon.getBaseUrl(cloud)}/items/${workbookId}/workbook/worksheets/${encodeURIComponent(worksheetId)}/usedRange`;
 
 		const request: HttpRequest = {
 			method: HttpMethod.GET,
@@ -347,7 +347,7 @@ export const excelCommon = {
 			values: (string | number | boolean)[][];
 		}>({
 			method: HttpMethod.GET,
-			url: `${basePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/usedRange(valuesOnly=true)`,
+			url: `${basePath}/items/${workbookId}/workbook/worksheets/${encodeURIComponent(worksheetId)}/usedRange(valuesOnly=true)`,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
 				token: accessToken,

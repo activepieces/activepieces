@@ -33,7 +33,7 @@ export const appendTableRowsAction = createAction({
 
     const client = createMSGraphClient(auth['access_token'], cloud);
     const response = await client
-      .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}/rows`)
+      .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${encodeURIComponent(worksheetId)}/tables/${tableId}/rows`)
       .post({ values: valuesToAppend });
 
     return response;
