@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { braveSearchAuth } from '../auth';
+import { braveSearchCommon } from '../common';
 
 export const braveWebSearchAction = createAction({
   auth: braveSearchAuth,
@@ -17,30 +18,37 @@ export const braveWebSearchAction = createAction({
   props: {
     query: Property.ShortText({
       displayName: 'Query',
-      description: 'The search query',
+      description: 'What to search for, up to 400 characters.',
+      placeholder: 'best open source workflow automation tools',
       required: true,
     }),
     count: Property.Number({
-      displayName: 'Count',
-      description: 'Number of results (1-20)',
+      displayName: 'Number of Results',
+      description:
+        'How many results to return, up to 20. Brave may return fewer.',
       required: false,
       defaultValue: 10,
+      display: 'stepper',
+      min: 1,
+      max: 20,
+      step: 1,
     }),
   },
   async run(context) {
-    const query = context.propsValue.query;
-    const count = context.propsValue.count;
+    const { query, count } = context.propsValue;
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: 'https://api.search.brave.com/res/v1/web/search',
+      url: `${braveSearchCommon.baseUrl}/web/search`,
       headers: {
         'X-Subscription-Token': context.auth.secret_text,
         Accept: 'application/json',
       },
       queryParams: {
         q: query,
-        count: count as unknown as string,
+        ...(typeof count === 'number' && Number.isFinite(count)
+          ? { count: String(Math.min(20, Math.max(1, Math.round(count)))) }
+          : {}),
       },
     });
 
