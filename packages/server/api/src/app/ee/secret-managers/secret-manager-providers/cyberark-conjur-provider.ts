@@ -73,6 +73,6 @@ const conjurApi = async ({
             ...(typeof body === 'string' && { 'Content-Type': 'text/plain' }),
         },
         data: body,
-        responseType: typeof body === 'string' ? 'text' : 'json',
+        responseType: 'text',
     })
 }
