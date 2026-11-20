@@ -16,6 +16,8 @@ jobs:
     if: |
       github.event.pull_request.user.login == 'automated-commits-ap' &&
       github.event.pull_request.head.ref == 'l10n_main'
+    env:
+      HEAD_REF: ${{ github.event.pull_request.head.ref }}
     
     steps:
       - name: Checkout
@@ -59,10 +61,10 @@ jobs:
         run: |
           git fetch origin main:main
           # Fetch the PR branch to make it available locally
-          git fetch origin ${{ github.event.pull_request.head.ref }}:${{ github.event.pull_request.head.ref }}
+          git fetch origin "$HEAD_REF:$HEAD_REF"
           # Reset branch to match remote repository
           echo "Resetting branch to match remote repository..."
-          git reset --hard origin/${{ github.event.pull_request.head.ref }}
+          git reset --hard "origin/$HEAD_REF"
           git clean -fd
 
       - name: Merge latest main
@@ -107,7 +109,7 @@ jobs:
             echo "No changes detected, skipping commit"
             echo "has_changes=false" >> $GITHUB_OUTPUT
           fi
-          git push origin HEAD:${{ github.event.pull_request.head.ref }}
+          git push origin "HEAD:$HEAD_REF"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
