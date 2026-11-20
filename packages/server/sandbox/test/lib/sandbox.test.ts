@@ -117,6 +117,25 @@ describe('createSandboxRuntime', () => {
         expect((error as ActivepiecesError).error.code).toBe(ErrorCode.VALIDATION)
     })
 
+    it('refuses to run after shutdown and boots no sandbox', async () => {
+        const runtime = createSandboxRuntime({ concurrency: 1, basePath: '/tmp', getSettings: () => ({} as never), log })
+        await runtime.shutdown(log)
+        const error = await runtime.execute(buildExecuteParams(0)).catch((e: unknown) => e)
+        expect(error).toBeInstanceOf(ActivepiecesError)
+        expect((error as ActivepiecesError).error.code).toBe(ErrorCode.SANDBOX_INTERNAL_ERROR)
+        expect(acquiredBoxIds).toEqual([])
+    })
+
+    it('does not start the sandbox when shutdown lands while provisioning', async () => {
+        const runtime = createSandboxRuntime({ concurrency: 1, basePath: '/tmp', getSettings: () => ({} as never), log })
+        const running = runtime.execute(buildExecuteParams(0)).catch((e: unknown) => e)
+        await runtime.shutdown(log)
+        const error = await running
+        expect((error as ActivepiecesError).error.code).toBe(ErrorCode.SANDBOX_INTERNAL_ERROR)
+        expect(runTimeouts).toEqual([])
+        expect(managerCalls.invalidate).toBe(1)
+    })
+
     it('defaults to a single box when concurrency is omitted', async () => {
         const { createSandboxManager } = await import('../../src/lib/sandbox-manager')
         createSandboxRuntime({ basePath: '/tmp', getSettings: () => ({} as never), log })
