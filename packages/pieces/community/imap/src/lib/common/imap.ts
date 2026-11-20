@@ -149,10 +149,12 @@ async function deleteEmail<T extends { success: boolean }>({
 async function fetchEmails({
   auth,
   lastPoll,
+  lastPollUids,
   mailbox,
 }: {
   auth: ImapAuth;
   lastPoll: number;
+  lastPollUids: number[];
   mailbox: string;
 }): Promise<Message[]> {
   return performMailboxOperation(auth, mailbox, async (imapClient) => {
@@ -165,33 +167,34 @@ async function fetchEmails({
       { uid: true, internalDate: true }
     );
     const newUids = candidates
-      .filter((message) => (arrivalEpoch(message) ?? Infinity) > after)
+      .filter((message) => {
+        const arrivedAt = arrivalEpoch(message) ?? Infinity;
+        return (
+          arrivedAt > after ||
+          (arrivedAt === after && !lastPollUids.includes(message.uid))
+        );
+      })
       .map((message) => message.uid);
     if (newUids.length === 0) {
       return [];
     }
 
-    const downloaded = await imapClient.fetchAll(
+    const messages: Message[] = [];
+    for await (const message of imapClient.fetch(
       newUids.join(','),
       { uid: true, internalDate: true, source: true },
       { uid: true }
-    );
-    const messages = await Promise.all(
-      downloaded.map(async (message) => {
-        if (isNil(message.source)) {
-          return [];
-        }
-        const parsed = await simpleParser(message.source);
-        return [
-          {
-            data: { ...parsed, uid: message.uid },
-            epochMilliSeconds:
-              arrivalEpoch(message) ?? dayjs(parsed.date).valueOf(),
-          },
-        ];
-      })
-    );
-    return messages.flat();
+    )) {
+      if (isNil(message.source)) {
+        continue;
+      }
+      const parsed = await simpleParser(message.source);
+      messages.push({
+        data: { ...parsed, uid: message.uid },
+        epochMilliSeconds: arrivalEpoch(message) ?? dayjs(parsed.date).valueOf(),
+      });
+    }
+    return messages;
   });
 }
 

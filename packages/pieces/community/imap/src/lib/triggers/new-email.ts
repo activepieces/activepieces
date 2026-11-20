@@ -18,6 +18,7 @@ import { newEmailTriggerOutputSchema } from '../output-schemas';
 
 const FILE_SIZE_ERROR_NAME = 'FileSizeError';
 const LAST_POLL_KEY = 'lastPoll';
+const LAST_POLL_UIDS_KEY = 'lastPollUids';
 const TEST_SAMPLE_SIZE = 5;
 
 const filterInstructions =
@@ -51,6 +52,7 @@ export const newEmail = createTrigger({
     const messages = await fetchEmails({
       auth: context.auth,
       lastPoll: 0,
+      lastPollUids: [],
       mailbox: context.propsValue.mailbox as string,
     });
     return Promise.all(
@@ -66,6 +68,7 @@ export const newEmail = createTrigger({
       return;
     }
     await context.store.put(LAST_POLL_KEY, Date.now());
+    await context.store.put<number[]>(LAST_POLL_UIDS_KEY, []);
   },
 
   async onDisable() {
@@ -75,26 +78,31 @@ export const newEmail = createTrigger({
   async run(context) {
     const storedLastPoll = await context.store.get<number>(LAST_POLL_KEY);
     const lastPoll = Math.min(storedLastPoll ?? Date.now(), Date.now());
-    const messages = await fetchEmails({
+    const lastPollUids =
+      (await context.store.get<number[]>(LAST_POLL_UIDS_KEY)) ?? [];
+    const newMessages = await fetchEmails({
       auth: context.auth,
       lastPoll,
+      lastPollUids,
       mailbox: context.propsValue.mailbox as string,
     });
-    const newMessages = messages.filter(
-      (message) => message.epochMilliSeconds > lastPoll
-    );
     const items = await Promise.all(
       newMessages.map((message) =>
         withStoredAttachments({ message, files: context.files })
       )
     );
-    await context.store.put(
-      LAST_POLL_KEY,
-      newMessages.reduce(
-        (latest, message) => Math.max(latest, message.epochMilliSeconds),
-        lastPoll
-      )
+    const nextLastPoll = newMessages.reduce(
+      (latest, message) => Math.max(latest, message.epochMilliSeconds),
+      lastPoll
     );
+    const nextLastPollUids = [
+      ...(nextLastPoll === lastPoll ? lastPollUids : []),
+      ...newMessages
+        .filter((message) => message.epochMilliSeconds === nextLastPoll)
+        .map((message) => message.data.uid),
+    ];
+    await context.store.put(LAST_POLL_KEY, nextLastPoll);
+    await context.store.put<number[]>(LAST_POLL_UIDS_KEY, nextLastPollUids);
     return items;
   },
 
