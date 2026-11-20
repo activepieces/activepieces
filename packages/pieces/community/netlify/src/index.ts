@@ -21,7 +21,7 @@ import { newFormSubmission } from './lib/triggers/new-form-submission';
 export const netlify = createPiece({
   displayName: 'Netlify',
   auth: netlifyAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.88.2',
   description: 'Netlify is a platform for building and deploying websites and apps.',
   logoUrl: 'https://cdn.activepieces.com/pieces/netlify.png',
   authors: ['sparkybug'],
