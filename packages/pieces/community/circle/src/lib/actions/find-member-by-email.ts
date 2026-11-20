@@ -14,8 +14,9 @@ export const findMemberByEmail = createAction({
     aiMetadata: { description: 'Looks up a single community member by their exact email address. Use to resolve an email into a member record (e.g. to obtain the member ID) before acting on them. Read-only and idempotent.', idempotent: true },
     props: {
         email: Property.ShortText({
-            displayName: 'Email',
-            description: 'The email address of the member to find.',
+            displayName: 'Member Email',
+            description: 'Email address of the member to find.',
+            placeholder: 'member@example.com',
             required: true,
         }),
     },

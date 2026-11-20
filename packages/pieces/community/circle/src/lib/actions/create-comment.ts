@@ -23,22 +23,27 @@ export const createComment = createAction({
 		space_id: spaceIdDropdown,
 		post_id: postIdDropdown,
 		body: Property.LongText({
-			displayName: 'Comment Body',
-			description: 'The content of the comment.',
+			displayName: 'Comment',
+			description: 'The text of the comment.',
 			required: true,
 		}),
 		parent_comment_id: Property.Number({
-			displayName: 'Parent Comment ID (Optional)',
-			description: 'ID of the comment to reply to. Leave empty if not a reply.',
+			displayName: 'Reply To Comment ID',
+			description: 'Leave empty for a top-level comment.',
 			required: false,
 		}),
 		skip_notifications: Property.Checkbox({
 			displayName: 'Skip Notifications',
-			description: 'Skip sending notifications for this comment?',
+			description: "Don't notify members about this comment.",
 			required: false,
+			advanced: true,
 			defaultValue: false,
 		}),
 	},
+	propertyGroups: [
+		{ key: 'post', display: 'section', label: 'Post', icon: 'inbox', props: ['space_id', 'post_id'] },
+		{ key: 'comment', display: 'section', label: 'Comment', icon: 'reply', props: ['body', 'parent_comment_id'] },
+	],
 	async run(context) {
 		const { post_id, body, parent_comment_id, skip_notifications } = context.propsValue;
 

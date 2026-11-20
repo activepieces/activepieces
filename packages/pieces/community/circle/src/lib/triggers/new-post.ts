@@ -18,7 +18,10 @@ import dayjs from 'dayjs';
 const polling: Polling<AppConnectionValueForAuthProperty<typeof circleAuth>, { space_id?: number }> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
-		const spaceId = propsValue.space_id!;
+		const spaceId = propsValue.space_id;
+		if (spaceId === undefined || spaceId === null) {
+			return [];
+		}
 
 		let page = 1;
 		let hasMorePages = true;
@@ -38,7 +41,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof circleAuth>, { s
 					per_page: '60',
 				},
 				headers: {
-					Authorization: `Bearer ${auth}`,
+					Authorization: `Bearer ${auth.secret_text}`,
 					'Content-Type': 'application/json',
 				},
 			});
