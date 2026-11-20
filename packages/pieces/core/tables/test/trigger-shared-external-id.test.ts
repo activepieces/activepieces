@@ -51,11 +51,18 @@ describe.each([
     expect(tablesApi.webhooks).toEqual([expect.objectContaining({ tableId: 'original-table', events: [event] })]);
   });
 
-  test('enabling and disabling without a selected table make no requests', async () => {
+  test('enabling without a selected table refuses to turn on', async () => {
+    tablesApi.tables = [{ id: 'original-table', externalId: 'leads' }];
+
+    await expect(trigger.onEnable(hookContext(memoryStore(), ''))).rejects.toThrow('Select a table for this step');
+
+    expect(tablesApi.requests).toEqual([]);
+  });
+
+  test('disabling without a selected table makes no requests', async () => {
     tablesApi.tables = [{ id: 'original-table', externalId: 'leads' }];
     const store = memoryStore();
 
-    await trigger.onEnable(hookContext(store, ''));
     await trigger.onDisable(hookContext(store, ''));
 
     expect(tablesApi.requests).toEqual([]);

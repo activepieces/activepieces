@@ -20,9 +20,6 @@ export const updatedRecordTrigger = createTrigger({
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context) {
         const tableExternalId = context.propsValue.table_id;
-        if ((tableExternalId ?? '').toString().length === 0) {
-            return;
-        }
         const tableId = await tablesCommon.convertTableExternalIdToId(tableExternalId, context);
 
         const { id: webhookId } = await tablesCommon.createWebhook({
