@@ -64,6 +64,12 @@ export const fileTransportHeaders = {
     TYPE: 'x-ap-file-type',
     NAME: 'x-ap-file-name',
     ENCODED_NAME: 'x-ap-file-name-encoded',
+    SIZE: 'x-ap-file-size',
+    UPLOAD_MODE: 'x-ap-upload-mode',
+} as const
+
+export const fileUploadModes = {
+    SIGNED_URL: 'signed-url',
 } as const
 
 export const ENGINE_WRITABLE_FILE_TYPES: ReadonlySet<FileType> = new Set([

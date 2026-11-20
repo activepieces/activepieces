@@ -11,7 +11,7 @@ import { securityAccess } from '../core/security/authorization/fastify-security'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { fileService, getDownloadName } from './file.service'
-import { enforceByteLimit, ENGINE_WRITABLE_FILE_TYPES, filesService, fileTransportHeaders } from './files-service'
+import { enforceByteLimit, ENGINE_WRITABLE_FILE_TYPES, filesService, fileTransportHeaders, fileUploadModes } from './files-service'
 import { signedFileTransport } from './signed-file-transport'
 
 export const filesController: FastifyPluginAsyncZod = async (app) => {
@@ -37,7 +37,7 @@ export const filesController: FastifyPluginAsyncZod = async (app) => {
             const fileName = parseFileNameHeader(request.headers)
             const contentEncoding = parseStringHeader(request.headers['content-encoding'])
             const compression = contentEncoding === 'zstd' ? FileCompression.ZSTD : FileCompression.NONE
-            const contentLength = Number(request.headers['content-length'] ?? 0)
+            const signedUrlOnly = parseStringHeader(request.headers[fileTransportHeaders.UPLOAD_MODE]) === fileUploadModes.SIGNED_URL
 
             const readUrl = await filesService.constructReadUrl({
                 fileId,
@@ -46,11 +46,20 @@ export const filesController: FastifyPluginAsyncZod = async (app) => {
             })
             void reply.header(fileTransportHeaders.READ_URL, readUrl)
 
-            // A presigned single PUT needs Content-Length; a streamed upload (chunked, no
-            // length header) can't redirect, so it falls through and streams in the handler.
-            if (!signedFileTransport.shouldRedirectForType(fileType) || isNil(request.headers['content-length'])) {
+            if (!signedFileTransport.shouldRedirectForType(fileType)) {
+                if (signedUrlOnly) {
+                    return reply.status(StatusCodes.NO_CONTENT).send()
+                }
                 return
             }
+            // A presigned single PUT needs Content-Length; a streamed upload (chunked, no
+            // length header) can't redirect, so it falls through and streams in the handler.
+            if (!signedUrlOnly && isNil(request.headers['content-length'])) {
+                return
+            }
+            const size = signedUrlOnly
+                ? parseFileSizeHeader(request.headers[fileTransportHeaders.SIZE])
+                : Number(request.headers['content-length'] ?? 0)
             const file = await fileService(request.log).save({
                 fileId,
                 projectId: principal.projectId,
@@ -58,7 +67,7 @@ export const filesController: FastifyPluginAsyncZod = async (app) => {
                 type: fileType,
                 fileName,
                 compression,
-                size: contentLength,
+                size,
                 data: null,
             })
             const redirected = await signedFileTransport.maybeRedirectToS3Put({
@@ -230,6 +239,18 @@ function parseFileTypeHeader(value: unknown): FileType {
         })
     }
     return raw as FileType
+}
+
+function parseFileSizeHeader(value: unknown): number {
+    const raw = parseStringHeader(value) ?? ''
+    const size = Number(raw)
+    if (!/^\d+$/.test(raw) || !Number.isSafeInteger(size)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: `Header ${fileTransportHeaders.SIZE} must be a non-negative integer when ${fileTransportHeaders.UPLOAD_MODE} is ${fileUploadModes.SIGNED_URL}` },
+        })
+    }
+    return size
 }
 
 function parseFileNameHeader(headers: IncomingHttpHeaders): string | undefined {
