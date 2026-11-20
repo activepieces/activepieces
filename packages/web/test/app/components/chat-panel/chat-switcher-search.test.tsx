@@ -75,6 +75,8 @@ describe('ChatSwitcher search', () => {
           openedBy="keyboard"
           onOpenChange={vi.fn()}
           onSelect={vi.fn()}
+          onShowAll={vi.fn()}
+          onTitleEdited={vi.fn()}
         />
       </QueryClientProvider>,
     );
