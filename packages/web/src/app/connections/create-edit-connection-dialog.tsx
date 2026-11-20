@@ -109,7 +109,8 @@ function CreateOrEditConnectionSection({
         }),
         ...(isGlobalConnection ? { scope: AppConnectionScope.PLATFORM } : {}),
         projectIds: reconnectConnection?.projectIds ?? [],
-        preSelectForNewProjects: false,
+        preSelectForNewProjects:
+          reconnectConnection?.preSelectForNewProjects ?? false,
         pieceVersion: piece.version,
       },
     },
