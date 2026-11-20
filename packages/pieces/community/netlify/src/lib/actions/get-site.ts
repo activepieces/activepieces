@@ -9,7 +9,7 @@ export const getSite = createAction({
   name: 'get_site',
   classification: 'READ',
   displayName: 'Get Site',
-  description: 'Get the details of a site, including its URLs, build settings and published deploy.',
+  description: "Get a site's details: URLs, build settings and published deploy.",
   audience: 'human',
   aiMetadata: {
     description:

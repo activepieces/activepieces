@@ -7,8 +7,9 @@ import { netlifyProps } from '../common/props';
 function clearCache() {
   return Property.Checkbox({
     displayName: 'Clear Build Cache',
-    description: 'Clear the build cache before building.',
+    description: 'Rebuild from scratch. Slower, but fixes builds that use stale files.',
     required: false,
+    advanced: true,
     defaultValue: false,
   });
 }
