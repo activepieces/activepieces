@@ -112,6 +112,9 @@ vi.mock('@/components/providers/socket-provider', () => ({
 vi.mock('@/lib/authentication-session', () => ({
   authenticationSession: {
     getCurrentUserId: () => 'viewer',
+    getPlatformId: () => 'platform',
+    getToken: () => 'token',
+    subscribe: () => () => undefined,
   },
 }));
 

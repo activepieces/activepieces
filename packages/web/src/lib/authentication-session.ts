@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/core-utils';
+import { isNil, tryCatchSync } from '@activepieces/core-utils';
 import {
   AuthenticationResponse,
   Principal,
@@ -18,6 +18,10 @@ const projectIdKey = 'projectId';
 export const authenticationSession = {
   setProjectId(projectId: string) {
     saveProjectId(projectId);
+  },
+  subscribe(listener: () => void): () => void {
+    window.addEventListener('storage', listener);
+    return () => window.removeEventListener('storage', listener);
   },
   saveResponse(response: AuthenticationResponse, isEmbedding: boolean) {
     if (isEmbedding) {
@@ -61,7 +65,11 @@ export const authenticationSession = {
       return lastUsedProjectId;
     }
     const decodedJwt = getDecodedJwt(token);
-    if ('projectId' in decodedJwt && typeof decodedJwt.projectId === 'string') {
+    if (
+      !isNil(decodedJwt) &&
+      'projectId' in decodedJwt &&
+      typeof decodedJwt.projectId === 'string'
+    ) {
       return decodedJwt.projectId;
     }
     return null;
@@ -71,8 +79,7 @@ export const authenticationSession = {
     if (isNil(token)) {
       return null;
     }
-    const decodedJwt = getDecodedJwt(token);
-    return decodedJwt.id;
+    return getDecodedJwt(token)?.id ?? null;
   },
   appendProjectRoutePrefix(path: string): string {
     const projectId = this.getProjectId();
@@ -88,7 +95,7 @@ export const authenticationSession = {
       return null;
     }
     const decodedJwt = getDecodedJwt(token);
-    if ('platform' in decodedJwt && decodedJwt.platform) {
+    if (!isNil(decodedJwt) && 'platform' in decodedJwt && decodedJwt.platform) {
       return decodedJwt.platform.id;
     }
     return null;
@@ -98,8 +105,7 @@ export const authenticationSession = {
     if (isNil(token)) {
       return false;
     }
-    const decodedJwt = jwtDecode<{ type: string }>(token);
-    return decodedJwt.type === PrincipalType.ONBOARDING;
+    return getDecodedJwt(token)?.type === PrincipalType.ONBOARDING;
   },
   async switchToPlatform(platformId: string) {
     if (authenticationSession.getPlatformId() === platformId) {
@@ -129,6 +135,7 @@ export const authenticationSession = {
   clearSession() {
     removeProjectId();
     ApStorage.getInstance().removeItem(tokenKey);
+    window.dispatchEvent(new Event('storage'));
   },
   logOut() {
     const hadSession = !isNil(this.getToken());
@@ -140,8 +147,8 @@ export const authenticationSession = {
   },
 };
 
-function getDecodedJwt(token: string): Principal {
-  return jwtDecode<Principal>(token);
+function getDecodedJwt(token: string): Principal | null {
+  return tryCatchSync(() => jwtDecode<Principal>(token)).data ?? null;
 }
 
 function saveProjectIdOrClear(projectId: string | null | undefined): void {
