@@ -172,12 +172,12 @@ export const excelCommon = {
 		displayName: 'Values',
 		description: 'The values to insert',
 		required: true,
-		refreshers: ['storageSource','siteId','documentId','workbook_id', 'worksheet_id', 'tableId'],
-		props: async ({ auth, storageSource, siteId, documentId, workbook_id, worksheet_id, tableId }) => {
+		refreshers: ['storageSource','siteId','documentId','workbookId', 'worksheetId', 'tableId'],
+		props: async ({ auth, storageSource, siteId, documentId, workbookId, worksheetId, tableId }) => {
 			if (
 				!auth ||
-				(workbook_id ?? '').toString().length === 0 ||
-				(worksheet_id ?? '').toString().length === 0 ||
+				(workbookId ?? '').toString().length === 0 ||
+				(worksheetId ?? '').toString().length === 0 ||
 				(tableId ?? '').toString().length === 0
 			) {
 				return {};
@@ -188,13 +188,14 @@ export const excelCommon = {
 			const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
 			const drivePath = getDrivePath(storageSource as string, siteId as string, documentId as string);
 
-			const headers = await excelCommon.getTableHeaders(
+			const headers = await excelCommon.getTableHeaders({
 				drivePath,
-				workbook_id as unknown as string,
-				authProp['access_token'],
-				worksheet_id as unknown as string,
-				tableId as unknown as string
-			);
+				workbookId: String(workbookId),
+				accessToken: authProp['access_token'],
+				worksheetId: String(worksheetId),
+				tableId: String(tableId),
+				cloud: authProp.props?.['cloud'] as string | undefined,
+			});
 
 			const properties: {
 				[key: string]: any;
@@ -265,16 +266,24 @@ export const excelCommon = {
 
 		return response.body.values?.[0] ?? [];
 	},
-	getTableHeaders: async function (
-		drivePath: string,
-		workbookId: string,
-		accessToken: string,
-		worksheetId: string,
-		tableId: string
-	) {
+	getTableHeaders: async function ({
+		drivePath,
+		workbookId,
+		accessToken,
+		worksheetId,
+		tableId,
+		cloud,
+	}: {
+		drivePath: string;
+		workbookId: string;
+		accessToken: string;
+		worksheetId: string;
+		tableId: string;
+		cloud?: string | null;
+	}) {
 		const response = await httpClient.sendRequest({
 			method: HttpMethod.GET,
-			url: `${drivePath}/items/${workbookId}/workbook/worksheets/${encodeURIComponent(worksheetId)}/tables/${tableId}/columns`,
+			url: `${getGraphBaseUrl(cloud)}/v1.0${drivePath}/items/${workbookId}/workbook/worksheets/${encodeURIComponent(worksheetId)}/tables/${encodeURIComponent(tableId)}/columns`,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
 				token: accessToken,

@@ -64,13 +64,14 @@ const polling: Polling<
             headers = cachedHeaders
         } else {
             try {
-                headers = await excelCommon.getTableHeaders(
+                headers = await excelCommon.getTableHeaders({
                     drivePath,
                     workbookId,
-                    auth.access_token,
+                    accessToken: auth.access_token,
                     worksheetId,
-                    tableId
-                );
+                    tableId,
+                    cloud: auth.props?.['cloud'] as string | undefined,
+                });
                 await store.put('table_headers', headers);
             } catch (error) {
                 headers = []
