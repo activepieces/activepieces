@@ -33,11 +33,14 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof discordAuth>, { 
     items: async ({ auth, propsValue: { guildId } }) => {
       if (!guildId) return [];
 
+      const scanStartedAt = Date.now();
       const members = await listAllMembers({ auth, guildId });
-      return members.map((item) => ({
-        epochMilliSeconds: dayjs(item.joined_at).valueOf(),
-        data: item,
-      }));
+      return members
+        .map((item) => ({
+          epochMilliSeconds: dayjs(item.joined_at).valueOf(),
+          data: item,
+        }))
+        .filter((item) => item.epochMilliSeconds <= scanStartedAt);
     },
   };
 
