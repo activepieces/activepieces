@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { googleSearchConsoleAuth } from '../auth';
 import { commonProps } from '../common';
 import { gscInputs } from '../common/inputs';
@@ -10,7 +10,7 @@ export const searchAnalytics = createAction({
   name: 'search_analytics',
   classification: 'SEARCH',
   displayName: 'Search Analytics',
-  description: 'Query traffic data for your site using the Google Search Console API.',
+  description: 'Gets clicks, impressions, CTR and position for a site.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -19,37 +19,69 @@ export const searchAnalytics = createAction({
   },
   props: {
     siteUrl: commonProps.siteUrl,
+    info: Property.MarkDown({
+      value: 'Search Console data lags 2–3 days and is kept for about 16 months.',
+      variant: MarkdownVariant.INFO,
+    }),
     startDate: Property.DateTime({
       displayName: 'Start Date',
-      description: 'First day of the range (YYYY-MM-DD), in Pacific Time. Search Console data lags 2-3 days and is kept for about 16 months.',
+      description: 'First day of the range, in Pacific Time.',
+      placeholder: '2026-01-01',
+      width: 'half',
       required: true,
     }),
     endDate: Property.DateTime({
       displayName: 'End Date',
-      description: 'Last day of the range (YYYY-MM-DD, inclusive), in Pacific Time. A range that covers only today or yesterday usually has no data yet.',
+      description: 'Last day of the range, inclusive.',
+      placeholder: '2026-01-31',
+      width: 'half',
       required: true,
     }),
     dimensions: Property.Array({
       displayName: 'Dimensions',
       description:
-        'The dimensions to group results by, in order. Valid values: "query", "page", "country", "device", "searchAppearance", "date", "hour". Each row of the output gets one column per dimension.',
+        'Group rows by query, page, country, device, searchAppearance, date or hour, in order. Empty: one totals row.',
       required: false,
     }),
-    searchType: commonProps.searchType(),
-    filters: commonProps.filters(),
-    aggregationType: commonProps.aggregationType(),
-    dataState: commonProps.dataState(),
+    searchType: commonProps.searchType({ description: 'Default: Web. Discover and Google News have no search queries.' }),
+    filters: commonProps.filters({ description: 'Only rows that match every filter are returned.', humanLabels: true }),
     rowLimit: Property.Number({
       displayName: 'Row Limit',
-      description: 'The maximum number of rows to return, from 1 to 25,000. Defaults to 1,000.',
+      description: 'Rows to return, from 1 to 25,000. Default: 1,000.',
       required: false,
+    }),
+    aggregationType: commonProps.aggregationType({
+      description: 'Default: Auto. By Property cannot be used with page dimensions or filters.',
+      advanced: true,
+    }),
+    dataState: commonProps.dataState({
+      description: 'Default: Final. Hourly is needed for, and set by, the hour dimension.',
+      advanced: true,
+      humanLabels: true,
     }),
     startRow: Property.Number({
       displayName: 'Start Row',
-      description: 'Zero-based index of the first row to return. Use with Row Limit to page through results. Defaults to 0.',
+      description: 'Rows to skip, to page through results. Default: 0.',
       required: false,
+      advanced: true,
     }),
   },
+  propertyGroups: [
+    {
+      key: 'period',
+      display: 'section',
+      label: 'Site and Dates',
+      icon: 'calendar',
+      props: ['siteUrl', 'info', 'startDate', 'endDate'],
+    },
+    {
+      key: 'report',
+      display: 'section',
+      label: 'Report',
+      icon: 'filter',
+      props: ['dimensions', 'searchType', 'filters', 'rowLimit'],
+    },
+  ],
   outputSchema: gscOutputSchemas.searchAnalytics,
   async run(context) {
     const props = context.propsValue;

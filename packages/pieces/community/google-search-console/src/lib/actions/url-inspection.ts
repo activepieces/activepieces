@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { googleSearchConsoleAuth } from '../auth';
 import { commonProps } from '../common';
 import { gscInputs } from '../common/inputs';
@@ -9,8 +9,8 @@ export const urlInspection = createAction({
   auth: googleSearchConsoleAuth,
   name: 'urlInspection',
   classification: 'READ',
-  displayName: 'URL Inspection',
-  description: "Use the URL Inspection action to check the status and presence of a specific page within Google's index.",
+  displayName: 'Inspect URL',
+  description: 'Checks whether Google has indexed a page, and why.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -20,20 +20,36 @@ export const urlInspection = createAction({
   props: {
     siteUrl: commonProps.siteUrl,
     url: Property.ShortText({
-      displayName: 'URL to Inspect',
-      description: 'The full URL of the page. It must belong to the selected property.',
+      displayName: 'Page URL',
+      description: 'The full page URL. It must belong to the selected site.',
+      placeholder: 'https://www.example.com/page',
       required: true,
     }),
     languageCode: Property.ShortText({
       displayName: 'Language Code',
-      description: 'Optional language for the issue messages, as a BCP-47 code such as "en-US" or "de". Defaults to English.',
+      description: 'Language of the issue messages. Default: English.',
+      placeholder: 'en-US',
       required: false,
+      advanced: true,
+    }),
+    info: Property.MarkDown({
+      value: 'Google allows 2,000 inspections per site per day.',
+      variant: MarkdownVariant.INFO,
     }),
   },
+  propertyGroups: [
+    {
+      key: 'page',
+      display: 'section',
+      label: 'Page',
+      icon: 'file',
+      props: ['siteUrl', 'url', 'info'],
+    },
+  ],
   outputSchema: gscOutputSchemas.urlInspection,
   async run(context) {
     const siteUrl = gscInputs.siteUrl({ value: context.propsValue.siteUrl });
-    const inspectionUrl = gscInputs.urlInProperty({ value: context.propsValue.url, label: 'URL to Inspect', site: siteUrl });
+    const inspectionUrl = gscInputs.urlInProperty({ value: context.propsValue.url, label: 'Page URL', site: siteUrl });
     const languageCode = gscInputs.languageCode({ value: context.propsValue.languageCode });
     return gscOps.inspectUrl({ auth: context.auth, siteUrl, inspectionUrl, languageCode });
   },

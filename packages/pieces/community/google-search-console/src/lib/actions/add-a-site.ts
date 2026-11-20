@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { googleSearchConsoleAuth } from '../auth';
 import { gscInputs } from '../common/inputs';
 import { gscOps } from '../common/operations';
@@ -9,7 +9,7 @@ export const addSite = createAction({
   name: 'add_site',
   classification: 'WRITE',
   displayName: 'Add a Site',
-  description: "Adds a site to the set of the user's sites in Search Console.",
+  description: 'Adds a site to your Search Console properties.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -19,11 +19,24 @@ export const addSite = createAction({
   props: {
     siteUrl: Property.ShortText({
       displayName: 'Site URL',
-      description:
-        'A URL-prefix property such as "https://www.example.com/" (a missing trailing slash is added) or a domain property such as "sc-domain:example.com".',
+      description: 'https://example.com/ or sc-domain:example.com. A missing slash is added.',
+      placeholder: 'https://www.example.com/',
       required: true,
     }),
+    info: Property.MarkDown({
+      value: 'New sites stay unverified until you verify ownership in Search Console.',
+      variant: MarkdownVariant.INFO,
+    }),
   },
+  propertyGroups: [
+    {
+      key: 'site',
+      display: 'section',
+      label: 'New Site',
+      icon: 'inbox',
+      props: ['siteUrl', 'info'],
+    },
+  ],
   outputSchema: gscOutputSchemas.addSite,
   async run(context) {
     const siteUrl = gscInputs.siteUrl({ value: context.propsValue.siteUrl });
