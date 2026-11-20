@@ -63,9 +63,11 @@ const DynamicPropertiesImplementation = React.memo(
       undefined,
     );
     const optionsRequestId = useRef(0);
-    const { propertyLoadingFinished, propertyLoadingStarted } = useContext(
-      DynamicPropertiesContext,
-    );
+    const {
+      propertyLoadingFinished,
+      propertyLoadingStarted,
+      authReconnectCount,
+    } = useContext(DynamicPropertiesContext);
     const [propertyMap, setPropertyMap] = useState<
       PiecePropertyMap | undefined
     >(undefined);
@@ -186,7 +188,7 @@ const DynamicPropertiesImplementation = React.memo(
           },
         },
       );
-    }, [refresherValues]);
+    }, [refresherValues, authReconnectCount]);
 
     return (
       <>

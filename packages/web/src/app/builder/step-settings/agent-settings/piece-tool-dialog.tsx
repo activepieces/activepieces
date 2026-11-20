@@ -31,6 +31,8 @@ import {
   PieceStepMetadataWithSuggestions,
 } from '@/features/pieces';
 
+import { DynamicPropertiesProvider } from '../../piece-properties/dynamic-properties-context';
+
 import { PredefinedInputsForm } from './predefined-inputs-form';
 
 type AgentToolsDialogProps = {
@@ -148,7 +150,11 @@ export function AgentPieceDialog({
         return <PieceActionsList tools={tools} />;
       }
       case 'action-inputs': {
-        return <PredefinedInputsForm />;
+        return (
+          <DynamicPropertiesProvider>
+            <PredefinedInputsForm />
+          </DynamicPropertiesProvider>
+        );
       }
     }
   };
