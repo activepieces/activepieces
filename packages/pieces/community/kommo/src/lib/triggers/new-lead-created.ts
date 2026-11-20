@@ -8,7 +8,7 @@ export const newLeadCreatedTrigger = createTrigger({
   name: 'new_lead_created',
   classification: 'READ',
   displayName: 'New Lead Created',
-  description: 'Triggers when a new lead is created.',
+  description: 'Triggers when a lead is created.',
   aiMetadata: {
     description: 'Fires when a new lead (deal) is created in the Kommo CRM account, emitting the full new lead record. Represents a new sales opportunity entering the CRM, regardless of source.',
   },

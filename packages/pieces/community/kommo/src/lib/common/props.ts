@@ -11,13 +11,14 @@ interface KommoAuth {
 export const pipelineDropdown = (required = false) => Property.Dropdown({
   auth: kommoAuth,
   displayName: 'Pipeline',
+  description: 'Sales pipeline the lead belongs to.',
   required,
   refreshers: [],
   options: async ({ auth }) => {
     if (!auth) {
       return {
         disabled: true,
-        placeholder: 'Please connect your Kommo account',
+        placeholder: 'Connect Kommo first',
         options: [],
       };
     }
@@ -42,13 +43,14 @@ export const pipelineDropdown = (required = false) => Property.Dropdown({
 export const statusDropdown = (required = false) => Property.Dropdown({
   auth: kommoAuth,
   displayName: 'Status',
+  description: 'Stage of the lead within the chosen pipeline.',
   required,
   refreshers: ['pipelineId'],
   options: async ({ auth, pipelineId }) => {
     if (!auth || !pipelineId) {
       return {
         disabled: true,
-        placeholder: 'Select a pipeline first',
+        placeholder: 'Pick a pipeline first',
         options: [],
       };
     }
@@ -76,20 +78,21 @@ export const statusDropdown = (required = false) => Property.Dropdown({
 
 export const userDropdown = (required = false) => Property.Dropdown({
   auth: kommoAuth,
-  displayName: 'Unique identified of a responsible user',
+  displayName: 'Responsible User',
+  description: 'Kommo user who owns this record.',
   required,
   refreshers: [],
   options: async ({ auth }) => {
     if (!auth) {
       return {
         disabled: true,
-        placeholder: 'Please connect your Kommo account',
+        placeholder: 'Connect Kommo first',
         options: [],
       };
     }
 
     const { subdomain, apiToken } = auth.props;
-    const users = await makeRequest({ subdomain, apiToken }, HttpMethod.GET, '/users');
+    const users = await makeRequest({ subdomain, apiToken }, HttpMethod.GET, '/users?limit=250');
 
     const options: DropdownOption<number>[] = (users._embedded?.users || []).map((user: any) => ({
       label: `${user.name} (${user.email})`,
@@ -103,16 +106,18 @@ export const userDropdown = (required = false) => Property.Dropdown({
   },
 });
 
-export const lossReasonDropdown = (required = false) => Property.Dropdown({
+export const lossReasonDropdown = ({ required = false, advanced = false }: { required?: boolean; advanced?: boolean } = {}) => Property.Dropdown({
   auth: kommoAuth,
   displayName: 'Loss Reason',
+  description: 'Only used when the status is Closed - lost.',
   required,
+  advanced,
   refreshers: [],
   options: async ({ auth }) => {
     if (!auth) {
       return {
         disabled: true,
-        placeholder: 'Please connect your Kommo account',
+        placeholder: 'Connect Kommo first',
         options: [],
       };
     }
@@ -137,19 +142,20 @@ export const lossReasonDropdown = (required = false) => Property.Dropdown({
 export const leadDropdown = Property.Dropdown({
   auth: kommoAuth,
   displayName: 'Lead',
+  description: 'Lists the 250 most recently updated leads.',
   required: true,
   refreshers: [],
   options: async ({ auth }) => {
     if (!auth) {
       return {
         disabled: true,
-        placeholder: 'Please connect your Kommo account',
+        placeholder: 'Connect Kommo first',
         options: [],
       };
     }
 
     const { subdomain, apiToken } = auth.props;
-    const leads = await makeRequest({ subdomain, apiToken }, HttpMethod.GET, '/leads');
+    const leads = await makeRequest({ subdomain, apiToken }, HttpMethod.GET, '/leads?limit=250&order[updated_at]=desc');
 
     const options: DropdownOption<number>[] = (leads._embedded?.leads || []).map((lead: any) => ({
       label: lead.name,
@@ -172,7 +178,7 @@ export const companyDropdown = Property.Dropdown({
     if (!auth) {
       return {
         disabled: true,
-        placeholder: 'Please connect your Kommo account',
+        placeholder: 'Connect Kommo first',
         options: [],
       };
     }
@@ -196,20 +202,21 @@ export const companyDropdown = Property.Dropdown({
 
 export const contactDropdown = Property.Dropdown({
   auth: kommoAuth,
-    displayName: 'Contact',
-  required: false,
+  displayName: 'Contact',
+  description: 'Lists the 250 most recently updated contacts.',
+  required: true,
   refreshers: [],
   options: async ({ auth }) => {
     if (!auth) {
       return {
         disabled: true,
-        placeholder: 'Please connect your Kommo account',
+        placeholder: 'Connect Kommo first',
         options: [],
       };
     }
 
     const { subdomain, apiToken } = auth.props;
-    const contacts = await makeRequest({ subdomain, apiToken }, HttpMethod.GET, '/contacts');
+    const contacts = await makeRequest({ subdomain, apiToken }, HttpMethod.GET, '/contacts?limit=250&order[updated_at]=desc');
 
     const options: DropdownOption<number>[] = (contacts._embedded?.contacts || []).map(
       (contact: any) => ({

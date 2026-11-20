@@ -8,7 +8,7 @@ export const leadStatusChangedTrigger = createTrigger({
   name: 'lead_status_changed',
   classification: 'READ',
   displayName: 'Lead Status Changed',
-  description: 'Triggers when a lead status is changed.',
+  description: 'Triggers when a lead moves to another status.',
   aiMetadata: {
     description: 'Fires when a lead in the Kommo CRM account moves to a different status (e.g. advances or regresses within its pipeline). Represents a stage change on an existing lead, emitting the full updated lead record.',
   },
