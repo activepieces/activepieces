@@ -29,7 +29,9 @@ export function PieceSelect({
   const [search, setSearch] = useState('');
   const selectedPiece = pieces.find((piece) => piece.name === value);
   const matchingPieces = pieces.filter((piece) =>
-    piece.displayName.toLowerCase().includes(search.toLowerCase()),
+    `${piece.displayName} ${piece.name}`
+      .toLowerCase()
+      .includes(search.toLowerCase()),
   );
   const listHeight = Math.min(
     matchingPieces.length * ITEM_HEIGHT,
