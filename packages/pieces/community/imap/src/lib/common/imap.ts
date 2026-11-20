@@ -168,10 +168,10 @@ async function fetchEmails({
     );
     const newUids = candidates
       .filter((message) => {
-        const arrivedAt = arrivalEpoch(message) ?? Infinity;
+        const arrivedAt = arrivalEpoch(message);
         return (
-          arrivedAt > after ||
-          (arrivedAt === after && !lastPollUids.includes(message.uid))
+          isNil(arrivedAt) ||
+          isNewArrival({ arrivedAt, uid: message.uid, after, lastPollUids })
         );
       })
       .map((message) => message.uid);
@@ -189,13 +189,34 @@ async function fetchEmails({
         continue;
       }
       const parsed = await simpleParser(message.source);
+      const arrivedAt = arrivalEpoch(message) ?? parsed.date?.getTime();
+      if (
+        isNil(arrivedAt) ||
+        !isNewArrival({ arrivedAt, uid: message.uid, after, lastPollUids })
+      ) {
+        continue;
+      }
       messages.push({
         data: { ...parsed, uid: message.uid },
-        epochMilliSeconds: arrivalEpoch(message) ?? dayjs(parsed.date).valueOf(),
+        epochMilliSeconds: arrivedAt,
       });
     }
     return messages;
   });
+}
+
+function isNewArrival({
+  arrivedAt,
+  uid,
+  after,
+  lastPollUids,
+}: {
+  arrivedAt: number;
+  uid: number;
+  after: number;
+  lastPollUids: number[];
+}): boolean {
+  return arrivedAt > after || (arrivedAt === after && !lastPollUids.includes(uid));
 }
 
 function arrivalEpoch(message: FetchMessageObject): number | undefined {
