@@ -1,6 +1,7 @@
 import {
   createTrigger,
   TriggerStrategy,
+  MarkdownVariant,
   Property,
 } from '@activepieces/pieces-framework';
 import {
@@ -45,15 +46,20 @@ export const drupalPollingTimestamp = createTrigger({
   auth: drupalAuth,
   name: 'drupalPollingTimestamp',
   classification: 'READ',
-  displayName: 'Polling by timestamp',
-  description: 'A trigger that polls the Drupal site by timestamp.',
+  displayName: 'Poll by Time',
+  description: 'Runs for each new item a named Drupal poll returns, by time.',
   aiMetadata: {
     description: 'Fires for each new item pushed to a named Drupal orchestration poll, tracked by timestamp so only items created after the last poll are emitted. Use the time-based variant when items are dated rather than sequentially numbered; the poll name must match the name configured on the Drupal side (e.g. an ECA poll event).',
   },
   props: {
+    requirements: Property.MarkDown({
+      value: 'Needs the [Drupal Orchestration](https://www.drupal.org/project/orchestration) module on your site.',
+      variant: MarkdownVariant.INFO,
+    }),
     name: Property.ShortText({
-      displayName: 'Name',
-      description: 'The name identifies the poll. It must be unique. It will be used to identify the poll in the Drupal site, e.g. if you use ECA to respond to this poll, you need to use the same name in the configuration of its poll event.',
+      displayName: 'Poll Name',
+      description: 'A unique name; use the same one in your site\'s ECA poll event.',
+      placeholder: 'new_article_poll',
       required: true,
     }),
   },

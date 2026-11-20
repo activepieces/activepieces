@@ -12,34 +12,38 @@ export const drupalListEntitiesAction = createAction({
   name: 'drupal-list-entities',
   classification: 'SEARCH',
   displayName: 'List Entities',
-  description: 'List entities from Drupal using JSON:API',
+  description: 'List entities of one type, with optional filters and sorting.',
   audience: 'both',
   aiMetadata: { description: 'Lists/retrieves entities of a chosen type and bundle from Drupal via JSON:API, with optional filtering by published status, sorting, and a result limit (limit 0 returns all entities, following pagination). Use to query or scan existing content rather than fetch one known item. Read-only and idempotent.', idempotent: true },
+  propertyGroups: [
+    { key: 'content', display: 'section', label: 'Entities to List', icon: 'inbox', props: ['entity_type', 'published_status'] },
+    { key: 'sorting', display: 'section', label: 'Sorting', icon: 'sliders', props: ['sort_by', 'sort_direction'] },
+    { key: 'results', display: 'section', label: 'Results', icon: 'filter', props: ['limit', 'output_options'] },
+  ],
   props: {
     entity_type: Property.Dropdown({
       displayName: 'Entity Type',
-      description: 'Choose what type of content to list.',
+      description: 'The kind of entity, shown as bundle (entity type).',
       required: true,
       refreshers: [],
       auth: drupalAuth,
       options: async ({ auth }) => fetchEntityTypesForReading(auth),
     }),
     published_status: Property.StaticDropdown({
-      displayName: 'Published Status',
-      description: 'Filter by publication status',
+      displayName: 'Status',
+      description: 'Only return entities with this status.',
       required: false,
       defaultValue: 'all',
       options: {
         options: [
           { label: 'All', value: 'all' },
-          { label: 'Published only', value: 'published' },
-          { label: 'Unpublished only', value: 'unpublished' },
+          { label: 'Published', value: 'published' },
+          { label: 'Unpublished', value: 'unpublished' },
         ],
       },
     }),
     sort_by: Property.DynamicProperties({
-      displayName: 'Sort Options',
-      description: 'Choose how to sort the entities',
+      displayName: 'Sort By',
       required: false,
       refreshers: ['entity_type'],
       auth: drupalAuth,
@@ -51,19 +55,19 @@ export const drupalListEntitiesAction = createAction({
 
         if (entityInfo.entity_type === 'taxonomy_term') {
           sortOptions = [
-            { label: 'Updated date', value: 'changed' },
+            { label: 'Updated', value: 'changed' },
             { label: 'Name', value: 'name' },
           ];
         } else if (entityInfo.entity_type === 'user') {
           sortOptions = [
-            { label: 'Creation date', value: 'created' },
-            { label: 'Updated date', value: 'changed' },
+            { label: 'Created', value: 'created' },
+            { label: 'Updated', value: 'changed' },
             { label: 'Name', value: 'name' },
           ];
         } else {
           sortOptions = [
-            { label: 'Creation date', value: 'created' },
-            { label: 'Updated date', value: 'changed' },
+            { label: 'Created', value: 'created' },
+            { label: 'Updated', value: 'changed' },
             { label: 'Title', value: 'title' },
           ];
         }
@@ -80,23 +84,24 @@ export const drupalListEntitiesAction = createAction({
     }),
     sort_direction: Property.StaticDropdown({
       displayName: 'Sort Direction',
+      description: 'Descending puts the newest dates and Z to A names first.',
       required: false,
       defaultValue: 'DESC',
       options: {
         options: [
-          { label: 'Newest first', value: 'DESC' },
-          { label: 'Oldest first', value: 'ASC' },
+          { label: 'Descending', value: 'DESC' },
+          { label: 'Ascending', value: 'ASC' },
         ],
       },
     }),
     limit: Property.Number({
       displayName: 'Limit',
-      description: 'Maximum number of entities to retrieve (0 = all entities)',
+      description: 'Most entities to return. 0 returns all of them.',
       required: true,
       defaultValue: 50,
     }),
     output_options: Property.DynamicProperties({
-      displayName: 'Output Options',
+      displayName: 'Output',
       required: false,
       refreshers: ['entity_type'],
       auth: drupalAuth,
@@ -108,8 +113,8 @@ export const drupalListEntitiesAction = createAction({
         if (entityInfo.entity_type === 'node') {
           return {
             minimal_output: Property.Checkbox({
-              displayName: 'Minimal Output',
-              description: 'Return only basic fields (UUID, title, status, dates) instead of all entity data',
+              displayName: 'Basic Fields Only',
+              description: 'Return only ID, title, status and dates.',
               required: false,
               defaultValue: true,
             })
