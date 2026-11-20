@@ -1,13 +1,11 @@
 import { Property, Store, createAction } from '@activepieces/pieces-framework';
-import { constructQueueName, queueNameProp, readQueue, sharedNotes, validateItemCount } from '../common';
+import { constructQueueName, queueNameProp, readQueue, testQueueNote, validateItemCount } from '../common';
 import { peekQueueOutputSchema } from '../output-schemas';
 
 const DEFAULT_PEEK_COUNT = 1;
 
-const notes = `**Note:**
-- Returns the oldest items in the queue without removing them, plus the total number of items queued.
-${sharedNotes}
-`;
+const notes = `Reads the oldest items without removing them.
+${testQueueNote}`;
 
 export const peekQueue = createAction({
   audience: 'both',
@@ -17,7 +15,7 @@ export const peekQueue = createAction({
   description: 'Read the oldest items in a queue without removing them',
   aiMetadata: {
     description:
-      'Reads the first N items of a named project-scoped FIFO queue without removing them. Use it to inspect pending work or decide whether to pull; use Pull items from queue to consume items, or Get Queue Size when only the count matters. Requires the exact queue name used by Push to Queue; the number of items defaults to 1 and must be a whole number of 0 or more. Read-only and idempotent.',
+      'Reads the first N items of a named project-scoped FIFO queue without removing them. Use it to inspect pending work or decide whether to pull; use Pull Items from Queue to consume items, or Get Queue Size when only the count matters. Requires the exact queue name used by Push to Queue; the number of items defaults to 1 and must be a whole number of 0 or more. Read-only and idempotent.',
     idempotent: true,
   },
   outputSchema: peekQueueOutputSchema,
@@ -27,8 +25,8 @@ export const peekQueue = createAction({
     }),
     queueName: queueNameProp,
     numOfItems: Property.Number({
-      displayName: 'Number of items',
-      description: `How many items to read from the front of the queue (a whole number, 0 or more). Defaults to ${DEFAULT_PEEK_COUNT}.`,
+      displayName: 'Number of Items',
+      description: `How many items to read from the front. Defaults to ${DEFAULT_PEEK_COUNT}.`,
       required: false,
       defaultValue: DEFAULT_PEEK_COUNT,
     }),

@@ -1,30 +1,35 @@
 import {
+  MarkdownVariant,
   Property,
   Store,
   createAction,
 } from '@activepieces/pieces-framework';
-import { constructQueueName, queueNameProp, readQueue, sharedNotes, writeQueue } from '../common';
+import { concurrencyWarning, constructQueueName, queueNameProp, readQueue, testQueueNote, writeQueue } from '../common';
 import { pushToQueueOutputSchema } from '../output-schemas';
 
-const notes = `**Note:**
-- Items are added to the end of the queue and returned oldest first by Pull items from queue.
-${sharedNotes}
-`
+const notes = `Items are added to the end of the queue and pulled oldest first. A queue holds up to 512 KB.
+${testQueueNote}`
+
 export const pushToQueue = createAction({
   audience: 'both',
   name: 'push-to-queue',
   classification: 'WRITE',
-  description: 'Push item to queue',
-  aiMetadata: { description: 'Appends one or more items to the end of a named project-scoped FIFO queue, creating the queue on first use; any flow using the same queue name writes to the same queue. Use it to buffer or throttle work for later consumption with Pull items from queue; use Get Queue Size or Peek at Queue to check the backlog without changing it. Not idempotent: each call appends the items again; the write fails once the queue would exceed 512 KB, and parallel runs pushing the same queue can lose items.', idempotent: false },
+  description: 'Add items to the end of a queue',
+  aiMetadata: { description: 'Appends one or more items to the end of a named project-scoped FIFO queue, creating the queue on first use; any flow using the same queue name writes to the same queue. Use it to buffer or throttle work for later consumption with Pull Items from Queue; use Get Queue Size or Peek at Queue to check the backlog without changing it. Not idempotent: each call appends the items again; the write fails once the queue would exceed 512 KB, and parallel runs pushing the same queue can lose items.', idempotent: false },
   displayName: 'Push to Queue',
   outputSchema: pushToQueueOutputSchema,
   props: {
     info: Property.MarkDown({
       value: notes,
     }),
+    warning: Property.MarkDown({
+      value: concurrencyWarning,
+      variant: MarkdownVariant.WARNING,
+    }),
     queueName: queueNameProp,
     items: Property.Array({
       displayName: 'Items',
+      description: 'Each entry is added to the queue as one item.',
       required: true,
     }),
   },

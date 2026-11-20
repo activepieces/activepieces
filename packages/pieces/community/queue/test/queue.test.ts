@@ -116,8 +116,8 @@ describe('queue key', () => {
   });
 
   it('uses the testing key in test() and the real key in run()', async () => {
-    await runAction({ action: pushToQueue, store: fake.store, propsValue: { info: undefined, queueName: 'q', items: ['real'] }, mode: 'run' });
-    await runAction({ action: pushToQueue, store: fake.store, propsValue: { info: undefined, queueName: 'q', items: ['test'] }, mode: 'test' });
+    await runAction({ action: pushToQueue, store: fake.store, propsValue: { info: undefined, warning: undefined, queueName: 'q', items: ['real'] }, mode: 'run' });
+    await runAction({ action: pushToQueue, store: fake.store, propsValue: { info: undefined, warning: undefined, queueName: 'q', items: ['test'] }, mode: 'test' });
     expect(fake.data.get(REAL_KEY('q'))).toEqual(['real']);
     expect(fake.data.get(TEST_KEY('q'))).toEqual(['test']);
     expect(fake.spies.put).toHaveBeenCalledWith(REAL_KEY('q'), ['real'], StoreScope.PROJECT);
@@ -126,21 +126,21 @@ describe('queue key', () => {
 
 describe('push-to-queue', () => {
   it('returns the whole queue after the append (unchanged output shape)', async () => {
-    expect(await runAction({ action: pushToQueue, store: fake.store, propsValue: { info: undefined, queueName: 'q', items: ['a'] } })).toEqual(['a']);
-    expect(await runAction({ action: pushToQueue, store: fake.store, propsValue: { info: undefined, queueName: 'q', items: ['b', { id: 1 }, 3] } })).toEqual(['a', 'b', { id: 1 }, 3]);
+    expect(await runAction({ action: pushToQueue, store: fake.store, propsValue: { info: undefined, warning: undefined, queueName: 'q', items: ['a'] } })).toEqual(['a']);
+    expect(await runAction({ action: pushToQueue, store: fake.store, propsValue: { info: undefined, warning: undefined, queueName: 'q', items: ['b', { id: 1 }, 3] } })).toEqual(['a', 'b', { id: 1 }, 3]);
   });
 
   it('does not write when there are no items and returns the existing queue', async () => {
     fake.data.set(REAL_KEY('q'), ['a']);
-    expect(await runAction({ action: pushToQueue, store: fake.store, propsValue: { info: undefined, queueName: 'q', items: [] } })).toEqual(['a']);
-    expect(await runAction({ action: pushToQueue, store: fake.store, propsValue: { info: undefined, queueName: 'new', items: [] } })).toEqual([]);
+    expect(await runAction({ action: pushToQueue, store: fake.store, propsValue: { info: undefined, warning: undefined, queueName: 'q', items: [] } })).toEqual(['a']);
+    expect(await runAction({ action: pushToQueue, store: fake.store, propsValue: { info: undefined, warning: undefined, queueName: 'new', items: [] } })).toEqual([]);
     expect(fake.spies.put).not.toHaveBeenCalled();
     expect(fake.data.has(REAL_KEY('new'))).toBe(false);
   });
 
   it('maps a storage limit error to a plain sentence', async () => {
     fake.spies.put.mockRejectedValueOnce(Object.assign(new Error('{"message":"too big"}'), { name: 'StorageLimitError', maxStorageSizeInBytes: 512 * 1024 }));
-    await expect(runAction({ action: pushToQueue, store: fake.store, propsValue: { info: undefined, queueName: 'q', items: ['x'] } })).rejects.toThrow(
+    await expect(runAction({ action: pushToQueue, store: fake.store, propsValue: { info: undefined, warning: undefined, queueName: 'q', items: ['x'] } })).rejects.toThrow(
       'Queue "q" would exceed the 512 KB size limit, so nothing was written. Pull items from the queue more often or push smaller items.',
     );
   });
@@ -148,12 +148,12 @@ describe('push-to-queue', () => {
   it('rethrows other store errors unchanged', async () => {
     const boom = Object.assign(new Error('store down'), { name: 'StorageError' });
     fake.spies.put.mockRejectedValueOnce(boom);
-    await expect(runAction({ action: pushToQueue, store: fake.store, propsValue: { info: undefined, queueName: 'q', items: ['x'] } })).rejects.toBe(boom);
+    await expect(runAction({ action: pushToQueue, store: fake.store, propsValue: { info: undefined, warning: undefined, queueName: 'q', items: ['x'] } })).rejects.toBe(boom);
   });
 
   it('refuses a stored value that is not a list', async () => {
     fake.data.set(REAL_KEY('q'), 'abc');
-    await expect(runAction({ action: pushToQueue, store: fake.store, propsValue: { info: undefined, queueName: 'q', items: ['x'] } })).rejects.toThrow(
+    await expect(runAction({ action: pushToQueue, store: fake.store, propsValue: { info: undefined, warning: undefined, queueName: 'q', items: ['x'] } })).rejects.toThrow(
       'Queue "q" holds a value that is not a list',
     );
     expect(fake.spies.put).not.toHaveBeenCalled();
@@ -163,34 +163,34 @@ describe('push-to-queue', () => {
 describe('pull-from-queue', () => {
   it('pulls in FIFO order and writes the remainder back', async () => {
     fake.data.set(REAL_KEY('q'), ['a', 'b', 'c', 'd']);
-    expect(await runAction({ action: pullFromQueue, store: fake.store, propsValue: { info: undefined, queueName: 'q', numOfItems: 2 } })).toEqual(['a', 'b']);
+    expect(await runAction({ action: pullFromQueue, store: fake.store, propsValue: { info: undefined, warning: undefined, queueName: 'q', numOfItems: 2 } })).toEqual(['a', 'b']);
     expect(fake.data.get(REAL_KEY('q'))).toEqual(['c', 'd']);
   });
 
   it('returns what is left when fewer items than requested are queued', async () => {
     fake.data.set(REAL_KEY('q'), ['a', 'b']);
-    expect(await runAction({ action: pullFromQueue, store: fake.store, propsValue: { info: undefined, queueName: 'q', numOfItems: 50 } })).toEqual(['a', 'b']);
+    expect(await runAction({ action: pullFromQueue, store: fake.store, propsValue: { info: undefined, warning: undefined, queueName: 'q', numOfItems: 50 } })).toEqual(['a', 'b']);
     expect(fake.data.get(REAL_KEY('q'))).toEqual([]);
   });
 
   it('returns [] on an empty or never-created queue without writing', async () => {
-    expect(await runAction({ action: pullFromQueue, store: fake.store, propsValue: { info: undefined, queueName: 'none', numOfItems: 3 } })).toEqual([]);
+    expect(await runAction({ action: pullFromQueue, store: fake.store, propsValue: { info: undefined, warning: undefined, queueName: 'none', numOfItems: 3 } })).toEqual([]);
     fake.data.set(REAL_KEY('empty'), []);
-    expect(await runAction({ action: pullFromQueue, store: fake.store, propsValue: { info: undefined, queueName: 'empty', numOfItems: 3 } })).toEqual([]);
+    expect(await runAction({ action: pullFromQueue, store: fake.store, propsValue: { info: undefined, warning: undefined, queueName: 'empty', numOfItems: 3 } })).toEqual([]);
     expect(fake.spies.put).not.toHaveBeenCalled();
     expect(fake.data.has(REAL_KEY('none'))).toBe(false);
   });
 
   it('accepts 0 and returns [] without writing', async () => {
     fake.data.set(REAL_KEY('q'), ['a']);
-    expect(await runAction({ action: pullFromQueue, store: fake.store, propsValue: { info: undefined, queueName: 'q', numOfItems: 0 } })).toEqual([]);
+    expect(await runAction({ action: pullFromQueue, store: fake.store, propsValue: { info: undefined, warning: undefined, queueName: 'q', numOfItems: 0 } })).toEqual([]);
     expect(fake.spies.put).not.toHaveBeenCalled();
     expect(fake.data.get(REAL_KEY('q'))).toEqual(['a']);
   });
 
   it.each([-1, 2.5, Number.POSITIVE_INFINITY, Number.NaN])('rejects %s before touching the store', async (numOfItems) => {
     fake.data.set(REAL_KEY('q'), ['a']);
-    await expect(runAction({ action: pullFromQueue, store: fake.store, propsValue: { info: undefined, queueName: 'q', numOfItems } })).rejects.toThrow(
+    await expect(runAction({ action: pullFromQueue, store: fake.store, propsValue: { info: undefined, warning: undefined, queueName: 'q', numOfItems } })).rejects.toThrow(
       'Number of items must be a whole number of 0 or more',
     );
     expect(fake.spies.get).not.toHaveBeenCalled();
@@ -199,13 +199,13 @@ describe('pull-from-queue', () => {
 
   it('refuses a stored value that is not a list', async () => {
     fake.data.set(REAL_KEY('q'), { a: 1 });
-    await expect(runAction({ action: pullFromQueue, store: fake.store, propsValue: { info: undefined, queueName: 'q', numOfItems: 1 } })).rejects.toThrow('is not a list');
+    await expect(runAction({ action: pullFromQueue, store: fake.store, propsValue: { info: undefined, warning: undefined, queueName: 'q', numOfItems: 1 } })).rejects.toThrow('is not a list');
   });
 
   it('pulls from the testing queue in test()', async () => {
     fake.data.set(REAL_KEY('q'), ['real']);
     fake.data.set(TEST_KEY('q'), ['test']);
-    expect(await runAction({ action: pullFromQueue, store: fake.store, propsValue: { info: undefined, queueName: 'q', numOfItems: 5 }, mode: 'test' })).toEqual(['test']);
+    expect(await runAction({ action: pullFromQueue, store: fake.store, propsValue: { info: undefined, warning: undefined, queueName: 'q', numOfItems: 5 }, mode: 'test' })).toEqual(['test']);
     expect(fake.data.get(REAL_KEY('q'))).toEqual(['real']);
   });
 });
@@ -265,8 +265,8 @@ describe('get-queue-size', () => {
 describe('clear-queue', () => {
   it('deletes the queue and is idempotent', async () => {
     fake.data.set(REAL_KEY('q'), ['a']);
-    expect(await runAction({ action: clearQueue, store: fake.store, propsValue: { info: undefined, queueName: 'q' } })).toEqual({ success: true });
-    expect(await runAction({ action: clearQueue, store: fake.store, propsValue: { info: undefined, queueName: 'q' } })).toEqual({ success: true });
+    expect(await runAction({ action: clearQueue, store: fake.store, propsValue: { info: undefined, warning: undefined, queueName: 'q' } })).toEqual({ success: true });
+    expect(await runAction({ action: clearQueue, store: fake.store, propsValue: { info: undefined, warning: undefined, queueName: 'q' } })).toEqual({ success: true });
     expect(fake.data.has(REAL_KEY('q'))).toBe(false);
     expect(fake.spies.delete).toHaveBeenCalledWith(REAL_KEY('q'), StoreScope.PROJECT);
   });
@@ -274,7 +274,7 @@ describe('clear-queue', () => {
   it('clears only the testing queue in test()', async () => {
     fake.data.set(REAL_KEY('q'), ['real']);
     fake.data.set(TEST_KEY('q'), ['test']);
-    await runAction({ action: clearQueue, store: fake.store, propsValue: { info: undefined, queueName: 'q' }, mode: 'test' });
+    await runAction({ action: clearQueue, store: fake.store, propsValue: { info: undefined, warning: undefined, queueName: 'q' }, mode: 'test' });
     expect(fake.data.get(REAL_KEY('q'))).toEqual(['real']);
     expect(fake.data.has(TEST_KEY('q'))).toBe(false);
   });
@@ -282,13 +282,13 @@ describe('clear-queue', () => {
 
 describe('full FIFO round trip', () => {
   it('push, peek, size, pull, clear', async () => {
-    await runAction({ action: pushToQueue, store: fake.store, propsValue: { info: undefined, queueName: 'flow', items: ['a'] } });
-    await runAction({ action: pushToQueue, store: fake.store, propsValue: { info: undefined, queueName: 'flow', items: ['b', 'c'] } });
+    await runAction({ action: pushToQueue, store: fake.store, propsValue: { info: undefined, warning: undefined, queueName: 'flow', items: ['a'] } });
+    await runAction({ action: pushToQueue, store: fake.store, propsValue: { info: undefined, warning: undefined, queueName: 'flow', items: ['b', 'c'] } });
     expect(await runAction({ action: getQueueSize, store: fake.store, propsValue: { info: undefined, queueName: 'flow' } })).toEqual({ queueName: 'flow', size: 3, isEmpty: false });
     expect(await runAction({ action: peekQueue, store: fake.store, propsValue: { info: undefined, queueName: 'flow', numOfItems: 1 } })).toEqual({ items: ['a'], itemCount: 1, queueSize: 3 });
-    expect(await runAction({ action: pullFromQueue, store: fake.store, propsValue: { info: undefined, queueName: 'flow', numOfItems: 2 } })).toEqual(['a', 'b']);
-    expect(await runAction({ action: pullFromQueue, store: fake.store, propsValue: { info: undefined, queueName: 'flow', numOfItems: 2 } })).toEqual(['c']);
+    expect(await runAction({ action: pullFromQueue, store: fake.store, propsValue: { info: undefined, warning: undefined, queueName: 'flow', numOfItems: 2 } })).toEqual(['a', 'b']);
+    expect(await runAction({ action: pullFromQueue, store: fake.store, propsValue: { info: undefined, warning: undefined, queueName: 'flow', numOfItems: 2 } })).toEqual(['c']);
     expect(await runAction({ action: getQueueSize, store: fake.store, propsValue: { info: undefined, queueName: 'flow' } })).toEqual({ queueName: 'flow', size: 0, isEmpty: true });
-    expect(await runAction({ action: clearQueue, store: fake.store, propsValue: { info: undefined, queueName: 'flow' } })).toEqual({ success: true });
+    expect(await runAction({ action: clearQueue, store: fake.store, propsValue: { info: undefined, warning: undefined, queueName: 'flow' } })).toEqual({ success: true });
   });
 });
