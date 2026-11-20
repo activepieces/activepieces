@@ -2,17 +2,13 @@ import { PieceAuth, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 const markdownPropertyDescription = `
-**Using Drupal's JSON:API**
+Connect with a Drupal user account over JSON:API.
 
-Your Drupal site comes with JSON:API built-in. Authentication to access relevant parts requires the HTTP Basic Authentication module, which is also part of your Drupal site. Just ensure both are enabled and configure user authentication:
+1. On your site, enable the **JSON:API** and **HTTP Basic Authentication** modules (both ship with Drupal core).
+2. Create a user for Activepieces and give it the permissions your flows need.
+3. Enter your site's address and that user's username and password below.
 
-1. Enable the JSON:API and the HTTP Basic Authentication modules
-2. Create a user account and give it the permissions you want Activepieces to have
-3. Use that account's credentials for authentication
-
-Provide the website URL in the format https://www.example.com.
-
-For extra functionality, you can use the [Drupal Orchestration](https://www.drupal.org/project/orchestration) module.
+The Call Service action and the triggers also need the [Drupal Orchestration](https://www.drupal.org/project/orchestration) module.
 `;
 
 export const drupalAuth = PieceAuth.CustomAuth({
@@ -22,15 +18,18 @@ export const drupalAuth = PieceAuth.CustomAuth({
     website_url: Property.ShortText({
       displayName: 'Website URL',
       required: true,
-      description: 'URL of your Drupal site without a trailing "/" character',
+      description: `Your site's address, without a trailing slash.`,
+      placeholder: 'https://www.example.com',
     }),
     username: Property.ShortText({
       displayName: 'Username',
       required: true,
+      description: 'The Drupal user Activepieces signs in as.',
     }),
     password: Property.ShortText({
       displayName: 'Password',
       required: true,
+      description: `That user's password.`,
     }),
   },
   validate: async ({ auth }) => {
@@ -38,7 +37,7 @@ export const drupalAuth = PieceAuth.CustomAuth({
     if (!website_url || !username || !password) {
       return {
         valid: false,
-        error: 'Please fill all the fields [website_url, username, password]',
+        error: 'Enter the website URL, username and password.',
       };
     }
     if (website_url.endsWith('/')) {
@@ -59,8 +58,12 @@ export const drupalAuth = PieceAuth.CustomAuth({
       });
       if (response.status === 200) {
         const data = (response.body as any).data;
+        if (data && data.length > 0 && data[0].attributes.name === username) {
+          return { valid: true };
+        }
         return {
-          valid: (data && data.length > 0 && data[0].attributes.name === username),
+          valid: false,
+          error: 'Authentication failed. Please check your credentials.',
         };
       }
       return {

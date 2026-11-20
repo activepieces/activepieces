@@ -295,6 +295,7 @@ export const jsonApi = {
     limit?: number;
   }) {
     const allEntities: any[] = [];
+    const limit = options?.limit ?? 0;
     const query = options ? buildQueryParams(options) : '';
     let url: string | null = `${auth.props.website_url.replace(/\/+$/, '')}${collectionPath}${query}`;
 
@@ -333,13 +334,17 @@ export const jsonApi = {
         allEntities.push(entities);
       }
 
+      if (limit > 0 && allEntities.length >= limit) {
+        break;
+      }
+
       // Continue to next page if it exists
       const nextLink = response.links?.['next'];
       url = typeof nextLink === 'string' ? nextLink : nextLink?.href || null;
 
     } while (url);
 
-    return allEntities;
+    return limit > 0 ? allEntities.slice(0, limit) : allEntities;
   },
 
   /**

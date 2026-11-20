@@ -1,4 +1,5 @@
 import {
+  MarkdownVariant,
   Property,
   createAction,
 } from '@activepieces/pieces-framework';
@@ -15,37 +16,42 @@ export const drupalUpdateEntityAction = createAction({
   name: 'drupal-update-entity',
   classification: 'WRITE',
   displayName: 'Update Entity',
-  description: 'Update an existing entity in Drupal with smart field discovery and validation',
+  description: 'Change fields on an existing Drupal entity.',
   audience: 'both',
   aiMetadata: { description: 'Updates an existing Drupal entity identified by its entity type, bundle, and UUID via a JSON:API PATCH, changing only the fields you provide (empty fields are left untouched); at least one field value is required. Use to modify known content. Idempotent: re-applying the same field values to the same UUID yields the same end state.', idempotent: true },
+  propertyGroups: [
+    { key: 'item', display: 'section', label: 'Entity to Update', icon: 'tag', props: ['entity_type', 'entity_uuid'] },
+    { key: 'changes', display: 'section', label: 'Changes', icon: 'sliders', props: ['changes_info', 'entity_fields'] },
+  ],
   props: {
     entity_type: Property.Dropdown({
       auth: drupalAuth,
       displayName: 'Entity Type',
-      description: 'Select the entity type and bundle',
+      description: 'The kind of entity, shown as bundle (entity type).',
       required: true,
       refreshers: [],
       options: async ({ auth }) => fetchEntityTypesForEditing(auth),
     }),
     entity_uuid: Property.ShortText({
       displayName: 'Entity UUID',
-      description: 'The UUID of the entity to update',
+      description: 'Find it in the entity\'s JSON:API URL or a List Entities result.',
+      placeholder: '3f1c9a52-7b0e-4c1d-9a8e-2f6b1d4c5e7a',
       required: true,
+    }),
+    changes_info: Property.MarkDown({
+      value: 'Empty fields keep their value; switches are always sent, on or off.',
+      variant: MarkdownVariant.INFO,
     }),
     entity_fields: Property.DynamicProperties({
       auth: drupalAuth,
-      displayName: 'Entity Fields',
-      description: 'Update the values for the entity fields (only provide values for fields you want to change)',
+      displayName: 'Fields',
+      description: 'Fields of the selected type, in your site\'s form order.',
       required: false,
       refreshers: ['entity_type'],
       props: async (propsValue) => {
         const { auth, entity_type } = propsValue;
         if (!auth) {
-          return {
-            disabled: true,
-            options: [],
-            placeholder: 'Please configure authentication first',
-          };
+          return {};
         }
         return buildFieldProperties(auth, entity_type, false);
       }
@@ -60,7 +66,7 @@ export const drupalUpdateEntityAction = createAction({
     const fieldsToUpdate: Record<string, any> = {};
     const processedFormatFields = new Set<string>();
 
-    for (const [key, value] of Object.entries(fieldsData)) {
+    for (const [key, value] of Object.entries(fieldsData ?? {})) {
       // Skip empty values and already processed format fields
       if (value === undefined || value === null || value === '' || processedFormatFields.has(key)) {
         continue;
@@ -98,7 +104,7 @@ export const drupalUpdateEntityAction = createAction({
     }
 
     if (Object.keys(fieldsToUpdate).length === 0) {
-      throw new Error('No fields provided to update');
+      throw new Error('Fill in at least one field to update.');
     }
 
     return await drupal.updateEntity(

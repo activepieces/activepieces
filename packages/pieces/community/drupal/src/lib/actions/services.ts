@@ -1,4 +1,5 @@
 import {
+  MarkdownVariant,
   Property,
   createAction,
 } from '@activepieces/pieces-framework';
@@ -14,13 +15,21 @@ export const drupalCallServiceAction = createAction({
   name: 'drupal-call-service',
   classification: 'WRITE',
   displayName: 'Call Service',
-  description: 'Call a service on the Drupal site',
+  description: 'Run a service exposed by the Drupal Orchestration module.',
   audience: 'both',
   aiMetadata: { description: 'Executes a named server-side service (e.g. an ECA/orchestration action) exposed by the Drupal site, passing a dynamic configuration object whose fields are defined by the chosen service. Use to invoke custom Drupal-side logic that has no dedicated action here. The service must be discoverable via the site\'s orchestration endpoint; because it runs arbitrary server logic, treat each call as potentially side-effecting and not idempotent.', idempotent: false },
+  propertyGroups: [
+    { key: 'service', display: 'section', label: 'Service to Run', icon: 'code', props: ['requirements', 'service'] },
+    { key: 'settings', display: 'section', label: 'Service Settings', icon: 'sliders', props: ['config'] },
+  ],
   props: {
+    requirements: Property.MarkDown({
+      value: 'Needs the [Drupal Orchestration](https://www.drupal.org/project/orchestration) module on your site.',
+      variant: MarkdownVariant.INFO,
+    }),
     service: Property.Dropdown({
       displayName: 'Service',
-      description: 'The service to call.',
+      description: 'A service your site exposes through Orchestration.',
       required: true,
       refreshers: [],
       auth: drupalAuth,
@@ -29,7 +38,7 @@ export const drupalCallServiceAction = createAction({
           return {
             disabled: true,
             options: [],
-            placeholder: 'Please authenticate first.',
+            placeholder: 'Connect your Drupal account first',
           };
         }
         const { website_url, username, password } = auth.props;
@@ -44,6 +53,13 @@ export const drupalCallServiceAction = createAction({
               'Accept': 'application/vnd.api+json',
             },
           });
+          if (response.status === 200 && response.body.length === 0) {
+            return {
+              disabled: false,
+              options: [],
+              placeholder: 'No services found on your site.',
+            };
+          }
           if (response.status === 200) {
             return {
               disabled: false,
@@ -62,17 +78,21 @@ export const drupalCallServiceAction = createAction({
         return {
           disabled: true,
           options: [],
-          placeholder: 'Error processing services',
+          placeholder: 'Could not load services from your site',
         };
       },
     }),
     config: Property.DynamicProperties({
-      displayName: 'Service configuration',
+      displayName: 'Configuration',
+      description: 'Fields depend on the service you pick.',
       refreshers: ['service'],
       required: true,
       auth: drupalAuth,
       props: async ({ service }) => {
         const fields: Record<string, any> = {};
+        if (!service) {
+          return {};
+        }
         const items = (service as { config: DrupalServiceConfig[] }).config;
         items.forEach((config: any) => {
           if (config.type === 'boolean') {

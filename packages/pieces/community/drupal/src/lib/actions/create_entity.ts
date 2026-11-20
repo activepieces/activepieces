@@ -15,33 +15,33 @@ export const drupalCreateEntityAction = createAction({
   name: 'drupal-create-entity',
   classification: 'WRITE',
   displayName: 'Create Entity',
-  description: 'Create a new entity in Drupal with smart field discovery and validation',
+  description: 'Create a node, taxonomy term, user or other entity in Drupal.',
   audience: 'both',
   aiMetadata: { description: 'Creates a new content entity (node, taxonomy term, user, etc.) of a chosen entity type and bundle in Drupal via JSON:API. Available fields are discovered from the selected entity type, and at least one field value must be supplied. Use when adding new content; each call creates a distinct entity, so it is not idempotent.', idempotent: false },
+  propertyGroups: [
+    { key: 'item', display: 'section', label: 'Entity to Create', icon: 'tag', props: ['entity_type'] },
+    { key: 'values', display: 'section', label: 'Field Values', icon: 'text', props: ['entity_fields'] },
+  ],
   props: {
     entity_type: Property.Dropdown({
       auth: drupalAuth,
       displayName: 'Entity Type',
-      description: 'Choose the type of content to create.',
+      description: 'The kind of entity, shown as bundle (entity type).',
       required: true,
       refreshers: [],
       options: async ({ auth }) => fetchEntityTypesForEditing(auth),
     }),
     entity_fields: Property.DynamicProperties({
       auth: drupalAuth,
-      displayName: 'Entity Fields',
-      description: 'Fill in the content fields. Available fields depend on the entity type selected above.',
+      displayName: 'Fields',
+      description: 'Fields of the selected type, in your site\'s form order.',
       required: false,
       refreshers: ['entity_type'],
       props: async (propsValue) => {
 
         const { auth, entity_type } = propsValue;
         if (!auth) {
-          return {
-            disabled: true,
-            options: [],
-            placeholder: 'Please configure authentication first',
-          };
+          return {};
         }
         return buildFieldProperties(auth, entity_type, true);
       }
@@ -55,7 +55,7 @@ export const drupalCreateEntityAction = createAction({
     const fieldsToCreate: Record<string, any> = {};
     const processedFormatFields = new Set<string>();
 
-    for (const [key, value] of Object.entries(fieldsData)) {
+    for (const [key, value] of Object.entries(fieldsData ?? {})) {
       // Skip empty values and already processed format fields
       if (value === undefined || value === null || value === '' || processedFormatFields.has(key)) {
         continue;
@@ -93,7 +93,7 @@ export const drupalCreateEntityAction = createAction({
     }
 
     if (Object.keys(fieldsToCreate).length === 0) {
-      throw new Error('At least one field must be provided to create an entity');
+      throw new Error('Fill in at least one field to create the entity.');
     }
 
     return await drupal.createEntity(

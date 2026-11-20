@@ -4,6 +4,7 @@ import {
 } from '@activepieces/pieces-common';
 import {
   createTrigger,
+  MarkdownVariant,
   Property,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
@@ -16,14 +17,19 @@ export const drupalWebhook = createTrigger({
   name: 'drupalWebhook',
   classification: 'READ',
   displayName: 'Webhook',
-  description: 'A webhook that the Drupal site can call to trigger a flow.',
+  description: 'Runs when your Drupal site calls this webhook by its name.',
   aiMetadata: {
     description: 'Fires in real time whenever the Drupal site calls the registered webhook URL (e.g. from an ECA action), emitting the request body sent by Drupal. Use for push-based events instead of polling; the webhook is registered on enable under the unique name supplied, which must match the name referenced on the Drupal side.',
   },
   props: {
+    requirements: Property.MarkDown({
+      value: 'Needs the [Drupal Orchestration](https://www.drupal.org/project/orchestration) module on your site.',
+      variant: MarkdownVariant.INFO,
+    }),
     id: Property.ShortText({
-      displayName: 'Name',
-      description: 'This name identifies the webhook. It must be unique. It will be used to identify the webhook in the Drupal site, e.g. if you use ECA to call this webhook, you will find this name in the list of available webhooks.',
+      displayName: 'Webhook Name',
+      description: 'A unique name; ECA on your site lists it among its webhooks.',
+      placeholder: 'new_article_webhook',
       required: true,
     }),
   },

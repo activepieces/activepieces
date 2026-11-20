@@ -12,13 +12,16 @@ export const drupalGetEntityAction = createAction({
   name: 'drupal-get-entity',
   classification: 'READ',
   displayName: 'Get Entity',
-  description: 'Retrieve a single entity by UUID',
+  description: 'Get one Drupal entity by its UUID.',
   audience: 'both',
   aiMetadata: { description: 'Retrieves a single Drupal entity by its entity type, bundle, and UUID via JSON:API. Use when the exact UUID is known; to find entities by criteria use List Entities instead. Read-only and idempotent.', idempotent: true },
+  propertyGroups: [
+    { key: 'item', display: 'section', label: 'Entity to Get', icon: 'tag', props: ['entity_type', 'entity_uuid'] },
+  ],
   props: {
     entity_type: Property.Dropdown({
       displayName: 'Entity Type',
-      description: 'Choose the type of content to retrieve.',
+      description: 'The kind of entity, shown as bundle (entity type).',
       required: true,
       refreshers: [],
       auth: drupalAuth,
@@ -26,7 +29,8 @@ export const drupalGetEntityAction = createAction({
     }),
     entity_uuid: Property.ShortText({
       displayName: 'Entity UUID',
-      description: 'The unique identifier (UUID) of the specific content item to retrieve.',
+      description: 'Find it in the entity\'s JSON:API URL or a List Entities result.',
+      placeholder: '3f1c9a52-7b0e-4c1d-9a8e-2f6b1d4c5e7a',
       required: true,
     }),
   },

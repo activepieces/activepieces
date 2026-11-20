@@ -2890,7 +2890,7 @@
     },
     "packages/pieces/community/drupal": {
       "name": "@activepieces/piece-drupal",
-      "version": "1.1.12",
+      "version": "1.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2899,6 +2899,7 @@
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "5.0.5",
       },
     },
     "packages/pieces/community/dub": {

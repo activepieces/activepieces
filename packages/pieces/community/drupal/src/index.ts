@@ -16,7 +16,7 @@ import { drupalAuth } from './lib/auth';
 export const drupal = createPiece({
   displayName: 'Drupal',
   auth: drupalAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/drupal.png',
   categories: [
     PieceCategory.BUSINESS_INTELLIGENCE,

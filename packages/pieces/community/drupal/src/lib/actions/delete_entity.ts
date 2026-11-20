@@ -11,13 +11,16 @@ export const drupalDeleteEntityAction = createAction({
   name: 'drupal-delete-entity',
   classification: 'DESTRUCTIVE',
   displayName: 'Delete Entity',
-  description: 'Delete an entity from Drupal',
+  description: 'Permanently delete a Drupal entity by its UUID.',
   audience: 'both',
   aiMetadata: { description: 'Permanently deletes a Drupal entity identified by its entity type, bundle, and UUID via JSON:API. Use to remove known content. Not idempotent: the first call deletes the entity and a repeat call for the same UUID fails because the resource no longer exists.', idempotent: false },
+  propertyGroups: [
+    { key: 'item', display: 'section', label: 'Entity to Delete', icon: 'trash', props: ['entity_type', 'entity_uuid'] },
+  ],
   props: {
     entity_type: Property.Dropdown({
       displayName: 'Entity Type',
-      description: 'Choose the type of content to delete.',
+      description: 'The kind of entity, shown as bundle (entity type).',
       required: true,
       refreshers: [],
       auth: drupalAuth,
@@ -25,7 +28,8 @@ export const drupalDeleteEntityAction = createAction({
     }),
     entity_uuid: Property.ShortText({
       displayName: 'Entity UUID',
-      description: 'The unique identifier (UUID) of the specific content item to delete.',
+      description: 'Find it in the entity\'s JSON:API URL or a List Entities result.',
+      placeholder: '3f1c9a52-7b0e-4c1d-9a8e-2f6b1d4c5e7a',
       required: true,
     }),
   },
