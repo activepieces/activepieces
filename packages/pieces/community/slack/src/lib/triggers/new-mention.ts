@@ -7,6 +7,7 @@ import { appWebhookSetupInfo, onlyBotChannels, slackChannels, multiSelectChannel
 import { slackAuth } from '../auth';
 import { getTeamId, SlackAuthValue } from '../common/auth-helpers';
 import { newMentionTriggerOutputSchema } from '../output-schemas';
+import { isChannelNoticeEvent } from '../common/utils';
 
 export const newMention = createTrigger({
   auth: slackAuth,
@@ -88,7 +89,7 @@ export const newMention = createTrigger({
     const usergroups = (context.propsValue.usergroups as string[]) ?? [];
 
     // check if it's channel message
-		if (!['channel','group'].includes(payloadBody.event.channel_type)) {
+		if (!['channel','group'].includes(payloadBody.event.channel_type) || isChannelNoticeEvent(payloadBody.event)) {
 			return [];
 		}
 
@@ -137,5 +138,6 @@ type PayloadBody = {
     bot_id?: string;
     text?: string;
     channel_type:string
+    subtype?: string;
   };
 };

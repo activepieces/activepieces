@@ -3,6 +3,7 @@ import { slackAuth } from '../auth';
 import { getTeamId, SlackAuthValue } from '../common/auth-helpers';
 import { appWebhookSetupInfo } from '../common/props';
 import { newMessageTriggerOutputSchema } from '../output-schemas';
+import { isNewMessageEvent } from '../common/utils';
 
 export const newMessageTrigger = createTrigger({
 	auth: slackAuth,
@@ -41,7 +42,7 @@ export const newMessageTrigger = createTrigger({
 		const payloadBody = context.payload.body as PayloadBody;
 
 		// check if it's channel message
-		if (!['channel','group'].includes(payloadBody.event.channel_type)) {
+		if (!['channel','group'].includes(payloadBody.event.channel_type) || !isNewMessageEvent(payloadBody.event)) {
 			return [];
 		}
 
@@ -58,5 +59,7 @@ type PayloadBody = {
 		channel: string;
 		bot_id?: string;
 		channel_type:string
+		subtype?: string;
+		hidden?: boolean;
 	};
 };
