@@ -70,7 +70,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof sftpAuth>, { pat
         newFiles.push({
           data: {
             ...file,
-            path: `${propsValue.path}/${file.name}`,
+            path: `${propsValue.path.replace(/\/+$/, '')}/${file.name}`,
           },
           epochMilliSeconds: modifyTime,
         });
@@ -89,20 +89,21 @@ export const newOrModifiedFile = createTrigger({
   name: 'new_file',
   classification: 'READ',
   displayName: 'New File',
-  description: 'Trigger when a new file is created or modified.',
+  description: 'Triggers when a file is added or changed in a folder.',
   aiMetadata: {
     description: 'Fires for each file in a watched directory on an FTP, FTPS or SFTP server whose modification time is newer than the previous poll, so it covers both newly added files and edits to existing ones. Each event represents one such file. Polls a single directory only, without recursing into subfolders, and can optionally skip hidden dotfiles.',
   },
   props: {
     path: Property.ShortText({
-      displayName: 'Path',
-      description: 'The path to watch for new files',
+      displayName: 'Folder Path',
+      description: 'The folder to watch. Subfolders are not watched.',
+      placeholder: './uploads',
       required: true,
       defaultValue: './',
     }),
     ignoreHiddenFiles: Property.Checkbox({
-      displayName: 'Ignore hidden files',
-      description: 'Ignore hidden files',
+      displayName: 'Ignore Hidden Files',
+      description: 'Skip files whose name starts with a dot.',
       required: false,
       defaultValue: false,
     }),

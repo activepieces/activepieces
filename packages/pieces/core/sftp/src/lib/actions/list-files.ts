@@ -4,7 +4,6 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import Client from 'ssh2-sftp-client';
 import { Client as FTPClient, FTPError } from 'basic-ftp';
 import { getSftpError } from './common';
-import { unknown } from 'zod';
 import { listFolderContentsActionOutputSchema } from '../output-schemas';
 
 async function listSFTP(client: Client, directoryPath: string) {
@@ -41,9 +40,10 @@ export const listFolderContentsAction = createAction({
   aiMetadata: { description: 'Lists the immediate entries of one directory on the connected FTP, FTPS or SFTP server. Use it to discover paths before reading, renaming or deleting, and to walk a tree one level at a time; it is not recursive and offers no filtering or search. Requires the directory path (e.g. ./myfolder); read-only and idempotent.', idempotent: true },
   props: {
     directoryPath: Property.ShortText({
-      displayName: 'Directory Path',
+      displayName: 'Folder Path',
       required: true,
-      description: 'The path of the folder to list e.g. `./myfolder`',
+      description: 'The folder to list. Subfolders are not opened.',
+      placeholder: './reports',
     }),
   },
   outputSchema: listFolderContentsActionOutputSchema,
