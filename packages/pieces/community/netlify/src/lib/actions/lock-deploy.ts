@@ -9,7 +9,7 @@ export const lockDeploy = createAction({
   name: 'lock_deploy',
   classification: 'WRITE',
   displayName: 'Lock Deploy',
-  description: 'Lock a published deploy so new builds do not replace it (stops auto publishing).',
+  description: 'Lock the published deploy so new builds stop replacing it.',
   audience: 'both',
   aiMetadata: {
     description:

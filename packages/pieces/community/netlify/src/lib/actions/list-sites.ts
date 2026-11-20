@@ -9,7 +9,7 @@ export const listSites = createAction({
   name: 'list_sites',
   classification: 'SEARCH',
   displayName: 'List Sites',
-  description: 'List the sites the connected account can access, optionally filtered by name.',
+  description: 'List the sites your account can access, optionally by name.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -18,7 +18,7 @@ export const listSites = createAction({
   },
   outputSchema: netlifySchemas.siteList,
   props: {
-    name: Property.ShortText({ displayName: 'Name Contains', description: 'Only sites whose name contains this text.', required: false }),
+    name: Property.ShortText({ displayName: 'Name Contains', description: 'Leave empty to list every site.', placeholder: 'my-site', required: false }),
     page: netlifyProps.page(),
     perPage: netlifyProps.perPage({ defaultValue: 50 }),
   },
