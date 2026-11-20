@@ -18,6 +18,8 @@ import { submitSitemap } from './lib/actions/submit-a-sitemap';
 import { urlInspection } from './lib/actions/url-inspection';
 import { googleSearchConsoleAuth } from './lib/auth';
 
+const webmastersBaseUrl = 'https://www.googleapis.com/webmasters/v3';
+
 export const googleSearchConsolePiece = createPiece({
   displayName: 'Google Search Console',
   description: "Monitor your site's Google Search traffic, sitemaps and index status.",
@@ -45,7 +47,13 @@ export const googleSearchConsolePiece = createPiece({
     urlInspection,
     inspectUrlBySiteUrl,
     createCustomApiCallAction({
-      baseUrl: () => 'https://www.googleapis.com/webmasters/v3',
+      baseUrl: () => webmastersBaseUrl,
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${webmastersBaseUrl}`,
+          placeholder: '/sites',
+        },
+      },
       auth: googleSearchConsoleAuth,
       authMapping: async (auth) => ({
         Authorization: `Bearer ${auth.access_token}`,

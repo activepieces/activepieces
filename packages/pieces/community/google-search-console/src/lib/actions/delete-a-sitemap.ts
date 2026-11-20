@@ -21,6 +21,15 @@ export const deleteSitemap = createAction({
     siteUrl: commonProps.siteUrl,
     feedpath: commonProps.sitemap,
   },
+  propertyGroups: [
+    {
+      key: 'sitemap',
+      display: 'section',
+      label: 'Sitemap to Delete',
+      icon: 'trash',
+      props: ['siteUrl', 'feedpath'],
+    },
+  ],
   outputSchema: gscOutputSchemas.sitemapChange,
   async run(context) {
     const siteUrl = gscInputs.siteUrl({ value: context.propsValue.siteUrl });

@@ -8,7 +8,7 @@ export const listSites = createAction({
   name: 'list_sites',
   classification: 'SEARCH',
   displayName: 'List Sites',
-  description: "Lists the user's Search Console sites.",
+  description: 'Lists your Search Console sites.',
   audience: 'both',
   aiMetadata: {
     description:
