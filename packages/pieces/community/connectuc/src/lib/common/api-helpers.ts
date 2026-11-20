@@ -1,4 +1,4 @@
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod, AuthenticationType, HttpError } from '@activepieces/pieces-common';
 
 export const CONNECTUC_BASE_URL = 'https://api.connectuc.io';
 
@@ -8,10 +8,11 @@ interface ApiCallParams {
     method: HttpMethod;
     body?: unknown;
     queryParams?: Record<string, string>;
+    timeout?: number;
 }
 
 export async function connectucApiCall<T = unknown>(params: ApiCallParams): Promise<T> {
-    const { accessToken, endpoint, method, body, queryParams } = params;
+    const { accessToken, endpoint, method, body, queryParams, timeout } = params;
 
     const response = await httpClient.sendRequest<T>({
         method,
@@ -22,9 +23,18 @@ export async function connectucApiCall<T = unknown>(params: ApiCallParams): Prom
         },
         body,
         queryParams,
+        timeout,
     });
 
     return response.body;
+}
+
+export function formatApiError(error: unknown): string {
+    if (error instanceof HttpError) {
+        const body = error.response.body;
+        return hasMessage(body) ? `${error.response.status}: ${body.message}` : `${error.response.status}`;
+    }
+    return error instanceof Error ? error.message : 'Unknown error';
 }
 
 export async function getUserId(accessToken: string): Promise<string> {
@@ -38,4 +48,8 @@ export async function getUserId(accessToken: string): Promise<string> {
     });
 
     return userInfoResponse.body.sub;
+}
+
+function hasMessage(body: unknown): body is { message: string } {
+    return typeof body === 'object' && body !== null && 'message' in body && typeof body.message === 'string';
 }
