@@ -9,7 +9,7 @@ export const getContentsAction = createAction({
   name: 'get_contents',
   classification: 'READ',
   displayName: 'Get Contents',
-  description: 'Retrieve clean HTML content from specified URLs.',
+  description: 'Get the text, highlights and summaries of web pages from their URLs.',
   audience: 'human',
   aiMetadata: {
     description: 'Crawls and extracts clean page content (and optionally full text, highlights, a guided summary and outgoing links) from a given list of URLs via Exa. Use when an agent already has specific URLs and needs their on-page content rather than running a web search; optionally fetch matching subpages by keyword and control cache freshness. Requires an array of URLs as input. Read-only and idempotent.',
@@ -17,22 +17,28 @@ export const getContentsAction = createAction({
   },
   auth: exaAuth,
   outputSchema: contentsResultsOutputSchema,
+  propertyGroups: [
+    { key: 'pages', display: 'section', label: 'Pages', icon: 'file', props: ['urls', 'text'] },
+    { key: 'content', display: 'section', label: 'Page Content', icon: 'text', props: ['highlights', 'summaryQuery', 'maxAgeHours', 'extrasLinks'] },
+    { key: 'subpages', display: 'section', label: 'Subpages', icon: 'paperclip', props: ['subpages', 'subpageTarget'] },
+  ],
   props: {
     urls: Property.Array({
       displayName: 'URLs',
       required: true,
-      description: 'Array of URLs to crawl',
+      description: 'The web pages to read, one URL per item.',
     }),
     text: Property.Checkbox({
       displayName: 'Return Full Text',
-      description: 'If true, returns full page text. If false, disables text return.',
+      description: 'Turn off to get only highlights, summaries or links.',
       required: false,
       defaultValue: true,
     }),
     livecrawl: Property.StaticDropdown({
-      displayName: 'Livecrawl Option',
-      description: 'Deprecated by Exa: prefer Max Content Age. Ignored when Max Content Age is set.',
+      displayName: 'Livecrawl',
+      description: 'Deprecated by Exa. Ignored when Max Content Age is set.',
       required: false,
+      advanced: true,
       options: {
         options: [
           { label: 'Never', value: 'never' },
@@ -43,40 +49,47 @@ export const getContentsAction = createAction({
       },
     }),
     livecrawlTimeout: Property.Number({
-      displayName: 'Livecrawl Timeout (ms)',
-      description: 'Timeout for livecrawling in milliseconds.',
+      displayName: 'Livecrawl Timeout',
+      description: 'Milliseconds to wait for a live crawl.',
       required: false,
+      advanced: true,
     }),
     subpages: Property.Number({
       displayName: 'Number of Subpages',
-      description: 'Number of subpages to crawl.',
+      description: 'Also read this many linked pages from each URL.',
       required: false,
+      width: 'half',
     }),
     subpageTarget: Property.ShortText({
       displayName: 'Subpage Target',
-      description: 'Keyword(s) to find specific subpages.',
+      description: 'Keyword that picks which subpages to read.',
+      placeholder: 'pricing',
       required: false,
+      width: 'half',
     }),
     highlights: Property.Checkbox({
       displayName: 'Include Highlights',
-      description: 'Also return the most relevant snippets from each page (billed as an extra content type).',
+      description: 'Also return the most relevant snippets from each page.',
       required: false,
       defaultValue: false,
     }),
     summaryQuery: Property.ShortText({
       displayName: 'Summary Question',
-      description: 'Ask for an AI summary of each page focused on this question, e.g. "What does this company sell?" (billed per page).',
+      description: 'Ask for an AI summary of each page, billed per page.',
+      placeholder: 'What does this company sell?',
       required: false,
     }),
     maxAgeHours: Property.Number({
-      displayName: 'Max Content Age (hours)',
-      description: 'Use cached content only if it is newer than this many hours (0 always fetches fresh, -1 always uses cache, up to 720). Replaces Livecrawl Option.',
+      displayName: 'Max Content Age',
+      description: 'Max cache age in hours, up to 720. 0: always fresh, -1: always cached.',
       required: false,
+      width: 'half',
     }),
     extrasLinks: Property.Number({
       displayName: 'Links per Page',
-      description: 'Also return up to this many links found on each page, e.g. 10.',
+      description: 'Also return up to this many links from each page.',
       required: false,
+      width: 'half',
     }),
   },
   async run(context) {
