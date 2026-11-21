@@ -7,7 +7,7 @@ export const clicksendFindContactListAction = createAction({
   auth: clicksendAuth,
   name: 'find_contact_lists',
   classification: 'READ',
-  description: 'Finds for contact list based on name.',
+  description: 'Find a contact list by its exact name.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -17,8 +17,9 @@ export const clicksendFindContactListAction = createAction({
   displayName: 'Find Contact List',
   props: {
     search: Property.ShortText({
-      displayName: 'Search',
-      description: 'Search by list name.',
+      displayName: 'List Name',
+      description: 'Must match the list name exactly.',
+      placeholder: 'Newsletter subscribers',
       required: true,
     }),
   },

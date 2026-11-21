@@ -18,38 +18,39 @@ export const clicksendSendSmsAction = createAction({
   props: {
     messages: Property.Array({
       displayName: 'Messages',
+      description: 'Each item is sent as its own SMS.',
       required: true,
       properties: {
         to: Property.ShortText({
-          description:
-            'The phone number (with country code, e.g., +1234567890)',
+          description: 'International format, with the country code.',
+          placeholder: '+14155550123',
           displayName: 'To',
           required: true,
         }),
         body: Property.ShortText({
-          description: 'The body of the message to send',
           displayName: 'Message Body',
           required: true,
         }),
         from: Property.ShortText({
-          description:
-            'The sender name or number (must be approved in ClickSend).',
+          description: 'A sender ID or number approved in ClickSend.',
           displayName: 'From',
           required: false,
         }),
         custom_string: Property.ShortText({
-          description: 'A custom string for tracking the message',
-          displayName: 'Custom String',
+          description: 'Your own tag, returned in delivery reports.',
+          displayName: 'Reference',
           required: false,
         }),
         country: Property.ShortText({
-          description: 'Country code (for compliance)',
+          description:
+            "Recipient's two-letter country code; helps ClickSend route it.",
+          placeholder: 'US',
           displayName: 'Country',
           required: false,
         }),
         message_expiry: Property.Number({
           description: 'How long (in minutes) the message is valid for.',
-          displayName: 'Message Expiry (minutes)',
+          displayName: 'Message Expiry',
           required: false,
         }),
         priority: Property.Checkbox({
