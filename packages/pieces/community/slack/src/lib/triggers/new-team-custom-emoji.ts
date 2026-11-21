@@ -39,15 +39,11 @@ export const newTeamCustomEmojiTrigger = createTrigger({
 
 	test: async (context) => {
 		const client = new WebClient(getBotToken(context.auth as SlackAuthValue));
-
-		const response = await client.emoji.list();
-
-		if (!response.emoji) return [sampleData];
-
-		return Object.entries(response.emoji).map(([id, image]) => ({
-			id,
-			image,
-		}));
+		const emojiList = (await client.emoji.list()).emoji ?? {};
+		const items = Object.entries(emojiList)
+			.slice(0, 5)
+			.map(([id, value]) => toEmojiItem({ id, value, emojiList }));
+		return items.length > 0 ? items : [sampleData];
 	},
 
 	run: async (context) => {
@@ -57,9 +53,33 @@ export const newTeamCustomEmojiTrigger = createTrigger({
 			return [];
 		}
 
-		return [{ id: payloadBody.event.name, image: payloadBody.event.value }];
+		const { name, value } = payloadBody.event;
+		if (!value.startsWith(ALIAS_PREFIX)) {
+			return [{ id: name, image: value }];
+		}
+		const client = new WebClient(getBotToken(context.auth as SlackAuthValue));
+		const emojiList = (await client.emoji.list()).emoji ?? {};
+		return [toEmojiItem({ id: name, value, emojiList })];
 	},
 });
+
+function toEmojiItem({ id, value, emojiList }: { id: string; value: string; emojiList: Record<string, string> }): EmojiItem {
+	if (!value.startsWith(ALIAS_PREFIX)) {
+		return { id, image: value };
+	}
+	const aliasFor = value.slice(ALIAS_PREFIX.length);
+	const targetValue = emojiList[aliasFor];
+	const image = targetValue && !targetValue.startsWith(ALIAS_PREFIX) ? targetValue : '';
+	return { id, image, alias_for: aliasFor };
+}
+
+const ALIAS_PREFIX = 'alias:';
+
+type EmojiItem = {
+	id: string;
+	image: string;
+	alias_for?: string;
+};
 
 type PayloadBody = {
 	event: {

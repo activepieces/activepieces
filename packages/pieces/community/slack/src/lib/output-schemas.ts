@@ -599,6 +599,7 @@ export const newTeamCustomEmojiTriggerOutputSchema: OutputSchema = {
   fields: [
     { key: 'id', label: 'Emoji Name' },
     { key: 'image', label: 'Image URL', format: 'url' },
+    { key: 'alias_for', label: 'Alias For' },
   ],
 };
 

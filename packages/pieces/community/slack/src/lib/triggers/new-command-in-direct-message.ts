@@ -85,20 +85,21 @@ export const newCommandInDirectMessageTrigger = createTrigger({
     const payloadBody = context.payload.body as PayloadBody;
     const commands = (context.propsValue.commands as string[]) ?? [];
     const user = context.propsValue.user as string;
-    const authUserId = await getUserId(context.auth as SlackAuthValue)
-
 
     if (payloadBody.event.channel_type !== 'im') {
-        return [];
+      return [];
     }
 
-    // Check for bot messages if configured to ignore them
-		if (
-			(context.propsValue.ignoreBots && payloadBody.event.bot_id) ||
-			(context.propsValue.ignoreSelfMessages && payloadBody.event.user === authUserId)
-		) {
-			return [];
-		}
+    if (context.propsValue.ignoreBots && payloadBody.event.bot_id) {
+      return [];
+    }
+
+    if (
+      context.propsValue.ignoreSelfMessages &&
+      payloadBody.event.user === (await getUserId(context.auth as SlackAuthValue))
+    ) {
+      return [];
+    }
 
     if (user && payloadBody.event.text) {
       const parsedCommand = parseCommand(

@@ -69,17 +69,18 @@ export const newMentionInDirectMessageTrigger = createTrigger({
 
   async run(context) {
     const payloadBody = context.payload.body as PayloadBody;
-    const userId = await getUserId(context.auth as SlackAuthValue)
 
     if (payloadBody.event.channel_type !== 'im') {
       return [];
     }
 
-    // check for bot messages
+    if (context.propsValue.ignoreBots && payloadBody.event.bot_id) {
+      return [];
+    }
+
     if (
-      (context.propsValue.ignoreBots && payloadBody.event.bot_id) ||
-      (context.propsValue.ignoreSelfMessages &&
-        payloadBody.event.user === userId)
+      context.propsValue.ignoreSelfMessages &&
+      payloadBody.event.user === (await getUserId(context.auth as SlackAuthValue))
     ) {
       return [];
     }

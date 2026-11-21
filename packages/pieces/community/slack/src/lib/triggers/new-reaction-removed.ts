@@ -75,7 +75,7 @@ export const newReactionRemoved = createTrigger({
       return [];
     }
 
-    if (emojis.length > 0 && !emojis.includes(payloadBody.event.reaction)) {
+    if (emojis.length > 0 && !emojis.includes(payloadBody.event.reaction) && !emojis.includes(payloadBody.event.reaction.split('::')[0])) {
       return [];
     }
 
