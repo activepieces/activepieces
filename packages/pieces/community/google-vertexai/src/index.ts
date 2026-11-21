@@ -7,7 +7,7 @@ export const googleVertexai = createPiece({
   displayName: "Google Vertex AI",
   description: "Generate content and images using Gemini and Imagen models on Google Vertex AI.",
   auth: vertexAiAuth,
-  minimumSupportedRelease: "0.71.4",
+  minimumSupportedRelease: "0.88.2",
   logoUrl: "https://cdn.activepieces.com/pieces/google-vertexai.png",
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ["alinperghel", "onyedikachi-david","bertrandong"],
