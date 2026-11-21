@@ -15,9 +15,16 @@ export const findProjects = createAction({
       'Lists the Nifty projects you can see, optionally only those whose name contains a text (case-insensitive), in one portfolio, or archived ones too. Leave the name empty to list them all. Use to get the project_id that task, status and milestone actions need. Read-only and idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    { key: 'search', display: 'section', label: 'Search', icon: 'filter', props: ['name_contains', 'portfolio_id', 'include_archived'] },
+  ],
   props: {
     name_contains: Property.ShortText({ displayName: 'Name Contains', required: false }),
-    portfolio_id: Property.ShortText({ displayName: 'Portfolio ID', required: false }),
+    portfolio_id: Property.ShortText({
+      displayName: 'Portfolio ID',
+      description: "From a project's Portfolio ID. Leave empty for all portfolios.",
+      required: false,
+    }),
     include_archived: Property.Checkbox({ displayName: 'Include Archived', required: false, defaultValue: false }),
   },
   outputSchema: findProjectsOutputSchema,
