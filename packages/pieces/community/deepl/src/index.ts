@@ -8,33 +8,38 @@ import { PieceCategory } from '@activepieces/pieces-framework';
 import { translateText } from './lib/actions/translate-text';
 
 const markdownDescription = `
-Follow these instructions to get your DeepL API Key:
+To get your DeepL API key:
 
 1. Log in to your DeepL account.
-2. Visit https://www.deepl.com/account/summary
-3. Go to the API section and obtain your DeepL API Key.
+2. Open **API Keys** at https://www.deepl.com/your-account/keys
+3. Copy a key and paste it below.
+
+Free plan keys end in \`:fx\`.
 `;
 export const deeplAuth = PieceAuth.CustomAuth({
   description: markdownDescription,
   props: {
     key: Property.ShortText({
-      displayName: 'Api key',
-      description: 'Enter the api key',
+      displayName: 'API Key',
+      description: 'Found under API Keys in your DeepL account.',
       required: true,
     }),
     type: Property.StaticDropdown({
-      displayName: 'Api url',
-      description: 'Select api url',
+      displayName: 'Plan',
+      description: 'The plan your key belongs to; Free keys end in :fx.',
       required: true,
+      display: 'cards',
       options: {
         options: [
           {
-            label: 'Free API',
+            label: 'Free',
             value: 'free',
+            description: 'api-free.deepl.com',
           },
           {
-            label: 'Paid API',
+            label: 'Pro',
             value: 'paid',
+            description: 'api.deepl.com',
           },
         ],
       },
@@ -47,7 +52,7 @@ export const deepl = createPiece({
   displayName: 'DeepL',
   description: 'AI-powered language translation',
   auth: deeplAuth,
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/deepl.png',
   categories: [],
   authors: ["BBND","kishanprmr","MoShizzle","abuaboud"],
@@ -55,13 +60,20 @@ export const deepl = createPiece({
     translateText,
     createCustomApiCallAction({
       baseUrl: (auth) =>
-        (auth as { type: string }).type === 'free'
+        auth?.props.type === 'free'
           ? 'https://api-free.deepl.com/v2'
-          : 'https://api.deepl.com/v2', // Replace with the actual base URL
+          : 'https://api.deepl.com/v2',
       auth: deeplAuth,
       authMapping: async (auth) => ({
         Authorization: `DeepL-Auth-Key ${auth.props.key}`,
       }),
+      props: {
+        url: {
+          description:
+            "Full URL, or a path relative to your plan's DeepL API address.",
+          placeholder: '/usage',
+        },
+      },
     }),
   ],
   triggers: [],
