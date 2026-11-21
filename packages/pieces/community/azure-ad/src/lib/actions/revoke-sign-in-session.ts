@@ -12,16 +12,24 @@ export const revokeSignInSessionAction = createAction({
     audience: 'both',
     aiMetadata: {
         description:
-            'Invalidates all of a user\'s refresh and session tokens, forcing re-authentication on every device — use to cut off access after a compromise or during offboarding, typically alongside disabling the account. Safe to repeat: calling it again just renews the revocation. It does not disable the account or reset the password.',
+            'Invalidates all of a user\'s refresh and session tokens, forcing re-authentication on every device — use to cut off access after a compromise or during offboarding, typically alongside disabling the account. Safe to repeat: calling it again just renews the revocation. It does not disable the account or reset the password; use Enable or Disable User for that.',
         idempotent: true,
+    },
+    outputSchema: {
+        fields: [
+            { key: 'success', label: 'Success', format: 'boolean' },
+            { key: 'message', label: 'Message' },
+        ],
     },
     props: {
         userId: userDropdown,
     },
     async run(context) {
         const token = context.auth.access_token;
-        const { userId } = context.propsValue;
-        // https://learn.microsoft.com/en-us/graph/api/user-revokesigninsessions?view=graph-rest-1.0&tabs=http
+        const userId = typeof context.propsValue.userId === 'string' ? context.propsValue.userId.trim() : '';
+        if (userId === '') {
+            throw new Error('Select the user whose sign-in sessions to revoke.');
+        }
         const result = await callGraphApi<{ value?: boolean }>(token, {
             method: HttpMethod.POST,
             url: `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(String(userId))}/revokeSignInSessions`,

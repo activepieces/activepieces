@@ -1,19 +1,27 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { azureAdAuth } from '../auth';
-import { callGraphApi, getResourceOptionsForType } from '../common';
+import { callGraphApi, dropdownErrorPlaceholder, fetchExtensionPropertyNames, getResourceOptionsForType, resourcePlaceholder } from '../common';
 
 export const resetCustomAttributesAction = createAction({
     auth: azureAdAuth,
     name: 'reset_custom_attributes',
     classification: 'DESTRUCTIVE',
     displayName: 'Reset Custom Attributes',
-    description: 'Clears extension/custom attributes on a user or group. Provide the resource type and ID, and the extension property names to clear.',
+    description: 'Clears directory extension attributes (extension_*) on a user or group by setting them to null.',
     audience: 'both',
     aiMetadata: {
         description:
-            'Clears extension/custom attribute values on a chosen user or group by setting them to null; pass specific extension property names, or leave empty to clear every detected extension_*/ext_* key (broader blast radius). Destructive to the attribute data but idempotent — re-running finds nothing left to clear and becomes a no-op.',
+            'Clears directory extension attribute values on one user or group by setting them to null. Pass specific extension property names (extension_<appId>_<name>), or leave them empty to clear every extension attribute registered for that object type that currently has a value (broader blast radius). Unknown names fail with the Graph error. Destructive to the attribute data but idempotent: re-running leaves the same empty state.',
         idempotent: true,
+    },
+    outputSchema: {
+        fields: [
+            { key: 'success', label: 'Success', format: 'boolean' },
+            { key: 'id', label: 'Resource ID' },
+            { key: 'cleared', label: 'Cleared Attributes', description: 'Names that were set to null.' },
+            { key: 'message', label: 'Message' },
+        ],
     },
     props: {
         resourceType: Property.StaticDropdown({
@@ -30,62 +38,81 @@ export const resetCustomAttributesAction = createAction({
         }),
         resourceId: Property.Dropdown({
             displayName: 'Resource',
-            description: 'Select the user or group to clear extension attributes from.',
+            description: 'Select the user or group, or type to search.',
             refreshers: ['resourceType'],
+            refreshOnSearch: true,
             required: true,
             auth: azureAdAuth,
-            options: async ({ auth, resourceType }) => {
+            options: async ({ auth, resourceType }, { searchValue }) => {
                 if (!auth) return { disabled: true, options: [], placeholder: 'Connect your account first.' };
-                const type = resourceType as string;
-                if (!type) return { disabled: true, options: [], placeholder: 'Select resource type first.' };
+                if (typeof resourceType !== 'string' || resourceType === '') {
+                    return { disabled: true, options: [], placeholder: 'Select resource type first.' };
+                }
                 try {
-                    const token = auth.access_token;
-                    const options = await getResourceOptionsForType(token, type);
-                    return {
-                        disabled: false,
-                        options,
-                        placeholder: options.length === 0 ? 'No items found.' : undefined,
-                    };
-                } catch {
-                    return { disabled: true, options: [], placeholder: 'Failed to load. Check your connection.' };
+                    const { options, truncated } = await getResourceOptionsForType({ accessToken: auth.access_token, resourceType, search: searchValue });
+                    return { disabled: false, options, placeholder: resourcePlaceholder({ count: options.length, truncated }) };
+                } catch (error) {
+                    return { disabled: true, options: [], placeholder: dropdownErrorPlaceholder({ what: 'items', error }) };
                 }
             },
         }),
         extensionNames: Property.ShortText({
             displayName: 'Extension Property Names',
-            description: 'Comma-separated extension property names to clear (e.g. extension_xxx_AttributeName). Leave empty to clear known extension keys.',
+            description: 'Comma-separated extension property names to clear. Leave empty to clear every registered extension attribute that has a value.',
             required: false,
+            placeholder: 'extension_1234abcd..._department',
+            advanced: true,
         }),
     },
     async run(context) {
         const token = context.auth.access_token;
         const { resourceType, resourceId, extensionNames } = context.propsValue;
-        const resource = resourceType as string;
-        const id = resourceId as string;
-        const getUrl = `https://graph.microsoft.com/v1.0/${resource}/${encodeURIComponent(id)}`;
-        // https://learn.microsoft.com/en-us/graph/api/user-get?view=graph-rest-1.0&tabs=http
-        // https://learn.microsoft.com/en-us/graph/api/group-get?view=graph-rest-1.0&tabs=http
-        const existing = await callGraphApi<Record<string, unknown>>(token, {
-            method: HttpMethod.GET,
-            url: getUrl,
-        });
-        const keysToClear = extensionNames
-            ? (extensionNames as string).split(',').map((s) => s.trim()).filter(Boolean)
-            : Object.keys(existing).filter((k) => k.startsWith('extension_') || k.startsWith('ext_'));
+        if (resourceType !== 'users' && resourceType !== 'groups') {
+            throw new Error('Resource Type must be "users" or "groups".');
+        }
+        const id = String(resourceId ?? '').trim();
+        if (id === '') {
+            throw new Error('Select the user or group whose attributes should be cleared.');
+        }
+        const url = `/${resourceType}/${encodeURIComponent(id)}`;
+        const explicit = typeof extensionNames === 'string'
+            ? Array.from(new Set(extensionNames.split(',').map((s) => s.trim()).filter(Boolean)))
+            : [];
+        let keysToClear: string[];
+        if (explicit.length > 0) {
+            await callGraphApi<Record<string, unknown>>(token, {
+                method: HttpMethod.GET,
+                url,
+                query: { $select: ['id', ...explicit].join(',') },
+            });
+            keysToClear = explicit;
+        } else {
+            const names = await fetchExtensionPropertyNames({
+                accessToken: token,
+                targetObject: resourceType === 'users' ? 'User' : 'Group',
+            });
+            if (names.length === 0) {
+                return { success: true, id, cleared: [], message: 'No extension attributes are registered for this object type.' };
+            }
+            const existing = await callGraphApi<Record<string, unknown>>(token, {
+                method: HttpMethod.GET,
+                url,
+                query: { $select: ['id', ...names].join(',') },
+            });
+            keysToClear = names.filter((n) => existing[n] !== undefined && existing[n] !== null);
+        }
+        if (keysToClear.length === 0) {
+            return { success: true, id, cleared: [], message: 'No extension attributes had a value; nothing was changed.' };
+        }
         const patchBody: Record<string, null> = {};
         for (const key of keysToClear) {
-            if (existing[key] !== undefined) patchBody[key] = null;
+            patchBody[key] = null;
         }
-        if (Object.keys(patchBody).length === 0) {
-            return { success: true, message: 'No extension attributes to reset.' };
-        }
-        // https://learn.microsoft.com/en-us/graph/api/user-update?view=graph-rest-1.0&tabs=http
-        // https://learn.microsoft.com/en-us/graph/api/group-update?view=graph-rest-1.0&tabs=http
         await callGraphApi(token, {
             method: HttpMethod.PATCH,
-            url: getUrl,
+            url,
             body: patchBody,
         });
-        return { success: true, cleared: keysToClear };
+        return { success: true, id, cleared: keysToClear, message: `Cleared ${keysToClear.length} extension attribute(s).` };
     },
 });

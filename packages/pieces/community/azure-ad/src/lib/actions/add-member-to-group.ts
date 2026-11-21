@@ -8,12 +8,20 @@ export const addMemberToGroupAction = createAction({
     name: 'add_member_to_group',
     classification: 'WRITE',
     displayName: 'Add Member to Group',
-    description: 'Adds a user or group as a member of an Azure AD group.',
+    description: 'Adds a user or group to a Microsoft Entra ID group.',
     audience: 'both',
     aiMetadata: {
         description:
-            'Adds an existing user or group (by directory object ID) as a member of an Azure AD group. Use when granting group-based access or distribution membership; both the group and the member must already exist. Not idempotent — re-adding someone who is already a member fails with a Graph error, so check membership with List Group Members first if unsure.',
+            'Adds an existing user or group (by directory object ID) as a member of a Microsoft Entra ID group. Use when granting group-based access or distribution membership; both the group and the member must already exist. Not idempotent — re-adding someone who is already a member fails with a Graph error, so check membership with List Group Members or List User Groups first if unsure. Use Remove Member from Group to undo.',
         idempotent: false,
+    },
+    outputSchema: {
+        fields: [
+            { key: 'success', label: 'Success', format: 'boolean' },
+            { key: 'message', label: 'Message' },
+            { key: 'group_id', label: 'Group ID' },
+            { key: 'member_id', label: 'Member ID' },
+        ],
     },
     props: {
         groupId: groupDropdown,
@@ -23,14 +31,13 @@ export const addMemberToGroupAction = createAction({
         const token = context.auth.access_token;
         const { groupId, memberId } = context.propsValue;
 
-        // https://learn.microsoft.com/en-us/graph/api/group-post-members?view=graph-rest-1.0&tabs=http
         await callGraphApi(token, {
             method: HttpMethod.POST,
-            url: `https://graph.microsoft.com/v1.0/groups/${groupId}/members/$ref`,
+            url: `https://graph.microsoft.com/v1.0/groups/${encodeURIComponent(String(groupId))}/members/$ref`,
             body: {
-                '@odata.id': `https://graph.microsoft.com/v1.0/directoryObjects/${memberId}`,
+                '@odata.id': `https://graph.microsoft.com/v1.0/directoryObjects/${encodeURIComponent(String(memberId).trim())}`,
             },
         });
-        return { success: true, message: 'Member added to group.' };
+        return { success: true, message: 'Member added to group.', group_id: groupId, member_id: memberId };
     },
 });

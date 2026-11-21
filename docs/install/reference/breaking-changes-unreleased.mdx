@@ -263,3 +263,13 @@ Microsoft Dynamics CRM "Create Record", "Get Record", "Update Record" and "Delet
 - If a flow relied on "Update Record" creating a missing record, use "Create Record" for that case instead.
 - If your self-hosted instance reaches Dynamics 365 through a proxy that inspects TLS traffic, add the proxy's CA certificate to `NODE_EXTRA_CA_CERTS`, or Dynamics CRM steps fail with a certificate error.
 - Flow steps that use these actions keep working unchanged otherwise. Steps keep running on the version they were built with until you upgrade them.
+
+#### Azure Active Directory 0.4.0: three list actions are no longer AI agent tools
+
+Azure Active Directory "List Users", "Get Enabled Users" and "List Enabled Users" are now available in the flow builder only, not as agent/MCP tools. Agents should use the new "Find Users" tool instead, which searches by name, email or user principal name, filters enabled accounts and pages with a cursor.
+
+#### What you need to do
+
+- If an agent or MCP client used one of the 3 actions as a tool, switch it to "Find Users".
+- Update User's "Account Enabled" checkbox is now a "Sign-in" choice (Allow / Block). An unticked checkbox no longer blocks sign-in; steps that relied on it to block a user should pick "Block sign-in" or use "Enable or Disable User".
+- Flow steps that use these actions keep working unchanged. Steps keep running on the version they were built with until you upgrade them.
