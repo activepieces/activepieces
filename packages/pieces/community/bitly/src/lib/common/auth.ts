@@ -1,6 +1,6 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
-import { bitlyApiCall } from './client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { bitlyApiCall, BitlyApiError } from './client';
 
 export const bitlyAuth = PieceAuth.CustomAuth({
   description: `
@@ -24,12 +24,14 @@ export const bitlyAuth = PieceAuth.CustomAuth({
         method: HttpMethod.GET,
         auth,
         resourceUri: '/user',
+        operation: 'validate connection',
       });
       return { valid: true };
     } catch (e) {
+      const invalid = e instanceof BitlyApiError && (e.statusCode === 401 || e.statusCode === 403);
       return {
         valid: false,
-        error: 'Invalid Access Token',
+        error: invalid ? 'Invalid Access Token' : e instanceof Error ? e.message : 'Could not reach Bitly',
       };
     }
   },

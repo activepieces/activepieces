@@ -1,60 +1,31 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { bitlyApiCall } from '../common/client';
+import { createAction } from '@activepieces/pieces-framework';
+import { bitlinkPath, bitlyApiCall, normalizeBitlinkId } from '../common/client';
 import { bitlyAuth } from '../common/auth';
 import { bitlinkDropdown, groupGuid } from '../common/props';
+import { bitlinkOutputSchema } from '../common/schemas';
 
 export const archiveBitlinkAction = createAction({
   auth: bitlyAuth,
   name: 'archive_bitlink',
-  classification: 'DESTRUCTIVE',
+  classification: 'WRITE',
   displayName: 'Archive Bitlink',
-  description: 'Archive a Bitlink to stop redirects.',
-  audience: 'both',
-  aiMetadata: { description: 'Archives an existing Bitlink so it stops redirecting, identified by its Bitlink ID (e.g. bit.ly/xyz123). Use to retire or disable a short link. Idempotent: re-archiving an already-archived link leaves it archived with no additional effect.', idempotent: true },
+  description: 'Archive a Bitlink to stop redirects. It can be restored with Update Bitlink.',
+  audience: 'human',
+  aiMetadata: { description: 'Archives an existing Bitlink so it stops redirecting, identified by its Bitlink ID (e.g. bit.ly/xyz123). Reversible with Update Bitlink. Idempotent: re-archiving an already-archived link leaves it archived.', idempotent: true },
+  outputSchema: bitlinkOutputSchema,
   props: {
     group_guid: groupGuid,
     bitlink: bitlinkDropdown,
   },
   async run(context) {
-    const { bitlink } = context.propsValue;
-
-    try {
-      const body = {
-        archived: true,
-      };
-
-      return await bitlyApiCall({
-        method: HttpMethod.PATCH,
-        auth: context.auth.props,
-        resourceUri: `/bitlinks/${bitlink}`,
-        body,
-      });
-
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.description || error.response?.data?.message || error.message;
-
-      if (error.response?.status === 429) {
-        throw new Error(
-          'Rate limit exceeded. Please wait before trying again.'
-        );
-      }
-
-      if (error.response?.status === 404) {
-        throw new Error(
-          `Bitlink not found: ${errorMessage}. Please verify the link (e.g., 'bit.ly/xyz123') is correct.`
-        );
-      }
-
-      if (error.response?.status === 401 || error.response?.status === 403) {
-        throw new Error(
-          `Authentication failed or forbidden: ${errorMessage}. Please check your Access Token and permissions.`
-        );
-      }
-
-      throw new Error(
-        `Failed to archive Bitlink: ${errorMessage || 'Unknown error occurred'}`
-      );
-    }
+    const id = normalizeBitlinkId(context.propsValue.bitlink);
+    return bitlyApiCall({
+      method: HttpMethod.PATCH,
+      auth: context.auth.props,
+      resourceUri: `/bitlinks/${bitlinkPath(id)}`,
+      body: { archived: true },
+      operation: 'archive Bitlink',
+    });
   },
 });

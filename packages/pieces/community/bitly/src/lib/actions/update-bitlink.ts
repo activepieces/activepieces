@@ -1,8 +1,9 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { bitlyApiCall } from '../common/client';
+import { bitlinkPath, bitlyApiCall, normalizeBitlinkId } from '../common/client';
 import { bitlyAuth } from '../common/auth';
-import { bitlinkDropdown, groupGuid } from '../common/props';
+import { bitlinkDropdown, groupGuid, optionalText, parseTriState, toStringList, tristateOptions } from '../common/props';
+import { bitlinkOutputSchema } from '../common/schemas';
 
 export const updateBitlinkAction = createAction({
   auth: bitlyAuth,
@@ -10,8 +11,9 @@ export const updateBitlinkAction = createAction({
   classification: 'WRITE',
   displayName: 'Update Bitlink',
   description: 'Modify properties of an existing Bitlink.',
-  audience: 'both',
-  aiMetadata: { description: 'Updates properties of an existing Bitlink identified by its Bitlink ID, including title, archive status, tags (overwrites existing), and mobile app deeplinks. Use to edit or re-tag a known short link; at least one field must be provided. Idempotent: applying the same values repeatedly yields the same final state.', idempotent: true },
+  audience: 'human',
+  outputSchema: bitlinkOutputSchema,
+  aiMetadata: { description: 'Updates properties of an existing Bitlink identified by its Bitlink ID, including title, archive status (unchanged unless set), tags (overwrites existing), and mobile app deeplinks. Use to edit or re-tag a known short link; at least one field must be provided. Idempotent: applying the same values repeatedly yields the same final state.', idempotent: true },
   props: {
     group_guid: groupGuid,
     bitlink: bitlinkDropdown,
@@ -20,17 +22,17 @@ export const updateBitlinkAction = createAction({
       description: 'New title for the Bitlink.',
       required: false,
     }),
-    archived: Property.Checkbox({
+    archived: Property.StaticDropdown<string>({
       displayName: 'Archived',
-      description: 'Archive or unarchive the Bitlink.',
+      description: 'Yes archives the Bitlink, No restores it. Leave empty to keep the current state.',
       required: false,
+      options: tristateOptions,
     }),
     tags: Property.Array({
       displayName: 'Tags',
       description: 'Tags to apply (overwrites existing tags).',
       required: false,
     }),
-    // Mobile App Deeplink Configuration
     app_uri_path: Property.ShortText({
       displayName: 'App URI Path',
       description: 'Path within the mobile app (e.g., /product/123).',
@@ -68,87 +70,46 @@ export const updateBitlinkAction = createAction({
     }),
   },
   async run(context) {
-    const { 
-      bitlink, 
-      title, 
-      archived, 
-      tags, 
-      app_uri_path,
-      install_url,
-      os,
-      install_type 
-    } = context.propsValue;
-
-    try {
-      const body: Record<string, unknown> = {};
-
-      if (title !== undefined && title !== null) {
-        body['title'] = title;
-      }
-      if (archived !== undefined && archived !== null) {
-        body['archived'] = archived;
-      }
-      if (tags !== undefined && tags !== null && Array.isArray(tags)) {
-        body['tags'] = tags;
-      }
-      
-      // Build deeplinks array if app configuration is provided
-      if (app_uri_path || install_url || os || install_type) {
-        const deeplink: Record<string, unknown> = {};
-        
-        if (app_uri_path) deeplink['app_uri_path'] = app_uri_path;
-        if (install_url) deeplink['install_url'] = install_url;
-        if (os) deeplink['os'] = os;
-        if (install_type) deeplink['install_type'] = install_type;
-        
-        if (Object.keys(deeplink).length > 0) {
-          body['deeplinks'] = [deeplink];
-        }
-      }
-
-      if (Object.keys(body).length === 0) {
-        throw new Error(
-          'No fields were provided to update. Please provide a title, tags, archive status, or deeplinks.'
-        );
-      }
-
-      return await bitlyApiCall({
-        method: HttpMethod.PATCH,
-        auth: context.auth.props,
-        resourceUri: `/bitlinks/${bitlink}`,
-        body,
-      });
-    } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.description ||
-        error.response?.data?.message ||
-        error.message;
-
-      if (error.response?.status === 429) {
-        throw new Error(
-          'Rate limit exceeded. Please wait before trying again.'
-        );
-      }
-
-      if (error.response?.status === 404) {
-        throw new Error(
-          `Bitlink not found: ${errorMessage}. Please verify the link (e.g., 'bit.ly/xyz123') is correct.`
-        );
-      }
-
-      if (error.response?.status === 401 || error.response?.status === 403) {
-        throw new Error(
-          `Authentication failed or forbidden: ${errorMessage}. Please check your Access Token and permissions.`
-        );
-      }
-
-      if (error.message.includes('Invalid JSON format')) {
-        throw error;
-      }
-
-      throw new Error(
-        `Failed to update Bitlink: ${errorMessage || 'Unknown error occurred'}`
-      );
+    const { bitlink, title, archived, tags, app_uri_path, install_url, os, install_type } = context.propsValue;
+    const id = normalizeBitlinkId(bitlink);
+    const deeplink = {
+      ...(optionalText(app_uri_path) ? { app_uri_path: optionalText(app_uri_path) } : {}),
+      ...(optionalText(install_url) ? { install_url: optionalText(install_url) } : {}),
+      ...(optionalText(os) ? { os: optionalText(os) } : {}),
+      ...(optionalText(install_type) ? { install_type: optionalText(install_type) } : {}),
+    };
+    const archivedRaw: unknown = archived;
+    const archivedValue = archivedRaw === false ? undefined : parseTriState({ value: archivedRaw, label: 'Archived' });
+    const body = buildUpdateBody({ title, archived: archivedValue, tags });
+    const fullBody = Object.keys(deeplink).length > 0 ? { ...body, deeplinks: [deeplink] } : body;
+    if (Object.keys(fullBody).length === 0) {
+      throw new Error('No fields were provided to update. Please provide a title, tags, archive status, or deeplinks.');
     }
+    return bitlyApiCall({
+      method: HttpMethod.PATCH,
+      auth: context.auth.props,
+      resourceUri: `/bitlinks/${bitlinkPath(id)}`,
+      body: fullBody,
+      operation: 'update Bitlink',
+    });
   },
 });
+
+export function buildUpdateBody({
+  title,
+  archived,
+  tags,
+}: {
+  title: unknown;
+  archived: boolean | undefined;
+  tags: unknown;
+}): Record<string, unknown> {
+  const titleText = optionalText(title);
+  const cleanedTags = toStringList(tags);
+  const tagList = cleanedTags !== undefined && cleanedTags.length > 0 ? cleanedTags : undefined;
+  return {
+    ...(titleText !== undefined ? { title: titleText } : {}),
+    ...(archived !== undefined ? { archived } : {}),
+    ...(tagList !== undefined ? { tags: tagList } : {}),
+  };
+}

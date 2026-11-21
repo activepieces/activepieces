@@ -8,12 +8,21 @@ import { createBitlinkAction } from './lib/actions/create-bitlink';
 import { createQrCodeAction } from './lib/actions/create-qr-code';
 import { getBitlinkDetailsAction } from './lib/actions/get-bitlink-details';
 import { updateBitlinkAction } from './lib/actions/update-bitlink';
+import { getBitlinkClicksAction } from './lib/actions/get-bitlink-clicks';
+import { aiListGroupsAction } from './lib/actions/ai/ai-list-groups';
+import { aiSearchBitlinksAction } from './lib/actions/ai/ai-search-bitlinks';
+import { aiGetBitlinkAction } from './lib/actions/ai/ai-get-bitlink';
+import { aiShortenUrlAction } from './lib/actions/ai/ai-shorten-url';
+import { aiUpdateBitlinkAction } from './lib/actions/ai/ai-update-bitlink';
+import { aiGetBitlinkClicksAction } from './lib/actions/ai/ai-get-bitlink-clicks';
+import { aiListQrCodesAction } from './lib/actions/ai/ai-list-qr-codes';
+import { aiCreateQrCodeAction } from './lib/actions/ai/ai-create-qr-code';
 
 export const bitly = createPiece({
   displayName: 'Bitly',
   description: 'URL shortening and link management platform with analytics.',
   auth: bitlyAuth,
-  minimumSupportedRelease: '0.20.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/bitly.png',
   authors: ['aryel780'],
   categories: [PieceCategory.MARKETING],
@@ -23,6 +32,15 @@ export const bitly = createPiece({
     createQrCodeAction,
     getBitlinkDetailsAction,
     updateBitlinkAction,
+    getBitlinkClicksAction,
+    aiListGroupsAction,
+    aiSearchBitlinksAction,
+    aiGetBitlinkAction,
+    aiShortenUrlAction,
+    aiUpdateBitlinkAction,
+    aiGetBitlinkClicksAction,
+    aiListQrCodesAction,
+    aiCreateQrCodeAction,
     createCustomApiCallAction({
       auth: bitlyAuth,
       baseUrl: () => 'https://api-ssl.bitly.com/v4',
@@ -34,5 +52,5 @@ export const bitly = createPiece({
       },
     }),
   ],
-  triggers: [ newBitlinkCreatedTrigger ],
+  triggers: [newBitlinkCreatedTrigger],
 });

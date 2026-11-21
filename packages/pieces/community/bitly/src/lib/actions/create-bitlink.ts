@@ -1,8 +1,9 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { bitlyApiCall } from '../common/client';
+import { bitlyApiCall, requireGuid } from '../common/client';
 import { bitlyAuth } from '../common/auth';
-import { groupGuid, domain } from '../common/props';
+import { groupGuid, domain, optionalText, toStringList } from '../common/props';
+import { bitlinkOutputSchema } from '../common/schemas';
 
 export const createBitlinkAction = createAction({
   auth: bitlyAuth,
@@ -10,7 +11,8 @@ export const createBitlinkAction = createAction({
   classification: 'WRITE',
   displayName: 'Create Bitlink',
   description: 'Shorten a long URL with optional customization.',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: bitlinkOutputSchema,
   aiMetadata: { description: 'Shortens a long URL into a Bitlink, optionally setting title, tags, custom branded domain, and mobile app deeplinks. Use to create a trackable short link from a destination URL (must start with http:// or https://). Not idempotent: each call creates a link, though Bitly may return an existing Bitlink for the same URL unless Force New Link is enabled.', idempotent: false },
   props: {
     long_url: Property.ShortText({
@@ -39,7 +41,6 @@ export const createBitlinkAction = createAction({
       required: false,
       defaultValue: false,
     }),
-    // Mobile App Deeplink Configuration
     app_id: Property.ShortText({
       displayName: 'Mobile App ID',
       description: 'Mobile app identifier (e.g., com.yourapp.name).',
@@ -70,90 +71,65 @@ export const createBitlinkAction = createAction({
     }),
   },
   async run(context) {
-    const {
-      long_url,
-      group_guid,
-      domain,
-      title,
-      tags,
-      force_new_link,
-      app_id,
-      app_uri_path,
-      install_url,
-      install_type,
-    } = context.propsValue;
-
-    try {
-      // Pre-flight validation
-      if (!long_url.startsWith('http://') && !long_url.startsWith('https://')) {
-        throw new Error(
-          "Invalid Long URL. It must start with 'http://' or 'https://'."
-        );
-      }
-
-      const body: Record<string, unknown> = { long_url };
-
-      if (group_guid) {
-        body['group_guid'] = group_guid;
-      }
-      if (domain) {
-        body['domain'] = domain;
-      }
-      if (title) {
-        body['title'] = title;
-      }
-      if (tags && tags.length > 0) {
-        body['tags'] = tags;
-      }
-      if (force_new_link) {
-        body['force_new_link'] = force_new_link;
-      }
-      
-      // Build deeplinks array if app configuration is provided
-      if (app_id && app_uri_path && install_url && install_type) {
-        body['deeplinks'] = [
-          {
-            app_id,
-            app_uri_path,
-            install_url,
-            install_type,
-          },
-        ];
-      }
-
-      return await bitlyApiCall({
-        method: HttpMethod.POST,
-        auth: context.auth.props,
-        resourceUri: '/bitlinks',
-        body,
-      });
-    } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.description ||
-        error.response?.data?.message ||
-        error.message;
-
-      if (error.response?.status === 429) {
-        throw new Error(
-          'Rate limit exceeded. Please wait before trying again.'
-        );
-      }
-
-      if (error.response?.status === 422) {
-        throw new Error(
-          `Unprocessable Entity: ${errorMessage}. Please check the format of your Long URL or other inputs.`
-        );
-      }
-
-      if (error.response?.status === 401 || error.response?.status === 403) {
-        throw new Error(
-          `Authentication failed or forbidden: ${errorMessage}. Please check your Access Token and permissions.`
-        );
-      }
-
-      throw new Error(
-        `Failed to create Bitlink: ${errorMessage || 'Unknown error occurred'}`
-      );
+    const { long_url, group_guid, domain, title, tags, force_new_link } = context.propsValue;
+    const deeplinkValues = {
+      app_id: optionalText(context.propsValue.app_id),
+      app_uri_path: optionalText(context.propsValue.app_uri_path),
+      install_url: optionalText(context.propsValue.install_url),
+      install_type: optionalText(context.propsValue.install_type),
+    };
+    const filled = Object.values(deeplinkValues).filter((v) => v !== undefined).length;
+    if (filled > 0 && filled < 4) {
+      throw new Error('To add a mobile deeplink, fill Mobile App ID, App URI Path, App Install URL and Install Type together.');
     }
+    return bitlyApiCall({
+      method: HttpMethod.POST,
+      auth: context.auth.props,
+      resourceUri: '/bitlinks',
+      body: buildShortenBody({
+        longUrl: long_url,
+        groupGuid: group_guid,
+        domain,
+        title,
+        tags,
+        forceNewLink: force_new_link === true,
+        deeplinks: filled === 4 ? [deeplinkValues] : undefined,
+      }),
+      operation: 'create Bitlink',
+    });
   },
 });
+
+export function buildShortenBody({
+  longUrl,
+  groupGuid,
+  domain,
+  title,
+  tags,
+  forceNewLink,
+  deeplinks,
+}: {
+  longUrl: unknown;
+  groupGuid: unknown;
+  domain: unknown;
+  title: unknown;
+  tags: unknown;
+  forceNewLink: boolean;
+  deeplinks: Record<string, string | undefined>[] | undefined;
+}): Record<string, unknown> {
+  const url = optionalText(longUrl);
+  if (!url || !/^https?:\/\//i.test(url)) {
+    throw new Error("Invalid Long URL. It must start with 'http://' or 'https://'.");
+  }
+  const guid = optionalText(groupGuid);
+  const tagList = toStringList(tags);
+  return {
+    long_url: url,
+    ...(guid ? { group_guid: requireGuid({ value: guid, label: 'Group GUID' }) } : {}),
+    ...(optionalText(domain) ? { domain: optionalText(domain) } : {}),
+    ...(optionalText(title) ? { title: optionalText(title) } : {}),
+    ...(tagList && tagList.length > 0 ? { tags: tagList } : {}),
+    ...(forceNewLink ? { force_new_link: true } : {}),
+    ...(deeplinks ? { deeplinks } : {}),
+  };
+}
