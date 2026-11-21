@@ -1,5 +1,6 @@
 import {
   createAction,
+  MarkdownVariant,
   Property,
 } from '@activepieces/pieces-framework';
 import { createCampaign } from '../api';
@@ -13,49 +14,63 @@ export const createCampaignAction = createAction({
   classification: 'WRITE',
   auth: sendyAuth,
   displayName: 'Create Campaign',
-  description: 'Create a new campaign',
+  description: 'Create a campaign as a draft, or send or schedule it.',
   audience: 'both',
   aiMetadata: { description: 'Creates a new email campaign in Sendy from the supplied from/reply-to addresses, subject, and HTML (plus optional plain text), targeting selected lists/segments. By default it is saved as a draft, but it can instead be sent immediately or scheduled for a future date/time via the auto-send and schedule options. Use to author or dispatch a campaign; HTML body and sender fields are required. Not idempotent — each call creates (and may send) a separate campaign.', idempotent: false },
   props: {
-    fromEmail: Property.ShortText({
-      displayName: 'From Email',
-      description: 'The email address the campaign will be sent from',
-      required: true,
-    }),
     fromName: Property.ShortText({
       displayName: 'From Name',
-      description: 'The name the campaign will be sent from',
+      description: 'The sender name recipients see.',
+      placeholder: 'Acme Newsletter',
       required: true,
+      width: 'half',
+    }),
+    fromEmail: Property.ShortText({
+      displayName: 'From Email',
+      description: 'The address the campaign is sent from.',
+      placeholder: 'news@example.com',
+      required: true,
+      width: 'half',
     }),
     replyTo: Property.ShortText({
       displayName: 'Reply To',
-      description: 'The email address that will be used for replies',
+      description: 'Replies go here instead of the From Email.',
+      placeholder: 'support@example.com',
       required: true,
     }),
     title: Property.ShortText({
       displayName: 'Title',
-      description: 'The title of the campaign',
+      description: "Internal name, shown in Sendy's campaign list.",
+      placeholder: 'Newsletter #12',
       required: true,
+      width: 'half',
     }),
     subject: Property.ShortText({
       displayName: 'Subject',
-      description: 'The subject of the campaign email',
+      description: 'What recipients see in their inbox.',
+      placeholder: 'Our June news',
+      required: true,
+      width: 'half',
+    }),
+    html: Property.LongText({
+      displayName: 'HTML Body',
+      description: 'The email content as HTML.',
+      placeholder: '<h1>Hello</h1><p>Our news…</p>',
       required: true,
     }),
     plainText: Property.LongText({
-      displayName: 'Plain Text',
-      description: 'The plain text version of the campaign email',
+      displayName: 'Plain Text Body',
+      description: 'Text version for email apps that do not show HTML.',
       required: false,
     }),
-    html: Property.LongText({
-      displayName: 'HTML',
-      description: 'The HTML version of the campaign email',
-      required: true,
+    audienceInfo: Property.MarkDown({
+      value: 'To send the campaign, pick at least one list or segment.',
+      variant: MarkdownVariant.INFO,
     }),
     lists: Property.MultiSelectDropdown({
       auth: sendyAuth,
       displayName: 'Lists',
-      description: 'Select lists to send the campaign to',
+      description: 'Send to everyone on these lists.',
       required: false,
       refreshers: ['auth'],
       options: async ({ auth }) =>
@@ -64,7 +79,7 @@ export const createCampaignAction = createAction({
     excludeLists: Property.MultiSelectDropdown({
       auth: sendyAuth,
       displayName: 'Exclude Lists',
-      description: 'Select lists to exclude from the campaign send',
+      description: 'Skip anyone who is also on these lists.',
       required: false,
       refreshers: ['auth'],
       options: async ({ auth }) =>
@@ -72,62 +87,68 @@ export const createCampaignAction = createAction({
     }),
     segments: Property.ShortText({
       displayName: 'Segment IDs',
-      description:
-        'Comma separated list of segment IDs to send the campaign to',
+      description: 'Segment IDs to send to, separated by commas.',
+      placeholder: '12,34',
       required: false,
+      width: 'half',
     }),
     excludeSegments: Property.ShortText({
       displayName: 'Exclude Segment IDs',
-      description:
-        'Comma separated list of segment IDs to exclude from the campaign send',
+      description: 'Segment IDs to leave out, separated by commas.',
+      placeholder: '56',
       required: false,
-    }),
-    queryString: Property.ShortText({
-      displayName: 'Query String',
-      description: 'The query string to append to the campaign URL',
-      required: false,
+      width: 'half',
     }),
     trackOpens: Property.StaticDropdown({
       displayName: 'Track Opens',
-      description: 'Enable open tracking',
+      description: 'How Sendy tracks who opens the email.',
       required: true,
       defaultValue: '1',
+      display: 'cards',
       options: {
         options: [
-          { label: 'Disable', value: '0' },
-          { label: 'Enable', value: '1' },
-          { label: 'Anonymous', value: '2' },
+          { label: 'Enable', value: '1', description: 'Per subscriber', icon: 'user' },
+          { label: 'Anonymous', value: '2', description: 'Counts only', icon: 'users' },
+          { label: 'Disable', value: '0', description: 'Not tracked', icon: 'blank' },
         ],
       },
     }),
     trackClicks: Property.StaticDropdown({
       displayName: 'Track Clicks',
-      description: 'Enable click tracking',
+      description: 'How Sendy tracks link clicks.',
       required: true,
       defaultValue: '1',
+      display: 'cards',
       options: {
         options: [
-          { label: 'Disable', value: '0' },
-          { label: 'Enable', value: '1' },
-          { label: 'Anonymous', value: '2' },
+          { label: 'Enable', value: '1', description: 'Per subscriber', icon: 'user' },
+          { label: 'Anonymous', value: '2', description: 'Counts only', icon: 'users' },
+          { label: 'Disable', value: '0', description: 'Not tracked', icon: 'blank' },
         ],
       },
     }),
+    queryString: Property.ShortText({
+      displayName: 'Link Tracking Tags',
+      description: 'Added to every link, e.g. Google Analytics UTM tags.',
+      placeholder: 'utm_source=sendy&utm_medium=email',
+      required: false,
+      advanced: true,
+    }),
     autoSend: Property.Checkbox({
-      displayName: 'Automatically Send',
-      description: 'Automatically send the campaign after creation',
+      displayName: 'Send Campaign',
+      description: 'Off saves the campaign as a draft.',
       required: false,
       defaultValue: false,
     }),
     schedule: Property.DateTime({
-      displayName: 'Schedule the Campaign',
-      description:
-        'Schedule the campaign to be sent at a specific date and time. Date/time format: 2023-06-09T12:00:00Z',
+      displayName: 'Schedule',
+      description: 'With Send Campaign on, sends at this time. Minutes in steps of 5.',
+      placeholder: '2026-06-15T18:05:00Z',
       required: false,
     }),
     timezone: Property.StaticDropdown({
       displayName: 'Timezone',
-      description: 'The timezone to use for the schedule',
+      description: 'For the schedule. Empty uses your Sendy timezone.',
       required: false,
       options: {
         options: [
@@ -625,6 +646,13 @@ export const createCampaignAction = createAction({
       },
     }),
   },
+  propertyGroups: [
+    { key: 'sender', display: 'section', label: 'Sender', icon: 'send', props: ['fromName', 'fromEmail', 'replyTo'] },
+    { key: 'content', display: 'section', label: 'Content', icon: 'text', props: ['title', 'subject', 'html', 'plainText'] },
+    { key: 'audience', display: 'section', label: 'Audience', icon: 'users', props: ['audienceInfo', 'lists', 'excludeLists', 'segments', 'excludeSegments'] },
+    { key: 'tracking', display: 'section', label: 'Tracking', icon: 'sliders', props: ['trackOpens', 'trackClicks'] },
+    { key: 'sending', display: 'section', label: 'Sending', icon: 'calendar', props: ['autoSend', 'schedule', 'timezone'] },
+  ],
   async run(context) {
     return await createCampaign(context.auth, {
       list_ids: context.propsValue.lists?.join(','),
