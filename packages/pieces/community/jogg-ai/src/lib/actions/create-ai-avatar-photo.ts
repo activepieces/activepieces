@@ -1,18 +1,20 @@
 import {
-  httpClient,
   HttpMethod,
   propsValidation,
 } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import * as z from 'zod/mini'
 import { joggAiAuth } from '../..';
+import { joggAiClient } from '../common/client';
+import { joggAiOutputSchemas } from '../common/output-schemas';
 
 export const createAiAvatarPhoto = createAction({
   name: 'createAiAvatarPhoto',
   classification: 'WRITE',
   displayName: 'Create AI Avatar Photo',
   description: 'Creates an AI avatar photo using JoggAI API',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: joggAiOutputSchemas.createAiAvatarPhoto,
   aiMetadata: {
     description:
       'Generates a brand-new AI avatar photo on JoggAI from specified traits (age, gender, style, ethnicity, aspect ratio, model) plus optional appearance/background text or a reference image URL. Use to produce an avatar still image for downstream avatar-video creation. Not idempotent: each call generates and is billed for a new photo.',
@@ -160,31 +162,12 @@ export const createAiAvatarPhoto = createAction({
       requestBody.image_url = image_url;
     }
 
-    const response = await httpClient.sendRequest({
+    return joggAiClient.requestEnvelope({
+      apiKey: auth.secret_text,
       method: HttpMethod.POST,
-      url: 'https://api.jogg.ai/v1/photo_avatar/photo/generate',
-      headers: {
-        'x-api-key': auth.secret_text,
-        'Content-Type': 'application/json',
-      },
+      path: '/v1/photo_avatar/photo/generate',
+      op: 'create avatar photo',
       body: requestBody,
     });
-
-    if (response.body.code !== 0) {
-      const errorMessages: Record<number, string> = {
-        10104: 'Record not found',
-        10105: 'Invalid API key',
-        18020: 'Insufficient credit',
-        18025: 'No permission to call APIs',
-        40000: 'Parameter error',
-        50000: 'System error',
-      };
-
-      const message =
-        errorMessages[response.body.code] || `API Error: ${response.body.msg}`;
-      throw new Error(message);
-    }
-
-    return response.body;
   },
 });

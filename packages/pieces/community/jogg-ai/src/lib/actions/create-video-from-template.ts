@@ -6,13 +6,16 @@ import {
 import { createAction, Property } from '@activepieces/pieces-framework';
 import * as z from 'zod/mini'
 import { joggAiAuth } from '../..';
+import { joggAiClient } from '../common/client';
+import { joggAiOutputSchemas } from '../common/output-schemas';
 
 export const createVideoFromTemplate = createAction({
   name: 'createVideoFromTemplate',
   classification: 'WRITE',
   displayName: 'Create Video from Template',
   description: 'Creates a new video from templates',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: joggAiOutputSchemas.createVideoFromTemplate,
   aiMetadata: {
     description:
       'Starts generation of a JoggAI video from a template, choosing the template from either the common library or the user’s own templates, and filling in template variables (text/script content or image/video URLs) plus optional avatar, voice, captions, and music. Use to render a video off a predefined template rather than building one from scratch; the call queues an async job whose output is polled via Get Generated Video. Not idempotent: each call queues and is billed for a new video.',
@@ -69,6 +72,7 @@ export const createVideoFromTemplate = createAction({
 
           const templates = response.body.data?.templates || [];
           return {
+            placeholder: templates.length === 0 ? 'No templates in your JoggAI account yet. Create one in JoggAI first.' : undefined,
             options: templates.map(
               (template: { id: number; name: string }) => ({
                 label: template.name,
@@ -76,8 +80,7 @@ export const createVideoFromTemplate = createAction({
               })
             ),
           };
-        } catch (error) {
-          console.error('Failed to fetch templates', error);
+        } catch {
           return {
             options: [],
             placeholder: 'Unable to load templates',
@@ -183,8 +186,7 @@ export const createVideoFromTemplate = createAction({
               })
             ),
           };
-        } catch (error) {
-          console.error('Failed to fetch avatars', error);
+        } catch {
           return {
             options: [],
             placeholder: 'Unable to load avatars',
@@ -243,14 +245,12 @@ export const createVideoFromTemplate = createAction({
 
     const processedVariables =
       variables && variables.length > 0
-        ? (
-            variables as Array<{
-              type: string;
-              name: string;
-              content?: string;
-              url?: string;
-            }>
-          ).map((variable) => {
+        ? joggAiClient.records(variables).map((item) => ({
+            type: String(item['type'] ?? ''),
+            name: String(item['name'] ?? ''),
+            content: typeof item['content'] === 'string' ? item['content'] : undefined,
+            url: typeof item['url'] === 'string' ? item['url'] : undefined,
+          })).map((variable) => {
             const properties: { content?: string; url?: string } = {};
 
             if (variable.type === 'text' || variable.type === 'script') {
@@ -318,31 +318,12 @@ export const createVideoFromTemplate = createAction({
       requestBody.video_name = video_name;
     }
 
-    const response = await httpClient.sendRequest({
+    return joggAiClient.requestEnvelope({
+      apiKey: auth.secret_text,
       method: HttpMethod.POST,
-      url: 'https://api.jogg.ai/v1/create_video_with_template',
-      headers: {
-        'x-api-key': auth.secret_text,
-        'Content-Type': 'application/json',
-      },
+      path: '/v1/create_video_with_template',
+      op: 'create template video',
       body: requestBody,
     });
-
-    if (response.body.code !== 0) {
-      const errorMessages: Record<number, string> = {
-        10104: 'Record not found',
-        10105: 'Invalid API key',
-        18020: 'Insufficient credit',
-        18025: 'No permission to call APIs',
-        40000: 'Parameter error',
-        50000: 'System error',
-      };
-
-      const message =
-        errorMessages[response.body.code] || `API Error: ${response.body.msg}`;
-      throw new Error(message);
-    }
-
-    return response.body;
   },
 });

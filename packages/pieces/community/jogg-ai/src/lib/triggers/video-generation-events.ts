@@ -1,133 +1,65 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { joggAiAuth } from '../..';
+import { joggAiWebhooks } from '../common/client';
+import { joggAiOutputSchemas } from '../common/output-schemas';
 
-interface WebhookInfo {
-  endpoint_id: string;
-}
+const EVENTS = [
+  'generated_video_success',
+  'generated_avatar_video_success',
+  'generated_template_video_success',
+  'generated_product_video_success',
+];
 
 export const videoGeneratedSuccessfully = createTrigger({
   name: 'videoGeneratedSuccessfully',
   classification: 'READ',
   displayName: 'Video Generated Successfully',
-  description: 'Fires when a video is generated successfully',
+  description: 'Fires when an avatar, template or product video is generated successfully',
   aiMetadata: {
     description:
-      'Fires when a JoggAI video generation job completes successfully, delivering the finished video’s project_id, video URL, and duration. Use to react to a completed avatar or template video without polling Get Generated Video.',
+      'Fires when a JoggAI avatar, template or product video finishes rendering, delivering the video_id (project_id is the same value), video URL and duration in decimal seconds. Use to react to a finished video without polling. Duplicate deliveries of the same event_id are dropped.',
   },
   auth: joggAiAuth,
   type: TriggerStrategy.WEBHOOK,
   props: {},
-
+  outputSchema: joggAiOutputSchemas.webhookEvent,
   sampleData: {
-    event_id: 'evt_123456789',
+    event_id: '02b29a4d98e74235830d5ebfc275b7d2',
     event: 'generated_video_success',
-    timestamp: 1703894400,
+    timestamp: 1795004264,
     data: {
-      project_id: 'abc123',
-      video_url: 'https://res.jogg.ai/video.mp4',
-      duration: 30,
+      duration: 2.933304,
+      project_id: 'vd_83c2da0e0c544721a96366a0f8960dc4',
+      video_id: 'vd_83c2da0e0c544721a96366a0f8960dc4',
+      video_url: 'https://res-intl.jogg.ai/joggUserData/project/vd_83c2da0e0c544721a96366a0f8960dc4/output/output.mp4',
     },
   },
 
   async onEnable(context) {
-    try {
-      const response = await httpClient.sendRequest({
-        method: HttpMethod.POST,
-        url: 'https://api.jogg.ai/v1/webhook/endpoint',
-        headers: {
-          'x-api-key': context.auth.secret_text,
-          'Content-Type': 'application/json',
-        },
-        body: {
-          url: context.webhookUrl,
-          events: ['generated_video_success'],
-          status: 'enabled',
-        },
-      });
-
-      if (response.body.code && response.body.code !== 0) {
-        const errorMessages: Record<number, string> = {
-          10104: 'Record not found',
-          10105: 'Invalid API key',
-          18020: 'Insufficient credit',
-          18025: 'No permission to call APIs',
-          40000: 'Parameter error',
-          50000: 'System error',
-        };
-
-        const message =
-          errorMessages[response.body.code] ||
-          `API Error: ${response.body.msg}`;
-        throw new Error(message);
-      }
-
-      const webhookData = response.body;
-      if (webhookData.endpoint_id) {
-        await context.store?.put<WebhookInfo>(
-          '_video_generation_success_webhook',
-          {
-            endpoint_id: webhookData.endpoint_id,
-          }
-        );
-      } else {
-        throw new Error('Failed to get webhook endpoint ID from response');
-      }
-    } catch (error) {
-      console.error('Failed to register webhook:', error);
-      throw new Error(
-        `Failed to register webhook with JoggAI: ${
-          error instanceof Error ? error.message : 'Unknown error'
-        }`
-      );
-    }
+    await joggAiWebhooks.registerWebhook({
+      apiKey: context.auth.secret_text,
+      url: context.webhookUrl,
+      events: EVENTS,
+      store: context.store,
+      storeKey: '_video_generation_success_webhook',
+    });
   },
 
   async onDisable(context) {
-    try {
-      const webhookInfo = await context.store?.get<WebhookInfo>(
-        '_video_generation_success_webhook'
-      );
-      if (webhookInfo?.endpoint_id) {
-        await httpClient.sendRequest({
-          method: HttpMethod.DELETE,
-          url: `https://api.jogg.ai/v1/webhook/endpoint/${webhookInfo.endpoint_id}`,
-          headers: {
-            'x-api-key': context.auth.secret_text,
-          },
-        });
-      }
-    } catch (error) {
-      console.error('Failed to unregister webhook:', error);
-    }
+    await joggAiWebhooks.unregisterWebhook({
+      apiKey: context.auth.secret_text,
+      store: context.store,
+      storeKey: '_video_generation_success_webhook',
+    });
   },
 
   async run(context) {
-    const payload = context.payload.body as {
-      event_id: string;
-      event: string;
-      timestamp: number;
-      data: {
-        project_id: string;
-        video_url?: string;
-        duration?: number;
-      };
-    };
-
-    if (
-      !payload.event_id ||
-      !payload.event ||
-      !payload.timestamp ||
-      !payload.data?.project_id
-    ) {
-      console.warn('Invalid webhook payload received:', payload);
-      return [];
-    }
-
-    if (payload.event === 'generated_video_success') {
-      return [payload];
-    }
-
-    return [];
+    return joggAiWebhooks.acceptEvent({
+      payload: context.payload,
+      events: EVENTS,
+      store: context.store,
+      storeKey: '_video_generation_success_webhook',
+      dedupeKey: '_video_generation_success_webhook_seen_events',
+    });
   },
 });

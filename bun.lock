@@ -4921,7 +4921,7 @@
     },
     "packages/pieces/community/jogg-ai": {
       "name": "@activepieces/piece-jogg-ai",
-      "version": "0.1.7",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4931,6 +4931,7 @@
       },
       "devDependencies": {
         "tslib": "^2.3.0",
+        "vitest": "5.0.5",
       },
     },
     "packages/pieces/community/jotform": {
