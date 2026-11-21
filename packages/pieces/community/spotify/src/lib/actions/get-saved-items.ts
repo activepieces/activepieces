@@ -7,7 +7,7 @@ function savedType(value: unknown): SavedItemType {
   if (value === 'albums' || value === 'shows' || value === 'episodes') {
     return value;
   }
-  throw new Error('Type must be albums, shows or episodes. For saved tracks use Get Saved Tracks.');
+  throw new Error('Item Type must be Albums, Podcasts or Episodes. For saved tracks use Get Saved Tracks.');
 }
 
 export default createAction({
@@ -24,21 +24,28 @@ export default createAction({
   outputSchema: spotifyOutputSchemas['savedItems'],
   props: {
     type: Property.StaticDropdown<string>({
-      displayName: 'Type',
+      displayName: 'Item Type',
       required: true,
+      display: 'cards',
+      defaultValue: 'albums',
       options: {
         options: [
-          { label: 'Albums', value: 'albums' },
-          { label: 'Shows (podcasts)', value: 'shows' },
-          { label: 'Episodes', value: 'episodes' },
+          { label: 'Albums', value: 'albums', description: 'Saved albums' },
+          { label: 'Podcasts', value: 'shows', description: 'Followed podcasts' },
+          { label: 'Episodes', value: 'episodes', description: 'Saved episodes' },
         ],
       },
     }),
     offset: spotifyCommon.offset(),
     limit: spotifyCommon.limit({ max: 50, defaultHint: 20 }),
     all: spotifyCommon.all(),
+    paging_note: spotifyCommon.pagingNote(),
     market: spotifyCommon.market(),
   },
+  propertyGroups: [
+    { key: 'library', display: 'section', label: 'Library', icon: 'inbox', props: ['type'] },
+    { key: 'results', display: 'section', label: 'Results', icon: 'sliders', props: ['limit', 'all', 'paging_note'] },
+  ],
   async run({ auth, propsValue }) {
     const type = savedType(propsValue.type);
     const market = spotifyValidate.market(propsValue.market);

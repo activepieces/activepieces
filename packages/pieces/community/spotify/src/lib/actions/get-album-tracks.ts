@@ -20,8 +20,13 @@ export default createAction({
     offset: spotifyCommon.offset(),
     limit: spotifyCommon.limit({ max: 50, defaultHint: 20 }),
     all: spotifyCommon.all(),
+    paging_note: spotifyCommon.pagingNote(),
     market: spotifyCommon.market(),
   },
+  propertyGroups: [
+    { key: 'album', display: 'section', label: 'Album', icon: 'inbox', props: ['id'] },
+    { key: 'results', display: 'section', label: 'Results', icon: 'sliders', props: ['limit', 'all', 'paging_note'] },
+  ],
   async run({ auth, propsValue }) {
     const id = spotifyIds.parse({ kind: 'album', value: propsValue.id, label: 'Album ID' });
     const market = spotifyValidate.market(propsValue.market);

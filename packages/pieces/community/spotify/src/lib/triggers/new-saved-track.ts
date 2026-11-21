@@ -56,7 +56,7 @@ export default createTrigger({
   name: 'new_saved_track',
   classification: 'READ',
   displayName: 'New Saved Track',
-  description: 'Triggers when you save (like) a track to Liked Songs',
+  description: 'Triggers when you save a track to Liked Songs.',
   aiMetadata: {
     description: "Fires once for each track newly saved to the user's Liked Songs since the last poll, emitting {added_at, track}. Tracks that were already saved when the trigger was turned on do not fire.",
   },

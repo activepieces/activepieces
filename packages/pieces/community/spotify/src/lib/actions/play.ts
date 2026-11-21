@@ -1,4 +1,4 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { MarkdownVariant, Property, createAction } from '@activepieces/pieces-framework';
 import { spotifyCommon, makeClient, spotifyValidate } from '../common';
 import { spotifyIds } from '../common/ids';
 import { spotifyOutputSchemas } from '../output-schemas';
@@ -12,7 +12,7 @@ function contextUri(value: string): string {
     }
     return value;
   }
-  return spotifyIds.parseUri({ value, kinds: ['album', 'artist', 'playlist', 'show', 'audiobook'], label: 'Context URI' });
+  return spotifyIds.parseUri({ value, kinds: ['album', 'artist', 'playlist', 'show', 'audiobook'], label: 'Play From' });
 }
 
 export default createAction({
@@ -29,45 +29,57 @@ export default createAction({
   outputSchema: spotifyOutputSchemas['playerResult'],
   props: {
     device_id: spotifyCommon.device_id(false),
+    what_note: Property.MarkDown({
+      value: 'Fill in Play From or Tracks, not both. Leave both empty to resume.',
+      variant: MarkdownVariant.INFO,
+    }),
     context_uri: Property.ShortText({
-      displayName: 'Context URI',
-      description:
-        'Album, artist, playlist or show URI or link. Empty when using Tracks.',
+      displayName: 'Play From',
+      description: 'Album, artist, playlist, show or audiobook URI or link.',
+      placeholder: 'https://open.spotify.com/playlist/…',
       required: false,
     }),
     tracks: Property.Array({
       displayName: 'Tracks',
-      description: 'Track or episode URIs to play. Empty when using a Context URI.',
+      description: 'Track or episode URIs or links, played in order.',
       required: false,
+    }),
+    start_note: Property.MarkDown({
+      value: 'Start At Position or Start At Item needs Play From; use only one.',
+      variant: MarkdownVariant.INFO,
     }),
     position_ms: Property.Number({
       displayName: 'Position',
-      description: 'Position in milliseconds to start the first item at',
+      description: 'Milliseconds into the first item, e.g. 90000 for 1:30.',
       required: false,
     }),
     offset_position: Property.Number({
       displayName: 'Start At Position',
-      description: 'With a Context URI: 0-based position to start from.',
+      description: 'Position in the album or playlist, counting from 0.',
       required: false,
     }),
     offset_uri: Property.ShortText({
       displayName: 'Start At Item',
-      description: 'With a Context URI: URI of the track or episode to start from.',
+      description: 'Track or episode URI or link to start at.',
       required: false,
     }),
   },
+  propertyGroups: [
+    { key: 'what', display: 'section', label: 'What to Play', icon: 'send', props: ['what_note', 'context_uri', 'tracks'] },
+    { key: 'start', display: 'section', label: 'Where to Start', icon: 'sliders', props: ['start_note', 'offset_position', 'offset_uri', 'position_ms'] },
+  ],
   async run({ auth, propsValue }) {
     const contextText = spotifyValidate.optionalText(propsValue.context_uri);
     const context = contextText === undefined ? undefined : contextUri(contextText);
     const uris = spotifyIds.parseUriList({ value: propsValue.tracks, kinds: ['track', 'episode'], label: 'Tracks', allowLocal: true });
     if (context !== undefined && uris.length > 0) {
-      throw new Error('Give either a Context URI or Tracks, not both.');
+      throw new Error('Give either Play From or Tracks, not both.');
     }
     const positionMs = spotifyValidate.optionalInteger({ value: propsValue.position_ms, field: 'Position', min: 0 });
     const offsetPosition = spotifyValidate.optionalInteger({ value: propsValue.offset_position, field: 'Start At Position', min: 0 });
     const offsetUriText = spotifyValidate.optionalText(propsValue.offset_uri);
     if ((offsetPosition !== undefined || offsetUriText !== undefined) && context === undefined) {
-      throw new Error('Start At Position and Start At Item only work together with a Context URI.');
+      throw new Error('Start At Position and Start At Item only work together with Play From.');
     }
     if (offsetPosition !== undefined && offsetUriText !== undefined) {
       throw new Error('Give either Start At Position or Start At Item, not both.');

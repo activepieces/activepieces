@@ -6,7 +6,7 @@ import { spotifyOutputSchemas } from '../output-schemas';
 export default createAction({
   name: 'remove_playlist_items',
   classification: 'DESTRUCTIVE',
-  displayName: 'Remove items from playlist',
+  displayName: 'Remove Items from Playlist',
   description: 'Removes tracks or episodes from the playlist',
   audience: 'both',
   aiMetadata: {
@@ -19,13 +19,14 @@ export default createAction({
     playlist_id: spotifyCommon.playlist_id(true),
     items: Property.Array({
       displayName: 'Items',
-      description: "URI's of the items to remove",
+      description: 'Track or episode URIs or links; every copy is removed.',
       required: true,
     }),
     snapshot_id: Property.ShortText({
       displayName: 'Snapshot ID',
-      description: 'Optional snapshot ID (from Get Playlist Info or an earlier write).',
+      description: 'Playlist version from an earlier step; empty uses the latest.',
       required: false,
+      advanced: true,
     }),
   },
   async run({ auth, propsValue }) {

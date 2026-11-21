@@ -1,12 +1,14 @@
 import {
   createTrigger,
+  MarkdownVariant,
+  Property,
   StoreScope,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { spotifyCommon, makeClient, spotifyPolling, SpotifyCheckpoint, SpotifyPollEntry } from '../common';
 import { spotifyIds } from '../common/ids';
 import { PlaylistItem } from '../common/models/playlist';
-import { SPOTIFY_PAGE_SIZE, SPOTIFY_PLAYLIST_MAX_ITEMS, SpotifyWebApi } from '../common/client';
+import { SPOTIFY_PLAYLIST_MAX_ITEMS, SpotifyWebApi } from '../common/client';
 import { spotifyOutputSchemas } from '../output-schemas';
 
 const CHECKPOINT_KEY = 'new_playlist_item_checkpoint';
@@ -31,7 +33,7 @@ async function fetchWindow({ client, playlistId }: { client: SpotifyWebApi; play
   const res = await client.getPlaylistItemsWindow({ playlistId, maxItems: SPOTIFY_PLAYLIST_MAX_ITEMS });
   if (res.hasMore) {
     throw new Error(
-      `The playlist grew by more than ${SPOTIFY_PAGE_SIZE} items while it was being read; the next poll will retry.`
+      'The playlist changed while it was being read; the next poll will retry.'
     );
   }
   return res.items;
@@ -73,7 +75,7 @@ export default createTrigger({
   name: 'new_playlist_item',
   classification: 'READ',
   displayName: 'New Playlist Item',
-  description: 'Triggers when a track or episode is added to a playlist. On playlists over 10,000 items only the last 10,000 are watched, so items inserted near the top are missed. Development-mode Spotify apps can only watch playlists you own or collaborate on.',
+  description: 'Triggers when a track or episode is added to a playlist.',
   aiMetadata: {
     description: 'Fires once for each track or episode added to the watched playlist since the last poll, emitting the playlist id with the item (added_at, added_by, item). Removals and reorders do not fire, and on playlists over 10,000 items only the last 10,000 positions are watched. Items already in the playlist when the trigger was turned on are skipped.',
   },
@@ -82,6 +84,10 @@ export default createTrigger({
   outputSchema: spotifyOutputSchemas['newPlaylistItemTrigger'],
   props: {
     playlist_id: spotifyCommon.playlist_id(true),
+    note: Property.MarkDown({
+      value: 'Watches the last 10,000 items of the playlist. Development-mode Spotify apps can only watch playlists you own or collaborate on.',
+      variant: MarkdownVariant.INFO,
+    }),
   },
   sampleData: {
     playlist_id: '3cEYpjA9oz9GiPac4AsH4n',
