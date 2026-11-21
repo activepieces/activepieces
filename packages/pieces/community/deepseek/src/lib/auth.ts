@@ -3,11 +3,9 @@ import OpenAI from 'openai';
 import { baseUrl, unauthorizedMessage } from './common/common';
 
 export const deepseekAuth = PieceAuth.SecretText({
-      description:`
-      Follow these instructions to get your DeepSeek API Key:
-
-1. Visit the following website: https://platform.deepseek.com/api_keys.
-2. Once on the website, locate and click on the option to obtain your DeepSeek API Key.`,
+      description: `To get your API key:
+1. Sign in at [platform.deepseek.com/api_keys](https://platform.deepseek.com/api_keys).
+2. Click **Create new API key**, name it, and copy the key (it starts with \`sk-\`).`,
       displayName: 'API Key',
       required: true,
       validate: async (auth) => {
