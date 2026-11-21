@@ -12,6 +12,7 @@ import { testimonialEventTriggerOutputSchema } from '../output-schemas';
 export const testimonialEventTrigger = createTrigger({
   auth: senjaAuth,
   name: 'testimonial_event',
+  classification: 'READ',
   displayName: 'Testimonial Event',
   description:
     'Triggers when a testimonial is created, updated, or deleted in Senja.',
@@ -53,8 +54,11 @@ export const testimonialEventTrigger = createTrigger({
     text: 'This product has completely transformed how we handle our workflow.',
     rating: 5,
     approved: true,
+    reward: null,
     date: '2024-01-15T10:30:00Z',
     url: 'https://google.com/reviews/123',
+    public_url: null,
+    dashboard_url: null,
     integration: 'google',
     tags: ['featured', 'enterprise'],
     lang: null,
