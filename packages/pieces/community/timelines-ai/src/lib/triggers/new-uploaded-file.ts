@@ -33,7 +33,7 @@ export const newUploadedFile = createTrigger({
   name: 'newUploadedFile',
   classification: 'READ',
   displayName: 'New Uploaded File',
-  description: 'Fires when a new file is uploaded in a chat.',
+  description: 'Fires when a file is uploaded to TimelinesAI.',
   aiMetadata: {
     description: 'Fires when a new file is uploaded to TimelinesAI. Polls the uploaded-files list and emits each newly added file as it appears.',
   },

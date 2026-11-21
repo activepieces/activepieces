@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { timelinesAiAuth, timelinesAiCommon } from '../common';
 import { chatDropdown, fileDropdown } from '../common/properties';
 
@@ -7,12 +7,30 @@ export const sendUploadedFileToExistingChat = createAction({
   name: 'sendUploadedFileToExistingChat',
   classification: 'WRITE',
   displayName: 'Send Uploaded File to Existing Chat',
-  description:
-    'Send a file (media/attachment) to a chat, with metadata like file name, via existing chat.',
+  description: 'Sends a file already uploaded to TimelinesAI to a chat.',
   audience: 'both',
   aiMetadata: { description: 'Sends an already-uploaded file, selected by its file uid, as an attachment into an existing TimelinesAI WhatsApp chat identified by its numeric chat_id. Use when the file is already uploaded (e.g. found via Find Uploaded File); use Send File to Existing Chat to upload and send raw file data in one step. Not idempotent: each call posts a new message.', idempotent: false },
+  propertyGroups: [
+    {
+      key: 'destination',
+      display: 'section',
+      label: 'Send to',
+      icon: 'send',
+      props: ['chat_id'],
+    },
+    {
+      key: 'file',
+      display: 'section',
+      label: 'File',
+      icon: 'file',
+      props: ['file_id'],
+    },
+  ],
   props: {
-    chat_id: chatDropdown({ required: true }),
+    chat_id: chatDropdown({
+      description: 'The chat to send the file to.',
+      required: true,
+    }),
     file_id: fileDropdown({ required: true }),
   },
   async run({ auth: apiKey, propsValue }) {
