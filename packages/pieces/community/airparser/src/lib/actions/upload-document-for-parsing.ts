@@ -1,8 +1,16 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import FormData from 'form-data';
 import { airparserAuth } from '../auth';
-import { BASE_URL } from '../common';
+import {
+	airparserClient,
+	airparserOutputSchemas,
+	buildUploadForm,
+	docIdOf,
+	parseJsonObjectInput,
+	pathFor,
+	requireId,
+	UPLOAD_TIMEOUT_MS,
+} from '../common';
 import { inboxIdDropdown } from '../common/props';
 
 export const uploadDocumentAction = createAction({
@@ -10,46 +18,38 @@ export const uploadDocumentAction = createAction({
 	name: 'upload_document',
 	classification: 'WRITE',
 	displayName: 'Upload Document',
-	description: 'Upload a document to an Airparser inbox for parsing.',
-	audience: 'both',
-	aiMetadata: { description: 'Uploads a file to a specified Airparser inbox so it can be parsed into structured data; requires the inbox ID and the file. Use to submit a new document (PDF, email, image, etc.) for extraction. Not idempotent: each call creates a new document, and parsing completes asynchronously, so retrieve the results separately once parsing finishes.', idempotent: false },
+	description: 'Send a file to an inbox for parsing; returns the document ID right away while parsing runs in the background.',
+	audience: 'human',
+	aiMetadata: { idempotent: false },
+	outputSchema: airparserOutputSchemas.upload,
 	props: {
 		inboxId: inboxIdDropdown,
 		file: Property.File({
 			displayName: 'File',
-			description: 'The document file to upload for parsing.',
+			description: 'The document to parse: PDF, EML, HTML, TXT, DOCX, XLSX, CSV, image or ZIP, up to 20 MB.',
 			required: true,
 		}),
 		fileName: Property.ShortText({
 			displayName: 'File Name',
+			description: 'Keep the extension (e.g. invoice.pdf). Defaults to the name of the file; a missing extension is copied from the file.',
 			required: false,
 		}),
 		meta: Property.Object({
 			displayName: 'Metadata',
-			description: 'Optional metadata to associate with the document.',
+			description: 'Optional key-value data (e.g. an order ID) that comes back with the parsed result.',
 			required: false,
 		}),
 	},
 	async run(context) {
 		const { inboxId, file, meta, fileName } = context.propsValue;
-
-		const formData = new FormData();
-		formData.append('file', Buffer.from(file.base64, 'base64'), fileName || file.filename);
-
-		if (meta) {
-			formData.append('meta', JSON.stringify(meta));
-		}
-
-		const response = await httpClient.sendRequest({
+		const response = await airparserClient.call({
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.POST,
-			url: BASE_URL + `/inboxes/${inboxId}/upload`,
-			headers: {
-				...formData.getHeaders(),
-				'X-API-Key': context.auth.secret_text,
-			},
-			body: formData,
+			path: `/inboxes${pathFor([requireId({ value: inboxId, label: 'Inbox' })])}/upload`,
+			operation: 'upload',
+			body: buildUploadForm({ file, fileName, meta: parseJsonObjectInput({ value: meta, label: 'Metadata' }) }),
+			timeoutMs: UPLOAD_TIMEOUT_MS,
 		});
-
-		return { docId: response.body };
+		return { docId: docIdOf(response) };
 	},
 });
