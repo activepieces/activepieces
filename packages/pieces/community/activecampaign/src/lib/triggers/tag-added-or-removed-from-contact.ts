@@ -1,5 +1,6 @@
 import { activeCampaignAuth } from '../auth';
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+import { activecampaignCommon } from '../common';
 import { activeCampaignWebhook } from '../common/webhook';
 import { contactTagTriggerOutputSchema } from '../common/output-schemas';
 
@@ -9,14 +10,16 @@ export const newtagAddedOrRemovedFromContactTrigger = createTrigger({
 	auth: activeCampaignAuth,
 	name: 'activecampaign_new_tag_added_or_removed_from_contact',
 	classification: 'READ',
-	displayName: 'Tag Added or Removed From Contact',
-	description: 'Triggers when a a Tag is added or removed from a Contact. Also fires for changes made through the API, including this piece\'s own actions, so a flow that changes the same record can trigger itself again.',
+	displayName: 'Tag Added or Removed from Contact',
+	description: 'Triggers when a tag is added to or removed from a contact.',
 	aiMetadata: {
 		description: 'Fires when a tag is added to or removed from a contact, covering both tag-added and tag-removed events. The payload identifies the affected contact and the tag.',
 	},
 	outputSchema: contactTagTriggerOutputSchema,
 	type: TriggerStrategy.WEBHOOK,
-	props: {},
+	props: {
+		selfTriggerNote: activecampaignCommon.selfTriggerNote,
+	},
 	async onEnable(context) {
 		await activeCampaignWebhook.enable({
 			auth: context.auth.props,

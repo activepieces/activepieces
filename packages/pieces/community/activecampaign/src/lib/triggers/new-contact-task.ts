@@ -1,5 +1,6 @@
 import { activeCampaignAuth } from '../auth';
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+import { activecampaignCommon } from '../common';
 import { activeCampaignWebhook } from '../common/webhook';
 import { contactTaskTriggerOutputSchema } from '../common/output-schemas';
 
@@ -10,13 +11,15 @@ export const newContactTaskTrigger = createTrigger({
 	name: 'activecampaign_new_contact_task',
 	classification: 'READ',
 	displayName: 'New Contact Task',
-	description: 'Triggers when a new contact task is added. Also fires for changes made through the API, including this piece\'s own actions, so a flow that changes the same record can trigger itself again.',
+	description: 'Triggers when a task is added to a contact.',
 	aiMetadata: {
 		description: 'Fires when a task is created on a contact. The payload includes the task (type, title, due date) and the associated contact.',
 	},
 	outputSchema: contactTaskTriggerOutputSchema,
 	type: TriggerStrategy.WEBHOOK,
-	props: {},
+	props: {
+		selfTriggerNote: activecampaignCommon.selfTriggerNote,
+	},
 	async onEnable(context) {
 		await activeCampaignWebhook.enable({
 			auth: context.auth.props,

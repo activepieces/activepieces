@@ -1,4 +1,4 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { MarkdownVariant, Property, createAction } from '@activepieces/pieces-framework';
 import { activeCampaignAuth } from '../../auth';
 import { activecampaignCommon, makeClient } from '../../common';
 import { aiInput } from '../../common/ai-props';
@@ -11,23 +11,32 @@ export const createDealAction = createAction({
 	name: 'activecampaign_create_deal_human',
 	classification: 'WRITE',
 	displayName: 'Create Deal',
-	description: 'Creates a deal in a pipeline stage, linked to a contact, an account or both.',
+	description: 'Creates a deal in a pipeline stage for a contact or an account.',
 	audience: 'human',
 	aiMetadata: {
 		description: 'Creates a deal in a pipeline stage. Each call creates a deal.',
 		idempotent: false,
 	},
 	outputSchema: rawDealOutputSchema,
+	propertyGroups: [
+		{ key: 'deal', display: 'section', label: 'Deal', icon: 'text', props: ['title', 'value', 'currency', 'description'] },
+		{ key: 'pipeline', display: 'section', label: 'Stage and Owner', icon: 'filter', props: ['pipelineId', 'stageId', 'ownerId', 'status'] },
+		{ key: 'links', display: 'section', label: 'Linked To', icon: 'users', props: ['linkNote', 'contactId', 'accountId'] },
+	],
 	props: {
 		title: Property.ShortText({ displayName: 'Title', required: true }),
-		value: Property.ShortText({ displayName: 'Value', description: 'The amount as a decimal, such as 1500 or 1234.50.', required: true }),
-		currency: Property.ShortText({ displayName: 'Currency', description: '3-letter currency code, such as usd or eur.', required: true, defaultValue: 'usd' }),
+		value: Property.ShortText({ displayName: 'Value', description: 'A decimal amount.', placeholder: '1500.00', required: true, width: 'half' }),
+		currency: Property.ShortText({ displayName: 'Currency', description: 'A 3-letter code.', placeholder: 'usd', required: true, defaultValue: 'usd', width: 'half' }),
 		pipelineId: activecampaignCommon.pipelineId(true),
 		stageId: activecampaignCommon.stageId(true),
 		ownerId: activecampaignCommon.userId({
 			displayName: 'Owner',
-			description: 'Required when the pipeline does not auto-assign owners; otherwise ActiveCampaign rejects the deal.',
+			description: 'Needed if the deal has no owner and the pipeline does not assign one.',
 			required: false,
+		}),
+		linkNote: Property.MarkDown({
+			value: 'A deal needs a contact, an account, or both.',
+			variant: MarkdownVariant.INFO,
 		}),
 		contactId: activecampaignCommon.optionalContactId,
 		accountId: activecampaignCommon.optionalAccountId,
@@ -36,12 +45,13 @@ export const createDealAction = createAction({
 			displayName: 'Status',
 			description: 'Defaults to open.',
 			required: false,
+			display: 'cards',
 			options: {
 				disabled: false,
 				options: [
-					{ label: 'Open', value: 'open' },
-					{ label: 'Won', value: 'won' },
-					{ label: 'Lost', value: 'lost' },
+					{ label: 'Open', value: 'open', description: 'Still being worked' },
+					{ label: 'Won', value: 'won', description: 'Closed as a sale' },
+					{ label: 'Lost', value: 'lost', description: 'Closed without a sale' },
 				],
 			},
 		}),

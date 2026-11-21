@@ -5,8 +5,8 @@ const authGuide = `
 To obtain your ActiveCampaign API URL and Key, follow these steps:
 
 1. Log in to your ActiveCampaign account.
-2. Navigate to **Settings->Developer** section.
-3. Under **API Access** ,you'll find your API URL and Key.
+2. Navigate to **Settings > Developer** section.
+3. Under **API Access**, you'll find your API URL and Key.
 `;
 
 async function validateConnection({ apiUrl, apiKey }: { apiUrl: string; apiKey: string }): Promise<{ valid: true } | { valid: false; error: string }> {
@@ -30,11 +30,13 @@ export const activeCampaignAuth = PieceAuth.CustomAuth({
 	props: {
 		apiUrl: Property.ShortText({
 			displayName: 'API URL',
-			description: 'For example https://youraccount.api-us1.com',
+			description: "Your account's API URL, from Settings > Developer.",
+			placeholder: 'https://youraccount.api-us1.com',
 			required: true,
 		}),
 		apiKey: PieceAuth.SecretText({
 			displayName: 'API Key',
+			description: 'Shown next to the API URL in Settings > Developer.',
 			required: true,
 		}),
 	},

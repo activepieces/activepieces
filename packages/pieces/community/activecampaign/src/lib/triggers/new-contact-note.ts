@@ -1,5 +1,6 @@
 import { activeCampaignAuth } from '../auth';
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+import { activecampaignCommon } from '../common';
 import { activeCampaignWebhook } from '../common/webhook';
 import { contactNoteTriggerOutputSchema } from '../common/output-schemas';
 
@@ -10,13 +11,15 @@ export const newContactNoteTrigger = createTrigger({
 	name: 'activecampaign_new_contact_note',
 	classification: 'READ',
 	displayName: 'New Contact Note',
-	description: 'Triggers when a new contact note is added. Also fires for changes made through the API, including this piece\'s own actions, so a flow that changes the same record can trigger itself again.',
+	description: 'Triggers when a note is added to a contact.',
 	aiMetadata: {
 		description: 'Fires when a note is added to a contact. The payload includes the note text and the associated contact.',
 	},
 	outputSchema: contactNoteTriggerOutputSchema,
 	type: TriggerStrategy.WEBHOOK,
-	props: {},
+	props: {
+		selfTriggerNote: activecampaignCommon.selfTriggerNote,
+	},
 	async onEnable(context) {
 		await activeCampaignWebhook.enable({
 			auth: context.auth.props,

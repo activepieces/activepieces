@@ -8,7 +8,7 @@ export const removeTagFromContactAction = createAction({
 	name: 'activecampaign_remove_tag_from_contact_human',
 	classification: 'WRITE',
 	displayName: 'Remove Tag from Contact',
-	description: 'Removes a tag from a contact. Does nothing when the contact does not have the tag.',
+	description: 'Removes a tag from a contact, if the contact has it.',
 	audience: 'human',
 	aiMetadata: {
 		description: 'Removes a tag from a contact. Safe to repeat: when the contact does not have the tag, nothing changes and removed is false.',

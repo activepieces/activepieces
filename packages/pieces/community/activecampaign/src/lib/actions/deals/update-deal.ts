@@ -1,4 +1,4 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { MarkdownVariant, Property, createAction } from '@activepieces/pieces-framework';
 import { activeCampaignAuth } from '../../auth';
 import { activecampaignCommon, makeClient } from '../../common';
 import { aiInput } from '../../common/ai-props';
@@ -18,16 +18,26 @@ export const updateDealAction = createAction({
 		idempotent: true,
 	},
 	outputSchema: rawDealOutputSchema,
+	propertyGroups: [
+		{ key: 'deal', display: 'section', label: 'Deal to Update', icon: 'text', props: ['dealId', 'emptyFieldsNote'] },
+		{ key: 'changes', display: 'section', label: 'Changes', icon: 'sliders', props: ['title', 'value', 'currency', 'description', 'status'] },
+		{ key: 'pipeline', display: 'section', label: 'Stage and Owner', icon: 'filter', props: ['pipelineId', 'stageId', 'ownerId'] },
+		{ key: 'links', display: 'section', label: 'Linked To', icon: 'users', props: ['contactId', 'accountId'] },
+	],
 	props: {
 		dealId: activecampaignCommon.dealId,
+		emptyFieldsNote: Property.MarkDown({
+			value: 'Fields left empty keep their current value.',
+			variant: MarkdownVariant.INFO,
+		}),
 		title: Property.ShortText({ displayName: 'Title', required: false }),
-		value: Property.ShortText({ displayName: 'Value', description: 'The amount as a decimal, such as 1500 or 1234.50.', required: false }),
-		currency: Property.ShortText({ displayName: 'Currency', description: '3-letter currency code, such as usd or eur.', required: false }),
+		value: Property.ShortText({ displayName: 'Value', description: 'A decimal amount.', placeholder: '1500.00', required: false, width: 'half' }),
+		currency: Property.ShortText({ displayName: 'Currency', description: 'A 3-letter code.', placeholder: 'usd', required: false, width: 'half' }),
 		pipelineId: activecampaignCommon.pipelineId(false),
 		stageId: activecampaignCommon.stageId(false),
 		ownerId: activecampaignCommon.userId({
 			displayName: 'Owner',
-			description: 'Needed when moving a deal without an owner into a pipeline that does not auto-assign owners.',
+			description: 'Needed if the deal has no owner and the pipeline does not assign one.',
 			required: false,
 		}),
 		contactId: activecampaignCommon.optionalContactId,

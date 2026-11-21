@@ -1,5 +1,6 @@
 import { activeCampaignAuth } from '../auth';
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+import { activecampaignCommon } from '../common';
 import { activeCampaignWebhook } from '../common/webhook';
 import { dealTriggerOutputSchema } from '../common/output-schemas';
 
@@ -9,14 +10,16 @@ export const newDealAddedOrUpdatedTrigger = createTrigger({
 	auth: activeCampaignAuth,
 	name: 'activecampaign_new_deal_added_or_updated',
 	classification: 'READ',
-	displayName: 'New Deal Added or Updated',
-	description: 'Triggers when a new deal is created or existing deal is updated. Also fires for changes made through the API, including this piece\'s own actions, so a flow that changes the same record can trigger itself again.',
+	displayName: 'New or Updated Deal',
+	description: 'Triggers when a deal is created or updated.',
 	aiMetadata: {
 		description: 'Fires when a deal (CRM sales opportunity) is created or when an existing deal is updated, covering both add and update events. The payload identifies which event occurred and lists the changed fields for updates.',
 	},
 	outputSchema: dealTriggerOutputSchema,
 	type: TriggerStrategy.WEBHOOK,
-	props: {},
+	props: {
+		selfTriggerNote: activecampaignCommon.selfTriggerNote,
+	},
 	async onEnable(context) {
 		await activeCampaignWebhook.enable({
 			auth: context.auth.props,

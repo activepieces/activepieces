@@ -1,5 +1,6 @@
 import { activeCampaignAuth } from '../auth';
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+import { activecampaignCommon } from '../common';
 import { activeCampaignWebhook } from '../common/webhook';
 import { dealTaskCompletedTriggerOutputSchema } from '../common/output-schemas';
 
@@ -10,13 +11,15 @@ export const dealTaskCompletedTrigger = createTrigger({
 	name: 'activecampaign_deal_task_completed',
 	classification: 'READ',
 	displayName: 'Deal Task Completed',
-	description: 'Triggers when a deal task has been completed. Also fires for changes made through the API, including this piece\'s own actions, so a flow that changes the same record can trigger itself again.',
+	description: 'Triggers when a deal task is completed.',
 	aiMetadata: {
 		description: 'Fires when a task attached to a deal is marked complete. Use to react to finished sales activities; the payload includes the related deal and contact.',
 	},
 	outputSchema: dealTaskCompletedTriggerOutputSchema,
 	type: TriggerStrategy.WEBHOOK,
-	props: {},
+	props: {
+		selfTriggerNote: activecampaignCommon.selfTriggerNote,
+	},
 	async onEnable(context) {
 		await activeCampaignWebhook.enable({
 			auth: context.auth.props,

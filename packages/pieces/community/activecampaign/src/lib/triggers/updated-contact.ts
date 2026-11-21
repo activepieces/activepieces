@@ -1,5 +1,6 @@
 import { activeCampaignAuth } from '../auth';
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+import { activecampaignCommon } from '../common';
 import { activeCampaignWebhook } from '../common/webhook';
 import { updatedContactTriggerOutputSchema } from '../common/output-schemas';
 
@@ -10,13 +11,15 @@ export const updatedContactTrigger = createTrigger({
 	name: 'activecampaign_updated_contact',
 	classification: 'READ',
 	displayName: 'Updated Contact',
-	description: 'Triggers when an existing contact details are updated. Also fires for changes made through the API, including this piece\'s own actions, so a flow that changes the same record can trigger itself again.',
+	description: 'Triggers when a contact\'s details are updated.',
 	aiMetadata: {
 		description: 'Fires when an existing contact\'s details are updated. The payload contains the updated contact record including its current field values and tags.',
 	},
 	outputSchema: updatedContactTriggerOutputSchema,
 	type: TriggerStrategy.WEBHOOK,
-	props: {},
+	props: {
+		selfTriggerNote: activecampaignCommon.selfTriggerNote,
+	},
 	async onEnable(context) {
 		await activeCampaignWebhook.enable({
 			auth: context.auth.props,

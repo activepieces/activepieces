@@ -1,5 +1,5 @@
 import { activeCampaignAuth } from '../auth';
-import { DropdownOption, InputPropertyMap, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
+import { DropdownOption, InputPropertyMap, MarkdownVariant, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
 import { ActiveCampaignClient } from './client';
 import { CUSTOM_FIELD_TYPE } from './constants';
 import { UnknownRecord, acData } from './types';
@@ -141,7 +141,7 @@ function customFieldProp({ type, displayName, options }: { type: string | undefi
 		case CUSTOM_FIELD_TYPE.TEXTAREA:
 			return Property.LongText({ displayName, required: false });
 		case CUSTOM_FIELD_TYPE.DATE:
-			return Property.DateTime({ displayName, description: 'Please use YYYY-MM-DD format.', required: false });
+			return Property.DateTime({ displayName, description: 'Use the YYYY-MM-DD format.', required: false });
 		case CUSTOM_FIELD_TYPE.DATETIME:
 			return Property.DateTime({ displayName, required: false });
 		case CUSTOM_FIELD_TYPE.MONEY:
@@ -160,21 +160,25 @@ function customFieldProp({ type, displayName, options }: { type: string | undefi
 }
 
 export const activecampaignCommon = {
+	selfTriggerNote: Property.MarkDown({
+		value: "Also fires for changes made by this piece's own actions, so a flow that updates the same record can trigger itself.",
+		variant: MarkdownVariant.WARNING,
+	}),
 	listId: <R extends boolean>(required: R) =>
 		recordDropdown({ displayName: 'List', description: 'Type to search lists by name.', required, load: loadLists }),
-	accountId: recordDropdown({ displayName: 'Account ID', description: 'Type to search accounts by name.', required: true, load: loadAccounts }),
+	accountId: recordDropdown({ displayName: 'Account', description: 'Type to search accounts by name.', required: true, load: loadAccounts }),
 	optionalAccountId: recordDropdown({ displayName: 'Account', description: 'Type to search accounts by name.', required: false, load: loadAccounts }),
-	contactId: recordDropdown({ displayName: 'Contact ID', description: 'Type to search contacts by name or email.', required: true, load: loadContacts }),
+	contactId: recordDropdown({ displayName: 'Contact', description: 'Type to search contacts by name or email.', required: true, load: loadContacts }),
 	optionalContactId: recordDropdown({ displayName: 'Contact', description: 'Type to search contacts by name or email.', required: false, load: loadContacts }),
-	tagId: recordDropdown({ displayName: 'Tag ID', description: 'Type to search tags by name.', required: true, load: loadTags }),
+	tagId: recordDropdown({ displayName: 'Tag', description: 'Type to search tags by name.', required: true, load: loadTags }),
 	pipelineId: <R extends boolean>(required: R) =>
-		recordDropdown({ displayName: 'Pipeline', description: 'The deal pipeline.', required, load: loadPipelines }),
+		recordDropdown({ displayName: 'Pipeline', description: 'Type to search pipelines by name.', required, load: loadPipelines }),
 	stageId: <R extends boolean>(required: R) =>
-		recordDropdown({ displayName: 'Stage', description: 'A stage of the selected pipeline.', required, refreshers: ['pipelineId'], load: loadStages }),
-	userId: <R extends boolean>({ displayName, required, description = 'An ActiveCampaign user.' }: { displayName: string; required: R; description?: string }) =>
+		recordDropdown({ displayName: 'Stage', description: 'Pick a pipeline first to load its stages.', required, refreshers: ['pipelineId'], load: loadStages }),
+	userId: <R extends boolean>({ displayName, required, description = 'Type to search users by name.' }: { displayName: string; required: R; description?: string }) =>
 		recordDropdown({ displayName, description, required, load: loadUsers }),
 	dealId: recordDropdown({ displayName: 'Deal', description: 'Type to search deals by title, contact or organization.', required: true, load: loadDeals }),
-	taskTypeId: recordDropdown({ displayName: 'Task Type', description: 'For example Call or Email.', required: true, load: loadTaskTypes }),
+	taskTypeId: recordDropdown({ displayName: 'Task Type', description: 'Type to search task types by name.', required: true, load: loadTaskTypes }),
 	automationId: recordDropdown({ displayName: 'Automation', description: 'Type to search automations by name.', required: true, load: loadAutomations }),
 	accountCustomFields: Property.DynamicProperties({
 		auth: activeCampaignAuth,
