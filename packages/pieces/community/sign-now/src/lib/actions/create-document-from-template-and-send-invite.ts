@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { signNowAuth, getSignNowBearerToken } from '../common/auth';
+import { signNowClient, signNowData } from '../common/client';
+import { signNowSchemas } from '../common/schemas';
 
 export const createDocumentFromTemplateAndSendInviteAction = createAction({
   auth: signNowAuth,
@@ -8,7 +9,9 @@ export const createDocumentFromTemplateAndSendInviteAction = createAction({
   displayName: 'Create Document From Template & Send Free Form Invite',
   description:
     'Creates a new document from a template and sends a free form invite to a signer.',
-  audience: 'both',
+  audience: 'human',
+  classification: 'WRITE',
+  outputSchema: signNowSchemas.composite,
   aiMetadata: {
     description:
       'Copies a SignNow template into a new document and sends a free-form (no predefined roles) signing invite to a single signer, returning the new document ID. Use for templates where the signer fills fields freely rather than by assigned role; for role-based templates use the role-based invite action instead. Requires the template ID, the signer email, and the sender email tied to the SignNow account. Each call creates a new document and dispatches an invite, so it is not idempotent.',
@@ -22,17 +25,17 @@ export const createDocumentFromTemplateAndSendInviteAction = createAction({
     }),
     document_name: Property.ShortText({
       displayName: 'Document Name',
-      description: 'Name for the new document. Defaults to the template name if not provided.',
+      description: 'Name for the new document, or leave empty to use the template name.',
       required: false,
     }),
     to: Property.ShortText({
       displayName: "Signer's Email",
-      description: "Email address of the signer. A free form invite can be sent to the sender's own email address.",
+      description: 'Email address of the signer.',
       required: true,
     }),
     from: Property.ShortText({
       displayName: "Sender's Email",
-      description: 'Must be the email address associated with your SignNow account.',
+      description: 'The email address of your SignNow account.',
       required: true,
     }),
     subject: Property.ShortText({
@@ -95,79 +98,48 @@ export const createDocumentFromTemplateAndSendInviteAction = createAction({
     }),
   },
   async run(context) {
-    const {
-      template_id,
-      document_name,
-      to,
-      from,
+    const { template_id, document_name, to, from, subject, message, cc, cc_subject, cc_message, language, redirect_uri, close_redirect_uri, redirect_target } =
+      context.propsValue;
+    const token = getSignNowBearerToken(context.auth);
+    const created = await signNowClient.request({
+      token,
+      method: 'POST',
+      path: `/template/${signNowClient.segment(template_id)}/copy`,
+      operation: 'create document from template',
+      body: signNowData.dropUndefined({ document_name: document_name?.trim() }),
+    });
+    const document_id = signNowData.textAt({ value: created, key: 'id' });
+    if (document_id === undefined || document_id === '') {
+      throw new Error('SignNow did not return a document ID for the template copy.');
+    }
+    const createdName = signNowData.optionalText({ value: created, key: 'name' }) ??
+      signNowData.optionalText({ value: created, key: 'document_name' }) ??
+      (document_name?.trim() || null);
+    const inviteBody = signNowData.dropUndefined({
+      to: to.trim(),
+      from: from.trim(),
       subject,
       message,
-      cc,
+      cc: signNowData.ccList(cc),
       cc_subject,
       cc_message,
       language,
       redirect_uri,
       close_redirect_uri,
       redirect_target,
-    } = context.propsValue;
-
-    const token = getSignNowBearerToken(context.auth);
-
-    // Step 1: Create document from template
-    let document_id: string;
-    let createdDocumentName: string;
-
+    });
     try {
-      const createResponse = await httpClient.sendRequest<{ id: string; document_name: string }>({
-        method: HttpMethod.POST,
-        url: `https://api.signnow.com/template/${template_id}/copy`,
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: {
-          ...(document_name ? { document_name } : {}),
-        },
-      });
-      document_id = createResponse.body.id;
-      createdDocumentName = createResponse.body.document_name;
-    } catch (e) {
-      throw new Error(`Failed to create document from template: ${(e as Error).message}`);
-    }
-
-    // Step 2: Send free form invite
-    const inviteBody: Record<string, unknown> = { to, from };
-    if (subject) inviteBody['subject'] = subject;
-    if (message) inviteBody['message'] = message;
-    if (cc && (cc as string[]).length > 0) inviteBody['cc'] = cc;
-    if (cc_subject) inviteBody['cc_subject'] = cc_subject;
-    if (cc_message) inviteBody['cc_message'] = cc_message;
-    if (language) inviteBody['language'] = language;
-    if (redirect_uri) inviteBody['redirect_uri'] = redirect_uri;
-    if (close_redirect_uri) inviteBody['close_redirect_uri'] = close_redirect_uri;
-    if (redirect_target) inviteBody['redirect_target'] = redirect_target;
-
-    try {
-      const inviteResponse = await httpClient.sendRequest({
-        method: HttpMethod.POST,
-        url: `https://api.signnow.com/document/${document_id}/invite`,
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
+      const invite = await signNowClient.request({
+        token,
+        method: 'POST',
+        path: `/document/${signNowClient.segment(document_id)}/invite`,
+        operation: 'send invite',
         body: inviteBody,
       });
-
-      return {
-        document_id,
-        document_name: createdDocumentName,
-        invite: inviteResponse.body,
-      };
-    } catch (e) {
+      return { document_id, document_name: createdName, invite };
+    } catch (error) {
       throw new Error(
-        `Document was created (ID: ${document_id}, Name: "${createdDocumentName}") but sending the invite failed: ${(e as Error).message}`
+        `Document ${document_id} was created, but sending the invite failed: ${error instanceof Error ? error.message : 'unknown error'}`
       );
     }
   },

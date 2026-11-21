@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { signNowAuth, getSignNowBearerToken } from '../common/auth';
+import { signNowClient, signNowData } from '../common/client';
+import { signNowSchemas } from '../common/schemas';
 
 export const sendInviteAction = createAction({
   auth: signNowAuth,
@@ -8,6 +9,8 @@ export const sendInviteAction = createAction({
   displayName: 'Invite to Sign',
   description: 'Sends an invite to sign an existing document.',
   audience: 'both',
+  classification: 'WRITE',
+  outputSchema: signNowSchemas.status,
   aiMetadata: {
     description:
       'Sends a role-based field invite for an existing SignNow document, emailing each named signer to sign. Use when you already have an uploaded document with defined roles and want recipients to sign. Requires the document ID, the sender email tied to the SignNow account, and one signer entry per role (email, role name, signing order); signers sharing an order sign in parallel. Each call dispatches new invite emails, so it is not idempotent.',
@@ -26,8 +29,7 @@ export const sendInviteAction = createAction({
     }),
     signers: Property.Array({
       displayName: 'Signers',
-      description:
-        'One entry per signer role. Each signer needs an email, role name, and signing order.',
+      description: 'One entry per signer role, each with an email, role name and signing order.',
       required: true,
       properties: {
         email: Property.ShortText({
@@ -37,13 +39,12 @@ export const sendInviteAction = createAction({
         }),
         role: Property.ShortText({
           displayName: 'Role Name',
-          description: 'Role name as defined in the document (e.g. "Signer 1").',
+          description: 'The role name as it appears in the document, such as Signer 1.',
           required: true,
         }),
         order: Property.Number({
           displayName: 'Signing Order',
-          description:
-            'Order in which this signer receives the invite. Multiple signers can share the same order to sign in parallel.',
+          description: 'Signers with the same order number sign in parallel.',
           required: true,
           defaultValue: 1,
         }),
@@ -76,19 +77,19 @@ export const sendInviteAction = createAction({
         }),
         expiration_days: Property.Number({
           displayName: 'Expiration Days',
-          description: 'Number of days before this signer\'s invite expires (3–180).',
+          description: 'Days until this invite expires, from 3 to 180.',
           required: false,
         }),
       },
     }),
     subject: Property.ShortText({
       displayName: 'Email Subject (All Signers)',
-      description: 'Default email subject for all signers. Overridden by per-signer subject if set.',
+      description: 'Default email subject for all signers.',
       required: false,
     }),
     message: Property.LongText({
       displayName: 'Email Message (All Signers)',
-      description: 'Default email body for all signers. Overridden by per-signer message if set.',
+      description: 'Default email body for all signers.',
       required: false,
     }),
     cc: Property.Array({
@@ -108,64 +109,21 @@ export const sendInviteAction = createAction({
     }),
   },
   async run(context) {
-    const {
-      document_id,
-      from,
-      signers,
-      subject,
-      message,
-      cc,
-      cc_subject,
-      cc_message,
-    } = context.propsValue;
-
-    const token = getSignNowBearerToken(context.auth);
-
-    type SignerEntry = {
-      email: string;
-      role: string;
-      order: number;
-      subject?: string;
-      message?: string;
-      redirect_uri?: string;
-      language?: string;
-      expiration_days?: number;
-    };
-
-    const toArray = (signers as SignerEntry[]).map((signer) => {
-      const entry: Record<string, unknown> = {
-        email: signer.email,
-        role: signer.role,
-        order: signer.order,
-      };
-      if (signer.subject) entry['subject'] = signer.subject;
-      if (signer.message) entry['message'] = signer.message;
-      if (signer.redirect_uri) entry['redirect_uri'] = signer.redirect_uri;
-      if (signer.language) entry['language'] = signer.language;
-      if (signer.expiration_days) entry['expiration_days'] = signer.expiration_days;
-      return entry;
+    const { document_id, from, signers, subject, message, cc, cc_subject, cc_message } = context.propsValue;
+    return signNowClient.request({
+      token: getSignNowBearerToken(context.auth),
+      method: 'POST',
+      path: `/document/${signNowClient.segment(document_id)}/invite`,
+      operation: 'send invite',
+      body: signNowData.dropUndefined({
+        to: signNowData.roleSigners({ signers, withExpiration: true }),
+        from: from.trim(),
+        subject,
+        message,
+        cc: signNowData.ccList(cc),
+        cc_subject,
+        cc_message,
+      }),
     });
-
-    const inviteBody: Record<string, unknown> = { to: toArray, from };
-    if (subject) inviteBody['subject'] = subject;
-    if (message) inviteBody['message'] = message;
-    if (cc && (cc as string[]).length > 0) {
-      inviteBody['cc'] = cc;
-    }
-    if (cc_subject) inviteBody['cc_subject'] = cc_subject;
-    if (cc_message) inviteBody['cc_message'] = cc_message;
-
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `https://api.signnow.com/document/${document_id}/invite`,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      body: inviteBody,
-    });
-
-    return response.body;
   },
 });

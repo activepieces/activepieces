@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { signNowAuth, getSignNowBearerToken } from '../common/auth';
+import { signNowClient, signNowData } from '../common/client';
+import { signNowSchemas } from '../common/schemas';
 
 export const createDocumentGroupFromTemplateAndSendInviteAction = createAction({
   auth: signNowAuth,
@@ -8,7 +9,9 @@ export const createDocumentGroupFromTemplateAndSendInviteAction = createAction({
   displayName: 'Create Document Group From Template Group & Send Invite',
   description:
     'Creates a new document group from a template group and sends an invite to one or more signers.',
-  audience: 'both',
+  audience: 'human',
+  classification: 'WRITE',
+  outputSchema: signNowSchemas.groupComposite,
   aiMetadata: {
     description:
       'Creates a new SignNow document group from a document-group template and sends a multi-step group invite to its signers, returning the group ID and per-document IDs. Use when several documents must be signed together as a package; for a single document use the document-template invite actions instead. Requires the document-group template ID, a group name, and one signer entry per recipient (email, role name, permitted action of sign/approve/view, and signing step); signers sharing a step act in parallel and each may target a specific document or all of them. Each call creates a new group and dispatches invites, so it is not idempotent.',
@@ -27,8 +30,7 @@ export const createDocumentGroupFromTemplateAndSendInviteAction = createAction({
     }),
     signers: Property.Array({
       displayName: 'Signers',
-      description:
-        'One entry per signer. Each signer needs an email, role name, and the document they are signing within the group. Signing order determines the step sequence.',
+      description: 'One entry per recipient, each with an email, role name, action and step.',
       required: true,
       properties: {
         email: Property.ShortText({
@@ -38,13 +40,12 @@ export const createDocumentGroupFromTemplateAndSendInviteAction = createAction({
         }),
         role_name: Property.ShortText({
           displayName: 'Role Name',
-          description: 'Role name as defined in the template (e.g. "Signer 1").',
+          description: 'The role name as it appears in the template, such as Signer 1.',
           required: true,
         }),
         document_id: Property.ShortText({
           displayName: 'Document ID',
-          description:
-            'ID of the specific document within the group this signer is assigned to. Leave blank to assign to all documents.',
+          description: 'The document in the group for this signer, or leave empty for the first document.',
           required: false,
         }),
         action: Property.StaticDropdown({
@@ -61,8 +62,7 @@ export const createDocumentGroupFromTemplateAndSendInviteAction = createAction({
         }),
         order: Property.Number({
           displayName: 'Signing Step',
-          description:
-            'Step order for this signer (1 = first). Signers with the same step number act in parallel.',
+          description: 'Signers with the same step number act in parallel.',
           required: true,
           defaultValue: 1,
         }),
@@ -103,118 +103,109 @@ export const createDocumentGroupFromTemplateAndSendInviteAction = createAction({
   },
   async run(context) {
     const { template_id, group_name, signers, cc } = context.propsValue;
+    const recipients = groupRecipients(signers);
     const token = getSignNowBearerToken(context.auth);
-
-    // Step 1: Create document group from template
-    type DocumentGroupResponse = {
-      data: {
-        unique_id: string;
-        name: string;
-        documents: Array<{ id: string; document_name: string; roles: string[] }>;
-      };
-    };
-
-    let documentGroupId: string;
-    let documents: DocumentGroupResponse['data']['documents'];
-
-    try {
-      const createResponse = await httpClient.sendRequest<DocumentGroupResponse>({
-        method: HttpMethod.POST,
-        url: `https://api.signnow.com/v2/document-group-templates/${template_id}/document-group`,
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: { group_name },
-      });
-      documentGroupId = createResponse.body.data.unique_id;
-      documents = createResponse.body.data.documents;
-    } catch (e) {
-      throw new Error(`Failed to create document group from template: ${(e as Error).message}`);
+    const created = await signNowClient.request({
+      token,
+      method: 'POST',
+      path: `/v2/document-group-templates/${signNowClient.segment(template_id)}/document-group`,
+      operation: 'create document group from template',
+      body: { group_name },
+    });
+    const data = signNowData.isRecord(created) && signNowData.isRecord(created['data']) ? created['data'] : created;
+    const documentGroupId = signNowData.textAt({ value: data, key: 'unique_id' });
+    if (documentGroupId === undefined || documentGroupId === '') {
+      throw new Error('SignNow did not return a document group ID.');
     }
-
-    // Step 2: Build invite_steps by grouping signers by their order/step
-    type SignerEntry = {
-      email: string;
-      role_name: string;
-      document_id?: string;
-      action: string;
-      order: number;
-      subject?: string;
-      message?: string;
-      language?: string;
-      redirect_uri?: string;
-    };
-
-    // Group signers by step order
-    const stepMap = new Map<number, SignerEntry[]>();
-    for (const signer of signers as SignerEntry[]) {
-      const step = signer.order ?? 1;
-      if (!stepMap.has(step)) stepMap.set(step, []);
-      stepMap.get(step)!.push(signer);
+    const documents = signNowData.recordsAt({ value: data, key: 'documents' }).map((document) => ({
+      id: signNowData.textAt({ value: document, key: 'id' }) ?? '',
+      name: signNowData.textAt({ value: document, key: 'document_name' }) ?? null,
+    }));
+    const fallbackDocumentId = documents.find((document) => document.id !== '')?.id;
+    const missingIndex = recipients.findIndex((recipient) => recipient.document_id === undefined && fallbackDocumentId === undefined);
+    if (missingIndex >= 0) {
+      throw new Error(
+        `Document group ${documentGroupId} was created, but it has no documents, so recipient ${missingIndex + 1} needs a Document ID.`
+      );
     }
-
-    const invite_steps = Array.from(stepMap.entries())
-      .sort(([a], [b]) => a - b)
-      .map(([order, stepSigners]) => {
-        const invite_actions = stepSigners.map((signer) => {
-          // If no document_id provided, use the first document in the group
-          const targetDocId =
-            signer.document_id || (documents.length > 0 ? documents[0].id : '');
-
-          const action: Record<string, unknown> = {
-            email: signer.email,
-            role_name: signer.role_name,
-            action: signer.action,
-            document_id: targetDocId,
-          };
-          if (signer.redirect_uri) action['redirect_uri'] = signer.redirect_uri;
-          if (signer.language) action['language'] = signer.language;
-          return action;
-        });
-
-        const invite_emails = stepSigners
-          .filter((s) => s.subject || s.message)
-          .map((signer) => {
-            const emailEntry: Record<string, unknown> = { email: signer.email };
-            if (signer.subject) emailEntry['subject'] = signer.subject;
-            if (signer.message) emailEntry['message'] = signer.message;
-            return emailEntry;
-          });
-
-        const step: Record<string, unknown> = { order, invite_actions };
-        if (invite_emails.length > 0) step['invite_emails'] = invite_emails;
-        return step;
+    const steps = [...new Set(recipients.map((recipient) => recipient.order))].sort((a, b) => a - b);
+    const invite_steps = steps.map((order) => {
+      const stepRecipients = recipients.filter((recipient) => recipient.order === order);
+      const invite_emails = stepRecipients
+        .filter((recipient) => recipient.subject !== undefined || recipient.message !== undefined)
+        .map((recipient) => signNowData.dropUndefined({ email: recipient.email, subject: recipient.subject, message: recipient.message }));
+      return signNowData.dropUndefined({
+        order,
+        invite_actions: stepRecipients.map((recipient) =>
+          signNowData.dropUndefined({
+            email: recipient.email,
+            role_name: recipient.role_name,
+            action: recipient.action,
+            document_id: recipient.document_id ?? fallbackDocumentId,
+            redirect_uri: recipient.redirect_uri,
+            language: recipient.language,
+          })
+        ),
+        invite_emails: invite_emails.length > 0 ? invite_emails : undefined,
       });
-
-    const inviteBody: Record<string, unknown> = { invite_steps };
-    if (cc && (cc as string[]).length > 0) inviteBody['cc'] = cc;
-
-    // Step 3: Send document group invite
+    });
     try {
-      const inviteResponse = await httpClient.sendRequest<{ id: string; pending_invite_link: string | null }>({
-        method: HttpMethod.POST,
-        url: `https://api.signnow.com/documentgroup/${documentGroupId}/groupinvite`,
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: inviteBody,
+      const invite = await signNowClient.request({
+        token,
+        method: 'POST',
+        path: `/documentgroup/${signNowClient.segment(documentGroupId)}/groupinvite`,
+        operation: 'send document group invite',
+        body: signNowData.dropUndefined({ invite_steps, cc: signNowData.ccList(cc) }),
       });
-
       return {
         document_group_id: documentGroupId,
         document_group_name: group_name,
-        invite_id: inviteResponse.body.id,
-        pending_invite_link: inviteResponse.body.pending_invite_link,
-        documents: documents.map((d) => ({ id: d.id, name: d.document_name })),
+        invite_id: signNowData.textAt({ value: invite, key: 'id' }) ?? null,
+        pending_invite_link: signNowData.textAt({ value: invite, key: 'pending_invite_link' }) ?? null,
+        documents,
       };
-    } catch (e) {
+    } catch (error) {
       throw new Error(
-        `Document group was created (ID: ${documentGroupId}) but sending the invite failed: ${(e as Error).message}`
+        `Document group ${documentGroupId} was created, but sending the invite failed: ${error instanceof Error ? error.message : 'unknown error'}`
       );
     }
   },
 });
+
+function groupRecipients(signers: unknown): GroupRecipient[] {
+  const entries = Array.isArray(signers) ? signers.filter(signNowData.isRecord) : [];
+  if (entries.length === 0) {
+    throw new Error('Add at least one recipient with an email, role name and action.');
+  }
+  return entries.map((entry, index) => {
+    const email = signNowData.optionalText({ value: entry, key: 'email' });
+    const role_name = signNowData.optionalText({ value: entry, key: 'role_name' });
+    const action = signNowData.optionalText({ value: entry, key: 'action' });
+    if (email === undefined || role_name === undefined || action === undefined) {
+      throw new Error(`Recipient ${index + 1} needs an email, a role name and an action.`);
+    }
+    return {
+      email: email.trim(),
+      role_name,
+      action,
+      order: signNowData.numberAt({ value: entry, key: 'order' }) ?? 1,
+      document_id: signNowData.optionalText({ value: entry, key: 'document_id' }),
+      subject: signNowData.optionalText({ value: entry, key: 'subject' }),
+      message: signNowData.optionalText({ value: entry, key: 'message' }),
+      language: signNowData.optionalText({ value: entry, key: 'language' }),
+      redirect_uri: signNowData.optionalText({ value: entry, key: 'redirect_uri' }),
+    };
+  });
+}
+
+type GroupRecipient = {
+  email: string;
+  role_name: string;
+  action: string;
+  order: number;
+  document_id?: string;
+  subject?: string;
+  message?: string;
+  language?: string;
+  redirect_uri?: string;
+};
