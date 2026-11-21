@@ -1,6 +1,7 @@
 import { HttpError, httpClient, HttpRequest } from '@activepieces/pieces-common';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getAiAnswerAction } from '../src/lib/actions/get-ai-answer';
+import { searchBingAction } from '../src/lib/actions/search-bing';
 import { searchGoogleAction } from '../src/lib/actions/search-google';
 import { cloro } from '../src';
 import { searchGoogleNewsAction } from '../src/lib/actions/search-google-news';
@@ -155,6 +156,33 @@ describe('Search Google', () => {
   });
 });
 
+describe('Search Bing', () => {
+  it('sends the query and country and returns flat rows with direct links only', async () => {
+    sendRequest.mockResolvedValue(ok(GOOGLE));
+    const rows = await runAction(searchBingAction, { query: ' serp api ', country: 'DE', max_results: 5 });
+
+    expect(request().url).toBe('https://api.cloro.dev/v1/monitor/bing');
+    expect(request().method).toBe('POST');
+    expect(request().body).toEqual({ query: 'serp api', country: 'DE' });
+    expect(rows).toEqual([
+      { position: 1, title: 'First', url: 'https://example.com/a', displayed_link: 'example.com', snippet: 'A.', date: null },
+      { position: 4, title: 'Second', url: 'https://example.org/b', displayed_link: null, snippet: 'B.', date: '2 days ago' },
+    ]);
+  });
+
+  it('caps the results', async () => {
+    sendRequest.mockResolvedValue(ok(GOOGLE));
+    expect(await runAction(searchBingAction, { query: 'q', country: 'US', max_results: 1 })).toHaveLength(1);
+  });
+
+  it('refuses a query that is too long after URL encoding', async () => {
+    await expect(runAction(searchBingAction, { query: '中'.repeat(600), country: 'US' })).rejects.toThrow(
+      /too long for Bing/
+    );
+    expect(sendRequest).not.toHaveBeenCalled();
+  });
+});
+
 describe('Search Google News', () => {
   it('returns flat news rows', async () => {
     sendRequest.mockResolvedValue(
@@ -202,11 +230,14 @@ describe('Get AI Answer', () => {
     });
   });
 
-  it('reads the Google AI Overview from a Google search', async () => {
+  it.each([
+    ['google_ai_overview', '/v1/monitor/google'],
+    ['bing_ai_overview', '/v1/monitor/bing'],
+  ])('reads %s from a search on %s', async (engine, path) => {
     sendRequest.mockResolvedValue(ok(GOOGLE));
-    const answer = await runAction(getAiAnswerAction, { engine: 'google_ai_overview', prompt: 'serp api', country: 'US' });
+    const answer = await runAction(getAiAnswerAction, { engine, prompt: 'serp api', country: 'US' });
 
-    expect(request().url).toBe('https://api.cloro.dev/v1/monitor/google');
+    expect(request().url).toBe(`https://api.cloro.dev${path}`);
     expect(request().body).toEqual({ query: 'serp api', country: 'US', include: { aioverview: { markdown: true } } });
     expect(answer).toMatchObject({
       answer_found: true,
@@ -223,10 +254,10 @@ describe('Get AI Answer', () => {
     expect(answer).toMatchObject({ answer_found: false, answer_markdown: null, source_count: 0, source_urls: null });
   });
 
-  it('refuses a Bing AI Mode prompt that is too long after URL encoding', async () => {
+  it.each(['bing_ai_mode', 'bing_ai_overview'])('refuses a %s prompt that is too long after URL encoding', async (engine) => {
     await expect(
-      runAction(getAiAnswerAction, { engine: 'bing_ai_mode', prompt: '中'.repeat(600), country: 'US' })
-    ).rejects.toThrow(/too long for Bing AI Mode/);
+      runAction(getAiAnswerAction, { engine, prompt: '中'.repeat(600), country: 'US' })
+    ).rejects.toThrow(/too long for Bing/);
     expect(sendRequest).not.toHaveBeenCalled();
   });
 

@@ -38,25 +38,9 @@ export const searchGoogleAction = createAction({
         country: context.propsValue.country,
       },
     });
-    const limit = clampResults(context.propsValue.max_results);
-    const rows = Array.isArray(result['organicResults']) ? result['organicResults'].filter(cloroApi.isRecord) : [];
-    return rows
-      .filter((row) => cloroApi.isDirectLink(row['link']))
-      .slice(0, limit)
-      .map((row) => ({
-        position: typeof row['position'] === 'number' ? row['position'] : null,
-        title: cloroApi.text(row['title']),
-        url: cloroApi.text(row['link']),
-        displayed_link: cloroApi.text(row['displayedLink']) || null,
-        snippet: cloroApi.text(row['snippet']) || null,
-        date: cloroApi.text(row['date']) || null,
-      }));
+    return cloroApi.organicResults({
+      items: result['organicResults'],
+      maxResults: context.propsValue.max_results,
+    });
   },
 });
-
-function clampResults(value: number | undefined): number {
-  if (value === undefined || !Number.isFinite(value)) {
-    return 10;
-  }
-  return Math.min(10, Math.max(1, Math.floor(value)));
-}

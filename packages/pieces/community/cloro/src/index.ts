@@ -1,6 +1,7 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
 import { getAiAnswerAction } from './lib/actions/get-ai-answer';
+import { searchBingAction } from './lib/actions/search-bing';
 import { searchGoogleAction } from './lib/actions/search-google';
 import { searchGoogleNewsAction } from './lib/actions/search-google-news';
 import { cloroAuth } from './lib/auth';
@@ -9,7 +10,7 @@ import { CLORO_API_URL, cloroApi } from './lib/common/client';
 export const cloro = createPiece({
   displayName: 'cloro',
   description:
-    'Live Google and Google News results, and the answers of Google AI Mode, the Google AI Overview, Bing AI Mode, ChatGPT and Gemini, with their sources.',
+    'Live Google, Google News and Bing results, and the answers of Google AI Mode, the Google AI Overview, Bing AI Mode, the Bing AI Overview, ChatGPT and Gemini, with their sources.',
   auth: cloroAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/cloro.png',
@@ -18,6 +19,7 @@ export const cloro = createPiece({
   actions: [
     searchGoogleAction,
     searchGoogleNewsAction,
+    searchBingAction,
     getAiAnswerAction,
     createCustomApiCallAction({
       baseUrl: () => CLORO_API_URL,

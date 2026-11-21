@@ -58,6 +58,34 @@ async function monitor({
   return result;
 }
 
+function organicResults({
+  items,
+  maxResults,
+}: {
+  items: unknown;
+  maxResults: number | undefined;
+}): OrganicResult[] {
+  const rows = Array.isArray(items) ? items.filter(isRecord) : [];
+  return rows
+    .filter((row) => isDirectLink(row['link']))
+    .slice(0, clampResults(maxResults))
+    .map((row) => ({
+      position: typeof row['position'] === 'number' ? row['position'] : null,
+      title: text(row['title']),
+      url: text(row['link']),
+      displayed_link: text(row['displayedLink']) || null,
+      snippet: text(row['snippet']) || null,
+      date: text(row['date']) || null,
+    }));
+}
+
+function clampResults(value: number | undefined): number {
+  if (value === undefined || !Number.isFinite(value)) {
+    return MAX_RESULTS;
+  }
+  return Math.min(MAX_RESULTS, Math.max(1, Math.floor(value)));
+}
+
 function isDirectLink(url: unknown): url is string {
   if (!isAbsoluteHttpUrl(url)) {
     return false;
@@ -143,6 +171,7 @@ class CloroApiError extends Error {
 }
 
 const REQUEST_TIMEOUT_MS = 180000;
+const MAX_RESULTS = 10;
 const GOOGLE_HOST = /^(www\.)?google\.[a-z]{2,3}(\.[a-z]{2})?$/;
 const GOOGLE_REDIRECT_PATH = /^\/(goto|search)(\/|$)/;
 
@@ -151,6 +180,7 @@ export const BING_PROMPT_LIMIT = 3500;
 export const cloroApi = {
   send,
   monitor,
+  organicResults,
   isDirectLink,
   assertCloroUrl,
   isRecord,
@@ -162,3 +192,11 @@ export const cloroApi = {
 export { CloroApiError };
 
 export type CloroSource = { title: string; url: string };
+export type OrganicResult = {
+  position: number | null;
+  title: string;
+  url: string;
+  displayed_link: string | null;
+  snippet: string | null;
+  date: string | null;
+};
