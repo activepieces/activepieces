@@ -1,6 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { villageAuth } from '../../common/auth';
+import { villageApi } from '../../common/client';
+import { villageSchemas } from '../../common/schemas';
 
 export const deleteList = createAction({
   auth: villageAuth,
@@ -12,9 +14,10 @@ export const deleteList = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Permanently delete an entire list and all its items by list ID; this cannot be undone. To remove only specific entries while keeping the list, use Remove items from list instead. Effectively idempotent once deleted.',
-    idempotent: true,
+      'Permanently delete an entire list and all its items by list ID; this cannot be undone. To remove only specific entries while keeping the list, use Remove items from list instead. A repeat call on a deleted list is expected to fail with not found.',
+    idempotent: false,
   },
+  outputSchema: villageSchemas.messageResult,
   props: {
     id: Property.ShortText({
       displayName: 'List ID',
@@ -25,11 +28,11 @@ export const deleteList = createAction({
   async run(context) {
     const { id } = context.propsValue;
 
-    const response = await httpClient.sendRequest({
+    const response = await villageApi.call({
+      token: context.auth.secret_text,
       method: HttpMethod.DELETE,
-      url: `${VILLAGE_API_BASE_URL}/v2/lists/${encodeURIComponent(id)}`,
-      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
+      path: `/v2/lists/${encodeURIComponent(id)}`,
     });
-    return response.body;
+    return response;
   },
 });

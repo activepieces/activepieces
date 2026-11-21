@@ -1,6 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { villageAuth } from '../../common/auth';
+import { villageApi } from '../../common/client';
+import { villageSchemas } from '../../common/schemas';
 
 const MAX_BULK_LINKEDIN_IDS = 100;
 
@@ -11,12 +13,13 @@ export const getPersonPathsBulk = createAction({
   displayName: 'Get Person Paths (Bulk)',
   description:
     'Find introduction paths to multiple people in a single request. Provide up to 100 LinkedIn IDs (the slug after linkedin.com/in/) and get connection paths for each.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Read-only batch lookup of warm-introduction paths to many people at once, keyed by LinkedIn ID (the slug after linkedin.com/in/, not a full URL). Pick this over Get Person Paths when you have more than one target to evaluate together; capped at 100 IDs per call. Pure query, safe to retry.',
     idempotent: true,
   },
+  outputSchema: villageSchemas.getPersonPathsBulk,
   props: {
     linkedin_ids: Property.Array({
       displayName: 'LinkedIn IDs',
@@ -36,12 +39,12 @@ export const getPersonPathsBulk = createAction({
       throw new Error(`Maximum ${MAX_BULK_LINKEDIN_IDS} LinkedIn IDs per bulk request.`);
     }
 
-    const response = await httpClient.sendRequest({
+    const response = await villageApi.call({
+      token: context.auth.secret_text,
       method: HttpMethod.POST,
-      url: `${VILLAGE_API_BASE_URL}/v2/people/paths/bulk`,
-      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
+      path: `/v2/people/paths/bulk`,
       body: { linkedin_ids },
     });
-    return response.body;
+    return response;
   },
 });

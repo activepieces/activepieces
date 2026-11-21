@@ -1,6 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { villageAuth } from '../../common/auth';
+import { villageApi } from '../../common/client';
+import { villageSchemas } from '../../common/schemas';
 
 const MAX_BULK_IDENTIFIERS = 10;
 const IDENTIFIER_TYPE_LINKEDIN = 'linkedin_url';
@@ -18,12 +20,13 @@ export const enrichPersonEmailBulk = createAction({
   displayName: 'Enrich Person Email (Bulk)',
   description:
     'Find email addresses for up to 10 people in a single request. Returns email addresses where found, with error messages for failed lookups.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Read-only batch lookup of email addresses for up to 10 people, each identified by a LinkedIn URL or generic URL. Use specifically when you need contact emails; for general profile attributes use Enrich Person. Per-row errors are returned for misses rather than failing the whole call. Pure query, safe to retry.',
     idempotent: true,
   },
+  outputSchema: villageSchemas.enrichPersonEmailBulk,
   props: {
     identifiers: Property.Array({
       displayName: 'Identifiers',
@@ -60,7 +63,10 @@ export const enrichPersonEmailBulk = createAction({
       throw new Error(`Maximum ${MAX_BULK_IDENTIFIERS} identifiers per bulk request.`);
     }
 
-    const rows = identifiers as IdentifierRow[];
+    const rows: IdentifierRow[] = villageApi.objectRows(identifiers).map((row) => ({
+      identifierType: villageApi.rowText({ row, key: 'identifierType' }),
+      identifierValue: villageApi.rowText({ row, key: 'identifierValue' }),
+    }));
     const body = {
       identifiers: rows.map((row, index) => {
         if (!row?.identifierType || !row?.identifierValue) {
@@ -72,12 +78,12 @@ export const enrichPersonEmailBulk = createAction({
       }),
     };
 
-    const response = await httpClient.sendRequest({
+    const response = await villageApi.call({
+      token: context.auth.secret_text,
       method: HttpMethod.POST,
-      url: `${VILLAGE_API_BASE_URL}/v2/people/enrich/emails/bulk`,
-      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
+      path: `/v2/people/enrich/emails/bulk`,
       body,
     });
-    return response.body;
+    return response;
   },
 });

@@ -1,6 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { villageAuth } from '../../common/auth';
+import { villageApi } from '../../common/client';
+import { villageSchemas } from '../../common/schemas';
 
 export const searchPeople = createAction({
   auth: villageAuth,
@@ -8,13 +10,14 @@ export const searchPeople = createAction({
   classification: 'SEARCH',
   displayName: 'Search People',
   description:
-    'Search for people using natural language queries. Pass your search text in "prompt" (e.g. "engineers at Google"). Supports cursor-based pagination and structured filters.',
-  audience: 'both',
+    'Search for people using natural language queries. Pass your search text in "prompt" (e.g. "engineers at Google"). Supports cursor-based pagination and structured filters. Costs 2 Village credits per 10 results.',
+  audience: 'human',
   aiMetadata: {
     description:
       'Read-only discovery search for people by a natural-language prompt and/or structured filters (at least one required); scope controls whether you search your network, everyone (global), or a caller-supplied candidate list. Use when you do not already have a specific profile URL — for a known person use Enrich Person instead. Cursor-paginated and safe to retry.',
     idempotent: true,
   },
+  outputSchema: villageSchemas.searchPeople,
   props: {
     prompt: Property.LongText({
       displayName: 'Prompt',
@@ -118,12 +121,12 @@ export const searchPeople = createAction({
     if (include_counts !== undefined) body['include_counts'] = include_counts;
     if (specific_list_data !== undefined) body['specific_list_data'] = specific_list_data;
 
-    const response = await httpClient.sendRequest({
+    const response = await villageApi.call({
+      token: context.auth.secret_text,
       method: HttpMethod.POST,
-      url: `${VILLAGE_API_BASE_URL}/v2/people/search`,
-      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
+      path: `/v2/people/search`,
       body,
     });
-    return response.body;
+    return response;
   },
 });

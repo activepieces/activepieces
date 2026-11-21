@@ -1,6 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { villageAuth } from '../../common/auth';
+import { villageApi, VILLAGE_ENRICH_MODE_OPTIONS } from '../../common/client';
+import { villageSchemas } from '../../common/schemas';
 
 const MAX_BULK_IDENTIFIERS = 10;
 const IDENTIFIER_TYPE_LINKEDIN = 'linkedin_url';
@@ -18,12 +20,13 @@ export const enrichPersonBulk = createAction({
   displayName: 'Enrich Person (Bulk)',
   description:
     'Get detailed profile information for up to 10 people in a single request. Partial results are returned if some lookups fail — check each result for success or error status.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Retrieve detailed profiles for up to 10 people in one call, each identified by a LinkedIn URL or generic URL. Read-only and idempotent; partial results are returned with per-person success or error status when some lookups fail. Use for full profile enrichment; use Enrich Person Email when only an email address is needed.',
     idempotent: true,
   },
+  outputSchema: villageSchemas.enrichPersonBulk,
   props: {
     identifiers: Property.Array({
       displayName: 'Identifiers',
@@ -49,6 +52,13 @@ export const enrichPersonBulk = createAction({
         }),
       },
     }),
+    mode: Property.StaticDropdown({
+      displayName: 'Cache Mode',
+      description:
+        'cached_first (default) charges credits only when Village has to fetch live data; cached_only never charges and returns per-item not found on a cache miss; realtime_only always fetches live and charges when found.',
+      required: false,
+      options: { options: VILLAGE_ENRICH_MODE_OPTIONS },
+    }),
   },
   async run(context) {
     const { identifiers } = context.propsValue;
@@ -60,7 +70,10 @@ export const enrichPersonBulk = createAction({
       throw new Error(`Maximum ${MAX_BULK_IDENTIFIERS} identifiers per bulk request.`);
     }
 
-    const rows = identifiers as IdentifierRow[];
+    const rows: IdentifierRow[] = villageApi.objectRows(identifiers).map((row) => ({
+      identifierType: villageApi.rowText({ row, key: 'identifierType' }),
+      identifierValue: villageApi.rowText({ row, key: 'identifierValue' }),
+    }));
     const body = {
       identifiers: rows.map((row, index) => {
         if (!row?.identifierType || !row?.identifierValue) {
@@ -72,12 +85,12 @@ export const enrichPersonBulk = createAction({
       }),
     };
 
-    const response = await httpClient.sendRequest({
+    const response = await villageApi.call({
+      token: context.auth.secret_text,
       method: HttpMethod.POST,
-      url: `${VILLAGE_API_BASE_URL}/v2/people/enrich/bulk`,
-      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
-      body,
+      path: `/v2/people/enrich/bulk`,
+      body: context.propsValue.mode ? { ...body, mode: context.propsValue.mode } : body,
     });
-    return response.body;
+    return response;
   },
 });

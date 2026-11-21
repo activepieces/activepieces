@@ -1,6 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { villageAuth } from '../../common/auth';
+import { villageApi } from '../../common/client';
+import { villageSchemas } from '../../common/schemas';
 
 export const peopleRefresh = createAction({
   auth: villageAuth,
@@ -15,6 +17,7 @@ export const peopleRefresh = createAction({
       'Trigger a re-fetch or first-time import of people into your network from LinkedIn URLs; this kicks off backend processing, so treat it as a non-idempotent write rather than a plain read. Set realtime=true to wait up to ~25s for enriched data inline, or false to get job IDs to poll later. To read already-imported profiles without re-fetching, use Enrich Person instead.',
     idempotent: false,
   },
+  outputSchema: villageSchemas.refreshJobs,
   props: {
     linkedin_urls: Property.Array({
       displayName: 'LinkedIn URLs',
@@ -36,15 +39,15 @@ export const peopleRefresh = createAction({
       throw new Error('At least one LinkedIn URL is required.');
     }
 
-    const response = await httpClient.sendRequest({
+    const response = await villageApi.call({
+      token: context.auth.secret_text,
       method: HttpMethod.POST,
-      url: `${VILLAGE_API_BASE_URL}/v2/people/refresh`,
-      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
+      path: `/v2/people/refresh`,
       body: {
         linkedin_urls: linkedin_urls.map(String),
         realtime,
       },
     });
-    return response.body;
+    return response;
   },
 });

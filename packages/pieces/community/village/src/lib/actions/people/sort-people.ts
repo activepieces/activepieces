@@ -1,6 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { villageAuth } from '../../common/auth';
+import { villageApi } from '../../common/client';
+import { villageSchemas } from '../../common/schemas';
 
 export const sortPeople = createAction({
   auth: villageAuth,
@@ -12,9 +14,10 @@ export const sortPeople = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Read-only ranking of a caller-supplied set of people (LinkedIn profile URLs) by how strongly you are connected to each, ordered strongest-first. Use when you already have specific candidates and want them prioritized; to discover candidates use Search People. Pure query, safe to retry.',
+      'Read-only ranking of a caller-supplied set of people (LinkedIn profile URLs) by how strongly you are connected to each, ordered strongest-first. Use when you already have specific candidates and want them prioritized; to discover candidates use Find People. Free. Pure query, safe to retry.',
     idempotent: true,
   },
+  outputSchema: villageSchemas.sortPeople,
   props: {
     people: Property.Array({
       displayName: 'People',
@@ -31,12 +34,12 @@ export const sortPeople = createAction({
       throw new Error('At least one person URL is required.');
     }
 
-    const response = await httpClient.sendRequest({
+    const response = await villageApi.call({
+      token: context.auth.secret_text,
       method: HttpMethod.POST,
-      url: `${VILLAGE_API_BASE_URL}/v2/people/sort`,
-      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
+      path: `/v2/people/sort`,
       body: { people: people.map(String) },
     });
-    return response.body;
+    return response;
   },
 });

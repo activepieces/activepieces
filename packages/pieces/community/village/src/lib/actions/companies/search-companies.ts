@@ -1,6 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { villageAuth } from '../../common/auth';
+import { villageApi } from '../../common/client';
+import { villageSchemas } from '../../common/schemas';
 
 export const searchCompanies = createAction({
   auth: villageAuth,
@@ -8,13 +10,14 @@ export const searchCompanies = createAction({
   classification: 'SEARCH',
   displayName: 'Search Companies',
   description:
-    'Search for companies using natural language (in the "prompt" field) and/or structured filters. Returns matching companies with relevance and connection-strength scores; supports cursor-based pagination.',
-  audience: 'both',
+    'Search for companies using natural language (in the "prompt" field) and/or structured filters. Returns matching companies with relevance and connection-strength scores; supports cursor-based pagination. Costs 2 Village credits per 10 results.',
+  audience: 'human',
   aiMetadata: {
     description:
       'Read-only discovery search for companies by a natural-language prompt and/or structured firmographic filters (at least one required); scope restricts to your network or searches globally. Use when you do not already have a domain or URL — for a known company use Enrich Company. Cursor-paginated and safe to retry.',
     idempotent: true,
   },
+  outputSchema: villageSchemas.searchCompanies,
   props: {
     prompt: Property.LongText({
       displayName: 'Prompt',
@@ -108,12 +111,12 @@ export const searchCompanies = createAction({
     if (network_filters !== undefined) body['network_filters'] = network_filters;
     if (include_counts !== undefined) body['include_counts'] = include_counts;
 
-    const response = await httpClient.sendRequest({
+    const response = await villageApi.call({
+      token: context.auth.secret_text,
       method: HttpMethod.POST,
-      url: `${VILLAGE_API_BASE_URL}/v2/companies/search`,
-      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
+      path: `/v2/companies/search`,
       body,
     });
-    return response.body;
+    return response;
   },
 });

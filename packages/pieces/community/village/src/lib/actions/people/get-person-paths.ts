@@ -1,6 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { villageAuth } from '../../common/auth';
+import { villageApi } from '../../common/client';
+import { villageSchemas } from '../../common/schemas';
 
 export const getPersonPaths = createAction({
   auth: villageAuth,
@@ -12,9 +14,10 @@ export const getPersonPaths = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Read-only lookup of warm-introduction paths to one person via your network, identified by their LinkedIn URL (or a generic url to auto-detect; supply exactly one). Use for a single target; for many targets at once use Get Person Paths (Bulk). Pure query, safe to retry.',
+      'Read-only lookup of warm-introduction paths to one person via your network, identified by their LinkedIn URL (or a generic url to auto-detect; supply exactly one). Costs 2 credits when paths are found (free if this person was opened in the last 30 days). Read-only.',
     idempotent: true,
   },
+  outputSchema: villageSchemas.getPersonPaths,
   props: {
     linkedin_url: Property.ShortText({
       displayName: 'LinkedIn URL',
@@ -38,12 +41,12 @@ export const getPersonPaths = createAction({
     }
     const identifier = linkedin_url ? { linkedin_url } : { url };
 
-    const response = await httpClient.sendRequest({
+    const response = await villageApi.call({
+      token: context.auth.secret_text,
       method: HttpMethod.POST,
-      url: `${VILLAGE_API_BASE_URL}/v2/people/paths`,
-      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
+      path: `/v2/people/paths`,
       body: identifier,
     });
-    return response.body;
+    return response;
   },
 });
