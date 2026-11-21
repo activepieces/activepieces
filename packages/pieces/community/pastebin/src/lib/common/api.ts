@@ -1,4 +1,5 @@
 import { HttpError } from '@activepieces/pieces-common';
+import { tryCatch } from '@activepieces/pieces-framework';
 
 import { pastebinClient } from './client';
 
@@ -78,13 +79,18 @@ async function getPasteContent({
 }): Promise<string> {
   const userKey = await getUserKey({ auth });
   if (userKey) {
-    return await pastebinClient.request({
-      auth,
-      userKey,
-      script: 'api_raw.php',
-      option: 'show_paste',
-      fields: { paste_key: pasteKey },
-    });
+    const { data, error } = await tryCatch(() =>
+      pastebinClient.request({
+        auth,
+        userKey,
+        script: 'api_raw.php',
+        option: 'show_paste',
+        fields: { paste_key: pasteKey },
+      })
+    );
+    if (!error) {
+      return data;
+    }
   }
   return await pastebinClient.getText({ path: `/raw/${pasteKey}` });
 }
