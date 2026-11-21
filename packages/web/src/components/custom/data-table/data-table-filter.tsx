@@ -9,6 +9,7 @@ import {
 } from '@/components/custom/date-time-picker-range';
 
 import { DataTableInputCheckbox } from './data-table-checkbox-filter';
+import { dataTableFilterUtils } from './data-table-filter-utils';
 import { DataTableInputPopover } from './data-table-input-popover';
 import { DataTableSelectPopover } from './data-table-select-popover';
 
@@ -21,6 +22,7 @@ type DropdownFilterProps = {
     value: string;
     icon?: React.ComponentType<{ className?: string }> | string;
   }[];
+  defaultValues?: string[];
 };
 
 type InputFilterProps = {
@@ -51,46 +53,48 @@ export function DataTableFilter<TData, TValue>({
   ...props
 }: DataTableFilterProps & {
   column?: Column<TData, TValue>;
-  accessorKey?: string;
+  accessorKey: string;
 }) {
   const facets = column?.getFacetedUniqueValues();
   const [searchParams, setSearchParams] = useSearchParams();
-  const paramKey = accessorKey ?? column?.id;
+  const defaultValues =
+    props.type === 'select' ? props.defaultValues : undefined;
 
   const handleFilterChange = React.useCallback(
     (filterValue: string | string[] | DateRange | undefined) => {
       setSearchParams(
         (prev) => {
           const newParams = new URLSearchParams(prev);
-          newParams.delete(paramKey as string);
-          newParams.delete(`${paramKey}After`);
-          newParams.delete(`${paramKey}Before`);
+          newParams.delete(accessorKey);
+          newParams.delete(`${accessorKey}After`);
+          newParams.delete(`${accessorKey}Before`);
           newParams.delete(CURSOR_QUERY_PARAM);
           if (!filterValue) {
             return newParams;
           }
 
           if (Array.isArray(filterValue)) {
+            if (filterValue.length === 0 && defaultValues?.length) {
+              newParams.set(accessorKey, '');
+            }
             filterValue.forEach((value) => {
-              if (paramKey) {
-                newParams.append(paramKey, value);
-              }
+              newParams.append(accessorKey, value);
             });
           } else if (typeof filterValue === 'object' && filterValue !== null) {
             if (filterValue.from) {
               newParams.append(
-                `${paramKey}After`,
+                `${accessorKey}After`,
                 filterValue.from.toISOString(),
               );
             }
             if (filterValue.to) {
               newParams.append(
-                `${paramKey}Before`,
+                `${accessorKey}Before`,
                 filterValue.to.toISOString(),
               );
             }
           } else {
-            newParams.append(paramKey as string, filterValue);
+            newParams.append(accessorKey, filterValue);
           }
 
           return newParams;
@@ -108,12 +112,12 @@ export function DataTableFilter<TData, TValue>({
         column?.setFilterValue(filterValue ? filterValue : undefined);
       }
     },
-    [paramKey, column, setSearchParams],
+    [accessorKey, defaultValues, column, setSearchParams],
   );
 
   switch (props.type) {
     case 'input': {
-      const filterValue = searchParams.get(paramKey as string) || '';
+      const filterValue = searchParams.get(accessorKey) || '';
       return (
         <DataTableInputPopover
           title={title}
@@ -123,8 +127,14 @@ export function DataTableFilter<TData, TValue>({
       );
     }
     case 'select': {
-      const filterValue = searchParams.getAll(paramKey as string) as string[];
-      const selectedValues = new Set(filterValue);
+      const selectedValues = new Set(
+        dataTableFilterUtils.getSelectedValues({
+          searchParams,
+          key: accessorKey,
+          allowedValues: props.options.map((option) => option.value),
+          defaultValues,
+        }),
+      );
       return (
         <DataTableSelectPopover
           title={title}
@@ -136,8 +146,8 @@ export function DataTableFilter<TData, TValue>({
       );
     }
     case 'date': {
-      const from = searchParams.get(`${paramKey}After`);
-      const to = searchParams.get(`${paramKey}Before`);
+      const from = searchParams.get(`${accessorKey}After`);
+      const to = searchParams.get(`${accessorKey}Before`);
 
       return (
         <DateTimePickerWithRange
@@ -150,17 +160,16 @@ export function DataTableFilter<TData, TValue>({
       );
     }
     case 'checkbox': {
-      const key = paramKey || 'archivedAt';
-      const isArchived = searchParams.get(key) === 'true';
+      const isArchived = searchParams.get(accessorKey) === 'true';
 
       const handleCheckedChange = (checked: boolean) => {
         setSearchParams(
           (prev) => {
             const newParams = new URLSearchParams(prev);
-            newParams.delete(key);
+            newParams.delete(accessorKey);
             newParams.delete(CURSOR_QUERY_PARAM);
             if (checked) {
-              newParams.append(key, 'true');
+              newParams.append(accessorKey, 'true');
             }
             return newParams;
           },
