@@ -17,7 +17,7 @@ export const getMultiplePrices = createAction({
   props: {
     symbols: Property.Array({
       displayName: 'Symbols',
-      description: `Trading pairs to price, for example BTCUSDT and ETHUSDT (base asset followed by quote asset). Up to ${binanceInput.MAX_SYMBOLS_PER_CALL}. Spaces and '/' are removed, letters are upper-cased and duplicates are dropped. A comma-separated list in one item also works.`,
+      description: `Up to ${binanceInput.MAX_SYMBOLS_PER_CALL} pairs, each base asset then quote asset. Commas also work.`,
       required: true,
     }),
   },

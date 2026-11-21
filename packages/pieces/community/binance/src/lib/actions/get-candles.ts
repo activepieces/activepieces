@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { binanceClient } from '../common/client';
 import { binanceInput } from '../common/input';
 import { symbolProp } from '../common/props';
@@ -40,7 +40,7 @@ export const getCandles = createAction({
     symbol: symbolProp,
     interval: Property.StaticDropdown({
       displayName: 'Interval',
-      description: 'Length of each candle. 1m is one minute and 1M is one month.',
+      description: 'Length of each candle.',
       required: true,
       defaultValue: '1h',
       options: {
@@ -48,30 +48,43 @@ export const getCandles = createAction({
         options: INTERVAL_OPTIONS,
       },
     }),
+    time_range_info: Property.MarkDown({
+      value: 'Times are in UTC. Leave both empty to get the latest candles.',
+      variant: MarkdownVariant.INFO,
+    }),
     start_time: Property.DateTime({
       displayName: 'Start Time',
-      description:
-        'Optional. Return candles that open at or after this time (UTC), for example 2026-09-01T00:00:00Z. Leave empty to get the most recent candles.',
+      description: 'Candles that open at or after this time.',
+      placeholder: '2026-09-01',
+      width: 'half',
       required: false,
     }),
     end_time: Property.DateTime({
       displayName: 'End Time',
-      description: 'Optional. Return candles that open at or before this time (UTC). Must not be earlier than the start time.',
+      description: 'Candles that open at or before this time.',
+      placeholder: '2026-09-02',
+      width: 'half',
       required: false,
     }),
     time_zone: Property.ShortText({
       displayName: 'Time Zone Offset',
-      description:
-        'Optional. Offset from UTC used to align daily and longer candles, such as 8, -5 or 05:45 (from -12:00 to +14:00). Start and end times are always read as UTC. Defaults to UTC.',
+      description: 'UTC offset used to align daily and longer candles. Default UTC.',
+      placeholder: '8, -5 or 05:45',
+      advanced: true,
       required: false,
     }),
     limit: Property.Number({
       displayName: 'Number of Candles',
-      description: 'How many candles to return, 1 to 1000. Defaults to 100.',
+      description: 'How many candles to return, up to 1000.',
       required: false,
       defaultValue: DEFAULT_LIMIT,
     }),
   },
+  propertyGroups: [
+    { key: 'pair', display: 'section', label: 'Trading Pair', icon: 'tag', props: ['symbol'] },
+    { key: 'candles', display: 'section', label: 'Candles', icon: 'sliders', props: ['interval', 'limit'] },
+    { key: 'range', display: 'section', label: 'Time Range', icon: 'calendar', props: ['time_range_info', 'start_time', 'end_time'] },
+  ],
   outputSchema: getCandlesOutputSchema,
   async run(context) {
     const { propsValue } = context;

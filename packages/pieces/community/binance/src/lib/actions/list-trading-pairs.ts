@@ -21,21 +21,29 @@ export const listTradingPairs = createAction({
   props: {
     quote_asset: Property.ShortText({
       displayName: 'Quote Asset',
-      description: 'Optional. Only pairs priced in this asset, for example USDT, BTC or EUR. Not case-sensitive.',
+      description: 'Only pairs priced in this asset.',
+      placeholder: 'USDT',
+      width: 'half',
       required: false,
     }),
     base_asset: Property.ShortText({
       displayName: 'Base Asset',
-      description: 'Optional. Only pairs that trade this asset, for example BTC or ETH. Not case-sensitive.',
+      description: 'Only pairs that trade this asset.',
+      placeholder: 'BTC',
+      width: 'half',
       required: false,
     }),
     limit: Property.Number({
       displayName: 'Maximum Pairs',
-      description: `Most pairs to return, 1 to ${MAX_LIMIT}. Defaults to ${DEFAULT_LIMIT}. The output also says how many pairs matched in total.`,
+      description: 'Most pairs to return, up to 1500. Output also gives the total count.',
       required: false,
       defaultValue: DEFAULT_LIMIT,
     }),
   },
+  propertyGroups: [
+    { key: 'filters', display: 'section', label: 'Filters', icon: 'filter', props: ['base_asset', 'quote_asset'] },
+    { key: 'results', display: 'section', label: 'Results', icon: 'sliders', props: ['limit'] },
+  ],
   outputSchema: listTradingPairsOutputSchema,
   async run(context) {
     const { propsValue } = context;
