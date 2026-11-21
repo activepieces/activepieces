@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { placidAuth } from '../auth';
 import { PlacidClient } from '../common/client';
+import { placidSchemas } from '../common/output-schemas';
 
 export const getImage = createAction({
 	auth: placidAuth,
@@ -10,10 +11,12 @@ export const getImage = createAction({
 	description: 'Retrieves a generated image by its ID.',
 	audience: 'both',
 	aiMetadata: { description: 'Look up a previously created Placid image by its ID to read its current status and download URL. Use this to poll a queued render to completion or fetch the result of an earlier Create Image call. Requires the image ID. Idempotent read-only lookup.', idempotent: true },
+	outputSchema: placidSchemas.image,
 	props: {
 		imageId: Property.ShortText({
 			displayName: 'Image ID',
 			description: 'The ID of the image to retrieve.',
+			placeholder: '136034145',
 			required: true,
 		}),
 	},
