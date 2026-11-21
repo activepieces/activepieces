@@ -12,7 +12,7 @@ const TRANSLATION_PROVIDERS = [
   { label: 'DeepL', value: 'deepl' },
   { label: 'ModernMT', value: 'modernmt' },
   { label: 'OpenAI', value: 'openai' },
-  { label: 'XAI Grok', value: 'xai' },
+  { label: 'xAI', value: 'xai' },
 ];
 
 const TRANSLATION_LANGUAGES = [
@@ -190,31 +190,36 @@ export const translateTextAction = createAction({
   classification: 'READ',
   auth: edenAiAuth,
   displayName: 'Translate Text',
-  description: 'Translate text into different languages using Eden AI. Supports multiple providers, languages, and models.',
+  description: 'Translate text into another language.',
   audience: 'both',
   aiMetadata: {
     description:
       'Translate a text into a target language via Eden AI, routed to a chosen provider. Use it to convert text between languages; the source language can be set explicitly or left on auto-detection. Requires a provider, the text, and a target language. Read-only transform with no side effect, so it is safe to repeat.',
     idempotent: true,
   },
+  propertyGroups: [
+    { key: 'content', display: 'section', label: 'Content', icon: 'text', props: ['text'] },
+    { key: 'languages', display: 'section', label: 'Languages', icon: 'type', props: ['source_language', 'target_language'] },
+    { key: 'ai_model', display: 'section', label: 'AI Provider', icon: 'code', props: ['provider', 'model'] },
+  ],
   props: {
     provider: Property.Dropdown({
       auth: edenAiAuth,
       displayName: 'Provider',
-      description: 'The AI provider to use for text translation.',
+      description: 'The AI service that runs this step.',
       required: true,
       refreshers: [],
       options: createStaticDropdown(TRANSLATION_PROVIDERS),
     }),
     text: Property.LongText({
-      displayName: 'Text to Translate',
+      displayName: 'Text',
       description: 'The text to translate.',
       required: true,
     }),
     source_language: Property.Dropdown({
       auth: edenAiAuth,
       displayName: 'Source Language',
-      description: 'The language of the input text. Choose "Auto Detection" to automatically detect the language.',
+      description: 'Leave on Auto Detection to let the provider work it out.',
       required: false,
       refreshers: [],
       options: createStaticDropdown(TRANSLATION_LANGUAGES),
@@ -223,27 +228,30 @@ export const translateTextAction = createAction({
     target_language: Property.Dropdown({
       auth: edenAiAuth,
       displayName: 'Target Language',
-      description: 'The language to translate the text into.',
+      description: 'The language to translate into.',
       required: true,
       refreshers: [],
       options: createStaticDropdown(TRANSLATION_LANGUAGES.filter(lang => lang.value !== 'auto-detect')),
     }),
     model: Property.ShortText({
-      displayName: 'Specific Model',
-      description: 'Specific model to use (e.g., gpt-4o, grok-2-latest). Leave empty for default.',
+      displayName: 'Model',
+      description: "Leave empty to use the provider's default model.",
+      placeholder: 'gpt-4o',
       required: false,
     }),
     fallback_providers: Property.MultiSelectDropdown({
       auth: edenAiAuth,
       displayName: 'Fallback Providers',
-      description: 'Alternative providers to try if the main provider fails (up to 5).',
+      description: 'Tried in order if the main provider fails. Up to 5.',
+      advanced: true,
       required: false,
       refreshers: [],
       options: createStaticDropdown(TRANSLATION_PROVIDERS),
     }),
     show_original_response: Property.Checkbox({
       displayName: 'Include Original Response',
-      description: 'Include the raw provider response in the output for debugging.',
+      description: "Adds the provider's unprocessed response to the output.",
+      advanced: true,
       required: false,
       defaultValue: false,
     }),
