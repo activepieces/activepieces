@@ -8,40 +8,72 @@ export const generateNewsKnowledgeGraph = createAction({
   name: 'generateNewsKnowledgeGraph',
   classification: 'SEARCH',
   displayName: 'Generate News Knowledge Graph',
-  description: 'Build a custom mega-news-knowledge graph with fully disambiguated entities and relationships',
+  description:
+    'Map the people, places and groups in matching news and how they relate.',
   audience: 'both',
   aiMetadata: {
     description:
       'Builds a news knowledge graph of disambiguated entities and their relationships from articles matching a natural-language query, via the AskNews API. Choose this when an agent needs structured entity/relationship extraction (optionally a visualization like mermaid/svg) rather than raw article text. Computes a fresh graph on each call from current matching news; safe to repeat.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'search',
+      display: 'section',
+      label: 'Search',
+      icon: 'text',
+      props: ['query', 'queryMethod', 'categories'],
+    },
+    {
+      key: 'articles',
+      display: 'section',
+      label: 'Articles',
+      icon: 'file',
+      props: ['nArticles', 'hoursBack', 'historical'],
+    },
+    {
+      key: 'graph',
+      display: 'section',
+      label: 'Graph',
+      icon: 'sliders',
+      props: [
+        'minClusterProbability',
+        'geoDiambiguation',
+        'returnArticles',
+        'visualizeWith',
+      ],
+    },
+  ],
   props: {
     query: Property.ShortText({
       displayName: 'Query',
-      description: 'Natural language query for building the graph',
+      description: 'What the graph should cover, in plain words.',
+      placeholder: 'Tech company acquisitions this week',
       required: true,
     }),
     returnArticles: Property.Checkbox({
-      displayName: 'Return Articles',
-      description: 'Include articles in the response',
+      displayName: 'Include Articles',
+      description: 'Add the source articles to the result.',
       defaultValue: false,
       required: false,
     }),
     minClusterProbability: Property.Number({
-      displayName: 'Min Cluster Probability',
-      description: 'Minimum cluster probability for disambiguation (0-1)',
+      displayName: 'Minimum Cluster Probability',
+      description:
+        'From 0 to 1. Higher values merge only near-certain entity matches.',
       defaultValue: 0.9,
       required: false,
     }),
     geoDiambiguation: Property.Checkbox({
-      displayName: 'Geo Disambiguation',
-      description: 'Use geographic disambiguation for entities',
+      displayName: 'Geographic Disambiguation',
+      description: 'Use locations to tell apart entities with the same name.',
       defaultValue: false,
       required: false,
     }),
     queryMethod: Property.StaticDropdown({
-      displayName: 'Query Method',
-      description: 'Search method for the query',
+      displayName: 'Search Method',
+      description:
+        'Keyword matches exact words; Natural Language matches meaning.',
       defaultValue: 'kw',
       required: false,
       options: {
@@ -54,25 +86,27 @@ export const generateNewsKnowledgeGraph = createAction({
     }),
     nArticles: Property.Number({
       displayName: 'Number of Articles',
-      description: 'Number of articles to use for building the graph',
+      description: 'How many articles to build the graph from.',
+      width: 'half',
       defaultValue: 10,
       required: false,
     }),
     historical: Property.Checkbox({
-      displayName: 'Search Historical',
-      description: 'Search historical archive instead of recent news',
+      displayName: 'Search Archive',
+      description: 'Search the archive instead of recent news.',
       defaultValue: false,
       required: false,
     }),
     hoursBack: Property.Number({
       displayName: 'Hours Back',
-      description: 'Number of hours back to search',
+      description: 'How many hours back from now to search.',
+      width: 'half',
       defaultValue: 24,
       required: false,
     }),
     categories: Property.StaticMultiSelectDropdown({
       displayName: 'Categories',
-      description: 'Filter by news categories',
+      description: 'Only use articles in these categories.',
       required: false,
       options: {
         options: [
@@ -88,8 +122,9 @@ export const generateNewsKnowledgeGraph = createAction({
       },
     }),
     visualizeWith: Property.ShortText({
-      displayName: 'Visualize With',
-      description: 'Request a visualization format (e.g., mermaid, svg)',
+      displayName: 'Visualization Format',
+      description: 'Optional diagram to add to the result.',
+      placeholder: 'mermaid',
       required: false,
     }),
   },

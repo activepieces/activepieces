@@ -11,15 +11,16 @@ import { createANewsletter } from './lib/actions/create-a-newsletter';
 import { updateANewsletter } from './lib/actions/update-a-newsletter';
 import { alertForQuery } from './lib/triggers/alert-for-query';
 
+const ASKNEWS_BASE_URL = 'https://api.asknews.app/v1';
+
 export const asknews = createPiece({
   displayName: 'AskNews',
   auth: asknewsAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/asknews.png',
   authors: ['sanket-a11y'],
   categories: [PieceCategory.COMMERCE],
-  description:
-    'AskNews piece allows you to search and retrieve enriched real-time and historical news articles using AskNews API.',
+  description: 'Search, summarize and track real-time and historical news.',
   actions: [
     searchNews,
     generateNewsKnowledgeGraph,
@@ -30,11 +31,17 @@ export const asknews = createPiece({
     updateANewsletter,
     createCustomApiCallAction({
       auth: asknewsAuth,
-      baseUrl: () => 'https://api.asknews.com/v1',
+      baseUrl: () => ASKNEWS_BASE_URL,
       authMapping: async (auth) => {
         return {
           Authorization: `Bearer ${auth.secret_text}`,
         };
+      },
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${ASKNEWS_BASE_URL}`,
+          placeholder: '/news/search?query=bitcoin',
+        },
       },
     }),
   ],
