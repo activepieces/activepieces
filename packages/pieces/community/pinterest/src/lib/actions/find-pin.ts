@@ -18,6 +18,15 @@ export const findPin = createAction({
       "Searches the authenticated account's Pins by keywords matched against title, description, or tags (comma-separated pin IDs also work). Use to locate existing Pins or resolve a pin_id before deleting or referencing one. Read-only and idempotent; it returns at most max_results Pins, and the next batch is fetched by passing the returned bookmark back as bookmark.",
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'search',
+      display: 'section',
+      label: 'Search',
+      icon: 'filter',
+      props: ['query', 'max_results'],
+    },
+  ],
   props: {
     ad_account_id: adAccountIdDropdown,
     query: Property.ShortText({

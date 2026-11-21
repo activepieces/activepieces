@@ -1,4 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  MarkdownVariant,
+  Property,
+} from '@activepieces/pieces-framework';
 import { pinterestAuth } from '../common/auth';
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { pinterestOperations } from '../common/operations';
@@ -18,9 +22,29 @@ export const updateBoard = createAction({
       "Updates an existing board's name, description, and/or privacy setting, identified by board_id. Use to rename or reconfigure a board the user owns; at least one field must be supplied. Mutates the board on each call, so it is not idempotent.",
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'board',
+      display: 'section',
+      label: 'Board',
+      icon: 'inbox',
+      props: ['board_id'],
+    },
+    {
+      key: 'changes',
+      display: 'section',
+      label: 'Changes',
+      icon: 'text',
+      props: ['empty_fields_info', 'name', 'description', 'privacy'],
+    },
+  ],
   props: {
     board_id: boardIdDropdown,
     ad_account_id: adAccountIdDropdown,
+    empty_fields_info: Property.MarkDown({
+      value: 'Empty fields keep their current value.',
+      variant: MarkdownVariant.INFO,
+    }),
     name: Property.ShortText({
       displayName: 'Board Name',
       required: false,
@@ -35,7 +59,6 @@ export const updateBoard = createAction({
     privacy: Property.StaticDropdown({
       displayName: 'Privacy',
       required: false,
-      display: 'cards',
       options: {
         options: [
           {
