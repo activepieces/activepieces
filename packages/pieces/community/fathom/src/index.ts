@@ -45,6 +45,12 @@ export const fathom = createPiece({
     createCustomApiCallAction({
       baseUrl: () => fathomClient.baseUrl,
       auth: fathomAuth,
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${fathomClient.baseUrl}`,
+          placeholder: '/meetings',
+        },
+      },
       authMapping: async (auth, propsValue) => {
         assertFathomUrl({ propsValue });
         return fathomClient.authHeaders(auth);

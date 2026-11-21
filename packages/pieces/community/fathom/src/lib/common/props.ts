@@ -59,6 +59,7 @@ function recordingIdText({ description }: { description: string }) {
   return Property.ShortText({
     displayName: 'Recording ID',
     description,
+    placeholder: '123456789',
     required: true,
   });
 }
