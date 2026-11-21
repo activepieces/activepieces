@@ -20,6 +20,14 @@ const listColumns = async ({ client, table }: { client: Client, table: PostgresT
     return result.rows.map((row) => row.column_name);
 }
 
+const listDateColumns = async ({ client, table }: { client: Client; table: PostgresTable; }): Promise<string[]> => {
+    const result = await client.query<{ column_name: string }>(
+        "SELECT column_name FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2 AND udt_name IN ('timestamptz', 'timestamp')",
+        [table.table_schema, table.table_name]
+    );
+    return result.rows.map((row) => row.column_name);
+}
+
 const listColumnDetails = async ({ client, table }: { client: Client, table: PostgresTable }): Promise<PostgresColumn[]> => {
     const result = await client.query<PostgresColumn>(
         `SELECT column_name, data_type, is_nullable, column_default, is_identity, is_generated FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2 ORDER BY ordinal_position`,
@@ -160,6 +168,7 @@ export const postgresUtils = {
     listTables,
     listColumns,
     listColumnDetails,
+    listDateColumns,
     isPostgresTable,
     qualifiedName,
     quoteIdentifier,
