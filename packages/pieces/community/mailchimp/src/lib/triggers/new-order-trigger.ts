@@ -1,4 +1,5 @@
-import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
+import { mailchimpOutputSchemas } from '../common/output-schemas';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { mailchimpCommon } from '../common';
 import { mailchimpAuth } from '../..';
@@ -135,6 +136,11 @@ export const mailChimpNewOrderTrigger = createTrigger({
   props: {
     store_id: mailchimpCommon.mailChimpStoreIdDropdown,
   },
+  handshakeConfiguration: mailchimpCommon.handshakeConfiguration,
+  async onHandshake(context) {
+    return mailchimpCommon.respondToHandshake({ payload: context.payload });
+  },
+  outputSchema: mailchimpOutputSchemas['triggerOrder'],
   sampleData: {
     type: 'order',
     fired_at: '2024-01-15T10:30:00Z',
@@ -212,7 +218,7 @@ export const mailChimpNewOrderTrigger = createTrigger({
         server,
         listId: context.propsValue.store_id!,
         token: accessToken,
-        webhookUrl: context.webhookUrl!,
+        webhookUrl: mailchimpCommon.withHandshakeMarker(context.webhookUrl),
         events: { 
           order: true,
           customer: true,

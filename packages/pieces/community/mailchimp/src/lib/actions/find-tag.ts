@@ -1,3 +1,4 @@
+import { mailchimpOutputSchemas } from '../common/output-schemas';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { mailchimpCommon } from '../common';
@@ -13,6 +14,7 @@ export const findTag = createAction({
   description: 'Search for tags on a list by name',
   audience: 'both',
   aiMetadata: { description: 'Searches the tags defined on an audience (list): an empty tag-name fetches all tags, while a provided name filters to matching tags. Use to discover available tags or confirm a tag exists before tagging contacts. Requires the target list; read-only and idempotent.', idempotent: true },
+  outputSchema: mailchimpOutputSchemas['findTag'],
   props: {
     list_id: mailchimpCommon.mailChimpListIdDropdown,
     name: Property.ShortText({

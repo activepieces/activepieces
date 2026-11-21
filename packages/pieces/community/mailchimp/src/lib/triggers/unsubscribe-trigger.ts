@@ -1,4 +1,5 @@
-import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
+import { mailchimpOutputSchemas } from '../common/output-schemas';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { mailchimpCommon } from '../common';
 import { mailchimpAuth } from '../..';
@@ -91,6 +92,11 @@ export const mailChimpUnsubscriberTrigger = createTrigger({
   props: {
     list_id: mailchimpCommon.mailChimpListIdDropdown,
   },
+  handshakeConfiguration: mailchimpCommon.handshakeConfiguration,
+  async onHandshake(context) {
+    return mailchimpCommon.respondToHandshake({ payload: context.payload });
+  },
+  outputSchema: mailchimpOutputSchemas['triggerUnsubscribe'],
   sampleData: {
     type: 'unsubscribe',
     fired_at: '2024-01-15T10:30:00Z',
@@ -139,7 +145,7 @@ export const mailChimpUnsubscriberTrigger = createTrigger({
         server,
         listId: context.propsValue.list_id as string,
         token: accessToken,
-        webhookUrl: context.webhookUrl!,
+        webhookUrl: mailchimpCommon.withHandshakeMarker(context.webhookUrl),
         events: { 
           unsubscribe: true,
           profile: true,

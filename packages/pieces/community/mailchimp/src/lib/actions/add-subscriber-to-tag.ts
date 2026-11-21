@@ -1,3 +1,4 @@
+import { mailchimpOutputSchemas } from '../common/output-schemas';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { mailchimpCommon } from '../common';
@@ -13,6 +14,7 @@ export const addSubscriberToTag = createAction({
   description: 'Add a subscriber to a specific tag in your Mailchimp audience.',
   audience: 'both',
   aiMetadata: { description: 'Activates a tag on a subscriber, identified by email within a given audience (list); the tag is created if it does not already exist. Use to segment or label a contact. Idempotent: re-applying an already-active tag leaves the member state unchanged.', idempotent: true },
+  outputSchema: mailchimpOutputSchemas['tagChange'],
   props: {
     list_id: mailchimpCommon.mailChimpListIdDropdown,
     email: Property.ShortText({

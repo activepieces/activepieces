@@ -1,4 +1,4 @@
-import { Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { Property, OAuth2PropertyValue, WebhookHandshakeStrategy } from '@activepieces/pieces-framework';
 import {
   HttpRequest,
   HttpMethod,
@@ -8,6 +8,9 @@ import mailchimp from '@mailchimp/mailchimp_marketing';
 import { AuthenticationType } from '@activepieces/pieces-common';
 import crypto from 'crypto';
 import { mailchimpAuth } from '../..';
+import { mailchimpApi } from './client';
+
+const HANDSHAKE_PARAM = 'mc_handshake';
 
 export const mailchimpCommon = {
   mailChimpListIdDropdown: Property.Dropdown<string,true,typeof mailchimpAuth>({
@@ -194,6 +197,7 @@ export const mailchimpCommon = {
       headers: {
         Authorization: `OAuth ${access_token}`,
       },
+      timeout: 15000,
     };
     return (await httpClient.sendRequest(mailChimpMetaDataRequest)).body['dc'];
   },
@@ -240,10 +244,104 @@ export const mailchimpCommon = {
       },
     });
   },
+  mailChimpOptionalListIdDropdown: Property.Dropdown<string, false, typeof mailchimpAuth>({
+    auth: mailchimpAuth,
+    displayName: 'Audience',
+    refreshers: [],
+    description: 'Optional audience (list) to limit the search to. Leave empty to search every audience.',
+    required: false,
+    options: async ({ auth }) => listDropdownOptions(auth),
+  }),
+  mailChimpSegmentIdDropdown: Property.Dropdown<string, true, typeof mailchimpAuth>({
+    auth: mailchimpAuth,
+    displayName: 'Segment or Tag',
+    refreshers: ['list_id'],
+    description: 'Segment or tag in the selected audience. Agents can pass the numeric segment ID from List Segments.',
+    required: true,
+    options: async ({ auth, list_id }) => {
+      if (!auth) {
+        return { disabled: true, options: [], placeholder: 'Please select a connection' };
+      }
+      if (typeof list_id !== 'string' || list_id.length === 0) {
+        return { disabled: true, options: [], placeholder: 'Select an audience first' };
+      }
+      try {
+        const client = createMailchimpClient({ accessToken: auth.access_token });
+        const segments = await client.listAll<{ id: number; name: string; type: string }>({
+          path: `/lists/${encodeURIComponent(list_id)}/segments`,
+          itemsKey: 'segments',
+          queryParams: { fields: 'segments.id,segments.name,segments.type,total_items' },
+          operation: 'list segments',
+        });
+        return {
+          disabled: false,
+          options: segments.map((segment) => ({
+            label: `${segment.name} (${segment.type})`,
+            value: String(segment.id),
+          })),
+        };
+      } catch (error) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: error instanceof Error ? error.message : 'Could not load segments',
+        };
+      }
+    },
+  }),
+  handshakeConfiguration: {
+    strategy: WebhookHandshakeStrategy.QUERY_PRESENT,
+    paramName: HANDSHAKE_PARAM,
+  },
+  withHandshakeMarker: (webhookUrl: string): string => {
+    const url = new URL(webhookUrl);
+    url.searchParams.set(HANDSHAKE_PARAM, '1');
+    return url.toString();
+  },
+  respondToHandshake: async ({ payload }: { payload: HandshakePayload }) => {
+    const method = payload.method?.toUpperCase();
+    const hasEvent =
+      typeof payload.body === 'object' && payload.body !== null && 'type' in payload.body;
+    if (method === 'POST' || hasEvent) {
+      throw new Error('Mailchimp event delivery, not a URL check; handled by the trigger run.');
+    }
+    return { status: 200, body: {} };
+  },
   getMD5EmailHash: (email: string) => {
     return crypto.createHash('md5').update(email.toLowerCase()).digest('hex');
   },
 };
+
+async function listDropdownOptions(auth: OAuth2PropertyValue | undefined) {
+  if (!auth) {
+    return { disabled: true, options: [], placeholder: 'Please select a connection' };
+  }
+  try {
+    const client = createMailchimpClient({ accessToken: auth.access_token });
+    const lists = await client.listAll<{ id: string; name: string }>({
+      path: '/lists',
+      itemsKey: 'lists',
+      queryParams: { fields: 'lists.id,lists.name,total_items' },
+      operation: 'list audiences',
+    });
+    return {
+      disabled: false,
+      options: lists.map((list) => ({ label: list.name, value: list.id })),
+    };
+  } catch (error) {
+    return {
+      disabled: true,
+      options: [],
+      placeholder: error instanceof Error ? error.message : 'Could not load audiences',
+    };
+  }
+}
+
+function createMailchimpClient({ accessToken }: { accessToken: string }) {
+  return mailchimpApi.createClient({ accessToken });
+}
+
+type HandshakePayload = { method?: string; body: unknown };
 
 type TriggerRequestParams = {
   server: string;

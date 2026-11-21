@@ -1,3 +1,4 @@
+import { mailchimpOutputSchemas } from '../common/output-schemas';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { mailchimpAuth } from '../..';
@@ -11,8 +12,9 @@ export const getCampaignReport = createAction({
   classification: 'READ',
   displayName: 'Get Campaign Report',
   description: 'Get comprehensive report details for a specific sent campaign including opens, clicks, bounces, and performance metrics',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Retrieves the analytics report for a single sent campaign by campaign ID, covering opens, clicks, bounces, unsubscribes, and engagement metrics; optional field include/exclude lists narrow the payload. Use to read performance for a campaign that has already been sent. Read-only and idempotent. Returns a not-found result if the campaign has not been sent or the ID is wrong.', idempotent: true },
+  outputSchema: mailchimpOutputSchemas['campaignReport'],
   props: {
     campaign_id: mailchimpCommon.mailChimpCampaignIdDropdown,
     fields: Property.LongText({
@@ -75,7 +77,7 @@ export const getCampaignReport = createAction({
           ab_split: report.ab_split,
           timewarp: report.timewarp,
           timeseries: report.timeseries,
-          share_report: report.share_report,
+          share_report: report.share_report ? { share_url: report.share_report.share_url } : undefined,
           ecommerce: report.ecommerce,
           delivery_status: report.delivery_status,
           _links: report._links,
@@ -186,7 +188,6 @@ export const getCampaignReport = createAction({
         timeseries_data: report.timeseries || [],
         share_report: report.share_report ? {
           share_url: report.share_report.share_url,
-          share_password: report.share_report.share_password,
         } : null,
       };
     } catch (error: any) {
