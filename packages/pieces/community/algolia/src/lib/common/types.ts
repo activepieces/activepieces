@@ -22,6 +22,8 @@ export type AlgoliaIndex = {
   entries?: number;
   dataSize?: number;
   updatedAt?: string;
+  primary?: string;
+  replicas?: string[];
 };
 
 export type AlgoliaIndexListResponse = {
@@ -40,5 +42,37 @@ export type AlgoliaBatchResponse = {
 };
 
 export type AlgoliaTaskStatusResponse = {
-  status: 'published' | 'notPublished';
+  status: AlgoliaTaskStatus;
+};
+
+export type AlgoliaTaskStatus = 'published' | 'notPublished';
+
+export type AlgoliaTaskOutcome = {
+  status: AlgoliaTaskStatus;
+  note?: string;
+};
+
+export type AlgoliaWriteResult = AlgoliaTaskOutcome & {
+  taskID: number;
+  objectIDs: string[];
+};
+
+export type AlgoliaSearchResponse = {
+  hits: AlgoliaRecord[];
+  nbHits: number;
+  page: number;
+  nbPages: number;
+  hitsPerPage: number;
+  query: string;
+};
+
+export type AlgoliaPartialUpdateResponse = {
+  taskID: number;
+  objectID: string;
+  updatedAt: string;
+};
+
+export type AlgoliaDeleteByQueryResponse = {
+  taskID: number;
+  updatedAt?: string;
 };
