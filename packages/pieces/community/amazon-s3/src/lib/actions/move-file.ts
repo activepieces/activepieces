@@ -9,21 +9,27 @@ export const moveFile = createAction({
   outputSchema: moveFileOutputSchema,
   classification: 'WRITE',
   displayName: 'Move File',
-  description: 'Move a File to Another Folder',
+  description: 'Move a file to another folder in your bucket.',
   audience: 'human',
   aiMetadata: {
     description: 'Moves an object within the configured S3 bucket by copying it to a new key under the destination folder (keeping the same filename) and then deleting the original. Use to relocate or archive a file. Not idempotent — the source object is deleted on the first successful run, so a repeat call errors because the source key no longer exists.',
     idempotent: false,
   },
+  propertyGroups: [
+    { key: 'source', display: 'section', label: 'File to Move', icon: 'file', props: ['fileKey'] },
+    { key: 'destination', display: 'section', label: 'Destination', icon: 'send', props: ['folderKey'] },
+  ],
   props: {
     fileKey: Property.ShortText({
       displayName: 'File Path',
-      description: 'The full path to the file you want to move (e.g. "old-folder/report.csv").',
+      description: 'Path of the file to move.',
+      placeholder: 'old-folder/report.csv',
       required: true,
     }),
     folderKey: Property.ShortText({
       displayName: 'Destination Folder',
-      description: 'The folder path to move the file into (e.g. "archive/" or "new-folder"). The file name is kept the same.',
+      description: 'Folder to move it into. The file keeps its name.',
+      placeholder: 'archive/',
       required: true,
     }),
   },
