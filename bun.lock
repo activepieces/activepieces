@@ -4719,7 +4719,7 @@
     },
     "packages/pieces/community/insightly": {
       "name": "@activepieces/piece-insightly",
-      "version": "0.1.8",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4728,6 +4728,7 @@
       },
       "devDependencies": {
         "tslib": "^2.3.0",
+        "vitest": "5.0.5",
       },
     },
     "packages/pieces/community/insighto-ai": {

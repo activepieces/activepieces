@@ -1,6 +1,5 @@
-import { Property } from '@activepieces/pieces-framework';
+import { InputPropertyMap, Property } from '@activepieces/pieces-framework';
 
-// Helper function to create a common set of fields
 const NameFields = {
   SALUTATION: Property.ShortText({
     displayName: 'Salutation',
@@ -203,7 +202,6 @@ export const leadFields = {
     }),
 };
 
-// TODO: Define fields when API documentation is available
 export const opportunityFields = {
     OPPORTUNITY_NAME: Property.ShortText({
         displayName: 'Opportunity Name',
@@ -687,3 +685,172 @@ export const quotationFields = {
     }),
 };
 
+
+export const fieldsByObject: Record<string, InputPropertyMap> = {
+  Contacts: contactFields,
+  Leads: leadFields,
+  Opportunities: opportunityFields,
+  Organisations: organisationFields,
+  Projects: projectFields,
+  Tasks: taskFields,
+  Events: eventFields,
+  Products: productFields,
+  Quotations: quotationFields,
+};
+
+export const searchableFields: Record<string, { label: string; value: string }[]> = {
+  Contacts: [
+    { label: 'First Name', value: 'FIRST_NAME' },
+    { label: 'Last Name', value: 'LAST_NAME' },
+    { label: 'Email Address', value: 'EMAIL_ADDRESS' },
+    { label: 'Phone', value: 'PHONE' },
+    { label: 'Title', value: 'TITLE' },
+    { label: 'Organization ID', value: 'ORGANISATION_ID' },
+  ],
+  Leads: [
+    { label: 'First Name', value: 'FIRST_NAME' },
+    { label: 'Last Name', value: 'LAST_NAME' },
+    { label: 'Email', value: 'EMAIL' },
+    { label: 'Phone', value: 'PHONE' },
+    { label: 'Organization Name', value: 'ORGANISATION_NAME' },
+    { label: 'Lead Status ID', value: 'LEAD_STATUS_ID' },
+    { label: 'Lead Source ID', value: 'LEAD_SOURCE_ID' },
+  ],
+  Opportunities: [
+    { label: 'Opportunity Name', value: 'OPPORTUNITY_NAME' },
+    { label: 'Opportunity State', value: 'OPPORTUNITY_STATE' },
+    { label: 'Pipeline ID', value: 'PIPELINE_ID' },
+    { label: 'Stage ID', value: 'STAGE_ID' },
+    { label: 'Organization ID', value: 'ORGANISATION_ID' },
+  ],
+  Organisations: [
+    { label: 'Organization Name', value: 'ORGANISATION_NAME' },
+    { label: 'Phone', value: 'PHONE' },
+    { label: 'Website', value: 'WEBSITE' },
+  ],
+  Projects: [
+    { label: 'Project Name', value: 'PROJECT_NAME' },
+    { label: 'Status', value: 'STATUS' },
+    { label: 'Opportunity ID', value: 'OPPORTUNITY_ID' },
+  ],
+  Tasks: [
+    { label: 'Title', value: 'TITLE' },
+    { label: 'Status', value: 'STATUS' },
+  ],
+  Events: [
+    { label: 'Title', value: 'TITLE' },
+    { label: 'Location', value: 'LOCATION' },
+  ],
+  Products: [
+    { label: 'Product Name', value: 'PRODUCT_NAME' },
+    { label: 'Product SKU', value: 'PRODUCT_SKU' },
+  ],
+  Quotations: [
+    { label: 'Quote Name', value: 'QUOTATION_NAME' },
+    { label: 'Opportunity ID', value: 'OPPORTUNITY_ID' },
+  ],
+};
+
+export const NOTE_PARENT_OPTIONS = [
+  { label: 'Contact', value: 'Contacts' },
+  { label: 'Lead', value: 'Leads' },
+  { label: 'Opportunity', value: 'Opportunities' },
+  { label: 'Organization', value: 'Organisations' },
+  { label: 'Project', value: 'Projects' },
+];
+
+export const TASK_STATUS_OPTIONS = [
+  { label: 'Not Started', value: 'NOT STARTED' },
+  { label: 'In Progress', value: 'IN PROGRESS' },
+  { label: 'Waiting', value: 'WAITING' },
+  { label: 'Deferred', value: 'DEFERRED' },
+  { label: 'Completed', value: 'COMPLETED' },
+];
+
+export const TASK_PRIORITY_OPTIONS = [
+  { label: 'Low', value: '1' },
+  { label: 'Normal', value: '2' },
+  { label: 'High', value: '3' },
+];
+
+export const aiProps = {
+  limit: () =>
+    Property.Number({
+      displayName: 'Limit',
+      description: 'Maximum number of results (1-500, default 25). The output says if more results exist.',
+      required: false,
+    }),
+  objectType: ({ options, description }: { options: { label: string; value: string }[]; description: string }) =>
+    Property.StaticDropdown<string, true>({
+      displayName: 'Object Type',
+      description,
+      required: true,
+      options: { options },
+    }),
+};
+
+export const OPPORTUNITY_STATE_OPTIONS = [
+  { label: 'Open', value: 'OPEN' },
+  { label: 'Won', value: 'WON' },
+  { label: 'Lost', value: 'LOST' },
+  { label: 'Abandoned', value: 'ABANDONED' },
+  { label: 'Suspended', value: 'SUSPENDED' },
+];
+
+export const PROJECT_STATUS_OPTIONS = [
+  { label: 'Not Started', value: 'NOT STARTED' },
+  { label: 'In Progress', value: 'IN PROGRESS' },
+  { label: 'Deferred', value: 'DEFERRED' },
+  { label: 'Cancelled', value: 'CANCELLED' },
+  { label: 'Abandoned', value: 'ABANDONED' },
+  { label: 'Completed', value: 'COMPLETED' },
+];
+
+export const LINKABLE_OBJECT_OPTIONS = [
+  { label: 'Contact', value: 'Contact' },
+  { label: 'Lead', value: 'Lead' },
+  { label: 'Opportunity', value: 'Opportunity' },
+  { label: 'Organization', value: 'Organisation' },
+  { label: 'Project', value: 'Project' },
+];
+
+export const YES_NO_OPTIONS = [
+  { label: 'Yes', value: 'yes' },
+  { label: 'No', value: 'no' },
+];
+
+export const GET_RECORD_OPTIONS = [
+  { label: 'Lead', value: 'Leads' },
+  { label: 'Opportunity', value: 'Opportunities' },
+  { label: 'Organization', value: 'Organisations' },
+  { label: 'Project', value: 'Projects' },
+  { label: 'Task', value: 'Tasks' },
+  { label: 'Event', value: 'Events' },
+  { label: 'Product', value: 'Products' },
+  { label: 'Quote', value: 'Quotations' },
+];
+
+export const DELETE_RECORD_OPTIONS = [{ label: 'Contact', value: 'Contacts' }, ...GET_RECORD_OPTIONS, { label: 'Note', value: 'Notes' }];
+
+export const PIPELINE_OBJECT_OPTIONS = [
+  { label: 'Opportunity', value: 'Opportunities' },
+  { label: 'Project', value: 'Projects' },
+];
+
+export const CATEGORY_OBJECT_OPTIONS = [
+  { label: 'Opportunity', value: 'Opportunities' },
+  { label: 'Project', value: 'Projects' },
+  { label: 'Task', value: 'Tasks' },
+];
+
+export const CUSTOM_FIELD_OBJECT_OPTIONS = [
+  { label: 'Contact', value: 'Contacts' },
+  { label: 'Lead', value: 'Leads' },
+  { label: 'Opportunity', value: 'Opportunities' },
+  { label: 'Organization', value: 'Organisations' },
+  { label: 'Project', value: 'Projects' },
+  { label: 'Task', value: 'Tasks' },
+  { label: 'Event', value: 'Events' },
+  { label: 'Product', value: 'Products' },
+  { label: 'Quote', value: 'Quotations' },
+];
