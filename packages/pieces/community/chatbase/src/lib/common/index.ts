@@ -1,16 +1,11 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
-export async function makeRequest(
-	apiKey: string,
-	method: HttpMethod,
-	path: string,
-	body?: unknown,
-) {
-	const url = `https://www.chatbase.co/api/v1${path}`;
+const baseUrl = 'https://www.chatbase.co/api/v1';
 
-	const response = await httpClient.sendRequest({
+async function makeRequest<T>({ apiKey, method, path, body }: MakeRequestParams): Promise<T> {
+	const response = await httpClient.sendRequest<T>({
 		method,
-		url,
+		url: `${baseUrl}${path}`,
 		headers: {
 			Authorization: `Bearer ${apiKey}`,
 			'Content-Type': 'application/json',
@@ -20,3 +15,12 @@ export async function makeRequest(
 
 	return response.body;
 }
+
+export const chatbaseCommon = { baseUrl, makeRequest };
+
+type MakeRequestParams = {
+	apiKey: string;
+	method: HttpMethod;
+	path: string;
+	body?: unknown;
+};
