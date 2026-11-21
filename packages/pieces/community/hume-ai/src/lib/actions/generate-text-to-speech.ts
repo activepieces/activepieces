@@ -6,27 +6,33 @@ export const generateTextToSpeech = createAction({
   name: 'generate_text_to_speech',
   classification: 'READ',
   displayName: 'Generate Text to Speech',
-  description: "Convert text to speech using Hume AI's expressive text-to-speech technology",
+  description: 'Turn text into expressive speech, with up to 5 versions to pick from.',
   audience: 'both',
   aiMetadata: {
     description: 'Synthesize expressive speech audio from text via Hume AI and return it as an audio file (mp3/wav/pcm). Optionally steer the voice with a natural-language description (omit to generate a dynamic voice) and request multiple generations in one call. Use to produce spoken audio from a text string. Each call generates fresh audio, so it is not idempotent.',
     idempotent: false,
   },
   auth: humeAiAuth,
+  propertyGroups: [
+    { key: 'speech', display: 'section', label: 'Speech', icon: 'type', props: ['text', 'voiceDescription'] },
+    { key: 'audio', display: 'section', label: 'Audio', icon: 'sliders', props: ['format', 'speed', 'numGenerations'] },
+  ],
   props: {
     text: Property.LongText({
       displayName: 'Text',
-      description: 'The text to convert to speech',
+      description: 'The words to speak.',
+      placeholder: 'Thanks for calling. How can I help you today?',
       required: true,
     }),
     voiceDescription: Property.LongText({
       displayName: 'Voice Description',
-      description: 'Natural language description of how the speech should sound (tone, accent, style, etc.). If no voice is specified, this will generate a dynamic voice.',
+      description: 'How the voice should sound. Empty: Hume creates a voice for the text.',
+      placeholder: 'A calm, warm narrator who speaks slowly',
       required: false,
     }),
     format: Property.StaticDropdown({
       displayName: 'Audio Format',
-      description: 'The output audio file format',
+      description: 'File type of the generated audio.',
       options: {
         options: [
           { label: 'MP3', value: 'mp3' },
@@ -36,39 +42,45 @@ export const generateTextToSpeech = createAction({
       },
       required: true,
       defaultValue: 'mp3',
+      width: 'half',
     }),
     speed: Property.Number({
       displayName: 'Speed',
-      description: 'Speed multiplier for the synthesized speech (0.75-1.5 recommended)',
+      description: '1 is normal pace; 0.75 to 1.5 sounds most natural.',
       required: false,
       defaultValue: 1.0,
+      width: 'half',
     }),
     numGenerations: Property.Number({
-      displayName: 'Number of Generations',
-      description: 'Number of audio generations to produce (1-5 recommended)',
+      displayName: 'Number of Versions',
+      description: 'How many versions to make (1 to 5). Over 1 also returns their IDs.',
       required: false,
       defaultValue: 1,
     }),
     contextText: Property.LongText({
       displayName: 'Context Text',
-      description: 'Optional context text to influence speech style and prosody consistency',
+      description: 'Speech that comes just before, so style and pace carry over.',
       required: false,
+      advanced: true,
     }),
     contextDescription: Property.LongText({
-      displayName: 'Context Description',
-      description: 'Description for the context text (how it should sound)',
+      displayName: 'Context Voice Description',
+      description: 'How the context text sounds. Used only with Context Text.',
       required: false,
+      advanced: true,
     }),
     trailingSilence: Property.Number({
-      displayName: 'Trailing Silence (seconds)',
-      description: 'Duration of silence to add at the end of the speech',
+      displayName: 'Trailing Silence',
+      description: 'Seconds of silence to add at the end.',
       required: false,
+      advanced: true,
     }),
     splitUtterances: Property.Checkbox({
-      displayName: 'Split Utterances',
-      description: 'Automatically split text into natural-sounding speech segments',
+      displayName: 'Split Into Phrases',
+      description: 'Break the text into natural-sounding phrases before speaking.',
       required: false,
       defaultValue: true,
+      advanced: true,
     }),
   },
   async run(context) {
@@ -136,6 +148,7 @@ export const generateTextToSpeech = createAction({
         });
         return {
           file: file,
+          generationId: gen.generationId,
           durationSeconds: gen.duration,
           sizeBytes: gen.fileSize,
         };
@@ -150,6 +163,7 @@ export const generateTextToSpeech = createAction({
         }),
         format: format,
         requestId: response.requestId,
+        generationId: firstGeneration.generationId,
         audioDurationSeconds: firstGeneration.duration,
         audioSizeBytes: firstGeneration.fileSize,
         allGenerations: allGenerations,

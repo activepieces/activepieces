@@ -6,7 +6,7 @@ export const deleteVoice = createAction({
   name: 'delete_voice',
   classification: 'DESTRUCTIVE',
   displayName: 'Delete Voice',
-  description: 'Delete a custom voice from your account',
+  description: 'Delete a custom voice from your Hume account.',
   audience: 'both',
   aiMetadata: {
     description: 'Permanently remove a saved custom voice from your Hume AI account, identified by its voice name. Use to clean up voices that are no longer needed. Deletion is keyed on the name and converges to the same end state, so re-running with the same name is idempotent.',
@@ -16,7 +16,8 @@ export const deleteVoice = createAction({
   props: {
     voiceName: Property.ShortText({
       displayName: 'Voice Name',
-      description: 'The name of the custom voice to delete',
+      description: 'Exact name of the custom voice to delete.',
+      placeholder: 'Support line narrator',
       required: true,
     }),
   },
