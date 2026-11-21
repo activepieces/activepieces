@@ -22,7 +22,7 @@ export const deleteRecordAction = createAction({
     record_id: recordDropdown(),
     run_workflows: Property.Checkbox({
       displayName: 'Run Workflows',
-      description: 'Run delete workflows configured in Zoho (Zoho default: on).',
+      description: 'Run the delete workflows set up in Zoho CRM.',
       required: false,
       defaultValue: true,
     }),

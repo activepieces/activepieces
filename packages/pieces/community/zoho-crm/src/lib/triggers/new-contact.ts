@@ -66,7 +66,7 @@ const newContactProps = {
   additional_fields: Property.MultiSelectDropdown({
     auth: zohoCrmAuth,
     displayName: 'Additional Fields',
-    description: `Optional. Up to ${MAX_EXTRA_FIELDS} extra Contacts fields (for example custom fields) to include. Zoho returns at most 50 fields per record and this trigger already requests 46 standard ones.`,
+    description: `Up to ${MAX_EXTRA_FIELDS} more Contacts fields to include, such as custom ones.`,
     required: false,
     refreshers: [],
     options: async ({ auth }) => {
@@ -94,7 +94,7 @@ export const newContact = createTrigger({
   name: 'new_contact',
   classification: 'READ',
   displayName: 'New Contact',
-  description: 'Triggers when a new contact is created',
+  description: 'Triggers when a new contact is created.',
   aiMetadata: {
     description: 'Fires when a new contact record is created in the connected Zoho CRM account, emitting that contact. Polls the Contacts module ordered by creation time, so it represents newly added contacts.',
   },
