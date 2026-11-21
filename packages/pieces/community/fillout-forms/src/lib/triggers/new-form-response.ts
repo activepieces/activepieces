@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, MarkdownVariant, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { formIdDropdown } from '../common/props';
 import { filloutFormsAuth } from '../auth';
 import { makeRequest } from '../common';
@@ -14,13 +14,20 @@ export const newFormResponse = createTrigger({
   classification: 'READ',
   displayName: 'New Form Response',
   description:
-    'Triggers when a new submission is received for a selected Fillout form.',
+    'Triggers when a Fillout form gets a new response.',
   aiMetadata: {
     description: 'Fires when a new submission is received for the selected Fillout form, delivering the submitted answers, calculations, and metadata. Use to start a workflow whenever someone completes the form.',
   },
   outputSchema: newFormResponseTriggerOutputSchema,
+  propertyGroups: [
+    { key: 'form', display: 'section', label: 'Watch', icon: 'file', props: ['formId', 'webhook_info'] },
+  ],
   props: {
     formId: formIdDropdown,
+    webhook_info: Property.MarkDown({
+      value: 'A webhook is added to this form in Fillout when you publish the flow, and removed when you turn it off.',
+      variant: MarkdownVariant.INFO,
+    }),
   },
 
   type: TriggerStrategy.WEBHOOK,
