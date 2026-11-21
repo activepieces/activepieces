@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { postizAuth } from '../common/auth';
-import { postizApiCall } from '../common';
+import { postizApiCall, postizPath, requirePositiveInteger, requireText } from '../common';
 
 export const getPostAnalytics = createAction({
   auth: postizAuth,
@@ -15,16 +15,32 @@ export const getPostAnalytics = createAction({
     description: 'Retrieves engagement analytics (likes, comments, shares, impressions and their change) for a single published post over a configurable lookback window in days. Use to measure how one specific post performed. Requires the post ID (from List Posts or the New Published Post trigger). Idempotent — a read-only lookup.',
     idempotent: true,
   },
+  outputSchema: {
+    itemLabel: '{metric}',
+    fields: [
+      {
+        key: 'metrics',
+        label: 'Metrics',
+        value: '',
+        labelKey: 'metric',
+        listItems: [
+          { key: 'metric', label: 'Metric' },
+          { key: 'total', label: 'Total', format: 'number' },
+          { key: 'percentage_change', label: 'Percentage Change', format: 'number' },
+          { key: 'daily_data', label: 'Daily Data' },
+        ],
+      },
+    ],
+  },
   props: {
     postId: Property.ShortText({
       displayName: 'Post ID',
-      description:
-        'The ID of the published post. You can get this from the "List Posts" or "New Published Post" trigger output.',
+      description: 'ID of the post, from List Posts or New Published Post.',
       required: true,
     }),
     days: Property.Number({
       displayName: 'Lookback Days',
-      description: 'Number of days to look back for analytics (e.g. 7, 30, 90)',
+      description: 'How many days back to read analytics for.',
       required: true,
       defaultValue: 30,
     }),
@@ -42,13 +58,13 @@ export const getPostAnalytics = createAction({
     >({
       auth,
       method: HttpMethod.GET,
-      path: `/analytics/post/${context.propsValue.postId}`,
+      path: postizPath({ segments: ['analytics', 'post', requireText({ value: context.propsValue.postId, label: 'Post ID' })] }),
       queryParams: {
-        date: String(context.propsValue.days),
+        date: String(requirePositiveInteger({ value: context.propsValue.days, label: 'Lookback Days' })),
       },
     });
 
-    return response.body.map((metric) => ({
+    return (Array.isArray(response.body) ? response.body : []).map((metric) => ({
       metric: metric.label,
       total: metric.total,
       percentage_change: metric.percentageChange,

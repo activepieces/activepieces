@@ -1,7 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { postizAuth } from '../common/auth';
-import { postizApiCall, postizCommon } from '../common';
+import { postizApiCall, postizCommon, postizPath, requireText, withUtcOffset } from '../common';
 
 export const findAvailableSlot = createAction({
   auth: postizAuth,
@@ -12,8 +12,11 @@ export const findAvailableSlot = createAction({
     'Find the next available posting time slot for a connected channel',
   audience: 'both',
   aiMetadata: {
-    description: 'Returns the next free posting time slot for a connected channel based on its posting schedule. Use before scheduling to pick a non-conflicting publish date for Create Post. Requires the channel integration id (resolve via List Channels). Idempotent — a read-only lookup.',
+    description: 'Returns the next free posting time slot for a connected channel based on its posting schedule. Use before scheduling to pick a non-conflicting publish date for Schedule Post. Requires the channel integration id (resolve via List Channels). Idempotent — a read-only lookup.',
     idempotent: true,
+  },
+  outputSchema: {
+    fields: [{ key: 'next_available_date', label: 'Next Available Date', format: 'datetime' }],
   },
   props: {
     integration: postizCommon.integrationDropdown,
@@ -24,11 +27,11 @@ export const findAvailableSlot = createAction({
     const response = await postizApiCall<{ date: string }>({
       auth,
       method: HttpMethod.GET,
-      path: `/find-slot/${context.propsValue.integration}`,
+      path: postizPath({ segments: ['find-slot', requireText({ value: context.propsValue.integration, label: 'Channel' })] }),
     });
 
     return {
-      next_available_date: response.body.date,
+      next_available_date: typeof response.body?.date === 'string' ? withUtcOffset({ value: response.body.date }) : null,
     };
   },
 });

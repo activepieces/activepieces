@@ -8,6 +8,21 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Postiz 0.2.0: Create Post is no longer an AI agent tool
+
+**Create Post** is now shown only in the flow builder. AI agents and MCP clients get three single-purpose actions instead: Create Draft Post, Schedule Post and Publish Post Now, plus Get Channel Settings to read each channel's posting rules.
+
+After you upgrade:
+
+- **Create Post** with **Schedule for later** fails the step when the date is not in the future. Before, Postiz published such a post immediately.
+- The **New Published Post** trigger keeps track of the posts it already sent. The first check after the upgrade records the existing posts and sends none of them.
+- The piece needs Activepieces 0.88.2 or later.
+
+#### What you need to do
+
+- Agents that used Create Post as a tool: switch to Create Draft Post, Schedule Post or Publish Post Now.
+- Create Post steps that map a schedule date: make sure the mapped date is in the future.
+
 #### Fireflies.ai 0.2.0: three find actions are no longer AI agent tools, and Upload Audio returns a smaller output
 
 **Find Meeting by ID**, **Find Recent Meeting** and **Find Meeting by Call Details** are now shown only in the flow builder. AI agents and MCP clients get **Get Meeting**, **Get Meeting Summary** and **Find Meetings** instead.

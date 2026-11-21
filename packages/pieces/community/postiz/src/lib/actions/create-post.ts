@@ -1,7 +1,14 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { postizAuth } from '../common/auth';
-import { postizApiCall, postizCommon } from '../common';
+import { postizCommon, requireText } from '../common';
+import { createPostizPost, parseDate, PostizPostType } from '../common/post-body';
+
+function toPostType({ value }: { value: unknown }): PostizPostType {
+  if (value === 'now' || value === 'schedule' || value === 'draft') {
+    return value;
+  }
+  throw new Error('Post Type must be "schedule", "now" or "draft".');
+}
 
 export const createPost = createAction({
   auth: postizAuth,
@@ -9,10 +16,12 @@ export const createPost = createAction({
   classification: 'WRITE',
   displayName: 'Create Post',
   description: 'Create or schedule a post on one or more connected channels',
-  audience: 'both',
-  aiMetadata: {
-    description: 'Publishes content to a connected social channel in one of three modes selectable via the post type: publish immediately, schedule for a future date, or save as a draft. Use to push a message out through Postiz; a publish date is required when scheduling, and media must be a path returned by the Upload File from URL action. Not idempotent — each call creates a new post.',
-    idempotent: false,
+  audience: 'human',
+  outputSchema: {
+    fields: [
+      { key: 'postId', label: 'Post ID' },
+      { key: 'integration', label: 'Channel ID' },
+    ],
   },
   props: {
     type: Property.StaticDropdown({
@@ -30,8 +39,7 @@ export const createPost = createAction({
     }),
     date: Property.DateTime({
       displayName: 'Publish Date',
-      description:
-        'The date and time to publish the post (ISO 8601 format). Required for scheduled posts.',
+      description: 'When to publish, required for scheduled posts.',
       required: false,
     }),
     integration: postizCommon.integrationDropdown,
@@ -42,8 +50,7 @@ export const createPost = createAction({
     }),
     media: Property.Array({
       displayName: 'Media Paths',
-      description:
-        'File paths of images or videos to attach. Upload media first using the "Upload File from URL" action, then paste the returned path here.',
+      description: 'Media IDs or paths from Upload File from URL or List Media.',
       required: false,
     }),
     shortLink: Property.Checkbox({
@@ -54,53 +61,33 @@ export const createPost = createAction({
     }),
     settings: Property.Json({
       displayName: 'Settings',
-      description: 'Optional platform-specific settings (e.g. approval workflow overrides)',
+      description: 'Optional platform-specific settings for the post.',
       required: false,
     }),
   },
   async run(context) {
-    const { type, date, integration, content, media, shortLink, settings } = context.propsValue;
-    const auth = context.auth;
-
-    const value: Record<string, unknown> = { content };
-
-    if (media && (media as string[]).length > 0) {
-      value['image'] = (media as string[]).map((path) => ({ path }));
+    const { date, integration, content, media, shortLink, settings } = context.propsValue;
+    const type = toPostType({ value: context.propsValue.type });
+    const publishDate = parseDate({ value: date, label: 'Publish Date' });
+    if (type === 'schedule' && publishDate === undefined) {
+      throw new Error('A Publish Date is required when Post Type is "Schedule for later".');
+    }
+    if (type === 'schedule' && publishDate !== undefined && new Date(publishDate).getTime() <= Date.now()) {
+      throw new Error(`Publish Date must be in the future when Post Type is "Schedule for later", got ${publishDate}.`);
     }
 
-    const postItem: Record<string, unknown> = {
-      integration: { id: integration },
-      value: [value],
-    };
-
-    if (settings) {
-      postItem['settings'] = settings;
-    }
-
-    const body: Record<string, unknown> = {
+    const results = await createPostizPost({
+      auth: context.auth,
       type,
+      date: publishDate,
+      integrationId: requireText({ value: integration, label: 'Channel' }),
+      content: requireText({ value: content, label: 'Content' }),
+      media,
       shortLink: shortLink ?? false,
-      posts: [postItem],
-    };
-
-    if (type === 'schedule') {
-      if (!date) {
-        throw new Error(
-          'A Publish Date is required when Post Type is "Schedule for later".',
-        );
-      }
-      body['date'] = date;
-    }
-
-    const response = await postizApiCall<Record<string, unknown>[]>({
-      auth,
-      method: HttpMethod.POST,
-      path: '/posts',
-      body,
+      settings,
     });
 
-    const results = response.body;
-    if (Array.isArray(results) && results.length === 1) {
+    if (results.length === 1) {
       return results[0];
     }
     return results;
