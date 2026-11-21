@@ -18,20 +18,35 @@ export const addLeads = createAction({
   auth: ReachinboxAuth,
   name: 'addLeads',
   classification: 'WRITE',
-  displayName: 'Add Leads',
-  description:
-    'Add leads to campaigns dynamically by selecting a campaign, entering lead details, and including custom variables.',
+  displayName: 'Add Lead to Campaign',
+  description: 'Adds a lead to a campaign, with optional custom variables.',
   audience: 'both',
   aiMetadata: {
     description:
       'Adds a single lead (email plus name and optional custom variables) to a specific ReachInbox campaign. Use to enroll a new contact into an outreach sequence. Requires a campaign id; not idempotent since repeated calls append the lead again.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'lead',
+      display: 'section',
+      label: 'Lead',
+      icon: 'user',
+      props: ['campaignId', 'email', 'firstName', 'lastName'],
+    },
+    {
+      key: 'variables',
+      display: 'section',
+      label: 'Personalization',
+      icon: 'tag',
+      props: ['customVariables'],
+    },
+  ],
   props: {
     campaignId: Property.Dropdown({
-  auth: ReachinboxAuth,
-      displayName: 'Select Campaign',
-      description: 'Choose a campaign from the list.',
+      auth: ReachinboxAuth,
+      displayName: 'Campaign',
+      description: 'Your campaigns, newest first.',
       required: true,
       refreshers: ['auth'],
       options: async ({ auth }) => {
@@ -42,44 +57,59 @@ export const addLeads = createAction({
             placeholder: 'Please connect your account first',
           };
         }
-        const campaigns = await fetchCampaigns(auth.secret_text);
-
-        return {
-          options: campaigns.map((campaign) => ({
-            label: campaign.name,
-            value: campaign.id.toString(),
-          })),
-          disabled: campaigns.length === 0,
-        };
+        try {
+          const campaigns = await fetchCampaigns(auth.secret_text);
+          if (campaigns.length === 0) {
+            return {
+              disabled: true,
+              options: [],
+              placeholder: 'No campaigns found. Create one in ReachInbox first.',
+            };
+          }
+          return {
+            options: campaigns.map((campaign) => ({
+              label: reachinboxCommon.campaignLabel(campaign),
+              value: campaign.id.toString(),
+            })),
+          };
+        } catch (error) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Failed to load campaigns. Check your connection.',
+          };
+        }
       },
     }),
     email: Property.ShortText({
-      displayName: 'Email Address',
-      description: 'Enter the email address for the lead',
+      displayName: 'Email',
+      placeholder: 'jane@example.com',
       required: true,
     }),
     firstName: Property.ShortText({
       displayName: 'First Name',
-      description: 'Enter the first name for the lead',
+      placeholder: 'Jane',
       required: true,
+      width: 'half',
     }),
     lastName: Property.ShortText({
       displayName: 'Last Name',
-      description: 'Enter the last name for the lead',
+      placeholder: 'Doe',
       required: false,
+      width: 'half',
     }),
     customVariables: Property.Array({
       displayName: 'Custom Variables',
-      description: 'Add custom variables as key-value pairs for the lead.',
+      description: 'Extra fields to use as variables in your emails.',
       properties: {
         key: Property.ShortText({
-          displayName: 'Key',
-          description: 'Enter the key for the custom variable',
+          displayName: 'Name',
+          placeholder: 'company',
           required: true,
         }),
         value: Property.ShortText({
           displayName: 'Value',
-          description: 'Enter the value for the custom variable',
+          placeholder: 'Acme Inc',
           required: true,
         }),
       },

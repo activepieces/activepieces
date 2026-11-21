@@ -30,31 +30,44 @@ export const getSummary = createAction({
   auth: ReachinboxAuth,
   name: 'getSummary',
   classification: 'READ',
-  displayName: 'Get Summary',
-  description: 'Get a summary of campaign analytics within a date range.',
+  displayName: 'Get Analytics Summary',
+  description: 'Gets totals for all campaigns over a date range.',
   audience: 'both',
   aiMetadata: {
     description:
       'Retrieves account-wide outreach analytics (totals and rates for sent, opens, clicks, and replies) aggregated across all campaigns for a date range. Use for an overall performance summary rather than a single campaign. Requires start/end dates in YYYY-MM-DD format; read-only and idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'range',
+      display: 'section',
+      label: 'Date Range',
+      icon: 'calendar',
+      props: ['startDate', 'endDate'],
+    },
+  ],
   props: {
     startDate: Property.ShortText({
       displayName: 'Start Date',
-      description: 'Enter the start date (YYYY-MM-DD). E.g. 2023-10-11',
+      description: 'Format YYYY-MM-DD.',
+      placeholder: '2024-01-01',
       required: true,
+      width: 'half',
     }),
     endDate: Property.ShortText({
       displayName: 'End Date',
-      description: 'Enter the end date (YYYY-MM-DD). E.g. 2023-12-20',
+      description: 'Format YYYY-MM-DD.',
+      placeholder: '2024-01-31',
       required: true,
+      width: 'half',
     }),
   },
   async run(context) {
     const { startDate, endDate } = context.propsValue;
 
     // Build the URL with the startDate and endDate query parameters
-    const url = `https://api.reachinbox.ai/api/v1/analytics/summary?startDate=${startDate}&endDate=${endDate}`;
+    const url = `${reachinboxCommon.baseUrl}analytics/summary?startDate=${startDate}&endDate=${endDate}`;
 
     try {
       const response = await httpClient.sendRequest<SummaryAnalyticsResponse>({
