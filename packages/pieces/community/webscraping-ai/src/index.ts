@@ -13,7 +13,7 @@ export const webscrapingAi = createPiece({
   displayName: 'WebScraping AI',
   auth: webscrapingAiAuth,
   minimumSupportedRelease: '0.88.2',
-  description: 'WebScraping AI is a powerful tool that allows you to scrape websites and extract data.',
+  description: 'Scrape web pages and pull data out of them with AI.',
   categories: [PieceCategory.DEVELOPER_TOOLS, PieceCategory.ARTIFICIAL_INTELLIGENCE],
   logoUrl: 'https://cdn.activepieces.com/pieces/webscraping-ai.png',
   authors: ['LuizDMM', 'onyedikachi-david'],
@@ -29,6 +29,12 @@ export const webscrapingAi = createPiece({
       baseUrl: () => webscrapingAiClient.baseUrl(),
       authLocation: 'queryParams',
       authMapping: async (auth) => ({ api_key: auth.secret_text }),
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${webscrapingAiClient.baseUrl()}`,
+          placeholder: '/account',
+        },
+      },
     }),
   ],
   triggers: [],

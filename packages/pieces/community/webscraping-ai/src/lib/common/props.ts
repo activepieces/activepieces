@@ -4,65 +4,74 @@ function pageRequest() {
 	return {
 		url: Property.ShortText({
 			displayName: 'URL',
-			description: 'URL of the target page.',
+			description: 'The page to load, including https://.',
+			placeholder: 'https://example.com/products/42',
 			required: true,
 		}),
 		headers: Property.Array({
 			displayName: 'Custom Headers',
-			description: 'Add custom HTTP headers (optional)',
+			description: 'Extra HTTP headers to send with the page request.',
 			required: false,
 			properties: {
 				name: Property.ShortText({
 					displayName: 'Header Name',
-					description: 'Header name (e.g., User-Agent, Authorization)',
+					placeholder: 'User-Agent',
 					required: true,
 				}),
 				value: Property.ShortText({
 					displayName: 'Header Value',
-					description: 'Header value',
+					placeholder: 'Mozilla/5.0',
 					required: true,
 				}),
 			},
 		}),
 		timeout: Property.Number({
 			displayName: 'Timeout',
-			description: 'Maximum page load time in milliseconds (default: 10000, max: 30000)',
+			description: 'Milliseconds to wait for the page to load, up to 30000.',
 			required: false,
+			advanced: true,
 			defaultValue: 10000,
 		}),
 		js: Property.Checkbox({
 			displayName: 'Enable JavaScript',
-			description: 'Execute JavaScript for dynamic content (recommended)',
+			description: "Run the page's scripts so dynamic content loads.",
+			advanced: true,
 			defaultValue: true,
 			required: false,
 		}),
 		jsTimeout: Property.Number({
 			displayName: 'JavaScript Timeout',
-			description: 'Maximum JavaScript execution time in milliseconds (default: 2000)',
+			description: 'Milliseconds to wait for scripts after the page loads.',
 			required: false,
+			advanced: true,
 			defaultValue: 2000,
 		}),
 		waitFor: Property.ShortText({
 			displayName: 'Wait For',
-			description: 'CSS selector to wait for dynamic content (e.g., ".content-loaded")',
+			description: 'CSS selector to wait for before reading the page.',
+			placeholder: '.content-loaded',
 			required: false,
+			advanced: true,
 		}),
 		proxy: Property.StaticDropdown({
 			displayName: 'Proxy Type',
-			description: 'Use residential proxies for sites that block datacenter IPs (more expensive)',
+			description: 'Which proxy network loads the page.',
 			required: false,
+			advanced: true,
+			display: 'cards',
 			defaultValue: 'datacenter',
 			options: {
 				options: [
-					{ label: '🏢 Datacenter (Fast)', value: 'datacenter' },
-					{ label: '🏠 Residential (Stealth)', value: 'residential' },
+					{ label: 'Datacenter', value: 'datacenter', description: 'Fast, cheaper' },
+					{ label: 'Residential', value: 'residential', description: 'Hard to block' },
 				],
 			},
 		}),
 		country: Property.StaticDropdown({
 			displayName: 'Proxy Country',
-			description: 'Geographic location of the proxy server',
+			description: 'Country the proxy connects from.',
 			required: false,
+			advanced: true,
 			defaultValue: 'us',
 			options: {
 				options: [
@@ -82,13 +91,17 @@ function pageRequest() {
 		}),
 		customProxy: Property.ShortText({
 			displayName: 'Custom Proxy',
-			description: 'Your proxy URL in format: http://user:password@host:port',
+			description: 'Your own proxy, used instead of the built-in ones.',
+			placeholder: 'http://user:password@host:port',
 			required: false,
+			advanced: true,
 		}),
 		jsScript: Property.LongText({
 			displayName: 'JavaScript Code',
-			description: 'Custom JavaScript to execute (e.g., document.querySelector("button").click())',
+			description: 'JavaScript to run on the page after it loads.',
+			placeholder: "document.querySelector('button').click()",
 			required: false,
+			advanced: true,
 		}),
 	};
 }
@@ -97,8 +110,9 @@ function pageOptions() {
 	return {
 		device: Property.StaticDropdown({
 			displayName: 'Device Type',
-			description: 'Emulate specific device for responsive design testing',
+			description: 'Device the page is loaded as. Empty: desktop.',
 			required: false,
+			advanced: true,
 			options: {
 				options: [
 					{ label: 'Desktop', value: 'desktop' },
@@ -109,13 +123,15 @@ function pageOptions() {
 		}),
 		errorOn404: Property.Checkbox({
 			displayName: 'Error on 404',
-			description: 'Fail the action if the page returns a 404 error',
+			description: 'Fail the step when the page returns 404 Not Found.',
 			required: false,
+			advanced: true,
 		}),
 		errorOnRedirect: Property.Checkbox({
 			displayName: 'Error on Redirect',
-			description: 'Fail the action if the page redirects to another URL',
+			description: 'Fail the step when the page redirects to another URL.',
 			required: false,
+			advanced: true,
 		}),
 	};
 }
@@ -123,13 +139,14 @@ function pageOptions() {
 function format() {
 	return Property.StaticDropdown({
 		displayName: 'Response Format',
-		description: 'Response format: Text (simple) or JSON (structured)',
+		description: 'JSON wraps the result in an object with a result key.',
 		required: false,
+		display: 'cards',
 		defaultValue: 'text',
 		options: {
 			options: [
-				{ label: 'Text', value: 'text' },
-				{ label: 'JSON', value: 'json' },
+				{ label: 'Text', value: 'text', description: 'Result only', icon: 'text' },
+				{ label: 'JSON', value: 'json', description: 'As an object', icon: 'code' },
 			],
 		},
 	});
