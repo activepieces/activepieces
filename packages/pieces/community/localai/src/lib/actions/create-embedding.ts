@@ -11,6 +11,10 @@ export const createEmbedding = createAction({
   displayName: 'Create Embedding',
   description: 'Turn text into a vector for semantic search or clustering.',
   aiMetadata: { description: 'Converts one block of text into a numeric embedding vector with an embedding model installed on the connected self-hosted LocalAI server, for storing in a vector database or for semantic search, clustering, and RAG, without the text leaving your infrastructure. The model must be an embedding model (for example mxbai-embed-large or nomic-embed), not a chat model: call list_models when unsure. Returns the vector and its length; one input per call, so loop to embed several texts. Deterministic for the same model and text, so repeat calls are idempotent.', idempotent: true },
+  propertyGroups: [
+    { key: 'settings', display: 'section', label: 'Settings', icon: 'sliders', props: ['model'] },
+    { key: 'content', display: 'section', label: 'Content', icon: 'text', props: ['input'] },
+  ],
   props: {
     model: localaiCommon.modelDropdown({
       displayName: 'Model',
@@ -19,6 +23,7 @@ export const createEmbedding = createAction({
     input: Property.LongText({
       displayName: 'Text',
       description: 'The text to turn into a vector.',
+      placeholder: 'e.g. How do I reset my password?',
       required: true,
     }),
   },
