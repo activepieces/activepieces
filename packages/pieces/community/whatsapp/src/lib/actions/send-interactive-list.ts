@@ -53,10 +53,17 @@ export const sendInteractiveList = createAction({
 				}),
 			},
 		}),
-		header_text: whatsappProps.interactiveHeaderText,
+		header_text: { ...whatsappProps.interactiveHeaderText, description: 'Optional text shown above the body. Max 60 characters.' },
 		footer: whatsappProps.footerText,
 		reply_to_message_id: whatsappProps.replyToMessageId,
 	},
+	propertyGroups: [
+		{ key: 'route', display: 'section', label: 'From & To', icon: 'send', props: ['phone_number_id', 'to'] },
+		{ key: 'message', display: 'section', label: 'Message', icon: 'text', props: ['body', 'button_text'] },
+		{ key: 'list', display: 'section', label: 'List', icon: 'inbox', props: ['section_title', 'rows'] },
+		{ key: 'header', display: 'section', label: 'Header & Footer', icon: 'type', props: ['header_text', 'footer'] },
+		{ key: 'reply', display: 'section', label: 'Reply To', icon: 'reply', props: ['reply_to_message_id'] },
+	],
 	async run(context) {
 		const { phone_number_id, to, body, button_text, section_title, rows, header_text, footer, reply_to_message_id } =
 			context.propsValue;

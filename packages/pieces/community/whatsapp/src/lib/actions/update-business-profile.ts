@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { whatsappAuth } from '../auth';
 import { commonProps } from '../common/utils';
@@ -22,6 +22,10 @@ export const updateBusinessProfile = createAction({
 	},
 	props: {
 		phone_number_id: commonProps.phone_number_id,
+		changes_info: Property.MarkDown({
+			value: 'Empty fields keep their current value.',
+			variant: MarkdownVariant.INFO,
+		}),
 		about: Property.ShortText({
 			displayName: 'About',
 			description: 'Short status line, max 139 characters.',
@@ -37,6 +41,16 @@ export const updateBusinessProfile = createAction({
 		}),
 		vertical: whatsappProps.businessVertical,
 	},
+	propertyGroups: [
+		{ key: 'account', display: 'section', label: 'Business Number', icon: 'user', props: ['phone_number_id'] },
+		{
+			key: 'changes',
+			display: 'section',
+			label: 'Changes',
+			icon: 'sliders',
+			props: ['changes_info', 'about', 'address', 'description', 'email', 'websites', 'vertical'],
+		},
+	],
 	async run(context) {
 		const { phone_number_id, about, address, description, email, websites, vertical } = context.propsValue;
 		const websiteEntries = inputUtils.asStrings(websites);
