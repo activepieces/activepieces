@@ -9,7 +9,7 @@ export const findRecordAction = createAction({
   name: 'bika_find_record',
   classification: 'READ',
   displayName: 'Get Record',
-  description: 'Retrieves a record in database by ID.',
+  description: 'Gets a record from a Bika database by its ID.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -19,7 +19,7 @@ export const findRecordAction = createAction({
   props: {
     space_id: bikaProps.space(),
     database_id: bikaProps.database(),
-    recordId: bikaProps.recordId({ description: 'The ID of the record to get (starts with "rec").' }),
+    recordId: bikaProps.recordId({ description: 'The record ID, mapped from a Find Records or Create Record step.' }),
   },
   outputSchema: bikaOutputSchemas.humanRecord,
   async run(context) {

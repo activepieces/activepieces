@@ -9,7 +9,7 @@ export const createRecordAction = createAction({
   name: 'bika_create_record',
   classification: 'WRITE',
   displayName: 'Create Record',
-  description: 'Creates a new record in database.',
+  description: 'Creates a new record in a Bika database.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -21,6 +21,10 @@ export const createRecordAction = createAction({
     database_id: bikaProps.database(),
     fields: bikaProps.fields({ description: 'The values for the new record. Empty inputs are left blank.' }),
   },
+  propertyGroups: [
+    { key: 'database', display: 'section', label: 'Location', icon: 'inbox', props: ['space_id', 'database_id'] },
+    { key: 'values', display: 'section', label: 'Values', icon: 'text', props: ['fields'] },
+  ],
   outputSchema: bikaOutputSchemas.humanCreatedRecord,
   async run(context) {
     return bikaOperations.humanCreate({

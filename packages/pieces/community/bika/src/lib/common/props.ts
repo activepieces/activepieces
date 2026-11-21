@@ -98,7 +98,7 @@ function fieldsDynamic({ description }: { description: string }) {
 }
 
 function recordId({ description }: { description: string }) {
-  return Property.ShortText({ displayName: 'Record ID', description, required: true });
+  return Property.ShortText({ displayName: 'Record ID', description, placeholder: 'recXXXXXXXXXXXX', required: true });
 }
 
 function spaceIdText() {

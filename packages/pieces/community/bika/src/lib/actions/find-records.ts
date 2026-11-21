@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { BikaAuth } from '../auth';
 import { bikaOperations } from '../common/operations';
 import { bikaProps } from '../common/props';
@@ -9,7 +9,7 @@ export const findRecordsAction = createAction({
   name: 'bika_find_records',
   classification: 'SEARCH',
   displayName: 'Find Records',
-  description: 'Finds records in database.',
+  description: 'Finds records in a Bika database, with an optional filter.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -19,28 +19,40 @@ export const findRecordsAction = createAction({
   props: {
     space_id: bikaProps.space(),
     database_id: bikaProps.database(),
+    filter: Property.LongText({
+      displayName: 'Filter',
+      description: 'Leave empty to match every record.',
+      placeholder: '{Stage}=="Close Deals";{Score}>10',
+      required: false,
+    }),
+    filter_help: Property.MarkDown({
+      value:
+        'Put field names in {} and join conditions with ; (and) or , (or). [Filter syntax](https://bika.ai/help/guide/developer/filter-query-language)',
+      variant: MarkdownVariant.INFO,
+    }),
     maxRecords: Property.Number({
       displayName: 'Max Records',
-      description: 'How many records to return in total (default 100, at most 1,000).',
+      description: 'How many records to return. Empty returns 100, at most 1,000.',
       required: false,
+      defaultValue: 100,
     }),
     pageSize: Property.Number({
       displayName: 'Page Size',
-      description: 'How many records to fetch per API request (default 100, at most 1,000). Larger pages use fewer of your Bika API requests.',
+      description: 'Records per API request, up to 1,000. Bigger pages use fewer requests.',
       required: false,
-    }),
-    filter: Property.LongText({
-      displayName: 'Filter',
-      description:
-        'Only return records that match, for example {Stage}=="Close Deals";{Score}>10. Put field names with spaces in {}, join conditions with ; (and) or , (or). See https://bika.ai/help/guide/developer/filter-query-language.',
-      required: false,
+      advanced: true,
     }),
     offset: Property.ShortText({
       displayName: 'Offset',
-      description: 'To continue a previous search, paste the offset it returned. Leave empty to start from the first record.',
+      description: 'Paste the offset a previous search returned to continue from there.',
       required: false,
+      advanced: true,
     }),
   },
+  propertyGroups: [
+    { key: 'database', display: 'section', label: 'Location', icon: 'inbox', props: ['space_id', 'database_id'] },
+    { key: 'search', display: 'section', label: 'Search', icon: 'filter', props: ['filter', 'filter_help', 'maxRecords'] },
+  ],
   outputSchema: bikaOutputSchemas.humanFind,
   async run(context) {
     return bikaOperations.humanFind({

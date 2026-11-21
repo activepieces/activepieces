@@ -1,4 +1,4 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { BikaAuth } from '../auth';
 import { bikaOperations } from '../common/operations';
 import { bikaProps } from '../common/props';
@@ -9,7 +9,7 @@ export const updateRecordAction = createAction({
   name: 'bika_update_record',
   classification: 'WRITE',
   displayName: 'Update Record',
-  description: 'Updates an existing record in database.',
+  description: 'Updates the fields of an existing record in a Bika database.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -19,9 +19,14 @@ export const updateRecordAction = createAction({
   props: {
     space_id: bikaProps.space(),
     database_id: bikaProps.database(),
-    recordId: bikaProps.recordId({ description: 'The ID of the record to update (starts with "rec").' }),
+    recordId: bikaProps.recordId({ description: 'The record ID, mapped from a Find Records or Create Record step.' }),
+    changes_info: Property.MarkDown({ value: 'Empty fields keep their current value.', variant: MarkdownVariant.INFO }),
     fields: bikaProps.fields({ description: 'The new values. Empty inputs keep their current value.' }),
   },
+  propertyGroups: [
+    { key: 'record', display: 'section', label: 'Record', icon: 'file', props: ['space_id', 'database_id', 'recordId'] },
+    { key: 'changes', display: 'section', label: 'Changes', icon: 'text', props: ['changes_info', 'fields'] },
+  ],
   outputSchema: bikaOutputSchemas.humanRecord,
   async run(context) {
     return bikaOperations.humanUpdate({
