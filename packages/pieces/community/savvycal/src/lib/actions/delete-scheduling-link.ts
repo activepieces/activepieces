@@ -6,6 +6,7 @@ import { savvyCalAuth, getToken } from '../auth';
 export const deleteSchedulingLinkAction = createAction({
   auth: savvyCalAuth,
   name: 'delete_scheduling_link',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Scheduling Link',
   description: 'Permanently deletes a scheduling link from your SavvyCal account.',
   audience: 'both',
@@ -36,7 +37,7 @@ export const deleteSchedulingLinkAction = createAction({
       options: async ({ auth, team_id }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account first' };
         try {
-          const options = await buildLinkOptions(getToken(auth), team_id as string | null);
+          const options = await buildLinkOptions(getToken(auth), team_id);
           return { disabled: false, options };
         } catch {
           return { disabled: true, options: [], placeholder: 'Failed to load scheduling links.' };

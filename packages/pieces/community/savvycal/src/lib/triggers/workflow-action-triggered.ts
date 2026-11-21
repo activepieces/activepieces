@@ -12,6 +12,7 @@ const SAMPLE_DATA = {
 export const workflowActionTriggeredTrigger = createTrigger({
   auth: savvyCalAuth,
   name: 'workflow_action_triggered',
+  classification: 'READ',
   displayName: 'Workflow Action Triggered',
   description: 'Triggers when a workflow action is triggered in SavvyCal.',
   aiMetadata: {
