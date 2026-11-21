@@ -11,10 +11,9 @@ export interface CohereChatRequest {
   max_tokens?: number;
 }
 
-export interface CohereContentBlock {
-  type: 'text';
-  text: string;
-}
+export type CohereContentBlock =
+  | { type: 'text'; text: string }
+  | { type: 'thinking'; thinking: string };
 
 export interface CohereAssistantMessage {
   role: 'assistant';
@@ -56,8 +55,4 @@ export interface CohereModelsResponse {
     finetuned: boolean;
     context_length: number;
   }[];
-}
-
-export interface CohereErrorResponse {
-  message: string;
 }
