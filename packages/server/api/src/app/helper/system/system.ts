@@ -39,6 +39,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.MAX_BARRIER_SIGNALS]: '10000',
     [AppSystemProp.MAX_FILE_SIZE_MB]: '25',
     [AppSystemProp.AI_CREDIT_USD_VALUE]: '0.0005',
+    [AppSystemProp.INVITE_REWARD_CREDITS]: '1000',
     [AppSystemProp.MAX_FLOW_RUN_LOG_SIZE_MB]: '50',
     [AppSystemProp.FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB]: '2',
     [AppSystemProp.FLOW_RUN_LOG_SLICE_THRESHOLD_KB]: '32',
