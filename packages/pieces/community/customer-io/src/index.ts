@@ -1,8 +1,4 @@
-import {
-  createPiece,
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { createEvent } from './lib/actions/create_event';
 import { newReportingEvent } from './lib/trigger/new-reporting-event';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
@@ -11,35 +7,13 @@ import { Buffer } from 'buffer';
 import { PieceCategory } from '@activepieces/pieces-framework';
 import { customerIOAuth } from './lib/auth';
 
-const markdown = `
-**Site ID:**\n
-
-Please log in and go to Settings, click [here](https://fly.customer.io/settings/api_credentials).
-
-**Tracking API Key:**\n
-
-Please log in and go to Settings, click [here](https://fly.customer.io/settings/api_credentials).
-
-**APP API Token:**\n
-
-Please log in and find it in Account Settings, click [here](https://fly.customer.io/settings/api_credentials?keyType=app).
-
-<br>
-Please note that the Track API Key and App API Key are different. You can read more about it [here](https://customer.io/docs/accounts-and-workspaces/managing-credentials/).
-`;
-type CustomerIOAuth = {
-  region: 'eu' | 'us';
-  track_site_id: string;
-  track_api_key: string;
-  api_bearer_token: string;
-};
 export const customerIo: any = createPiece({
-  displayName: 'customer.io',
+  displayName: 'Customer.io',
   auth: customerIOAuth,
   description:
     'Create personalized journeys across all channels with our customer engagement platform.',
   categories: [PieceCategory.MARKETING],
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/customerio.png',
   authors: ['hamedsh', 'AbuAboud', 'AdamSelene'],
   actions: [
@@ -49,8 +23,15 @@ export const customerIo: any = createPiece({
         auth ? customerIOCommon[auth.props.region || 'us'].trackUrl : '',
       auth: customerIOAuth,
       name: 'custom_track_api_call',
-      description: 'CustomerIO Track Custom API Call (track.customer.io)',
+      description: 'Call any Track API endpoint with your connection.',
       displayName: 'Track Custom API Call',
+      props: {
+        url: {
+          description:
+            "Full URL, or a path relative to your region's Track API URL.",
+          placeholder: '/customers/42/events',
+        },
+      },
       authMapping: async (auth) => ({
         Authorization: `Basic ${Buffer.from(
           `${(auth).props.track_site_id}:${
@@ -65,8 +46,15 @@ export const customerIo: any = createPiece({
         auth ? customerIOCommon[auth.props.region || 'us'].apiUrl : '',
       auth: customerIOAuth,
       name: 'custom_app_api_call',
-      description: 'CustomerIO App Custom API Call (api.customer.io)',
+      description: 'Call any App API endpoint with your connection.',
       displayName: 'App Custom API Call',
+      props: {
+        url: {
+          description:
+            "Full URL, or a path relative to your region's App API URL.",
+          placeholder: '/campaigns',
+        },
+      },
       authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth).props.api_bearer_token}`,
       }),
