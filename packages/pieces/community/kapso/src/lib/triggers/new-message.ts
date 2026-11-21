@@ -7,14 +7,10 @@ import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { kapsoAuth } from '../common';
 import { parseWebhookPayload } from '../common/webhook';
 
-const webhookSetupMarkdown = `**Setup Instructions:**
+const webhookSetupMarkdown = `1. Copy the webhook URL below.
+2. In the [Kapso dashboard](https://app.kapso.ai), open your WhatsApp number's settings.
+3. Paste it as the **Webhook destination URL**.
 
-1. Copy the **Webhook URL** below.
-2. Go to your [Kapso dashboard](https://app.kapso.ai) and open your WhatsApp number settings.
-3. Paste the URL as your **Webhook destination URL**.
-4. Incoming WhatsApp events will now trigger this flow.
-
-**Webhook URL:**
 \`\`\`text
 {{webhookUrl}}
 \`\`\`
@@ -38,10 +34,8 @@ export const newMessage = createTrigger({
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable() {
-    // Webhook is configured manually in the Kapso dashboard
   },
   async onDisable() {
-    // Webhook is removed manually in the Kapso dashboard
   },
   async run(context) {
     const body = context.payload.body;

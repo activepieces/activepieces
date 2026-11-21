@@ -1,7 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { kapsoAuth } from '../common';
 import { makeClient } from '../common';
-import { businessAccountIdProp, phoneNumberIdDropdown } from '../common/props';
+import {
+  businessAccountIdProp,
+  freeFormWindowInfo,
+  phoneNumberIdDropdown,
+  recipientPhoneProp,
+} from '../common/props';
 
 export const sendList = createAction({
   auth: kapsoAuth,
@@ -14,52 +19,74 @@ export const sendList = createAction({
     description: 'Sends an interactive WhatsApp list message: a tap-to-open button reveals selectable rows grouped into sections. Use when the recipient must choose from more options than fit in reply buttons (the 3-button limit). Each row needs an id and title; rows are passed as a JSON array per section. Each call delivers a new message, so it is not idempotent.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'sender',
+      display: 'section',
+      label: 'Send From',
+      icon: 'send',
+      props: ['businessAccountId', 'phoneNumberId'],
+    },
+    {
+      key: 'recipient',
+      display: 'section',
+      label: 'Send To',
+      icon: 'user',
+      props: ['windowInfo', 'to'],
+    },
+    {
+      key: 'message',
+      display: 'section',
+      label: 'Message',
+      icon: 'text',
+      props: ['bodyText', 'buttonText', 'sections'],
+    },
+  ],
   props: {
     businessAccountId: businessAccountIdProp,
     phoneNumberId: phoneNumberIdDropdown,
-    to: Property.ShortText({
-      displayName: 'Recipient Phone Number',
-      description:
-        'The recipient\'s phone number in international format (e.g. 15551234567).',
-      required: true,
-    }),
+    windowInfo: freeFormWindowInfo,
+    to: recipientPhoneProp,
     bodyText: Property.LongText({
-      displayName: 'Body Text',
-      description: 'The message body displayed above the list.',
+      displayName: 'Message',
+      description: 'Shown above the list button.',
       required: true,
     }),
     buttonText: Property.ShortText({
       displayName: 'Button Text',
-      description: 'The text on the button that opens the list (max 20 characters).',
+      description: 'Opens the list. Up to 20 characters.',
+      placeholder: 'View options',
       required: true,
     }),
     sections: Property.Array({
       displayName: 'Sections',
-      description: 'List sections. Each section contains a title and rows.',
+      description: 'Groups of rows the person can pick from.',
       required: true,
       properties: {
         title: Property.ShortText({
           displayName: 'Section Title',
-          description: 'Title of this section.',
+          description: 'Required when the list has more than one section.',
           required: false,
         }),
         rows: Property.Json({
           displayName: 'Rows',
           description:
-            'JSON array of row objects. Each row needs: id, title, and optionally description. Example: [{"id":"row_1","title":"Option 1","description":"First option"}]',
+            'JSON array of rows, each with an id, a title and an optional description.',
           required: true,
         }),
       },
     }),
     headerText: Property.ShortText({
-      displayName: 'Header Text',
-      description: 'Optional header text.',
+      displayName: 'Header',
+      description: 'Bold text above the message.',
       required: false,
+      advanced: true,
     }),
     footerText: Property.ShortText({
-      displayName: 'Footer Text',
-      description: 'Optional footer text.',
+      displayName: 'Footer',
+      description: 'Small grey text under the message.',
       required: false,
+      advanced: true,
     }),
   },
   async run(context) {

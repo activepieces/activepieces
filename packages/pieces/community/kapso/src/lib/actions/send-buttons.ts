@@ -1,7 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { kapsoAuth } from '../common';
 import { makeClient } from '../common';
-import { businessAccountIdProp, phoneNumberIdDropdown } from '../common/props';
+import {
+  businessAccountIdProp,
+  freeFormWindowInfo,
+  phoneNumberIdDropdown,
+  recipientPhoneProp,
+} from '../common/props';
 
 export const sendButtons = createAction({
   auth: kapsoAuth,
@@ -14,42 +19,63 @@ export const sendButtons = createAction({
     description: 'Sends an interactive WhatsApp message with up to 3 reply buttons, each carrying an ID returned when the user taps it. Use when you want the recipient to pick from a small set of quick-reply options rather than typing. Button titles are capped at 20 characters. Each call delivers a new message, so it is not idempotent.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'sender',
+      display: 'section',
+      label: 'Send From',
+      icon: 'send',
+      props: ['businessAccountId', 'phoneNumberId'],
+    },
+    {
+      key: 'recipient',
+      display: 'section',
+      label: 'Send To',
+      icon: 'user',
+      props: ['windowInfo', 'to'],
+    },
+    {
+      key: 'message',
+      display: 'section',
+      label: 'Message',
+      icon: 'text',
+      props: ['bodyText', 'buttons'],
+    },
+  ],
   props: {
     businessAccountId: businessAccountIdProp,
     phoneNumberId: phoneNumberIdDropdown,
-    to: Property.ShortText({
-      displayName: 'Recipient Phone Number',
-      description:
-        'The recipient\'s phone number in international format (e.g. 15551234567).',
-      required: true,
-    }),
+    windowInfo: freeFormWindowInfo,
+    to: recipientPhoneProp,
     bodyText: Property.LongText({
-      displayName: 'Body Text',
-      description: 'The message body displayed above the buttons.',
+      displayName: 'Message',
+      description: 'Shown above the buttons.',
       required: true,
     }),
     buttons: Property.Array({
       displayName: 'Buttons',
-      description:
-        'Up to 3 buttons. Each button needs an ID and a title (max 20 characters).',
+      description: 'Up to 3 buttons.',
       required: true,
       properties: {
         id: Property.ShortText({
           displayName: 'Button ID',
-          description: 'A unique identifier for this button (returned when the user taps it).',
+          description: 'Sent back to you when the person taps this button.',
+          placeholder: 'confirm',
           required: true,
         }),
         title: Property.ShortText({
           displayName: 'Button Title',
-          description: 'The text displayed on the button (max 20 characters).',
+          description: 'Up to 20 characters.',
+          placeholder: 'Confirm',
           required: true,
         }),
       },
     }),
     footerText: Property.ShortText({
-      displayName: 'Footer Text',
-      description: 'Optional footer text displayed below the buttons.',
+      displayName: 'Footer',
+      description: 'Small grey text under the message.',
       required: false,
+      advanced: true,
     }),
   },
   async run(context) {

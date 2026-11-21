@@ -1,7 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { kapsoAuth } from '../common';
 import { makeClient } from '../common';
-import { businessAccountIdProp, phoneNumberIdDropdown } from '../common/props';
+import {
+  businessAccountIdProp,
+  freeFormWindowInfo,
+  phoneNumberIdDropdown,
+  recipientPhoneProp,
+} from '../common/props';
 
 export const requestLocation = createAction({
   auth: kapsoAuth,
@@ -14,18 +19,37 @@ export const requestLocation = createAction({
     description: 'Sends an interactive prompt asking a WhatsApp user to share their current location, with a body text explaining the request. Use to collect a location from the recipient; to share a location you already have, use Send Location instead. Each call delivers a new request message, so it is not idempotent.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'sender',
+      display: 'section',
+      label: 'Send From',
+      icon: 'send',
+      props: ['businessAccountId', 'phoneNumberId'],
+    },
+    {
+      key: 'recipient',
+      display: 'section',
+      label: 'Send To',
+      icon: 'user',
+      props: ['windowInfo', 'to'],
+    },
+    {
+      key: 'message',
+      display: 'section',
+      label: 'Message',
+      icon: 'text',
+      props: ['bodyText'],
+    },
+  ],
   props: {
     businessAccountId: businessAccountIdProp,
     phoneNumberId: phoneNumberIdDropdown,
-    to: Property.ShortText({
-      displayName: 'Recipient Phone Number',
-      description:
-        'The recipient\'s phone number in international format (e.g. 15551234567).',
-      required: true,
-    }),
+    windowInfo: freeFormWindowInfo,
+    to: recipientPhoneProp,
     bodyText: Property.LongText({
-      displayName: 'Body Text',
-      description: 'The message body displayed with the location request.',
+      displayName: 'Message',
+      description: 'Shown above the Send Location button.',
       required: true,
     }),
   },

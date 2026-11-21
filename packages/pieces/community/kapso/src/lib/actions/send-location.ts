@@ -1,7 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { kapsoAuth } from '../common';
 import { makeClient } from '../common';
-import { businessAccountIdProp, phoneNumberIdDropdown } from '../common/props';
+import {
+  businessAccountIdProp,
+  freeFormWindowInfo,
+  phoneNumberIdDropdown,
+  recipientPhoneProp,
+} from '../common/props';
 
 export const sendLocation = createAction({
   auth: kapsoAuth,
@@ -14,33 +19,56 @@ export const sendLocation = createAction({
     description: 'Sends a geographic location (latitude and longitude, optionally with a name and address) to a WhatsApp recipient as a map pin. Use to share a place; to ask the recipient for their own location instead, use Request User Location. Each call delivers a new message, so it is not idempotent.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'sender',
+      display: 'section',
+      label: 'Send From',
+      icon: 'send',
+      props: ['businessAccountId', 'phoneNumberId'],
+    },
+    {
+      key: 'recipient',
+      display: 'section',
+      label: 'Send To',
+      icon: 'user',
+      props: ['windowInfo', 'to'],
+    },
+    {
+      key: 'location',
+      display: 'section',
+      label: 'Location',
+      icon: 'location',
+      props: ['latitude', 'longitude', 'name', 'address'],
+    },
+  ],
   props: {
     businessAccountId: businessAccountIdProp,
     phoneNumberId: phoneNumberIdDropdown,
-    to: Property.ShortText({
-      displayName: 'Recipient Phone Number',
-      description:
-        'The recipient\'s phone number in international format (e.g. 15551234567).',
-      required: true,
-    }),
+    windowInfo: freeFormWindowInfo,
+    to: recipientPhoneProp,
     latitude: Property.Number({
       displayName: 'Latitude',
-      description: 'Latitude of the location.',
+      description: 'Between -90 and 90.',
       required: true,
+      width: 'half',
     }),
     longitude: Property.Number({
       displayName: 'Longitude',
-      description: 'Longitude of the location.',
+      description: 'Between -180 and 180.',
       required: true,
+      width: 'half',
     }),
     name: Property.ShortText({
       displayName: 'Location Name',
-      description: 'Name of the location.',
+      description: 'Shown in bold above the address.',
+      placeholder: 'Head Office',
       required: false,
     }),
     address: Property.ShortText({
       displayName: 'Address',
-      description: 'Address of the location.',
+      description: 'Shown under the location name.',
+      placeholder: '1 Market St, San Francisco, CA',
       required: false,
     }),
   },
