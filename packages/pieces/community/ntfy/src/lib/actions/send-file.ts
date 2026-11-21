@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { ntfyAuth } from '../auth';
 import { ntfyClient, NtfyMessage } from '../common/client';
-import { ntfyProps } from '../common/props';
+import { ntfyProps, TOPIC_DESCRIPTIONS } from '../common/props';
 import { sentFileOutputSchema } from '../output-schemas';
 
 export const sendFile = createAction({
@@ -10,8 +10,7 @@ export const sendFile = createAction({
   name: 'send_file',
   classification: 'WRITE',
   displayName: 'Send File',
-  description:
-    'Send a notification with a file from your flow attached. ntfy.sh accepts files up to 2 MB without an account; self-hosted servers allow 15 MB by default.',
+  description: 'Send a notification with a file from your flow attached.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -19,26 +18,32 @@ export const sendFile = createAction({
     idempotent: false,
   },
   props: {
-    topic: ntfyProps.topic(),
+    topic: ntfyProps.topic({ description: TOPIC_DESCRIPTIONS.publish }),
     file: Property.File({
       displayName: 'File',
-      description: 'The file to attach, e.g. the output of a previous step.',
+      description: 'Up to 2 MB on ntfy.sh, 15 MB on self-hosted servers by default.',
       required: true,
     }),
     filename: Property.ShortText({
       displayName: 'File Name',
-      description: 'Name shown for the file, e.g. report.pdf. Defaults to the file\'s own name.',
+      description: "Name shown for the file. Defaults to the file's own name.",
+      placeholder: 'report.pdf',
       required: false,
     }),
-    message: ntfyProps.optionalMessage(
-      'Notification body, up to 4,096 bytes. Leave empty and ntfy shows "You received a file: <file name>".'
-    ),
+    message: ntfyProps.optionalMessage('Empty: ntfy shows "You received a file: <file name>".'),
     title: ntfyProps.title(),
     priority: ntfyProps.priority(),
     tags: ntfyProps.tags(),
     click: ntfyProps.click(),
     delay: ntfyProps.delay(),
   },
+  propertyGroups: [
+    { key: 'destination', display: 'section', label: 'Send to', icon: 'send', props: ['topic'] },
+    { key: 'file', display: 'section', label: 'File', icon: 'file', props: ['file', 'filename'] },
+    { key: 'message', display: 'section', label: 'Message', icon: 'text', props: ['title', 'message'] },
+    { key: 'appearance', display: 'section', label: 'Appearance', icon: 'sliders', props: ['priority', 'click', 'tags'] },
+    { key: 'delivery', display: 'section', label: 'Delivery', icon: 'calendar', props: ['delay'] },
+  ],
   outputSchema: sentFileOutputSchema,
   async run({ auth, propsValue }) {
     const topic = ntfyClient.validateId({ value: propsValue.topic, label: 'Topic' });

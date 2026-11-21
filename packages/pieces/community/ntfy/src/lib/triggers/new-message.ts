@@ -11,8 +11,7 @@ export const newMessage = createTrigger({
   name: 'new_message',
   classification: 'READ',
   displayName: 'New Message',
-  description:
-    'Triggers when a message is published to a ntfy topic. Needs the server to cache messages (ntfy.sh keeps them 12 hours); messages sent with "Do not cache" are never seen.',
+  description: 'Triggers when a message is published to a topic. Uncached messages are missed.',
   aiMetadata: {
     description:
       'Fires once per new message published to the chosen ntfy topic(s), including scheduled messages when they are delivered and updates sent with a sequence ID; optionally only for given priorities or tags. Clear and delete events do not fire it. Polls the server cache, so uncached messages are missed. If more than 10 MB of messages arrive on any of the topics between two polls, the server returns only the newest ones and cannot return the rest; every run from that poll carries replay_truncated: true.',
@@ -21,13 +20,13 @@ export const newMessage = createTrigger({
     topics: ntfyProps.topics(),
     priority: Property.StaticMultiSelectDropdown({
       displayName: 'Priority Filter',
-      description: 'Only trigger for messages with any of these priorities. Leave empty for all.',
+      description: 'Only messages with any of these priorities. Empty: all.',
       required: false,
       options: { options: PRIORITY_OPTIONS },
     }),
     tags: Property.Array({
       displayName: 'Tags Filter',
-      description: 'Only trigger for messages that have all of these tags, e.g. backup.',
+      description: 'Only messages that have all of these tags.',
       required: false,
     }),
   },

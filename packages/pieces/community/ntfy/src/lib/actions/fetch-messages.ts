@@ -9,8 +9,7 @@ export const fetchMessages = createAction({
   name: 'fetch_messages',
   classification: 'SEARCH',
   displayName: 'Fetch Messages',
-  description:
-    'Read messages that the ntfy server has cached for one or more topics. A message sent a few seconds ago may not be listed yet.',
+  description: 'Read the messages the server has cached for one or more topics.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -21,45 +20,55 @@ export const fetchMessages = createAction({
     topics: ntfyProps.topics(),
     since: Property.ShortText({
       displayName: 'Since',
-      description:
-        'How far back to read: a duration (2h), a Unix timestamp, a message ID (messages after it), "latest" or "all". Defaults to 12h.',
+      description: 'How far back: a duration, Unix timestamp, message ID, latest or all.',
+      placeholder: '12h',
       required: false,
       defaultValue: '12h',
     }),
     priority: Property.StaticMultiSelectDropdown({
       displayName: 'Priority Filter',
-      description: 'Only return messages with any of these priorities. Leave empty for all.',
+      description: 'Only messages with any of these priorities. Empty: all.',
       required: false,
       options: { options: PRIORITY_OPTIONS },
     }),
     tags: Property.Array({
       displayName: 'Tags Filter',
-      description: 'Only return messages that have all of these tags, e.g. backup.',
+      description: 'Only messages that have all of these tags.',
       required: false,
     }),
     title: Property.ShortText({
       displayName: 'Title Filter',
-      description: 'Only return messages whose title is exactly this text.',
+      description: 'Exact title to match.',
+      placeholder: 'Backup finished',
       required: false,
+      width: 'half',
     }),
     message: Property.ShortText({
       displayName: 'Message Filter',
-      description: 'Only return messages whose body is exactly this text.',
+      description: 'Exact body to match.',
       required: false,
+      width: 'half',
     }),
     include_events: Property.Checkbox({
       displayName: 'Include Clear/Delete Events',
-      description: 'Also return the message_clear and message_delete events created by Clear/Delete Notification.',
+      description: 'Also return events created by Clear and Delete Notification.',
       required: false,
       defaultValue: false,
     }),
     limit: Property.Number({
       displayName: 'Limit',
-      description: 'Maximum number of messages to return (newest first), 1-1000. Defaults to 100.',
+      description: 'Most messages to return, newest first, 1 to 1000. Empty: 100.',
       required: false,
       defaultValue: 100,
+      min: 1,
+      max: 1000,
     }),
   },
+  propertyGroups: [
+    { key: 'source', display: 'section', label: 'Read from', icon: 'inbox', props: ['topics', 'since'] },
+    { key: 'filters', display: 'section', label: 'Filters', icon: 'filter', props: ['priority', 'tags', 'title', 'message'] },
+    { key: 'results', display: 'section', label: 'Results', icon: 'sliders', props: ['limit', 'include_events'] },
+  ],
   outputSchema: fetchMessagesOutputSchema,
   async run({ auth, propsValue }) {
     const topics = ntfyClient.validateTopicList(propsValue.topics);
