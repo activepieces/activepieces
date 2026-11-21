@@ -11,7 +11,7 @@ import { BASE_URL } from './lib/common/client';
 export const skyvern = createPiece({
 	displayName: 'Skyvern',
 	auth: skyvernAuth,
-	minimumSupportedRelease: '0.36.1',
+	minimumSupportedRelease: '0.88.2',
 	logoUrl: 'https://cdn.activepieces.com/pieces/skyvern.jpg',
 	authors: ['rimjhimyadav','kishanprmr'],
 	actions: [
@@ -23,6 +23,12 @@ export const skyvern = createPiece({
 		createCustomApiCallAction({
 			auth: skyvernAuth,
 			baseUrl: () => BASE_URL,
+			props: {
+				url: {
+					description: `Full URL, or a path relative to ${BASE_URL}`,
+					placeholder: '/workflows',
+				},
+			},
 			authMapping: async (auth) => {
 				return {
 					'x-api-key': auth.secret_text,

@@ -8,12 +8,14 @@ export const cancelRunAction = createAction({
 	name: 'cancel-run',
 	classification: 'DESTRUCTIVE',
 	displayName: 'Cancel Run',
-	description: 'Cancels a workflow or or task run by ID.',
+	description: 'Cancels a task or workflow run that is still in progress.',
 	audience: 'both',
 	aiMetadata: { description: 'Cancels an in-progress Skyvern workflow or task run identified by its run ID. Use to stop a run an agent previously started (via Run Agent Task or Run Workflow). Idempotent: cancelling an already-cancelled or finished run converges to the same cancelled state with no additional effect.', idempotent: true },
 	props: {
 		runId: Property.ShortText({
-			displayName: 'Workflow/Task Run ID',
+			displayName: 'Run ID',
+			description: 'The run ID from a Run Agent Task or Run Workflow step.',
+			placeholder: 'tsk_v2_486305187432193504',
 			required: true,
 		}),
 	},
