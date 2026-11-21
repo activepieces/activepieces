@@ -41,11 +41,9 @@ export async function bitlyApiCall<T extends HttpMessageBody>({
     }
   }
 
-  const baseUrl = 'https://api-ssl.bitly.com/v4';
-
   const request: HttpRequest = {
     method,
-    url: `${baseUrl}${resourceUri}`,
+    url: `${bitlyBaseUrl}${resourceUri}`,
     headers: {
       Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
@@ -120,3 +118,5 @@ export async function bitlyApiCall<T extends HttpMessageBody>({
     }
   }
 }
+
+export const bitlyBaseUrl = 'https://api-ssl.bitly.com/v4';

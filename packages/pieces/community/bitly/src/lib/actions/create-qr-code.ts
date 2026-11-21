@@ -22,10 +22,11 @@ export const createQrCodeAction = createAction({
       displayName: 'Destination Type',
       required: true,
       defaultValue: 'long_url',
+      display: 'cards',
       options: {
         options: [
-          { label: 'Long URL', value: 'long_url' },
-          { label: 'Existing Bitlink', value: 'bitlink_id' },
+          { label: 'Long URL', value: 'long_url', description: 'A web page', icon: 'text' },
+          { label: 'Bitlink', value: 'bitlink_id', description: 'Short link', icon: 'tag' },
         ],
       },
     }),
@@ -44,11 +45,15 @@ export const createQrCodeAction = createAction({
         if (destination_type === 'long_url') {
           props['long_url'] = Property.ShortText({
             displayName: 'Long URL',
+            description: 'The page to open. Must start with http:// or https://.',
+            placeholder: 'https://example.com/landing-page',
             required: true,
           });
         } else if (destination_type === 'bitlink_id') {
           props['bitlink_id'] = Property.ShortText({
-            displayName: 'Bitlink (e.g., bit.ly/xyz)',
+            displayName: 'Bitlink',
+            description: 'The short link, without https://.',
+            placeholder: 'bit.ly/abc123',
             required: true,
           });
         }
@@ -57,26 +62,30 @@ export const createQrCodeAction = createAction({
     }),
     title: Property.ShortText({
       displayName: 'Title',
-      description: 'Internal title for the QR Code.',
+      description: 'Shown in your Bitly account.',
       required: false,
     }),
     archived: Property.Checkbox({
       displayName: 'Archive on Create',
-      description: 'Archive the QR code upon creation.',
+      description: 'Create the QR code already archived.',
       required: false,
     }),
     background_color: Property.ShortText({
-      displayName: 'Style: Background Color',
-      description: 'Hex code (e.g., #FFFFFF)',
+      displayName: 'Background Color',
+      description: 'Hex color code.',
+      placeholder: '#FFFFFF',
       required: false,
+      width: 'half',
     }),
     dot_pattern_color: Property.ShortText({
-      displayName: 'Style: Dot Pattern Color',
-      description: 'Hex code (e.g., #000000)',
+      displayName: 'Dot Color',
+      description: 'Hex color code.',
+      placeholder: '#000000',
       required: false,
+      width: 'half',
     }),
     dot_pattern_type: Property.StaticDropdown({
-      displayName: 'Style: Dot Pattern Type',
+      displayName: 'Dot Pattern',
       required: false,
       options: {
         options: [
@@ -95,7 +104,7 @@ export const createQrCodeAction = createAction({
       },
     }),
     corner_1_shape: Property.StaticDropdown({
-      displayName: 'Corner 1 (Top-Left): Shape',
+      displayName: 'Shape',
       required: false,
       options: {
         options: [
@@ -112,15 +121,19 @@ export const createQrCodeAction = createAction({
       },
     }),
     corner_1_inner_color: Property.ShortText({
-      displayName: 'Corner 1 (Top-Left): Inner Color',
+      displayName: 'Inner Color',
+      placeholder: '#000000',
       required: false,
+      width: 'half',
     }),
     corner_1_outer_color: Property.ShortText({
-      displayName: 'Corner 1 (Top-Left): Outer Color',
+      displayName: 'Outer Color',
+      placeholder: '#000000',
       required: false,
+      width: 'half',
     }),
     corner_2_shape: Property.StaticDropdown({
-      displayName: 'Corner 2 (Top-Right): Shape',
+      displayName: 'Shape',
       required: false,
       options: {
         options: [
@@ -137,15 +150,19 @@ export const createQrCodeAction = createAction({
       },
     }),
     corner_2_inner_color: Property.ShortText({
-      displayName: 'Corner 2 (Top-Right): Inner Color',
+      displayName: 'Inner Color',
+      placeholder: '#000000',
       required: false,
+      width: 'half',
     }),
     corner_2_outer_color: Property.ShortText({
-      displayName: 'Corner 2 (Top-Right): Outer Color',
+      displayName: 'Outer Color',
+      placeholder: '#000000',
       required: false,
+      width: 'half',
     }),
     corner_3_shape: Property.StaticDropdown({
-      displayName: 'Corner 3 (Bottom-Right): Shape',
+      displayName: 'Shape',
       required: false,
       options: {
         options: [
@@ -162,15 +179,19 @@ export const createQrCodeAction = createAction({
       },
     }),
     corner_3_inner_color: Property.ShortText({
-      displayName: 'Corner 3 (Bottom-Right): Inner Color',
+      displayName: 'Inner Color',
+      placeholder: '#000000',
       required: false,
+      width: 'half',
     }),
     corner_3_outer_color: Property.ShortText({
-      displayName: 'Corner 3 (Bottom-Right): Outer Color',
+      displayName: 'Outer Color',
+      placeholder: '#000000',
       required: false,
+      width: 'half',
     }),
     gradient_style: Property.StaticDropdown({
-      displayName: 'Gradient: Style',
+      displayName: 'Type',
       required: false,
       options: {
         options: [
@@ -181,25 +202,29 @@ export const createQrCodeAction = createAction({
       },
     }),
     gradient_color_1: Property.ShortText({
-      displayName: 'Gradient: Color 1',
-      description: 'First gradient color (hex code)',
+      displayName: 'Start Color',
+      placeholder: '#000000',
       required: false,
+      width: 'half',
     }),
     gradient_color_2: Property.ShortText({
-      displayName: 'Gradient: Color 2',
-      description: 'Second gradient color (hex code)',
+      displayName: 'End Color',
+      placeholder: '#FFFFFF',
       required: false,
+      width: 'half',
     }),
     gradient_angle: Property.Number({
-      displayName: 'Gradient: Angle (for Linear)',
+      displayName: 'Angle',
+      description: 'Degrees, used by linear gradients only.',
       required: false,
     }),
     gradient_exclude_corners: Property.Checkbox({
-      displayName: 'Gradient: Exclude Corners',
+      displayName: 'Exclude Corners',
+      description: 'Keep the corners out of the gradient.',
       required: false,
     }),
     frame_id: Property.StaticDropdown({
-      displayName: 'Frame: Type',
+      displayName: 'Style',
       required: false,
       options: {
         options: [
@@ -218,46 +243,63 @@ export const createQrCodeAction = createAction({
       },
     }),
     frame_primary_color: Property.ShortText({
-      displayName: 'Frame: Primary Color',
+      displayName: 'Primary Color',
+      placeholder: '#000000',
       required: false,
+      width: 'half',
     }),
     frame_secondary_color: Property.ShortText({
-      displayName: 'Frame: Secondary Color',
+      displayName: 'Secondary Color',
+      placeholder: '#000000',
       required: false,
+      width: 'half',
     }),
     frame_background_color: Property.ShortText({
-      displayName: 'Frame: Background Color',
+      displayName: 'Background Color',
+      placeholder: '#FFFFFF',
       required: false,
     }),
     frame_text: Property.ShortText({
-      displayName: 'Frame: Text',
-      description: 'Primary text for frames that support it.',
+      displayName: 'Text',
+      description: 'Shown by frames that have a text area.',
       required: false,
     }),
     logo_image_guid: Property.ShortText({
-      displayName: 'Branding: Logo Image GUID',
-      description: 'A GUID for a logo image previously uploaded to Bitly.',
+      displayName: 'Logo Image ID',
+      description: 'ID of a logo image you uploaded to Bitly.',
       required: false,
     }),
     bitly_brand: Property.Checkbox({
-      displayName: 'Branding: Show Bitly Logo',
-      description: 'Show the Bitly logo in the bottom right corner.',
+      displayName: 'Show Bitly Logo',
+      description: 'Adds the Bitly logo to the bottom right corner.',
       required: false,
       defaultValue: true,
     }),
     error_correction: Property.StaticDropdown({
-      displayName: 'Specs: Error Correction',
+      displayName: 'Error Correction',
+      description: 'Higher keeps the code readable with a logo or damage.',
       required: false,
       options: {
         options: [
-          { label: 'Low (1)', value: 1 },
-          { label: 'Medium (2)', value: 2 },
-          { label: 'Quartile (3)', value: 3 },
-          { label: 'High (4)', value: 4 },
+          { label: 'Low', value: 1 },
+          { label: 'Medium', value: 2 },
+          { label: 'Quartile', value: 3 },
+          { label: 'High', value: 4 },
         ],
       },
     }),
   },
+  propertyGroups: [
+    { key: 'destination', display: 'section', label: 'Target', icon: 'send', props: ['group_guid', 'destination_type', 'destination'] },
+    { key: 'details', display: 'section', label: 'Details', icon: 'type', props: ['title', 'archived'] },
+    { key: 'style', display: 'section', label: 'Style', icon: 'sliders', props: ['background_color', 'dot_pattern_color', 'dot_pattern_type'] },
+    { key: 'corner_1', display: 'section', label: 'Top-Left Corner', icon: 'sliders', props: ['corner_1_shape', 'corner_1_inner_color', 'corner_1_outer_color'] },
+    { key: 'corner_2', display: 'section', label: 'Top-Right Corner', icon: 'sliders', props: ['corner_2_shape', 'corner_2_inner_color', 'corner_2_outer_color'] },
+    { key: 'corner_3', display: 'section', label: 'Bottom-Right Corner', icon: 'sliders', props: ['corner_3_shape', 'corner_3_inner_color', 'corner_3_outer_color'] },
+    { key: 'gradient', display: 'section', label: 'Gradient', icon: 'sliders', props: ['gradient_style', 'gradient_color_1', 'gradient_color_2', 'gradient_angle', 'gradient_exclude_corners'] },
+    { key: 'frame', display: 'section', label: 'Frame', icon: 'blank', props: ['frame_id', 'frame_text', 'frame_primary_color', 'frame_secondary_color', 'frame_background_color'] },
+    { key: 'branding', display: 'section', label: 'Branding', icon: 'file', props: ['logo_image_guid', 'bitly_brand', 'error_correction'] },
+  ],
   async run(context) {
     const props = context.propsValue;
 

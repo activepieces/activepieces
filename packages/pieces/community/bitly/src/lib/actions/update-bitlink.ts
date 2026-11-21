@@ -1,5 +1,5 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { bitlyApiCall } from '../common/client';
 import { bitlyAuth } from '../common/auth';
 import { bitlinkDropdown, groupGuid } from '../common/props';
@@ -15,36 +15,44 @@ export const updateBitlinkAction = createAction({
   props: {
     group_guid: groupGuid,
     bitlink: bitlinkDropdown,
+    changes_info: Property.MarkDown({
+      value: 'Title and tags left empty keep their current value.',
+      variant: MarkdownVariant.INFO,
+    }),
     title: Property.ShortText({
       displayName: 'Title',
-      description: 'New title for the Bitlink.',
+      description: 'Empty keeps the current title.',
       required: false,
     }),
     archived: Property.Checkbox({
       displayName: 'Archived',
-      description: 'Archive or unarchive the Bitlink.',
+      description: 'On archives the link, off makes it active again.',
       required: false,
     }),
     tags: Property.Array({
       displayName: 'Tags',
-      description: 'Tags to apply (overwrites existing tags).',
+      description: 'Replaces all current tags. Empty keeps them.',
       required: false,
     }),
     // Mobile App Deeplink Configuration
     app_uri_path: Property.ShortText({
-      displayName: 'App URI Path',
-      description: 'Path within the mobile app (e.g., /product/123).',
+      displayName: 'App Path',
+      description: 'Path inside the app.',
+      placeholder: '/product/123',
       required: false,
+      width: 'half',
     }),
     install_url: Property.LongText({
       displayName: 'App Install URL',
-      description: 'URL where users can install the mobile app.',
+      description: 'Where people without the app can install it.',
+      placeholder: 'https://apps.apple.com/app/id123456789',
       required: false,
     }),
     os: Property.StaticDropdown({
       displayName: 'Mobile OS',
-      description: 'Target mobile operating system.',
+      description: 'Platform it targets.',
       required: false,
+      width: 'half',
       options: {
         disabled: false,
         options: [
@@ -55,7 +63,7 @@ export const updateBitlinkAction = createAction({
     }),
     install_type: Property.StaticDropdown({
       displayName: 'Install Type',
-      description: 'How to handle app installation.',
+      description: 'What happens when the app is not installed.',
       required: false,
       options: {
         disabled: false,
@@ -67,6 +75,29 @@ export const updateBitlinkAction = createAction({
       },
     }),
   },
+  propertyGroups: [
+    {
+      key: 'target',
+      display: 'section',
+      label: 'Link to Update',
+      icon: 'send',
+      props: ['group_guid', 'bitlink'],
+    },
+    {
+      key: 'changes',
+      display: 'section',
+      label: 'Changes',
+      icon: 'tag',
+      props: ['changes_info', 'title', 'tags', 'archived'],
+    },
+    {
+      key: 'deeplink',
+      display: 'section',
+      label: 'Mobile App Deeplink',
+      icon: 'sliders',
+      props: ['app_uri_path', 'os', 'install_url', 'install_type'],
+    },
+  ],
   async run(context) {
     const { 
       bitlink, 
@@ -88,7 +119,7 @@ export const updateBitlinkAction = createAction({
       if (archived !== undefined && archived !== null) {
         body['archived'] = archived;
       }
-      if (tags !== undefined && tags !== null && Array.isArray(tags)) {
+      if (Array.isArray(tags) && tags.length > 0) {
         body['tags'] = tags;
       }
       

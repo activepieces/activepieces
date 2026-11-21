@@ -1,5 +1,5 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { bitlyApiCall } from '../common/client';
 import { bitlyAuth } from '../common/auth';
 import { groupGuid, domain } from '../common/props';
@@ -15,7 +15,8 @@ export const createBitlinkAction = createAction({
   props: {
     long_url: Property.ShortText({
       displayName: 'Long URL',
-      description: 'The URL to shorten (must include http:// or https://).',
+      description: 'The page to open. Must start with http:// or https://.',
+      placeholder: 'https://example.com/landing-page',
       required: true,
     }),
     group_guid: groupGuid,
@@ -25,39 +26,48 @@ export const createBitlinkAction = createAction({
     },
     title: Property.ShortText({
       displayName: 'Title',
-      description: 'Custom title for the Bitlink.',
+      description: 'Shown in your Bitly account.',
       required: false,
     }),
     tags: Property.Array({
       displayName: 'Tags',
-      description: 'Tags to apply to the Bitlink.',
+      description: 'Labels for finding the link in Bitly.',
       required: false,
     }),
     force_new_link: Property.Checkbox({
       displayName: 'Force New Link',
-      description: 'Create new link even if one exists for this URL.',
+      description: 'Create a new link even if this URL already has one.',
       required: false,
       defaultValue: false,
     }),
     // Mobile App Deeplink Configuration
+    deeplink_info: Property.MarkDown({
+      value: 'The app deeplink is only added when all four fields below are filled.',
+      variant: MarkdownVariant.WARNING,
+    }),
     app_id: Property.ShortText({
-      displayName: 'Mobile App ID',
-      description: 'Mobile app identifier (e.g., com.yourapp.name).',
+      displayName: 'App ID',
+      description: 'Bundle or package ID.',
+      placeholder: 'com.example.app',
       required: false,
+      width: 'half',
     }),
     app_uri_path: Property.ShortText({
-      displayName: 'App URI Path',
-      description: 'Path within the mobile app (e.g., /product/123).',
+      displayName: 'App Path',
+      description: 'Path inside the app.',
+      placeholder: '/product/123',
       required: false,
+      width: 'half',
     }),
     install_url: Property.LongText({
       displayName: 'App Install URL',
-      description: 'URL where users can install the mobile app.',
+      description: 'Where people without the app can install it.',
+      placeholder: 'https://apps.apple.com/app/id123456789',
       required: false,
     }),
     install_type: Property.StaticDropdown({
       displayName: 'Install Type',
-      description: 'How to handle app installation.',
+      description: 'What happens when the app is not installed.',
       required: false,
       options: {
         disabled: false,
@@ -69,6 +79,29 @@ export const createBitlinkAction = createAction({
       },
     }),
   },
+  propertyGroups: [
+    {
+      key: 'link',
+      display: 'section',
+      label: 'Link',
+      icon: 'send',
+      props: ['long_url', 'group_guid', 'domain'],
+    },
+    {
+      key: 'details',
+      display: 'section',
+      label: 'Details',
+      icon: 'tag',
+      props: ['title', 'tags', 'force_new_link'],
+    },
+    {
+      key: 'deeplink',
+      display: 'section',
+      label: 'Mobile App Deeplink',
+      icon: 'sliders',
+      props: ['deeplink_info', 'app_id', 'app_uri_path', 'install_url', 'install_type'],
+    },
+  ],
   async run(context) {
     const {
       long_url,
