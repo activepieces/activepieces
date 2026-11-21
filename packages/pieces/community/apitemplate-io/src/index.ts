@@ -45,6 +45,12 @@ export const apitemplateIo = createPiece({
         }
         return getRegionalBaseUrl(authConfig.region as ApitemplateRegion);
       },
+      props: {
+        url: {
+          description: "Full URL, or a path relative to your region's API address.",
+          placeholder: '/v2/list-templates',
+        },
+      },
       authMapping: async (auth) => {
         const authConfig = auth.props;
         return {

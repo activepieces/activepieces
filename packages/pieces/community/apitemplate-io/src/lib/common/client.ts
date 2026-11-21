@@ -161,5 +161,7 @@ export async function makeRequest(
         } region.${suggestionText}`
       );
     }
+
+    throw error;
   }
 }

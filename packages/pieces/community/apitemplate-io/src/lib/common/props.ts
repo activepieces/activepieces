@@ -48,7 +48,8 @@ export const regionDropdown = Property.StaticDropdown({
 
 export const templateIdDropdown = Property.Dropdown({
   auth: ApitemplateAuth,
-  displayName: 'Template ID',
+  displayName: 'Template',
+  description: 'The template to fill in.',
   required: true,
   refreshers: ['auth'],
   options: async ({ auth }) => {
@@ -66,7 +67,7 @@ export const templateIdDropdown = Property.Dropdown({
       return {
         disabled: true,
         options: [],
-        placeholder: 'Please complete authentication setup.',
+        placeholder: 'Please connect your account first',
       };
     }
 
@@ -80,10 +81,9 @@ export const templateIdDropdown = Property.Dropdown({
         authConfig.region as ApitemplateRegion
       );
 
-      // Handle the specific APITemplate.io response structure
-      const templates = response?.templates || [];
+      const templates = readTemplates(response);
 
-      if (!Array.isArray(templates) || templates.length === 0) {
+      if (templates.length === 0) {
         return {
           disabled: false,
           options: [],
@@ -93,8 +93,8 @@ export const templateIdDropdown = Property.Dropdown({
 
       return {
         disabled: false,
-        options: templates.map((template: any) => ({
-          label: `${template.name} (${template.format}) - ${template.status}`,
+        options: templates.map((template) => ({
+          label: buildTemplateLabel(template),
           value: template.template_id,
         })),
       };
@@ -103,7 +103,7 @@ export const templateIdDropdown = Property.Dropdown({
       return {
         disabled: true,
         options: [],
-        placeholder: 'Error loading templates',
+        placeholder: 'Could not load templates',
       };
     }
   },
@@ -174,9 +174,9 @@ export const pdfTemplateIdDropdown = Property.Dropdown({
 
 export const transactionRefDropdown = Property.Dropdown({
   auth: ApitemplateAuth,
-  displayName: 'Transaction Reference',
-  description: 'Select a transaction reference to filter objects.',
-  required: false,
+  displayName: 'File',
+  description: 'The generated PDF or image to delete.',
+  required: true,
   refreshers: ['auth'],
   options: async ({ auth }) => {
     if (!auth) {
@@ -193,7 +193,7 @@ export const transactionRefDropdown = Property.Dropdown({
       return {
         disabled: true,
         options: [],
-        placeholder: 'Please complete authentication setup',
+        placeholder: 'Please connect your account first',
       };
     }
 
@@ -207,22 +207,21 @@ export const transactionRefDropdown = Property.Dropdown({
         authConfig.region as ApitemplateRegion
       );
 
-      // Handle the specific APITemplate.io response structure
-      const objects = response?.objects || [];
+      const files = readFiles(response);
 
-      if (!Array.isArray(objects) || objects.length === 0) {
+      if (files.length === 0) {
         return {
           disabled: false,
           options: [],
-          placeholder: 'No objects found',
+          placeholder: 'No generated files found',
         };
       }
 
       return {
         disabled: false,
-        options: objects.map((obj: any) => ({
-          label: obj.transaction_ref || 'Unknown Transaction Ref',
-          value: obj.transaction_ref || '',
+        options: files.map((file) => ({
+          label: buildFileLabel(file),
+          value: file.transaction_ref,
         })),
       };
     } catch (error) {
@@ -230,8 +229,76 @@ export const transactionRefDropdown = Property.Dropdown({
       return {
         disabled: true,
         options: [],
-        placeholder: 'Error loading transaction references',
+        placeholder: 'Could not load files',
       };
     }
   },
 });
+
+function buildTemplateLabel(template: TemplateSummary): string {
+  const format =
+    typeof template.format === 'string' ? ` (${template.format})` : '';
+  const status =
+    typeof template.status === 'string' ? ` - ${template.status}` : '';
+  return `${template.name}${format}${status}`;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function readTemplates(response: unknown): TemplateSummary[] {
+  if (!isRecord(response) || !Array.isArray(response['templates'])) {
+    return [];
+  }
+  return response['templates'].filter(isTemplateSummary);
+}
+
+function isTemplateSummary(value: unknown): value is TemplateSummary {
+  return (
+    isRecord(value) &&
+    typeof value['template_id'] === 'string' &&
+    typeof value['name'] === 'string'
+  );
+}
+
+function readFiles(response: unknown): GeneratedFile[] {
+  if (!isRecord(response) || !Array.isArray(response['objects'])) {
+    return [];
+  }
+  return response['objects'].filter(isGeneratedFile);
+}
+
+function isGeneratedFile(value: unknown): value is GeneratedFile {
+  return (
+    isRecord(value) &&
+    typeof value['transaction_ref'] === 'string' &&
+    value['transaction_ref'] !== '' &&
+    !value['deleted_at']
+  );
+}
+
+function buildFileLabel(file: GeneratedFile): string {
+  const name =
+    typeof file.meta === 'string' && file.meta !== ''
+      ? file.meta
+      : file.transaction_ref;
+  if (typeof file.created_at !== 'string' || file.created_at === '') {
+    return name;
+  }
+  return `${name} · ${file.created_at.slice(0, 16).replace('T', ' ')}`;
+}
+
+interface TemplateSummary {
+  template_id: string;
+  name: string;
+  format?: unknown;
+  status?: unknown;
+}
+
+interface GeneratedFile {
+  transaction_ref: string;
+  meta?: unknown;
+  created_at?: unknown;
+  deleted_at?: unknown;
+}
