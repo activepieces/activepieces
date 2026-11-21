@@ -3,12 +3,10 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { twentyAuth } from '../../auth';
 import { twentyAiProps } from '../../common/ai-props';
 import { twentyApi } from '../../common/api';
-import { twentyCreateRecordsOutputSchema } from '../../output-schemas';
 
 export const createRecordsAction = createAction({
 	auth: twentyAuth,
 	name: 'twenty_create_records',
-	outputSchema: twentyCreateRecordsOutputSchema,
 	displayName: 'Create Records',
 	description: 'Creates up to 60 records of one object in a single call.',
 	audience: 'ai',
@@ -46,7 +44,7 @@ export const createRecordsAction = createAction({
 		) {
 			throw new Error('Every item in Records must be a JSON object of field values.');
 		}
-		return await twentyApi.createRecords({ auth: context.auth, objectNamePlural, records, upsert });
+		return await twentyApi.createRecords({ auth: context.auth, objectNamePlural, recordValuesList: records, upsert });
 	},
 });
 

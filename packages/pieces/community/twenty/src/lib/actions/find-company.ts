@@ -1,4 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  MarkdownVariant,
+  Property,
+} from '@activepieces/pieces-framework';
 import { twentyAuth } from '../auth';
 import { twentyApi } from '../common/api';
 import { findCompanyOutputSchema } from '../output-schemas';
@@ -11,8 +15,12 @@ export const findCompanyAction = createAction({
   displayName: 'Find Company',
   description: 'Searches for company records in Twenty CRM.',
   audience: 'human',
-  aiMetadata: { description: 'Looks up company records in Twenty CRM, optionally filtering by an exact-match company name and/or domain. Use to resolve a company to its record ID before updating or linking, or to check existence; leaving both filters empty returns all companies. Idempotent: a read-only query with no side effects.', idempotent: true },
+  aiMetadata: { description: 'Looks up company records in Twenty CRM, optionally filtering by a case-insensitive match on company name and/or domain (% is a wildcard). Use to resolve a company to its record ID before updating or linking, or to check existence; leaving both filters empty returns all companies. Idempotent: a read-only query with no side effects.', idempotent: true },
   props: {
+    filterInfo: Property.MarkDown({
+      value: 'Not case-sensitive. Use % as a wildcard, e.g. %acme%.',
+      variant: MarkdownVariant.INFO,
+    }),
     name: Property.ShortText({
       displayName: 'Company Name',
       description: 'Filter by company name.',

@@ -3,12 +3,10 @@ import { createAction } from '@activepieces/pieces-framework';
 import { twentyAuth } from '../../auth';
 import { twentyAiProps } from '../../common/ai-props';
 import { twentyApi } from '../../common/api';
-import { twentyRestoreRecordOutputSchema } from '../../output-schemas';
 
 export const restoreRecordAction = createAction({
 	auth: twentyAuth,
 	name: 'twenty_restore_record',
-	outputSchema: twentyRestoreRecordOutputSchema,
 	displayName: 'Restore Record',
 	description: 'Restores a soft-deleted record.',
 	audience: 'ai',

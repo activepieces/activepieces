@@ -3,12 +3,10 @@ import { createAction } from '@activepieces/pieces-framework';
 import { twentyAuth } from '../../auth';
 import { twentyAiProps } from '../../common/ai-props';
 import { twentyApi } from '../../common/api';
-import { twentyListRecordsOutputSchema } from '../../output-schemas';
 
 export const listRecordsAction = createAction({
 	auth: twentyAuth,
 	name: 'twenty_list_records',
-	outputSchema: twentyListRecordsOutputSchema,
 	displayName: 'List Records',
 	description: 'Lists or searches records of any object, with filter, sort and cursor paging.',
 	audience: 'ai',

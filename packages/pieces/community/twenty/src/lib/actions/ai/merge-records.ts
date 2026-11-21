@@ -3,12 +3,10 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { twentyAuth } from '../../auth';
 import { twentyAiProps } from '../../common/ai-props';
 import { twentyApi } from '../../common/api';
-import { twentyMergeRecordsOutputSchema } from '../../output-schemas';
 
 export const mergeRecordsAction = createAction({
 	auth: twentyAuth,
 	name: 'twenty_merge_records',
-	outputSchema: twentyMergeRecordsOutputSchema,
 	displayName: 'Merge Records',
 	description: 'Merges 2 to 9 duplicate records of one object into one.',
 	audience: 'ai',
