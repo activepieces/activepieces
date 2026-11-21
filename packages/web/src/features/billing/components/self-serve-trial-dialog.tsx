@@ -1,18 +1,22 @@
 import { ErrorCode, isNil } from '@activepieces/core-utils';
 import {
-  ApEdition,
-  ApFlagId,
   SelfServeTrialState,
   SalesLinkLocationInWebApp,
 } from '@activepieces/shared';
 import confetti from 'canvas-confetti';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { Check, Gem, Sparkles } from 'lucide-react';
+import { Check } from 'lucide-react';
+import { useState } from 'react';
 
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { flagsHooks } from '@/hooks/flags-hooks';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
@@ -24,14 +28,13 @@ import {
   SELF_SERVE_TRIAL_DAYS,
   selfServeTrialHooks,
 } from '../hooks/self-serve-trial-hooks';
-import { enterpriseMotion } from '../utils/billing-utils';
+import { billingUtils, enterpriseMotion } from '../utils/billing-utils';
+import { FeatureKey } from '../utils/platform-features';
 import { selfServeTrialFeatures } from '../utils/self-serve-trial-features';
 import { selfServeTrialTime } from '../utils/self-serve-trial-utils';
 
 import { SelfServeTrialSalesLink } from './current-subscription-card';
 import {
-  DialogFrame,
-  IncludedFeatures,
   LockedFeature,
   TrialAlreadyUsed,
   TrialStarted,
@@ -41,6 +44,10 @@ import { SelfServeTrialEndedDialog } from './self-serve-trial-notices';
 export function SelfServeTrialDialog() {
   const { payload, returnFocus, closeDialog } =
     billingDialogHooks.useSelfServeTrialDialogStore();
+  const [shownPayload, setShownPayload] = useState(payload);
+  if (!isNil(payload) && payload !== shownPayload) {
+    setShownPayload(payload);
+  }
   const shouldOfferTrial = selfServeTrialHooks.useShouldOfferTrial();
   const {
     mutate: startSelfServeTrial,
@@ -57,7 +64,7 @@ export function SelfServeTrialDialog() {
     runPostTrialActivationCallback();
   });
   const open = !isNil(payload);
-  const view = dialogViewForStartResult({
+  const liveView = dialogViewForStartResult({
     result: startedTrial?.state,
     alreadyUsed: api.isApError(
       trialStartError,
@@ -65,9 +72,13 @@ export function SelfServeTrialDialog() {
     ),
     shouldOfferTrial:
       (shouldOfferTrial &&
-        selfServeTrialFeatures.isIncludedInTrial(payload?.featureKey)) ||
+        selfServeTrialFeatures.isIncludedInTrial(shownPayload?.featureKey)) ||
       trialStartFailed,
   });
+  const [view, setView] = useState(liveView);
+  if (open && liveView !== view) {
+    setView(liveView);
+  }
   const busy = isStartingTrial;
   const close = () => {
     if (busy) {
@@ -84,6 +95,10 @@ export function SelfServeTrialDialog() {
       case DialogView.START:
         return (
           <StartTrial
+            featureKey={shownPayload?.featureKey}
+            hasPostTrialActivationCallback={
+              !isNil(shownPayload?.postTrialActivationCallback)
+            }
             isPending={isStartingTrial}
             isError={trialStartFailed}
             onStart={() => {
@@ -97,7 +112,10 @@ export function SelfServeTrialDialog() {
         return <TrialAlreadyUsed />;
       case DialogView.LOCKED:
         return (
-          <LockedFeature featureKey={payload?.featureKey} onAction={close} />
+          <LockedFeature
+            featureKey={shownPayload?.featureKey}
+            onAction={close}
+          />
         );
     }
   };
@@ -132,9 +150,9 @@ export function SelfServeTrialDialog() {
               returnFocus.focus();
             }
           }}
-          className="flex max-h-[calc(100dvh-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-[60rem] sm:rounded-2xl"
+          className="flex max-h-[calc(100dvh-2rem)] flex-col gap-0 overflow-hidden p-0 shadow-(--lift) sm:max-w-[50rem] sm:rounded-2xl"
         >
-          {open && (
+          {!isNil(shownPayload) && (
             <div
               key={view}
               className={cn(
@@ -176,47 +194,48 @@ export function TrialTimeline({
         }
       : {
           when: t('Today'),
-          what: t('Everything turns on. Your credits stay the same.'),
+          what: t('Full access, same credits'),
         },
     {
       when: selfServeTrialTime.formatDate(endDate.subtract(1, 'day')),
-      what: t('We remind you the day before it ends.'),
+      what: t('We remind you'),
     },
     {
       when: selfServeTrialTime.formatDate(endDate),
-      what: t(
-        'You are back on {plan}. Your flows, connections and settings are kept.',
-        {
-          plan: info?.autumnPlanName,
-        },
-      ),
+      what: t('Back on {plan}, work kept', {
+        plan:
+          info?.autumnPlanName ??
+          (info && billingUtils.isPaidPlan(info.plan.plan)
+            ? info.plan.plan
+            : t('Free')),
+      }),
     },
   ];
   return (
     <ol className="flex flex-col">
       {steps.map((step, index) => (
         <li key={step.when} className="flex gap-3">
-          <span className="flex flex-col items-center">
-            <span className="grid size-4 shrink-0 place-items-center">
-              {index === 0 && !started && (
-                <Check className="size-4 text-success-11" />
+          <span className="flex w-2 flex-col items-center gap-1.5 pt-1">
+            <span
+              className={cn(
+                'size-2 shrink-0 rounded-full',
+                index === 0 ? 'bg-accent-10' : 'bg-gray-8',
               )}
-              {index === 0 && started && (
-                <span className="size-2.5 rounded-full bg-accent-9" />
-              )}
-              {index > 0 && <span className="size-2 rounded-full bg-gray-8" />}
-            </span>
+            />
             {index < steps.length - 1 && (
-              <span className="my-1 w-px flex-1 bg-gray-6" />
+              <span className="w-px flex-1 bg-gray-6" />
             )}
           </span>
-          <span className="flex flex-col gap-0.5 pb-5">
-            <span className="text-sm font-medium text-gray-12">
+          <span
+            className={cn(
+              'flex flex-col gap-0.5',
+              index < steps.length - 1 && 'pb-6',
+            )}
+          >
+            <span className="text-xs font-medium text-gray-11">
               {step.when}
             </span>
-            <span className="text-sm leading-relaxed text-gray-11">
-              {step.what}
-            </span>
+            <span className="text-sm text-gray-12">{step.what}</span>
           </span>
         </li>
       ))}
@@ -225,79 +244,90 @@ export function TrialTimeline({
 }
 
 function StartTrial({
+  featureKey,
+  hasPostTrialActivationCallback,
   isPending,
   isError,
   onStart,
 }: {
+  featureKey: FeatureKey | undefined;
+  hasPostTrialActivationCallback: boolean;
   isPending: boolean;
   isError: boolean;
   onStart: () => void;
 }) {
-  const { payload } = billingDialogHooks.useSelfServeTrialDialogStore();
-  const featureKey = payload?.featureKey;
-  const hasPostTrialActivationCallback = !isNil(
-    payload?.postTrialActivationCallback,
-  );
-  const featureName = selfServeTrialFeatures.name(featureKey);
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const highlights = selfServeTrialFeatures.highlights(featureKey);
+  const isClicked = (keys: FeatureKey[]) =>
+    featureKey !== undefined && keys.includes(featureKey);
+  const featureName = isClicked(highlights[0]?.featureKeys ?? [])
+    ? selfServeTrialFeatures.nameInSentence(featureKey)
+    : null;
 
   return (
-    <DialogFrame
-      eyebrow={
-        featureName && (
-          <span className="flex items-center gap-2 text-sm font-medium text-accent-11">
-            <Gem className="size-4" />
-            {t('Try {feature} in the Enterprise plan trial', {
-              feature: featureName,
-            })}
-          </span>
-        )
-      }
-      title={t('Try the Enterprise plan free for {days} days', {
-        days: SELF_SERVE_TRIAL_DAYS,
-      })}
-      description={t(
-        'Everything in the Enterprise plan turns on for everyone on your platform. No credit card, nothing to set up.',
-      )}
-      note={
-        hasPostTrialActivationCallback && (
-          <p className="flex items-start gap-2.5 text-sm text-gray-12">
-            <Check className="mt-0.5 size-4 shrink-0 text-success-11" />
-            {t(
-              'We save your changes as soon as the trial starts, so nothing you did is lost.',
-            )}
-          </p>
-        )
-      }
-      mainTitle={t('What is included')}
-      main={
-        <>
-          <IncludedFeatures featureKey={featureKey} />
-          {edition === ApEdition.CLOUD && (
-            <p className="flex items-start gap-2.5 text-sm text-gray-11">
-              <Sparkles className="mt-0.5 size-4 shrink-0 text-gray-9" />
+    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto md:flex-row">
+      <div className="flex flex-col gap-8 p-8 md:w-[32rem] md:shrink-0">
+        <div className="flex flex-col gap-2 pr-8 md:pr-0">
+          <DialogTitle className="text-2xl font-semibold tracking-tight">
+            {featureName
+              ? t('Try {feature} free for {days} days', {
+                  feature: featureName,
+                  days: SELF_SERVE_TRIAL_DAYS,
+                })
+              : t('Try the Enterprise plan free for {days} days', {
+                  days: SELF_SERVE_TRIAL_DAYS,
+                })}
+          </DialogTitle>
+          <DialogDescription className="text-base text-gray-11">
+            {t('You get the full Enterprise plan, no card needed.')}
+          </DialogDescription>
+          {hasPostTrialActivationCallback && (
+            <p className="mt-2 flex items-start gap-2.5 text-sm text-gray-12">
+              <Check className="mt-0.5 size-4 shrink-0 text-success-11" />
               {t(
-                "Plans that include Embedding don't usually come with the Activepieces AI provider. You can use both together only during the trial.",
+                'We save your changes as soon as the trial starts, so nothing you did is lost.',
               )}
             </p>
           )}
-        </>
-      }
-      asideTitle={t('How the trial works')}
-      aside={<TrialTimeline started={false} />}
-      footerNote={
-        <>
-          {t('Want to keep the Enterprise plan?')}
-          <SelfServeTrialSalesLink
-            locationInWebApp={SalesLinkLocationInWebApp.ENTERPRISE_TRIAL_START}
-            variant="link"
-            className="h-auto p-0"
-            featureKey={featureKey}
-          />
-        </>
-      }
-      actions={
-        <div className="flex flex-col items-stretch gap-2 sm:items-end">
+        </div>
+        <div className="flex flex-col gap-3">
+          <span className="text-xs font-medium text-gray-11">
+            {t('What you get')}
+          </span>
+          <ul className="grid gap-x-6 gap-y-4 sm:grid-cols-2 md:grid-flow-col md:grid-rows-3">
+            {highlights.map((feature) => {
+              const highlighted = isClicked(feature.featureKeys);
+              return (
+                <li key={feature.title} className="flex items-start gap-2.5">
+                  <feature.icon
+                    className={cn(
+                      'mt-0.5 size-4 shrink-0',
+                      highlighted ? 'text-accent-11' : 'text-gray-11',
+                    )}
+                  />
+                  <span className="flex min-w-0 flex-col">
+                    <span
+                      className={cn(
+                        'text-sm text-gray-12',
+                        highlighted && 'font-medium',
+                      )}
+                    >
+                      {feature.shortTitle ?? feature.title}
+                    </span>
+                    <TextWithTooltip tooltipMessage={feature.detail}>
+                      <span className="truncate text-xs text-gray-11">
+                        {feature.detail}
+                      </span>
+                    </TextWithTooltip>
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </div>
+      <div className="flex flex-1 flex-col justify-between gap-8 border-t bg-gray-2 p-8 md:border-t-0 md:border-l">
+        <TrialTimeline started={false} />
+        <div className="flex flex-col items-stretch gap-2">
           {isError && (
             <p className="text-sm text-danger-11">
               {t('We could not start your trial. Please try again.')}
@@ -313,9 +343,14 @@ function StartTrial({
               ? t('Start trial and save')
               : t('Start free trial')}
           </Button>
+          <SelfServeTrialSalesLink
+            locationInWebApp={SalesLinkLocationInWebApp.ENTERPRISE_TRIAL_START}
+            className="h-10"
+            featureKey={featureKey}
+          />
         </div>
-      }
-    />
+      </div>
+    </div>
   );
 }
 

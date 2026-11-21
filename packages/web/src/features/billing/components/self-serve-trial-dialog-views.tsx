@@ -127,23 +127,19 @@ export function DialogFrame({
   eyebrow,
   title,
   description,
-  note,
   mainTitle,
   main,
   asideTitle,
   aside,
-  footerNote,
   actions,
 }: {
   eyebrow?: ReactNode;
   title: string;
   description: ReactNode;
-  note?: ReactNode;
   mainTitle?: string;
   main?: ReactNode;
   asideTitle?: string;
   aside?: ReactNode;
-  footerNote?: ReactNode;
   actions: ReactNode;
 }) {
   const [scroller, setScroller] = useState<HTMLDivElement | null>(null);
@@ -165,7 +161,6 @@ export function DialogFrame({
           <DialogDescription className="text-base text-pretty">
             {description}
           </DialogDescription>
-          {note}
         </div>
         {(main || aside) && (
           <div className="grid border-t md:grid-cols-[minmax(0,1fr)_20rem]">
@@ -192,11 +187,8 @@ export function DialogFrame({
           </div>
         )}
       </div>
-      <div className="flex shrink-0 flex-col-reverse items-stretch gap-3 border-t px-7 py-5 sm:flex-row sm:items-center sm:justify-between">
-        <span className="flex flex-wrap items-center gap-1 text-sm text-gray-11">
-          {footerNote}
-        </span>
-        <div className="flex justify-end">{actions}</div>
+      <div className="flex shrink-0 justify-end border-t px-7 py-5">
+        {actions}
       </div>
     </>
   );

@@ -18,9 +18,18 @@ function list(): SelfServeTrialFeature[] {
   const names = featureNames();
   return [
     {
+      icon: Sparkles,
+      title: names.UNIVERSAL_AI,
+      benefit: t('Use your own AI provider accounts in every flow and agent.'),
+      detail: t('OpenAI, Anthropic and more'),
+      featureKeys: ['UNIVERSAL_AI'],
+      isOnPlan: (plan) => plan.aiProvidersEnabled,
+    },
+    {
       icon: KeyRound,
       title: names.SSO,
       benefit: t('Your team signs in with your identity provider.'),
+      detail: t('Okta, Google or any SAML'),
       featureKeys: ['SSO'],
       isOnPlan: (plan) => plan.ssoEnabled,
     },
@@ -28,6 +37,7 @@ function list(): SelfServeTrialFeature[] {
       icon: FileClock,
       title: names.AUDIT_LOGS,
       benefit: t('See who changed which flow, and when.'),
+      detail: t('Stream events to your SIEM'),
       featureKeys: ['AUDIT_LOGS', 'EVENT_DESTINATIONS'],
       isOnPlan: (plan) => plan.auditLogEnabled && plan.eventStreamingEnabled,
     },
@@ -35,20 +45,15 @@ function list(): SelfServeTrialFeature[] {
       icon: Vault,
       title: names.SECRET_MANAGERS,
       benefit: t('Keep credentials in your own vault, not in flows.'),
+      detail: t('Vault, AWS or CyberArk'),
       featureKeys: ['SECRET_MANAGERS'],
       isOnPlan: (plan) => plan.secretManagersEnabled,
-    },
-    {
-      icon: Sparkles,
-      title: names.UNIVERSAL_AI,
-      benefit: t('Use your own AI provider accounts in every flow and agent.'),
-      featureKeys: ['UNIVERSAL_AI'],
-      isOnPlan: (plan) => plan.aiProvidersEnabled,
     },
     {
       icon: UserCog,
       title: names.CUSTOM_ROLES,
       benefit: t('Give every person exactly the access they need.'),
+      detail: t('Who can build vs. publish'),
       featureKeys: ['CUSTOM_ROLES'],
       isOnPlan: (plan) => plan.projectRolesEnabled,
     },
@@ -56,6 +61,8 @@ function list(): SelfServeTrialFeature[] {
       icon: Users,
       title: t('Unlimited users and projects'),
       benefit: t('Bring every team in without counting seats.'),
+      shortTitle: t('Unlimited users'),
+      detail: t('And unlimited projects'),
       featureKeys: ['USERS', 'PROJECTS'],
       isOnPlan: (plan) =>
         isNil(plan.usersLimit) && isNil(plan.billedTeamProjectsLimit),
@@ -64,10 +71,24 @@ function list(): SelfServeTrialFeature[] {
       icon: Globe,
       title: names.GLOBAL_CONNECTIONS,
       benefit: t('Connect an app once and share it with every project.'),
+      detail: t('Connect an app once'),
       featureKeys: ['GLOBAL_CONNECTIONS'],
       isOnPlan: (plan) => plan.globalConnectionsEnabled,
     },
   ];
+}
+
+function highlights(
+  featureKey: FeatureKey | undefined,
+): SelfServeTrialFeature[] {
+  const all = list();
+  const clicked = all.find(
+    (feature) => !isNil(featureKey) && feature.featureKeys.includes(featureKey),
+  );
+  const ordered = isNil(clicked)
+    ? all
+    : [clicked, ...all.filter((feature) => feature !== clicked)];
+  return ordered.slice(0, HIGHLIGHT_COUNT);
 }
 
 function isIncludedInTrial(featureKey: FeatureKey | undefined): boolean {
@@ -323,7 +344,10 @@ export const selfServeTrialFeatures = {
   name,
   nameInSentence,
   lockedCopy,
+  highlights,
 };
+
+const HIGHLIGHT_COUNT = 6;
 
 const FEATURES_NOT_IN_TRIAL: FeatureKey[] = ['DEDICATED_WORKERS'];
 
@@ -331,6 +355,8 @@ type SelfServeTrialFeature = {
   icon: LucideIcon;
   title: string;
   benefit: string;
+  detail: string;
+  shortTitle?: string;
   featureKeys: FeatureKey[];
   isOnPlan: (plan: PlatformPlanLimits) => boolean;
 };

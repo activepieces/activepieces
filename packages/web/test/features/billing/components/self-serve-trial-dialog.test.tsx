@@ -13,15 +13,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SelfServeTrialDialog } from '@/features/billing/components/self-serve-trial-dialog';
 
 let offer = false;
-let payload: { featureKey?: string; postTrialActivationCallback?: () => Promise<unknown> } | null =
-  null;
+let payload: {
+  featureKey?: string;
+  postTrialActivationCallback?: () => Promise<unknown>;
+} | null = null;
 let startFailed = false;
 let startError: unknown = null;
 let liveStatus:
   | { state: string; startedAt: string | null; endsAt: string | null }
   | undefined;
 let onStarted: ((status: { state: string }) => void) | undefined;
-let edition = 'cloud';
 const mutate = vi.fn();
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
@@ -38,10 +39,6 @@ vi.mock('@/features/billing/hooks/billing-dialog-hooks', () => ({
       closeDialog: vi.fn(),
     }),
   },
-}));
-
-vi.mock('@/hooks/flags-hooks', () => ({
-  flagsHooks: { useFlag: () => ({ data: edition }) },
 }));
 
 vi.mock('@/hooks/platform-hooks', () => ({
@@ -64,7 +61,9 @@ vi.mock('@/features/billing/hooks/self-serve-trial-hooks', () => ({
   selfServeTrialHooks: {
     useStatus: () => ({ data: liveStatus }),
     useShouldOfferTrial: () => offer,
-    useStartSelfServeTrial: (callback?: (status: { state: string }) => void) => {
+    useStartSelfServeTrial: (
+      callback?: (status: { state: string }) => void,
+    ) => {
       onStarted = callback;
       return {
         data: undefined,
@@ -103,19 +102,8 @@ const dialog = () => (
   </QueryClientProvider>
 );
 
-const settle = () =>
-  act(async () => {
-    await new Promise((resolve) => setTimeout(resolve, 10));
-  });
-
 const startTrialAndSave = () =>
   fireEvent.click(screen.getByRole('button', { name: 'Start trial and save' }));
-
-const trialIsOn = () => ({
-  state: SelfServeTrialState.ACTIVE,
-  startedAt: new Date().toISOString(),
-  endsAt: new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString(),
-});
 
 beforeEach(() => {
   vi.stubGlobal(
@@ -130,26 +118,28 @@ beforeEach(() => {
   startFailed = false;
   startError = null;
   liveStatus = undefined;
-  edition = 'cloud';
   mutate.mockClear();
 });
 
 describe('the start dialog', () => {
-  const embeddingAiNote =
-    "Plans that include Embedding don't usually come with the Activepieces AI provider. You can use both together only during the trial.";
+  it('names the clicked feature in the title when the list shows it', () => {
+    payload = { featureKey: 'SSO' };
 
-  it('says on Cloud that Embedding with Activepieces AI is only for the trial', () => {
     render(dialog());
 
-    expect(screen.getByText(embeddingAiNote)).toBeDefined();
+    expect(
+      screen.getByText('Try {feature} free for {days} days'),
+    ).toBeDefined();
   });
 
-  it('leaves the note out on a self-hosted install, which has no Activepieces AI', () => {
-    edition = 'ee';
+  it('uses the plan title for a feature the list leaves out', () => {
+    payload = { featureKey: 'SIGNING_KEYS' };
 
     render(dialog());
 
-    expect(screen.queryByText(embeddingAiNote)).toBeNull();
+    expect(
+      screen.getByText('Try the Enterprise plan free for {days} days'),
+    ).toBeDefined();
   });
 });
 
