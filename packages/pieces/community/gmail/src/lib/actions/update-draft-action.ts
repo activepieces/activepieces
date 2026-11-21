@@ -3,7 +3,7 @@ import { gmailAuth, createGoogleClient, getUserEmail } from '../auth';
 import { gmail as googleGmail } from '@googleapis/gmail';
 import { GmailMime, RawMimeAttachment } from '../common/mime';
 import { gmailUpdateDraftActionOutputSchema } from '../output-schemas';
-import { parseStream } from '../common/data';
+import { parseRawMessage } from '../common/data';
 import { AddressObject } from 'mailparser';
 
 export const gmailUpdateDraftAction = createAction({
@@ -133,9 +133,7 @@ export const gmailUpdateDraftAction = createAction({
         threadId = threadId ?? message?.threadId ?? undefined;
 
         if (message?.raw) {
-          const parsed = await parseStream(
-            Buffer.from(message.raw, 'base64').toString('utf-8')
-          );
+          const parsed = await parseRawMessage(message.raw);
           if (!receiver?.length) receiver = addressesOf(parsed.to);
           if (!cc?.length) cc = addressesOf(parsed.cc);
           if (!bcc?.length) bcc = addressesOf(parsed.bcc);

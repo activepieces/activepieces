@@ -1,4 +1,4 @@
-import { FilesService } from '@activepieces/pieces-framework';
+import { FilesService, tryCatch } from '@activepieces/pieces-framework';
 import {
   GmailLabel,
   GmailMessage,
@@ -11,7 +11,7 @@ import {
   httpClient,
   HttpMethod,
 } from '@activepieces/pieces-common';
-import { Attachment, ParsedMail, simpleParser } from 'mailparser';
+import { Attachment, simpleParser } from 'mailparser';
 import { GmailAuthValue, getAccessToken } from '../auth';
 
 interface SearchMailProps {
@@ -219,43 +219,35 @@ function decodeBase64(data: any) {
   return Buffer.from(data, 'base64').toString();
 }
 
-export async function parseStream(stream: any) {
-  return new Promise<ParsedMail>((resolve, reject) => {
-    simpleParser(stream, (err, parsed) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(parsed);
-      }
-    });
-  });
+export async function parseRawMessage(raw: string | null | undefined) {
+  const parsed = await simpleParser(Buffer.from(raw ?? '', 'base64'));
+  return { ...parsed, headers: Object.fromEntries(parsed.headers) };
 }
 
 export async function convertAttachment(
   attachments: Attachment[],
   files: FilesService
 ) {
-  const promises = attachments.map(async (attachment) => {
-    try {
+  const results = await Promise.all(
+    attachments.map(async (attachment) => {
       const fileName = attachment.filename ?? `attachment-${Date.now()}`;
+      const { data, error } = await tryCatch(() =>
+        files.write({ fileName, data: attachment.content })
+      );
+      if (error) {
+        if (error.name === FILE_SIZE_ERROR_NAME) {
+          return null;
+        }
+        throw error;
+      }
       return {
         fileName,
         mimeType: attachment.contentType,
         size: attachment.size,
-        data: await files.write({
-          fileName: fileName,
-          data: attachment.content,
-        }),
+        data,
       };
-    } catch (error) {
-      console.error(
-        `Failed to process attachment: ${attachment.filename}`,
-        error
-      );
-      return null;
-    }
-  });
-  const results = await Promise.all(promises);
+    })
+  );
   return results.filter((result) => result !== null);
 }
 
@@ -266,3 +258,5 @@ export function getFirstFiveOrAll(array: unknown[]) {
     return array.slice(0, 5);
   }
 }
+
+const FILE_SIZE_ERROR_NAME = 'FileSizeError';

@@ -1,29 +1,16 @@
 import {
   createTrigger,
   TriggerStrategy,
-  Property,
   FilesService,
-  isNil,
+  Property,
 } from '@activepieces/pieces-framework';
 import { GmailProps } from '../common/props';
 import { gmailAuth, createGoogleClient, GmailAuthValue } from '../auth';
-import { gmail as googleGmail } from '@googleapis/gmail';
-import {
-  parseStream,
-  convertAttachment,
-  getFirstFiveOrAll,
-} from '../common/data';
+import { gmail as googleGmail, gmail_v1 } from '@googleapis/gmail';
+import { parseRawMessage, convertAttachment } from '../common/data';
+import { gmailMessagePoll } from '../common/message-poll';
 import { GmailLabel } from '../common/models';
 import { newAttachmentTriggerOutputSchema } from '../output-schemas';
-
-type Props = {
-  from?: string;
-  to?: string;
-  subject?: string;
-  label?: GmailLabel;
-  category?: string;
-  filenameExtension?: string;
-};
 
 export const gmailNewAttachmentTrigger = createTrigger({
   auth: gmailAuth,
@@ -52,133 +39,92 @@ export const gmailNewAttachmentTrigger = createTrigger({
   sampleData: {},
   type: TriggerStrategy.POLLING,
   async onEnable(context) {
-    if (context.isRepublish && !isNil(await context.store.get('lastPoll'))) {
-      return;
-    }
-    await context.store.put('lastPoll', Date.now());
+    await gmailMessagePoll.enable({
+      store: context.store,
+      isRepublish: context.isRepublish,
+    });
   },
-  async onDisable(context) {
+  async onDisable() {
     return;
   },
   async run(context) {
-    const lastFetchEpochMS = (await context.store.get<number>('lastPoll')) ?? 0;
-
-    const items = await pollRecentMessages({
-      auth: context.auth,
-      props: context.propsValue,
-      files: context.files,
-      lastFetchEpochMS: lastFetchEpochMS,
+    const gmail = await createGmail(context.auth);
+    return gmailMessagePoll.poll({
+      gmail,
+      store: context.store,
+      query: buildQuery(context.propsValue),
+      labelId: context.propsValue.label?.id,
+      toItems: (message) =>
+        toAttachmentItems({
+          message,
+          files: context.files,
+          extension: context.propsValue.filenameExtension,
+        }),
     });
-
-    const newLastEpochMilliSeconds = items.reduce(
-      (acc, item) => Math.max(acc, item.epochMilliSeconds),
-      lastFetchEpochMS
-    );
-    await context.store.put('lastPoll', newLastEpochMilliSeconds);
-    return items
-      .filter((f) => f.epochMilliSeconds > lastFetchEpochMS)
-      .map((item) => item.data);
   },
   async test(context) {
-    const lastFetchEpochMS = (await context.store.get<number>('lastPoll')) ?? 0;
-
-    const items = await pollRecentMessages({
-      auth: context.auth,
-      props: context.propsValue,
-      files: context.files,
-      lastFetchEpochMS: lastFetchEpochMS,
+    const gmail = await createGmail(context.auth);
+    return gmailMessagePoll.sample({
+      gmail,
+      query: buildQuery(context.propsValue),
+      labelId: context.propsValue.label?.id,
+      toItems: (message) =>
+        toAttachmentItems({
+          message,
+          files: context.files,
+          extension: context.propsValue.filenameExtension,
+        }),
     });
-
-    return getFirstFiveOrAll(items.map((item) => item.data));
   },
 });
 
-async function pollRecentMessages({
-  auth,
-  props,
-  files,
-  lastFetchEpochMS,
-}: {
-  auth: GmailAuthValue;
-  props: Props;
-  files: FilesService;
-  lastFetchEpochMS: number;
-}): Promise<
-  {
-    epochMilliSeconds: number;
-    data: unknown;
-  }[]
-> {
+async function createGmail(auth: GmailAuthValue): Promise<gmail_v1.Gmail> {
   const authClient = await createGoogleClient(auth);
-
-  const gmail = googleGmail({ version: 'v1', auth: authClient });
-
-  // construct query
-  const query = ['has:attachment'];
-  const maxResults = lastFetchEpochMS === 0 ? 5 : 20;
-  const afterUnixSeconds = Math.floor(lastFetchEpochMS / 1000);
-
-  if (props.from) query.push(`from:(${props.from})`);
-  if (props.to) query.push(`to:(${props.to})`);
-  if (props.subject) query.push(`subject:(${props.subject})`);
-  if (props.label) query.push(`label:${props.label.name}`);
-  if (props.category) query.push(`category:${props.category}`);
-  if (props.filenameExtension)
-    query.push(`filename:${props.filenameExtension}`);
-  if (afterUnixSeconds != null && afterUnixSeconds > 0)
-    query.push(`after:${afterUnixSeconds}`);
-
-  // List Messages
-  const messagesResponse = await gmail.users.messages.list({
-    userId: 'me',
-    q: query.join(' '),
-    maxResults,
-  });
-
-  // Reverse to process oldest-first so partial progress doesn't skip messages
-  const messages = (messagesResponse.data.messages || []).slice().reverse();
-
-  const pollingResponse = [];
-  for (const message of messages) {
-    try {
-      const rawMailResponse = await gmail.users.messages.get({
-        userId: 'me',
-        id: message.id!,
-        format: 'raw',
-      });
-
-      const parsedMailResponse = await parseStream(
-        Buffer.from(rawMailResponse.data.raw as string, 'base64').toString(
-          'utf-8'
-        )
-      );
-
-      const { attachments, ...restOfParsedMailResponse } = parsedMailResponse;
-      const parsedAttachments = await convertAttachment(attachments, files);
-
-      for (const attachment of parsedAttachments) {
-        pollingResponse.push({
-          epochMilliSeconds: Number(rawMailResponse.data.internalDate),
-          data: {
-            attachment,
-            message: {
-              id: message.id,
-              ...restOfParsedMailResponse,
-            },
-          },
-        });
-      }
-    } catch (error: any) {
-      const isRateLimit =
-        error.status === 429 ||
-        (error.status === 403 &&
-          /quota|rate.?limit/i.test(error.message ?? ''));
-      if (isRateLimit) {
-        break;
-      }
-      throw error;
-    }
-  }
-
-  return pollingResponse;
+  return googleGmail({ version: 'v1', auth: authClient });
 }
+
+function buildQuery(props: Props): string[] {
+  return [
+    'has:attachment',
+    ...(props.from ? [`from:(${props.from})`] : []),
+    ...(props.to ? [`to:(${props.to})`] : []),
+    ...(props.subject ? [`subject:(${props.subject})`] : []),
+    ...(props.category ? [`category:${props.category}`] : []),
+    ...(props.filenameExtension ? [`filename:${props.filenameExtension}`] : []),
+  ];
+}
+
+async function toAttachmentItems({
+  message,
+  files,
+  extension,
+}: {
+  message: gmail_v1.Schema$Message;
+  files: FilesService;
+  extension: string | undefined;
+}): Promise<unknown[]> {
+  const { attachments, ...parsedMail } = await parseRawMessage(message.raw);
+  const suffix = extension?.trim().replace(/^\./, '').toLowerCase();
+  const matching = suffix
+    ? attachments.filter((attachment) =>
+        (attachment.filename ?? '').toLowerCase().endsWith(`.${suffix}`)
+      )
+    : attachments;
+  const converted = await convertAttachment(matching, files);
+  return converted.map((attachment) => ({
+    attachment,
+    message: {
+      id: message.id,
+      ...parsedMail,
+    },
+  }));
+}
+
+type Props = {
+  from?: string;
+  to?: string;
+  subject?: string;
+  label?: GmailLabel;
+  category?: string;
+  filenameExtension?: string;
+};

@@ -155,7 +155,7 @@ export const gmailCreateDraftReplyAction = createAction({
     let originalMessageContent = '';
     if (context.propsValue.include_original_message) {
       try {
-        const { parseStream } = await import('../common/data');
+        const { parseRawMessage } = await import('../common/data');
 
         const originalMessageFull = await gmail.users.messages.get({
           userId: 'me',
@@ -164,11 +164,9 @@ export const gmailCreateDraftReplyAction = createAction({
         });
 
         if (originalMessageFull.data.raw) {
-          const rawMessage = Buffer.from(
-            originalMessageFull.data.raw,
-            'base64'
-          ).toString('utf-8');
-          const parsedMessage = await parseStream(rawMessage);
+          const parsedMessage = await parseRawMessage(
+            originalMessageFull.data.raw
+          );
 
           let messageText = parsedMessage.text || '';
           if (!messageText && parsedMessage.html) {

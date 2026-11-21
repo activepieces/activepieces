@@ -56,8 +56,7 @@ export const gmailNewLabelTrigger = createTrigger({
     return getFirstFiveOrAll(labels);
   },
   async run(context) {
-    const existingIds = (await context.store.get<string>(TRIGGER_KEY)) ?? '[]';
-    const parsedExistingIds = JSON.parse(existingIds) as string[];
+    const existingIds = await context.store.get<string>(TRIGGER_KEY);
 
     const authClient = await createGoogleClient(context.auth);
 
@@ -66,6 +65,15 @@ export const gmailNewLabelTrigger = createTrigger({
     const response = await gmail.users.labels.list({
       userId: 'me',
     });
+
+    if (isNil(existingIds)) {
+      await context.store.put(
+        TRIGGER_KEY,
+        JSON.stringify((response.data.labels ?? []).map((label) => label.id))
+      );
+      return [];
+    }
+    const parsedExistingIds: string[] = JSON.parse(existingIds);
 
     if (isNil(response.data.labels) || response.data.labels.length === 0) {
       await context.store.put(TRIGGER_KEY, '[]');
