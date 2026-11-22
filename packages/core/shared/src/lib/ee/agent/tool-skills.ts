@@ -223,6 +223,7 @@ export const agentToolSkills = {
     findSkill,
     isMetaTool,
     effectiveToolCall,
+    lazyCall,
     uncataloguedToolNames,
     renderToolCatalog,
     renderSkillsNote,
