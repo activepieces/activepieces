@@ -1,13 +1,15 @@
 import { apId, isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
-import { Project } from '@activepieces/shared'
+import { PiecesFilterType, Project, ProjectPlan, ProjectType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager } from 'typeorm'
 import { z } from 'zod'
 import { appConnectionsRepo } from '../../app-connection/app-connection-service/app-connection-service'
+import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
 import { projectRepo, projectService } from '../../project/project-service'
-import { platformProjectService } from '../projects/platform-project-service'
+import { platformProjectJobs } from '../projects/platform-project-service'
+import { ProjectPlanEntity } from '../projects/project-plan/project-plan.entity'
 
 export const agentEvalWorkspaceService = (log: FastifyBaseLogger) => ({
     async resolveBaseProject({ platformId, ownerId, baseProjectId }: ResolveBaseProjectParams): Promise<Project | null> {
@@ -19,22 +21,36 @@ export const agentEvalWorkspaceService = (log: FastifyBaseLogger) => ({
         return projects.find((project) => !isEvalWorkspace(project)) ?? null
     },
 
-    async create({ platformId, baseProjectId }: CreateWorkspaceParams): Promise<Project> {
-        await sweepStaleWorkspaces({ platformId, log })
-        const metadata = { [EVAL_WORKSPACE_METADATA_KEY]: true, baseProjectId }
-        const project = await platformProjectService(log).create({
-            platformId,
-            displayName: `${EVAL_WORKSPACE_NAME_PREFIX}${apId().slice(0, 8)}`,
-            metadata,
-        })
-        const { error } = await tryCatch(() => transaction(async (entityManager) => {
-            const sharedConnectionIds = await shareConnections({ platformId, fromProjectId: baseProjectId, toProjectId: project.id, entityManager })
-            await projectRepo(entityManager).update({ id: project.id, platformId }, { metadata: { ...metadata, [SHARED_CONNECTION_IDS_METADATA_KEY]: sharedConnectionIds } })
-        }))
-        if (!isNil(error)) {
-            await platformProjectService(log).markForDeletion({ id: project.id, platformId })
-            throw error
+    async create({ platformId, ownerId, baseProjectId }: CreateWorkspaceParams): Promise<Project> {
+        const { error: sweepError } = await tryCatch(() => sweepStaleWorkspaces({ platformId, log }))
+        if (!isNil(sweepError)) {
+            log.warn({ error: sweepError, platform: { id: platformId } }, 'Failed to sweep stale eval workspaces')
         }
+        const project = await transaction(async (entityManager) => {
+            const metadata = { [EVAL_WORKSPACE_METADATA_KEY]: true, baseProjectId }
+            const savedProject = await projectService(log).create({
+                ownerId,
+                platformId,
+                displayName: `${EVAL_WORKSPACE_NAME_PREFIX}${apId().slice(0, 8)}`,
+                type: ProjectType.TEAM,
+                metadata,
+                callPostCreateHooks: false,
+                entityManager,
+            })
+            await projectPlanRepo(entityManager).upsert({
+                id: apId(),
+                projectId: savedProject.id,
+                pieces: [],
+                piecesFilterType: PiecesFilterType.NONE,
+                locked: false,
+                name: 'platform',
+            }, ['projectId'])
+            const sharedConnectionIds = await shareConnections({ platformId, fromProjectId: baseProjectId, toProjectId: savedProject.id, entityManager })
+            const finalMetadata = { ...metadata, [SHARED_CONNECTION_IDS_METADATA_KEY]: sharedConnectionIds }
+            await projectRepo(entityManager).update({ id: savedProject.id, platformId }, { metadata: finalMetadata })
+            return { ...savedProject, metadata: finalMetadata }
+        })
+        await projectService(log).callProjectPostCreateHooks(project)
         return project
     },
 
@@ -55,6 +71,8 @@ async function sweepStaleWorkspaces({ platformId, log }: { platformId: string, l
         .andWhere('project.deleted IS NULL')
         .andWhere('project.metadata ->> :markerKey = \'true\'', { markerKey: EVAL_WORKSPACE_METADATA_KEY })
         .andWhere('project.created < :cutoff', { cutoff: apDayjs().subtract(STALE_WORKSPACE_AGE_MINUTES, 'minute').toISOString() })
+        .orderBy('project.created', 'ASC')
+        .limit(STALE_SWEEP_BATCH_SIZE)
         .getMany()
     const stale = candidates.filter(isEvalWorkspace)
     if (stale.length === 0) {
@@ -65,14 +83,19 @@ async function sweepStaleWorkspaces({ platformId, log }: { platformId: string, l
 }
 
 async function deleteWorkspaces({ platformId, projects, log }: DeleteWorkspacesParams): Promise<void> {
-    await unshareConnections({
-        platformId,
-        projectIds: projects.map((project) => project.id),
-        connectionIds: projects.flatMap(sharedConnectionIdsOf),
+    const projectIds = projects.map((project) => project.id)
+    const deletedIds = await transaction(async (entityManager) => {
+        await unshareConnections({ platformId, projectIds, connectionIds: projects.flatMap(sharedConnectionIdsOf), entityManager })
+        const result = await projectRepo(entityManager)
+            .createQueryBuilder()
+            .softDelete()
+            .where('"platformId" = :platformId', { platformId })
+            .andWhere('id IN (:...projectIds)', { projectIds })
+            .returning('id')
+            .execute()
+        return UpdatedRows.parse(result.raw ?? []).map((row) => row.id)
     })
-    for (const project of projects) {
-        await platformProjectService(log).markForDeletion({ id: project.id, platformId })
-    }
+    await Promise.all(deletedIds.map((id) => platformProjectJobs.scheduleHardDeleteProjectJob({ id, platformId, log })))
 }
 
 function isEvalWorkspace(project: Pick<Project, 'displayName' | 'metadata'>): boolean {
@@ -97,11 +120,11 @@ async function shareConnections({ platformId, fromProjectId, toProjectId, entity
     return UpdatedRows.parse(result.raw ?? []).map((row) => row.id)
 }
 
-async function unshareConnections({ platformId, projectIds, connectionIds }: UnshareConnectionsParams): Promise<void> {
+async function unshareConnections({ platformId, projectIds, connectionIds, entityManager }: UnshareConnectionsParams): Promise<void> {
     if (connectionIds.length === 0) {
         return
     }
-    await appConnectionsRepo()
+    await appConnectionsRepo(entityManager)
         .createQueryBuilder()
         .update()
         .set({ projectIds: () => 'ARRAY(SELECT kept.id FROM unnest("projectIds") WITH ORDINALITY AS kept(id, position) WHERE kept.id <> ALL(ARRAY[:...projectIds]::varchar[]) ORDER BY kept.position)' })
@@ -115,6 +138,8 @@ const EVAL_WORKSPACE_NAME_PREFIX = 'eval-'
 const EVAL_WORKSPACE_METADATA_KEY = 'evalWorkspace'
 const SHARED_CONNECTION_IDS_METADATA_KEY = 'sharedConnectionIds'
 const STALE_WORKSPACE_AGE_MINUTES = 60
+const STALE_SWEEP_BATCH_SIZE = 20
+const projectPlanRepo = repoFactory<ProjectPlan>(ProjectPlanEntity)
 const SharedConnectionIds = z.array(z.string()).catch([])
 const UpdatedRows = z.array(z.object({ id: z.string() }))
 
@@ -126,6 +151,7 @@ type ResolveBaseProjectParams = {
 
 type CreateWorkspaceParams = {
     platformId: string
+    ownerId: string
     baseProjectId: string
 }
 
@@ -151,4 +177,5 @@ type UnshareConnectionsParams = {
     platformId: string
     projectIds: string[]
     connectionIds: string[]
+    entityManager: EntityManager
 }

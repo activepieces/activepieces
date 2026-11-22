@@ -94,7 +94,7 @@ const agentEvalController: FastifyPluginAsyncZod = async (app) => {
         if (isNil(credentials.mcpServerUrl) || isNil(credentials.mcpToken)) {
             return reply.status(StatusCodes.SERVICE_UNAVAILABLE).send({ message: 'Could not issue MCP credentials on this instance' })
         }
-        const { data: project, error } = await tryCatch(() => workspaces.create({ platformId: platform.id, baseProjectId: baseProject.id }))
+        const { data: project, error } = await tryCatch(() => workspaces.create({ platformId: platform.id, ownerId: platform.ownerId, baseProjectId: baseProject.id }))
         if (!isNil(error)) {
             request.log.warn({ error, platform: { id: platform.id } }, 'Failed to create an eval workspace')
             return reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ message: `Could not create an eval workspace: ${error.message}` })

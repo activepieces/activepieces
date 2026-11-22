@@ -1,11 +1,13 @@
 import { AppConnection, Project } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import * as appConnectionServiceModule from '../../../../src/app/app-connection/app-connection-service/app-connection-service'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { encryptUtils } from '../../../../src/app/helper/encryption'
+import * as projectRepoModule from '../../../../src/app/project/project-repo'
 import { db } from '../../../helpers/db'
-import { createMockConnection } from '../../../helpers/mocks'
+import { createMockConnection, createMockProject } from '../../../helpers/mocks'
 import { createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
@@ -13,9 +15,10 @@ const WORKSPACE_URL = '/api/v1/agents/eval/workspace'
 
 let app: FastifyInstance
 let previousEnvironment: string | undefined
+let contextsCreated = 0
 
 beforeAll(async () => {
-    app = await setupTestEnvironment()
+    app = await setupTestEnvironment({ fresh: true })
 })
 
 beforeEach(() => {
@@ -24,6 +27,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+    vi.restoreAllMocks()
     if (previousEnvironment === undefined) {
         delete process.env['AP_ENVIRONMENT']
     }
@@ -89,6 +93,72 @@ describe('eval workspace', () => {
         expect(await connectionProjectIds(connection.id)).toEqual([ctx.project.id, second.projectId])
     })
 
+    it('sweeps at most a bounded batch of the oldest stale workspaces per create', async () => {
+        const ctx = await context()
+        const stale = Array.from({ length: 21 }, (_, index) => createMockProject({
+            platformId: ctx.platform.id,
+            ownerId: ctx.user.id,
+            displayName: `eval-stale${index}`,
+            metadata: { evalWorkspace: true, sharedConnectionIds: [] },
+            created: new Date(Date.now() - (3 * 60 * 60 * 1000) + index * 1000).toISOString(),
+        }))
+        await db.save('project', stale)
+
+        const created = await evalRequest({ method: 'POST', url: WORKSPACE_URL, body: { baseProjectId: ctx.project.id } })
+        expect(created.statusCode).toBe(StatusCodes.OK)
+
+        const remaining = await Promise.all(stale.map((project) => findProject(project.id)))
+        expect(remaining.slice(0, 20).every((project) => project?.deleted !== null)).toBe(true)
+        expect(remaining[20]?.deleted).toBeNull()
+    })
+
+    it('leaves nothing behind when creating a workspace fails midway', async () => {
+        const ctx = await context()
+        const connection = await saveConnection({ ctx })
+        const originalConnectionsRepo = appConnectionServiceModule.appConnectionsRepo
+        vi.spyOn(appConnectionServiceModule, 'appConnectionsRepo').mockImplementation((entityManager) => {
+            if (entityManager) {
+                throw new Error('forced failure')
+            }
+            return originalConnectionsRepo(entityManager)
+        })
+
+        const response = await evalRequest({ method: 'POST', url: WORKSPACE_URL, body: { baseProjectId: ctx.project.id } })
+        vi.restoreAllMocks()
+
+        expect(response.statusCode).toBe(StatusCodes.INTERNAL_SERVER_ERROR)
+
+        const evalProjects = await databaseConnection().getRepository<Project>('project').createQueryBuilder('project')
+            .where('project."platformId" = :platformId', { platformId: ctx.platform.id })
+            .andWhere('project."displayName" LIKE \'eval-%\'')
+            .withDeleted()
+            .getCount()
+        expect(evalProjects).toBe(0)
+        expect(await connectionProjectIds(connection.id)).toEqual([ctx.project.id])
+    })
+
+    it('keeps the connections shared when deleting a workspace fails midway', async () => {
+        const ctx = await context()
+        const connection = await saveConnection({ ctx })
+        const { projectId } = (await evalRequest({ method: 'POST', url: WORKSPACE_URL, body: { baseProjectId: ctx.project.id } })).json()
+
+        const originalProjectRepo = projectRepoModule.projectRepo
+        vi.spyOn(projectRepoModule, 'projectRepo').mockImplementation((entityManager) => {
+            if (entityManager) {
+                throw new Error('forced failure')
+            }
+            return originalProjectRepo(entityManager)
+        })
+
+        const response = await evalRequest({ method: 'DELETE', url: `${WORKSPACE_URL}/${projectId}` })
+        vi.restoreAllMocks()
+
+        expect(response.statusCode).toBeGreaterThanOrEqual(StatusCodes.INTERNAL_SERVER_ERROR)
+
+        expect((await findProject(projectId))?.deleted).toBeNull()
+        expect(await connectionProjectIds(connection.id)).toEqual([ctx.project.id, projectId])
+    })
+
     it('refuses to delete a project the eval workspace endpoint did not create', async () => {
         const ctx = await context()
 
@@ -129,7 +199,10 @@ describe('eval workspace', () => {
 })
 
 async function context(): Promise<TestContext> {
-    return createTestContext(app, { plan: { agentsEnabled: true, chatEnabled: true } })
+    const ctx = await createTestContext(app, { plan: { agentsEnabled: true, chatEnabled: true } })
+    contextsCreated += 1
+    await db.update('platform', ctx.platform.id, { created: new Date(Date.UTC(2000, 0, 1) - contextsCreated * 24 * 60 * 60 * 1000).toISOString() })
+    return ctx
 }
 
 async function saveConnection({ ctx, projectIds }: { ctx: TestContext, projectIds?: string[] }): Promise<AppConnection> {

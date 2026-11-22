@@ -77,6 +77,8 @@ async function run({ evalCase, recordedToolCalls, mcp, modelId, auth, mode, seed
     const rejected = [...warnings, ...rejectedToolParts(parts)]
     const toolCalls = turnToolCalls(parts)
     const transcript = timedOut ? `${renderTranscript(parts)}\n(the turn did not finish within ${timeoutMs / 1000}s)` : renderTranscript(parts)
+    const elapsedMs = Date.now() - startedAt
+    const metrics = recorder.summarize({ toolCalls, rejectedToolCalls: rejected.length })
     const flowsAfter = isNil(live) ? '' : await renderFlowsAfter({ mcp, toolCalls })
     return {
         before,
@@ -88,10 +90,10 @@ async function run({ evalCase, recordedToolCalls, mcp, modelId, auth, mode, seed
         costUsd: costUsd(),
         steps,
         timedOut,
-        elapsedMs: Date.now() - startedAt,
+        elapsedMs,
         cardsShown: user?.cardsShown() ?? [],
         notes: [...notes],
-        metrics: recorder.summarize({ toolCalls, rejectedToolCalls: rejected.length }),
+        metrics,
     }
 }
 
@@ -297,7 +299,17 @@ function changedFlowIdsOf(call: TurnToolCall): string[] {
     const fromInput = isObject(input) && typeof input['flowId'] === 'string' ? [input['flowId']] : []
     const structured = isObject(call.output) && isObject(call.output['structuredContent']) ? call.output['structuredContent'] : {}
     const fromOutput = typeof structured['flowId'] === 'string' ? [structured['flowId']] : []
+    if (toolName === DUPLICATE_FLOW_TOOL) {
+        return fromOutput.length > 0 ? fromOutput : duplicatedFlowId(call)
+    }
     return [...fromInput, ...fromOutput]
+}
+
+function duplicatedFlowId(call: TurnToolCall): string[] {
+    const text = contentText(isObject(call.output) ? call.output['content'] : null) ?? ''
+    const copyLine = text.split('\n').map((line) => line.trim()).find((line) => line.startsWith(DUPLICATE_COPY_PREFIX))
+    const copyId = copyLine?.match(TRAILING_ID_PATTERN)?.[1]
+    return isNil(copyId) ? [] : [copyId]
 }
 
 async function resolveAuth(): Promise<Record<string, unknown>> {
@@ -344,6 +356,9 @@ const MINTED_KEY_LIMIT_USD = 25
 const TURN_TIMEOUT_MS = 5 * 60_000
 const LIVE_TOOL_FIELD_MAX = 2_000
 const FLOW_STRUCTURE_TOOL = 'ap_flow_structure'
+const DUPLICATE_FLOW_TOOL = 'ap_duplicate_flow'
+const DUPLICATE_COPY_PREFIX = 'Copy:'
+const TRAILING_ID_PATTERN = /\(id: ([A-Za-z0-9_-]+)\)$/
 const SEEDED_MARK = '--- SEEDED BEFORE THE TURN (the test harness created these in the project before the user message; compare them with the flows after the turn) ---'
 const FLOWS_AFTER_MARK = '--- FLOWS AFTER THE TURN (read by the test harness once the turn ended) ---'
 const SCHEMA_DUMP_MARK = '\nInput schema:'
