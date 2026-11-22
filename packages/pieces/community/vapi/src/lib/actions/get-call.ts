@@ -1,6 +1,19 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { vapiAuth } from '../auth';
-import { createVapiClient } from '../common/client';
+import { vapiApi, vapiUtils } from '../common/vapi-api';
+import { vapiOutputSchemas } from '../common/output-schemas';
+
+async function fetchCall({ apiKey, callId }: { apiKey: string; callId: string }): Promise<Record<string, unknown>> {
+  const id = vapiUtils.requireId({ value: callId, fieldName: 'Call ID' });
+  const call = await vapiApi.request<unknown>({
+    apiKey,
+    method: HttpMethod.GET,
+    path: `/call/${id}`,
+    operation: 'get call',
+  });
+  return vapiUtils.cleanCall(call);
+}
 
 export const getCall = createAction({
   auth: vapiAuth,
@@ -8,8 +21,8 @@ export const getCall = createAction({
   classification: 'READ',
   displayName: 'Get Call',
   description: 'Retrieve the details of a specific call by its ID.',
-  audience: 'both',
-  aiMetadata: { description: 'Look up a single Vapi call by its unique ID and return its details (status, transcript, outcome, and related metadata). Use to check the result or progress of a call you previously initiated. Read-only and idempotent.', idempotent: true },
+  audience: 'human',
+  outputSchema: vapiOutputSchemas.call,
   props: {
     callId: Property.ShortText({
       displayName: 'Call ID',
@@ -18,8 +31,8 @@ export const getCall = createAction({
     }),
   },
   async run(context) {
-    const client = createVapiClient(context.auth.secret_text);
-    const call = await client.calls.get({ id: context.propsValue.callId });
-    return call;
+    return fetchCall({ apiKey: context.auth.secret_text, callId: context.propsValue.callId });
   },
 });
+
+export const callFetcher = { fetch: fetchCall };
