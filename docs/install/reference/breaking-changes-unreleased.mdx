@@ -8,6 +8,9 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Bokio: five actions are no longer available to AI agents, and invalid enum values are corrected
+Create Invoice, Add Line Item to Invoice, Create an Item, Create a Journal Entry and Update an Invoice are now human-only steps. AI agents use the new tools instead: Create Draft Invoice, Add Invoice Line Item, Create Item, Create Journal Entry and Update Draft Invoice. Product type `service` is now sent as `services`, and item type `text` as `descriptionOnlyItem` (Bokio rejected the old values, so steps that used them were already failing). Update an Invoice now keeps any field you leave blank, including line items, instead of overwriting the whole invoice. The Invoice Type field on Create Invoice and Update an Invoice now only offers Invoice, because Bokio rejects Cash Invoice on create; an old Cash Invoice value is ignored. Create a Journal Entry now requires a title and balanced lines (Bokio already rejected entries without them).
+
 #### Fireflies.ai 0.2.0: three find actions are no longer AI agent tools, and Upload Audio returns a smaller output
 
 **Find Meeting by ID**, **Find Recent Meeting** and **Find Meeting by Call Details** are now shown only in the flow builder. AI agents and MCP clients get **Get Meeting**, **Get Meeting Summary** and **Find Meetings** instead.
