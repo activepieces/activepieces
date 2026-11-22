@@ -65,7 +65,7 @@ export class ProjectRolesPage extends BasePage {
     await this.enterName(name);
     const refused = this.page.waitForResponse((response) => isRoleCreate(response.request()));
     await this.createButton().click();
-    expect((await refused).status(), `The server accepted the taken name ${name}`).toBe(400);
+    expect((await refused).status(), `The server did not refuse the taken name ${name}`).toBe(409);
     await expect(this.createDialog()).toBeVisible();
   }
 
