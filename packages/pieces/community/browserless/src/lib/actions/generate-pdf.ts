@@ -40,7 +40,7 @@ export const generatePdf = createAction({
             display: 'section',
             label: 'Header and footer',
             icon: 'text',
-            props: ['displayHeaderFooter'],
+            props: ['displayHeaderFooter', 'headerTemplate', 'footerTemplate'],
         },
         {
             key: 'wait',
@@ -129,12 +129,12 @@ export const generatePdf = createAction({
         }),
         headerTemplate: Property.LongText({
             displayName: 'Header Template',
-            description: 'HTML for the header on every page.',
+            description: 'HTML for the header on each page; needs Show Header and Footer.',
             required: false,
         }),
         footerTemplate: Property.LongText({
             displayName: 'Footer Template',
-            description: 'HTML for the footer on every page.',
+            description: 'HTML for the footer on each page; needs Show Header and Footer.',
             required: false,
         }),
         displayHeaderFooter: Property.Checkbox({
@@ -142,7 +142,6 @@ export const generatePdf = createAction({
             description: 'Add a header and footer to every page.',
             required: false,
             defaultValue: false,
-            reveals: ['headerTemplate', 'footerTemplate'],
         }),
         scale: Property.Number({
             displayName: 'Scale',
