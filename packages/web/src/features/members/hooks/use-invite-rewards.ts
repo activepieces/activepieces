@@ -20,18 +20,13 @@ export function useInviteRewards(): InviteRewardsState {
     enabled: edition === ApEdition.CLOUD && isPlatformAdmin,
     staleTime: INVITE_REWARDS_STALE_MS,
     refetchInterval: ({ state }) => {
-      const rewards = state.data?.inviteRewards;
-      return hasPendingInvites &&
-        !isNil(rewards) &&
-        rewards.rewardsEarned < rewards.maxRewards
+      const left = state.data?.rewardedInvitesLeft;
+      return hasPendingInvites && !isNil(left) && left > 0
         ? INVITE_REWARDS_STALE_MS
         : false;
     },
   });
-  const inviteRewards = data?.inviteRewards ?? null;
-  const maxRewards = inviteRewards?.maxRewards ?? 0;
-  const rewardsEarned = inviteRewards?.rewardsEarned ?? 0;
-  const rewardsLeft = Math.max(0, maxRewards - rewardsEarned);
+  const rewardedInvitesLeft = data?.rewardedInvitesLeft ?? null;
 
   const seatLimits = [
     platform.plan.usersLimit,
@@ -43,22 +38,20 @@ export function useInviteRewards(): InviteRewardsState {
     : Math.max(0, usersLimit - (platform.usage?.users ?? 0));
 
   return {
-    visible: !isNil(inviteRewards) && rewardsLeft > 0 && seatsLeft > 0,
+    visible:
+      !isNil(rewardedInvitesLeft) && rewardedInvitesLeft > 0 && seatsLeft > 0,
     platformId: platform.id,
-    creditsPerInvite: inviteRewards?.creditsPerInvite ?? 0,
-    rewardsEarned,
-    maxRewards,
-    rewardsLeft,
+    creditsPerInvite: INVITE_REWARD_CREDITS,
+    rewardedInvitesLeft,
   };
 }
 
 const INVITE_REWARDS_STALE_MS = 60_000;
+const INVITE_REWARD_CREDITS = 1000;
 
 export type InviteRewardsState = {
   visible: boolean;
   platformId: string;
   creditsPerInvite: number;
-  rewardsEarned: number;
-  maxRewards: number;
-  rewardsLeft: number;
+  rewardedInvitesLeft: number | null;
 };

@@ -4,7 +4,7 @@ import { render } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const toastSuccess = vi.hoisted(() => vi.fn());
-const rewards = vi.hoisted(() => ({ rewardsEarned: 1 }));
+const rewards = vi.hoisted(() => ({ rewardedInvitesLeft: 3 }));
 
 vi.mock('i18next', async (importOriginal) => ({
   ...(await importOriginal<typeof import('i18next')>()),
@@ -17,9 +17,8 @@ vi.mock('@/components/providers/telemetry-provider', () => ({
 vi.mock('@/features/members/hooks/use-invite-rewards', () => ({
   useInviteRewards: () => ({
     platformId: 'platform_1',
-    maxRewards: 4,
     creditsPerInvite: 1000,
-    rewardsEarned: rewards.rewardsEarned,
+    rewardedInvitesLeft: rewards.rewardedInvitesLeft,
   }),
 }));
 
@@ -29,7 +28,7 @@ describe('InviteRewardNotifier', () => {
   beforeEach(() => {
     toastSuccess.mockReset();
     localStorage.clear();
-    rewards.rewardsEarned = 1;
+    rewards.rewardedInvitesLeft = 3;
   });
 
   it('stays quiet the first time it sees a platform', () => {
@@ -39,23 +38,23 @@ describe('InviteRewardNotifier', () => {
   });
 
   it('announces a reward earned since the last visit', () => {
-    localStorage.setItem('ap-invite-rewards-seen-count:platform_1', '1');
-    rewards.rewardsEarned = 2;
+    localStorage.setItem('ap-invite-rewards-seen-left:platform_1', '3');
+    rewards.rewardedInvitesLeft = 2;
 
     renderNotifier();
 
     expect(toastSuccess).toHaveBeenCalledTimes(1);
   });
 
-  it('stays quiet when the count went down, so a restarted count never announces rewards that were not paid', () => {
-    localStorage.setItem('ap-invite-rewards-seen-count:platform_1', '4');
-    rewards.rewardsEarned = 2;
+  it('stays quiet when the rewards left went up, and remembers the new count', () => {
+    localStorage.setItem('ap-invite-rewards-seen-left:platform_1', '0');
+    rewards.rewardedInvitesLeft = 4;
 
     renderNotifier();
 
     expect(toastSuccess).not.toHaveBeenCalled();
     expect(
-      localStorage.getItem('ap-invite-rewards-seen-count:platform_1'),
+      localStorage.getItem('ap-invite-rewards-seen-left:platform_1'),
     ).toBe('4');
   });
 });

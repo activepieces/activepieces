@@ -1,6 +1,6 @@
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjs, wideEvent } from '@activepieces/server-utils'
-import { AiCreditsAutoTopUpState, ApEdition, AppSumoCreditsBillableFeature, AutoTopUpConfig, ConsumableFeatureId, CreditsBillableFeature, FeatureId, InviteRewardsInfo, isConsumableFeatureId, isEligibleForSelfServeTrial, notStartedSelfServeTrial, PlanName, RewardFeatureId, SeatsBillableFeature, SelfServeTrialDates, SelfServeTrialInfo, SelfServeTrialState, UnconsumableFeatureId } from '@activepieces/shared'
+import { AiCreditsAutoTopUpState, ApEdition, AppSumoCreditsBillableFeature, AutoTopUpConfig, ConsumableFeatureId, CreditsBillableFeature, FeatureId, isConsumableFeatureId, isEligibleForSelfServeTrial, notStartedSelfServeTrial, PlanName, RewardFeatureId, SeatsBillableFeature, SelfServeTrialDates, SelfServeTrialInfo, SelfServeTrialState, UnconsumableFeatureId } from '@activepieces/shared'
 import { AutumnError, type GetCustomerResponse } from 'autumn-js'
 import { FastifyBaseLogger } from 'fastify'
 import { AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS, getAutumnEnrollLockKey, getBillingEnforcedKey, getBillingOverviewFetchLockKey, getBillingOverviewKey, getCustomerStateFetchLockKey, getCustomerStateMissKey, getCustomerStateRefreshKey, getEntitlementsRefreshKey, getSelfServeTrialEndedRefreshKey, getSelfServeTrialStartLockKey } from '../../../../database/redis/keys'
@@ -28,7 +28,6 @@ const BILLING_OVERVIEW_TTL_SECONDS = 5 * 60
 const USAGE_EVENTS_PAGE_SIZE = 5000
 const SELF_SERVE_TRIAL_ENDED_REFRESH_CLAIM_SECONDS = 30 * 24 * 60 * 60
 const TRIAL_DURATION_UNITS: Partial<Record<string, 'day' | 'month' | 'year'>> = { day: 'day', month: 'month', year: 'year' }
-const INVITE_REWARD_CREDITS = 1000
 
 export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider => ({
     listPlans: async (platformId: string) => {
@@ -364,16 +363,12 @@ function toCreditsResetInterval(items: AutumnPlanItems): string | null {
     return creditsItem?.reset?.interval ?? null
 }
 
-function toInviteRewards(customer: GetCustomerResponse): InviteRewardsInfo | null {
+function toRewardedInvitesLeft(customer: GetCustomerResponse): number | null {
     const rewardedInvites = customer.balances[RewardFeatureId.REWARDED_INVITES]
     if (system.getEdition() !== ApEdition.CLOUD || isNil(rewardedInvites)) {
         return null
     }
-    return {
-        maxRewards: rewardedInvites.granted,
-        rewardsEarned: Math.min(rewardedInvites.usage, rewardedInvites.granted),
-        creditsPerInvite: INVITE_REWARD_CREDITS,
-    }
+    return Math.max(0, rewardedInvites.granted - rewardedInvites.usage)
 }
 
 function toSeatBreakdown(customer: GetCustomerResponse): { includedSeats: number | null, additionalSeats: number | null } {
@@ -611,7 +606,7 @@ async function fetchBillingOverview(log: FastifyBaseLogger, platformId: string):
         ...toBillingInfo(customer, monthStart, monthEnd),
         ...toSeatBreakdown(customer),
         ...toBillableFeatures(customer),
-        inviteRewards: toInviteRewards(customer),
+        rewardedInvitesLeft: toRewardedInvitesLeft(customer),
         unavailable: false,
     }
     await distributedStore.put(getBillingOverviewKey(platformId), overview, BILLING_OVERVIEW_TTL_SECONDS)

@@ -42,30 +42,30 @@ beforeEach(() => {
     edition.current = ApEdition.CLOUD
 })
 
-describe('billing overview invite rewards', () => {
-    it('reads the rewarded invites used from the balance', async () => {
+describe('billing overview rewarded invites left', () => {
+    it('reads the rewarded invites left from the balance', async () => {
         mockGetCustomer.mockResolvedValue(customer({ rewarded_invites_count: { granted: 4, usage: 1 } }))
 
-        expect((await overview()).inviteRewards).toEqual({ maxRewards: 4, rewardsEarned: 1, creditsPerInvite: 1000 })
+        expect((await overview()).rewardedInvitesLeft).toBe(3)
     })
 
-    it('never counts past the plan', async () => {
+    it('never goes below zero', async () => {
         mockGetCustomer.mockResolvedValue(customer({ rewarded_invites_count: { granted: 4, usage: 6 } }))
 
-        expect((await overview()).inviteRewards).toEqual({ maxRewards: 4, rewardsEarned: 4, creditsPerInvite: 1000 })
+        expect((await overview()).rewardedInvitesLeft).toBe(0)
     })
 
-    it('has no invite rewards outside Cloud, even on a plan with rewarded invites', async () => {
+    it('is null outside Cloud, even on a plan with rewarded invites', async () => {
         edition.current = ApEdition.ENTERPRISE
         mockGetCustomer.mockResolvedValue(customer({ rewarded_invites_count: { granted: 4, usage: 1 } }))
 
-        expect((await overview()).inviteRewards).toBeNull()
+        expect((await overview()).rewardedInvitesLeft).toBeNull()
     })
 
-    it('has no invite rewards when the plan carries no rewarded invites', async () => {
+    it('is null when the plan carries no rewarded invites', async () => {
         mockGetCustomer.mockResolvedValue(customer({}))
 
-        expect((await overview()).inviteRewards).toBeNull()
+        expect((await overview()).rewardedInvitesLeft).toBeNull()
     })
 })
 

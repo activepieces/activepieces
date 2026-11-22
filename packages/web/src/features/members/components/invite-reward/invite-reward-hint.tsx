@@ -20,7 +20,7 @@ export function InviteRewardHint() {
           'Each new teammate who joins earns you {credits} credits ({left, plural, =1 {1 reward left} other {# rewards left}}).',
           {
             credits: billingUtils.formatCredits(rewards.creditsPerInvite),
-            left: rewards.rewardsLeft,
+            left: rewards.rewardedInvitesLeft,
           },
         )}
       </span>

@@ -8,7 +8,6 @@ import { toast } from 'sonner';
 
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { refreshBillingCaches } from '@/features/billing/hooks/billing-hooks';
 import { billingUtils } from '@/features/billing/utils/billing-utils';
 import { timedDismissal } from '@/lib/timed-dismissal';
@@ -49,18 +48,10 @@ export function InviteRewardCard() {
               <X className="size-3.5" />
             </Button>
           </div>
-          <Progress
-            aria-label={t('Invite rewards earned')}
-            value={billingUtils.percentUsed({
-              used: rewards.rewardsEarned,
-              total: rewards.maxRewards,
-            })}
-          />
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs text-gray-11">
-              {t('{claimed} of {max} rewards earned', {
-                claimed: rewards.rewardsEarned,
-                max: rewards.maxRewards,
+              {t('{left, plural, =1 {1 reward left} other {# rewards left}}', {
+                left: rewards.rewardedInvitesLeft,
               })}
             </span>
             <Button size="xs" onClick={openInvite}>
@@ -93,7 +84,7 @@ export function InviteRewardBillingLink() {
     InviteRewardSurface.BILLING_CREDITS,
   );
   const credits = billingUtils.formatCredits(
-    rewards.rewardsLeft * rewards.creditsPerInvite,
+    (rewards.rewardedInvitesLeft ?? 0) * rewards.creditsPerInvite,
   );
 
   return (
@@ -107,9 +98,7 @@ export function InviteRewardBillingLink() {
             onClick={openInvite}
           >
             <UserPlus />
-            {rewards.rewardsEarned > 0
-              ? t('Invite teammates, earn {credits} more', { credits })
-              : t('Invite teammates, earn {credits} credits', { credits })}
+            {t('Invite teammates, earn {credits} credits', { credits })}
             <ArrowRight className="ms-auto" />
           </Button>
         </div>
@@ -120,23 +109,23 @@ export function InviteRewardBillingLink() {
 }
 
 export function InviteRewardNotifier() {
-  const { platformId, rewardsEarned, maxRewards, creditsPerInvite } =
+  const { platformId, rewardedInvitesLeft, creditsPerInvite } =
     useInviteRewards();
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (maxRewards === 0) {
+    if (isNil(rewardedInvitesLeft)) {
       return;
     }
-    const seen = readSeenRewardCount(platformId);
-    if (!isNil(seen) && rewardsEarned <= seen) {
+    const seen = readSeenRewardedInvitesLeft(platformId);
+    if (seen === rewardedInvitesLeft) {
       return;
     }
-    writeSeenRewardCount({ platformId, count: rewardsEarned });
-    if (isNil(seen)) {
+    writeSeenRewardedInvitesLeft({ platformId, left: rewardedInvitesLeft });
+    if (isNil(seen) || rewardedInvitesLeft > seen) {
       return;
     }
-    const newRewards = rewardsEarned - seen;
+    const newRewards = seen - rewardedInvitesLeft;
     toast.success(
       t('Congrats 🎉 You got {credits} extra credits', {
         credits: billingUtils.formatCredits(newRewards * creditsPerInvite),
@@ -149,7 +138,7 @@ export function InviteRewardNotifier() {
       },
     );
     refreshBillingCaches(queryClient);
-  }, [platformId, rewardsEarned, maxRewards, creditsPerInvite, queryClient]);
+  }, [platformId, rewardedInvitesLeft, creditsPerInvite, queryClient]);
 
   return null;
 }
@@ -162,7 +151,10 @@ export function useInviteOffer(surface: InviteRewardSurface): InviteOffer {
   const openInvite = () => {
     capture({
       name: TelemetryEventName.INVITE_REWARD_OFFER_CLICKED,
-      payload: { surface, rewardsEarned: rewards.rewardsEarned },
+      payload: {
+        surface,
+        rewardedInvitesLeft: rewards.rewardedInvitesLeft ?? 0,
+      },
     });
     setDialogMounted(true);
     setInviteOpen(true);
@@ -177,7 +169,7 @@ function seenStorageKey(platformId: string): string {
   return `${SEEN_STORAGE_PREFIX}:${platformId}`;
 }
 
-function readSeenRewardCount(platformId: string): number | null {
+function readSeenRewardedInvitesLeft(platformId: string): number | null {
   const { data } = tryCatchSync((): unknown =>
     localStorage.getItem(seenStorageKey(platformId)),
   );
@@ -185,19 +177,19 @@ function readSeenRewardCount(platformId: string): number | null {
   return Number.isInteger(count) ? count : null;
 }
 
-function writeSeenRewardCount({
+function writeSeenRewardedInvitesLeft({
   platformId,
-  count,
+  left,
 }: {
   platformId: string;
-  count: number;
+  left: number;
 }): void {
   tryCatchSync(() =>
-    localStorage.setItem(seenStorageKey(platformId), String(count)),
+    localStorage.setItem(seenStorageKey(platformId), String(left)),
   );
 }
 
-const SEEN_STORAGE_PREFIX = 'ap-invite-rewards-seen-count';
+const SEEN_STORAGE_PREFIX = 'ap-invite-rewards-seen-left';
 const CARD_DISMISSAL_DAYS = 7;
 const cardDismissal = timedDismissal.create({
   storageKeyPrefix: 'ap-invite-reward-card-dismissed',

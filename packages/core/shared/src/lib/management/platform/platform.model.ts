@@ -361,13 +361,6 @@ export const ProjectCreditUsage = z.object({
 })
 export type ProjectCreditUsage = z.infer<typeof ProjectCreditUsage>
 
-export const InviteRewardsInfo = z.object({
-    maxRewards: z.number(),
-    rewardsEarned: z.number(),
-    creditsPerInvite: z.number(),
-})
-export type InviteRewardsInfo = z.infer<typeof InviteRewardsInfo>
-
 export const PlatformBillingInformation = z.object({
     plan: PlatformPlan,
     usage: PlatformUsage,
@@ -388,6 +381,6 @@ export const PlatformBillingInformation = z.object({
     includedSeats: Nullable(z.number()),
     additionalSeats: Nullable(z.number()),
     selfServeTrial: SelfServeTrialInfo,
-    inviteRewards: Nullable(InviteRewardsInfo),
+    rewardedInvitesLeft: Nullable(z.number()),
 })
 export type PlatformBillingInformation = z.infer<typeof PlatformBillingInformation>

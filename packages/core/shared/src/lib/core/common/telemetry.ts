@@ -81,7 +81,7 @@ type InviteAccepted = {
 
 type InviteRewardOfferClicked = {
     surface: InviteRewardSurface
-    rewardsEarned: number
+    rewardedInvitesLeft: number
 }
 
 type InviteRewardGranted = {

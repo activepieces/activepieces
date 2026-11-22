@@ -4,7 +4,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const capture = vi.fn();
-const offer = { visible: true, rewardsEarned: 2 };
+const offer = { visible: true, rewardedInvitesLeft: 2 };
 
 vi.mock('i18next', async (importOriginal) => ({
   ...(await importOriginal<typeof import('i18next')>()),
@@ -19,9 +19,7 @@ vi.mock('@/features/members/hooks/use-invite-rewards', () => ({
     visible: offer.visible,
     platformId: 'platform_1',
     creditsPerInvite: 1000,
-    rewardsEarned: offer.rewardsEarned,
-    maxRewards: 4,
-    rewardsLeft: 4 - offer.rewardsEarned,
+    rewardedInvitesLeft: offer.rewardedInvitesLeft,
   }),
 }));
 vi.mock('@/features/members/components/invite-user/invite-user-dialog', () => ({
@@ -51,7 +49,7 @@ describe('invite reward offer tracking', () => {
     capture.mockReset();
     localStorage.clear();
     offer.visible = true;
-    offer.rewardsEarned = 2;
+    offer.rewardedInvitesLeft = 2;
   });
 
   it('records a sidebar card click and opens the invite dialog', () => {
@@ -61,7 +59,10 @@ describe('invite reward offer tracking', () => {
 
     expect(capture).toHaveBeenCalledWith({
       name: TelemetryEventName.INVITE_REWARD_OFFER_CLICKED,
-      payload: { surface: InviteRewardSurface.SIDEBAR_CARD, rewardsEarned: 2 },
+      payload: {
+        surface: InviteRewardSurface.SIDEBAR_CARD,
+        rewardedInvitesLeft: 2,
+      },
     });
     screen.getByText('invite dialog');
   });
@@ -122,7 +123,7 @@ describe('invite reward offer tracking', () => {
 
     fireEvent.click(
       screen.getByRole('button', {
-        name: 'Invite teammates, earn {credits} more',
+        name: 'Invite teammates, earn {credits} credits',
       }),
     );
 
@@ -130,24 +131,10 @@ describe('invite reward offer tracking', () => {
       name: TelemetryEventName.INVITE_REWARD_OFFER_CLICKED,
       payload: {
         surface: InviteRewardSurface.BILLING_CREDITS,
-        rewardsEarned: 2,
+        rewardedInvitesLeft: 2,
       },
     });
     screen.getByText('invite dialog');
-  });
-
-  it('offers the full amount on the billing card before any reward is earned', () => {
-    offer.rewardsEarned = 0;
-
-    render(<InviteRewardBillingLink />);
-
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: 'Invite teammates, earn {credits} credits',
-      }),
-    );
-
-    expect(capture).toHaveBeenCalledTimes(1);
   });
 
   it('records a low-credits alert click', () => {
@@ -159,7 +146,7 @@ describe('invite reward offer tracking', () => {
       name: TelemetryEventName.INVITE_REWARD_OFFER_CLICKED,
       payload: {
         surface: InviteRewardSurface.CREDITS_ALERT,
-        rewardsEarned: 2,
+        rewardedInvitesLeft: 2,
       },
     });
   });

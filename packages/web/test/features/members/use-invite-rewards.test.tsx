@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { ApEdition, InviteRewardsInfo } from '@activepieces/shared';
+import { ApEdition } from '@activepieces/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';
 import { ReactNode } from 'react';
@@ -66,33 +66,33 @@ describe('useInviteRewards', () => {
   });
 
   it('shows the offer on an eligible platform with rewards and seats left', async () => {
-    getBillingInfo.mockResolvedValue(billingInfo({ rewardsEarned: 1 }));
+    getBillingInfo.mockResolvedValue({ rewardedInvitesLeft: 3 });
 
     const { result } = renderHook(() => useInviteRewards(), { wrapper });
 
     await waitFor(() => expect(result.current.visible).toBe(true));
-    expect(result.current.rewardsEarned).toBe(1);
-    expect(result.current.rewardsLeft).toBe(3);
+    expect(result.current.rewardedInvitesLeft).toBe(3);
+    expect(result.current.creditsPerInvite).toBe(1000);
   });
 
   it('counts rewards left under the cap, however few seats are free', async () => {
     state.activeUsers = 3;
     state.invitedSeats = 1;
-    getBillingInfo.mockResolvedValue(billingInfo({ rewardsEarned: 0 }));
+    getBillingInfo.mockResolvedValue({ rewardedInvitesLeft: 4 });
 
     const { result } = renderHook(() => useInviteRewards(), { wrapper });
 
     await waitFor(() => expect(result.current.visible).toBe(true));
-    expect(result.current.rewardsLeft).toBe(4);
+    expect(result.current.rewardedInvitesLeft).toBe(4);
   });
 
   it('hides the offer once every seat is taken', async () => {
     state.activeUsers = 5;
-    getBillingInfo.mockResolvedValue(billingInfo({ rewardsEarned: 0 }));
+    getBillingInfo.mockResolvedValue({ rewardedInvitesLeft: 4 });
 
     const { result } = renderHook(() => useInviteRewards(), { wrapper });
 
-    await waitFor(() => expect(result.current.maxRewards).toBe(4));
+    await waitFor(() => expect(result.current.rewardedInvitesLeft).toBe(4));
     expect(result.current.visible).toBe(false);
   });
 
@@ -100,11 +100,11 @@ describe('useInviteRewards', () => {
     state.usersLimit = 10;
     state.scheduledUsersLimit = 5;
     state.activeUsers = 5;
-    getBillingInfo.mockResolvedValue(billingInfo({ rewardsEarned: 0 }));
+    getBillingInfo.mockResolvedValue({ rewardedInvitesLeft: 4 });
 
     const { result } = renderHook(() => useInviteRewards(), { wrapper });
 
-    await waitFor(() => expect(result.current.maxRewards).toBe(4));
+    await waitFor(() => expect(result.current.rewardedInvitesLeft).toBe(4));
     expect(result.current.visible).toBe(false);
   });
 
@@ -118,22 +118,22 @@ describe('useInviteRewards', () => {
   });
 
   it('hides the offer once all four rewards are earned', async () => {
-    getBillingInfo.mockResolvedValue(billingInfo({ rewardsEarned: 4 }));
+    getBillingInfo.mockResolvedValue({ rewardedInvitesLeft: 0 });
 
     const { result } = renderHook(() => useInviteRewards(), { wrapper });
 
-    await waitFor(() => expect(result.current.rewardsEarned).toBe(4));
+    await waitFor(() => expect(result.current.rewardedInvitesLeft).toBe(0));
     expect(result.current.visible).toBe(false);
   });
 
   it('offers nothing on a plan without reward slots', async () => {
-    getBillingInfo.mockResolvedValue({ inviteRewards: null });
+    getBillingInfo.mockResolvedValue({ rewardedInvitesLeft: null });
 
     const { result } = renderHook(() => useInviteRewards(), { wrapper });
 
     await waitFor(() => expect(getBillingInfo).toHaveBeenCalled());
     expect(result.current.visible).toBe(false);
-    expect(result.current.maxRewards).toBe(0);
+    expect(result.current.rewardedInvitesLeft).toBeNull();
   });
 
   it('never asks the server outside Cloud', async () => {
@@ -160,11 +160,3 @@ describe('useInviteRewards', () => {
     );
   }
 });
-
-function billingInfo({ rewardsEarned }: { rewardsEarned: number }): {
-  inviteRewards: InviteRewardsInfo;
-} {
-  return {
-    inviteRewards: { maxRewards: 4, rewardsEarned, creditsPerInvite: 1000 },
-  };
-}
