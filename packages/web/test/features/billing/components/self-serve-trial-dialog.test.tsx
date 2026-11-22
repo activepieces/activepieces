@@ -25,7 +25,12 @@ let liveStatus:
 let onStarted: ((status: { state: string }) => void) | undefined;
 const mutate = vi.fn();
 
-vi.mock('i18next', () => ({ t: (key: string) => key }));
+vi.mock('i18next', () => ({
+  t: (key: string, params?: Record<string, unknown>) =>
+    key.replace(/\{(\w+)\}/g, (match, name: string) =>
+      params && name in params ? String(params[name]) : match,
+    ),
+}));
 
 vi.mock('canvas-confetti', () => ({
   default: Object.assign(vi.fn(), { reset: vi.fn() }),
@@ -128,7 +133,7 @@ describe('the start dialog', () => {
     render(dialog());
 
     expect(
-      screen.getByText('Try {feature} free for {days} days'),
+      screen.getByText('Try single sign-on free for 7 days'),
     ).toBeDefined();
   });
 
@@ -138,7 +143,7 @@ describe('the start dialog', () => {
     render(dialog());
 
     expect(
-      screen.getByText('Try the Enterprise plan free for {days} days'),
+      screen.getByText('Try the Enterprise plan free for 7 days'),
     ).toBeDefined();
   });
 });
