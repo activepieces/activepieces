@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { zoomAuth } from '../..';
 import { zoomClient } from '../common/client';
@@ -17,16 +17,33 @@ export const zoomListRecordings = createAction({
     idempotent: true,
   },
   outputSchema: listRecordingsOutputSchema,
+  propertyGroups: [
+    {
+      key: 'dates',
+      display: 'section',
+      label: 'Dates',
+      icon: 'calendar',
+      props: ['recordings_info', 'from', 'to'],
+    },
+  ],
   props: {
+    recordings_info: Property.MarkDown({
+      value: 'Needs a paid Zoom plan with cloud recording. When paging, reuse the From and To of the last run.',
+      variant: MarkdownVariant.INFO,
+    }),
     from: Property.ShortText({
       displayName: 'From Date',
-      description: 'Start date in YYYY-MM-DD format (UTC), for example 2026-10-01.',
+      description: 'Date in UTC.',
+      placeholder: '2026-10-01',
       required: true,
+      width: 'half',
     }),
     to: Property.ShortText({
       displayName: 'To Date',
-      description: 'End date in YYYY-MM-DD format (UTC), at most one month after From Date. Defaults to today, or to one month after From Date if that is earlier. Required with Next Page Token: use the To value from the previous page so every page covers the same dates.',
+      description: 'Up to a month after From Date. Empty: today, or that limit if sooner.',
+      placeholder: '2026-10-31',
       required: false,
+      width: 'half',
     }),
     page_size: zoomProps.pageSize(),
     next_page_token: zoomProps.nextPageToken(),
