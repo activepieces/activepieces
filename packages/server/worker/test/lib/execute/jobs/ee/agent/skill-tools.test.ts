@@ -292,6 +292,19 @@ describe('ap_lazy_tool input schema', () => {
         expect(errorMessageOf(result)).toContain('credits')
     })
 
+    it('accepts the call wrapped in an extra input object, like the step label already does', async () => {
+        await expect(validateWrapped({ surface: chatSurface(), value: { input: { tool: 'ap_add_step', title: 'Your step', input: { value: 'x' } } } })).resolves.toMatchObject({ success: true, value: { tool: 'ap_add_step', input: { value: 'x' } } })
+    })
+
+    it('moves an argument the tool declares from the top level into its input', async () => {
+        await expect(validateWrapped({ surface: chatSurface(), value: { tool: 'ap_add_step', input: {}, value: 'x', stray: 1 } })).resolves.toMatchObject({ success: true, value: { tool: 'ap_add_step', input: { value: 'x' } } })
+    })
+
+    it('still rejects a call that names no tool at all', async () => {
+        const result = await validateWrapped({ surface: chatSurface(), value: { input: { value: 'x' } } })
+        expect(errorMessageOf(result)).toContain('`tool`')
+    })
+
     it('rejects a call without an input object', async () => {
         const result = await validateWrapped({ surface: chatSurface(), value: { tool: 'ap_add_step', input: 'x' } })
         expect(errorMessageOf(result)).toContain('`input` object')

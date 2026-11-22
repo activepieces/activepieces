@@ -122,7 +122,7 @@ function createSkillTools({ registry, surface, guides, loadedSkills, onSkillLoad
             },
         }),
         [LAZY_TOOL_NAME]: tool({
-            description: 'Run any tool by name. `tool` is the tool name and `input` is that tool\'s arguments, shaped exactly by its input schema, both at the top level: {"tool": "ap_validate_flow", "input": {"flowId": "..."}}. Never wrap them in another object. Numbers, booleans and lists keep their JSON types. Always set title, activeTitle and doneTitle on this call: they are the step label the user sees, so name their thing in plain words, never the tool.',
+            description: 'Run any tool by name. `tool` is the tool name and `input` is that tool\'s arguments, shaped exactly by its input schema, both at the top level: {"tool": "ap_validate_flow", "input": {"flowId": "..."}}. Never wrap them in another object, and put every argument inside `input`, even one the tool itself calls input: {"tool": "ap_explore_data", "input": {"pieceName": "...", "actionName": "get_rows", "input": {...}}}. Numbers, booleans and lists keep their JSON types. Always set title, activeTitle and doneTitle on this call: they are the step label the user sees, so name their thing in plain words, never the tool.',
             inputSchema: lazyToolInputSchema({ registry, canAffordPaidTool }),
             execute: async ({ tool: toolName, input }, options: ToolExecutionOptions<undefined>) => {
                 const target = registry[toolName]
@@ -173,7 +173,8 @@ function lazyToolInputSchema({ registry, canAffordPaidTool }: { registry: ToolSe
     const advertised = asSchema(LAZY_TOOL_ADVERTISED_SCHEMA)
     return jsonSchema<LazyToolInput>(async () => plainJsonSchema(await advertised.jsonSchema), {
         validate: async (value) => {
-            const parsed = LAZY_TOOL_OUTER_SCHEMA.safeParse(value)
+            const call = asLazyCall(value)
+            const parsed = LAZY_TOOL_OUTER_SCHEMA.safeParse(call)
             if (!parsed.success) {
                 return { success: false, error: new Error(`Pass the tool name as \`tool\` and its arguments as an \`input\` object: ${parsed.error.message}`) }
             }
@@ -185,13 +186,32 @@ function lazyToolInputSchema({ registry, canAffordPaidTool }: { registry: ToolSe
             if (chatBilling.isPaidTool(toolName) && !canAffordPaidTool()) {
                 return { success: false, error: new Error(paidToolRefusal(toolName)) }
             }
-            const inner = await validateToolInput({ target, input: await withOuterLabels({ target, outer: parsed.data, input }) })
+            const withStrays = await withStrayArguments({ target, outer: call, input })
+            const inner = await validateToolInput({ target, input: await withOuterLabels({ target, outer: parsed.data, input: withStrays }) })
             if (!inner.success) {
                 return { success: false, error: new Error(`Invalid input for "${toolName}": ${inner.error.message}\nInput schema: ${JSON.stringify(await jsonSchemaOf(target))}`) }
             }
             return { success: true, value: { ...parsed.data, input: inner.value } }
         },
     })
+}
+
+function asLazyCall(value: unknown): unknown {
+    if (!isObject(value) || typeof value['tool'] === 'string') {
+        return value
+    }
+    const effective = agentToolSkills.effectiveToolCall({ toolName: LAZY_TOOL_NAME, input: value })
+    return effective.toolName === LAZY_TOOL_NAME ? value : { tool: effective.toolName, input: effective.input }
+}
+
+async function withStrayArguments({ target, outer, input }: { target: ToolSet[string], outer: unknown, input: Record<string, unknown> }): Promise<Record<string, unknown>> {
+    const schema = plainJsonSchema(await asSchema(target.inputSchema).jsonSchema)
+    if (!isObject(outer) || !isObject(schema) || !isObject(schema['properties'])) {
+        return input
+    }
+    const declared = schema['properties']
+    const strays = Object.entries(outer).filter(([key]) => !LAZY_CALL_KEYS.has(key) && !LABEL_FIELDS.has(key) && key in declared && input[key] === undefined)
+    return { ...input, ...Object.fromEntries(strays) }
 }
 
 async function validateToolInput({ target, input }: { target: ToolSet[string], input: Record<string, unknown> }): Promise<ToolInputCheck> {
@@ -309,6 +329,7 @@ const LAZY_TOOL_ADVERTISED_SCHEMA = LAZY_TOOL_OUTER_SCHEMA.extend({
 })
 
 const LABEL_FIELDS = new Set(Object.keys(cardTitleFields))
+const LAZY_CALL_KEYS = new Set(['tool', 'input'])
 const LABEL_SCHEMA = asSchema(z.object(cardTitleFields))
 const SCHEMA_NOISE_KEYS = new Set(['$schema', 'additionalProperties'])
 
