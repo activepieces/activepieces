@@ -43,8 +43,24 @@ describe('preflight', () => {
         vi.stubEnv('AP_API_KEY', 'k')
         vi.stubEnv('OPENROUTER_API_KEY', 'or')
         vi.stubEnv('AP_POSTHOG_API_KEY', 'ph')
-        vi.stubGlobal('fetch', async () => new Response('', { status: 401 }))
+        const headers: unknown[] = []
+        vi.stubGlobal('fetch', async (_url: string, init: { headers: unknown }) => {
+            headers.push(init.headers)
+            return new Response('{}', { status: 200 })
+        })
 
         expect(await preflight.check({ needs: ['devServer', 'openRouter', 'posthog'] })).toBeNull()
+        expect(headers).toEqual([{ 'api-key': 'k' }])
+    })
+
+    it('reports an API key the dev server rejects', async () => {
+        vi.stubEnv('AP_API_KEY', 'wrong')
+        vi.stubEnv('OPENROUTER_API_KEY', 'or')
+        vi.stubEnv('AP_POSTHOG_API_KEY', 'ph')
+        vi.stubGlobal('fetch', async () => new Response('{"message":"Forbidden"}', { status: 403 }))
+
+        const message = await preflight.check({ needs: ['devServer', 'openRouter', 'posthog'] })
+
+        expect(message).toContain("AP_API_KEY does not match the dev server's AP_API_KEY (/v1/agents/eval/prompt-sources answered 403)")
     })
 })

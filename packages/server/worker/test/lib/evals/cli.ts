@@ -21,6 +21,7 @@ import { repoPaths } from './repo-paths'
 import { resultsBrowser } from './results-browser'
 import { scriptedUser } from './scripted-user'
 import { evalSeed } from './seed'
+import { DatasetOutcome, RunnableDataset, SkippedCase, skippedCases } from './skipped-cases'
 import { speedCompare } from './speed-compare'
 import { toolChanges, ToolFingerprints } from './tool-changes'
 import { evalToolSet, McpTools } from './tool-set'
@@ -111,8 +112,13 @@ async function main(): Promise<void> {
     const ran: RanDataset[] = []
     let explained = new Map<string, CaseExplanation>()
     try {
-        for (const [index, dataset] of datasets.entries()) {
-            ran.push(await runDataset({ dataset: await withoutSkipped({ dataset, mcp }), repeats, recordMode, keep: values.keep, upload: values.upload, verbose: values.verbose, live, modelId: values.model, auth, mcp, schemaTools, baselineRead: baselineReads[index], toolFingerprints }))
+        const runnable = await Promise.all(datasets.map((dataset) => withoutSkipped({ dataset, mcp })))
+        const skippedCount = runnable.reduce((total, dataset) => total + dataset.skipped.length, 0)
+        if (values.upload && skippedCount > 0) {
+            throw new Error(`--upload refused: ${skippedCount} live case(s) would be skipped for a missing connection, so the baseline would leave them out. Add the connections to project "${mcp.projectName}" first.`)
+        }
+        for (const [index, dataset] of runnable.entries()) {
+            ran.push(await runDataset({ dataset, repeats, recordMode, keep: values.keep, upload: values.upload, verbose: values.verbose, live, modelId: values.model, auth, mcp, schemaTools, baselineRead: baselineReads[index], toolFingerprints }))
         }
         if (!recordMode) {
             console.log(colors.dim('\nWriting a short summary for each case…'))
@@ -140,15 +146,16 @@ async function main(): Promise<void> {
     process.exit(broken.length === 0 ? 0 : 1)
 }
 
-async function withoutSkipped({ dataset, mcp }: { dataset: { name: string, cases: EvalCase[] }, mcp: McpTools }): Promise<{ name: string, cases: EvalCase[] }> {
-    const checked = await Promise.all(dataset.cases.map(async (candidate) => ({
-        candidate,
-        missing: isNil(candidate.live) ? [] : await scriptedUser.missingConnections({ answers: candidate.live.answers, listConnections: (pieceName) => evalToolSet.listConnections({ mcp, pieceName }) }),
-    })))
-    checked.filter(({ missing }) => missing.length > 0).forEach(({ candidate, missing }) => {
-        console.log(colors.yellow(`${dataset.name} case ${candidate.caseNumber} · ${candidate.title}: skipped: needs connection ${missing.join(', ')} in project "${mcp.projectName}"`))
+async function withoutSkipped({ dataset, mcp }: { dataset: { name: string, cases: EvalCase[] }, mcp: McpTools }): Promise<RunnableDataset> {
+    return skippedCases.split({
+        dataset,
+        projectName: mcp.projectName,
+        unmetOf: async (candidate) => isNil(candidate.live) ? [] : scriptedUser.unmetConnections({ answers: candidate.live.answers, listConnections: (pieceName) => evalToolSet.listConnections({ mcp, pieceName }) }),
     })
-    return { name: dataset.name, cases: checked.filter(({ missing }) => missing.length === 0).map(({ candidate }) => candidate) }
+}
+
+function printSkipped({ skipped }: { skipped: SkippedCase[] }): void {
+    skipped.forEach(({ candidate, reason }) => console.log(colors.yellow(`  - case ${candidate.caseNumber} · ${candidate.title}: skipped: ${reason}`)))
 }
 
 function modeNote({ cases, recordMode }: { cases: EvalCase[], recordMode: boolean }): string {
@@ -215,11 +222,12 @@ function printUntested({ cases, changedTools }: { cases: EvalCase[], changedTool
     console.log(colors.yellow(`\nThese cases answer a tool you changed from recordings, so their result does not test your change. Use the agent bench for that:\n${lines.join('\n')}`))
 }
 
-async function runDataset({ dataset, repeats, recordMode, keep, upload, verbose, live, modelId, auth, mcp, schemaTools, baselineRead, toolFingerprints }: { dataset: { name: string, cases: EvalCase[] }, repeats: number, recordMode: boolean, keep: boolean, upload: boolean, verbose: boolean, live: boolean, modelId: string, auth: Record<string, unknown>, mcp: McpTools, schemaTools: ToolSet, baselineRead: BaselineRead, toolFingerprints: ToolFingerprints }): Promise<RanDataset> {
-    const { name, cases } = dataset
+async function runDataset({ dataset, repeats, recordMode, keep, upload, verbose, live, modelId, auth, mcp, schemaTools, baselineRead, toolFingerprints }: { dataset: RunnableDataset, repeats: number, recordMode: boolean, keep: boolean, upload: boolean, verbose: boolean, live: boolean, modelId: string, auth: Record<string, unknown>, mcp: McpTools, schemaTools: ToolSet, baselineRead: BaselineRead, toolFingerprints: ToolFingerprints }): Promise<RanDataset> {
+    const { name, cases, skipped } = dataset
     const changedTools = changedSinceBaseline({ baselineRead, toolFingerprints })
     const splits = new Map(await Promise.all(cases.map(async (candidate) => [candidate.id, await replay.splitStale({ tools: schemaTools, recordedToolCalls: candidate.recordedToolCalls })] as const)))
     console.log(`\n${colors.bold(colors.cyan(`=== ${name}`))}: ${cases.length} case(s) × ${repeats} run(s) · model ${modelId} · judge ${evalChecks.judgeModelId()} (reasons ${evalChecks.reasonModelId}) · web and catalog reads run live · ${modeNote({ cases, recordMode })}${upload ? ' · UPLOADS a main baseline to PostHog' : ' · nothing is uploaded'}`)
+    printSkipped({ skipped })
     printToolChanges({ baselineRead, changedTools })
     printStale({ cases, stale: (candidate) => splits.get(candidate.id)?.stale ?? [] })
     const touched = (candidate: EvalCase): boolean => toolChanges.touches({ evalCase: candidate, changedTools: changedTools ?? [] })
@@ -235,8 +243,8 @@ async function runDataset({ dataset, repeats, recordMode, keep, upload, verbose,
         onResult: (result) => isNil(table) ? print({ result, verbose }) : table.finish({ ...result, runCostUsd: result.scores.costUsd }),
     })
     table?.stop()
-    printCleanupProblems({ results })
-    return { name, cases, results, baselineRead, changedTools }
+    printNotes({ results })
+    return { name, cases, skipped, results, baselineRead, changedTools }
 }
 
 async function explainAll({ ran, auth }: { ran: RanDataset[], auth: Record<string, unknown> }): Promise<Map<string, CaseExplanation>> {
@@ -264,7 +272,7 @@ function printExplanation({ summary, title, explanation }: { summary: CaseSummar
     console.log(`      ${colors.dim('means   ')}  ${colors.bold(explanation.means)}`)
 }
 
-async function reportDataset({ name, cases, results, explained, live, browse, recordMode, upload, modelId, toolFingerprints, baselineRead, changedTools }: RanDataset & { explained: Map<string, CaseExplanation>, live: boolean, browse: boolean, recordMode: boolean, upload: boolean, modelId: string, toolFingerprints: ToolFingerprints }): Promise<DatasetOutcome> {
+async function reportDataset({ name, cases, skipped, results, explained, live, browse, recordMode, upload, modelId, toolFingerprints, baselineRead, changedTools }: RanDataset & { explained: Map<string, CaseExplanation>, live: boolean, browse: boolean, recordMode: boolean, upload: boolean, modelId: string, toolFingerprints: ToolFingerprints }): Promise<DatasetOutcome> {
     if (live && !browse) {
         results.filter((result) => result.verdict === 'fail').sort((a, b) => a.candidate.caseNumber - b.candidate.caseNumber || a.trial - b.trial).forEach((result) => print({ result, verbose: false }))
     }
@@ -275,7 +283,8 @@ async function reportDataset({ name, cases, results, explained, live, browse, re
     }
     const failing = summaries.filter((summary) => summary.verdict === 'fail').length
     const clearlyFailing = summaries.filter((summary) => clearVerdict(summary) === 'fail').length
-    console.log(`${colors.green(`${summaries.length - failing} pass`)} · ${failing > 0 ? colors.red(`${failing} fail`) : `${failing} fail`} ${colors.dim(`(${clearlyFailing} clearly)`)} · ${summaries.length} cases`)
+    printSkipped({ skipped })
+    console.log(`${colors.green(`${summaries.length - failing} pass`)} · ${failing > 0 ? colors.red(`${failing} fail`) : `${failing} fail`} ${colors.dim(`(${clearlyFailing} clearly)`)}${skipped.length > 0 ? ` · ${colors.yellow(`${skipped.length} skipped`)}` : ''} · ${summaries.length + skipped.length} cases`)
     if (recordMode) {
         await saveFixtures({ cases, results })
         return { status: 'ok', reason: '' }
@@ -293,6 +302,10 @@ async function reportDataset({ name, cases, results, explained, live, browse, re
         const experimentId = await posthogExperiments.upload({ runs: results, suiteKey: name, runSource: isNil(process.env['CI']) ? 'local' : 'ci', applicationVersion: gitSha(), modelVersion: modelId, promptVersion: promptVersion(), toolFingerprints })
         console.log(`\nUploaded main baseline for ${name}: experiment ${experimentId}`)
     }
+    return skippedCases.withSkipped({ outcome: baselineOutcome({ name, modelId, baselineRead, labels }), name, skipped })
+}
+
+function baselineOutcome({ name, modelId, baselineRead, labels }: { name: string, modelId: string, baselineRead: BaselineRead, labels: DiffLabel[] }): DatasetOutcome {
     switch (baselineRead.kind) {
         case 'error': return { status: 'broken', reason: `could not read the main baseline for ${name}: ${baselineRead.message}` }
         case 'missing': return { status: 'unchecked', reason: `no main baseline for ${name} on ${modelId}` }
@@ -333,7 +346,7 @@ async function runPool({ runs, run, onResult }: { runs: PlannedRun[], run: (plan
 async function evaluate({ candidate, trial, recordedToolCalls, mcp, modelId, auth, recordMode, keep }: { candidate: EvalCase, trial: number, recordedToolCalls: RecordedToolCall[], mcp: McpTools, modelId: string, auth: Record<string, unknown>, recordMode: boolean, keep: boolean }): Promise<CaseResult> {
     if (isNil(candidate.live)) {
         const turn = await tryCatch(async () => ({ outcome: await evalAgentTurn.run({ evalCase: candidate, recordedToolCalls, mcp, modelId, auth, mode: recordMode ? 'record' : 'replay' }), codeCheck: evalCodeChecks.notRun }))
-        return gradeTurn({ candidate, trial, auth, turn, cleanupProblems: [] })
+        return gradeTurn({ candidate, trial, auth, turn, notes: [] })
     }
     const { seed, codeChecks } = candidate.live
     const { result, notes } = await evalWorkspace.run({
@@ -347,27 +360,28 @@ async function evaluate({ candidate, trial, recordedToolCalls, mcp, modelId, aut
             return { outcome, codeCheck: await evalCodeChecks.run({ checks: codeChecks, outcome, mcp: workspaceMcp }) }
         },
     })
-    return gradeTurn({ candidate, trial, auth, turn: result, cleanupProblems: notes.map((note) => `case ${candidate.caseNumber} run ${trial + 1}: ${note}`) })
+    return gradeTurn({ candidate, trial, auth, turn: result, notes: notes.map((note) => `case ${candidate.caseNumber} run ${trial + 1}: ${note}`) })
 }
 
-async function gradeTurn({ candidate, trial, auth, turn, cleanupProblems }: { candidate: EvalCase, trial: number, auth: Record<string, unknown>, turn: Result<CheckedTurn>, cleanupProblems: string[] }): Promise<CaseResult> {
+async function gradeTurn({ candidate, trial, auth, turn, notes }: { candidate: EvalCase, trial: number, auth: Record<string, unknown>, turn: Result<CheckedTurn>, notes: string[] }): Promise<CaseResult> {
     if (!isNil(turn.error)) {
-        return crashedResult({ candidate, trial, reason: turn.error.message, cleanupProblems })
+        return crashedResult({ candidate, trial, reason: turn.error.message, notes })
     }
     const { outcome, codeCheck } = turn.data
     const graded = await tryCatch(async () => outcome.timedOut ? timedOutScores({ outcome, codeCheck }) : evalChecks.grade({ evalCase: candidate, outcome, auth, codeCheck }))
     if (!isNil(graded.error)) {
-        return crashedResult({ candidate, trial, reason: graded.error.message, cleanupProblems })
+        return crashedResult({ candidate, trial, reason: graded.error.message, notes })
     }
-    return { candidate, trial, verdict: evalChecks.verdictOf({ scores: graded.data }), scores: graded.data, stops: outcome.stops.map((stop) => stop.reason), transcript: outcome.transcript, newFixtures: outcome.newFixtures, cleanupProblems, crashed: false }
+    const runNotes = [...notes, ...outcome.notes.map((note) => `case ${candidate.caseNumber} run ${trial + 1}: ${note}`)]
+    return { candidate, trial, verdict: evalChecks.verdictOf({ scores: graded.data }), scores: graded.data, stops: outcome.stops.map((stop) => stop.reason), transcript: outcome.transcript, newFixtures: outcome.newFixtures, notes: runNotes, crashed: false }
 }
 
-function crashedResult({ candidate, trial, reason, cleanupProblems }: { candidate: EvalCase, trial: number, reason: string, cleanupProblems: string[] }): CaseResult {
-    return { candidate, trial, verdict: 'unknown', scores: crashedScores({ reason }), stops: [], transcript: '', newFixtures: [], cleanupProblems, crashed: true }
+function crashedResult({ candidate, trial, reason, notes }: { candidate: EvalCase, trial: number, reason: string, notes: string[] }): CaseResult {
+    return { candidate, trial, verdict: 'unknown', scores: crashedScores({ reason }), stops: [], transcript: '', newFixtures: [], notes, crashed: true }
 }
 
-function printCleanupProblems({ results }: { results: CaseResult[] }): void {
-    results.flatMap((result) => result.cleanupProblems).forEach((problem) => console.log(colors.dim(`cleanup: ${problem}`)))
+function printNotes({ results }: { results: CaseResult[] }): void {
+    results.flatMap((result) => result.notes).forEach((note) => console.log(colors.yellow(`note: ${note}`)))
 }
 
 function timedOutScores({ outcome, codeCheck }: { outcome: TurnOutcome, codeCheck: CodeCheckResult }): RunScores {
@@ -574,6 +588,7 @@ function print({ result, verbose }: { result: CaseResult, verbose: boolean }): v
         console.log(`    ${speedLine(scores.speed)}`)
     }
     result.stops.forEach((reason) => console.log(`    replay note: ${reason}`))
+    result.notes.forEach((note) => console.log(`    note: ${note}`))
 }
 
 const DEFAULT_MODEL = 'z-ai/glm-5.3'
@@ -607,6 +622,7 @@ type CaseSummary = {
 type RanDataset = {
     name: string
     cases: EvalCase[]
+    skipped: SkippedCase[]
     results: CaseResult[]
     baselineRead: BaselineRead
     changedTools: string[] | null
@@ -620,10 +636,6 @@ type BaselineRead =
 
 type DiffLabel = 'same' | 'unclear' | 'edited' | 'FIXED' | 'REGRESSED'
 
-type DatasetOutcome = {
-    status: 'ok' | 'unchecked' | 'broken'
-    reason: string
-}
 
 type CheckedTurn = {
     outcome: TurnOutcome
@@ -637,6 +649,6 @@ type PlannedRun = {
 
 type CaseResult = UploadedRun & {
     newFixtures: RecordedToolCall[]
-    cleanupProblems: string[]
+    notes: string[]
     crashed: boolean
 }

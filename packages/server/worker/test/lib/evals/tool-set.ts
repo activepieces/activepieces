@@ -35,7 +35,7 @@ async function connect({ conversationId, projectId, projectName, ...mcpCredentia
     }
 }
 
-function build({ mcp, caseReplay, auth, mode, user }: { mcp: McpTools, caseReplay: Replay, auth: Record<string, unknown>, mode: ReplayMode, user: ScriptedUser | null }): ToolSet {
+function build({ mcp, caseReplay, auth, mode, user, onNote = ignoreNote }: { mcp: McpTools, caseReplay: Replay, auth: Record<string, unknown>, mode: ReplayMode, user: ScriptedUser | null, onNote?: (note: string) => void }): ToolSet {
     const taintState = agentWorkerTools.createTaintState({ carried: false })
     const eventEmitter = agentWorkerTools.createEventEmitter({ sendEvent: async () => {}, userId: EVAL_USER_ID, conversationId: mcp.conversationId })
     const executeTool = async (toolName: string, toolInput: Record<string, unknown>): Promise<unknown> => replay.resolveCall({
@@ -49,7 +49,11 @@ function build({ mcp, caseReplay, auth, mode, user }: { mcp: McpTools, caseRepla
     const dismissCard = async (): Promise<GateDecision> => ({ outcome: 'declined' })
     const noop = async (): Promise<void> => {}
     const storeSelectedConnection = async (toolInput: { pieceName: string, connectionExternalId: string, label: string, projectId: string }): Promise<void> => {
-        await tryCatch(() => executeOnDevServer({ toolName: STORE_SELECTED_CONNECTION_TOOL, toolInput, conversationId: mcp.conversationId }))
+        const { data, error } = await tryCatch(() => executeOnDevServer({ toolName: STORE_SELECTED_CONNECTION_TOOL, toolInput, conversationId: mcp.conversationId }))
+        const failure = !isNil(error) ? error.message : failureOf(data)
+        if (!isNil(failure)) {
+            onNote(`could not save the scripted connection pick "${toolInput.label}" for ${toolInput.pieceName}, later steps may not see it: ${failure}`)
+        }
     }
     const project = projectOf({ mcp, mode })
     const buildPlanTools = agentWorkerTools.createBuildPlanTools({ eventEmitter, getProjectId: () => project.id })
@@ -83,6 +87,20 @@ function build({ mcp, caseReplay, auth, mode, user }: { mcp: McpTools, caseRepla
             completion: {},
         },
     })
+}
+
+function failureOf(result: unknown): string | null {
+    if (!isObject(result)) {
+        return null
+    }
+    if (!isNil(result['error'])) {
+        return typeof result['error'] === 'string' ? result['error'] : JSON.stringify(result['error'])
+    }
+    return result['success'] === false ? JSON.stringify(result) : null
+}
+
+function ignoreNote(): void {
+    return undefined
 }
 
 function projectOf({ mcp, mode }: { mcp: McpTools, mode: ReplayMode }): PromptProject {

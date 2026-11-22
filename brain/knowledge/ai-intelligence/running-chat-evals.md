@@ -13,7 +13,7 @@ icon: 🧪
   - `AP_API_KEY`: the same value the dev server runs with.
   - `OPENROUTER_API_KEY`, or `AP_OPENROUTER_PROVISION_KEY` to mint a temporary key per run.
   - `AP_POSTHOG_API_KEY`: reads the datasets and the baseline. `AP_POSTHOG_PROJECT_ID` (default `18070`) and `AP_POSTHOG_HOST` (default `https://us.posthog.com`) point it at another PostHog.
-- A check at start lists every missing variable and an unreachable dev server in one message, then exits. `--steps`, `--set-cut` and `--set-target` only need `AP_POSTHOG_API_KEY`; `--compare` needs nothing.
+- A check at start lists every missing variable, an unreachable dev server and an `AP_API_KEY` the dev server rejects in one message, then exits. `--steps`, `--set-cut` and `--set-target` only need `AP_POSTHOG_API_KEY`; `--compare` needs nothing.
 
 ## Run
 
@@ -22,14 +22,15 @@ icon: 🧪
 - `npm run evals -- --dataset chat-core --case 2 --case 5`: only those cases.
 - `--repeats 1`: a quick check. `--model <id>`: another model (default `z-ai/glm-5.3`).
 - `--verbose`: print every run with its transcript instead of the live table.
-- `--keep`: don't delete live runs' workspace projects; each kept one prints its name and id.
+- `--keep`: don't delete live runs' workspace projects; each kept one prints its name and id. The next run that creates a workspace sweeps any older than 60 minutes, so look at it before then.
 
 ## Live cases
 
 - A case with `metadata.mode: "live"` runs against real data. Each run calls `POST /v1/agents/eval/workspace`, which creates a fresh `eval-…` project and conversation and shares the base project's connections with it (the platform owner's first project, the same one replay cases run in). The run then deletes it with `DELETE /v1/agents/eval/workspace/:projectId`, also when the run throws. The server sweeps workspaces older than an hour, so a killed run doesn't leave one forever. The agent's system prompt names the workspace project.
-- `metadata.seed` is created in the workspace before the user message: each `seed.flows[]` item is an `ap_build_flow` input (`flowName`, `trigger`, `steps`, `folderName`), each `seed.tables[]` item an `ap_create_table` input plus optional `records` (inserted with `ap_insert_records`, values sent as text). A seed that fails crashes the run with the reason. The judge sees the seeded ids and flow structures as the state before the turn, next to the flows after it.
-- `metadata.codeChecks` is graded by code as the **code checks** gate: `noQuestionCards` (no `ap_show_questions`), `cardShown` (that card showed), `noWrites` (no workspace change, write action or other non-read tool), `noDeletes` (no `ap_delete_*` or delete/remove action). Every flow the turn changed must also pass `ap_validate_flow`, unless `skipFlowValidates`. Replay cases pass this gate.
-- `metadata.answers.connections` maps a piece to the connection the scripted user picks (`none` declines). When the base project has no connection by that name or id, the case prints `skipped: needs connection <name>` and does not run.
+- `metadata.seed` is created in the workspace before the user message, tables first: each `seed.tables[]` item is an `ap_create_table` input plus optional `records` (inserted with `ap_insert_records`, values sent as text, empty ones as `""`), each `seed.flows[]` item an `ap_build_flow` input (`flowName`, `trigger`, `steps`, `folderName`). Flows sharing a `folderName` are built one at a time. A seed that fails crashes the run with the reason. The judge sees the seeded ids and flow structures as the state before the turn, next to the flows after it.
+- `metadata.codeChecks` is graded by code as the **code checks** gate: `noQuestionCards` (no `ap_show_questions`), `cardShown` (that card showed), `noWrites` (no call to a tool on the write list in `code-checks.ts`, nor a write action; tests, connection checks, code runs and memory are not writes), `noDeletes` (no `ap_delete_*`, delete action, `DELETE` custom API call or delete operation inside `ap_apply_flow_operations`, `ap_manage_fields` or `ap_manage_notes`). Errored calls never count. Every flow the turn changed and didn't delete must also pass `ap_validate_flow`, unless `skipFlowValidates`; a validation that errors fails the check. Replay cases pass this gate.
+- `metadata.answers.connections` maps a piece to the connection the scripted user picks (`none` declines). When the base project has no connection by that name or id, or its connections can't be listed, the case is skipped with the reason: it is listed in the summary, the dataset ends as "Nothing to compare" instead of passing, and `--upload` refuses to run.
+- A scripted connection pick the dev server fails to save prints as a `note:` for that run.
 
 ## Reading the result
 

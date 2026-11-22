@@ -18,7 +18,10 @@ async function run({ evalCase, recordedToolCalls, mcp, modelId, auth, mode, seed
     const caseReplay = replay.create({ recordedToolCalls, faults: live?.faults })
     const user = isNil(live) ? null : scriptedUser.create({ answers: live.answers, listConnections: (pieceName) => evalToolSet.listConnections({ mcp, pieceName }), projectId: mcp.projectId })
     const recorder = runMetrics.createRecorder()
-    const tools = recorder.timeTools(evalToolSet.build({ mcp, caseReplay, auth, mode, user }))
+    const notes: string[] = []
+    const tools = recorder.timeTools(evalToolSet.build({ mcp, caseReplay, auth, mode, user, onNote: (note) => {
+        notes.push(note)
+    } }))
     const phaseState: { phase: AgentPhase } = { phase: 'discovery' }
     const { model, costUsd } = withCost({ recorder, model: aiUtils.createModel({ credentials: aiProviderCredentials({ provider: AIProviderName.OPENROUTER, auth, config: {} }), modelId, billing: null }) })
     const warnings: string[] = []
@@ -87,6 +90,7 @@ async function run({ evalCase, recordedToolCalls, mcp, modelId, auth, mode, seed
         timedOut,
         elapsedMs: Date.now() - startedAt,
         cardsShown: user?.cardsShown() ?? [],
+        notes: [...notes],
         metrics: recorder.summarize({ toolCalls, rejectedToolCalls: rejected.length }),
     }
 }
@@ -375,6 +379,7 @@ export type TurnOutcome = {
     timedOut: boolean
     elapsedMs: number
     cardsShown: string[]
+    notes: string[]
     metrics: RunMetrics
 }
 

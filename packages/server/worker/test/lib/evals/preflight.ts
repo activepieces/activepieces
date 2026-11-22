@@ -4,8 +4,8 @@ import { repoPaths } from './repo-paths'
 
 async function check({ needs }: { needs: Need[] }): Promise<string | null> {
     const unset = missingEnv({ needs, env: process.env })
-    const unreachable = needs.includes('devServer') && !await answers({ url: devServer.url() }) ? [unreachableLine()] : []
-    return message({ problems: [...unset, ...unreachable] })
+    const server = needs.includes('devServer') ? await serverProblems() : []
+    return message({ problems: [...unset, ...server] })
 }
 
 function missingEnv({ needs, env }: { needs: Need[], env: Record<string, string | undefined> }): string[] {
@@ -20,8 +20,21 @@ function missingEnv({ needs, env }: { needs: Need[], env: Record<string, string 
     ].flatMap((line) => isNil(line) ? [] : [line])
 }
 
-function unreachableLine(): string {
-    return `no dev server answers at ${devServer.url()}: start it, or point ${devServer.baseUrlEnv} at it`
+async function serverProblems(): Promise<string[]> {
+    const url = devServer.url()
+    const apiKey = process.env[devServer.apiKeyEnv]
+    const hasKey = !isNil(apiKey) && apiKey.length > 0
+    const { data: res, error } = await tryCatch(() => fetch(`${url}${PING_PATH}`, { headers: hasKey ? { 'api-key': apiKey } : {}, signal: AbortSignal.timeout(PING_TIMEOUT_MS) }))
+    if (!isNil(error)) {
+        return [`no dev server answers at ${url}: start it, or point ${devServer.baseUrlEnv} at it`]
+    }
+    if (!hasKey) {
+        return []
+    }
+    if (res.status === 401 || res.status === 403) {
+        return [`${devServer.apiKeyEnv} does not match the dev server's AP_API_KEY (${PING_PATH} answered ${res.status})`]
+    }
+    return res.status === 404 ? [`the dev server at ${url} does not serve the eval routes (${PING_PATH} answered 404)`] : []
 }
 
 function message({ problems }: { problems: string[] }): string | null {
@@ -31,17 +44,12 @@ function message({ problems }: { problems: string[] }): string | null {
     return `Cannot run the evals. Fix these (environment or ${repoPaths.envFile()}) and run again:\n${problems.map((problem) => `  - ${problem}`).join('\n')}`
 }
 
-async function answers({ url }: { url: string }): Promise<boolean> {
-    const { error } = await tryCatch(() => fetch(`${url}${PING_PATH}`, { signal: AbortSignal.timeout(PING_TIMEOUT_MS) }))
-    return isNil(error)
-}
-
 const OPENROUTER_API_KEY_ENV = 'OPENROUTER_API_KEY'
 const OPENROUTER_PROVISION_ENV = 'AP_OPENROUTER_PROVISION_KEY'
 const POSTHOG_API_KEY_ENV = 'AP_POSTHOG_API_KEY'
 const POSTHOG_PROJECT_ENV = 'AP_POSTHOG_PROJECT_ID'
 const DEFAULT_POSTHOG_PROJECT_ID = '18070'
-const PING_PATH = '/v1/flags'
+const PING_PATH = '/v1/agents/eval/prompt-sources'
 const PING_TIMEOUT_MS = 5_000
 
 export const preflight = {

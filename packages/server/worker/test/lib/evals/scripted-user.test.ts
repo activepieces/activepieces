@@ -43,17 +43,17 @@ describe('scriptedUser', () => {
             ? [{ externalId: 'slack-1', displayName: 'Team Slack', status: 'ACTIVE' }]
             : [])
 
-        const missing = await scriptedUser.missingConnections({ answers: { questions: null, connections: { slack: 'Team Slack', gmail: 'Work Gmail', hubspot: 'none' } }, listConnections })
+        const unmet = await scriptedUser.unmetConnections({ answers: { questions: null, connections: { slack: 'Team Slack', gmail: 'Work Gmail', hubspot: 'none' } }, listConnections })
 
-        expect(missing).toEqual(['Work Gmail'])
+        expect(unmet).toEqual(['needs connection "Work Gmail" (@activepieces/piece-gmail)'])
         expect(listConnections).not.toHaveBeenCalledWith('@activepieces/piece-hubspot')
     })
 
-    it('counts a connection it could not list as missing', async () => {
+    it('reports the real error when it could not list the connections', async () => {
         const listConnections = vi.fn(async (): Promise<ProjectConnection[]> => {
             throw new Error('no ap_list_connections')
         })
 
-        expect(await scriptedUser.missingConnections({ answers: { questions: null, connections: { slack: 'Team Slack' } }, listConnections })).toEqual(['Team Slack'])
+        expect(await scriptedUser.unmetConnections({ answers: { questions: null, connections: { slack: 'Team Slack' } }, listConnections })).toEqual(['could not list @activepieces/piece-slack connections to find "Team Slack": no ap_list_connections'])
     })
 })

@@ -42,13 +42,17 @@ function create({ answers, listConnections, projectId }: { answers: LiveSettings
     }
 }
 
-async function missingConnections({ answers, listConnections }: { answers: LiveSettings['answers'], listConnections: (pieceName: string) => Promise<ProjectConnection[]> }): Promise<string[]> {
+async function unmetConnections({ answers, listConnections }: { answers: LiveSettings['answers'], listConnections: (pieceName: string) => Promise<ProjectConnection[]> }): Promise<string[]> {
     const wanted = Object.entries(answers.connections).filter(([, choice]) => choice !== NO_CONNECTION)
-    const missing = await Promise.all(wanted.map(async ([piece, choice]) => {
-        const { data: connections } = await tryCatch(() => listConnections(agentWorkerTools.normalizePieceName(piece)))
-        return isNil(pickConnection({ connections: connections ?? [], override: choice })) ? [choice] : []
+    const unmet = await Promise.all(wanted.map(async ([piece, choice]) => {
+        const pieceName = agentWorkerTools.normalizePieceName(piece)
+        const { data: connections, error } = await tryCatch(() => listConnections(pieceName))
+        if (!isNil(error)) {
+            return [`could not list ${pieceName} connections to find "${choice}": ${error.message}`]
+        }
+        return isNil(pickConnection({ connections, override: choice })) ? [`needs connection "${choice}" (${pieceName})`] : []
     }))
-    return missing.flat()
+    return unmet.flat()
 }
 
 function answersCard(toolName: string): boolean {
@@ -75,7 +79,7 @@ export const ProjectConnection = z.object({ externalId: z.string(), displayName:
 export const scriptedUser = {
     create,
     answersCard,
-    missingConnections,
+    unmetConnections,
 }
 
 export type ScriptedUser = Pick<DisplayToolOptions, 'waitForApproval'> & Required<Pick<DisplayToolOptions, 'onGateOpened'>> & {
