@@ -1,5 +1,5 @@
-import { aiProviderCredentials, AIProviderName, isNil, tryCatch } from '@activepieces/core-utils'
-import { AgentRunSource } from '@activepieces/shared'
+import { aiProviderCredentials, AIProviderName, isNil, isObject, tryCatch } from '@activepieces/core-utils'
+import { AgentRunSource, agentToolClassification } from '@activepieces/shared'
 import { aiUtils } from '@activepieces/server-utils'
 import { ToolExecutionOptions, ToolSet } from 'ai'
 import Fastify from 'fastify'
@@ -108,6 +108,30 @@ async function listConnections({ mcp, pieceName }: { mcp: McpTools, pieceName: s
     return ListConnectionsOutput.parse(await execute({ pieceName }, { toolCallId: LIST_CONNECTIONS_TOOL, messages: [], context: {} })).structuredContent.connections
 }
 
+async function call({ mcp, toolName, input }: { mcp: McpTools, toolName: string, input: Record<string, unknown> }): Promise<unknown> {
+    const execute = mcp.toolSet[toolName]?.execute
+    if (isNil(execute)) {
+        throw new Error(`the dev server MCP does not offer ${toolName}`)
+    }
+    return execute(input, { toolCallId: toolName, messages: [], context: {} })
+}
+
+function readResult(output: unknown): ToolResult {
+    const structured = isObject(output) && isObject(output['structuredContent']) ? output['structuredContent'] : {}
+    const text = resultText(output)
+    const failed = (isObject(output) && output['isError'] === true) || agentToolClassification.hasFailureTextPrefix(text.trim())
+    return { failed, text, structured }
+}
+
+function resultText(output: unknown): string {
+    if (typeof output === 'string') {
+        return output
+    }
+    const content = isObject(output) ? output['content'] : null
+    const texts = Array.isArray(content) ? content.flatMap((item) => isObject(item) && typeof item['text'] === 'string' ? [item['text']] : []) : []
+    return texts.length === 0 ? JSON.stringify(output ?? null) : texts.join('\n')
+}
+
 async function executeOnDevServer({ toolName, toolInput, conversationId }: { toolName: string, toolInput: Record<string, unknown>, conversationId: string }): Promise<unknown> {
     const res = await devServer.request({ path: '/v1/agents/eval/execute-tool', method: 'POST', body: { toolName, toolInput, conversationId } })
     if (!res.ok) {
@@ -145,7 +169,15 @@ export const evalToolSet = {
     connectMcp,
     connect,
     build,
+    call,
+    readResult,
     listConnections,
+}
+
+export type ToolResult = {
+    failed: boolean
+    text: string
+    structured: Record<string, unknown>
 }
 
 export type McpCredentials = z.infer<typeof McpCredentials>

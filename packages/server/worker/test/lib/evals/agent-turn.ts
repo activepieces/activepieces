@@ -9,10 +9,12 @@ import { evalPrompts } from './prompts'
 import { replay, ReplayMode, ReplayStop } from './replay'
 import { MetricsRecorder, RunMetrics, runMetrics } from './run-metrics'
 import { scriptedUser } from './scripted-user'
+import { SeededState } from './seed'
 import { evalToolSet, McpTools } from './tool-set'
 
-async function run({ evalCase, recordedToolCalls, mcp, modelId, auth, mode }: { evalCase: EvalCase, recordedToolCalls: RecordedToolCall[], mcp: McpTools, modelId: string, auth: Record<string, unknown>, mode: ReplayMode }): Promise<TurnOutcome> {
+async function run({ evalCase, recordedToolCalls, mcp, modelId, auth, mode, seeded = null }: { evalCase: EvalCase, recordedToolCalls: RecordedToolCall[], mcp: McpTools, modelId: string, auth: Record<string, unknown>, mode: ReplayMode, seeded?: SeededState | null }): Promise<TurnOutcome> {
     const live = mode === 'live' ? evalCase.live : null
+    const before = isNil(seeded) ? '' : await renderSeeded({ mcp, seeded })
     const caseReplay = replay.create({ recordedToolCalls, faults: live?.faults })
     const user = isNil(live) ? null : scriptedUser.create({ answers: live.answers, listConnections: (pieceName) => evalToolSet.listConnections({ mcp, pieceName }), projectId: mcp.projectId })
     const recorder = runMetrics.createRecorder()
@@ -67,6 +69,7 @@ async function run({ evalCase, recordedToolCalls, mcp, modelId, auth, mode }: { 
     const transcript = timedOut ? `${renderTranscript(parts)}\n(the turn did not finish within ${timeoutMs / 1000}s)` : renderTranscript(parts)
     const flowsAfter = isNil(live) ? '' : await renderFlowsAfter({ mcp, toolCalls })
     return {
+        before,
         transcript: `${transcript}${flowsAfter}`,
         rejectedToolInputs: rejected,
         toolCalls,
@@ -244,21 +247,38 @@ function cutIfLive({ toolName, text }: { toolName: string, text: string }): stri
 }
 
 async function renderFlowsAfter({ mcp, toolCalls }: { mcp: McpTools, toolCalls: TurnToolCall[] }): Promise<string> {
-    const execute = mcp.toolSet[FLOW_STRUCTURE_TOOL]?.execute
-    const flowIds = [...new Set(toolCalls.flatMap(changedFlowIds))]
-    if (isNil(execute) || flowIds.length === 0) {
+    const rendered = await renderFlows({ mcp, flowIds: changedFlowIds(toolCalls) })
+    return rendered.length === 0 ? '' : `\n${FLOWS_AFTER_MARK}\n${rendered.join('\n')}`
+}
+
+async function renderSeeded({ mcp, seeded }: { mcp: McpTools, seeded: SeededState }): Promise<string> {
+    if (seeded.flows.length === 0 && seeded.tables.length === 0) {
         return ''
+    }
+    const flowLines = seeded.flows.map((flow) => `flow "${flow.name}" (id: ${flow.id})`)
+    const tableLines = seeded.tables.map((table) => `table "${table.name}" (id: ${table.id}, ${table.records} record(s))`)
+    const structures = await renderFlows({ mcp, flowIds: seeded.flows.map((flow) => flow.id) })
+    return `${SEEDED_MARK}\n${[...flowLines, ...tableLines, ...structures].join('\n')}\n`
+}
+
+async function renderFlows({ mcp, flowIds }: { mcp: McpTools, flowIds: string[] }): Promise<string[]> {
+    const execute = mcp.toolSet[FLOW_STRUCTURE_TOOL]?.execute
+    if (isNil(execute) || flowIds.length === 0) {
+        return []
     }
     const flows = await Promise.all(flowIds.map(async (flowId) => {
         const { data } = await tryCatch(async () => execute({ flowId }, { toolCallId: FLOW_STRUCTURE_TOOL, messages: [], context: {} }))
         const isError = isNil(data) || (isObject(data) && data['isError'] === true)
         return isError ? [] : [`FLOW ${flowId}:\n${isObject(data) ? contentText(data['content']) ?? resultText(data) : resultText(data)}`]
     }))
-    const rendered = flows.flat()
-    return rendered.length === 0 ? '' : `\n${FLOWS_AFTER_MARK}\n${rendered.join('\n')}`
+    return flows.flat()
 }
 
-function changedFlowIds(call: TurnToolCall): string[] {
+function changedFlowIds(toolCalls: TurnToolCall[]): string[] {
+    return [...new Set(toolCalls.flatMap(changedFlowIdsOf))]
+}
+
+function changedFlowIdsOf(call: TurnToolCall): string[] {
     const { toolName, input } = agentToolSkills.effectiveToolCall({ toolName: call.toolName, input: call.input })
     if (replay.isRead(toolName)) {
         return []
@@ -313,6 +333,7 @@ const MINTED_KEY_LIMIT_USD = 25
 const TURN_TIMEOUT_MS = 5 * 60_000
 const LIVE_TOOL_FIELD_MAX = 2_000
 const FLOW_STRUCTURE_TOOL = 'ap_flow_structure'
+const SEEDED_MARK = '--- SEEDED BEFORE THE TURN (the test harness created these in the project before the user message; compare them with the flows after the turn) ---'
 const FLOWS_AFTER_MARK = '--- FLOWS AFTER THE TURN (read by the test harness once the turn ended) ---'
 const SCHEMA_DUMP_MARK = '\nInput schema:'
 const STOPPED_RESULT = '(not run: this is a replayed test, writes never run and the test ends the turn here)'
@@ -330,11 +351,13 @@ export const evalAgentTurn = {
     withCost,
     toolCallLine,
     toolResultLine,
+    changedFlowIds,
 }
 
 type MintedKey = { apiKey: string, hash: string | null, provisionKey: string }
 
 export type TurnOutcome = {
+    before: string
     transcript: string
     rejectedToolInputs: string[]
     toolCalls: TurnToolCall[]

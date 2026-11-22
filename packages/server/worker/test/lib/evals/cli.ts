@@ -16,6 +16,7 @@ import { progressTable } from './progress-table'
 import { evalPrompts } from './prompts'
 import { replay, StaleRecording } from './replay'
 import { resultsBrowser } from './results-browser'
+import { evalSeed } from './seed'
 import { speedCompare } from './speed-compare'
 import { toolChanges, ToolFingerprints } from './tool-changes'
 import { evalToolSet, McpTools } from './tool-set'
@@ -314,9 +315,16 @@ async function evaluate({ candidate, trial, recordedToolCalls, mcp, modelId, aut
         const turn = await tryCatch(() => evalAgentTurn.run({ evalCase: candidate, recordedToolCalls, mcp, modelId, auth, mode: recordMode ? 'record' : 'replay' }))
         return gradeTurn({ candidate, trial, auth, turn, cleanupProblems: [] })
     }
+    const { seed } = candidate.live
     const { result, notes } = await evalWorkspace.run({
         keep,
-        use: (workspaceMcp) => evalAgentTurn.run({ evalCase: candidate, recordedToolCalls, mcp: workspaceMcp, modelId, auth, mode: 'live' }),
+        use: async (workspaceMcp) => {
+            const seeded = await tryCatch(() => evalSeed.create({ mcp: workspaceMcp, seed }))
+            if (!isNil(seeded.error)) {
+                throw new Error(`seed failed: ${seeded.error.message}`)
+            }
+            return evalAgentTurn.run({ evalCase: candidate, recordedToolCalls, mcp: workspaceMcp, modelId, auth, mode: 'live', seeded: seeded.data })
+        },
     })
     return gradeTurn({ candidate, trial, auth, turn: result, cleanupProblems: notes.map((note) => `case ${candidate.caseNumber} run ${trial + 1}: ${note}`) })
 }

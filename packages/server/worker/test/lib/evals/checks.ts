@@ -64,7 +64,7 @@ function verdictOf({ scores }: { scores: RunScores }): RunVerdict {
 async function judge({ evalCase, outcome, auth }: { evalCase: EvalCase, outcome: TurnOutcome, auth: Record<string, unknown> }): Promise<JudgedScores> {
     const replayNote = replayNoteFor({ stops: outcome.stops, live: !isNil(evalCase.live) })
     const expectedBehavior = evalCase.checks.map((check) => `- ${check}`).join('\n')
-    const transcript = `${renderContext({ messages: evalCase.messages })}\n--- THE GRADED TURN STARTS HERE ---\n${outcome.transcript}`
+    const transcript = `${renderContext({ messages: evalCase.messages })}\n${outcome.before}--- THE GRADED TURN STARTS HERE ---\n${outcome.transcript}`
     const judgedText = `${replayNote}${transcript}`
     const { data: answers, error } = await tryCatch(() => askJev({ auth, transcript: judgedText, expectedBehavior }))
     if (isNil(answers)) {

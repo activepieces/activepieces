@@ -1,0 +1,66 @@
+import { chunk, isNil, tryCatch } from '@activepieces/core-utils'
+import { LiveSettings, SeedFlow, SeedTable } from './eval-case'
+import { evalToolSet, McpTools, ToolResult } from './tool-set'
+
+async function create({ mcp, seed }: { mcp: McpTools, seed: LiveSettings['seed'] }): Promise<SeededState> {
+    const flows = await Promise.all(seed.flows.map((flow) => seedFlow({ mcp, flow })))
+    const tables = await Promise.all(seed.tables.map((table) => seedTable({ mcp, table })))
+    return { flows, tables }
+}
+
+async function seedFlow({ mcp, flow }: { mcp: McpTools, flow: SeedFlow }): Promise<SeededFlow> {
+    const result = await callTool({ mcp, toolName: BUILD_FLOW_TOOL, input: flow, label: `flow "${flow.flowName}"` })
+    const flowId = result.structured['flowId']
+    if (typeof flowId !== 'string') {
+        throw new Error(`could not seed flow "${flow.flowName}": ${result.text}`)
+    }
+    return { name: flow.flowName, id: flowId }
+}
+
+async function seedTable({ mcp, table }: { mcp: McpTools, table: SeedTable }): Promise<SeededTable> {
+    const { records = [], ...definition } = table
+    const label = `table "${table.name}"`
+    const created = await callTool({ mcp, toolName: CREATE_TABLE_TOOL, input: definition, label })
+    const tableId = created.structured['id']
+    if (typeof tableId !== 'string') {
+        throw new Error(`could not seed ${label}: ${created.text}`)
+    }
+    for (const batch of chunk(records, INSERT_BATCH)) {
+        await callTool({ mcp, toolName: INSERT_RECORDS_TOOL, input: { tableId, records: batch.map(asTextRecord) }, label: `records of ${label}` })
+    }
+    return { name: table.name, id: tableId, records: records.length }
+}
+
+async function callTool({ mcp, toolName, input, label }: { mcp: McpTools, toolName: string, input: Record<string, unknown>, label: string }): Promise<ToolResult> {
+    const { data, error } = await tryCatch(() => evalToolSet.call({ mcp, toolName, input }))
+    if (!isNil(error)) {
+        throw new Error(`could not seed ${label}: ${error.message}`)
+    }
+    const result = evalToolSet.readResult(data)
+    if (result.failed) {
+        throw new Error(`could not seed ${label}: ${result.text}`)
+    }
+    return result
+}
+
+function asTextRecord(record: Record<string, unknown>): Record<string, string> {
+    return Object.fromEntries(Object.entries(record).map(([field, value]) => [field, typeof value === 'string' ? value : JSON.stringify(value)]))
+}
+
+const BUILD_FLOW_TOOL = 'ap_build_flow'
+const CREATE_TABLE_TOOL = 'ap_create_table'
+const INSERT_RECORDS_TOOL = 'ap_insert_records'
+const INSERT_BATCH = 50
+
+export const evalSeed = {
+    create,
+}
+
+export type SeededFlow = { name: string, id: string }
+
+export type SeededTable = { name: string, id: string, records: number }
+
+export type SeededState = {
+    flows: SeededFlow[]
+    tables: SeededTable[]
+}
