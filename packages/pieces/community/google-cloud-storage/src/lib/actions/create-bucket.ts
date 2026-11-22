@@ -1,4 +1,4 @@
-import { createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { googleCloudStorageAuth } from '../common/auth';
 import { gcsCommon } from '../common/client';
 import { projectIdProperty, bucketNameProperty, locationProperty, storageClassProperty } from '../common/props';
@@ -32,7 +32,7 @@ export const createBucket = createAction({
   },
   async run(context) {
     const { projectId, name, location, storageClass, versioning, uniformBucketLevelAccess, labels } = context.propsValue;
-    const auth = context.auth as OAuth2PropertyValue;
+    const accessToken = await gcsCommon.getAccessToken({ auth: context.auth, server: context.server });
 
     const bucketConfig: any = {
       name,
@@ -57,7 +57,7 @@ export const createBucket = createAction({
     }
 
     try {
-      const response = await gcsCommon.makeRequest(HttpMethod.POST, `/b?project=${projectId}`, auth.access_token, bucketConfig);
+      const response = await gcsCommon.makeRequest(HttpMethod.POST, `/b?project=${projectId}`, accessToken, bucketConfig);
       return response;
     } catch (error: any) {
       if (error.response?.status === 409) {
