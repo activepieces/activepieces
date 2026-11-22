@@ -15,8 +15,8 @@ describe('skippedCases', () => {
     it('turns an ok or unchecked outcome into unchecked when a case was skipped, and keeps broken', () => {
         const skipped = [{ candidate: caseOf(2), reason: 'needs connection' }]
 
-        expect(skippedCases.withSkipped({ outcome: { status: 'ok', reason: '' }, name: 'chat-core', skipped })).toEqual({ status: 'unchecked', reason: '1 chat-core case(s) were skipped for a missing connection' })
-        expect(skippedCases.withSkipped({ outcome: { status: 'unchecked', reason: 'no main baseline' }, name: 'chat-core', skipped })).toEqual({ status: 'unchecked', reason: 'no main baseline; 1 chat-core case(s) were skipped for a missing connection' })
+        expect(skippedCases.withSkipped({ outcome: { status: 'ok', reason: '' }, name: 'chat-core', skipped })).toEqual({ status: 'unchecked', reason: '1 chat-core case(s) were skipped (case 2: needs connection)' })
+        expect(skippedCases.withSkipped({ outcome: { status: 'unchecked', reason: 'no main baseline' }, name: 'chat-core', skipped })).toEqual({ status: 'unchecked', reason: 'no main baseline; 1 chat-core case(s) were skipped (case 2: needs connection)' })
         expect(skippedCases.withSkipped({ outcome: { status: 'broken', reason: '1 regressed' }, name: 'chat-core', skipped })).toEqual({ status: 'broken', reason: '1 regressed' })
         expect(skippedCases.withSkipped({ outcome: { status: 'ok', reason: '' }, name: 'chat-core', skipped: [] })).toEqual({ status: 'ok', reason: '' })
     })

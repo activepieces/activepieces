@@ -113,9 +113,9 @@ async function main(): Promise<void> {
     let explained = new Map<string, CaseExplanation>()
     try {
         const runnable = await Promise.all(datasets.map((dataset) => withoutSkipped({ dataset, mcp })))
-        const skippedCount = runnable.reduce((total, dataset) => total + dataset.skipped.length, 0)
-        if (values.upload && skippedCount > 0) {
-            throw new Error(`--upload refused: ${skippedCount} live case(s) would be skipped for a missing connection, so the baseline would leave them out. Add the connections to project "${mcp.projectName}" first.`)
+        const skipped = runnable.flatMap((dataset) => dataset.skipped)
+        if (values.upload && skipped.length > 0) {
+            throw new Error(`--upload refused: ${skipped.length} live case(s) would be skipped, so the baseline would leave them out: ${skippedCases.describe(skipped)}`)
         }
         for (const [index, dataset] of runnable.entries()) {
             ran.push(await runDataset({ dataset, repeats, recordMode, keep: values.keep, upload: values.upload, verbose: values.verbose, live, modelId: values.model, auth, mcp, schemaTools, baselineRead: baselineReads[index], toolFingerprints }))
@@ -635,7 +635,6 @@ type BaselineRead =
     | { kind: 'skipped' }
 
 type DiffLabel = 'same' | 'unclear' | 'edited' | 'FIXED' | 'REGRESSED'
-
 
 type CheckedTurn = {
     outcome: TurnOutcome

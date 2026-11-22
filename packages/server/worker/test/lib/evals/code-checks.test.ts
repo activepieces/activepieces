@@ -56,6 +56,21 @@ describe('evalCodeChecks write and delete rules', () => {
         expect(evalCodeChecks.declaredProblems({ checks: { cardShown: 'ap_show_questions' }, outcome: outcomeOf({ calls: errored }) })).toEqual(['never showed ap_show_questions'])
     })
 
+    it('does not count a delete whose result starts with ❌, and still validates a flow it failed to delete', async () => {
+        const failedDelete = call({ toolName: 'ap_delete_flow', input: { flowId: 'flow-1' }, output: { content: [{ type: 'text', text: '❌ Flow not found' }] } })
+        const validated: unknown[] = []
+        const mcp = mcpWith({
+            ap_validate_flow: async (input) => {
+                validated.push(input)
+                return { content: [{ type: 'text', text: '✅ valid' }], structuredContent: { valid: true } }
+            },
+        })
+
+        expect(evalCodeChecks.declaredProblems({ checks: { noDeletes: true }, outcome: outcomeOf({ calls: [failedDelete] }) })).toEqual([])
+        expect(await evalCodeChecks.run({ checks: {}, outcome: outcomeOf({ calls: [call({ toolName: 'ap_update_step', input: { flowId: 'flow-1' } }), failedDelete] }), mcp })).toEqual({ verdict: 'pass', reason: 'Every code check passed' })
+        expect(validated).toEqual([{ flowId: 'flow-1' }])
+    })
+
     it('does not call removing a label, member or tag a delete, nor an HTTP GET', () => {
         const calls = [
             call({ toolName: 'ap_execute_action', input: { actionName: 'remove_label_from_email' } }),

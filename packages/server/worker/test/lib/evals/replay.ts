@@ -325,6 +325,7 @@ export const replay = {
     splitStale,
     stubbedTools: STUBBED_TOOLS,
     stubbedToolsNote: STUBBED_TOOLS_NOTE,
+    workspaceWriteTools: WORKSPACE_WRITE_TOOLS,
 }
 
 export type StaleRecording = {

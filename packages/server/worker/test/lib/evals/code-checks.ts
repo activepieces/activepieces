@@ -3,10 +3,11 @@ import { agentToolClassification, agentToolSkills } from '@activepieces/shared'
 import { evalAgentTurn, TurnOutcome, TurnToolCall } from './agent-turn'
 import { RunVerdict } from './checks'
 import { CodeChecks } from './eval-case'
+import { replay } from './replay'
 import { evalToolSet, McpTools } from './tool-set'
 
 async function run({ checks, outcome, mcp }: { checks: CodeChecks, outcome: CheckedOutcome, mcp: McpTools }): Promise<CodeCheckResult> {
-    const deletedFlows = new Set(succeededCalls(outcome).filter((call) => call.toolName === DELETE_FLOW_TOOL).flatMap(flowIdOf))
+    const deletedFlows = new Set(succeededCalls(outcome).filter((call) => call.toolName === DELETE_FLOW_TOOL && landed(call)).flatMap(flowIdOf))
     const flowIds = evalAgentTurn.changedFlowIds(outcome.toolCalls).filter((flowId) => !deletedFlows.has(flowId))
     const flowProblems = checks.skipFlowValidates === true ? [] : await invalidFlows({ mcp, flowIds })
     return resultOf([...declaredProblems({ checks, outcome }), ...flowProblems])
@@ -16,7 +17,7 @@ function declaredProblems({ checks, outcome }: { checks: CodeChecks, outcome: Ch
     const calls = succeededCalls(outcome)
     const cards = new Set([...outcome.cardsShown, ...calls.flatMap((call) => call.toolName.startsWith(CARD_PREFIX) ? [call.toolName] : [])])
     const writes = unique(calls.flatMap(writesOf))
-    const deletes = unique(calls.flatMap(deletesOf))
+    const deletes = unique(calls.filter(landed).flatMap(deletesOf))
     return [
         checks.noQuestionCards === true && cards.has(QUESTIONS_CARD) ? `showed a questions card (${QUESTIONS_CARD}), the case expects none` : null,
         !isNil(checks.cardShown) && !cards.has(checks.cardShown) ? `never showed ${checks.cardShown}${cards.size === 0 ? '' : ` (showed ${[...cards].join(', ')})`}` : null,
@@ -29,6 +30,10 @@ function succeededCalls(outcome: CheckedOutcome): TurnToolCall[] {
     return outcome.toolCalls
         .filter((call) => !call.errored)
         .map((call) => ({ ...call, ...agentToolSkills.effectiveToolCall({ toolName: call.toolName, input: call.input }) }))
+}
+
+function landed(call: TurnToolCall): boolean {
+    return !evalToolSet.readResult(call.output).failed
 }
 
 async function invalidFlows({ mcp, flowIds }: { mcp: McpTools, flowIds: string[] }): Promise<string[]> {
@@ -123,39 +128,18 @@ const CUSTOM_API_CALL_ACTION = 'custom_api_call'
 const DELETE_METHOD = 'DELETE'
 const DELETE_ACTION_PATTERN = /(^|[_\-.])delete([_\-.]|$)/i
 const MAX_ISSUES = 5
-const WRITE_TOOLS = new Set([
+const SIDE_EFFECT_TOOLS = [
     'ap_add_agent_tool',
-    'ap_add_branch',
-    'ap_add_step',
-    'ap_apply_flow_operations',
-    'ap_build_flow',
     'ap_change_flow_status',
     'ap_create_agent',
-    'ap_create_flow',
-    'ap_create_folder',
-    'ap_create_table',
-    'ap_delete_branch',
-    'ap_delete_flow',
-    'ap_delete_records',
-    'ap_delete_step',
-    'ap_delete_table',
-    'ap_duplicate_flow',
-    'ap_insert_records',
     'ap_lock_and_publish',
-    'ap_manage_fields',
-    'ap_manage_notes',
-    'ap_move_flow_to_folder',
     'ap_remove_agent_tool',
-    'ap_rename_flow',
     'ap_retry_run',
     'ap_run_action',
     'ap_send_email',
     'ap_update_agent',
-    'ap_update_branch',
-    'ap_update_record',
-    'ap_update_step',
-    'ap_update_trigger',
-])
+]
+const WRITE_TOOLS = new Set([...replay.workspaceWriteTools, ...SIDE_EFFECT_TOOLS])
 const NOT_RUN: CodeCheckResult = { verdict: 'pass', reason: 'No code checks: they run on live cases only' }
 
 export const evalCodeChecks = {

@@ -13,13 +13,18 @@ function withSkipped({ outcome, name, skipped }: { outcome: DatasetOutcome, name
     if (outcome.status === 'broken' || skipped.length === 0) {
         return outcome
     }
-    const reason = `${skipped.length} ${name} case(s) were skipped for a missing connection`
+    const reason = `${skipped.length} ${name} case(s) were skipped (${describe(skipped)})`
     return { status: 'unchecked', reason: outcome.reason.length === 0 ? reason : `${outcome.reason}; ${reason}` }
+}
+
+function describe(skipped: SkippedCase[]): string {
+    return skipped.map(({ candidate, reason }) => `case ${candidate.caseNumber}: ${reason}`).join('; ')
 }
 
 export const skippedCases = {
     split,
     withSkipped,
+    describe,
 }
 
 export type SkippedCase = {
