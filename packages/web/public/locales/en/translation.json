@@ -4032,5 +4032,12 @@
   "Connect an app once": "Connect an app once",
   "Full access, same credits": "Full access, same credits",
   "We remind you": "We remind you",
-  "Back on {plan}, work kept": "Back on {plan}, work kept"
+  "Back on {plan}, work kept": "Back on {plan}, work kept",
+  "Invite teammates, get {credits} credits each": "Invite teammates, get {credits} credits each",
+  "{left, plural, =1 {1 reward left} other {# rewards left}}": "{left, plural, =1 {1 reward left} other {# rewards left}}",
+  "Invite a teammate for +{credits}": "Invite a teammate for +{credits}",
+  "Each new teammate who joins earns you {credits} credits ({left, plural, =1 {1 reward left} other {# rewards left}}).": "Each new teammate who joins earns you {credits} credits ({left, plural, =1 {1 reward left} other {# rewards left}}).",
+  "Invite teammates, earn {credits} credits": "Invite teammates, earn {credits} credits",
+  "Congrats 🎉 You got {credits} extra credits": "Congrats 🎉 You got {credits} extra credits",
+  "{count, plural, =1 {A teammate} other {# teammates}} joined your team.": "{count, plural, =1 {A teammate} other {# teammates}} joined your team."
 }

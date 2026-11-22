@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/core-utils';
-import { ApEdition, ApFlagId } from '@activepieces/shared';
+import { ApEdition, ApFlagId, InviteRewardSurface } from '@activepieces/shared';
 import { Unplug } from 'lucide-react';
 import React, { ComponentType } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -16,6 +16,11 @@ import {
   SelfServeTrialEndingAlert,
   ManagePlanDialog,
 } from '@/features/billing';
+import {
+  InviteRewardButton,
+  InviteRewardNotifier,
+  useInviteOffer,
+} from '@/features/members';
 import { projectHooks } from '@/features/projects';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
@@ -143,6 +148,7 @@ function ProjectDashboardLayoutInner({
   children: React.ReactNode;
 }) {
   const { open: searchOpen } = useGlobalSearch();
+  const inviteOffer = useInviteOffer(InviteRewardSurface.CREDITS_ALERT);
 
   return (
     <div
@@ -179,7 +185,11 @@ function ProjectDashboardLayoutInner({
               {!hideHeader && (
                 <ProjectDashboardLayoutHeader key={currentProjectId} />
               )}
-              <CreditsUsageAlert />
+              <CreditsUsageAlert
+                extraAction={<InviteRewardButton offer={inviteOffer} />}
+              />
+              {inviteOffer.dialog}
+              <InviteRewardNotifier />
               <div className="flex-1 overflow-auto">{children}</div>
             </div>
           </div>

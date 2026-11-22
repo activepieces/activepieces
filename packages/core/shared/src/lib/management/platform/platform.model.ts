@@ -47,6 +47,10 @@ export enum UnconsumableFeatureId {
     ACTIVE_FLOWS_LIMIT = 'activeFlowsLimit',
 }
 
+export enum RewardFeatureId {
+    REWARDED_INVITES = 'rewarded_invites_count',
+}
+
 export enum FeatureFlagId {
     BILLING_ENFORCED = 'billingEnforced',
     TABLES_ENABLED = 'tablesEnabled',
@@ -377,5 +381,6 @@ export const PlatformBillingInformation = z.object({
     includedSeats: Nullable(z.number()),
     additionalSeats: Nullable(z.number()),
     selfServeTrial: SelfServeTrialInfo,
+    rewardedInvitesLeft: Nullable(z.number()),
 })
 export type PlatformBillingInformation = z.infer<typeof PlatformBillingInformation>
