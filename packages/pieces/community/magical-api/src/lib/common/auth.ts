@@ -2,8 +2,13 @@ import { PieceAuth } from '@activepieces/pieces-framework';
 import { magicalApiRequest, MagicalApiError } from './client';
 
 export const magicalApiAuth = PieceAuth.SecretText({
-  displayName: 'Magical API Key',
-  description: 'Enter your Magical API key from your MagicalAPI dashboard.',
+  displayName: 'API Key',
+  description: `To get your API key:
+1. Sign in to the [MagicalAPI dashboard](https://panel.magicalapi.com/login).
+2. Open **API Info** in the left sidebar.
+3. Click **Create API Key**, give it a title and copy the key. It is shown only once.
+
+API keys need a Basic, Pro or Business plan.`,
   required: true,
   validate: async ({ auth }) => validateMagicalApiKey({ apiKey: auth }),
 });
