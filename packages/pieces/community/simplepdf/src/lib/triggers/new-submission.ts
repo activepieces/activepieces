@@ -1,20 +1,19 @@
 import {
   createTrigger,
+  MarkdownVariant,
   PieceAuth,
   Property,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 
 const markdown = `
-- Paste this URL in the webhook integration endpoint:
+1. Paste this URL as the endpoint of your SimplePDF webhook integration:
 \`\`\`text
 {{webhookUrl}}
 \`\`\`
-- Click update (keep other settings unchanged)
-<br>
-<br>
+2. Click **Update** and leave the other settings unchanged.
 
-_[Read more about configuring webhooks](https://simplepdf.eu/help/how-to/configure-webhooks-pdf-form-submissions)_
+[How to configure webhooks in SimplePDF](https://simplepdf.eu/help/how-to/configure-webhooks-pdf-form-submissions)
 `;
 
 export const simplePDFNewSubmission = createTrigger({
@@ -22,7 +21,7 @@ export const simplePDFNewSubmission = createTrigger({
   classification: 'READ',
   displayName: 'New Submission',
   auth: PieceAuth.None(),
-  description: 'Triggers when a form receives a new submission',
+  description: 'Triggers when someone submits a SimplePDF form',
   aiMetadata: {
     description:
       'Fires when an end user submits a SimplePDF form, delivering the completed PDF submission via webhook. The event represents a single form submission and includes the source document (id and name), the submission (id, submitted_at timestamp, and a URL to the filled PDF), and any context such as environment and customer_id.',
@@ -30,6 +29,7 @@ export const simplePDFNewSubmission = createTrigger({
   props: {
     md: Property.MarkDown({
       value: markdown,
+      variant: MarkdownVariant.INFO,
     }),
   },
   type: TriggerStrategy.WEBHOOK,
@@ -48,12 +48,8 @@ export const simplePDFNewSubmission = createTrigger({
       customer_id: '123',
     },
   },
-  async onEnable(context) {
-    // Empty
-  },
-  async onDisable(context) {
-    // Empty
-  },
+  async onEnable() {},
+  async onDisable() {},
   async run(context) {
     const payloadBody = context.payload.body as
       | Record<string, unknown>
