@@ -138,6 +138,9 @@ jobs:
       AP_EXECUTION_MODE: ${{ matrix.executionMode }}
       # The compose file passes an unset value as "", which the worker reads as invalid and replaces with 1 slot.
       AP_WORKER_CONCURRENCY: 5
+      # The compose default (0.5 CPU, 1 GiB) fits one slot. Five slots peak near 1.5 GiB, and at the default the kernel kills the split cells' worker for memory.
+      WORKER_CPUS: 2
+      WORKER_MEMORY: 3G
       AP_PIECES_SYNC_MODE: NONE
       AP_LOG_LEVEL: info
       AP_FILE_STORAGE_LOCATION: ${{ matrix.fileStorage }}
@@ -242,8 +245,10 @@ jobs:
           fi
 
       - name: Show app and worker logs on failure
-        if: failure()
-        run: docker compose logs --tail=2000 app worker
+        if: failure() || cancelled()
+        run: |
+          docker compose ps -a
+          docker compose logs --tail=2000 app worker
 
       # The stack lives only for this job, so traces hold no real credentials.
       - name: Upload test results
