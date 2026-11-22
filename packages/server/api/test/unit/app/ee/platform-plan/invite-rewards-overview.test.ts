@@ -1,5 +1,5 @@
 import { ApEdition } from '@activepieces/shared'
-import { FastifyBaseLogger } from 'fastify'
+import Fastify from 'fastify'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { autumnBillingProvider } from '../../../../../src/app/ee/platform/platform-plan/billing-providers/autumn-billing'
 
@@ -35,7 +35,7 @@ vi.mock('../../../../../src/app/ee/platform/platform-plan/platform-plan.service'
     assertSeatsNotBelowActiveUsers: vi.fn(),
 }))
 
-const log = { warn: vi.fn(), info: vi.fn(), error: vi.fn(), debug: vi.fn() } satisfies Partial<FastifyBaseLogger>
+const log = Fastify({ logger: false }).log
 
 beforeEach(() => {
     mockGetCustomer.mockReset()
