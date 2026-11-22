@@ -5,6 +5,7 @@ import {
     PackageType,
     PieceScope,
     PieceType,
+    PlanName,
 } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -99,5 +100,28 @@ describe('POST /v1/pieces — private piece installation (EE)', () => {
         expect(saved.pieceType).toBe(PieceType.CUSTOM)
         expect(saved.packageType).toBe(PackageType.ARCHIVE)
         expect(saved.archiveId).toBeDefined()
+    })
+
+    it('should still install on a self-hosted platform whose plan is named free', async () => {
+        const ctx = await createTestContext(app!, { plan: { plan: PlanName.FREE } })
+
+        const formData = new FormData()
+        formData.append(
+            'pieceArchive',
+            new Blob([tgzBuffer], { type: 'application/gzip' }),
+            'private-piece-test.tgz',
+        )
+        formData.append('pieceName', PIECE_NAME)
+        formData.append('pieceVersion', PIECE_VERSION)
+        formData.append('packageType', PackageType.ARCHIVE)
+        formData.append('scope', PieceScope.PLATFORM)
+
+        const response = await ctx.inject({
+            method: 'POST',
+            url: '/api/v1/pieces',
+            body: formData,
+        })
+
+        expect(response.statusCode).toBe(StatusCodes.CREATED)
     })
 })

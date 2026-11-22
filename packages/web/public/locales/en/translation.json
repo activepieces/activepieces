@@ -2641,6 +2641,7 @@
   "Failed to delete piece": "Failed to delete piece",
   "Manage the pieces that are available to your users": "Manage the pieces that are available to your users",
   "Hiding pieces from your users is locked.": "Hiding pieces from your users is locked.",
+  "Installing custom pieces is not available on the free plan.": "Installing custom pieces is not available on the free plan.",
   "Start by installing pieces that you want to use in your automations": "Start by installing pieces that you want to use in your automations",
   "Unpin this piece": "Unpin this piece",
   "Pin this piece": "Pin this piece",

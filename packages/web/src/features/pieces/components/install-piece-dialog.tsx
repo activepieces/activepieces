@@ -4,6 +4,7 @@ import {
   ApFlagId,
   PackageType,
   PieceScope,
+  PlanName,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
@@ -67,6 +68,9 @@ const InstallPieceDialog = ({
 }: InstallPieceDialogProps) => {
   const { platform } = platformHooks.useCurrentPlatform();
   const isEnabled = platform.plan.managePiecesEnabled;
+  const lockedOnFreePlan =
+    platform.plan.plan === PlanName.FREE ||
+    platform.plan.plan === PlanName.FREE_LEGACY;
   const [isOpen, setIsOpen] = useState(false);
 
   const { data: privatePiecesEnabled } = flagsHooks.useFlag<boolean>(
@@ -178,6 +182,12 @@ const InstallPieceDialog = ({
           icon={PlusIcon}
           iconSize={16}
           size="sm"
+          disabled={lockedOnFreePlan}
+          title={
+            lockedOnFreePlan
+              ? t('Installing custom pieces is not available on the free plan.')
+              : undefined
+          }
         >
           {t('Install Piece')}
         </AnimatedIconButton>

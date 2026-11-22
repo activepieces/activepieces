@@ -1,13 +1,16 @@
-import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
-import { AddPieceRequestBody, PieceScope, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
+import { AddPieceRequestBody, ApEdition, PieceScope, PlanName, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 import { FastifyPluginAsyncZod, FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 import { attachMultipartFieldsToBody } from '../../helper/multipart-body'
+import { system } from '../../helper/system/system'
 import { pieceInstallService } from '../../pieces/piece-install-service'
 
 export const platformPieceModule: FastifyPluginAsyncZod = async (app) => {
+    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => planAllowsCustomPieces(platform.plan.plan)))
     await app.register(platformPieceController, { prefix: '/v1/pieces' })
 }
 
@@ -61,3 +64,12 @@ function assertOneOfTheseScope(
         })
     }
 }
+
+function planAllowsCustomPieces(plan: string | null | undefined): boolean {
+    if (system.getEdition() !== ApEdition.CLOUD || isNil(plan)) {
+        return true
+    }
+    return !PLANS_WITHOUT_CUSTOM_PIECES.includes(plan)
+}
+
+const PLANS_WITHOUT_CUSTOM_PIECES: string[] = [PlanName.FREE, PlanName.FREE_LEGACY]
