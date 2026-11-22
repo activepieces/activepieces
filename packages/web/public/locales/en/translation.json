@@ -3368,7 +3368,6 @@
   "Today · {date}": "Today · {date}",
   "Your Enterprise plan trial started. Everything is unlocked for {days} days.": "Your Enterprise plan trial started. Everything is unlocked for {days} days.",
   "We save your changes as soon as the trial starts, so nothing you did is lost.": "We save your changes as soon as the trial starts, so nothing you did is lost.",
-  "Want to keep the Enterprise plan?": "Want to keep the Enterprise plan?",
   "We could not start your trial. Please try again.": "We could not start your trial. Please try again.",
   "Start trial and save": "Start trial and save",
   "Your Enterprise plan trial ends {day, select, today {today at {time}} tomorrow {tomorrow at {time}} other {on {date}}}.": "Your Enterprise plan trial ends {day, select, today {today at {time}} tomorrow {tomorrow at {time}} other {on {date}}}.",

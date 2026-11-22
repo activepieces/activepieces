@@ -28,7 +28,7 @@ import { SelfServeTrialSalesLink } from './current-subscription-card';
 import { PlanBadge, SelfServeTrialLockedActions } from './locked-feature';
 import { TrialTimeline } from './self-serve-trial-dialog';
 
-export function IncludedFeatures({
+function IncludedFeatures({
   featureKey,
 }: {
   featureKey: FeatureKey | undefined;
@@ -37,8 +37,10 @@ export function IncludedFeatures({
   return (
     <ul className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
       {features.map((feature) => {
-        const highlighted =
-          featureKey !== undefined && feature.featureKeys.includes(featureKey);
+        const highlighted = selfServeTrialFeatures.covers({
+          feature,
+          featureKey,
+        });
         return (
           <li key={feature.title} className="flex items-start gap-2.5">
             <feature.icon
@@ -123,7 +125,7 @@ export function LockedFeature({
   );
 }
 
-export function DialogFrame({
+function DialogFrame({
   eyebrow,
   title,
   description,

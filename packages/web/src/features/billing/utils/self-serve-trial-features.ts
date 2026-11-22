@@ -82,13 +82,21 @@ function highlights(
   featureKey: FeatureKey | undefined,
 ): SelfServeTrialFeature[] {
   const all = list();
-  const clicked = all.find(
-    (feature) => !isNil(featureKey) && feature.featureKeys.includes(featureKey),
-  );
+  const clicked = all.find((feature) => covers({ feature, featureKey }));
   const ordered = isNil(clicked)
     ? all
     : [clicked, ...all.filter((feature) => feature !== clicked)];
   return ordered.slice(0, HIGHLIGHT_COUNT);
+}
+
+function covers({
+  feature,
+  featureKey,
+}: {
+  feature: SelfServeTrialFeature;
+  featureKey: FeatureKey | undefined;
+}): boolean {
+  return !isNil(featureKey) && feature.featureKeys.includes(featureKey);
 }
 
 function isIncludedInTrial(featureKey: FeatureKey | undefined): boolean {
@@ -345,6 +353,7 @@ export const selfServeTrialFeatures = {
   nameInSentence,
   lockedCopy,
   highlights,
+  covers,
 };
 
 const HIGHLIGHT_COUNT = 6;

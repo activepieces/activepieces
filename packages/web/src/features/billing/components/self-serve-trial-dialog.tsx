@@ -22,14 +22,16 @@ import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
-import { billingDialogHooks } from '../hooks/billing-dialog-hooks';
+import {
+  billingDialogHooks,
+  SelfServeTrialDialogPayload,
+} from '../hooks/billing-dialog-hooks';
 import { billingQueries } from '../hooks/billing-hooks';
 import {
   SELF_SERVE_TRIAL_DAYS,
   selfServeTrialHooks,
 } from '../hooks/self-serve-trial-hooks';
 import { billingUtils, enterpriseMotion } from '../utils/billing-utils';
-import { FeatureKey } from '../utils/platform-features';
 import { selfServeTrialFeatures } from '../utils/self-serve-trial-features';
 import { selfServeTrialTime } from '../utils/self-serve-trial-utils';
 
@@ -95,10 +97,7 @@ export function SelfServeTrialDialog() {
       case DialogView.START:
         return (
           <StartTrial
-            featureKey={shownPayload?.featureKey}
-            hasPostTrialActivationCallback={
-              !isNil(shownPayload?.postTrialActivationCallback)
-            }
+            payload={shownPayload}
             isPending={isStartingTrial}
             isError={trialStartFailed}
             onStart={() => {
@@ -203,11 +202,7 @@ export function TrialTimeline({
     {
       when: selfServeTrialTime.formatDate(endDate),
       what: t('Back on {plan}, work kept', {
-        plan:
-          info?.autumnPlanName ??
-          (info && billingUtils.isPaidPlan(info.plan.plan)
-            ? info.plan.plan
-            : t('Free')),
+        plan: billingUtils.planDisplayName(info),
       }),
     },
   ];
@@ -244,22 +239,24 @@ export function TrialTimeline({
 }
 
 function StartTrial({
-  featureKey,
-  hasPostTrialActivationCallback,
+  payload,
   isPending,
   isError,
   onStart,
 }: {
-  featureKey: FeatureKey | undefined;
-  hasPostTrialActivationCallback: boolean;
+  payload: SelfServeTrialDialogPayload | null;
   isPending: boolean;
   isError: boolean;
   onStart: () => void;
 }) {
+  const featureKey = payload?.featureKey;
+  const hasPostTrialActivationCallback = !isNil(
+    payload?.postTrialActivationCallback,
+  );
   const highlights = selfServeTrialFeatures.highlights(featureKey);
-  const isClicked = (keys: FeatureKey[]) =>
-    featureKey !== undefined && keys.includes(featureKey);
-  const featureName = isClicked(highlights[0]?.featureKeys ?? [])
+  const featureName = highlights.some((feature) =>
+    selfServeTrialFeatures.covers({ feature, featureKey }),
+  )
     ? selfServeTrialFeatures.nameInSentence(featureKey)
     : null;
 
@@ -295,7 +292,10 @@ function StartTrial({
           </span>
           <ul className="grid gap-x-6 gap-y-4 sm:grid-cols-2 md:grid-flow-col md:grid-rows-3">
             {highlights.map((feature) => {
-              const highlighted = isClicked(feature.featureKeys);
+              const highlighted = selfServeTrialFeatures.covers({
+                feature,
+                featureKey,
+              });
               return (
                 <li key={feature.title} className="flex items-start gap-2.5">
                   <feature.icon
