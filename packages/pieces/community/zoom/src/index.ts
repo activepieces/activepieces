@@ -18,7 +18,7 @@ export const zoomAuth = PieceAuth.OAuth2({
   1. Go to [marketplace.zoom.us](https://marketplace.zoom.us/) and log in to your account.
   2. In the upper-right corner, click **Develop** then **Build App**.
   3. Select **General App**.
-  4. Copy the Client ID and Client Secret.Add Redirect URL and press continue.
+  4. Copy the Client ID and Client Secret. Add the Redirect URL and press Continue.
   5. Go to **Scopes** from left side bar and add the scopes for the actions you use:
      - Meetings: **meeting:write:meeting**, **meeting:read:meeting**, **meeting:read:list_meetings**, **meeting:update:meeting**, **meeting:delete:meeting**
      - Registrants: **meeting:write:registrant**
@@ -67,6 +67,12 @@ export const zoom = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.zoom.us/v2',
       auth: zoomAuth,
+      props: {
+        url: {
+          description: 'Full URL, or a path relative to https://api.zoom.us/v2',
+          placeholder: '/users/me/meetings',
+        },
+      },
       authMapping: async (auth) => {
         return {
           Authorization: `Bearer ${auth.access_token}`,
