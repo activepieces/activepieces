@@ -193,13 +193,13 @@ export function createBuildPlanTools({ eventEmitter, getProjectId }: {
     }
     const tools: ToolSet = {
         ap_set_build_plan: tool({
-            description: 'The live build card for a brand-new recurring automation (silent, internal — no thinking status). Use it only while following the build_flow guide; never for a one-time task, a lookup, an answer or a small edit to an existing automation. When the solution is several flows, give each flow one row and set its flowName. Call it once with phase "detecting", flowName, tagline, iconName and every step "pending" before building. Later calls only need what changed (usually just phase): any field you leave out keeps the card\'s current value. Send each update alongside the next step\'s real tool calls instead of as a step on its own, but only with states you already know: mark a step done or failed, or set phase done or failed, only after the result that decides it has come back, never in the same step as the call that produces it.',
+            description: 'The live build card for a brand-new recurring automation (silent, internal — no thinking status). Use it only while following the build_flow guide; never for a one-time task, a lookup, an answer or a small edit to an existing automation. When the solution is several flows, give each flow one row and set its flowName. Call it once with phase "detecting", flowName, tagline, iconName and every step "pending" before building. Later calls only need what changed (usually just phase): any field you leave out keeps the card\'s current value. Send each update alongside the next step\'s real tool calls instead of as a step on its own, and set phase done or failed only after the result that decides it has come back.',
             inputSchema: z.object({
                 phase: z.enum(['detecting', 'building', 'testing', 'done', 'failed']).optional().describe('"detecting" = just decided to build (celebrate); "building" = constructing steps; "testing" = running test cases; "done" = built & verified; "failed" = gave up. Left out, the card starts at "detecting" and later keeps its phase.'),
                 flowName: z.string().optional().describe('Human-readable automation name shown on the card. Required on the first call; omit later to keep it.'),
                 tagline: z.string().optional().describe('A big, bold, fun marketing-style headline about the specific manual work this automation kills — casual and celebratory, max ~7 words, no period. Make it about THIS user\'s task, not generic. E.g. "Say goodbye to copy-pasting leads", "No more chasing invoices by hand", "Never sort support emails again". Required on the first call; omit later to keep it.'),
                 iconName: z.string().optional().describe(`The single icon that best represents this automation's business case, shown as a playful doodle on the card. Pick the closest match to the task — e.g. mail/email triage, dollar-sign or credit-card for invoices/payments, users for CRM/leads, calendar or calendar-clock for scheduling, bot for AI work, bar-chart or pie-chart for reporting, truck or package for logistics/orders, message-square for chat/Slack, file-text for documents, bell for alerts. Required on the first call; omit later to keep it. Allowed names: ${QUESTION_ICON_NAMES}`),
-                flowId: z.string().optional().describe('The flow id; set it as soon as ap_create_flow / ap_build_flow returns it. Required when phase is "done" so the Open / Test / Run actions work.'),
+                flowId: z.string().optional().describe('Filled in from the built flows; set it only to point the card at a different flow, e.g. a solution\'s entry flow.'),
                 steps: z.array(z.object({
                     id: z.string().describe('Stable id you reuse across updates, e.g. "trigger", "classify", "route"'),
                     label: z.string().describe('Short human label for a planned step. Once flows are built, the card shows their real steps and their state by itself.'),
@@ -284,7 +284,11 @@ function builtFlowOf({ result }: { result: unknown }): BuiltFlow | null {
     }
 }
 
-function withBuiltRows({ plan, builtFlows, plannedRows = [] }: { plan: BuildPlanEvent, builtFlows: BuiltFlow[], plannedRows?: PlannedRow[] }): BuildPlanEvent {
+function withBuiltRows({ plan, builtFlows, plannedRows }: { plan: BuildPlanEvent, builtFlows: BuiltFlow[], plannedRows: PlannedRow[] }): BuildPlanEvent {
+    const [firstFlow] = builtFlows
+    if (isNil(firstFlow)) {
+        return plan
+    }
     const finished = plan.phase === 'done'
     const status = (done: boolean): BuildPlanStep['status'] => {
         if (done || finished) {
@@ -296,14 +300,14 @@ function withBuiltRows({ plan, builtFlows, plannedRows = [] }: { plan: BuildPlan
     const steps = plannedRows.some((row) => !isNil(row.flowName))
         ? plannedFlowRows({ plannedRows, builtFlows, flowRow, finished })
         : builtFlows.length === 1
-            ? builtFlows[0].steps.map((step, index) => ({ id: `${builtFlows[0].flowId}:${index}`, label: step.label, status: status(step.done) }))
+            ? firstFlow.steps.map((step, index) => ({ id: `${firstFlow.flowId}:${index}`, label: step.label, status: status(step.done) }))
             : builtFlows.map(flowRow)
     return {
         ...plan,
         steps,
         phase: plan.phase === 'detecting' ? 'building' : plan.phase,
         updatedAt: new Date().toISOString(),
-        flowId: plan.flowId ?? builtFlows[0].flowId,
+        flowId: plan.flowId ?? firstFlow.flowId,
     }
 }
 

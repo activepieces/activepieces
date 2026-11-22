@@ -835,7 +835,7 @@ const built = (value: unknown) => {
 describe('buildPlanSync', () => {
     it('shows the real steps of a single built flow, with the broken one still in progress, whatever the card labels were', () => {
         const flow = built(result({ flowId: 'f1', name: 'Email triage', steps: [['gmail_new_email_received', 'ok'], ['Classify urgency', 'ok'], ['Ping me on Slack', 'problem']] }))
-        const next = buildPlanSync.withBuiltRows({ plan: PLAN, builtFlows: [flow] })
+        const next = buildPlanSync.withBuiltRows({ plan: PLAN, builtFlows: [flow], plannedRows: [] })
 
         expect(rows(next)).toEqual(['Gmail new email received=done', 'Classify urgency=done', 'Ping me on Slack=in_progress'])
         expect(next).toMatchObject({ phase: 'building', flowId: 'f1' })
@@ -847,7 +847,7 @@ describe('buildPlanSync', () => {
             built(result({ flowId: 'f2', name: 'Midday task check-in', steps: [['cron_expression', 'problem'], ['Send check-in email', 'ok']] })),
         ]
 
-        expect(rows(buildPlanSync.withBuiltRows({ plan: PLAN, builtFlows: flows }))).toEqual(['Morning task digest=done', 'Midday task check-in=in_progress'])
+        expect(rows(buildPlanSync.withBuiltRows({ plan: PLAN, builtFlows: flows, plannedRows: [] }))).toEqual(['Morning task digest=done', 'Midday task check-in=in_progress'])
     })
 
     it('keeps the flows not built yet when the card plans several flows', () => {
@@ -895,13 +895,17 @@ describe('buildPlanSync', () => {
     it('marks the unfinished steps failed once the model sets phase failed', () => {
         const flow = built(result({ flowId: 'f1', name: 'Email triage', steps: [['Classify urgency', 'ok'], ['Ping me on Slack', 'problem']] }))
 
-        expect(rows(buildPlanSync.withBuiltRows({ plan: { ...PLAN, phase: 'failed' }, builtFlows: [flow] }))).toEqual(['Classify urgency=done', 'Ping me on Slack=failed'])
+        expect(rows(buildPlanSync.withBuiltRows({ plan: { ...PLAN, phase: 'failed' }, builtFlows: [flow], plannedRows: [] }))).toEqual(['Classify urgency=done', 'Ping me on Slack=failed'])
     })
 
     it('marks every row done once the model sets phase done', () => {
         const flow = built(result({ flowId: 'f1', name: 'Email triage', steps: [['Ping me on Slack', 'problem']] }))
 
-        expect(rows(buildPlanSync.withBuiltRows({ plan: { ...PLAN, phase: 'done' }, builtFlows: [flow] }))).toEqual(['Ping me on Slack=done'])
+        expect(rows(buildPlanSync.withBuiltRows({ plan: { ...PLAN, phase: 'done' }, builtFlows: [flow], plannedRows: [] }))).toEqual(['Ping me on Slack=done'])
+    })
+
+    it('keeps the plan unchanged when no flow is built yet', () => {
+        expect(buildPlanSync.withBuiltRows({ plan: PLAN, builtFlows: [], plannedRows: [] })).toEqual(PLAN)
     })
 
     it('ignores results that are not a flow build or edit', () => {

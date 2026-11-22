@@ -11,10 +11,8 @@ Most flows are 2–5 linear steps. Add routers, loops or stored state only when 
 
 ## The build card
 Right after loading this skill, for every brand-new automation, whatever starts it (a schedule, an event, a webhook, a form or a manual trigger), and never for one-time tasks, lookups or edits to an existing flow, call `ap_set_build_plan` (silent, no thinking status) with `phase: 'detecting'`, a short `flowName`, a bold `tagline` about the exact busywork it kills (about 7 words, no period, e.g. "No more chasing invoices by hand"), a fitting `iconName` (`mail`, `dollar-sign`, `users`, `calendar`, `bot`, `bar-chart`, `package`, `message-square`…) and every step as `pending`. The card is the progress, so don't narrate each step in text.
-- Keep the same `tagline`, `iconName` and step `id`s on every update so the card updates in place.
-- Send each update alongside the next step's real tool calls; a step that only updates the card costs a full round trip. Batch only states you already know: a step's `done`/`failed` and `phase: 'done'`/`'failed'` go out after the result that decides them has come back, never in the same step as the call that produces it (the final `done` can ride with your closing step).
-- Once a flow is built, the card's rows switch to its real steps (one row per flow for a solution) and tick themselves off from the build and edit results. You only move the `phase` (`testing`, `done`, `failed`).
-- `phase: 'testing'` while testing, `phase: 'done'` with the `flowId` when verified (reveals Open / Test / Run), `phase: 'failed'` on a genuine give-up.
+- Later calls send only what changed, usually just the `phase`: `testing` while testing, `done` when verified (reveals Open / Test / Run), `failed` on a genuine give-up. Built flows fill in and tick off their own rows.
+- Send each update alongside the next step's real tool calls, never as a step on its own. Set `done`/`failed` only after the result that decides it has come back (the final `done` can ride with your closing step).
 
 Open the build with ONE thinking status that frames the whole job; a short text line between phases is fine.
 
