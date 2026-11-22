@@ -1,7 +1,7 @@
 import { formulaEvaluator } from '@activepieces/core-formula'
 import { isNil, isObject, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
-import { FlowActionType, flowStructureUtil, FlowTrigger, FlowTriggerType, PopulatedFlow, RouterActionSettingsWithValidation, Step } from '@activepieces/shared'
+import { FlowActionType, flowStructureUtil, FlowTrigger, FlowTriggerType, PopulatedFlow, PropertyExecutionType, PropertySettings, RouterActionSettingsWithValidation, Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { flowValidation } from './flow-validation'
@@ -22,9 +22,10 @@ async function resolveDropdownLabels({ pieceName, pieceVersion, componentName, c
 }): Promise<LabelResolution> {
     const component = await findComponent({ pieceName, pieceVersion, componentName, componentType, platformId, log })
     if (isNil(component)) {
-        return { input, resolved: [], problems: [] }
+        return { input, resolved: [], problems: [], propertySettings: {} }
     }
     let currentInput = input
+    let propertySettings: Record<string, PropertySettings> = {}
     const resolved: string[] = []
     const problems: FlowProblem[] = []
     for (const [field, prop] of Object.entries(component.props)) {
@@ -41,6 +42,7 @@ async function resolveDropdownLabels({ pieceName, pieceVersion, componentName, c
             resolved.push(...remap.resolved)
             problems.push(...remap.problems)
             currentInput = { ...currentInput, [field]: remap.input }
+            propertySettings = { ...propertySettings, [field]: { type: PropertyExecutionType.MANUAL, schema } }
             continue
         }
         const labels = labelsToResolve(value)
@@ -61,7 +63,7 @@ async function resolveDropdownLabels({ pieceName, pieceVersion, componentName, c
             currentInput = { ...currentInput, [field]: Array.isArray(currentInput[field]) ? values : values[0] }
         }
     }
-    return { input: currentInput, resolved, problems }
+    return { input: currentInput, resolved, problems, propertySettings }
 }
 
 async function findProblems({ trigger, invalidReasons, labelProblems, platformId, log }: {
@@ -220,7 +222,7 @@ function remapDynamicKeys({ stepName, field, value, schema }: {
     field: string
     value: Record<string, unknown>
     schema: PiecePropertyMap
-}): LabelResolution {
+}): Omit<LabelResolution, 'propertySettings'> {
     const entries = Object.entries(value).map(([key, item]) => ({ key, item, target: dynamicKeyFor({ key, schema }) }))
     const renamed = entries.filter((entry) => !isNil(entry.target) && entry.target !== entry.key)
     const unknownKeys = entries.filter((entry) => isNil(entry.target)).map((entry) => JSON.stringify(entry.key))
@@ -361,6 +363,7 @@ type LabelResolution = {
     input: Record<string, unknown>
     resolved: string[]
     problems: FlowProblem[]
+    propertySettings: Record<string, PropertySettings>
 }
 
 export type FlowStepState = {

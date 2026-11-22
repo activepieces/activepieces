@@ -1,4 +1,5 @@
 import { PropertyType } from '@activepieces/pieces-framework'
+import { PropertyExecutionType } from '@activepieces/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const { getOrThrow, executePropertyResolution } = vi.hoisted(() => ({ getOrThrow: vi.fn(), executePropertyResolution: vi.fn() }))
@@ -37,6 +38,7 @@ function resolve(values: Record<string, unknown>): ReturnType<typeof buildFlowRe
 
 describe('buildFlowReview.resolveDropdownLabels on a dynamic field', () => {
     beforeEach(() => {
+        executePropertyResolution.mockClear()
         getOrThrow.mockResolvedValue({ actions: { insert_row: { props: { values: { type: PropertyType.DYNAMIC, displayName: 'Values', required: true } } } }, triggers: {} })
         executePropertyResolution.mockResolvedValue({ status: 'dynamic', props: COLUMNS })
     })
@@ -47,6 +49,8 @@ describe('buildFlowReview.resolveDropdownLabels on a dynamic field', () => {
         expect(result.input).toEqual({ values: { A: '{{trigger.email}}', B: 'Ada' } })
         expect(result.resolved).toEqual(['step_1.values: key "email" → "A"', 'step_1.values: key "Name" → "B"'])
         expect(result.problems).toEqual([])
+        expect(result.propertySettings).toEqual({ values: { type: PropertyExecutionType.MANUAL, schema: COLUMNS } })
+        expect(executePropertyResolution).toHaveBeenCalledTimes(1)
     })
 
     it('keeps real keys and reports a key that matches no field', async () => {
