@@ -40,7 +40,7 @@ icon: "cards"
         | Parameter Name | Required | Type   | Description                                 |
         | -------------- | -------- | ------ | ------------------------------------------- |
         | pieceName      | ✅      | string | The name of the piece you want to create a connection for.
-        | connectionName | ❌      | string | The external Id of the connection. When provided, the connection uses it as its external Id and display name, and the dialog does not ask for a name. If the project already has a connection with this external Id, saving the dialog replaces its value.
+        | connectionName | ❌      | string | The external Id of the connection. When provided, the connection uses it as its external Id and display name, and the dialog does not ask for a name. If the project already has a connection with this external Id, saving the dialog replaces its value. Use only letters, numbers and `_ - @ + .`: with any other character, such as a space, the dialog does not save.
         | newWindow      | ❌      | \{ width?: number, height?: number, top?: number, left?: number \} | If set the connection dialog will be opened in a new window instead of an iframe taking the full page.
 
         **Connect Result**

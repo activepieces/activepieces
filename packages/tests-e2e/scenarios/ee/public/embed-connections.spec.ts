@@ -9,7 +9,7 @@ test.describe('Embedded connections and MCP', { tag: ['@feature:embed-conn', '@s
   test('create a connection on the embedded connections page', async ({ cleanup, embed, embedConnections, connectionsList }) => {
     const token = embed.signToken({ signingKey: await embed.createSigningKey() });
     const embedded = await embed.exchange({ token });
-    const connectionName = e2eApi.uniqueName('embed connection');
+    const connectionName = e2eApi.uniqueName('embed connection').replaceAll(' ', '_');
     const embedPage = new EmbedConnectionsPage(await embed.hostPage());
     await embedPage.openConnect({ token, pieceName: ACTIVEPIECES_PIECE, connectionName });
 
