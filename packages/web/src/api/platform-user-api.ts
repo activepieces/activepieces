@@ -1,5 +1,7 @@
 import { SeekPage } from '@activepieces/core-utils';
 import {
+  ListPlatformUsersWithInvitationsRequest,
+  PlatformUserListItem,
   UpdateUserRequestBody,
   User,
   UserWithMetaInformation,
@@ -11,6 +13,12 @@ import { api } from '@/lib/api';
 export const platformUserApi = {
   list(request: ListUsersRequestBody) {
     return api.get<SeekPage<UserWithMetaInformation>>('/v1/users', request);
+  },
+  listWithInvitations(request: ListPlatformUsersWithInvitationsRequest) {
+    return api.get<SeekPage<PlatformUserListItem>>(
+      '/v1/users/with-invitations',
+      request,
+    );
   },
   delete(id: string) {
     return api.delete(`/v1/users/${id}`);

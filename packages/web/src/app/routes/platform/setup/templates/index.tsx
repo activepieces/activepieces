@@ -3,8 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { FileText, Pencil, Trash, Tag, Clock, Puzzle } from 'lucide-react';
-import { useState, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useMemo } from 'react';
 import { toast } from 'sonner';
 
 import {
@@ -27,7 +26,11 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { PieceIconList } from '@/features/pieces';
-import { templatesApi, templatesMutations } from '@/features/templates';
+import {
+  templateKeys,
+  templatesApi,
+  templatesMutations,
+} from '@/features/templates';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
@@ -37,20 +40,20 @@ import { CreateTemplateDialog } from './create-template-dialog';
 import { UpdateTemplateDialog } from './update-template-dialog';
 
 const PlatformTemplatesPage = () => {
-  const [searchParams] = useSearchParams();
   const { platform } = platformHooks.useCurrentPlatform();
   const isSample = !platform.plan.manageTemplatesEnabled;
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['templates', searchParams.toString()],
+    queryKey: [...templateKeys.all, 'platform'],
     staleTime: 0,
-    queryFn: () => {
-      return templatesApi.list({
-        type: TemplateType.CUSTOM,
-      });
-    },
+    queryFn: () => templatesApi.list({ type: TemplateType.CUSTOM }),
   });
-
-  const [selectedRows, setSelectedRows] = useState<Template[]>([]);
+  const templatesPage = isSample ? sampleData.templatesPage() : data;
+  const newestFirst = templatesPage && {
+    ...templatesPage,
+    data: [...templatesPage.data].sort(
+      (a, b) => b.created.localeCompare(a.created) || b.id.localeCompare(a.id),
+    ),
+  };
 
   const bulkDeleteMutation = templatesMutations.useBulkDeleteTemplates({
     onSuccess: () => {
@@ -74,41 +77,15 @@ const PlatformTemplatesPage = () => {
             table.getRowModel().rows.length > 0 &&
             table.getRowModel().rows.every((row) => row.getIsSelected())
           }
-          onCheckedChange={(value) => {
-            table.toggleAllRowsSelected(!!value);
-            const allRows = table.getRowModel().rows.map((row) => row.original);
-            setSelectedRows(value ? allRows : []);
-          }}
+          onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
         />
       ),
-      cell: ({ row }) => {
-        const isChecked = selectedRows.some(
-          (selectedRow) => selectedRow.id === row.original.id,
-        );
-
-        return (
-          <Checkbox
-            checked={isChecked}
-            onCheckedChange={(value) => {
-              let newSelectedRows = [...selectedRows];
-              if (value) {
-                const exists = newSelectedRows.some(
-                  (selectedRow) => selectedRow.id === row.original.id,
-                );
-                if (!exists) {
-                  newSelectedRows.push(row.original);
-                }
-              } else {
-                newSelectedRows = newSelectedRows.filter(
-                  (selectedRow) => selectedRow.id !== row.original.id,
-                );
-              }
-              setSelectedRows(newSelectedRows);
-              row.toggleSelected(!!value);
-            }}
-          />
-        );
-      },
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+        />
+      ),
     },
     {
       accessorKey: 'name',
@@ -160,7 +137,7 @@ const PlatformTemplatesPage = () => {
     () => [
       {
         render: (
-          _selectedRows: RowDataWithActions<Template>[],
+          selectedRows: RowDataWithActions<Template>[],
           resetSelection: () => void,
         ) => (
           <div onClick={(e) => e.stopPropagation()}>
@@ -176,7 +153,6 @@ const PlatformTemplatesPage = () => {
                   selectedRows.map((row) => row.id),
                 );
                 resetSelection();
-                setSelectedRows([]);
               }}
             >
               {selectedRows.length > 0 && (
@@ -195,7 +171,7 @@ const PlatformTemplatesPage = () => {
         ),
       },
     ],
-    [selectedRows, bulkDeleteMutation],
+    [bulkDeleteMutation],
   );
 
   return (
@@ -224,8 +200,10 @@ const PlatformTemplatesPage = () => {
         )}
         emptyStateIcon={<FileText />}
         columns={columnsWithCheckbox}
-        page={isSample ? sampleData.templatesPage() : data}
-        hidePagination={true}
+        getRowId={(template) => template.id}
+        page={newestFirst}
+        pageInBrowser
+        hideFooterUntilNeeded
         isLoading={isLoading}
         isError={isError}
         errorStateEntity={t('templates')}

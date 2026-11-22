@@ -30,6 +30,7 @@ import { triggerRunHooks } from '@/features/flows';
 import { PieceDisplayName, PieceIconWithPieceName } from '@/features/pieces';
 
 import { StatusProgressBar, type DayStatus } from './status-progress-bar';
+import { triggerHealthUtils } from './trigger-health-utils';
 
 type TriggerHealthRow = {
   id: string;
@@ -69,9 +70,7 @@ const percentageForLastXDays = (
     (acc, day) => acc + (pieceData.dailyStats[day]?.failure ?? 0),
     0,
   );
-  const percentage =
-    successRuns > 0 ? (successRuns / (successRuns + failureRuns)) * 100 : 100;
-  return Number(percentage.toFixed(1));
+  return triggerHealthUtils.successRate({ successRuns, failureRuns });
 };
 
 const generateLastXDays = (days: number): string[] => {
@@ -90,39 +89,41 @@ export default function TriggerHealthPage() {
 
   const triggerHealthData: TriggerHealthRow[] = isLoading
     ? []
-    : Object.entries(report?.pieces ?? {}).map(([pieceName, pieceData]) => {
-        const last7Days = percentageForLastXDays(7, pieceData);
-        const last14Days = percentageForLastXDays(14, pieceData);
-        const last24Hours = percentageForLastXDays(1, pieceData);
-        return {
-          id: pieceName,
-          status: {
-            type:
-              last14Days === 100
-                ? STATUS.SUCCESS
-                : last14Days > 0
-                ? STATUS.WARNING
-                : STATUS.FAULT,
-          },
-          last24Hours,
-          last7Days,
-          last14Days,
-          lastResults: generateLastXDays(14).map((day) => {
-            const success = pieceData.dailyStats[day]?.success ?? 0;
-            const failure = pieceData.dailyStats[day]?.failure ?? 0;
-            const totalRuns = success + failure;
-            return {
-              date: day,
-              success,
-              failure,
-              status:
-                failure > 0 ? (success > 0 ? 'warning' : 'fault') : 'success',
-              totalRuns: totalRuns,
-            };
-          }),
-          runs: pieceData.totalRuns,
-        };
-      });
+    : Object.entries(report?.pieces ?? {})
+        .map(([pieceName, pieceData]): TriggerHealthRow => {
+          const last7Days = percentageForLastXDays(7, pieceData);
+          const last14Days = percentageForLastXDays(14, pieceData);
+          const last24Hours = percentageForLastXDays(1, pieceData);
+          return {
+            id: pieceName,
+            status: {
+              type:
+                last14Days === 100
+                  ? STATUS.SUCCESS
+                  : last14Days > 0
+                  ? STATUS.WARNING
+                  : STATUS.FAULT,
+            },
+            last24Hours,
+            last7Days,
+            last14Days,
+            lastResults: generateLastXDays(14).map((day) => {
+              const success = pieceData.dailyStats[day]?.success ?? 0;
+              const failure = pieceData.dailyStats[day]?.failure ?? 0;
+              const totalRuns = success + failure;
+              return {
+                date: day,
+                success,
+                failure,
+                status:
+                  failure > 0 ? (success > 0 ? 'warning' : 'fault') : 'success',
+                totalRuns: totalRuns,
+              };
+            }),
+            runs: pieceData.totalRuns,
+          };
+        })
+        .sort(triggerHealthUtils.compareWorstFirst);
 
   const getStatusIcon = (statusType: string) => {
     switch (statusType) {
@@ -248,9 +249,10 @@ export default function TriggerHealthPage() {
           'Trigger health information will appear here',
         )}
         emptyStateIcon={<CheckCircle />}
-        hidePagination={true}
+        pageInBrowser
+        hideFooterUntilNeeded
         columns={columns}
-        page={{ data: triggerHealthData, previous: '', next: '' }}
+        page={{ data: triggerHealthData, previous: null, next: null }}
         isLoading={isLoading}
         isError={isError}
         errorStateEntity={t('trigger status')}

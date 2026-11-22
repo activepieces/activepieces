@@ -6,6 +6,7 @@ export { adminPageResources } from './admin-page-resources';
 export { adminSurface } from './admin-surface';
 export { adminLayout } from './admin-layout';
 export { AdminDataTable } from './admin-data-table';
+export { adminPagination } from './admin-pagination';
 export { AdminEmpty } from './admin-empty';
 export { SettingsPanel, SettingsRow, DangerZone } from './settings-panel';
 export { SaveBar } from './save-bar';
