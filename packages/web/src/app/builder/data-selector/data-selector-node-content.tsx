@@ -100,6 +100,10 @@ const DataSelectorNodeContent = ({
         'hover:bg-gray-4/60 focus:bg-gray-4',
       )}
       data-depth={depth}
+      data-testid="data-selector-node"
+      data-property-path={
+        node.data.type === 'value' ? node.data.propertyPath : undefined
+      }
     >
       <div
         className={cn(

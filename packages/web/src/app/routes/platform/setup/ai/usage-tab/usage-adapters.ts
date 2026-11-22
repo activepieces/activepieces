@@ -17,7 +17,7 @@ import { t } from 'i18next';
 import { SUPPORTED_AI_PROVIDERS } from '@/features/agents';
 
 import { usageFormat } from './usage-format';
-import { UsageMetric, UsagePoint } from './usage-types';
+import { UsageChartPoint, UsageMetric, UsagePoint } from './usage-types';
 
 function seriesToPoints({
   series,
@@ -95,7 +95,10 @@ function paceOf({
   history: AiUsageHistory;
   period: AiUsagePeriod;
 }): { avgPerDayUsd: number; forecastUsd?: number } {
-  const avgPerDayUsd = totals.spendUsd / elapsedDaysOf({ ranges, history });
+  const elapsedDays = elapsedDaysOf({ ranges, history });
+  const avgPerDayUsd =
+    totals.spendUsd /
+    (SUB_DAY_PERIODS.includes(period) ? elapsedDays : Math.max(elapsedDays, 1));
   if (period !== 'this-month') {
     return { avgPerDayUsd };
   }
@@ -103,6 +106,22 @@ function paceOf({
     avgPerDayUsd,
     forecastUsd: avgPerDayUsd * daysInMonthOf({ iso: ranges.current.start }),
   };
+}
+
+function chartPointsOf({
+  points,
+  ranges,
+}: {
+  points: UsagePoint[];
+  ranges: AiUsageRanges;
+}): UsageChartPoint[] {
+  const lastIsLive = new Date(ranges.current.end).getTime() > Date.now();
+  const lastIndex = points.length - 1;
+  return points.map((point, index) => ({
+    ...point,
+    settled: lastIsLive && index === lastIndex ? null : point.current,
+    live: lastIsLive && index >= lastIndex - 1 ? point.current : null,
+  }));
 }
 
 function daysInMonthOf({ iso }: { iso: string }): number {
@@ -274,6 +293,7 @@ export const usageAdapters = {
   seriesToPoints,
   creditsNote,
   paceOf,
+  chartPointsOf,
   monthEndDateLabel,
   legendRanges,
   providerDisplayName,

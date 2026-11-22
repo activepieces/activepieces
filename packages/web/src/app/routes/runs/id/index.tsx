@@ -30,7 +30,6 @@ const FlowRunPage = () => {
       };
     },
     enabled: runId !== undefined,
-    refetchInterval: 15000,
   });
 
   const { data: sampleData, isLoading: isSampleDataLoading } =
