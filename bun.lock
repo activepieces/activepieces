@@ -8632,7 +8632,7 @@
     },
     "packages/pieces/community/simplepdf": {
       "name": "@activepieces/piece-simplepdf",
-      "version": "1.1.7",
+      "version": "1.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
