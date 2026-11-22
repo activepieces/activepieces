@@ -40,6 +40,48 @@ describe('evalCodeChecks.declaredProblems', () => {
     })
 })
 
+describe('evalCodeChecks write and delete rules', () => {
+    it('counts stubbed side effects as writes, but not tests, connection checks, code runs or memory', () => {
+        const notWrites = ['ap_revalidate_connection', 'ap_test_flow', 'ap_test_step', 'ap_run_code', 'ap_remember', 'ap_set_session_title'].map((toolName) => call({ toolName }))
+        const writes = ['ap_change_flow_status', 'ap_lock_and_publish', 'ap_retry_run', 'ap_create_agent'].map((toolName) => call({ toolName }))
+
+        expect(evalCodeChecks.declaredProblems({ checks: { noWrites: true }, outcome: outcomeOf({ calls: notWrites }) })).toEqual([])
+        expect(evalCodeChecks.declaredProblems({ checks: { noWrites: true }, outcome: outcomeOf({ calls: writes }) })).toEqual(['changed data, the case expects no writes: ap_change_flow_status, ap_lock_and_publish, ap_retry_run, ap_create_agent'])
+    })
+
+    it('does not count a rejected or errored call as a change, a delete or a shown card', () => {
+        const errored = [call({ toolName: 'ap_update_step', errored: true }), call({ toolName: 'ap_delete_flow', errored: true }), call({ toolName: 'ap_show_questions', errored: true })]
+
+        expect(evalCodeChecks.declaredProblems({ checks: { noWrites: true, noDeletes: true, noQuestionCards: true }, outcome: outcomeOf({ calls: errored }) })).toEqual([])
+        expect(evalCodeChecks.declaredProblems({ checks: { cardShown: 'ap_show_questions' }, outcome: outcomeOf({ calls: errored }) })).toEqual(['never showed ap_show_questions'])
+    })
+
+    it('does not call removing a label, member or tag a delete, nor an HTTP GET', () => {
+        const calls = [
+            call({ toolName: 'ap_execute_action', input: { actionName: 'remove_label_from_email' } }),
+            call({ toolName: 'ap_execute_action', input: { actionName: 'remove_member' } }),
+            call({ toolName: 'ap_execute_action', input: { actionName: 'custom_api_call', input: { method: 'GET' } } }),
+            call({ toolName: 'ap_apply_flow_operations', input: { operations: [{ type: 'update_step' }, { type: 'add_branch' }] } }),
+            call({ toolName: 'ap_manage_fields', input: { operation: 'UPDATE' } }),
+        ]
+
+        expect(evalCodeChecks.declaredProblems({ checks: { noDeletes: true }, outcome: outcomeOf({ calls }) })).toEqual([])
+    })
+
+    it('catches a DELETE custom API call and delete operations inside batch and manage tools', () => {
+        const calls = [
+            call({ toolName: 'ap_execute_action', input: { actionName: 'custom_api_call', input: { method: 'delete' } } }),
+            call({ toolName: 'ap_apply_flow_operations', input: { operations: [{ type: 'update_step' }, { type: 'delete_step' }, { type: 'delete_branch' }] } }),
+            call({ toolName: 'ap_manage_fields', input: { operation: 'DELETE' } }),
+            call({ toolName: 'ap_manage_notes', input: { operation: 'DELETE' } }),
+        ]
+
+        expect(evalCodeChecks.declaredProblems({ checks: { noDeletes: true }, outcome: outcomeOf({ calls }) })).toEqual([
+            'deleted something, the case expects no deletes: ap_execute_action (custom_api_call), ap_apply_flow_operations (delete_step), ap_apply_flow_operations (delete_branch), ap_manage_fields (DELETE), ap_manage_notes (DELETE)',
+        ])
+    })
+})
+
 describe('evalCodeChecks.run', () => {
     it('validates every flow the turn changed and fails on an invalid one', async () => {
         const validated: unknown[] = []
@@ -65,6 +107,19 @@ describe('evalCodeChecks.run', () => {
         expect(result.verdict).toBe('pass')
     })
 
+    it('fails when ap_validate_flow reports an error or no verdict, but not for a flow the turn deleted', async () => {
+        const mcp = mcpWith({
+            ap_validate_flow: async (input) => input['flowId'] === 'flow-gone'
+                ? { content: [{ type: 'text', text: '❌ Flow not found.' }] }
+                : { content: [{ type: 'text', text: 'Flow validation failed: boom' }], isError: true },
+        })
+        const calls = [call({ toolName: 'ap_update_step', input: { flowId: 'flow-1' } }), call({ toolName: 'ap_delete_flow', input: { flowId: 'flow-gone' } })]
+
+        const result = await evalCodeChecks.run({ checks: {}, outcome: outcomeOf({ calls }), mcp })
+
+        expect(result).toEqual({ verdict: 'fail', reason: 'could not validate flow flow-1: Flow validation failed: boom' })
+    })
+
     it('fails when a changed flow could not be validated', async () => {
         const result = await evalCodeChecks.run({ checks: {}, outcome: outcomeOf({ calls: [call({ toolName: 'ap_update_step', input: { flowId: 'flow-1' } })] }), mcp: mcpWith({}) })
 
@@ -72,8 +127,8 @@ describe('evalCodeChecks.run', () => {
     })
 })
 
-function call({ toolName, input = {}, output = { success: true } }: { toolName: string, input?: unknown, output?: unknown }): TurnToolCall {
-    return { toolName, input, output, errorText: undefined, errored: false }
+function call({ toolName, input = {}, output = { success: true }, errored = false }: { toolName: string, input?: unknown, output?: unknown, errored?: boolean }): TurnToolCall {
+    return { toolName, input, output, errorText: errored ? 'Invalid input' : undefined, errored }
 }
 
 function outcomeOf({ calls = [], cardsShown = [] }: { calls?: TurnToolCall[], cardsShown?: string[] }): { toolCalls: TurnToolCall[], cardsShown: string[] } {
