@@ -5614,7 +5614,7 @@
     },
     "packages/pieces/community/magical-api": {
       "name": "@activepieces/piece-magical-api",
-      "version": "0.3.2",
+      "version": "0.4.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
