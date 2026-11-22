@@ -43,6 +43,8 @@ export const AddAlertEmailForm = () => {
                 <Input
                   {...field}
                   id="alert-email"
+                  data-testid="alert-email-input"
+                  aria-label={t('Email')}
                   type="text"
                   placeholder="joe@doe.com"
                   className="rounded-r-none"
@@ -53,6 +55,7 @@ export const AddAlertEmailForm = () => {
                     <span>
                       <Button
                         type="submit"
+                        data-testid="alert-email-add"
                         variant="default"
                         className="rounded-l-none border-l-0"
                         loading={isPending}
@@ -70,7 +73,7 @@ export const AddAlertEmailForm = () => {
                   )}
                 </Tooltip>
               </div>
-              <FormMessage />
+              <FormMessage data-testid="alert-email-error" />
             </FormItem>
           )}
         />
