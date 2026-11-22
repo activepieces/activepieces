@@ -1,6 +1,7 @@
-import { createAction, isNil, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { manychatAuth } from '../auth';
 import { manychatClient, manychatUtils } from '../common/client';
+import { manychatInput } from '../common/props';
 import { manychatOutputSchemas } from '../common/output-schemas';
 
 export const createSubscriberAction = createAction({
@@ -8,7 +9,7 @@ export const createSubscriberAction = createAction({
 	name: 'createSubscriber',
 	classification: 'WRITE',
 	displayName: 'Create Subscriber',
-	description: 'Creates a Unified or a Whatsapp subscriber.',
+	description: 'Creates a subscriber from a phone number, WhatsApp number or email.',
 	audience: 'both',
 	aiMetadata: {
 		description:
@@ -20,25 +21,33 @@ export const createSubscriberAction = createAction({
 		first_name: Property.ShortText({
 			displayName: 'First Name',
 			required: true,
+			width: 'half',
 		}),
 		last_name: Property.ShortText({
 			displayName: 'Last Name',
 			required: false,
+			width: 'half',
+		}),
+		contact_info: Property.MarkDown({
+			value: 'Fill in at least one: Phone Number, WhatsApp Phone or Email.',
+			variant: MarkdownVariant.INFO,
 		}),
 		phone: Property.ShortText({
 			displayName: 'Phone Number',
 			required: false,
-			description: 'Fill in at least one field: phone or email or whatsapp phone.',
+			placeholder: '+14155550123',
+			width: 'half',
 		}),
 		whatsapp_phone: Property.ShortText({
 			displayName: 'WhatsApp Phone',
 			required: false,
-			description: 'Fill in at least one field: phone or email or whatsapp phone.',
+			placeholder: '+14155550123',
+			width: 'half',
 		}),
 		email: Property.ShortText({
 			displayName: 'Email',
 			required: false,
-			description: 'Fill in at least one field: phone or email or whatsapp phone.',
+			placeholder: 'jane@example.com',
 		}),
 		gender: Property.ShortText({
 			displayName: 'Gender',
@@ -46,18 +55,25 @@ export const createSubscriberAction = createAction({
 		}),
 		has_opt_in_sms: Property.Checkbox({
 			displayName: 'SMS Opt-in',
+			description: 'The subscriber agreed to receive SMS.',
 			required: false,
 		}),
 		has_opt_in_email: Property.Checkbox({
 			displayName: 'Email Opt-in',
+			description: 'The subscriber agreed to receive email.',
 			required: false,
 		}),
 		consent_phrase: Property.ShortText({
 			displayName: 'Consent Phrase',
-			description: 'The consent phrase provided by the subscriber.',
+			description: 'The consent text the subscriber accepted. Needed when SMS Opt-in is on.',
 			required: false,
 		}),
 	},
+	propertyGroups: [
+		{ key: 'name', display: 'section', label: 'Profile', icon: 'user', props: ['first_name', 'last_name', 'gender'] },
+		{ key: 'contact', display: 'section', label: 'Contact Details', icon: 'inbox', props: ['contact_info', 'phone', 'whatsapp_phone', 'email'] },
+		{ key: 'consent', display: 'section', label: 'Consent', icon: 'sliders', props: ['has_opt_in_sms', 'has_opt_in_email', 'consent_phrase'] },
+	],
 	async run({ auth, propsValue }) {
 		const {
 			first_name,
@@ -70,8 +86,9 @@ export const createSubscriberAction = createAction({
 			has_opt_in_sms,
 			consent_phrase,
 		} = propsValue;
-		if (isNil(phone) && isNil(whatsapp_phone) && isNil(email)) {
-			throw new Error('To create a subscriber you must fill in at least one field: phone or email or whatsapp_phone.');
+		const hasContact = [phone, whatsapp_phone, email].some((value) => manychatInput.optionalText(value) !== undefined);
+		if (!hasContact) {
+			throw new Error('Fill in at least one of Phone Number, WhatsApp Phone or Email.');
 		}
 		const body = await manychatClient.request({
 			apiKey: manychatUtils.apiKeyOf(auth),
@@ -87,7 +104,7 @@ export const createSubscriberAction = createAction({
 				gender,
 				has_opt_in_sms,
 				has_opt_in_email,
-				consent_phrase,
+				consent_phrase: manychatInput.optionalText(consent_phrase),
 			},
 		});
 		return manychatUtils.recordOf(body);
