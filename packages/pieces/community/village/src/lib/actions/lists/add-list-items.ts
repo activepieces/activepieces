@@ -1,6 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { villageAuth } from '../../common/auth';
+import { villageApi } from '../../common/client';
+import { villageSchemas } from '../../common/schemas';
 
 const MAX_ITEMS = 100;
 
@@ -16,12 +18,13 @@ export const addListItems = createAction({
   displayName: 'Add items to list',
   description:
     'Add people or companies to a list. Each identifier is resolved (LinkedIn URLs, company domains, emails, or graph IDs) and added. Returns detailed results per item.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Add up to 100 people or companies to an existing list, resolving each identifier (LinkedIn URL, company domain, email, or graph ID) to an entity. Effectively idempotent per entity: re-adding one already on the list does not duplicate it. Per-item results report which identifiers resolved and were added.',
     idempotent: true,
   },
+  outputSchema: villageSchemas.addListItems,
   props: {
     id: Property.ShortText({
       displayName: 'List ID',
@@ -55,7 +58,10 @@ export const addListItems = createAction({
   async run(context) {
     const { id, items } = context.propsValue;
 
-    const rows = (items ?? []) as AddItemRow[];
+    const rows: AddItemRow[] = villageApi.objectRows(items).map((row) => ({
+      identifier: villageApi.rowText({ row, key: 'identifier' }),
+      type: villageApi.rowText({ row, key: 'type' }),
+    }));
     if (rows.length === 0) {
       throw new Error('At least one item is required');
     }
@@ -72,14 +78,14 @@ export const addListItems = createAction({
       return entry;
     });
 
-    const response = await httpClient.sendRequest({
+    const response = await villageApi.call({
+      token: context.auth.secret_text,
       method: HttpMethod.POST,
-      url: `${VILLAGE_API_BASE_URL}/v2/lists/${encodeURIComponent(id)}/items`,
-      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
+      path: `/v2/lists/${encodeURIComponent(id)}/items`,
       body: {
         items: normalizedItems,
       },
     });
-    return response.body;
+    return response;
   },
 });

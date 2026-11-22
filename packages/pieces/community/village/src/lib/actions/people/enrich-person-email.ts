@@ -1,6 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { villageAuth } from '../../common/auth';
+import { villageApi } from '../../common/client';
+import { villageSchemas } from '../../common/schemas';
 
 export const enrichPersonEmail = createAction({
   auth: villageAuth,
@@ -12,9 +14,10 @@ export const enrichPersonEmail = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Look up a single person\'s email address from exactly one identifier — either a LinkedIn URL or a generic URL (provide one, not both). Read-only and idempotent. Use for email discovery specifically; use Enrich Person (Bulk) for full profile data on many people.',
+      'Look up a single person\'s email address from exactly one identifier — either a LinkedIn URL or a generic URL (provide one, not both). Costs 1 credit per email found (nothing when none is found). Read-only. Use for email discovery specifically; use Enrich Person for profile data.',
     idempotent: true,
   },
+  outputSchema: villageSchemas.enrichPersonEmail,
   props: {
     linkedin_url: Property.ShortText({
       displayName: 'LinkedIn URL',
@@ -38,12 +41,12 @@ export const enrichPersonEmail = createAction({
     }
     const identifier = linkedin_url ? { linkedin_url } : { url };
 
-    const response = await httpClient.sendRequest({
+    const response = await villageApi.call({
+      token: context.auth.secret_text,
       method: HttpMethod.POST,
-      url: `${VILLAGE_API_BASE_URL}/v2/people/enrich/emails`,
-      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
+      path: `/v2/people/enrich/emails`,
       body: identifier,
     });
-    return response.body;
+    return response;
   },
 });

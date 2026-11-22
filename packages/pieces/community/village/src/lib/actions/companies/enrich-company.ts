@@ -1,6 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { villageAuth } from '../../common/auth';
+import { villageApi, VILLAGE_ENRICH_MODE_OPTIONS } from '../../common/client';
+import { villageSchemas } from '../../common/schemas';
 
 export const enrichCompany = createAction({
   auth: villageAuth,
@@ -12,9 +14,10 @@ export const enrichCompany = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Read-only firmographic lookup for one company you can already identify by domain, LinkedIn URL, or generic url (supply exactly one). Use when you have the identifier; for multiple companies use Enrich Company (Bulk), and to find companies by criteria use Search Companies. Pure query, safe to retry.',
+      'Read-only firmographic lookup for one company you can already identify by domain, LinkedIn URL, or generic url (supply exactly one). Use when you have the identifier; to find companies by criteria use Find Companies. Cost: free when Village has the company cached; a live fetch costs credits. Set mode to "cached_only" to never spend credits (a cache miss then returns not found). Read-only.',
     idempotent: true,
   },
+  outputSchema: villageSchemas.enrichCompany,
   props: {
     domain: Property.ShortText({
       displayName: 'Domain',
@@ -33,9 +36,16 @@ export const enrichCompany = createAction({
         'Generic company URL (auto-detected) (provide one of: domain, linkedin_url, url)',
       required: false,
     }),
+    mode: Property.StaticDropdown({
+      displayName: 'Cache Mode',
+      description:
+        'cached_first (default) charges credits only when Village has to fetch live data; cached_only never charges and returns not found on a cache miss; realtime_only always fetches live and charges when found.',
+      required: false,
+      options: { options: VILLAGE_ENRICH_MODE_OPTIONS },
+    }),
   },
   async run(context) {
-    const { domain, linkedin_url, url } = context.propsValue;
+    const { domain, linkedin_url, url, mode } = context.propsValue;
 
     const provided = [domain, linkedin_url, url].filter((value) => value !== undefined && value !== '');
     if (provided.length === 0) {
@@ -49,14 +59,17 @@ export const enrichCompany = createAction({
       ? { domain }
       : linkedin_url
         ? { linkedin_url }
-        : { url: url as string };
+        : { url: url ?? '' };
+    if (mode) {
+      identifier['mode'] = mode;
+    }
 
-    const response = await httpClient.sendRequest({
+    const response = await villageApi.call({
+      token: context.auth.secret_text,
       method: HttpMethod.POST,
-      url: `${VILLAGE_API_BASE_URL}/v2/companies/enrich`,
-      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
+      path: `/v2/companies/enrich`,
       body: identifier,
     });
-    return response.body;
+    return response;
   },
 });

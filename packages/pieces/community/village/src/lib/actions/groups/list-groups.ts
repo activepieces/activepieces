@@ -1,6 +1,8 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { villageAuth } from '../../common/auth';
+import { villageApi } from '../../common/client';
+import { villageSchemas } from '../../common/schemas';
 
 export const listGroups = createAction({
   auth: villageAuth,
@@ -15,13 +17,14 @@ export const listGroups = createAction({
       'Read-only listing of every group you currently belong to, useful for discovering group_ids needed by Leave Group or Create or Update Group. Takes no input. Pure query, safe to retry.',
     idempotent: true,
   },
+  outputSchema: villageSchemas.listGroups,
   props: {},
   async run(context) {
-    const response = await httpClient.sendRequest({
+    const response = await villageApi.call({
+      token: context.auth.secret_text,
       method: HttpMethod.GET,
-      url: `${VILLAGE_API_BASE_URL}/v2/groups`,
-      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
+      path: `/v2/groups`,
     });
-    return response.body;
+    return response;
   },
 });

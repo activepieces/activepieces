@@ -1,6 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { villageAuth } from '../../common/auth';
+import { villageApi } from '../../common/client';
+import { villageSchemas } from '../../common/schemas';
 
 export const getList = createAction({
   auth: villageAuth,
@@ -15,6 +17,7 @@ export const getList = createAction({
       'Fetch a single list by ID along with its items, paginated via an opaque cursor. Read-only and idempotent. Use this to read members of one known list (and to obtain item IDs for removal); use List all lists to discover list IDs first.',
     idempotent: true,
   },
+  outputSchema: villageSchemas.getList,
   props: {
     id: Property.ShortText({
       displayName: 'List ID',
@@ -40,12 +43,12 @@ export const getList = createAction({
     if (cursor) queryParams['cursor'] = cursor;
     if (limit !== undefined && limit !== null) queryParams['limit'] = String(limit);
 
-    const response = await httpClient.sendRequest({
+    const response = await villageApi.call({
+      token: context.auth.secret_text,
       method: HttpMethod.GET,
-      url: `${VILLAGE_API_BASE_URL}/v2/lists/${encodeURIComponent(id)}`,
-      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
+      path: `/v2/lists/${encodeURIComponent(id)}`,
       queryParams,
     });
-    return response.body;
+    return response;
   },
 });

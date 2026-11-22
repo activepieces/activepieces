@@ -1,6 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { villageAuth } from '../../common/auth';
+import { villageApi } from '../../common/client';
+import { villageSchemas } from '../../common/schemas';
 
 export const leaveGroup = createAction({
   auth: villageAuth,
@@ -15,6 +17,7 @@ export const leaveGroup = createAction({
       'Remove yourself from a group by group_id, a state-changing write that revokes your access to its shared network; if you are the last member the group is deleted entirely. Admins must remove all other members before they can leave. Find the group_id via List Groups.',
     idempotent: false,
   },
+  outputSchema: villageSchemas.successResult,
   props: {
     group_id: Property.ShortText({
       displayName: 'Group ID',
@@ -25,12 +28,12 @@ export const leaveGroup = createAction({
   async run(context) {
     const { group_id } = context.propsValue;
 
-    const response = await httpClient.sendRequest({
+    const response = await villageApi.call({
+      token: context.auth.secret_text,
       method: HttpMethod.POST,
-      url: `${VILLAGE_API_BASE_URL}/v2/groups/leave`,
-      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
+      path: `/v2/groups/leave`,
       body: { group_id },
     });
-    return response.body;
+    return response;
   },
 });

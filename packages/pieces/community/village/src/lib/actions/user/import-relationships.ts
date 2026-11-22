@@ -1,6 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { villageAuth } from '../../common/auth';
+import { villageApi } from '../../common/client';
+import { villageSchemas } from '../../common/schemas';
 
 const MAX_RELATIONSHIPS_PER_REQUEST = 1000;
 const MIN_SCORE = 0;
@@ -27,12 +29,13 @@ export const importRelationships = createAction({
   displayName: 'Import Relationships',
   description:
     "Import manual relationships to expand your network graph — useful for adding people you know but aren't connected to digitally. Provide email addresses or LinkedIn URLs with optional scores (0-10); higher scores indicate stronger relationships. Max 1000 per request.",
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Import up to 1000 manual relationships into the network graph, each identified by email or LinkedIn URL with an optional 0-10 strength score and relationship type. Effectively idempotent per person: re-importing the same identifier updates that relationship rather than duplicating it. Use to add people known offline who would not surface from a synced integration.',
     idempotent: true,
   },
+  outputSchema: villageSchemas.importRelationships,
   props: {
     people: Property.Array({
       displayName: 'People',
@@ -70,7 +73,11 @@ export const importRelationships = createAction({
   async run(context) {
     const { people, min_score } = context.propsValue;
 
-    const rows = (people ?? []) as PersonRow[];
+    const rows: PersonRow[] = villageApi.objectRows(people).map((row) => ({
+      identifier: villageApi.rowText({ row, key: 'identifier' }),
+      score: villageApi.rowNumber({ row, key: 'score' }),
+      user_relationship_type: villageApi.rowText({ row, key: 'user_relationship_type' }),
+    }));
 
     if (rows.length === 0) {
       throw new Error('At least one person is required');
@@ -114,12 +121,12 @@ export const importRelationships = createAction({
       body['min_score'] = min_score;
     }
 
-    const response = await httpClient.sendRequest({
+    const response = await villageApi.call({
+      token: context.auth.secret_text,
       method: HttpMethod.POST,
-      url: `${VILLAGE_API_BASE_URL}/v2/user/relationships`,
-      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
+      path: `/v2/user/relationships`,
       body,
     });
-    return response.body;
+    return response;
   },
 });

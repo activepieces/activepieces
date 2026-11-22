@@ -1,6 +1,8 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { villageAuth } from '../../common/auth';
+import { villageApi } from '../../common/client';
+import { villageSchemas } from '../../common/schemas';
 
 export const getCurrentUser = createAction({
   auth: villageAuth,
@@ -15,13 +17,14 @@ export const getCurrentUser = createAction({
       'Fetch the authenticated user\'s own profile, including their ID and a sync-completion flag. Read-only and idempotent. Use to confirm the token is valid and to check whether the user\'s network data has finished syncing before relying on graph queries.',
     idempotent: true,
   },
+  outputSchema: villageSchemas.getCurrentUser,
   props: {},
   async run(context) {
-    const response = await httpClient.sendRequest({
+    const response = await villageApi.call({
+      token: context.auth.secret_text,
       method: HttpMethod.GET,
-      url: `${VILLAGE_API_BASE_URL}/v2/user/me`,
-      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
+      path: `/v2/user/me`,
     });
-    return response.body;
+    return response;
   },
 });

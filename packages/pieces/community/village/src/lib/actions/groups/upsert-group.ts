@@ -1,6 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { villageAuth } from '../../common/auth';
+import { villageApi } from '../../common/client';
+import { villageSchemas } from '../../common/schemas';
 
 export const upsertGroup = createAction({
   auth: villageAuth,
@@ -15,6 +17,7 @@ export const upsertGroup = createAction({
       'Create a new group or update an existing one in a single write. Omit group_id to create (a new id is generated); pass an existing group_id to update its name/logo (requires admin permissions). Updating by a stable group_id is idempotent, but omitting it creates a fresh group on each call.',
     idempotent: true,
   },
+  outputSchema: villageSchemas.upsertTeamOrGroup,
   props: {
     name: Property.ShortText({
       displayName: 'Name',
@@ -39,12 +42,12 @@ export const upsertGroup = createAction({
     if (group_id !== undefined) body['group_id'] = group_id;
     if (logo !== undefined) body['logo'] = logo;
 
-    const response = await httpClient.sendRequest({
+    const response = await villageApi.call({
+      token: context.auth.secret_text,
       method: HttpMethod.POST,
-      url: `${VILLAGE_API_BASE_URL}/v2/groups`,
-      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
+      path: `/v2/groups`,
       body,
     });
-    return response.body;
+    return response;
   },
 });

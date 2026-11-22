@@ -1,6 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { villageAuth } from '../../common/auth';
+import { villageApi } from '../../common/client';
+import { villageSchemas } from '../../common/schemas';
 
 export const joinTeam = createAction({
   auth: villageAuth,
@@ -15,6 +17,7 @@ export const joinTeam = createAction({
       'Add the authenticated user to a team using an invite-link code (the segment after /join/ in the share URL). Use when you have an invite code rather than wanting to create a team. Not idempotent in effect, though re-joining a team the user already belongs to is harmless.',
     idempotent: false,
   },
+  outputSchema: villageSchemas.joinTeam,
   props: {
     team_invite_link: Property.ShortText({
       displayName: 'Team Invite Link',
@@ -25,12 +28,12 @@ export const joinTeam = createAction({
   async run(context) {
     const { team_invite_link } = context.propsValue;
 
-    const response = await httpClient.sendRequest({
+    const response = await villageApi.call({
+      token: context.auth.secret_text,
       method: HttpMethod.POST,
-      url: `${VILLAGE_API_BASE_URL}/v2/teams/join`,
-      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
+      path: `/v2/teams/join`,
       body: { team_invite_link },
     });
-    return response.body;
+    return response;
   },
 });

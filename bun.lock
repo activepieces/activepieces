@@ -9894,7 +9894,7 @@
     },
     "packages/pieces/community/village": {
       "name": "@activepieces/piece-village",
-      "version": "0.4.6",
+      "version": "0.5.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9903,6 +9903,7 @@
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "5.0.5",
       },
     },
     "packages/pieces/community/vimeo": {

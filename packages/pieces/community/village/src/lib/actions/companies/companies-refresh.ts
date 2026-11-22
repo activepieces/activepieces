@@ -1,6 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { villageAuth } from '../../common/auth';
+import { villageApi } from '../../common/client';
+import { villageSchemas } from '../../common/schemas';
 
 export const companiesRefresh = createAction({
   auth: villageAuth,
@@ -15,6 +17,7 @@ export const companiesRefresh = createAction({
       'Trigger a re-fetch or first-time import of companies from LinkedIn URLs and/or domains; it kicks off backend processing, so treat it as a non-idempotent write. Set realtime=true to wait up to ~25s for inline data, or false to get job IDs; pass those job_ids back on a later call to poll async results. To read an already-imported company without re-fetching, use Enrich Company.',
     idempotent: false,
   },
+  outputSchema: villageSchemas.refreshJobs,
   props: {
     job_ids: Property.Array({
       displayName: 'Job IDs',
@@ -57,12 +60,12 @@ export const companiesRefresh = createAction({
     if (domainsArray.length > 0) body['domains'] = domainsArray;
     if (jobIdsArray.length > 0) body['job_ids'] = jobIdsArray;
 
-    const response = await httpClient.sendRequest({
+    const response = await villageApi.call({
+      token: context.auth.secret_text,
       method: HttpMethod.POST,
-      url: `${VILLAGE_API_BASE_URL}/v2/companies/refresh`,
-      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
+      path: `/v2/companies/refresh`,
       body,
     });
-    return response.body;
+    return response;
   },
 });

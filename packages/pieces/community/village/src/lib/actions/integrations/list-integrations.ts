@@ -1,6 +1,8 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { villageAuth } from '../../common/auth';
+import { villageApi } from '../../common/client';
+import { villageSchemas } from '../../common/schemas';
 
 export const listIntegrations = createAction({
   auth: villageAuth,
@@ -15,13 +17,14 @@ export const listIntegrations = createAction({
       'List the caller\'s connected Gmail integrations with their rate limits, timezone, and default-sender status. Read-only and idempotent. Use to discover integration IDs before updating or resyncing one.',
     idempotent: true,
   },
+  outputSchema: villageSchemas.listIntegrations,
   props: {},
   async run(context) {
-    const response = await httpClient.sendRequest({
+    const response = await villageApi.call({
+      token: context.auth.secret_text,
       method: HttpMethod.GET,
-      url: `${VILLAGE_API_BASE_URL}/v2/integrations`,
-      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
+      path: `/v2/integrations`,
     });
-    return response.body;
+    return response;
   },
 });
