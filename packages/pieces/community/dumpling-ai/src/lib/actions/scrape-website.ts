@@ -10,10 +10,16 @@ export const scrapeWebsite = createAction({
 	description: 'Scrapes data from a specified URL and format the result.',
 	audience: 'both',
 	aiMetadata: { description: 'Fetches the content of a single given URL via Dumpling AI and returns it as markdown, HTML, or a screenshot, with optional content cleaning and JavaScript rendering. Use to read one specific page; use Crawl Website instead to follow links across many pages. Not idempotent: each call is a fresh billed fetch reflecting the live page.', idempotent: false },
+	propertyGroups: [
+		{ key: 'page', display: 'section', label: 'Page', icon: 'file', props: ['url'] },
+		{ key: 'output', display: 'section', label: 'Output', icon: 'sliders', props: ['format', 'cleaned', 'renderJs'] },
+	],
 	props: {
 		url: Property.ShortText({
 			displayName: 'URL',
 			required: true,
+			description: 'The page to read.',
+			placeholder: 'https://example.com/pricing',
 		}),
 		format: Property.StaticDropdown({
 			displayName: 'Output Format',
@@ -26,29 +32,28 @@ export const scrapeWebsite = createAction({
 					{ label: 'Screenshot', value: 'screenshot' },
 				],
 			},
-			description: 'The format of the output',
+			description: 'Screenshot returns an image of the page instead of text.',
 		}),
 		cleaned: Property.Checkbox({
-			displayName: 'Clean Output ?',
+			displayName: 'Clean Output',
 			required: false,
 			defaultValue: true,
-			description: 'Whether the output should be cleaned.',
+			description: 'Return a cleaned-up version of the page content.',
 		}),
 		renderJs: Property.Checkbox({
-			displayName: 'Render JavaScript ?',
+			displayName: 'Render JavaScript',
 			required: false,
 			defaultValue: true,
-			description: 'Whether to render JavaScript before scraping.',
+			description: 'Needed for pages that build their content in the browser.',
 		}),
 	},
 	async run(context) {
 		const { url, format, cleaned, renderJs } = context.propsValue;
 
-		const requestBody: Record<string, any> = {
+		const requestBody: Record<string, unknown> = {
 			url,
 		};
 
-		// Add optional parameters if provided
 		if (format) requestBody['format'] = format;
 		if (cleaned !== undefined) requestBody['cleaned'] = cleaned;
 		if (renderJs !== undefined) requestBody['renderJs'] = renderJs;
