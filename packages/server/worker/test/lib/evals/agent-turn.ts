@@ -6,17 +6,24 @@ import { hasToolCall, isLoopFinished, isStepCount, LanguageModel, StopCondition,
 import { AgentTurnResult, runAgentTurn } from '../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
 import { EvalCase, RecordedToolCall } from './eval-case'
 import { evalPrompts } from './prompts'
-import { replay, ReplayStop } from './replay'
+import { replay, ReplayMode, ReplayStop } from './replay'
+import { MetricsRecorder, RunMetrics, runMetrics } from './run-metrics'
+import { scriptedUser } from './scripted-user'
 import { evalToolSet, McpTools } from './tool-set'
 
-async function run({ evalCase, recordedToolCalls, mcp, modelId, auth, recordMode }: { evalCase: EvalCase, recordedToolCalls: RecordedToolCall[], mcp: McpTools, modelId: string, auth: Record<string, unknown>, recordMode: boolean }): Promise<TurnOutcome> {
-    const caseReplay = replay.create({ recordedToolCalls })
-    const tools = evalToolSet.build({ mcp, caseReplay, auth, recordMode })
+async function run({ evalCase, recordedToolCalls, mcp, modelId, auth, mode }: { evalCase: EvalCase, recordedToolCalls: RecordedToolCall[], mcp: McpTools, modelId: string, auth: Record<string, unknown>, mode: ReplayMode }): Promise<TurnOutcome> {
+    const live = mode === 'live' ? evalCase.live : null
+    const caseReplay = replay.create({ recordedToolCalls, faults: live?.faults })
+    const user = isNil(live) ? null : scriptedUser.create({ answers: live.answers, listConnections: (pieceName) => evalToolSet.listConnections({ mcp, pieceName }) })
+    const recorder = runMetrics.createRecorder()
+    const tools = recorder.timeTools(evalToolSet.build({ mcp, caseReplay, auth, mode, user }))
     const phaseState: { phase: AgentPhase } = { phase: 'discovery' }
-    const { model, costUsd } = withCost({ model: aiUtils.createModel({ credentials: aiProviderCredentials({ provider: AIProviderName.OPENROUTER, auth, config: {} }), modelId, billing: null }) })
+    const { model, costUsd } = withCost({ recorder, model: aiUtils.createModel({ credentials: aiProviderCredentials({ provider: AIProviderName.OPENROUTER, auth, config: {} }), modelId, billing: null }) })
     const warnings: string[] = []
     let steps = 0
-    const abortSignal = AbortSignal.timeout(TURN_TIMEOUT_MS)
+    const timeoutMs = live?.timeoutMs ?? TURN_TIMEOUT_MS
+    const startedAt = Date.now()
+    const abortSignal = AbortSignal.timeout(timeoutMs)
 
     const { data: result, error } = await tryCatch(() => runAgentTurn({
         models: [{ model, provider: AIProviderName.OPENROUTER, modelId, thinkingBudget: TIER.thinkingBudget }],
@@ -41,27 +48,34 @@ async function run({ evalCase, recordedToolCalls, mcp, modelId, auth, recordMode
             },
             error: () => {},
         },
-        stopWhen: [isLoopFinished(), ...TERMINAL_DISPLAY_TOOLS.map(hasToolCall), async () => caseReplay.stops().some(replay.endsTurn), ...gradedWindow({ evalCase })],
+        stopWhen: [isLoopFinished(), ...TERMINAL_DISPLAY_TOOLS.filter((toolName) => isNil(user) || !scriptedUser.answersCard(toolName)).map(hasToolCall), async () => caseReplay.stops().some(replay.endsTurn), ...gradedWindow({ evalCase })],
     }))
 
-    if (abortSignal.aborted) {
-        throw new Error(`The turn did not finish within ${TURN_TIMEOUT_MS / 1000}s`)
+    const timedOut = abortSignal.aborted
+    if (timedOut && isNil(live)) {
+        throw new Error(`The turn did not finish within ${timeoutMs / 1000}s`)
     }
-    if (isNil(result)) {
+    if (isNil(result) && !timedOut) {
         throw new Error(`The turn produced no output: ${error instanceof Error ? error.message : String(error)}`)
     }
-    if (result.uiParts.length === 0) {
-        throw new Error(`The turn produced nothing (finish reason "${result.finishReason}"): ${result.streamError?.message ?? 'no error reported'}`)
+    const parts = result?.uiParts ?? []
+    if (parts.length === 0 && !timedOut) {
+        throw new Error(`The turn produced nothing (finish reason "${result?.finishReason}"): ${result?.streamError?.message ?? 'no error reported'}`)
     }
-    const rejected = [...warnings, ...rejectedToolParts(result)]
+    const rejected = [...warnings, ...rejectedToolParts(parts)]
+    const toolCalls = turnToolCalls(parts)
     return {
-        transcript: renderTranscript(result),
+        transcript: timedOut ? `${renderTranscript(parts)}\n(the turn did not finish within ${timeoutMs / 1000}s)` : renderTranscript(parts),
         rejectedToolInputs: rejected,
-        toolCalls: turnToolCalls(result),
+        toolCalls,
         stops: caseReplay.stops(),
         newFixtures: caseReplay.newFixtures(),
         costUsd: costUsd(),
         steps,
+        timedOut,
+        elapsedMs: Date.now() - startedAt,
+        cardsShown: user?.cardsShown() ?? [],
+        metrics: recorder.summarize({ toolCalls, rejectedToolCalls: rejected.length }),
     }
 }
 
@@ -77,7 +91,7 @@ function gradedWindow({ evalCase }: { evalCase: EvalCase }): StopCondition<ToolS
     return [reachedTarget, isStepCount(MAX_STEPS_TO_TARGET)]
 }
 
-function withCost({ model }: { model: LanguageModel }): { model: LanguageModel, costUsd: () => number | null } {
+function withCost({ model, recorder }: { model: LanguageModel, recorder: MetricsRecorder }): { model: LanguageModel, costUsd: () => number | null } {
     if (typeof model === 'string') {
         throw new Error(`Expected a model instance for ${model}`)
     }
@@ -100,12 +114,15 @@ function withCost({ model }: { model: LanguageModel }): { model: LanguageModel, 
                 },
             }),
             wrapGenerate: async ({ doGenerate }) => {
+                const startedAt = Date.now()
                 const result = await doGenerate()
                 ledger.calls += 1
                 record(result.providerMetadata)
+                recorder.modelCall({ durationMs: Date.now() - startedAt, usage: result.usage })
                 return result
             },
             wrapStream: async ({ doStream }) => {
+                const startedAt = Date.now()
                 const { stream, ...rest } = await doStream()
                 ledger.calls += 1
                 return {
@@ -114,6 +131,7 @@ function withCost({ model }: { model: LanguageModel }): { model: LanguageModel, 
                         transform: (chunk, controller) => {
                             if (chunk.type === 'finish') {
                                 record(chunk.providerMetadata)
+                                recorder.modelCall({ durationMs: Date.now() - startedAt, usage: chunk.usage })
                             }
                             controller.enqueue(chunk)
                         },
@@ -125,20 +143,20 @@ function withCost({ model }: { model: LanguageModel }): { model: LanguageModel, 
     return { model: wrapped, costUsd: () => ledger.reported === ledger.calls ? ledger.totalUsd : null }
 }
 
-function rejectedToolParts(result: AgentTurnResult): string[] {
-    return result.uiParts.flatMap((part) => part.type === PersistedAgentPartType.TOOL_CALL && !isNil(part.errorText) && REJECTED_PATTERN.test(part.errorText)
+function rejectedToolParts(parts: AgentTurnResult['uiParts']): string[] {
+    return parts.flatMap((part) => part.type === PersistedAgentPartType.TOOL_CALL && !isNil(part.errorText) && REJECTED_PATTERN.test(part.errorText)
         ? [`${part.toolName}: ${part.errorText.slice(0, ERROR_PREVIEW_CHARS)}`]
         : [])
 }
 
-function turnToolCalls(result: AgentTurnResult): TurnToolCall[] {
-    return result.uiParts.flatMap((part) => part.type === PersistedAgentPartType.TOOL_CALL
+function turnToolCalls(parts: AgentTurnResult['uiParts']): TurnToolCall[] {
+    return parts.flatMap((part) => part.type === PersistedAgentPartType.TOOL_CALL
         ? [{ toolName: part.toolName, input: part.input, output: part.output, errorText: part.errorText, errored: part.status === PersistedToolCallStatus.ERROR }]
         : [])
 }
 
-function renderTranscript(result: AgentTurnResult): string {
-    return result.uiParts.flatMap((part) => {
+function renderTranscript(parts: AgentTurnResult['uiParts']): string {
+    return parts.flatMap((part) => {
         if (part.type === PersistedAgentPartType.TEXT) {
             return [`ASSISTANT: ${part.text}`]
         }
@@ -222,6 +240,10 @@ export type TurnOutcome = {
     newFixtures: RecordedToolCall[]
     costUsd: number | null
     steps: number
+    timedOut: boolean
+    elapsedMs: number
+    cardsShown: string[]
+    metrics: RunMetrics
 }
 
 export type TurnToolCall = {

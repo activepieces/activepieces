@@ -1,10 +1,12 @@
 import { isNil, isObject } from '@activepieces/core-utils'
+import { agentToolClassification, FlowRunStatus } from '@activepieces/shared'
 import { asSchema, ToolSet } from 'ai'
 import { agentWorkerTools } from '../../../src/lib/execute/jobs/ee/agent/agent-worker-tools'
-import { RecordedToolCall } from './eval-case'
+import { RecordedToolCall, ToolFault } from './eval-case'
 
-function create({ recordedToolCalls }: { recordedToolCalls: RecordedToolCall[] }): Replay {
+function create({ recordedToolCalls, faults = [] }: { recordedToolCalls: RecordedToolCall[], faults?: ToolFault[] }): Replay {
     const used = new Set<number>()
+    const faultsLeft = new Map(faults.map((fault) => [fault.toolName, { error: fault.error, left: fault.times }]))
     const stops: ReplayStop[] = []
     const recorded: RecordedToolCall[] = []
 
@@ -26,9 +28,19 @@ function create({ recordedToolCalls }: { recordedToolCalls: RecordedToolCall[] }
         return { error: REPLAY_ENDED_MESSAGE }
     }
 
+    const fault = (toolName: string): string | null => {
+        const pending = faultsLeft.get(toolName)
+        if (isNil(pending) || pending.left === 0) {
+            return null
+        }
+        faultsLeft.set(toolName, { error: pending.error, left: pending.left - 1 })
+        return pending.error
+    }
+
     return {
         take,
         stop,
+        fault,
         record: (call) => {
             recorded.push(call)
         },
@@ -37,7 +49,10 @@ function create({ recordedToolCalls }: { recordedToolCalls: RecordedToolCall[] }
     }
 }
 
-async function resolveCall({ caseReplay, recordMode, toolName, input, live }: { caseReplay: Replay, recordMode: boolean, toolName: string, input: unknown, live: (() => Promise<unknown>) | undefined }): Promise<unknown> {
+async function resolveCall({ caseReplay, mode, toolName, input, live }: { caseReplay: Replay, mode: ReplayMode, toolName: string, input: unknown, live: (() => Promise<unknown>) | undefined }): Promise<unknown> {
+    if (mode === 'live') {
+        return resolveLiveCall({ caseReplay, toolName, input, live })
+    }
     if (isLive(toolName) && !isNil(live)) {
         return live()
     }
@@ -49,7 +64,7 @@ async function resolveCall({ caseReplay, recordMode, toolName, input, live }: { 
     if (!read) {
         return caseReplay.stop({ toolName, input, kind: fixture.sameToolRecorded ? 'write_input_differs' : 'unrecorded_write' })
     }
-    if (!recordMode || isNil(live)) {
+    if (mode !== 'record' || isNil(live)) {
         return caseReplay.stop({ toolName, input, kind: 'missing_fixture' })
     }
     const output = await live()
@@ -57,6 +72,29 @@ async function resolveCall({ caseReplay, recordMode, toolName, input, live }: { 
         caseReplay.record({ toolName, input, output })
     }
     return output
+}
+
+async function resolveLiveCall({ caseReplay, toolName, input, live }: { caseReplay: Replay, toolName: string, input: unknown, live: (() => Promise<unknown>) | undefined }): Promise<unknown> {
+    const injected = caseReplay.fault(toolName)
+    if (!isNil(injected)) {
+        return { content: [{ type: 'text', text: injected }], isError: true }
+    }
+    if (isStubbed({ toolName, input })) {
+        return STUBBED_SUCCESS
+    }
+    if (isNil(live)) {
+        throw new Error(`${toolName} has nothing to run in live mode`)
+    }
+    return live()
+}
+
+function isStubbed({ toolName, input }: { toolName: string, input: unknown }): boolean {
+    if (toolName !== EXECUTE_ACTION_TOOL) {
+        return STUBBED_TOOLS.has(toolName)
+    }
+    const actionName = isObject(input) && typeof input['actionName'] === 'string' ? input['actionName'] : ''
+    const actionInput = isObject(input) && isObject(input['input']) ? input['input'] : undefined
+    return agentToolClassification.requiresActionPreview({ actionName, input: actionInput })
 }
 
 async function splitStale({ tools, recordedToolCalls }: { tools: ToolSet, recordedToolCalls: RecordedToolCall[] }): Promise<{ fresh: RecordedToolCall[], stale: StaleRecording[] }> {
@@ -176,6 +214,9 @@ const LIVE_TOOLS = new Set([
     'ap_setup_guide',
     'ap_web_search',
 ])
+const STUBBED_TOOLS = new Set(['ap_change_flow_status', 'ap_run_action', 'ap_test_flow', 'ap_test_step'])
+const EXECUTE_ACTION_TOOL = 'ap_execute_action'
+const STUBBED_SUCCESS = { content: [{ type: 'text', text: 'Finished successfully.' }], structuredContent: { status: FlowRunStatus.SUCCEEDED } }
 const READ_TOOLS = new Set([
     ...LIVE_TOOLS,
     'ap_discover_action_auth',
@@ -215,6 +256,8 @@ export type StaleRecording = {
     reason: string
 }
 
+export type ReplayMode = 'replay' | 'record' | 'live'
+
 export type ReplayStop = {
     toolName: string
     kind: 'missing_fixture' | 'unrecorded_write' | 'write_input_differs'
@@ -226,6 +269,7 @@ type RecordedLookup = { found: true, output: unknown } | { found: false, sameToo
 export type Replay = {
     take: (params: { toolName: string, input: unknown }) => RecordedLookup
     stop: (params: { toolName: string, input: unknown, kind: ReplayStop['kind'] }) => unknown
+    fault: (toolName: string) => string | null
     record: (call: RecordedToolCall) => void
     stops: () => ReplayStop[]
     newFixtures: () => RecordedToolCall[]

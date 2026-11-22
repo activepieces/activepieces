@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { TurnToolCall } from './agent-turn'
 import { evalChecks } from './checks'
+import { runMetrics } from './run-metrics'
 
 describe('evalChecks.targetCallFailure', () => {
     const evalCase = { cutBeforeStep: 2, targetTool: 'ap_add_step' }
@@ -51,8 +52,8 @@ describe('evalChecks.grade', () => {
 
     it('scores a judge outage as unknown, not as a failure', async () => {
         vi.stubGlobal('fetch', vi.fn(async () => new Response('down', { status: 503 })))
-        const evalCase = { id: 'c1', versionId: 'v1', caseNumber: 1, title: 't', problemType: 'core', checks: ['asks a question'], cutBeforeStep: undefined, targetTool: undefined, preloadedSkills: [], userMessage: 'hi', messages: [], steps: [], recordedToolCalls: [] }
-        const outcome = { transcript: 'ASSISTANT: hello', rejectedToolInputs: [], toolCalls: [], stops: [], newFixtures: [], costUsd: 0, steps: 1 }
+        const evalCase = { id: 'c1', versionId: 'v1', caseNumber: 1, title: 't', problemType: 'core', checks: ['asks a question'], cutBeforeStep: undefined, targetTool: undefined, preloadedSkills: [], userMessage: 'hi', messages: [], steps: [], recordedToolCalls: [], live: null }
+        const outcome = { transcript: 'ASSISTANT: hello', rejectedToolInputs: [], toolCalls: [], stops: [], newFixtures: [], costUsd: 0, steps: 1, timedOut: false, elapsedMs: 1_000, cardsShown: [], metrics: runMetrics.summarize({ modelCalls: [], toolTimings: [], toolCalls: [], rejectedToolCalls: 0, totalMs: 1_000 }) }
 
         const scores = await evalChecks.grade({ evalCase, outcome, auth: { apiKey: 'k' } })
 
