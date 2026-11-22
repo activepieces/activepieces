@@ -3580,7 +3580,7 @@
     },
     "packages/pieces/community/frame": {
       "name": "@activepieces/piece-frame",
-      "version": "0.2.3",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
