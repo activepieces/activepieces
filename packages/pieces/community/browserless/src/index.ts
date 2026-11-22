@@ -52,6 +52,12 @@ export const browserless = createPiece({
             auth: browserlessAuth,
             baseUrl: (auth) => (auth ? browserlessApi.resolveBaseUrl(auth.props) : ''),
             authLocation: 'queryParams',
+            props: {
+                url: {
+                    description: "Full URL, or a path relative to your connection's Browserless address.",
+                    placeholder: '/meta',
+                },
+            },
             authMapping: async (auth, propsValue) => {
                 const baseUrl = browserlessApi.resolveBaseUrl(auth.props);
                 const url = readUrlProp(propsValue);
