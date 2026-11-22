@@ -29,31 +29,47 @@ export const replyMessage = createAction({
   auth:returningAiAuth,
   name: 'replyMessage',
   classification: 'WRITE',
-  displayName: 'Reply Message',
-  description: 'Reply to a specific message as a chosen user in a channel.',
+  displayName: 'Reply to Message',
+  description: 'Replies to a message as a chosen user.',
   audience: 'both',
   aiMetadata: { description: 'Posts a threaded reply to an existing Returning.ai message on behalf of a given user (identified by username or email), so the reply appears as if that user sent it. Use to respond in-thread to a known message; requires the target message ID and the reply text. Not idempotent: each call adds a new reply.', idempotent: false },
   props: {
     description: Property.MarkDown({
-      value:
-        'This action allows you to reply to a message in any accessible channel on behalf of a specific user. The reply will appear as if the selected user posted it directly in response to the original message.',
+      value: 'The reply is posted as the sender, as if they wrote it.',
     }),
     user: Property.ShortText({
-      displayName: 'Sender (Username or email)',
-      description: 'The user account that will send the message',
+      displayName: 'Sender',
+      description: 'Username or email of a community member.',
+      placeholder: 'jane or jane@example.com',
       required: true,
     }),
     messageId: Property.ShortText({
-      displayName: 'Reply to (Message ID)',
-      description: 'The ID of the message to reply to. ',
+      displayName: 'Message ID',
+      description: "ID of the message, from Returning AI's Get Messages API.",
       required: true,
     }),
     message: Property.LongText({
       displayName: 'Message',
-      description: 'The content of the reply to be posted.',
+      description: 'Text of the reply.',
       required: true,
     }),
   },
+  propertyGroups: [
+    {
+      key: 'sender',
+      display: 'section',
+      label: 'Reply As',
+      icon: 'user',
+      props: ['description', 'user'],
+    },
+    {
+      key: 'reply',
+      display: 'section',
+      label: 'Reply',
+      icon: 'reply',
+      props: ['messageId', 'message'],
+    },
+  ],
   async run({ propsValue, auth }) {
     const authToken = auth.secret_text;
     const response = await httpClient.sendRequest({
