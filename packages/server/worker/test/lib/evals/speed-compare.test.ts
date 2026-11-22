@@ -44,7 +44,24 @@ describe('speedCompare', () => {
         expect(byName['wasted calls']).toEqual([2, 2])
         expect(byName['first build seconds']).toEqual([null, 2])
         expect(byName['tokens in+out']).toEqual([100, 100])
-        expect(totals.find((metric) => metric.name === 'turn seconds')).toEqual({ name: 'turn seconds', before: 20, after: 5 })
+        expect(totals.find((metric) => metric.name === 'turn seconds')).toEqual({ name: 'turn seconds', before: 20, after: 5, excluded: 0 })
+    })
+
+    it('totals only over cases with a value on both sides and counts the rest as excluded', () => {
+        const run = (totalMs: number, firstBuildMs: number | null): SavedRun => ({ verdict: 'pass', gates, speed: speed({ totalMs, firstBuildMs }) })
+        const before = { cases: [
+            ...saved({ caseId: 'a', runs: [run(10_000, 1_000)] }).cases,
+            ...saved({ caseId: 'b', runs: [run(20_000, null)] }).cases,
+            ...saved({ caseId: 'c', runs: [run(30_000, 3_000)] }).cases,
+        ] }
+        const after = { cases: [
+            ...saved({ caseId: 'a', runs: [run(5_000, 500)] }).cases,
+            ...saved({ caseId: 'b', runs: [run(10_000, 700)] }).cases,
+            ...saved({ caseId: 'c', runs: [run(15_000, null)] }).cases,
+        ] }
+        const { totals } = speedCompare.compare({ before, after })
+        expect(totals.find((metric) => metric.name === 'first build seconds')).toEqual({ name: 'first build seconds', before: 1, after: 0.5, excluded: 2 })
+        expect(totals.find((metric) => metric.name === 'turn seconds')?.excluded).toBe(0)
     })
 })
 
