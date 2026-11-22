@@ -5,7 +5,6 @@ import {
   ApFlagId,
   PackageType,
   PieceScope,
-  PlanName,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
@@ -75,12 +74,10 @@ const InstallPieceDialog = ({
   const { platform } = platformHooks.useCurrentPlatform();
   const isEnabled = platform.plan.managePiecesEnabled;
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const lockedOnFreePlan =
-    edition === ApEdition.CLOUD &&
-    (platform.plan.plan === PlanName.FREE ||
-      platform.plan.plan === PlanName.FREE_LEGACY);
+  const lockedOnPlan =
+    edition === ApEdition.CLOUD && !platform.plan.customPiecesEnabled;
   const lockedReason = t(
-    'Installing custom pieces is not available on the free plan.',
+    'Installing custom pieces is not available on your plan.',
   );
   const [isOpen, setIsOpen] = useState(false);
 
@@ -187,7 +184,7 @@ const InstallPieceDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => setIsOpen(open)}>
-      {lockedOnFreePlan ? (
+      {lockedOnPlan ? (
         <Tooltip>
           <TooltipTrigger asChild>
             <span

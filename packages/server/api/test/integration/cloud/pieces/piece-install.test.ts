@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { EngineResponseStatus, PackageType, PieceScope, PlanName } from '@activepieces/shared'
+import { EngineResponseStatus, PackageType, PieceScope } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { MockInstance } from 'vitest'
@@ -57,8 +57,8 @@ afterEach(() => {
 })
 
 describe('POST /v1/pieces — custom piece installation by plan (Cloud)', () => {
-    it.each([PlanName.FREE, PlanName.FREE_LEGACY])('rejects a custom piece on the %s plan before it reaches a worker', async (plan) => {
-        const ctx = await createTestContext(app!, { plan: { plan } })
+    it('rejects a custom piece before it reaches a worker when the plan has custom pieces disabled', async () => {
+        const ctx = await createTestContext(app!, { plan: { customPiecesEnabled: false } })
 
         const response = await ctx.inject({
             method: 'POST',
@@ -73,8 +73,8 @@ describe('POST /v1/pieces — custom piece installation by plan (Cloud)', () => 
         expect(saved).toBe(0)
     })
 
-    it.each([PlanName.PLUS, PlanName.APPSUMO])('installs a custom piece on the %s plan', async (plan) => {
-        const ctx = await createTestContext(app!, { plan: { plan } })
+    it('installs a custom piece when the plan has custom pieces enabled', async () => {
+        const ctx = await createTestContext(app!, { plan: { customPiecesEnabled: true } })
 
         const response = await ctx.inject({
             method: 'POST',

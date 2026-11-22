@@ -5,7 +5,6 @@ import {
     PackageType,
     PieceScope,
     PieceType,
-    PlanName,
 } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -102,8 +101,8 @@ describe('POST /v1/pieces — private piece installation (EE)', () => {
         expect(saved.archiveId).toBeDefined()
     })
 
-    it('should still install on a self-hosted platform whose plan is named free', async () => {
-        const ctx = await createTestContext(app!, { plan: { plan: PlanName.FREE } })
+    it('should still install on a self-hosted platform whose plan has custom pieces disabled', async () => {
+        const ctx = await createTestContext(app!, { plan: { customPiecesEnabled: false } })
 
         const formData = new FormData()
         formData.append(

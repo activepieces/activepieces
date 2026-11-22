@@ -663,6 +663,7 @@ function toPlatformPlanFlags(grantedFeatureIds: ReadonlySet<string>): PlatformPl
         agentsEnabled: grantedFeatureIds.has(FeatureFlagId.AGENTS_ENABLED),
         workerGroupsEnabled: grantedFeatureIds.has(FeatureFlagId.WORKER_GROUPS_ENABLED),
         managePiecesEnabled: grantedFeatureIds.has(FeatureFlagId.MANAGE_PIECES_ENABLED),
+        customPiecesEnabled: grantedFeatureIds.has(FeatureFlagId.CUSTOM_PIECES_ENABLED),
         manageTemplatesEnabled: grantedFeatureIds.has(FeatureFlagId.MANAGE_TEMPLATES_ENABLED),
         customAppearanceEnabled: grantedFeatureIds.has(FeatureFlagId.CUSTOM_APPEARANCE_ENABLED),
         projectRolesEnabled: grantedFeatureIds.has(FeatureFlagId.PROJECT_ROLES_ENABLED),
