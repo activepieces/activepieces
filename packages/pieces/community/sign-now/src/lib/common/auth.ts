@@ -1,28 +1,23 @@
 import { PieceAuth, OAuth2AuthorizationMethod, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { AppConnectionType } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { SignNowApiError, signNowClient, signNowData } from './client';
 
 export const signNowOAuth2Auth = PieceAuth.OAuth2({
   displayName: 'Sign in with SignNow',
-  description: 'Connect your SignNow account using OAuth2. You will be redirected to SignNow to authorize access.',
+  description: 'Connect your SignNow account by signing in to SignNow.',
   authUrl: 'https://app.signnow.com/authorize',
   tokenUrl: 'https://api.signnow.com/oauth2/token',
   required: true,
   scope: ['*'],
   authorizationMethod: OAuth2AuthorizationMethod.HEADER,
-  // SignNow does not accept access_type or prompt params — suppress both with empty strings
   extra: { access_type: '' },
   prompt: 'omit',
-  getConnectionIdentifier: async ({ auth }) => fetchSignNowUserLabel(auth.access_token),
+  getConnectionIdentifier: async ({ auth }) => fetchSignNowUserLabel({ token: auth.access_token }),
 });
 
 export const signNowApiKeyAuth = PieceAuth.CustomAuth({
   displayName: 'API Key',
-  description: `Authenticate using an API key from the SignNow dashboard.
-
-1. Log in to the [SignNow API dashboard](https://app.signnow.com/webapp/developer-experience).
-2. Go to **Apps and Keys** and select your application.
-3. On the **API Keys** tab, copy your API key.`,
+  description: 'Copy the API key from Apps and Keys in your SignNow API dashboard.',
   required: true,
   props: {
     apiKey: PieceAuth.SecretText({
@@ -33,61 +28,40 @@ export const signNowApiKeyAuth = PieceAuth.CustomAuth({
   },
   validate: async ({ auth }) => {
     try {
-      const response = await httpClient.sendRequest({
-        method: HttpMethod.GET,
-        url: 'https://api.signnow.com/user',
-        headers: {
-          Authorization: `Bearer ${auth.apiKey.trim()}`,
-          Accept: 'application/json',
-        },
-      });
-      if (response.status === 200) {
-        return { valid: true };
+      await signNowClient.getUser({ token: auth.apiKey, timeoutMs: VALIDATE_TIMEOUT_MS });
+      return { valid: true };
+    } catch (error) {
+      if (error instanceof SignNowApiError && (error.status === 401 || error.status === 403)) {
+        return { valid: false, error: 'SignNow did not recognise this API key.' };
       }
-      return { valid: false, error: 'Invalid API key.' };
-    } catch (e) {
-      return { valid: false, error: (e as Error).message };
+      return { valid: false, error: error instanceof Error ? error.message : 'Could not reach SignNow.' };
     }
   },
-  getConnectionIdentifier: async ({ auth }) => fetchSignNowUserLabel(auth.apiKey),
+  getConnectionIdentifier: async ({ auth }) => fetchSignNowUserLabel({ token: auth.apiKey ?? '' }),
 });
 
 export const signNowAuth = [signNowOAuth2Auth, signNowApiKeyAuth];
 
-export type SignNowAuthValue = AppConnectionValueForAuthProperty<typeof signNowAuth>;
-
-/**
- * Returns the bearer token for API requests regardless of which auth method was used.
- */
 export function getSignNowBearerToken(auth: SignNowAuthValue): string {
   if (auth.type === AppConnectionType.OAUTH2) {
     return auth.access_token;
   }
-  return (auth as Extract<SignNowAuthValue, { type: AppConnectionType.CUSTOM_AUTH }>).props.apiKey.trim();
+  return auth.props.apiKey.trim();
 }
 
-async function fetchSignNowUserLabel(token: string): Promise<string | undefined> {
+async function fetchSignNowUserLabel({ token }: { token: string }): Promise<string | undefined> {
   try {
-    const response = await httpClient.sendRequest<SignNowUser>({
-      method: HttpMethod.GET,
-      url: 'https://api.signnow.com/user',
-      headers: {
-        Authorization: `Bearer ${token.trim()}`,
-        Accept: 'application/json',
-      },
-      timeout: 5000,
-    });
-    const user = response.body;
-    const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ');
-    return user.primary_email || user.emails?.find(Boolean) || fullName || undefined;
+    const user = await signNowClient.getUser({ token, timeoutMs: VALIDATE_TIMEOUT_MS });
+    const fullName = [signNowData.textAt({ value: user, key: 'first_name' }), signNowData.textAt({ value: user, key: 'last_name' })]
+      .filter(Boolean)
+      .join(' ');
+    const emails = signNowData.stringList(user['emails']);
+    return signNowData.textAt({ value: user, key: 'primary_email' }) || emails[0] || fullName || undefined;
   } catch {
     return undefined;
   }
 }
 
-type SignNowUser = {
-  primary_email?: string;
-  emails?: string[];
-  first_name?: string;
-  last_name?: string;
-};
+const VALIDATE_TIMEOUT_MS = 5000;
+
+export type SignNowAuthValue = AppConnectionValueForAuthProperty<typeof signNowAuth>;

@@ -1,52 +1,34 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { signNowAuth, getSignNowBearerToken } from '../common/auth';
-import { getUserId, registerWebhook, unregisterWebhook } from '../common/webhook';
+import { createTrigger } from '@activepieces/pieces-framework';
+import { signNowWebhook } from '../common/webhook';
+import { signNowSchemas } from '../common/schemas';
 
-const STORE_KEY = 'sign_now_document_updated_subscription_id';
+const SAMPLE_DATA = {
+  meta: {
+    timestamp: 1661430936,
+    event: 'user.document.update',
+    environment: 'https://api.signnow.com',
+    initiator_id: 'b2c3d4e5f67890123456789abcdef0123456789a',
+    callback_url: 'https://cloud.activepieces.com/api/v1/webhooks/FLOW_ID',
+  },
+  content: {
+    document_id: 'a1b2c3d4e5f67890123456789abcdef012345678',
+    document_name: 'Contract.pdf',
+    user_id: 'b2c3d4e5f67890123456789abcdef0123456789a',
+  },
+};
 
 export const documentUpdatedTrigger = createTrigger({
-  auth: signNowAuth,
   name: 'document_updated',
-  displayName: 'Document Updated',
-  description: 'Triggers when a document has been updated.',
-  aiMetadata: {
+  classification: 'READ',
+  sampleData: SAMPLE_DATA,
+  ...signNowWebhook.webhookTriggerConfig({
+    displayName: 'Document Updated',
     description:
-      'Fires when an existing SignNow document is modified, signaling a change to the document such as edits to its fields, fields filled, or status updates.',
-  },
-  props: {},
-  type: TriggerStrategy.WEBHOOK,
-  async onEnable(context) {
-    const token = getSignNowBearerToken(context.auth);
-    const userId = await getUserId(token);
-    const subscriptionId = await registerWebhook(
-      context.auth,
-      'user.document.update',
-      userId,
-      context.webhookUrl
-    );
-    await context.store.put(STORE_KEY, subscriptionId);
-  },
-  async onDisable(context) {
-    const subscriptionId = await context.store.get<string>(STORE_KEY);
-    if (subscriptionId) {
-      await unregisterWebhook(context.auth, subscriptionId);
-      await context.store.delete(STORE_KEY);
-    }
-  },
-  async run(context) {
-    return [context.payload.body];
-  },
-  sampleData: {
-    meta: {
-      timestamp: 1661430936,
-      event: 'user.document.update',
-      environment: 'https://api.signnow.com',
-      callback_url: 'https://your-callback-url.com',
-    },
-    content: {
-      document_id: 'a1b2c3d4e5f67890123456789abcdef012345678',
-      document_name: 'Contract.pdf',
-      user_id: 'b2c3d4e5f67890123456789abcdef0123456789a',
-    },
-  },
+      'Triggers when a document in your SignNow account is updated, including changes made by this piece. Each trigger uses one of the 10 active webhooks SignNow allows without an API plan.',
+    aiDescription:
+      'Fires when a document in the connected SignNow account changes (user.document.update), including field, name and invite changes made by this piece, so avoid flows that edit documents from this event. Emits the document ID, name and owner. Retried deliveries of the same event are ignored.',
+    event: 'user.document.update',
+    storeKey: 'sign_now_document_updated_subscription_id',
+    outputSchema: signNowSchemas.documentEvent({ withInitiator: false }),
+  }),
 });
