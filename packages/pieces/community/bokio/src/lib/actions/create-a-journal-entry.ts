@@ -1,7 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { bokioAuth } from '../common/auth';
-import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { bokioAuth } from '../common/auth';
+import { bokioClient } from '../common/client';
+import { bokioBuilders } from '../common/builders';
+import { bokioSchemas } from '../common/schemas';
 
 export const createAJournalEntry = createAction({
   auth: bokioAuth,
@@ -9,13 +11,18 @@ export const createAJournalEntry = createAction({
   classification: 'WRITE',
   displayName: 'Create a journal entry',
   description: 'Creates a new journal entry in Bokio',
-  audience: 'both',
-  aiMetadata: { description: 'Records a new bookkeeping journal entry in a Bokio company, posting debit/credit amounts against account numbers. Use for manual double-entry transactions; the entry date is required and items carry the per-account debit/credit lines. Not idempotent — each call posts a separate journal entry.', idempotent: false },
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Posts a balanced journal entry (debits equal credits) in a Bokio company. Not idempotent: each call posts another entry.',
+    idempotent: false,
+  },
+  outputSchema: bokioSchemas.journalEntry,
   props: {
     title: Property.ShortText({
       displayName: 'Title',
       description: 'Title of the journal entry',
-      required: false,
+      required: true,
     }),
     date: Property.ShortText({
       displayName: 'Date',
@@ -23,24 +30,25 @@ export const createAJournalEntry = createAction({
       required: true,
     }),
     items: Property.Array({
-      displayName: 'Items (JSON)',
+      displayName: 'Lines',
       description:
-        'Journal entry items as JSON array. Each item should have: account (account number), debit (optional), credit (optional)',
-      required: false,
+        'At least two lines. Each line has an account number and either a debit or a credit amount. Total debits must equal total credits.',
+      required: true,
       properties: {
         account: Property.Number({
           displayName: 'Account Number',
-          description: 'Account number for the journal entry item',
-          required: false,
+          placeholder: '1930',
+          description: 'Bokio account number, for example 1930',
+          required: true,
         }),
         debit: Property.Number({
           displayName: 'Debit Amount',
-          description: 'Debit amount for the journal entry item',
+          description: 'Debit amount (leave empty for a credit line)',
           required: false,
         }),
         credit: Property.Number({
           displayName: 'Credit Amount',
-          description: 'Credit amount for the journal entry item',
+          description: 'Credit amount (leave empty for a debit line)',
           required: false,
         }),
       },
@@ -48,26 +56,13 @@ export const createAJournalEntry = createAction({
   },
   async run(context) {
     const { title, date, items } = context.propsValue;
-    const { api_key, companyId } = context.auth.props;
-
-    const body: any = {
-      date,
-    };
-
-    if (title) {
-      body.title = title;
-    }
-    if (items) {
-      body.items = items;
-    }
-
-    const response = await makeRequest(
-      api_key,
-      HttpMethod.POST,
-      `/companies/${companyId}/journal-entries`,
-      body
-    );
-
-    return response;
+    const body = bokioBuilders.buildJournalBody({ title, date, lines: items ?? [] });
+    return bokioClient.request<unknown>({
+      auth: context.auth.props,
+      method: HttpMethod.POST,
+      path: '/journal-entries',
+      operation: 'create journal entry',
+      body,
+    });
   },
 });

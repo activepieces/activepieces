@@ -1,8 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { bokioAuth } from '../common/auth';
-import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { t } from 'i18next';
+import { bokioClient } from '../common/client';
+import { bokioBuilders } from '../common/builders';
+import { bokioSchemas } from '../common/schemas';
 
 export const createCustomer = createAction({
   auth: bokioAuth,
@@ -11,7 +12,8 @@ export const createCustomer = createAction({
   displayName: 'Create Customer',
   description: 'Creates a new customer in Bokio',
   audience: 'both',
-  aiMetadata: { description: 'Creates a new customer record in a Bokio accounting company. Use to register a person or company before invoicing them; only customer name and type (individual/company) are required, with optional VAT/org number, contact, and address details. Not idempotent — each call creates a separate customer.', idempotent: false },
+  aiMetadata: { description: 'Creates a new customer in a Bokio company and returns it with its id. Name and type (private or company) are required. Email/phone become the default contact. If any address field is given, address line 1, zip code, city and two-letter country code are all required. Language is sv or en. Not idempotent: each call creates another customer, so search with Find Customer first.', idempotent: false },
+  outputSchema: bokioSchemas.customer,
   props: {
     customerName: Property.ShortText({
       displayName: 'Customer Name',
@@ -50,6 +52,22 @@ export const createCustomer = createAction({
       description: 'Customer number (optional)',
       required: false,
     }),
+    language: Property.StaticDropdown({
+      displayName: 'Language',
+      description: 'Language used on documents sent to the customer',
+      required: false,
+      options: {
+        options: [
+          { label: 'Swedish', value: 'sv' },
+          { label: 'English', value: 'en' },
+        ],
+      },
+    }),
+    contactName: Property.ShortText({
+      displayName: 'Contact Name',
+      description: 'Name of the contact person. Defaults to the customer name when email or phone is set.',
+      required: false,
+    }),
     email: Property.ShortText({
       displayName: 'Email',
       description: 'Customer email address',
@@ -62,7 +80,7 @@ export const createCustomer = createAction({
     }),
     lin1: Property.ShortText({
       displayName: 'Address line 1',
-      description: 'Customer address line 1',
+      description: 'Customer address line 1. If any address field is set, line 1, zip code, city and country are all required.',
       required: false,
     }),
     line2: Property.ShortText({
@@ -87,78 +105,30 @@ export const createCustomer = createAction({
     }),
   },
   async run(context) {
-    const {
-      customerName,
-      type,
-      vatNumber,
-      orgNumber,
-      paymentTerms,
-      customerNumber,
-      email,
-      phone,
-      lin1,
-      line2,
-      zipCode,
-      city,
-      country,
-    } = context.propsValue;
-    const { api_key, companyId } = context.auth.props;
-
-    const body: any = {
-      name: customerName,
-      type: type,
-    };
-    if (vatNumber) {
-      body.vat_number = vatNumber;
-    }
-    if (orgNumber) {
-      body.org_number = orgNumber;
-    }
-    if (customerNumber) {
-      body.customer_number = customerNumber;
-    }
-    if (paymentTerms) {
-      body.payment_terms = paymentTerms;
-    }
-    const contactsDetails: any = {};
-    if (email) {
-      contactsDetails.email = email;
-    }
-    if (phone) {
-      contactsDetails.phone = phone;
-    }
-
-    if (Object.keys(contactsDetails).length > 0) {
-      body.contactsDetails = contactsDetails;
-    }
-    const addressDetails: any = {};
-    if (lin1) {
-      addressDetails.line_1 = lin1;
-    }
-    if (line2) {
-      addressDetails.line_2 = line2;
-    }
-    if (zipCode) {
-      addressDetails.zip_code = zipCode;
-    }
-    if (city) {
-      addressDetails.city = city;
-    }
-    if (country) {
-      addressDetails.country = country;
-    }
-
-    if (Object.keys(addressDetails).length > 0) {
-      body.address = addressDetails;
-    }
-
-    const response = await makeRequest(
-      api_key,
-      HttpMethod.POST,
-      `/companies/${companyId}/customers`,
-      body
-    );
-
-    return response;
+    const p = context.propsValue;
+    const body = bokioBuilders.buildCustomerBody({
+      name: p.customerName,
+      type: p.type,
+      vatNumber: p.vatNumber,
+      orgNumber: p.orgNumber,
+      paymentTerms: p.paymentTerms,
+      customerNumber: p.customerNumber,
+      language: p.language,
+      contactName: p.contactName,
+      email: p.email,
+      phone: p.phone,
+      line1: p.lin1,
+      line2: p.line2,
+      postalCode: p.zipCode,
+      city: p.city,
+      country: p.country,
+    });
+    return bokioClient.request<unknown>({
+      auth: context.auth.props,
+      method: HttpMethod.POST,
+      path: '/customers',
+      operation: 'create customer',
+      body,
+    });
   },
 });

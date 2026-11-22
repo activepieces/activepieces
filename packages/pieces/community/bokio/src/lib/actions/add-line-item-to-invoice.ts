@@ -1,8 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { bokioAuth } from '../common/auth';
-import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { invoiceIdDropdown, lineItemsProps, unitTypeDropdown } from '../common/props';
+import { bokioAuth } from '../common/auth';
+import { bokioClient } from '../common/client';
+import { bokioBuilders } from '../common/builders';
+import { bokioSchemas } from '../common/schemas';
+import { invoiceIdDropdown, lineItemsProps } from '../common/props';
 
 export const addLineItemToInvoice = createAction({
   auth: bokioAuth,
@@ -10,8 +12,13 @@ export const addLineItemToInvoice = createAction({
   classification: 'WRITE',
   displayName: 'Add line item to invoice',
   description: 'Adds a line item to an existing draft invoice',
-  audience: 'both',
-  aiMetadata: { description: 'Appends a single line item to an existing draft invoice in Bokio, identified by invoice ID. Use to add a product, service, or description-only row to an invoice that already exists; pricing fields apply only when item type is a sales item. Not idempotent — each call appends another line item.', idempotent: false },
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Appends one line item to an existing draft invoice in Bokio. Not idempotent: each call appends another line.',
+    idempotent: false,
+  },
+  outputSchema: bokioSchemas.lineItem,
   props: {
     invoiceId: invoiceIdDropdown,
     itemType: Property.StaticDropdown({
@@ -29,47 +36,23 @@ export const addLineItemToInvoice = createAction({
   },
   async run(context) {
     const { invoiceId, itemType, dynamicProps } = context.propsValue;
-    const { api_key, companyId } = context.auth.props;
-
-    const body: any = {
+    const line = dynamicProps ?? {};
+    const body = bokioBuilders.buildSalesLineItem({
       itemType,
-      description: dynamicProps?.['description'],
-    };
-
-    // Only add pricing fields for sales items
-    if (itemType === 'salesItem' && dynamicProps) {
-      body.quantity = dynamicProps['quantity'];
-      body.unitPrice = dynamicProps['unitPrice'];
-
-      if (dynamicProps['itemRefId']) {
-        body.itemRef = {
-          id: dynamicProps['itemRefId'],
-        };
-      }
-
-      if (dynamicProps['productType']) {
-        body.productType = dynamicProps['productType'];
-      }
-
-      if (dynamicProps['unitType']) {
-        body.unitType = dynamicProps['unitType'];
-      }
-
-      if (
-        dynamicProps['taxRate'] !== undefined &&
-        dynamicProps['taxRate'] !== null
-      ) {
-        body.taxRate = dynamicProps['taxRate'];
-      }
-    }
-
-    const response = await makeRequest(
-      api_key,
-      HttpMethod.POST,
-      `/companies/${companyId}/invoices/${invoiceId}/line-items`,
-      body
-    );
-
-    return response;
+      description: line['description'],
+      itemId: line['itemRefId'],
+      productType: line['productType'],
+      unitType: line['unitType'],
+      quantity: line['quantity'],
+      unitPrice: line['unitPrice'],
+      taxRate: line['taxRate'],
+    });
+    return bokioClient.request<unknown>({
+      auth: context.auth.props,
+      method: HttpMethod.POST,
+      path: `/invoices/${bokioBuilders.requireUuid({ value: invoiceId, kind: 'invoice' })}/line-items`,
+      operation: 'add invoice line item',
+      body,
+    });
   },
 });

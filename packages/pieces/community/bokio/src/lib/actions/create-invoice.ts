@@ -1,7 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { bokioAuth } from '../common/auth';
-import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { bokioAuth } from '../common/auth';
+import { bokioClient } from '../common/client';
+import { bokioBuilders } from '../common/builders';
+import { bokioSchemas } from '../common/schemas';
 import { lineItemsProps } from '../common/props';
 
 export const createInvoice = createAction({
@@ -10,49 +12,18 @@ export const createInvoice = createAction({
   classification: 'WRITE',
   displayName: 'Create Invoice',
   description: 'Creates a new draft invoice in Bokio',
-  audience: 'both',
-  aiMetadata: { description: 'Creates a new draft invoice in a Bokio company with a single line item. Use to start a new customer invoice; invoice date, due date, and item type are required, and the customer is linked by passing the customer UUID. Not idempotent — each call creates a separate draft invoice.', idempotent: false },
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Creates a new draft invoice in a Bokio company with one line item. Not idempotent: each call creates another draft invoice.',
+    idempotent: false,
+  },
+  outputSchema: bokioSchemas.invoice,
   props: {
-    invoiceType: Property.StaticDropdown({
-      displayName: 'Invoice Type',
-      description: 'Type of invoice',
-      required: false,
-      options: {
-        options: [
-          { label: 'Invoice', value: 'invoice' },
-          { label: 'Cash Invoice', value: 'cashInvoice' },
-        ],
-      },
-    }),
-    customerRef: Property.ShortText({
-      displayName: 'Customer ID',
-      description: 'UUID of the customer',
-      required: false,
-    }),
     invoiceDate: Property.ShortText({
       displayName: 'Invoice Date',
       description: 'Invoice date (YYYY-MM-DD)',
       required: true,
-    }),
-    dueDate: Property.ShortText({
-      displayName: 'Due Date',
-      description: 'Due date (YYYY-MM-DD)',
-      required: true,
-    }),
-    orderNumberReference: Property.ShortText({
-      displayName: 'Order Number Reference',
-      description: 'The order number associated with the invoice',
-      required: false,
-    }),
-    currency: Property.ShortText({
-      displayName: 'Currency',
-      description: 'ISO 4217 currency code (e.g., SEK, EUR, USD)',
-      required: false,
-    }),
-    currencyRate: Property.Number({
-      displayName: 'Currency Rate',
-      description: 'Currency rate (defaults to 1)',
-      required: false,
     }),
     itemType: Property.StaticDropdown({
       displayName: 'Item Type',
@@ -66,81 +37,69 @@ export const createInvoice = createAction({
       },
     }),
     dynamicProps: lineItemsProps,
+    customerRef: Property.ShortText({
+      displayName: 'Customer ID',
+      placeholder: 'e.g. 3fa85f64-5717-4562-b3fc-2c963f66afa6',
+      description: 'Customer UUID. Get it from Find Customer, Get Draft Invoice by Customer Name, or the output of Create Customer.',
+      required: false,
+    }),
+    dueDate: Property.ShortText({
+      displayName: 'Due Date',
+      description: 'Due date (YYYY-MM-DD). Leave empty to use the customer payment terms.',
+      required: false,
+    }),
+    orderNumberReference: Property.ShortText({
+      displayName: 'Order Number Reference',
+      description: 'The order number associated with the invoice',
+      required: false,
+    }),
+    currency: Property.ShortText({
+      displayName: 'Currency',
+      description: 'ISO 4217 currency code (e.g., SEK, EUR, USD). Defaults to SEK.',
+      required: false,
+    }),
+    currencyRate: Property.Number({
+      displayName: 'Currency Rate',
+      description: 'Currency rate (defaults to 1)',
+      required: false,
+    }),
+    invoiceType: Property.StaticDropdown({
+      displayName: 'Invoice Type',
+      description: 'Bokio only accepts Invoice. Kept so older flows keep working.',
+      required: false,
+      options: {
+        options: [{ label: 'Invoice', value: 'invoice' }],
+      },
+    }),
   },
   async run(context) {
-    const {
-      invoiceType,
-      customerRef,
-      invoiceDate,
-      dueDate,
-      orderNumberReference,
-      currency,
-      currencyRate,
-      itemType,
-      dynamicProps,
-    } = context.propsValue;
-    const { api_key, companyId } = context.auth.props;
-
-    const body: any = {
-      type: invoiceType || 'invoice',
-      invoiceDate,
-      dueDate,
-    };
-
-    if (customerRef) {
-      body.customerRef = {
-        id: customerRef,
-      };
-    }
-
-    if (orderNumberReference) {
-      body.orderNumberReference = orderNumberReference;
-    }
-
-    if (currency) {
-      body.currency = currency;
-    }
-
-    if (currencyRate !== undefined && currencyRate !== null) {
-      body.currencyRate = currencyRate;
-    }
-    const lineItems: any = {};
-    if (itemType === 'salesItem' && dynamicProps) {
-      lineItems.itemType = itemType;
-      body.description = dynamicProps?.['description'];
-      lineItems.quantity = dynamicProps['quantity'];
-      lineItems.unitPrice = dynamicProps['unitPrice'];
-
-      if (dynamicProps['itemRefId']) {
-        lineItems.itemRef = {
-          id: dynamicProps['itemRefId'],
-        };
-      }
-
-      if (dynamicProps['productType']) {
-        lineItems.productType = dynamicProps['productType'];
-      }
-
-      if (dynamicProps['unitType']) {
-        lineItems.unitType = dynamicProps['unitType'];
-      }
-
-      if (
-        dynamicProps['taxRate'] !== undefined &&
-        dynamicProps['taxRate'] !== null
-      ) {
-        lineItems.taxRate = dynamicProps['taxRate'];
-      }
-    }
-    body.lineItems = [lineItems];
-    
-    const response = await makeRequest(
-      api_key,
-      HttpMethod.POST,
-      `/companies/${companyId}/invoices`,
-      body
-    );
-
-    return response;
+    const p = context.propsValue;
+    const line = p.dynamicProps ?? {};
+    const lineItem = bokioBuilders.buildSalesLineItem({
+      itemType: p.itemType,
+      description: line['description'],
+      itemId: line['itemRefId'],
+      productType: line['productType'],
+      unitType: line['unitType'],
+      quantity: line['quantity'],
+      unitPrice: line['unitPrice'],
+      taxRate: line['taxRate'],
+    });
+    const body = bokioBuilders.buildInvoiceBody({
+      customerId: p.customerRef,
+      invoiceDate: p.invoiceDate,
+      dueDate: p.dueDate,
+      currency: p.currency,
+      currencyRate: p.currencyRate,
+      orderNumberReference: p.orderNumberReference,
+      lineItems: [lineItem],
+    });
+    return bokioClient.request<unknown>({
+      auth: context.auth.props,
+      method: HttpMethod.POST,
+      path: '/invoices',
+      operation: 'create invoice',
+      body,
+    });
   },
 });
