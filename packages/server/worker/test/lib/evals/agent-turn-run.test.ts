@@ -27,6 +27,28 @@ describe('evalAgentTurn.changedFlowIds', () => {
     })
 })
 
+describe('evalAgentTurn.changedFlowIds only trusts flows the turn proved exist', () => {
+    it('ignores flow ids passed to tools that are not flow edits, like a build plan placeholder', () => {
+        expect(evalAgentTurn.changedFlowIds([call({ toolName: 'ap_set_build_plan', input: { phase: 'building', flowId: 'placeholder' }, output: { ok: true } })])).toEqual([])
+    })
+
+    it('ignores edits that errored or failed', () => {
+        const calls = [
+            call({ toolName: 'ap_update_step', input: { flowId: 'gone' }, output: { content: [{ type: 'text', text: '❌ Flow not found.' }] } }),
+            call({ toolName: 'ap_add_step', input: { flowId: 'bad' }, output: { success: false } }),
+            { ...call({ toolName: 'ap_update_trigger', input: { flowId: 'rejected' } }), errored: true },
+        ]
+
+        expect(evalAgentTurn.changedFlowIds(calls)).toEqual([])
+    })
+
+    it('keeps a built flow the tool reports with problems, since its id proves it exists', () => {
+        const built = call({ toolName: 'ap_build_flow', input: { flowName: 'F' }, output: { content: [{ type: 'text', text: '❌ Flow "F" created (id: f1), but some settings were dropped' }], structuredContent: { flowId: 'f1' } } })
+
+        expect(evalAgentTurn.changedFlowIds([built, call({ toolName: 'ap_update_step', input: { flowId: 'f1' } })])).toEqual(['f1'])
+    })
+})
+
 describe('evalAgentTurn.run', () => {
     it('stops the turn clock before reading the flows after the turn', async () => {
         vi.mocked(runAgentTurn).mockResolvedValue(turnResult())
