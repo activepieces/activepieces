@@ -11,7 +11,7 @@ import { PieceCategory } from '@activepieces/pieces-framework';
 export const browseAi = createPiece({
   displayName: 'Browse AI',
   auth: browseAiAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/browse-ai.png',
   categories:[PieceCategory.PRODUCTIVITY],
   authors: ['aryel780'],
@@ -22,6 +22,12 @@ export const browseAi = createPiece({
     createCustomApiCallAction({
       auth: browseAiAuth,
       baseUrl: () => 'https://api.browse.ai/v2',
+      props: {
+        url: {
+          description: 'Full URL, or a path relative to https://api.browse.ai/v2',
+          placeholder: '/robots',
+        },
+      },
       authMapping: async (auth) => ({
         Authorization: `Bearer ${auth.secret_text}`,
       }),
