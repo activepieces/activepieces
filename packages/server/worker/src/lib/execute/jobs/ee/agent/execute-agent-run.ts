@@ -635,7 +635,7 @@ function calledAgentStarter({ ctx, platformId, conversationId, runId, flowRunId,
         if ('unavailableReason' in agent) {
             return agent
         }
-        const agentBilling: ActivepiecesAiBilling = { ...billing, context: { ...billing.context, agentId } }
+        const agentBilling: ActivepiecesAiBilling = isNil(billing.context) ? billing : { ...billing, context: { ...billing.context, agentId } }
         const model = aiUtils.createModel({ credentials: agent.credentials, modelId: agent.modelId, metadata, billing: agentBilling, turnAlreadyCharged: true, providerConfigId: agent.providerConfigId })
         const models = turnModelsFor({ config: { ...agent, tier: { thinkingBudget: agent.thinkingBudget } }, model, billing: agentBilling, metadata })
         const agentKey = { provider: agent.credentials.provider, providerConfigId: agent.providerConfigId, modelId: agent.modelId }

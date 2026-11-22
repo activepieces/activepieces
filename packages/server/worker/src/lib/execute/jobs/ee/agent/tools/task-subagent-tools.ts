@@ -61,7 +61,7 @@ export function createCalledAgentTools({ tools, startAgent, ...deps }: TaskRunDe
                 description: configured.description,
                 inputSchema: calledAgentInput,
                 toModelOutput: taskModelOutput,
-                execute: async ({ request, taskId }, { toolCallId }) => runCalledAgent({ deps, agentId: configured.agentId, startAgent, request, taskId, progressId: toolCallId }),
+                execute: async ({ request }, { toolCallId }) => runCalledAgent({ deps, agentId: configured.agentId, startAgent, request, progressId: toolCallId }),
             }),
     ]))
 }
@@ -72,12 +72,11 @@ export function taskTokensOf({ parts }: { parts: PersistedAgentPart[] }): TaskTo
         : []))
 }
 
-async function runCalledAgent({ deps, agentId, startAgent, request, taskId, progressId }: {
+async function runCalledAgent({ deps, agentId, startAgent, request, progressId }: {
     deps: TaskRunDeps
     agentId: string
     startAgent: StartCalledAgent
     request: string
-    taskId?: string
     progressId: string
 }): Promise<TaskRunOutput> {
     const { data: agent, error } = await tryCatch(() => startAgent({ agentId }))
@@ -92,7 +91,6 @@ async function runCalledAgent({ deps, agentId, startAgent, request, taskId, prog
         deps,
         title: agent.displayName,
         brief: request,
-        taskId,
         progressId,
         profile: { tools, models: agent.models, stepCeiling: agent.maxSteps },
         systemPrompt: agent.systemPrompt,
@@ -484,7 +482,6 @@ const taskInput = z.object({
 
 const calledAgentInput = z.object({
     request: z.string().min(1).describe('What you want this agent to do, self-contained: the goal, what counts as done, and every id, value and decision it needs. It sees nothing else of this conversation.'),
-    taskId: z.string().optional().describe('Continue the work you started with this agent earlier in this conversation, for example after it finished as blocked'),
 })
 
 const researchInput = z.object({
@@ -507,7 +504,7 @@ const STATUS_BY_RESULT: Record<TaskResult['status'], FinishAgentTaskRequest['sta
 }
 
 const TASK_TOOL_NAME = 'ap_run_task'
-const HIDDEN_FROM_MODEL = ['activity', 'billedToolCalls', 'tokens']
+const HIDDEN_FROM_MODEL: (keyof TaskRunOutput)[] = ['activity', 'billedToolCalls', 'tokens']
 const FIX_IN_SETUP = 'Tell the user this tool needs fixing in the agent\'s setup.'
 const RESEARCH_TOOL_NAME = 'ap_deep_research'
 const SUB_AGENT_TOOL_NAMES = [TASK_TOOL_NAME, RESEARCH_TOOL_NAME]
