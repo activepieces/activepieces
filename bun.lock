@@ -1444,7 +1444,7 @@
     },
     "packages/pieces/community/browse-ai": {
       "name": "@activepieces/piece-browse-ai",
-      "version": "0.2.2",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
