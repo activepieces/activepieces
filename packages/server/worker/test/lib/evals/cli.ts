@@ -8,6 +8,7 @@ import { evalAgentTurn, TurnOutcome } from './agent-turn'
 import { RunMetrics } from './run-metrics'
 import { caseSummary, CaseExplanation } from './case-summary'
 import { evalChecks, RunScores, RunVerdict, Verdict } from './checks'
+import { CodeCheckResult, evalCodeChecks } from './code-checks'
 import { colors } from './colors'
 import { evalCase, EvalCase, RecordedToolCall } from './eval-case'
 import { posthogDataset } from './posthog-dataset'
@@ -312,10 +313,10 @@ async function runPool({ runs, run, onResult }: { runs: PlannedRun[], run: (plan
 
 async function evaluate({ candidate, trial, recordedToolCalls, mcp, modelId, auth, recordMode, keep }: { candidate: EvalCase, trial: number, recordedToolCalls: RecordedToolCall[], mcp: McpTools, modelId: string, auth: Record<string, unknown>, recordMode: boolean, keep: boolean }): Promise<CaseResult> {
     if (isNil(candidate.live)) {
-        const turn = await tryCatch(() => evalAgentTurn.run({ evalCase: candidate, recordedToolCalls, mcp, modelId, auth, mode: recordMode ? 'record' : 'replay' }))
+        const turn = await tryCatch(async () => ({ outcome: await evalAgentTurn.run({ evalCase: candidate, recordedToolCalls, mcp, modelId, auth, mode: recordMode ? 'record' : 'replay' }), codeCheck: evalCodeChecks.notRun }))
         return gradeTurn({ candidate, trial, auth, turn, cleanupProblems: [] })
     }
-    const { seed } = candidate.live
+    const { seed, codeChecks } = candidate.live
     const { result, notes } = await evalWorkspace.run({
         keep,
         use: async (workspaceMcp) => {
@@ -323,18 +324,19 @@ async function evaluate({ candidate, trial, recordedToolCalls, mcp, modelId, aut
             if (!isNil(seeded.error)) {
                 throw new Error(`seed failed: ${seeded.error.message}`)
             }
-            return evalAgentTurn.run({ evalCase: candidate, recordedToolCalls, mcp: workspaceMcp, modelId, auth, mode: 'live', seeded: seeded.data })
+            const outcome = await evalAgentTurn.run({ evalCase: candidate, recordedToolCalls, mcp: workspaceMcp, modelId, auth, mode: 'live', seeded: seeded.data })
+            return { outcome, codeCheck: await evalCodeChecks.run({ checks: codeChecks, outcome, mcp: workspaceMcp }) }
         },
     })
     return gradeTurn({ candidate, trial, auth, turn: result, cleanupProblems: notes.map((note) => `case ${candidate.caseNumber} run ${trial + 1}: ${note}`) })
 }
 
-async function gradeTurn({ candidate, trial, auth, turn, cleanupProblems }: { candidate: EvalCase, trial: number, auth: Record<string, unknown>, turn: Result<TurnOutcome>, cleanupProblems: string[] }): Promise<CaseResult> {
+async function gradeTurn({ candidate, trial, auth, turn, cleanupProblems }: { candidate: EvalCase, trial: number, auth: Record<string, unknown>, turn: Result<CheckedTurn>, cleanupProblems: string[] }): Promise<CaseResult> {
     if (!isNil(turn.error)) {
         return crashedResult({ candidate, trial, reason: turn.error.message, cleanupProblems })
     }
-    const outcome = turn.data
-    const graded = await tryCatch(async () => outcome.timedOut ? timedOutScores({ outcome }) : evalChecks.grade({ evalCase: candidate, outcome, auth }))
+    const { outcome, codeCheck } = turn.data
+    const graded = await tryCatch(async () => outcome.timedOut ? timedOutScores({ outcome, codeCheck }) : evalChecks.grade({ evalCase: candidate, outcome, auth, codeCheck }))
     if (!isNil(graded.error)) {
         return crashedResult({ candidate, trial, reason: graded.error.message, cleanupProblems })
     }
@@ -349,14 +351,14 @@ function printCleanupProblems({ results }: { results: CaseResult[] }): void {
     results.flatMap((result) => result.cleanupProblems).forEach((problem) => console.log(colors.dim(`cleanup: ${problem}`)))
 }
 
-function timedOutScores({ outcome }: { outcome: TurnOutcome }): RunScores {
+function timedOutScores({ outcome, codeCheck }: { outcome: TurnOutcome, codeCheck: CodeCheckResult }): RunScores {
     const message = `The turn did not finish within ${Math.round(outcome.elapsedMs / 1000)}s`
-    return { expected: 'fail', honest: 'unknown', validToolCalls: 'unknown', rejectedToolCalls: outcome.rejectedToolInputs.length, costUsd: outcome.costUsd, stepsToDecision: outcome.steps, speed: outcome.metrics, problemTypes: [], reasons: { expected: message, honest: message, toolCalls: message }, judge: null }
+    return { expected: 'fail', honest: 'unknown', validToolCalls: 'unknown', codeChecks: codeCheck.verdict, rejectedToolCalls: outcome.rejectedToolInputs.length, costUsd: outcome.costUsd, stepsToDecision: outcome.steps, speed: outcome.metrics, problemTypes: [], reasons: { expected: message, honest: message, toolCalls: message, codeChecks: codeCheck.reason }, judge: null }
 }
 
 function crashedScores({ reason }: { reason: string }): RunScores {
     const message = `The run crashed: ${reason}`
-    return { expected: 'unknown', honest: 'unknown', validToolCalls: 'unknown', rejectedToolCalls: 0, costUsd: null, stepsToDecision: 0, speed: null, problemTypes: [], reasons: { expected: message, honest: message, toolCalls: message }, judge: null }
+    return { expected: 'unknown', honest: 'unknown', validToolCalls: 'unknown', codeChecks: 'unknown', rejectedToolCalls: 0, costUsd: null, stepsToDecision: 0, speed: null, problemTypes: [], reasons: { expected: message, honest: message, toolCalls: message, codeChecks: message }, judge: null }
 }
 
 function summarize({ datasetName, candidate, results }: { datasetName: string, candidate: EvalCase, results: CaseResult[] }): CaseSummary {
@@ -541,6 +543,7 @@ function print({ result, verbose }: { result: CaseResult, verbose: boolean }): v
     line('did the expected thing', scores.expected, scores.reasons.expected)
     line('honest about results', scores.honest, scores.reasons.honest)
     line(`valid tool calls (${scores.rejectedToolCalls} rejected)`, scores.validToolCalls, scores.reasons.toolCalls)
+    line('code checks', scores.codeChecks, scores.reasons.codeChecks)
     const escalations = isNil(scores.judge) ? [] : [{ check: 'expected', audit: scores.judge.expected }, { check: 'honest', audit: scores.judge.honest }]
     escalations.forEach(({ check, audit }) => {
         if (!isNil(audit.escalation)) {
@@ -602,6 +605,11 @@ type DiffLabel = 'same' | 'unclear' | 'edited' | 'FIXED' | 'REGRESSED'
 type DatasetOutcome = {
     status: 'ok' | 'unchecked' | 'broken'
     reason: string
+}
+
+type CheckedTurn = {
+    outcome: TurnOutcome
+    codeCheck: CodeCheckResult
 }
 
 type PlannedRun = {

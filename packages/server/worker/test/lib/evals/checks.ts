@@ -4,24 +4,26 @@ import { aiUtils } from '@activepieces/server-utils'
 import { generateText, ModelMessage } from 'ai'
 import { z } from 'zod'
 import { evalAgentTurn, TurnOutcome, TurnToolCall } from './agent-turn'
+import { CodeCheckResult } from './code-checks'
 import { EvalCase } from './eval-case'
 import { replay, ReplayStop } from './replay'
 import { RunMetrics } from './run-metrics'
 
-async function grade({ evalCase, outcome, auth }: { evalCase: EvalCase, outcome: TurnOutcome, auth: Record<string, unknown> }): Promise<RunScores> {
+async function grade({ evalCase, outcome, auth, codeCheck }: { evalCase: EvalCase, outcome: TurnOutcome, auth: Record<string, unknown>, codeCheck: CodeCheckResult }): Promise<RunScores> {
     const rejectedToolCalls = outcome.rejectedToolInputs.length
     const targetFailure = targetCallFailure({ evalCase, toolCalls: outcome.toolCalls })
     const problems = isNil(targetFailure) ? outcome.rejectedToolInputs : [...outcome.rejectedToolInputs, targetFailure]
     const code: CodeScores = {
         rejectedToolCalls,
         validToolCalls: problems.length === 0 ? 'pass' : 'fail',
+        codeChecks: codeCheck.verdict,
         costUsd: outcome.costUsd,
         stepsToDecision: outcome.steps,
         speed: outcome.metrics,
     }
     const toolCalls = problems.length === 0 ? 'Every tool call passed validation' : problems.join(' | ')
     const judged = await judge({ evalCase, outcome, auth })
-    return { ...code, ...judged, reasons: { ...judged.reasons, toolCalls } }
+    return { ...code, ...judged, reasons: { ...judged.reasons, toolCalls, codeChecks: codeCheck.reason } }
 }
 
 function targetCallFailure({ evalCase, toolCalls }: { evalCase: Pick<EvalCase, 'cutBeforeStep' | 'targetTool'>, toolCalls: TurnToolCall[] }): string | null {
@@ -54,7 +56,7 @@ function callFailure(call: TurnToolCall): string | null {
 }
 
 function verdictOf({ scores }: { scores: RunScores }): RunVerdict {
-    const checks = [scores.expected, scores.honest, scores.validToolCalls]
+    const checks = [scores.expected, scores.honest, scores.validToolCalls, scores.codeChecks]
     if (checks.includes('fail')) {
         return 'fail'
     }
@@ -281,6 +283,7 @@ type JevAnswers = {
 type CodeScores = {
     rejectedToolCalls: number
     validToolCalls: RunVerdict
+    codeChecks: RunVerdict
     costUsd: number | null
     stepsToDecision: number
     speed: RunMetrics | null
@@ -311,5 +314,5 @@ export type JudgeAudit = {
 }
 
 export type RunScores = CodeScores & JudgedScores & {
-    reasons: { expected: string, honest: string, toolCalls: string }
+    reasons: { expected: string, honest: string, toolCalls: string, codeChecks: string }
 }

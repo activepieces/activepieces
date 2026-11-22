@@ -11,7 +11,7 @@ async function save({ path, datasets }: { path: string, datasets: SnapshotDatase
         title: candidate.title,
         runs: results.filter((result) => result.candidate.id === candidate.id).map(({ verdict, scores }) => ({
             verdict,
-            gates: { expected: scores.expected, honest: scores.honest, validToolCalls: scores.validToolCalls },
+            gates: { expected: scores.expected, honest: scores.honest, validToolCalls: scores.validToolCalls, codeChecks: scores.codeChecks },
             speed: scores.speed,
             reasons: scores.reasons,
             judge: scores.judge,
@@ -119,7 +119,7 @@ const SavedRunsSchema = z.object({
         title: z.string(),
         runs: z.array(z.object({
             verdict: RunVerdictSchema,
-            gates: z.object({ expected: RunVerdictSchema, honest: RunVerdictSchema, validToolCalls: RunVerdictSchema }),
+            gates: z.object({ expected: RunVerdictSchema, honest: RunVerdictSchema, validToolCalls: RunVerdictSchema, codeChecks: RunVerdictSchema.optional() }),
             speed: z.object({
                 totalMs: z.number(),
                 modelCalls: z.number(),

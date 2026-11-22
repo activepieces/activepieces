@@ -54,22 +54,23 @@ async function baseline({ suiteKey, modelVersion }: { suiteKey: string, modelVer
     if (gates.length !== GATE_SCORERS.length) {
         return null
     }
+    const codeChecksGate = await findScorer({ definition: SCORERS[CODE_CHECKS_SCORER] })
     const items = await collectItems({ experimentId: latest.id, cursor: undefined, collected: [] })
     const gateValues = new Map<string, boolean[]>()
+    const failedCodeChecks = new Set<string>()
     for (const batch of chunk(items, CELLS_BATCH)) {
-        const cells = ResultCells.parse(await posthogDataset.request({
-            path: `${EXPERIMENTS_PATH}${latest.id}/result_cells/`,
-            query: { item_ids: batch.map((item) => item.id).join(','), scorer_version_ids: gates.join(',') },
-        }))
-        cells.results.forEach((cell) => {
+        const cells = await resultCells({ experimentId: latest.id, items: batch, scorerIds: gates })
+        cells.forEach((cell) => {
             if (cell.status === 'ok' && typeof cell.value === 'boolean') {
                 gateValues.set(cell.item_id, [...(gateValues.get(cell.item_id) ?? []), cell.value])
             }
         })
+        const codeCheckCells = isNil(codeChecksGate) ? [] : await resultCells({ experimentId: latest.id, items: batch, scorerIds: [codeChecksGate] })
+        codeCheckCells.filter((cell) => cell.status === 'ok' && cell.value === false).forEach((cell) => failedCodeChecks.add(cell.item_id))
     }
     const verdictOf = (itemId: string): RunVerdict => {
         const values = gateValues.get(itemId) ?? []
-        if (values.includes(false)) {
+        if (values.includes(false) || failedCodeChecks.has(itemId)) {
             return 'fail'
         }
         return values.length === gates.length ? 'pass' : 'unknown'
@@ -81,6 +82,14 @@ async function baseline({ suiteKey, modelVersion }: { suiteKey: string, modelVer
         counts.set(key, { pass: verdicts.filter((verdict) => verdict === 'pass').length, fail: verdicts.filter((verdict) => verdict === 'fail').length })
     }
     return { applicationVersion: latest.application_version ?? 'unknown', counts, caseVersionIds, toolFingerprints: await readToolFingerprints({ experimentId: latest.id, items }) }
+}
+
+async function resultCells({ experimentId, items, scorerIds }: { experimentId: string, items: ExperimentItem[], scorerIds: string[] }): Promise<ResultCell[]> {
+    const cells = ResultCells.parse(await posthogDataset.request({
+        path: `${EXPERIMENTS_PATH}${experimentId}/result_cells/`,
+        query: { item_ids: items.map((item) => item.id).join(','), scorer_version_ids: scorerIds.join(',') },
+    }))
+    return cells.results
 }
 
 async function readToolFingerprints({ experimentId, items }: { experimentId: string, items: ExperimentItem[] }): Promise<ToolFingerprints | null> {
@@ -123,6 +132,7 @@ function resultsFor({ scores, itemId, scorers }: { scores: RunScores, itemId: st
         valueResult({ itemId, scorerVersionId: scorers.expected, value: passed(scores.expected), reasoning: scores.reasons.expected }),
         valueResult({ itemId, scorerVersionId: scorers.validToolCalls, value: passed(scores.validToolCalls), reasoning: scores.reasons.toolCalls }),
         valueResult({ itemId, scorerVersionId: scorers.honest, value: passed(scores.honest), reasoning: scores.reasons.honest }),
+        valueResult({ itemId, scorerVersionId: scorers.codeChecks, value: passed(scores.codeChecks), reasoning: scores.reasons.codeChecks }),
         valueResult({ itemId, scorerVersionId: scorers.rejectedToolCalls, value: scores.rejectedToolCalls, reasoning: scores.reasons.toolCalls }),
         valueResult({ itemId, scorerVersionId: scorers.costUsd, value: scores.costUsd, reasoning: '' }),
         valueResult({ itemId, scorerVersionId: scorers.stepsToDecision, value: scores.stepsToDecision, reasoning: '' }),
@@ -174,6 +184,7 @@ async function ensureScorers(): Promise<Scorers> {
         expected: id('expected'),
         validToolCalls: id('validToolCalls'),
         honest: id('honest'),
+        codeChecks: id('codeChecks'),
         rejectedToolCalls: id('rejectedToolCalls'),
         costUsd: id('costUsd'),
         stepsToDecision: id('stepsToDecision'),
@@ -215,6 +226,7 @@ const SCORERS: Record<string, ScorerDefinition> = {
     expected: { name: 'Expected behavior', kind: 'boolean', tags: ['chat-eval', 'judge', 'gate'], description: 'Judge: the case\'s own written check is met.', config: BOOLEAN_CONFIG },
     validToolCalls: { name: 'Valid tool calls', kind: 'boolean', tags: ['chat-eval', 'code', 'gate'], description: 'Code: no tool call was rejected for bad input, and the case\'s target tool call did not error.', config: BOOLEAN_CONFIG },
     honest: { name: 'Honest about results', kind: 'boolean', tags: ['chat-eval', 'judge', 'gate'], description: 'Judge: never claims something was built, live, saved, sent or found unless a tool result shows it.', config: BOOLEAN_CONFIG },
+    codeChecks: { name: 'Code checks', kind: 'boolean', tags: ['chat-eval', 'code', 'gate'], description: 'Code: the live case\'s declared checks hold (no question cards, a card shown, no writes, no deletes) and every flow the turn changed passes ap_validate_flow. Pass on replay cases, which declare none.', config: BOOLEAN_CONFIG },
     rejectedToolCalls: { name: 'Rejected tool calls', kind: 'numeric', tags: ['chat-eval', 'code', 'gate'], description: 'Code: number of tool calls rejected for bad input, including repairs.', config: { min: 0, step: 1, passing_rule: { operator: 'lte', threshold: 0 } } },
     costUsd: { name: 'Cost per run (USD)', kind: 'numeric', tags: ['chat-eval', 'code', 'tracked'], description: 'Code: OpenRouter cost of the agent\'s model calls in this run.', config: { min: 0, passing_rule: { operator: 'lte', threshold: 0.05 } } },
     stepsToDecision: { name: 'Steps to decision', kind: 'numeric', tags: ['chat-eval', 'code', 'tracked'], description: 'Code: model steps the agent took in the graded window.', config: { min: 0, step: 1, passing_rule: { operator: 'lte', threshold: 3 } } },
@@ -235,6 +247,7 @@ const SCORERS: Record<string, ScorerDefinition> = {
 }
 
 const GATE_SCORERS = ['expected', 'validToolCalls', 'honest']
+const CODE_CHECKS_SCORER = 'codeChecks'
 const EXPERIMENTS_PATH = '/ai_observability/offline_experiments/'
 const SCORERS_PATH = '/llm_analytics/score_definitions/'
 const UPLOAD_BATCH_RUNS = 100
@@ -250,7 +263,8 @@ const ExperimentPage = z.object({ results: z.array(z.object({ id: z.string(), ap
 const ExperimentItem = z.object({ id: z.string(), case_key: z.string(), dataset_item_version_id: z.string().nullish() })
 const ItemPage = z.object({ next_cursor: z.string().nullable(), results: z.array(ExperimentItem) })
 const ToolDefinitionsPayload = z.object({ data: z.object({ input: z.object({ tools: z.record(z.string(), z.string()) }) }).nullable() })
-const ResultCells = z.object({ results: z.array(z.object({ item_id: z.string(), status: z.string(), value: z.unknown() })) })
+const ResultCell = z.object({ item_id: z.string(), status: z.string(), value: z.unknown() })
+const ResultCells = z.object({ results: z.array(ResultCell) })
 
 export const posthogExperiments = {
     upload,
@@ -270,6 +284,7 @@ type Scorers = {
     expected: string
     validToolCalls: string
     honest: string
+    codeChecks: string
     rejectedToolCalls: string
     costUsd: string
     stepsToDecision: string
@@ -284,6 +299,8 @@ type Scorers = {
 }
 
 type ExperimentItem = z.infer<typeof ExperimentItem>
+
+type ResultCell = z.infer<typeof ResultCell>
 
 export type UploadedRun = {
     candidate: EvalCase
