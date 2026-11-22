@@ -8,6 +8,19 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Insightly 0.2.0: generic record actions are no longer AI agent tools
+
+**Create Record**, **Update Record**, **Get Record**, **Delete Record** and **Find Records** are now shown only in the flow builder. AI agents and MCP clients get dedicated Insightly tools instead (Find, Get, Create and Update Contact, Find Opportunities, Set Opportunity Stage, Get Record, Delete Record and others). Existing flow steps keep working.
+
+After you upgrade:
+
+- **Update Record** changes only the fields you fill in; before, it re-sent every field shown.
+- The **Pod** field is optional and detected from the API key.
+
+#### What you need to do
+
+- Agents that used the five record actions as tools: switch to the new Insightly agent actions.
+
 #### Fireflies.ai 0.2.0: three find actions are no longer AI agent tools, and Upload Audio returns a smaller output
 
 **Find Meeting by ID**, **Find Recent Meeting** and **Find Meeting by Call Details** are now shown only in the flow builder. AI agents and MCP clients get **Get Meeting**, **Get Meeting Summary** and **Find Meetings** instead.
