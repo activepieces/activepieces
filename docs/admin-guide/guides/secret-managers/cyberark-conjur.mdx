@@ -109,16 +109,21 @@ Store the **api_key** securely; you will enter it in Activepieces as the **API K
   and set **Organization account name** to `conjur` unless your Cloud tenant uses a different account.
 - **On-prem / Enterprise**: Use your Conjur server base URL (e.g. `https://conjur.example.com`) and your organization account name.
 
+<Note>
+  Requests to Conjur go through the SSRF filter. If Conjur runs on a private or loopback address (such as `10.0.5.12`), add its IP to [`AP_SSRF_ALLOW_LIST`](/install/architecture/network-security#self-hosted-providers-on-private-ips) and restart Activepieces.
+</Note>
+
 ## Connecting to Activepieces
 
 1. Go to **Platform Admin → Security → Secret Managers**.
-2. Select **CyberArk Conjur** from the provider list.
-3. Enter the connection details:
-   - **URL**: Conjur server URL (e.g. `https://conjur.example.com` or Conjur Cloud URL above). Do not add a trailing slash.
+2. Click **New Connection** and select **CyberArk Conjur** from the provider list.
+3. Enter a **Name** and choose a **Scope** (see [Connection Scopes](/admin-guide/guides/secret-managers/overview#connection-scopes)).
+4. Enter the connection details:
+   - **URL**: Conjur server URL (e.g. `https://conjur.example.com` or Conjur Cloud URL above).
    - **Organization account name**: Your Conjur account (e.g. `conjur` for Conjur Cloud).
    - **Login ID**: For host authentication this must be the Conjur host ID with a `host/` prefix, e.g. `host/activepieces/activepieces` (policy id and host name as in your policy).
    - **API Key**: The host API key returned when the host was created (see policy load response above).
-4. Click **Connect** to test and save the connection.
+5. Click **Save** to test and save the connection.
 
 ## Using CyberArk Conjur secrets in connections
 

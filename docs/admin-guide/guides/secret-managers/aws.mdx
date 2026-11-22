@@ -52,22 +52,25 @@ For production, scope `Resource` to the specific secret ARNs Activepieces needs 
 ## Step 3 — Connect in Activepieces
 
 1. Go to **Platform Admin → Security → Secret Managers**.
-2. Select **AWS Secrets Manager** from the provider list.
-3. Enter the connection details:
-   - **Access Key** — the Access Key ID from Step 2 (e.g. `AKIAIOSFODNN7EXAMPLE`).
-   - **Secret Key** — the Secret Access Key from Step 2.
+2. Click **New Connection** and select **AWS Secrets Manager** from the provider list.
+3. Enter a **Name** and choose a **Scope** (see [Connection Scopes](/admin-guide/guides/secret-managers/overview#connection-scopes)).
+4. Enter the connection details:
+   - **Access Key ID** — the Access Key ID from Step 2 (e.g. `AKIAIOSFODNN7EXAMPLE`).
+   - **Secret Access Key** — the Secret Access Key from Step 2.
    - **Region** — the AWS region where your secrets are stored (e.g. `us-east-1`).
-4. Click **Connect** to test and save the connection.
+5. Click **Save** to test and save the connection.
 
 ## Using AWS Secrets Manager in connections
 
-When configuring a global connection that requires credentials:
+When configuring a connection that requires credentials:
 
 1. Click the **key icon** (🔑) next to the credential field.
-2. Select **AWS Secrets Manager** as the secret manager.
-3. Fill in:
-   - **Secret Name** — the friendly name of the secret in AWS Secrets Manager.
-   - **Secret Json key** — Key of row for the stored secret.
+2. Select your **AWS Secrets Manager** connection from the list.
+3. Enter the **Secret Path** in the format `secret-name:json-key`:
+   - **secret-name** — the name of the secret in AWS Secrets Manager.
+   - **json-key** — the key in the secret's key/value pairs.
+
+The secret must be stored as key/value pairs (a JSON object) with string values. Plaintext and binary secrets are not supported.
 
 Activepieces will use the configured credentials to retrieve the secret value and inject it into the connection at runtime.
 

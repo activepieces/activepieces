@@ -3,7 +3,7 @@ title: "Overview"
 description: "Connect external secret management systems to securely store and retrieve credentials"
 ---
 
-Secret Managers allow you to integrate external secret management systems with Activepieces, enabling centralized credential management and enhanced security for your global connections.
+Secret Managers allow you to integrate external secret management systems with Activepieces, enabling centralized credential management and enhanced security for your connections.
 
 <Snippet file="enterprise-feature.mdx" />
 
@@ -33,7 +33,7 @@ Secret Managers allow you to integrate external secret management systems with A
 7. Enter the required connection details
 8. Click **Save** to test and save the connection
 
-The connection will be encrypted and stored securely. You can edit or delete it at any time from the Secret Managers page.
+The connection will be encrypted and stored securely. You can edit or delete it at any time from the Secret Managers page. When you edit a connection, enter its credentials again. You cannot change its provider.
 
 ## Connection Scopes
 
@@ -51,12 +51,12 @@ When creating or editing a connection, select **Project** scope and choose the p
 Once connected, you can reference secrets from your secret managers when configuring piece connections:
 
 1. Open a connection dialog (either a global connection or one inside the flow builder)
-2. Click the **key icon** (🔑) next to a credential field
+2. Click the **key icon** (🔑) next to a credential field. The icon shows only when at least one secret manager connection that the project can use is connected.
 3. Select a secret manager connection from the dropdown
 4. Enter the secret path/identifier required by your provider (see provider-specific documentation)
 5. The connection will automatically retrieve the secret from your secret manager when needed
 
-**Global connections (Platform Admin):** All platform-scoped and project-scoped secret manager connections are available to select.
+**Global connections (Platform Admin):** The dropdown shows platform-scoped connections and the project-scoped connections of your current project. A project-scoped connection must include every project that the global connection is shared with, or the save fails.
 
 **Flow builder connections:** Only secret manager connections that are accessible to the current project are shown — this includes platform-scoped connections and project-scoped connections assigned to that project.
 
@@ -66,14 +66,14 @@ Once connected, you can reference secrets from your secret managers when configu
 
 When you use a secret manager in a connection:
 
-- The global connection stores a reference to the secret (not the actual credential)
+- The connection stores a reference to the secret (not the actual credential)
 - When the flow runs, Activepieces authenticates with your secret manager and retrieves the secret
-- Secrets are fetched on-demand and never stored in Activepieces
+- Secrets are fetched on demand and never saved in the database. A fetched secret stays in the encrypted cache for up to 1 hour (see [Caching](#caching))
 - If the secret is updated in your secret manager, flows will use the new value after the cache expires (up to 1 hour), or immediately after clearing the cache
 
 ## Caching
 
-Connection checks and retrieved secrets are cached in Redis (encrypted) for **1 hour** to reduce latency and provider API load.
+Retrieved secrets (encrypted) and successful connection checks are cached in Redis for **1 hour** to reduce latency and provider API load.
 
 To force a refresh (e.g. after rotating credentials or updating secrets), platform admins can clear the cache per connection using the **refresh icon** next to each connection row in the Secret Managers page.
 
@@ -97,7 +97,7 @@ curl --request DELETE \
 
 - **Encryption**: Secret managers authentication configuration is encrypted
 - **Access Control**: Use your secret manager's access policies to control who can access secrets
-- **Network Security**: Ensure your secret manager is accessible from your Activepieces instance
+- **Network Security**: Ensure your secret manager is accessible from your Activepieces instance. Requests to HashiCorp Vault and CyberArk Conjur go through the SSRF filter: if the server runs on a private or loopback IP, add it to [`AP_SSRF_ALLOW_LIST`](/install/architecture/network-security#self-hosted-providers-on-private-ips)
 - **Credential Management**: Regularly rotate authentication credentials for secret managers
 
 ## Troubleshooting
