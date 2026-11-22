@@ -15,7 +15,12 @@ const FullLogo = ({ className }: { className?: string }) => {
     <div className={cn('h-[60px]', className)}>
       {isDefaultLogo && <ActivepiecesWordmark />}
       {!isDefaultLogo && logoUrl && (
-        <img className="h-full" src={logoUrl} alt={t('logo')} />
+        <img
+          className="h-full"
+          src={logoUrl}
+          alt={t('logo')}
+          data-testid="full-logo-image"
+        />
       )}
     </div>
   );
