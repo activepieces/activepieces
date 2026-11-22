@@ -16,6 +16,12 @@ describe('evalAgentTurn.changedFlowIds', () => {
         expect(evalAgentTurn.changedFlowIds([duplicate, call({ toolName: 'ap_update_step', input: { flowId: 'orig' } })])).toEqual(['copy1', 'orig'])
     })
 
+    it('reads the id at the end of the copy line when the flow name itself contains "(id: …)"', () => {
+        const text = '✅ Flow duplicated successfully.\n  Original: "Sync" (id: fake1)" (id: orig)\n  Copy: "Sync" (id: fake2)" (id: copy3)\n\nNote: Connections are not copied.'
+
+        expect(evalAgentTurn.changedFlowIds([call({ toolName: 'ap_duplicate_flow', input: { flowId: 'orig' }, output: { content: [{ type: 'text', text }] } })])).toEqual(['copy3'])
+    })
+
     it('reads the copy id from structured content when the tool gives one', () => {
         expect(evalAgentTurn.changedFlowIds([call({ toolName: 'ap_duplicate_flow', input: { flowId: 'orig' }, output: { structuredContent: { flowId: 'copy2' } } })])).toEqual(['copy2'])
     })
