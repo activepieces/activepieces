@@ -3,7 +3,7 @@ import { ExecuteAgentRunJobData } from '@activepieces/core-execution'
 import { AGENT_STEP_TIMEOUT_MS, AgentResult, AgentTaskStatus } from '@activepieces/core-piece-types'
 import { ActivepiecesAiBilling, ActivepiecesError, AiCallContext, AIProviderName, AiUsageEnvironment, apId, assertNotNullOrUndefined, ErrorCode, isNil, spreadIfDefined, tryCatch, tryCatchSync, unique } from '@activepieces/core-utils'
 import { aiUtils, modelTierCatalog, ModelTierSurface } from '@activepieces/server-utils'
-import { Agent, AGENT_RUN_USAGE_ORIGIN, AgentConfig, AgentConversation, AgentConversationStatus, AgentFlowTool, AgentRunSource, AgentTool, AgentToolType, AI_PROVIDER_CAPABILITIES, AI_PROVIDER_ENTITY_TYPES, AIProviderModelType, FlowVersionState, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, ResolvedAgentAgentTool, ResolvedAgentFlowTool, UserMemory } from '@activepieces/shared'
+import { AGENT_RUN_USAGE_ORIGIN, AgentConfig, AgentConversation, AgentConversationStatus, AgentFlowTool, AgentRunSource, AgentTool, AgentToolType, AI_PROVIDER_CAPABILITIES, AI_PROVIDER_ENTITY_TYPES, AIProviderModelType, FlowVersionState, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, ResolvedAgentAgentTool, ResolvedAgentFlowTool, UserMemory } from '@activepieces/shared'
 import { LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { IsNull, Repository } from 'typeorm'
@@ -24,7 +24,6 @@ import { AgentConversationEntity, AgentConversationWithRelations } from './agent
 import { agentModelResolution } from './agent-model-resolution'
 import { agentModelTier } from './agent-model-tier'
 import { agentToolRules } from './agent-tool-rules'
-import { agentToolsRollout } from './agent-tools-rollout'
 import { flowStepRpc } from './rpc/flow-step-rpc'
 import { UserMemoryEntity } from './user-memory-entity'
 
@@ -540,7 +539,7 @@ async function resolveFlowTools({ projectId, tools, log }: { projectId: string, 
 
 async function resolveAgentTools({ projectId, tools, log }: { projectId: string, tools: AgentTool[], log: FastifyBaseLogger }): Promise<ResolvedAgentAgentTool[]> {
     const agentToolRequests = tools.filter(agentToolRules.isAgentTool)
-    if (agentToolRequests.length === 0 || !agentToolsRollout.isOn()) {
+    if (agentToolRequests.length === 0) {
         return []
     }
     const targets = await agentToolRules.findTargets({ projectId, externalIds: agentToolRequests.map((tool) => tool.externalAgentId) })
@@ -549,7 +548,7 @@ async function resolveAgentTools({ projectId, tools, log }: { projectId: string,
         const target = targetByExternalId.get(toolRequest.externalAgentId)
         if (isNil(target) || !agentToolRules.isCallable(target)) {
             log.warn({ tool: { name: toolRequest.toolName } }, '[agentHelpers#resolveAgentTools] Offering an agent tool as unavailable, its agent is missing, private, unpublished or calls agents itself')
-            return { toolName: toolRequest.toolName, unavailableReason: unavailableReasonOf({ target }) }
+            return { toolName: toolRequest.toolName, unavailableReason: agentToolRules.unavailableReason({ target }) }
         }
         const description = target.description?.trim()
         return {
@@ -558,16 +557,6 @@ async function resolveAgentTools({ projectId, tools, log }: { projectId: string,
             description: isNil(description) || description.length === 0 ? `Ask the agent "${target.displayName}" to do a task` : description,
         }
     })
-}
-
-function unavailableReasonOf({ target }: { target: Agent | undefined }): string {
-    if (isNil(target)) {
-        return 'The agent behind this tool was deleted or is no longer shared with this project.'
-    }
-    if (isNil(target.published)) {
-        return 'The agent behind this tool is not published.'
-    }
-    return 'The agent behind this tool now calls other agents itself, and agents can only be nested one level deep.'
 }
 
 async function agentsSurfaceAvailable({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<boolean> {

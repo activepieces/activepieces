@@ -1,4 +1,4 @@
-import { createConfiguredAgentTools, createConfiguredFlowTools, createConfiguredKnowledgeBaseTools, createConfiguredPieceTools } from './tools/configured-tools'
+import { createConfiguredFlowTools, createConfiguredKnowledgeBaseTools, createConfiguredPieceTools } from './tools/configured-tools'
 import { createCrossProjectTools } from './tools/cross-project-tools'
 import { createDisplayTools } from './tools/display-tools'
 import { createEmailTools } from './tools/email-tools'
@@ -36,7 +36,6 @@ export const agentWorkerTools = {
     createBuildPlanTools,
     createConfiguredPieceTools,
     createConfiguredFlowTools,
-    createConfiguredAgentTools,
     createConfiguredKnowledgeBaseTools,
     createStructuredOutputTool,
     unwrapLazyToolChunk,

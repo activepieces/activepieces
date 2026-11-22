@@ -43,13 +43,12 @@ export function createLocalTools({ onSetProjectContext, projects }: {
     }
 }
 
-export function createAgentSurfaceTools({ executeTool, taintState, eventEmitter, waitForApproval, onGateOpened, agentToolsOn }: {
+export function createAgentSurfaceTools({ executeTool, taintState, eventEmitter, waitForApproval, onGateOpened }: {
     executeTool: (toolName: string, toolInput: Record<string, unknown>) => Promise<unknown>
     taintState: TaintState
     eventEmitter: AgentEventEmitter
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
     onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
-    agentToolsOn: boolean
 }): ToolSet {
     const runAfterApprovalIfTainted = async ({ toolName, toolInput, toolCallId }: { toolName: string, toolInput: Record<string, unknown>, toolCallId: string }): Promise<unknown> => {
         if (taintState.tainted) {
@@ -73,17 +72,11 @@ export function createAgentSurfaceTools({ executeTool, taintState, eventEmitter,
             },
         }),
 
-        ap_add_agent_tool: agentToolsOn
-            ? tool({
-                description: `${ADD_AGENT_TOOL_DESCRIPTION} ${ADD_AGENT_AS_TOOL_NOTE}`,
-                inputSchema: addAgentToolWithAgentsInput,
-                execute: async (toolInput, { toolCallId }: ToolExecutionOptions<undefined>) => runAfterApprovalIfTainted({ toolName: 'ap_add_agent_tool', toolInput, toolCallId }),
-            })
-            : tool({
-                description: ADD_AGENT_TOOL_DESCRIPTION,
-                inputSchema: addAgentToolInput,
-                execute: async (toolInput, { toolCallId }: ToolExecutionOptions<undefined>) => runAfterApprovalIfTainted({ toolName: 'ap_add_agent_tool', toolInput, toolCallId }),
-            }),
+        ap_add_agent_tool: tool({
+            description: `${ADD_AGENT_TOOL_DESCRIPTION} ${ADD_AGENT_AS_TOOL_NOTE}`,
+            inputSchema: addAgentToolInput,
+            execute: async (toolInput, { toolCallId }: ToolExecutionOptions<undefined>) => runAfterApprovalIfTainted({ toolName: 'ap_add_agent_tool', toolInput, toolCallId }),
+        }),
 
         ap_remove_agent_tool: tool({
             description: 'Take piece actions away from a saved agent, when the user no longer wants it doing that or a tool was added by mistake. Pass every action to remove in one call. If two of the agent\'s pieces share an action name, pass pieceName to say which one.',
@@ -212,15 +205,10 @@ const ADD_AGENT_AS_TOOL_NOTE = 'To let it hand work to other agents instead, pas
 
 const addAgentToolInput = z.object({
     agentId: z.string().optional().describe('The id returned by ap_list_agents, ap_create_agent or ap_update_agent. Leave it out when you are changing the agent this conversation belongs to'),
-    pieceName: z.string().describe('Full piece name, e.g. "@activepieces/piece-gmail"'),
-    actionNames: z.array(z.string()).describe('Action names within that piece, e.g. ["gmail_search_mail"]'),
+    pieceName: z.string().optional().describe('Full piece name, e.g. "@activepieces/piece-gmail"'),
+    actionNames: z.array(z.string()).optional().describe('Action names within that piece, e.g. ["gmail_search_mail"]'),
     connectionExternalId: z.string().optional().describe('externalId from ap_list_connections, for a piece that needs an account'),
     publish: z.boolean().optional().describe('Make the agent live with these tools in the same step'),
-})
-
-const addAgentToolWithAgentsInput = addAgentToolInput.extend({
-    pieceName: addAgentToolInput.shape.pieceName.optional(),
-    actionNames: addAgentToolInput.shape.actionNames.optional(),
     agentIds: z.array(z.string()).optional().describe('agentId values of published agents from ap_list_agents, to add as tools this agent can call'),
 })
 

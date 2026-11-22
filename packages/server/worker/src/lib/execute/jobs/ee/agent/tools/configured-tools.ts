@@ -1,5 +1,5 @@
 import { chunk, isObject, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { AgentKnowledgeBaseTool, AgentPieceTool, AgentPieceToolMetadata, agentToolClassification, apErrorOf, BatchItemResult, ExecutePieceToolResponse, KnowledgeBaseSourceType, ResolvedAgentAgentTool, ResolvedAgentFlowTool } from '@activepieces/shared'
+import { AgentKnowledgeBaseTool, AgentPieceTool, AgentPieceToolMetadata, agentToolClassification, apErrorOf, BatchItemResult, ExecutePieceToolResponse, KnowledgeBaseSourceType, ResolvedAgentFlowTool } from '@activepieces/shared'
 import { jsonSchema, JSONSchema7, tool, ToolSet } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -234,27 +234,5 @@ export function createConfiguredFlowTools({ tools, runFlowTool, taintState, log 
     ]))
 }
 
-export function createConfiguredAgentTools({ tools }: { tools: ResolvedAgentAgentTool[] }): ToolSet {
-    return Object.fromEntries(tools.map((configured) => {
-        const { description, answer } = 'unavailableReason' in configured
-            ? unavailableAgentTool({ reason: configured.unavailableReason })
-            : { description: configured.description, answer: AGENT_TOOL_NOT_AVAILABLE }
-        return [
-            configured.toolName,
-            tool({
-                description,
-                inputSchema: z.object({ request: z.string().describe('What you want this agent to do, with everything it needs to know') }),
-                execute: async () => ({ content: [{ type: 'text', text: answer }] }),
-            }),
-        ]
-    }))
-}
-
-function unavailableAgentTool({ reason }: { reason: string }): { description: string, answer: string } {
-    const note = `Unavailable: ${reason} Do not call it. If the task needs it, tell the user this tool needs fixing in the agent's setup.`
-    return { description: note, answer: note }
-}
-
-const AGENT_TOOL_NOT_AVAILABLE = 'Calling other agents is not available yet. Do the task yourself with your other tools, or tell the user it is not possible yet.'
 
 // Per-turn flag, set once the turn reads untrusted external content; forces the action-preview gate.

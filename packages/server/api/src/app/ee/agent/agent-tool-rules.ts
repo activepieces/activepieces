@@ -4,15 +4,11 @@ import { Agent, AgentConfig, AgentVisibility } from '@activepieces/shared'
 import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { AgentEntity } from './agent-entity'
-import { agentToolsRollout } from './agent-tools-rollout'
 
 async function validate({ entityManager, projectId, ownerExternalId, tools, previousTools = [] }: ValidateParams): Promise<void> {
     const agentTools = tools.filter(isAgentTool).filter((tool) => !previousTools.some((previous) => isAgentTool(previous) && previous.externalAgentId === tool.externalAgentId))
     if (agentTools.length === 0) {
         return
-    }
-    if (!agentToolsRollout.isOn()) {
-        throw refuse('Calling other agents as tools is not available yet')
     }
     await entityManager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`agent-tools:${projectId}`])
     if (!isNil(ownerExternalId) && agentTools.some((tool) => tool.externalAgentId === ownerExternalId)) {
@@ -46,6 +42,16 @@ function isCallable(target: Agent): boolean {
     return !isNil(target.published) && !callsOtherAgents(target)
 }
 
+function unavailableReason({ target }: { target: Agent | undefined }): string {
+    if (isNil(target)) {
+        return 'The agent behind this tool was deleted or is no longer shared with this project.'
+    }
+    if (isNil(target.published)) {
+        return 'The agent behind this tool is not published.'
+    }
+    return 'The agent behind this tool now calls other agents itself, and agents can only be nested one level deep.'
+}
+
 function isAgentTool(tool: AgentTool): tool is AgentAgentTool {
     return tool.type === AgentToolType.AGENT
 }
@@ -76,6 +82,7 @@ export const agentToolRules = {
     validate,
     findTargets,
     isCallable,
+    unavailableReason,
     isAgentTool,
 }
 

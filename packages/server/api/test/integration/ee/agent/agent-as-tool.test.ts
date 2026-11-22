@@ -4,7 +4,7 @@ import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { accessTokenManager } from '../../../../src/app/authentication/lib/access-token-manager'
-import { agentToolsRollout } from '../../../../src/app/ee/agent/agent-tools-rollout'
+import { agentConfigRpc } from '../../../../src/app/ee/agent/rpc/agent-config-rpc'
 import { executeCrossProjectTool } from '../../../../src/app/ee/agent/tools/agent-tools'
 import * as jobQueueModule from '../../../../src/app/workers/job-queue/job-queue'
 import { db } from '../../../helpers/db'
@@ -23,10 +23,6 @@ beforeAll(async () => {
 
 afterAll(async () => {
     await teardownTestEnvironment()
-})
-
-beforeEach(() => {
-    vi.spyOn(agentToolsRollout, 'isOn').mockReturnValue(true)
 })
 
 afterEach(() => {
@@ -140,17 +136,6 @@ describe('saving an agent that calls another agent', () => {
         expect(response.statusCode).toBe(StatusCodes.CONFLICT)
         expect(response.json().params.message).toContain('was not found in this project')
     })
-
-    it('refuses agent tools while the rollout is off', async () => {
-        vi.spyOn(agentToolsRollout, 'isOn').mockReturnValue(false)
-        const ctx = await context()
-        const researcher = await createPublishedAgent(ctx, { displayName: 'Researcher' })
-
-        const response = await createAgent(ctx, { displayName: 'Lead', tools: [agentTool({ externalAgentId: researcher.externalId })] })
-
-        expect(response.statusCode).toBe(StatusCodes.CONFLICT)
-        expect(response.json().params.message).toContain('not available yet')
-    })
 })
 
 describe('adding an agent as a tool from chat', () => {
@@ -261,5 +246,38 @@ describe('the agent tools a chat turn hands to the worker', () => {
         const job = await sendMessage(ctx, lead.id)
 
         expect(job.data.agentTools).toEqual([{ toolName: 'ask_researcher', unavailableReason: 'The agent behind this tool was deleted or is no longer shared with this project.' }])
+    })
+})
+
+describe('loading a called agent for the worker', () => {
+    async function leadConversation(ctx: TestContext, researcherExternalId: string) {
+        const saved = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENROUTER })
+        await db.update('ai_provider', saved.id, { enabledForChat: true })
+        const lead = await createPublishedAgent(ctx, { displayName: 'Lead', tools: [agentTool({ externalAgentId: researcherExternalId })] })
+        const conversation = await ctx.post('/v1/agents/conversations', { agentId: lead.id })
+        expect(conversation.statusCode).toBe(StatusCodes.CREATED)
+        return conversation.json().id
+    }
+
+    it('hands over the called agent own instructions, model, tools and step budget', async () => {
+        const ctx = await context()
+        const researcher = await createPublishedAgent(ctx, { displayName: 'Researcher' })
+        const conversationId = await leadConversation(ctx, researcher.externalId)
+
+        const config = await agentConfigRpc(app.log).getCalledAgentConfig({ platformId: ctx.platform.id, conversationId, agentId: researcher.id })
+
+        expect(config).toMatchObject({ displayName: 'Researcher', systemPrompt: expect.stringContaining('Do the task.'), maxSteps: 5, tools: [], flowTools: [] })
+        expect(config).toHaveProperty('modelId')
+    })
+
+    it('says why when the called agent was unpublished', async () => {
+        const ctx = await context()
+        const researcher = await createPublishedAgent(ctx, { displayName: 'Researcher' })
+        const conversationId = await leadConversation(ctx, researcher.externalId)
+        await ctx.post(`/v1/agents/${researcher.id}/unpublish`, {})
+
+        const config = await agentConfigRpc(app.log).getCalledAgentConfig({ platformId: ctx.platform.id, conversationId, agentId: researcher.id })
+
+        expect(config).toEqual({ unavailableReason: 'The agent behind this tool is not published.' })
     })
 })

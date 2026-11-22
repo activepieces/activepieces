@@ -1,5 +1,5 @@
 import { ActivepiecesAiBilling, AiChargeBasis, AIProviderName, AiProviderCredentials, AiProviderKeyStatus, ProviderOutcomeSignal } from '@activepieces/core-utils'
-import { AgentPieceToolMetadata, PiecePackage } from '@activepieces/core-piece-types'
+import { AgentPieceToolMetadata, AgentTool, PiecePackage } from '@activepieces/core-piece-types'
 import { StreamStepProgress } from '../engine/engine-operation'
 import { GetFlowVersionForWorkerRequest, UploadRunLogsRequest } from '../engine/requests'
 import { FlowRun, RunEnvironment } from '../flow-run/flow-run'
@@ -7,7 +7,7 @@ import { SourceCode } from '../flows/actions/action'
 import { FlowVersion, FlowVersionState } from '../flows/flow-version'
 import { TriggerRunStatus } from '../flows/triggers/trigger-run'
 import { AgentEvent } from './agent-events'
-import { AgentPromptOverride, AgentRunSource, PersonalizationScope } from './job-data'
+import { AgentPromptOverride, AgentRunSource, PersonalizationScope, ResolvedAgentFlowTool } from './job-data'
 import { ConsumeJobRequest, ConsumeJobResponse, WorkerMachineHealthcheckRequest } from './index'
 
 export type SubmitPayloadsRequest = {
@@ -89,6 +89,7 @@ export type WorkerToApiContract = {
     disableFlow(input: DisableFlowRequest): Promise<void>
     sendAgentEvent(input: SendAgentEventRequest): Promise<void>
     getAgentConfig(input: GetAgentConfigRequest): Promise<AgentConfigResponse>
+    getCalledAgentConfig(input: GetCalledAgentConfigRequest): Promise<CalledAgentConfigResponse>
     saveAgentMessages(input: SaveAgentMessagesRequest): Promise<void>
     beginAgentTask(input: BeginAgentTaskRequest): Promise<BeginAgentTaskResponse>
     finishAgentTask(input: FinishAgentTaskRequest): Promise<void>
@@ -186,13 +187,33 @@ export type AgentConfigResponse = {
     aiTools: AgentAiToolsConfig
     emailEnabled: boolean
     agentsAvailable: boolean
-    agentToolsAvailable?: boolean
     userEmail: string
     source: AgentRunSource
     platformTier?: { id: string, name: string }
     candidates?: AgentModelCandidate[]
     fastCandidate?: AgentModelCandidate
 }
+
+export type GetCalledAgentConfigRequest = {
+    platformId: string
+    conversationId: string
+    agentId: string
+}
+
+export type CalledAgentConfig = {
+    displayName: string
+    systemPrompt: string
+    credentials: AiProviderCredentials
+    providerConfigId: string
+    modelId: string
+    thinkingBudget: number
+    candidates?: AgentModelCandidate[]
+    tools: AgentTool[]
+    flowTools: ResolvedAgentFlowTool[]
+    maxSteps: number
+}
+
+export type CalledAgentConfigResponse = CalledAgentConfig | { unavailableReason: string }
 
 export type AgentModelCandidate = AiModelCandidate & {
     thinkingBudget: number

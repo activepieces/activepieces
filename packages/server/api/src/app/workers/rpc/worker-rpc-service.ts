@@ -363,6 +363,10 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
             return config
         },
 
+        async getCalledAgentConfig(input) {
+            return agentRpcHandlers(agentRpcLog(log, input)).getCalledAgentConfig(input)
+        },
+
         async saveAgentMessages(input) {
             return agentRpcHandlers(agentRpcLog(log, input)).saveAgentMessages(input)
         },

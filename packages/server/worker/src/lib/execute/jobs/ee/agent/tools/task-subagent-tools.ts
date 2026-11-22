@@ -1,5 +1,5 @@
 import { isNil, isObject, omit, parseToJsonIfPossible, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { AGENT_SURFACE_TOOLS, AgentPhase, BeginAgentTaskResponse, chatBilling, FinishAgentTaskRequest, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus, SkillSurface, SubagentActivity, SubagentLink, subagentProgressId, SubagentTaskArtifact, SubagentTimelineEntry, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
+import { AGENT_SURFACE_TOOLS, AgentPhase, BeginAgentTaskResponse, CalledAgentConfig, CalledAgentConfigResponse, chatBilling, FinishAgentTaskRequest, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus, ResolvedAgentAgentTool, SkillSurface, SubagentActivity, SubagentLink, subagentProgressId, SubagentTaskArtifact, SubagentTimelineEntry, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
 import { hasToolCall, isLoopFinished, ModelMessage, tool, ToolSet } from 'ai'
 import pLimit from 'p-limit'
 import { z } from 'zod'
@@ -25,7 +25,7 @@ export function createTaskSubagentTools({ tools, taskPrompt, ...rest }: Omit<Tas
             description: 'Hand one self-contained goal to a focused sub-agent with its own fresh context and the same tools you have (read, search, build, update, execute; risky actions still ask the user for approval). Use it when it buys something: independent goals that can run in parallel (several calls in one step run at once), or noisy preparation with a short answer (going through many records or runs, investigating a failure). Build flows yourself, even several at once, and make small edits yourself. It cannot ask the user anything: when it needs something only the user can give it finishes as blocked and says what; ask the user for it in your own words, then pass their answer back. Pass taskId to continue a task you started earlier in this conversation (after a block, or for a follow-up on what it built).',
             inputSchema: taskInput,
             toModelOutput: ({ output }) => ({ type: 'text', value: JSON.stringify(omit(output, ['activity', 'billedToolCalls', 'tokens'])) }),
-            execute: async ({ title, brief, taskId }, { toolCallId }) => runTask({ deps, title, brief, taskId, progressId: toolCallId }),
+            execute: async ({ title, brief, taskId }, { toolCallId }) => runTask({ deps, title, brief, taskId, progressId: toolCallId, profile: TASK_PROFILES.task(deps), systemPrompt: deps.taskPrompt }),
         }),
         ...(searchAvailable ? {
             [RESEARCH_TOOL_NAME]: tool({
@@ -39,7 +39,8 @@ export function createTaskSubagentTools({ tools, taskPrompt, ...rest }: Omit<Tas
                         title: subject,
                         brief: [question, `Subject: ${subject}`, ...(isNil(context) ? [] : [context])].join('\n\n'),
                         progressId: subagentProgressId.forSubject({ toolCallId, index }),
-                        kind: 'research',
+                        profile: TASK_PROFILES.research(deps),
+                        systemPrompt: deps.taskPrompt,
                     }))))
                     return { tasks, billedToolCalls: tasks.flatMap((task) => task.billedToolCalls ?? []), tokens: sumTokens(tasks.map((task) => task.tokens ?? NO_TOKENS)) }
                 },
@@ -48,21 +49,69 @@ export function createTaskSubagentTools({ tools, taskPrompt, ...rest }: Omit<Tas
     }
 }
 
+export function createCalledAgentTools({ tools, loadAgent, prepareAgent, ...deps }: TaskRunDeps & {
+    tools: ResolvedAgentAgentTool[]
+    loadAgent: (input: { agentId: string }) => Promise<CalledAgentConfigResponse>
+    prepareAgent: (agent: CalledAgentConfig) => PreparedCalledAgent
+}): ToolSet {
+    return Object.fromEntries(tools.map((configured) => [
+        configured.toolName,
+        'unavailableReason' in configured
+            ? unavailableAgentTool({ reason: configured.unavailableReason })
+            : tool({
+                description: configured.description,
+                inputSchema: calledAgentInput,
+                toModelOutput: ({ output }) => ({ type: 'text', value: JSON.stringify(omit(output, ['activity', 'billedToolCalls', 'tokens'])) }),
+                execute: async ({ request, taskId }, { toolCallId }) => runCalledAgent({ deps, agentId: configured.agentId, loadAgent, prepareAgent, request, taskId, progressId: toolCallId }),
+            }),
+    ]))
+}
+
 export function taskTokensOf({ parts }: { parts: PersistedAgentPart[] }): TaskTokens {
-    return sumTokens(parts.flatMap((part) => part.type === PersistedAgentPartType.TOOL_CALL && SUB_AGENT_TOOL_NAMES.includes(part.toolName) && isObject(part.output) && isTaskTokens(part.output['tokens'])
+    return sumTokens(parts.flatMap((part) => part.type === PersistedAgentPartType.TOOL_CALL && isObject(part.output) && (SUB_AGENT_TOOL_NAMES.includes(part.toolName) || isObject(part.output['activity'])) && isTaskTokens(part.output['tokens'])
         ? [part.output['tokens']]
         : []))
 }
 
-async function runTask({ deps, title, brief, taskId, progressId, kind = 'task' }: {
-    deps: TaskDeps
+async function runCalledAgent({ deps, agentId, loadAgent, prepareAgent, request, taskId, progressId }: {
+    deps: TaskRunDeps
+    agentId: string
+    loadAgent: (input: { agentId: string }) => Promise<CalledAgentConfigResponse>
+    prepareAgent: (agent: CalledAgentConfig) => PreparedCalledAgent
+    request: string
+    taskId?: string
+    progressId: string
+}): Promise<TaskRunOutput> {
+    const { data: agent, error } = await tryCatch(() => loadAgent({ agentId }))
+    if (!isNil(error) || isNil(agent)) {
+        deps.log.warn({ error, agent: { id: agentId } }, '[calledAgent] Could not load the called agent')
+        return { status: 'failed', summary: `That agent could not be started: ${error instanceof Error ? error.message : 'unknown error'}` }
+    }
+    if ('unavailableReason' in agent) {
+        return { status: 'failed', summary: `${agent.unavailableReason} Tell the user this tool needs fixing in the agent's setup.` }
+    }
+    const prepared = prepareAgent(agent)
+    return prepared.withTools((tools) => runTask({
+        deps,
+        title: agent.displayName,
+        brief: request,
+        taskId,
+        progressId,
+        profile: { tools, models: prepared.models, stepCeiling: agent.maxSteps },
+        systemPrompt: agent.systemPrompt,
+    }))
+}
+
+async function runTask({ deps, title, brief, taskId, progressId, profile, systemPrompt }: {
+    deps: TaskRunDeps
     title: string
     brief: string
     taskId?: string
     progressId: string
-    kind?: TaskKind
+    profile: TaskProfile
+    systemPrompt: string
 }): Promise<TaskRunOutput> {
-    const { tier, taskPrompt, creditsLeftFor, beginTask, finishTask, eventEmitter, abortSignal, log } = deps
+    const { tier, creditsLeftFor, beginTask, finishTask, eventEmitter, abortSignal, log } = deps
     if (abortSignal.aborted) {
         return { status: 'failed', summary: 'Stopped before it started.' }
     }
@@ -77,14 +126,13 @@ async function runTask({ deps, title, brief, taskId, progressId, kind = 'task' }
     const priorMessages = begun.messages.filter(isModelMessage)
     const messages: ModelMessage[] = [...priorMessages, { role: 'user', content: brief }]
     const phaseState: { phase: AgentPhase } = { phase: 'build' }
-    const profile = TASK_PROFILES[kind](deps)
     const taskTools = {
         ...profile.tools,
         ...finishTool(finish),
     }
     const turnParams: RunAgentTurnParams = {
         models: profile.models,
-        systemPrompt: taskPrompt,
+        systemPrompt,
         messages,
         tools: taskTools,
         allToolNames: Object.keys(taskTools),
@@ -95,6 +143,7 @@ async function runTask({ deps, title, brief, taskId, progressId, kind = 'task' }
         creditsLeft: creditsLeftFor(progressId),
         stopWhen: [isLoopFinished(), hasToolCall(TASK_COMPLETION_TOOL_NAME)],
         ...spreadIfDefined('skills', profile.skills),
+        ...spreadIfDefined('stepCeiling', profile.stepCeiling),
         sinks: {
             drainStream: async (result) => {
                 await result.consumeStream()
@@ -235,6 +284,15 @@ function finishTool(finish: { result?: TaskResult }): ToolSet {
             },
         }),
     }
+}
+
+function unavailableAgentTool({ reason }: { reason: string }): ToolSet[string] {
+    const note = `Unavailable: ${reason} Do not call it. If the task needs it, tell the user this tool needs fixing in the agent's setup.`
+    return tool({
+        description: note,
+        inputSchema: calledAgentInput,
+        execute: async () => ({ content: [{ type: 'text', text: note }] }),
+    })
 }
 
 function stoppedResult(reported: TaskResult): TaskResult {
@@ -423,6 +481,11 @@ const taskInput = z.object({
     taskId: z.string().optional().describe('Continue a task from earlier in this conversation instead of starting a new one'),
 })
 
+const calledAgentInput = z.object({
+    request: z.string().min(1).describe('What you want this agent to do, self-contained: the goal, what counts as done, and every id, value and decision it needs. It sees nothing else of this conversation.'),
+    taskId: z.string().optional().describe('Continue the work you started with this agent earlier in this conversation, for example after it finished as blocked'),
+})
+
 const researchInput = z.object({
     question: z.string().min(1).describe('What to find out, with the details that matter (team size, budget, region, what to compare)'),
     subjects: z.array(z.string().min(1)).min(1).describe('One entry per thing to research, e.g. ["Asana", "ClickUp", "Monday.com"]. Each gets its own sub-agent.'),
@@ -459,7 +522,7 @@ const RESEARCH_PAGE_CHARS = 32_000
 const PAGE_TEXT_KEYS = ['content', 'markdown']
 const LARGE_RESPONSE_MARKER = '[LARGE RESPONSE'
 
-const TASK_PROFILES: Record<TaskKind, (deps: TaskDeps) => TaskProfile> = {
+const TASK_PROFILES: Record<'task' | 'research', (deps: TaskDeps) => TaskProfile> = {
     task: ({ workerTools, models, guides }) => ({ tools: workerTools, models, skills: { surface: TASK_SKILL_SURFACE, guides } }),
     research: ({ workerTools, researchModels }) => ({ tools: researchTools(workerTools), models: researchModels }),
 }
@@ -506,12 +569,18 @@ type TaskDeps = {
     log: RunAgentTurnParams['log']
 }
 
-type TaskKind = 'task' | 'research'
+type TaskRunDeps = Pick<TaskDeps, 'tier' | 'creditsLeftFor' | 'beginTask' | 'finishTask' | 'eventEmitter' | 'abortSignal' | 'log'>
 
 type TaskProfile = {
     tools: ToolSet
     models: RunAgentTurnParams['models']
     skills?: RunAgentTurnParams['skills']
+    stepCeiling?: number
+}
+
+export type PreparedCalledAgent = {
+    models: RunAgentTurnParams['models']
+    withTools: (run: (tools: ToolSet) => Promise<TaskRunOutput>) => Promise<TaskRunOutput>
 }
 
 type TaskRunOutput = {

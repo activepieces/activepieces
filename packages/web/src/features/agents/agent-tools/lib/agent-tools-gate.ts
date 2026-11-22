@@ -1,16 +1,11 @@
-import { AgentSummary, ApEnvironment, ApFlagId } from '@activepieces/shared';
+import { AgentSummary } from '@activepieces/shared';
 
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { agentsQueries, useAgentsAvailable } from '../../hooks/agents-hooks';
 
 function useAgentToolsOn(): boolean {
-  const { data: environment } = flagsHooks.useFlag<ApEnvironment>(
-    ApFlagId.ENVIRONMENT,
-  );
-  const agentsAvailable = useAgentsAvailable();
-  return agentsAvailable && environment === ApEnvironment.DEVELOPMENT;
+  return useAgentsAvailable();
 }
 
 function useProjectAgents(): {

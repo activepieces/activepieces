@@ -12,7 +12,7 @@ vi.mock('../../../../../../src/lib/execute/jobs/ee/agent/run-agent-turn', () => 
 import { RunAgentTurnParams } from '../../../../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
 import { buildSkillSurface } from '../../../../../../src/lib/execute/jobs/ee/agent/tools/skill-tools'
 import { taskContext } from '../../../../../../src/lib/execute/jobs/ee/agent/tools/task-context'
-import { createTaskSubagentTools, taskTokensOf } from '../../../../../../src/lib/execute/jobs/ee/agent/tools/task-subagent-tools'
+import { createCalledAgentTools, createTaskSubagentTools, taskTokensOf } from '../../../../../../src/lib/execute/jobs/ee/agent/tools/task-subagent-tools'
 
 describe('createTaskSubagentTools', () => {
     beforeEach(() => {
@@ -548,6 +548,61 @@ describe('createTaskSubagentTools', () => {
     })
 })
 
+describe('createCalledAgentTools', () => {
+    beforeEach(() => {
+        runAgentTurn.mockReset()
+        beginTask.mockReset()
+        finishTask.mockReset()
+        beginTask.mockResolvedValue({ taskId: 'task-9', claimId: 'claim-9', messages: [] })
+        finishTask.mockResolvedValue(undefined)
+    })
+
+    it('runs the called agent with its own prompt, model, tools and step budget, and hands back its result', async () => {
+        runAgentTurn.mockImplementation(async (params: { tools: ToolSet }) => {
+            await params.tools[TASK_COMPLETION_TOOL_NAME].execute?.({ status: 'done', summary: 'Stripe sells payments.', artifacts: [] }, EXECUTION_OPTIONS)
+            return turnResult()
+        })
+        const loadAgent = vi.fn().mockResolvedValue(CALLED_AGENT)
+        const tools = createCalledAgentTools({ ...CALLED_PARAMS, loadAgent, tools: [{ toolName: 'researcher', agentId: 'agent-b', description: 'Researches companies.' }] })
+
+        const result = await tools['researcher'].execute?.({ request: 'Research Stripe' }, EXECUTION_OPTIONS)
+
+        const params = runAgentTurn.mock.calls[0][0]
+        expect(loadAgent).toHaveBeenCalledWith({ agentId: 'agent-b' })
+        expect(params.systemPrompt).toBe('B INSTRUCTIONS')
+        expect(params.models).toBe(CALLED_MODELS)
+        expect(params.stepCeiling).toBe(7)
+        expect(Object.keys(params.tools).sort()).toEqual(['gmail_send', TASK_COMPLETION_TOOL_NAME].sort())
+        expect(params.messages).toEqual([{ role: 'user', content: 'Research Stripe' }])
+        expect(beginTask).toHaveBeenCalledWith({ title: 'Researcher' })
+        expect(result).toMatchObject({ taskId: 'task-9', status: 'done', summary: 'Stripe sells payments.', activity: { title: 'Researcher', status: 'done' }, tokens: { input: 1000, output: 100 } })
+    })
+
+    it('tells the caller why when the agent became unavailable after the turn started, without running it', async () => {
+        const tools = createCalledAgentTools({ ...CALLED_PARAMS, loadAgent: vi.fn().mockResolvedValue({ unavailableReason: 'The agent behind this tool is not published.' }), tools: [{ toolName: 'researcher', agentId: 'agent-b', description: 'Researches companies.' }] })
+
+        const result = await tools['researcher'].execute?.({ request: 'Research Stripe' }, EXECUTION_OPTIONS)
+
+        expect(runAgentTurn).not.toHaveBeenCalled()
+        expect(result).toMatchObject({ status: 'failed', summary: expect.stringContaining('not published') })
+    })
+
+    it('offers an unavailable agent tool with the reason in its description and its answer', async () => {
+        const tools = createCalledAgentTools({ ...CALLED_PARAMS, loadAgent: vi.fn(), tools: [{ toolName: 'researcher', unavailableReason: 'The agent behind this tool was deleted.' }] })
+
+        const answer = await tools['researcher'].execute?.({ request: 'Research Stripe' }, EXECUTION_OPTIONS)
+
+        expect(tools['researcher'].description).toContain('The agent behind this tool was deleted.')
+        expect(answer).toEqual({ content: [{ type: 'text', text: tools['researcher'].description }] })
+    })
+
+    it('rolls a called agent run into the turn tokens', () => {
+        const tokens = taskTokensOf({ parts: [{ type: PersistedAgentPartType.TOOL_CALL, toolCallId: 'c1', toolName: 'researcher', input: {}, status: PersistedToolCallStatus.COMPLETED, output: { activity: { title: 'Researcher' }, tokens: { input: 40, output: 4 } } }] })
+
+        expect(tokens).toEqual({ input: 40, output: 4 })
+    })
+})
+
 function toolSet(names: string[]): ToolSet {
     return Object.fromEntries(names.map((name) => [name, tool({ description: name, inputSchema: z.object({}), execute: async () => 'ok' })]))
 }
@@ -588,6 +643,31 @@ const BASE_PARAMS = {
     eventEmitter: { emitToolProgress: vi.fn(), emitActionPreview: vi.fn(), emitActionReceipt: vi.fn(), emitImageGenerated: vi.fn(), emitFileProduced: vi.fn(), emitBuildPlan: vi.fn(), emitSubagentProgress },
     abortSignal: new AbortController().signal,
     log: { debug: () => undefined, info: () => undefined, warn: () => undefined, error: () => undefined },
+}
+
+const CALLED_MODELS: RunAgentTurnParams['models'] = [{ model: 'b-model', provider: AIProviderName.ANTHROPIC, modelId: 'b', thinkingBudget: 0 }]
+
+const CALLED_AGENT = {
+    displayName: 'Researcher',
+    systemPrompt: 'B INSTRUCTIONS',
+    credentials: { provider: AIProviderName.ANTHROPIC },
+    providerConfigId: 'key-b',
+    modelId: 'b',
+    thinkingBudget: 0,
+    tools: [],
+    flowTools: [],
+    maxSteps: 7,
+}
+
+const CALLED_PARAMS = {
+    tier: BASE_PARAMS.tier,
+    creditsLeftFor: BASE_PARAMS.creditsLeftFor,
+    beginTask,
+    finishTask,
+    eventEmitter: BASE_PARAMS.eventEmitter,
+    abortSignal: BASE_PARAMS.abortSignal,
+    log: BASE_PARAMS.log,
+    prepareAgent: () => ({ models: CALLED_MODELS, withTools: (run: (tools: ToolSet) => Promise<unknown>) => run(toolSet(['gmail_send'])) }),
 }
 
 const EXECUTION_OPTIONS: ToolExecutionOptions = { toolCallId: 'call-1', messages: [] }

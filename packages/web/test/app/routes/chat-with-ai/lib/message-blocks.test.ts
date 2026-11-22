@@ -95,6 +95,34 @@ const receiptMeta = (id: string): Record<string, ToolCallMeta> => ({
   },
 });
 
+describe('buildMessageBlocks — called agents', () => {
+  it('shows a called agent as a task card once its result carries its activity', () => {
+    const called = tool({
+      name: 'researcher',
+      output: {
+        status: 'done',
+        summary: 'Stripe sells payments.',
+        activity: { title: 'Researcher', status: 'done', stepCount: 2, startedAt: '2026-11-22T10:00:00.000Z' },
+      },
+    });
+
+    expect(kinds([called])).toEqual(['tasks']);
+  });
+
+  it('shows a called agent as a task card while it is still running', () => {
+    const running = tool({ name: 'researcher', id: 'call-b', state: 'input-available' });
+    const toolCallMeta: Record<string, ToolCallMeta> = {
+      'call-b': { subagent: { title: 'Researcher', status: 'running', stepCount: 0, startedAt: '2026-11-22T10:00:00.000Z' } },
+    };
+
+    expect(kinds([running], { isStreaming: true, toolCallMeta })).toContain('tasks');
+  });
+
+  it('keeps an ordinary tool with a plain result as it was', () => {
+    expect(kinds([tool({ name: 'gmail_send', output: { sent: true } })])).not.toContain('tasks');
+  });
+});
+
 describe('buildMessageBlocks — memory saves', () => {
   it('shows "Memory updated" only when the memory was actually saved', () => {
     const saved = tool({
