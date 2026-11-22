@@ -87,7 +87,6 @@ type InviteRewardOfferClicked = {
 type InviteRewardGranted = {
     platformId: string
     credits: number
-    rewardsEarned: number
 }
 
 type SalesHandoffClicked = {

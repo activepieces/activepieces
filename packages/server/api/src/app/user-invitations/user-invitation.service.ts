@@ -117,7 +117,7 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
             }
             await deleteIfUnchanged({ invitation })
             if (created) {
-                rejectedPromiseHandler(userInvitationHooks.get(log).onInvitedUserJoined({ platformId: invitation.platformId, identityId: identity.id }), log)
+                rejectedPromiseHandler(userInvitationHooks.get(log).onInvitedUserJoined({ platformId: invitation.platformId, invitationId: invitation.id, inviteeEmail: identity.email }), log)
             }
         }
     },

@@ -57,7 +57,6 @@ import { flowApprovalModule } from './ee/flows/flow-approval/flow-approval.modul
 import { eeFlowPublishHook } from './ee/flows/flow-approval/flow-publish-hook'
 import { globalConnectionModule } from './ee/global-connections/global-connection-module'
 import { appearanceHelper } from './ee/helper/appearance-helper'
-import { inviteRewardModule } from './ee/invite-reward/invite-reward.module'
 import { inviteRewardService } from './ee/invite-reward/invite-reward.service'
 import { licenseKeyUsageReportModule } from './ee/license-key-usage-report/license-key-usage-report-module'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
@@ -415,8 +414,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             eventDestinationHooks.set(eventDestinationEntitlementHooks)
             exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
             systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PLATFORM, (data) => platformTeardownJobs(app.log).hardDeletePlatformHandler(data))
-            userInvitationHooks.set((log) => ({ onInvitedUserJoined: (params) => inviteRewardService(log).scheduleGrant(params) }))
-            await app.register(inviteRewardModule)
+            userInvitationHooks.set((log) => ({ onInvitedUserJoined: (params) => inviteRewardService(log).grantOnJoin(params) }))
             break
         case ApEdition.ENTERPRISE:
             await app.register(denoMigrationModule)

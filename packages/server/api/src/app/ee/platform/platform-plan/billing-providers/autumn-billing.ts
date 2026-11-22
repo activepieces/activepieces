@@ -7,7 +7,6 @@ import { AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS, getAutumnEnrollLockKey, getBillingE
 import { distributedLock, distributedStore } from '../../../../database/redis-connections'
 import { rejectedPromiseHandler } from '../../../../helper/promise-handler'
 import { system } from '../../../../helper/system/system'
-import { AppSystemProp } from '../../../../helper/system/system-props'
 import { ActivateLicenseParams, ApplyAppSumoPlanParams, AppSumoAiCreditsUsage, BillingInfo, BillingOverview, BillingProvider, CreditCheckSpeed, CreditsAndAppSumoState, CreditsGateState, CreditsUsage, emptyBillingOverview, GetSelfServeTrialInfoParams, ShouldBlockOnCreditsParams, TrackFeatureParams } from '../../../../platform/billing-provider'
 import { platformPlanTelemetry } from '../platform-plan-telemetry'
 import { assertSeatsNotBelowActiveUsers, platformPlanService } from '../platform-plan.service'
@@ -29,7 +28,7 @@ const BILLING_OVERVIEW_TTL_SECONDS = 5 * 60
 const USAGE_EVENTS_PAGE_SIZE = 5000
 const SELF_SERVE_TRIAL_ENDED_REFRESH_CLAIM_SECONDS = 30 * 24 * 60 * 60
 const TRIAL_DURATION_UNITS: Partial<Record<string, 'day' | 'month' | 'year'>> = { day: 'day', month: 'month', year: 'year' }
-const INVITE_REWARD_EVENTS_TIMEOUT_MS = 3000
+const INVITE_REWARD_CREDITS = 1000
 
 export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider => ({
     listPlans: async (platformId: string) => {
@@ -365,26 +364,16 @@ function toCreditsResetInterval(items: AutumnPlanItems): string | null {
     return creditsItem?.reset?.interval ?? null
 }
 
-async function loadInviteRewards({ log, platformId, client, customer }: LoadInviteRewardsParams): Promise<InviteRewardsInfo | null> {
-    const slots = customer.balances[RewardFeatureId.REWARDED_INVITES]
-    if (system.getEdition() !== ApEdition.CLOUD || isNil(slots)) {
+function toInviteRewards(customer: GetCustomerResponse): InviteRewardsInfo | null {
+    const rewardedInvites = customer.balances[RewardFeatureId.REWARDED_INVITES]
+    if (system.getEdition() !== ApEdition.CLOUD || isNil(rewardedInvites)) {
         return null
     }
-    const rewards = { maxRewards: slots.granted, creditsPerInvite: system.getNumberOrThrow(AppSystemProp.INVITE_REWARD_CREDITS) }
-    if (slots.usage >= slots.granted) {
-        return { ...rewards, rewardsEarned: slots.granted }
+    return {
+        maxRewards: rewardedInvites.granted,
+        rewardsEarned: Math.min(rewardedInvites.usage, rewardedInvites.granted),
+        creditsPerInvite: INVITE_REWARD_CREDITS,
     }
-    const { data: events, error } = await tryCatch(() => client.listEvents({
-        featureId: RewardFeatureId.REWARDED_INVITES,
-        customRange: { start: 0, end: Date.now() },
-        limit: slots.granted,
-        timeoutMs: INVITE_REWARD_EVENTS_TIMEOUT_MS,
-    }))
-    if (!isNil(error) || isNil(events)) {
-        log.warn({ error, platform: { id: platformId } }, 'Failed to count invite reward events; hiding the invite offer')
-        return null
-    }
-    return { ...rewards, rewardsEarned: Math.min(Math.max(events.list.length, slots.usage), slots.granted) }
 }
 
 function toSeatBreakdown(customer: GetCustomerResponse): { includedSeats: number | null, additionalSeats: number | null } {
@@ -622,7 +611,7 @@ async function fetchBillingOverview(log: FastifyBaseLogger, platformId: string):
         ...toBillingInfo(customer, monthStart, monthEnd),
         ...toSeatBreakdown(customer),
         ...toBillableFeatures(customer),
-        inviteRewards: await loadInviteRewards({ log, platformId, client, customer }),
+        inviteRewards: toInviteRewards(customer),
         unavailable: false,
     }
     await distributedStore.put(getBillingOverviewKey(platformId), overview, BILLING_OVERVIEW_TTL_SECONDS)
@@ -639,15 +628,6 @@ type CurrentPlanSelection = {
     purchase: GetCustomerResponse['purchases'][number] | undefined
     plan: AutumnPlan | null
 }
-
-type LoadInviteRewardsParams = {
-    log: FastifyBaseLogger
-    platformId: string
-    client: AutumnPlatformClient
-    customer: GetCustomerResponse
-}
-
-type AutumnPlatformClient = ReturnType<typeof autumnUtils.client>
 
 type ComputeCreditsAndAppSumoStateParams = {
     log: FastifyBaseLogger

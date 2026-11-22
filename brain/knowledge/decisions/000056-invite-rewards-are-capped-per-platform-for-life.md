@@ -1,17 +1,18 @@
 ---
 status: accepted
+title: Invite rewards are capped by the plan's rewarded invites
 ---
 
-# Invite rewards are capped per platform for life
+# Invite rewards are capped by the plan's rewarded invites
 
 ## Decision
-A Cloud platform whose plan carries reward slots (Free, Plus and Team, monthly or annual) earns bonus credits (`AP_INVITE_REWARD_CREDITS`, 1,000 by default) each time an invited person joins as a new member. The plan sets how many slots there are, 4 today, and each reward is paid at most once per platform for life, so a platform never earns more rewards than the slot count, whatever plan it moves to. The same person earns a reward for each platform they join. Removing a member never frees a slot and never takes the credits back. Self-hosted installs get no invite reward.
+A Cloud platform earns 1,000 bonus credits each time an invited person joins as a new member, while its plan has rewarded invites left. The plans (Free, Plus and Team, monthly or annual) carry the `rewarded_invites_count` feature, 4 today. AP only tells the billing console "this person joined this customer". The console skips a person it already rewarded on that customer, otherwise uses one rewarded invite in the billing provider and pays the credits. Self-hosted installs get no invite reward.
 
 ## Context
-The reward exists to push a team toward the free plan's 5 users, so the cap is 4: the owner plus four invitees. On self-hosted, credits only cap AI usage on the team's own provider keys, so a bonus there gives nothing of value, and a self-hosted server is not a trustworthy witness that someone joined.
+The reward exists to push a team toward the free plan's 5 users: the owner plus four invitees. On self-hosted, credits only cap AI usage on the team's own provider keys, so a bonus there gives nothing of value.
 
 ## Why
-The slots live on the plans in the billing provider, so which plans earn and how many slots they carry are plan settings, changed without a code change. Each reward is paid under a fixed number (first, second, third, fourth) that can only be paid once per platform, so a slot count that restarts on a plan change cannot pay a fifth reward. Inviting 4 people, collecting the credits, removing them and inviting 4 more must not earn more than 4 rewards, so the cap counts rewards paid, never active members. Clawing credits back on removal was rejected: it takes credits away from honest teams. One reward per invitee email across all platforms was dropped: it needs a record of every rewarded email, a second email address gets around it anyway, and the per-platform cap already limits the total. Storing anything in the AP database was rejected: the billing provider holds the slots and the billing console pays, and AP keeps no record of rewards.
+The cap is a plan setting in the billing provider, so it changes without a code change. The billing console owns the payment and its amount, so AP sends only the customer id and the invitee email, and keeps no record. The call is fire-and-forget, not a queued job: a lost call is rare, and the log line with the customer and invitation ids is enough to send it again by hand. Removing a member never frees a rewarded invite and never takes credits back, and inviting the same person again on the same platform earns nothing. The same person joining a second platform earns there.
 
 ## Consequences
-When an invited person joins, Cloud AP queues a one-time system job. It uses one reward slot on the platform's plan directly in the billing provider, and if the plan had one left, asks the billing console to pay the `AP_INVITE_REWARD_CREDITS` amount; the console only pays. The job retries with backoff for about 17 hours, so an outage delays a reward instead of losing it, and a retry never uses a second slot or pays twice. AP has no table for this, and the amount is the one `AP_INVITE_REWARD_CREDITS` setting; it reads the reward count with the rest of the billing info, and shows counts, not names. The credits are a one-time gift and never expire. Raising the slot count on the plans lets platforms earn more, but only platforms on a plan version that carries the new count. Platforms on a plan version without slots earn nothing until they are moved to one. Only people who join after launch earn: members who joined before launch earn nothing and there is no back-pay. An invite sent before launch still earns when it is accepted after launch.
+The billing card reads the rewarded invites used from the same billing info call. A cancel back to Free restarts the count, so that platform can earn again; this is accepted. A failed console call loses that reward until someone sends it again by hand. Platforms on a plan version without the feature earn nothing until they move to one.

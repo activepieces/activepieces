@@ -47,14 +47,11 @@ const BASELINE_PLAN_IDS: readonly string[] = [PlanName.FREE, PlanName.FREE_LEGAC
 const SELF_SERVE_TRIAL_ENDED_REPORT_WINDOW_MS = 30 * 24 * 60 * 60 * 1000
 
 export const autumnUtils = {
-    client({ secretKey, customerId, failOpen = true }: AutumnClientParams) {
-        const client = new Autumn({ secretKey, failOpen })
+    client({ secretKey, customerId }: AutumnClientParams) {
+        const client = new Autumn({ secretKey, failOpen: true })
         return {
-            check({ idempotencyKey, ...params }: CheckInput) {
-                return client.check(
-                    { customerId, ...params },
-                    idempotencyKey ? { headers: { 'Idempotency-Key': idempotencyKey } } : undefined,
-                )
+            check(params: WithoutCustomerId<CheckParams>) {
+                return client.check({ customerId, ...params })
             },
             track({ idempotencyKey, ...params }: TrackInput) {
                 return client.track(
@@ -78,8 +75,8 @@ export const autumnUtils = {
             aggregateEvents(params: WithoutCustomerId<EventsAggregateParams>) {
                 return client.events.aggregate({ customerId, ...params })
             },
-            listEvents({ timeoutMs = AUTUMN_LIST_EVENTS_TIMEOUT_MS, ...params }: ListEventsInput) {
-                return client.events.list({ customerId, ...params }, { timeoutMs })
+            listEvents(params: WithoutCustomerId<EventsListParams>) {
+                return client.events.list({ customerId, ...params }, { timeoutMs: AUTUMN_LIST_EVENTS_TIMEOUT_MS })
             },
         }
     },
@@ -415,11 +412,11 @@ export const autumnConsole = {
     async compFreeLegacy({ autumnCustomerId }: { autumnCustomerId: string }): Promise<void> {
         await consoleRequest({ path: '/api/v1/billing/free-legacy', token: consoleSecretOrThrow(), body: { autumnCustomerId } })
     },
-    async grantInviteReward({ autumnCustomerId, credits }: GrantInviteRewardParams): Promise<ConsoleInviteRewardGrant> {
+    async grantInviteReward({ autumnCustomerId, inviteeEmail }: GrantInviteRewardParams): Promise<ConsoleInviteRewardGrant> {
         return consoleRequest<ConsoleInviteRewardGrant>({
             path: '/api/v1/invite-rewards',
             token: consoleSecretOrThrow(),
-            body: { autumnCustomerId, credits },
+            body: { autumnCustomerId, inviteeEmail },
         })
     },
     async getCreds(log: FastifyBaseLogger, platformId: string): Promise<ConsoleCustomerCall | null> {
@@ -716,15 +713,6 @@ type ListAllSubscriptionsParams = {
 type AutumnClientParams = {
     secretKey: string
     customerId: string
-    failOpen?: boolean
-}
-
-type CheckInput = WithoutCustomerId<CheckParams> & {
-    idempotencyKey?: string
-}
-
-type ListEventsInput = WithoutCustomerId<EventsListParams> & {
-    timeoutMs?: number
 }
 
 type TrackInput = WithoutCustomerId<TrackParams> & {
@@ -831,10 +819,10 @@ export type ConsoleCustomerCall = {
 
 type GrantInviteRewardParams = {
     autumnCustomerId: string
-    credits: number
+    inviteeEmail: string
 }
 
-type ConsoleInviteRewardGrant = { granted: true, credits: number, rewardsEarned: number } | { granted: false, reason: string }
+type ConsoleInviteRewardGrant = { granted: true, credits: number } | { granted: false }
 
 type ConfigureAutoTopUpOnConsoleParams =
     | {
