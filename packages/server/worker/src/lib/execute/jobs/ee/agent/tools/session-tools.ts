@@ -195,7 +195,7 @@ export function createBuildPlanTools({ eventEmitter, getProjectId }: {
         ap_set_build_plan: tool({
             description: 'The live build card for a brand-new recurring automation (silent, internal — no thinking status). Use it only while following the build_flow guide; never for a one-time task, a lookup, an answer or a small edit to an existing automation. When the solution is several flows, give each flow one row and set its flowName. Call it once with phase "detecting", flowName, tagline, iconName and every step "pending" before building. Later calls only need what changed (usually just phase): any field you leave out keeps the card\'s current value. Send each update alongside the next step\'s real tool calls instead of as a step on its own, but only with states you already know: mark a step done or failed, or set phase done or failed, only after the result that decides it has come back, never in the same step as the call that produces it.',
             inputSchema: z.object({
-                phase: z.enum(['detecting', 'building', 'testing', 'done', 'failed']).describe('"detecting" = just decided to build (celebrate); "building" = constructing steps; "testing" = running test cases; "done" = built & verified; "failed" = gave up'),
+                phase: z.enum(['detecting', 'building', 'testing', 'done', 'failed']).optional().describe('"detecting" = just decided to build (celebrate); "building" = constructing steps; "testing" = running test cases; "done" = built & verified; "failed" = gave up. Left out, the card starts at "detecting" and later keeps its phase.'),
                 flowName: z.string().optional().describe('Human-readable automation name shown on the card. Required on the first call; omit later to keep it.'),
                 tagline: z.string().optional().describe('A big, bold, fun marketing-style headline about the specific manual work this automation kills — casual and celebratory, max ~7 words, no period. Make it about THIS user\'s task, not generic. E.g. "Say goodbye to copy-pasting leads", "No more chasing invoices by hand", "Never sort support emails again". Required on the first call; omit later to keep it.'),
                 iconName: z.string().optional().describe(`The single icon that best represents this automation's business case, shown as a playful doodle on the card. Pick the closest match to the task — e.g. mail/email triage, dollar-sign or credit-card for invoices/payments, users for CRM/leads, calendar or calendar-clock for scheduling, bot for AI work, bar-chart or pie-chart for reporting, truck or package for logistics/orders, message-square for chat/Slack, file-text for documents, bell for alerts. Required on the first call; omit later to keep it. Allowed names: ${QUESTION_ICON_NAMES}`),
@@ -205,19 +205,20 @@ export function createBuildPlanTools({ eventEmitter, getProjectId }: {
                     label: z.string().describe('Short human label for a planned step. Once flows are built, the card shows their real steps and their state by itself.'),
                     status: z.enum(['pending', 'in_progress', 'done', 'failed']),
                     flowName: z.string().optional().describe('Only when the solution is several flows and this row stands for one whole flow: the exact name you build that flow with.'),
-                })).min(1).optional().describe('The planned rows. Required on the first call; omit later to keep them, since built flows fill in their real steps by themselves.'),
+                })).optional().describe('The planned rows. Required on the first call; omit later to keep them, since built flows fill in their real steps by themselves.'),
             }),
             execute: async (input) => {
                 const flowName = input.flowName ?? currentPlan?.flowName
                 const tagline = input.tagline ?? currentPlan?.tagline
                 const iconName = input.iconName ?? currentPlan?.iconName
-                const rows = input.steps ?? (plannedRows.length > 0 || builtFlows.size > 0 ? plannedRows : undefined)
+                const sentRows = isNil(input.steps) || input.steps.length === 0 ? undefined : input.steps
+                const rows = sentRows ?? (plannedRows.length > 0 || builtFlows.size > 0 ? plannedRows : undefined)
                 if (isNil(flowName) || isNil(tagline) || isNil(iconName) || isNil(rows)) {
                     return { ok: false, error: FIRST_CARD_FIELDS_NOTE }
                 }
                 const event: BuildPlanEvent = {
                     buildId,
-                    phase: input.phase,
+                    phase: input.phase ?? currentPlan?.phase ?? (builtFlows.size > 0 ? 'building' : 'detecting'),
                     flowName,
                     tagline,
                     iconName,

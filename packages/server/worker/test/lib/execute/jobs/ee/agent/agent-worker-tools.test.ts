@@ -924,6 +924,22 @@ describe('ap_set_build_plan', () => {
         expect(plans.at(-1)).toMatchObject({ phase: 'testing', flowName: 'Email triage', tagline: 'Never sort email again', iconName: 'mail', steps: PLAN.steps })
     })
 
+    it('starts the card at detecting when the first call leaves the phase out, then keeps the phase it has', async () => {
+        const plans: BuildPlanEvent[] = []
+        const { eventEmitter } = makeMockEventEmitter()
+        const { tools } = agentWorkerTools.createBuildPlanTools({ eventEmitter: { ...eventEmitter, emitBuildPlan: (plan) => { plans.push(plan) } }, getProjectId: () => null })
+        const setPlan = tools['ap_set_build_plan']
+        const first = { flowName: PLAN.flowName, tagline: PLAN.tagline, iconName: PLAN.iconName, steps: PLAN.steps }
+        expect((await asSchema(setPlan.inputSchema).validate?.(first))?.success).toBe(true)
+        await setPlan.execute?.(first, CALL)
+        await setPlan.execute?.({ phase: 'testing' }, CALL)
+        expect((await asSchema(setPlan.inputSchema).validate?.({ steps: [] }))?.success).toBe(true)
+        await setPlan.execute?.({ steps: [] }, CALL)
+
+        expect(plans.map((plan) => plan.phase)).toEqual(['detecting', 'testing', 'testing'])
+        expect(plans.at(-1)?.steps).toEqual(PLAN.steps)
+    })
+
     it('asks for the card fields when the first call leaves them out', async () => {
         const { eventEmitter } = makeMockEventEmitter()
         const { tools } = agentWorkerTools.createBuildPlanTools({ eventEmitter: { ...eventEmitter, emitBuildPlan: () => {} }, getProjectId: () => null })
