@@ -16,6 +16,7 @@ import { progressTable } from './progress-table'
 import { evalPrompts } from './prompts'
 import { replay, ReplayMode, StaleRecording } from './replay'
 import { resultsBrowser } from './results-browser'
+import { speedCompare } from './speed-compare'
 import { toolChanges, ToolFingerprints } from './tool-changes'
 import { evalToolSet, McpTools } from './tool-set'
 
@@ -35,8 +36,19 @@ async function main(): Promise<void> {
             'set-cut': { type: 'string', multiple: true },
             'set-target': { type: 'string', multiple: true },
             'upload': { type: 'boolean', default: false },
+            'save': { type: 'string' },
+            'compare': { type: 'string' },
+            'against': { type: 'string' },
         },
     })
+    if (!isNil(values.compare) || !isNil(values.against)) {
+        if (isNil(values.compare) || isNil(values.against)) {
+            throw new Error('pass both --compare <before.json> and --against <after.json>')
+        }
+        const [before, after] = await Promise.all([speedCompare.load(values.compare), speedCompare.load(values.against)])
+        speedCompare.print(speedCompare.compare({ before, after }))
+        return
+    }
     const repeats = Math.max(1, Number(values.repeats) || 1)
     const recordMode = values.record
     const onlyCases = new Set((values.case ?? []).map(Number))
@@ -98,6 +110,10 @@ async function main(): Promise<void> {
     finally {
         await mcp.close().catch(() => undefined)
         await evalAgentTurn.cleanupAuth()
+    }
+    if (!isNil(values.save)) {
+        await speedCompare.save({ path: values.save, datasets: ran })
+        console.log(colors.dim(`Saved runs to ${values.save}`))
     }
     if (browse) {
         await resultsBrowser.open({ datasets: ran.map(({ name, cases, results }) => ({ name, cases, runs: results, verdictOf: (candidate) => summarize({ datasetName: name, candidate, results: results.filter((result) => result.candidate.id === candidate.id) }).verdict, explanationOf: (candidate) => explained.get(candidate.id) })) })
