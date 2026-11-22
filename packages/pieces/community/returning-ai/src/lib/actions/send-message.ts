@@ -216,7 +216,7 @@ export const sendMessage = createAction({
 });
 
 function parseChannel(value: unknown): { id?: unknown; type?: unknown } {
-  if (typeof value !== 'string') {
+  if (typeof value !== 'string' || value === '') {
     return {};
   }
   const parsed: unknown = JSON.parse(value);
