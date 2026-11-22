@@ -1,4 +1,4 @@
-import { apId, isNil } from '@activepieces/core-utils'
+import { apId, isNil, tryCatch } from '@activepieces/core-utils'
 import { AgentConversationStatus, AgentPromptOverride, AgentRunSource, ApEnvironment, LATEST_JOB_DATA_SCHEMA_VERSION, MAX_AGENT_TEXT_LENGTH, PersistedAgentRole, SimulateAgentRequest, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
@@ -8,9 +8,9 @@ import { securityAccess } from '../../core/security/authorization/fastify-securi
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { platformService } from '../../platform/platform.service'
-import { projectService } from '../../project/project-service'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { agentConversationService } from './agent-conversation-service'
+import { agentEvalWorkspaceService } from './agent-eval-workspace-service'
 import { agentHelpers, EVAL_CONVERSATION_ID_PREFIX, isEvalConversationId } from './agent-helpers'
 import { agentRpcHandlers } from './agent-rpc-handlers'
 import { agentMcp } from './mcp/agent-mcp'
@@ -69,12 +69,53 @@ const agentEvalController: FastifyPluginAsyncZod = async (app) => {
         if (isNil(credentials.mcpServerUrl) || isNil(credentials.mcpToken)) {
             return reply.status(StatusCodes.SERVICE_UNAVAILABLE).send({ message: 'Could not issue MCP credentials on this instance' })
         }
-        const [project] = await projectService(request.log).getAllForUser({ platformId: platform.id, userId: platform.ownerId, isPrivileged: true })
+        const project = await agentEvalWorkspaceService(request.log).resolveBaseProject({ platformId: platform.id, ownerId: platform.ownerId, baseProjectId: undefined })
         if (isNil(project)) {
             return reply.status(StatusCodes.NOT_FOUND).send({ message: 'The platform owner has no project to run evals in' })
         }
         const conversation = await agentConversationService(request.log).createConversation({ platformId: platform.id, userId: platform.ownerId, request: { projectId: project.id }, id: (EVAL_CONVERSATION_ID_PREFIX + apId()).slice(0, 21) })
         return reply.status(StatusCodes.OK).send({ ...credentials, conversationId: conversation.id, projectId: project.id, projectName: project.displayName })
+    })
+
+    app.post('/eval/workspace', EvalWorkspaceCreateRoute, async (request, reply) => {
+        if (!isDevelopment()) {
+            return reply.status(StatusCodes.NOT_FOUND).send({ message: 'Not found' })
+        }
+        const platform = await platformService(request.log).getOldestPlatform()
+        if (isNil(platform)) {
+            return reply.status(StatusCodes.NOT_FOUND).send({ message: 'No platform exists on this instance' })
+        }
+        const workspaces = agentEvalWorkspaceService(request.log)
+        const baseProject = await workspaces.resolveBaseProject({ platformId: platform.id, ownerId: platform.ownerId, baseProjectId: request.body?.baseProjectId })
+        if (isNil(baseProject)) {
+            return reply.status(StatusCodes.NOT_FOUND).send({ message: 'Base project not found on the eval platform' })
+        }
+        const credentials = await agentMcp.getCredentials({ platformId: platform.id, userId: platform.ownerId, log: request.log })
+        if (isNil(credentials.mcpServerUrl) || isNil(credentials.mcpToken)) {
+            return reply.status(StatusCodes.SERVICE_UNAVAILABLE).send({ message: 'Could not issue MCP credentials on this instance' })
+        }
+        const { data: project, error } = await tryCatch(() => workspaces.create({ platformId: platform.id, baseProjectId: baseProject.id }))
+        if (!isNil(error)) {
+            request.log.warn({ error, platform: { id: platform.id } }, 'Failed to create an eval workspace')
+            return reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ message: `Could not create an eval workspace: ${error.message}` })
+        }
+        const conversation = await agentConversationService(request.log).createConversation({ platformId: platform.id, userId: platform.ownerId, request: { projectId: project.id }, id: (EVAL_CONVERSATION_ID_PREFIX + apId()).slice(0, 21) })
+        return reply.status(StatusCodes.OK).send({ ...credentials, conversationId: conversation.id, projectId: project.id, projectName: project.displayName, baseProjectId: baseProject.id })
+    })
+
+    app.delete('/eval/workspace/:projectId', EvalWorkspaceDeleteRoute, async (request, reply) => {
+        if (!isDevelopment()) {
+            return reply.status(StatusCodes.NOT_FOUND).send({ message: 'Not found' })
+        }
+        const platform = await platformService(request.log).getOldestPlatform()
+        if (isNil(platform)) {
+            return reply.status(StatusCodes.NOT_FOUND).send({ message: 'No platform exists on this instance' })
+        }
+        const removed = await agentEvalWorkspaceService(request.log).remove({ platformId: platform.id, projectId: request.params.projectId })
+        if (!removed) {
+            return reply.status(StatusCodes.NOT_FOUND).send({ message: 'Eval workspace not found' })
+        }
+        return reply.status(StatusCodes.NO_CONTENT).send()
     })
 
     app.post('/eval/execute-tool', ExecuteToolRoute, async (request, reply) => {
@@ -296,6 +337,30 @@ const McpCredentialsRoute = {
     },
     schema: {
         tags: ['agent'],
+    },
+}
+
+const EvalWorkspaceCreateRoute = {
+    config: {
+        security: securityAccess.public(),
+    },
+    schema: {
+        tags: ['agent'],
+        body: z.object({
+            baseProjectId: z.string().optional(),
+        }).optional(),
+    },
+}
+
+const EvalWorkspaceDeleteRoute = {
+    config: {
+        security: securityAccess.public(),
+    },
+    schema: {
+        tags: ['agent'],
+        params: z.object({
+            projectId: z.string(),
+        }),
     },
 }
 

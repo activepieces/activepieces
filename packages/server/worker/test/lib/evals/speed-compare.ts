@@ -11,7 +11,7 @@ async function save({ path, datasets }: { path: string, datasets: SnapshotDatase
         title: candidate.title,
         runs: results.filter((result) => result.candidate.id === candidate.id).map(({ verdict, scores }) => ({
             verdict,
-            gates: { expected: scores.expected, honest: scores.honest, validToolCalls: scores.validToolCalls },
+            gates: { expected: scores.expected, honest: scores.honest, validToolCalls: scores.validToolCalls, codeChecks: scores.codeChecks },
             speed: scores.speed,
             reasons: scores.reasons,
             judge: scores.judge,
@@ -34,11 +34,13 @@ function compare({ before, after }: { before: SavedRuns, after: SavedRuns }): Sp
         const afterStats = caseStats(afterCase)
         return [{ dataset: beforeCase.dataset, title: beforeCase.title, metrics: METRIC_NAMES.map((name) => ({ name, before: beforeStats[name], after: afterStats[name] })) }]
     })
-    const totals = METRIC_NAMES.map((name, index) => ({
-        name,
-        before: median(rows.flatMap((row) => nonNil(row.metrics[index].before))),
-        after: median(rows.flatMap((row) => nonNil(row.metrics[index].after))),
-    }))
+    const totals = METRIC_NAMES.map((name, index) => {
+        const paired = rows.flatMap((row) => {
+            const { before, after } = row.metrics[index]
+            return isNil(before) || isNil(after) ? [] : [{ before, after }]
+        })
+        return { name, before: median(paired.map((pair) => pair.before)), after: median(paired.map((pair) => pair.after)), excluded: rows.length - paired.length }
+    })
     return { rows, totals }
 }
 
@@ -52,7 +54,7 @@ function print(comparison: SpeedComparison): void {
         row.metrics.forEach((metric) => console.log(metricLine(metric)))
     })
     console.log(`\n${colors.bold(`Totals (median across ${comparison.rows.length} case(s))`)}`)
-    comparison.totals.forEach((metric) => console.log(metricLine(metric)))
+    comparison.totals.forEach((metric) => console.log(`${metricLine(metric)}${metric.excluded > 0 ? colors.dim(`  (${metric.excluded} of ${comparison.rows.length} case(s) excluded: no value on both sides)`) : ''}`))
 }
 
 function caseStats(savedCase: SavedCase): Record<MetricName, number | null> {
@@ -117,7 +119,7 @@ const SavedRunsSchema = z.object({
         title: z.string(),
         runs: z.array(z.object({
             verdict: RunVerdictSchema,
-            gates: z.object({ expected: RunVerdictSchema, honest: RunVerdictSchema, validToolCalls: RunVerdictSchema }),
+            gates: z.object({ expected: RunVerdictSchema, honest: RunVerdictSchema, validToolCalls: RunVerdictSchema, codeChecks: RunVerdictSchema.optional() }),
             speed: z.object({
                 totalMs: z.number(),
                 modelCalls: z.number(),
@@ -150,7 +152,7 @@ type MetricComparison = { name: MetricName, before: number | null, after: number
 
 type SpeedComparison = {
     rows: { dataset: string, title: string, metrics: MetricComparison[] }[]
-    totals: MetricComparison[]
+    totals: (MetricComparison & { excluded: number })[]
 }
 
 type SnapshotDataset = {

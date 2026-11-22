@@ -51,15 +51,34 @@ describe('evalToolSet.build', () => {
             conversationId: 'eval-conversation',
         })
     })
+
+    it('turns a connection pick the dev server could not save into a run note', async () => {
+        vi.stubEnv('AP_API_KEY', 'eval-key')
+        vi.stubGlobal('fetch', async () => new Response('conversation not found', { status: 404 }))
+        const user = scriptedUser.create({
+            answers: { questions: null, connections: {} },
+            listConnections: async () => [{ externalId: 'gmail-conn', displayName: 'Work Gmail', status: 'ACTIVE' }],
+            projectId: EVAL_PROJECT_ID,
+        })
+        const notes: string[] = []
+        const tools = buildWith({ mcpTools: {}, user, onNote: (note) => {
+            notes.push(note)
+        } })
+        await tools['ap_show_connection_picker']?.execute?.({ piece: 'gmail', displayName: 'Gmail' }, { toolCallId: 'call-1', messages: [], context: undefined })
+
+        expect(notes).toEqual([expect.stringContaining('could not save the scripted connection pick "Work Gmail" for @activepieces/piece-gmail')])
+        expect(notes[0]).toContain('404 conversation not found')
+    })
 })
 
-function buildWith({ mcpTools, user = null }: { mcpTools: ToolSet, user?: ScriptedUser | null }): ToolSet {
+function buildWith({ mcpTools, user = null, onNote }: { mcpTools: ToolSet, user?: ScriptedUser | null, onNote?: (note: string) => void }): ToolSet {
     return evalToolSet.build({
         mcp: { toolSet: mcpTools, close: async () => {}, projectId: EVAL_PROJECT_ID, projectName: 'Eval project', conversationId: 'eval-conversation' },
         caseReplay: replay.create({ recordedToolCalls: [] }),
         auth: {},
         mode: 'live',
         user,
+        onNote,
     })
 }
 

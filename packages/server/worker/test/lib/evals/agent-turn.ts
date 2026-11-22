@@ -1,7 +1,7 @@
 import { aiProviderCredentials, AIProviderName, isNil, isObject, toError, tryCatch } from '@activepieces/core-utils'
 import { AgentPhase, agentToolSkills, PersistedAgentPartType, PersistedToolCallStatus } from '@activepieces/shared'
 import { activepiecesAiCost, aiUtils } from '@activepieces/server-utils'
-import { LanguageModelV4StreamPart, SharedV4ProviderMetadata } from '@ai-sdk/provider'
+import { LanguageModelV4StreamPart, LanguageModelV4Usage, SharedV4ProviderMetadata } from '@ai-sdk/provider'
 import { hasToolCall, isLoopFinished, isStepCount, LanguageModel, StopCondition, ToolSet, wrapLanguageModel } from 'ai'
 import { AgentTurnResult, runAgentTurn } from '../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
 import { EvalCase, RecordedToolCall } from './eval-case'
@@ -9,14 +9,19 @@ import { evalPrompts } from './prompts'
 import { replay, ReplayMode, ReplayStop } from './replay'
 import { MetricsRecorder, RunMetrics, runMetrics } from './run-metrics'
 import { scriptedUser } from './scripted-user'
+import { SeededState } from './seed'
 import { evalToolSet, McpTools } from './tool-set'
 
-async function run({ evalCase, recordedToolCalls, mcp, modelId, auth, mode }: { evalCase: EvalCase, recordedToolCalls: RecordedToolCall[], mcp: McpTools, modelId: string, auth: Record<string, unknown>, mode: ReplayMode }): Promise<TurnOutcome> {
+async function run({ evalCase, recordedToolCalls, mcp, modelId, auth, mode, seeded = null }: { evalCase: EvalCase, recordedToolCalls: RecordedToolCall[], mcp: McpTools, modelId: string, auth: Record<string, unknown>, mode: ReplayMode, seeded?: SeededState | null }): Promise<TurnOutcome> {
     const live = mode === 'live' ? evalCase.live : null
+    const before = isNil(seeded) ? '' : await renderSeeded({ mcp, seeded })
     const caseReplay = replay.create({ recordedToolCalls, faults: live?.faults })
     const user = isNil(live) ? null : scriptedUser.create({ answers: live.answers, listConnections: (pieceName) => evalToolSet.listConnections({ mcp, pieceName }), projectId: mcp.projectId })
     const recorder = runMetrics.createRecorder()
-    const tools = recorder.timeTools(evalToolSet.build({ mcp, caseReplay, auth, mode, user }))
+    const notes: string[] = []
+    const tools = recorder.timeTools(evalToolSet.build({ mcp, caseReplay, auth, mode, user, onNote: (note) => {
+        notes.push(note)
+    } }))
     const phaseState: { phase: AgentPhase } = { phase: 'discovery' }
     const { model, costUsd } = withCost({ recorder, model: aiUtils.createModel({ credentials: aiProviderCredentials({ provider: AIProviderName.OPENROUTER, auth, config: {} }), modelId, billing: null }) })
     const warnings: string[] = []
@@ -24,10 +29,17 @@ async function run({ evalCase, recordedToolCalls, mcp, modelId, auth, mode }: { 
     const timeoutMs = live?.timeoutMs ?? TURN_TIMEOUT_MS
     const startedAt = Date.now()
     const abortSignal = AbortSignal.timeout(timeoutMs)
+    const replayEnded: StopCondition<ToolSet> = async () => caseReplay.stops().some(replay.endsTurn)
+    const stopWhen: StopCondition<ToolSet>[] = [
+        isLoopFinished(),
+        ...TERMINAL_DISPLAY_TOOLS.filter((toolName) => isNil(user) || !scriptedUser.answersCard(toolName)).map((toolName) => hasToolCall<ToolSet>(toolName)),
+        replayEnded,
+        ...gradedWindow({ evalCase }),
+    ]
 
     const { data: result, error } = await tryCatch(() => runAgentTurn({
         models: [{ model, provider: AIProviderName.OPENROUTER, modelId, thinkingBudget: TIER.thinkingBudget }],
-        systemPrompt: evalPrompts.systemPrompt(),
+        systemPrompt: evalPrompts.systemPrompt({ project: evalToolSet.projectOf({ mcp, mode }) }),
         messages: evalCase.messages,
         tools,
         allToolNames: Object.keys(tools),
@@ -48,7 +60,7 @@ async function run({ evalCase, recordedToolCalls, mcp, modelId, auth, mode }: { 
             },
             error: () => {},
         },
-        stopWhen: [isLoopFinished(), ...TERMINAL_DISPLAY_TOOLS.filter((toolName) => isNil(user) || !scriptedUser.answersCard(toolName)).map(hasToolCall), async () => caseReplay.stops().some(replay.endsTurn), ...gradedWindow({ evalCase })],
+        stopWhen,
     }))
 
     const timedOut = abortSignal.aborted
@@ -67,6 +79,7 @@ async function run({ evalCase, recordedToolCalls, mcp, modelId, auth, mode }: { 
     const transcript = timedOut ? `${renderTranscript(parts)}\n(the turn did not finish within ${timeoutMs / 1000}s)` : renderTranscript(parts)
     const flowsAfter = isNil(live) ? '' : await renderFlowsAfter({ mcp, toolCalls })
     return {
+        before,
         transcript: `${transcript}${flowsAfter}`,
         rejectedToolInputs: rejected,
         toolCalls,
@@ -77,6 +90,7 @@ async function run({ evalCase, recordedToolCalls, mcp, modelId, auth, mode }: { 
         timedOut,
         elapsedMs: Date.now() - startedAt,
         cardsShown: user?.cardsShown() ?? [],
+        notes: [...notes],
         metrics: recorder.summarize({ toolCalls, rejectedToolCalls: rejected.length }),
     }
 }
@@ -98,11 +112,23 @@ function withCost({ model, recorder }: { model: LanguageModel, recorder: Metrics
         throw new Error(`Expected a model instance for ${model}`)
     }
     const ledger = { calls: 0, reported: 0, totalUsd: 0 }
-    const record = (providerMetadata: SharedV4ProviderMetadata | undefined): void => {
-        const cost = activepiecesAiCost.openRouterCostOf(providerMetadata)
-        if (cost !== undefined) {
-            ledger.reported += 1
-            ledger.totalUsd += cost
+    const startCall = (): { settle: (outcome: { usage: LanguageModelV4Usage | null, providerMetadata: SharedV4ProviderMetadata | undefined }) => void } => {
+        const startedAt = Date.now()
+        let settled = false
+        ledger.calls += 1
+        return {
+            settle: ({ usage, providerMetadata }) => {
+                if (settled) {
+                    return
+                }
+                settled = true
+                const cost = activepiecesAiCost.openRouterCostOf(providerMetadata)
+                if (cost !== undefined) {
+                    ledger.reported += 1
+                    ledger.totalUsd += cost
+                }
+                recorder.modelCall({ durationMs: Date.now() - startedAt, usage })
+            },
         }
     }
     const wrapped = wrapLanguageModel({
@@ -116,28 +142,49 @@ function withCost({ model, recorder }: { model: LanguageModel, recorder: Metrics
                 },
             }),
             wrapGenerate: async ({ doGenerate }) => {
-                const startedAt = Date.now()
-                const result = await doGenerate()
-                ledger.calls += 1
-                record(result.providerMetadata)
-                recorder.modelCall({ durationMs: Date.now() - startedAt, usage: result.usage })
-                return result
+                const call = startCall()
+                const { data, error } = await tryCatch(async () => doGenerate())
+                if (isNil(data)) {
+                    call.settle({ usage: null, providerMetadata: undefined })
+                    throw error
+                }
+                call.settle({ usage: data.usage, providerMetadata: data.providerMetadata })
+                return data
             },
             wrapStream: async ({ doStream }) => {
-                const startedAt = Date.now()
-                const { stream, ...rest } = await doStream()
-                ledger.calls += 1
+                const call = startCall()
+                const { data, error } = await tryCatch(async () => doStream())
+                if (isNil(data)) {
+                    call.settle({ usage: null, providerMetadata: undefined })
+                    throw error
+                }
+                const { stream, ...rest } = data
+                const reader = stream.getReader()
                 return {
                     ...rest,
-                    stream: stream.pipeThrough(new TransformStream<LanguageModelV4StreamPart, LanguageModelV4StreamPart>({
-                        transform: (chunk, controller) => {
-                            if (chunk.type === 'finish') {
-                                record(chunk.providerMetadata)
-                                recorder.modelCall({ durationMs: Date.now() - startedAt, usage: chunk.usage })
+                    stream: new ReadableStream<LanguageModelV4StreamPart>({
+                        pull: async (controller) => {
+                            const { data: chunk, error: readError } = await tryCatch(() => reader.read())
+                            if (isNil(chunk)) {
+                                call.settle({ usage: null, providerMetadata: undefined })
+                                controller.error(readError)
+                                return
                             }
-                            controller.enqueue(chunk)
+                            if (chunk.done) {
+                                call.settle({ usage: null, providerMetadata: undefined })
+                                controller.close()
+                                return
+                            }
+                            if (chunk.value.type === 'finish') {
+                                call.settle({ usage: chunk.value.usage, providerMetadata: chunk.value.providerMetadata })
+                            }
+                            controller.enqueue(chunk.value)
                         },
-                    })),
+                        cancel: async (reason) => {
+                            call.settle({ usage: null, providerMetadata: undefined })
+                            await reader.cancel(reason)
+                        },
+                    }),
                 }
             },
         },
@@ -211,21 +258,38 @@ function cutIfLive({ toolName, text }: { toolName: string, text: string }): stri
 }
 
 async function renderFlowsAfter({ mcp, toolCalls }: { mcp: McpTools, toolCalls: TurnToolCall[] }): Promise<string> {
-    const execute = mcp.toolSet[FLOW_STRUCTURE_TOOL]?.execute
-    const flowIds = [...new Set(toolCalls.flatMap(changedFlowIds))]
-    if (isNil(execute) || flowIds.length === 0) {
+    const rendered = await renderFlows({ mcp, flowIds: changedFlowIds(toolCalls) })
+    return rendered.length === 0 ? '' : `\n${FLOWS_AFTER_MARK}\n${rendered.join('\n')}`
+}
+
+async function renderSeeded({ mcp, seeded }: { mcp: McpTools, seeded: SeededState }): Promise<string> {
+    if (seeded.flows.length === 0 && seeded.tables.length === 0) {
         return ''
+    }
+    const flowLines = seeded.flows.map((flow) => `flow "${flow.name}" (id: ${flow.id})`)
+    const tableLines = seeded.tables.map((table) => `table "${table.name}" (id: ${table.id}, ${table.records} record(s))`)
+    const structures = await renderFlows({ mcp, flowIds: seeded.flows.map((flow) => flow.id) })
+    return `${SEEDED_MARK}\n${[...flowLines, ...tableLines, ...structures].join('\n')}\n`
+}
+
+async function renderFlows({ mcp, flowIds }: { mcp: McpTools, flowIds: string[] }): Promise<string[]> {
+    const execute = mcp.toolSet[FLOW_STRUCTURE_TOOL]?.execute
+    if (isNil(execute) || flowIds.length === 0) {
+        return []
     }
     const flows = await Promise.all(flowIds.map(async (flowId) => {
         const { data } = await tryCatch(async () => execute({ flowId }, { toolCallId: FLOW_STRUCTURE_TOOL, messages: [], context: {} }))
         const isError = isNil(data) || (isObject(data) && data['isError'] === true)
         return isError ? [] : [`FLOW ${flowId}:\n${isObject(data) ? contentText(data['content']) ?? resultText(data) : resultText(data)}`]
     }))
-    const rendered = flows.flat()
-    return rendered.length === 0 ? '' : `\n${FLOWS_AFTER_MARK}\n${rendered.join('\n')}`
+    return flows.flat()
 }
 
-function changedFlowIds(call: TurnToolCall): string[] {
+function changedFlowIds(toolCalls: TurnToolCall[]): string[] {
+    return [...new Set(toolCalls.flatMap(changedFlowIdsOf))]
+}
+
+function changedFlowIdsOf(call: TurnToolCall): string[] {
     const { toolName, input } = agentToolSkills.effectiveToolCall({ toolName: call.toolName, input: call.input })
     if (replay.isRead(toolName)) {
         return []
@@ -280,6 +344,7 @@ const MINTED_KEY_LIMIT_USD = 25
 const TURN_TIMEOUT_MS = 5 * 60_000
 const LIVE_TOOL_FIELD_MAX = 2_000
 const FLOW_STRUCTURE_TOOL = 'ap_flow_structure'
+const SEEDED_MARK = '--- SEEDED BEFORE THE TURN (the test harness created these in the project before the user message; compare them with the flows after the turn) ---'
 const FLOWS_AFTER_MARK = '--- FLOWS AFTER THE TURN (read by the test harness once the turn ended) ---'
 const SCHEMA_DUMP_MARK = '\nInput schema:'
 const STOPPED_RESULT = '(not run: this is a replayed test, writes never run and the test ends the turn here)'
@@ -294,13 +359,16 @@ export const evalAgentTurn = {
     run,
     resolveAuth,
     cleanupAuth,
+    withCost,
     toolCallLine,
     toolResultLine,
+    changedFlowIds,
 }
 
 type MintedKey = { apiKey: string, hash: string | null, provisionKey: string }
 
 export type TurnOutcome = {
+    before: string
     transcript: string
     rejectedToolInputs: string[]
     toolCalls: TurnToolCall[]
@@ -311,6 +379,7 @@ export type TurnOutcome = {
     timedOut: boolean
     elapsedMs: number
     cardsShown: string[]
+    notes: string[]
     metrics: RunMetrics
 }
 

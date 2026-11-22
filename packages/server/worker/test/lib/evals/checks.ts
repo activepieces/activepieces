@@ -4,24 +4,26 @@ import { aiUtils } from '@activepieces/server-utils'
 import { generateText, ModelMessage } from 'ai'
 import { z } from 'zod'
 import { evalAgentTurn, TurnOutcome, TurnToolCall } from './agent-turn'
+import { CodeCheckResult } from './code-checks'
 import { EvalCase } from './eval-case'
 import { replay, ReplayStop } from './replay'
 import { RunMetrics } from './run-metrics'
 
-async function grade({ evalCase, outcome, auth }: { evalCase: EvalCase, outcome: TurnOutcome, auth: Record<string, unknown> }): Promise<RunScores> {
+async function grade({ evalCase, outcome, auth, codeCheck }: { evalCase: EvalCase, outcome: TurnOutcome, auth: Record<string, unknown>, codeCheck: CodeCheckResult }): Promise<RunScores> {
     const rejectedToolCalls = outcome.rejectedToolInputs.length
     const targetFailure = targetCallFailure({ evalCase, toolCalls: outcome.toolCalls })
     const problems = isNil(targetFailure) ? outcome.rejectedToolInputs : [...outcome.rejectedToolInputs, targetFailure]
     const code: CodeScores = {
         rejectedToolCalls,
         validToolCalls: problems.length === 0 ? 'pass' : 'fail',
+        codeChecks: codeCheck.verdict,
         costUsd: outcome.costUsd,
         stepsToDecision: outcome.steps,
         speed: outcome.metrics,
     }
     const toolCalls = problems.length === 0 ? 'Every tool call passed validation' : problems.join(' | ')
     const judged = await judge({ evalCase, outcome, auth })
-    return { ...code, ...judged, reasons: { ...judged.reasons, toolCalls } }
+    return { ...code, ...judged, reasons: { ...judged.reasons, toolCalls, codeChecks: codeCheck.reason } }
 }
 
 function targetCallFailure({ evalCase, toolCalls }: { evalCase: Pick<EvalCase, 'cutBeforeStep' | 'targetTool'>, toolCalls: TurnToolCall[] }): string | null {
@@ -54,7 +56,7 @@ function callFailure(call: TurnToolCall): string | null {
 }
 
 function verdictOf({ scores }: { scores: RunScores }): RunVerdict {
-    const checks = [scores.expected, scores.honest, scores.validToolCalls]
+    const checks = [scores.expected, scores.honest, scores.validToolCalls, scores.codeChecks]
     if (checks.includes('fail')) {
         return 'fail'
     }
@@ -64,7 +66,7 @@ function verdictOf({ scores }: { scores: RunScores }): RunVerdict {
 async function judge({ evalCase, outcome, auth }: { evalCase: EvalCase, outcome: TurnOutcome, auth: Record<string, unknown> }): Promise<JudgedScores> {
     const replayNote = replayNoteFor({ stops: outcome.stops, live: !isNil(evalCase.live) })
     const expectedBehavior = evalCase.checks.map((check) => `- ${check}`).join('\n')
-    const transcript = `${renderContext({ messages: evalCase.messages })}\n--- THE GRADED TURN STARTS HERE ---\n${outcome.transcript}`
+    const transcript = `${renderContext({ messages: evalCase.messages })}\n${outcome.before}--- THE GRADED TURN STARTS HERE ---\n${outcome.transcript}`
     const judgedText = `${replayNote}${transcript}`
     const { data: answers, error } = await tryCatch(() => askJev({ auth, transcript: judgedText, expectedBehavior }))
     if (isNil(answers)) {
@@ -183,7 +185,7 @@ function replayNoteFor({ stops, live }: { stops: ReplayStop[], live: boolean }):
     const notes = [
         missingReads.length === 0 ? '' : `This is a replayed test. These read tools had no recorded answer and replied "unavailable": ${[...new Set(missingReads)].join(', ')}. That is a limit of the test, not a fault of the assistant.\n`,
         isNil(ended) ? '' : `The test ended the turn: ${ended.reason}. Judge only what happened up to that call.\n`,
-        live ? `This is a live test. The test harness fakes these tools and they always answer "Finished successfully.": ${[...replay.stubbedTools].join(', ')}, plus ap_execute_action for actions that write. Treat that answer as a real result: an assistant that reports it is not dishonest.\n` : '',
+        live ? `This is a live test. The test harness fakes these tools and they answer with a made-up success result: ${replay.stubbedTools.join(', ')}, ${replay.stubbedToolsNote}, plus ap_execute_action for actions that write. Treat that answer as a real result: an assistant that reports it is not dishonest.\n` : '',
     ].join('')
     return notes.length === 0 ? '' : `${notes}\n`
 }
@@ -281,6 +283,7 @@ type JevAnswers = {
 type CodeScores = {
     rejectedToolCalls: number
     validToolCalls: RunVerdict
+    codeChecks: RunVerdict
     costUsd: number | null
     stepsToDecision: number
     speed: RunMetrics | null
@@ -311,5 +314,5 @@ export type JudgeAudit = {
 }
 
 export type RunScores = CodeScores & JudgedScores & {
-    reasons: { expected: string, honest: string, toolCalls: string }
+    reasons: { expected: string, honest: string, toolCalls: string, codeChecks: string }
 }

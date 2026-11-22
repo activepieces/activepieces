@@ -2,28 +2,35 @@ import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { existsSync } from 'node:fs'
 import { parseArgs } from 'node:util'
-import { isNil, tryCatch } from '@activepieces/core-utils'
+import { isNil, Result, tryCatch } from '@activepieces/core-utils'
 import { ToolSet } from 'ai'
 import { evalAgentTurn, TurnOutcome } from './agent-turn'
 import { RunMetrics } from './run-metrics'
 import { caseSummary, CaseExplanation } from './case-summary'
 import { evalChecks, RunScores, RunVerdict, Verdict } from './checks'
+import { CodeCheckResult, evalCodeChecks } from './code-checks'
 import { colors } from './colors'
-import { createdResources } from './created-resources'
 import { evalCase, EvalCase, RecordedToolCall } from './eval-case'
 import { posthogDataset } from './posthog-dataset'
 import { Baseline, posthogExperiments, UploadedRun, VerdictCounts } from './posthog-experiments'
+import { preflight } from './preflight'
 import { progressTable } from './progress-table'
-import { evalPrompts } from './prompts'
-import { replay, ReplayMode, StaleRecording } from './replay'
+import { EVAL_PROJECT, evalPrompts } from './prompts'
+import { replay, StaleRecording } from './replay'
+import { repoPaths } from './repo-paths'
 import { resultsBrowser } from './results-browser'
+import { scriptedUser } from './scripted-user'
+import { evalSeed } from './seed'
+import { DatasetOutcome, RunnableDataset, SkippedCase, skippedCases } from './skipped-cases'
 import { speedCompare } from './speed-compare'
 import { toolChanges, ToolFingerprints } from './tool-changes'
 import { evalToolSet, McpTools } from './tool-set'
+import { evalWorkspace } from './workspace'
 
 async function main(): Promise<void> {
-    if (existsSync(ENV_FILE)) {
-        process.loadEnvFile(ENV_FILE)
+    const envFile = repoPaths.envFile()
+    if (existsSync(envFile)) {
+        process.loadEnvFile(envFile)
     }
     const { values } = parseArgs({
         options: {
@@ -59,6 +66,10 @@ async function main(): Promise<void> {
     if (editing && datasetNames.length !== 1) {
         throw new Error('--steps, --set-cut and --set-target work on one dataset: pass --dataset <name>')
     }
+    const notReady = await preflight.check({ needs: editing ? ['posthog'] : ['devServer', 'openRouter', 'posthog'] })
+    if (!isNil(notReady)) {
+        throw new Error(notReady)
+    }
     if (values.upload && (recordMode || onlyCases.size > 0)) {
         throw new Error('--upload is for the full main run only: drop --case and --record')
     }
@@ -93,12 +104,7 @@ async function main(): Promise<void> {
         throw setup.error
     }
     const [auth, mcp, baselineReads] = setup.data
-    console.log(`Dev server MCP tools run in project "${mcp.projectName}"`)
-    const hasLiveCases = datasets.some((dataset) => dataset.cases.some((candidate) => !isNil(candidate.live)))
-    const crowded = hasLiveCases ? await createdResources.crowdedWarning({ mcp }) : null
-    if (!isNil(crowded)) {
-        console.log(colors.yellow(crowded))
-    }
+    console.log(`Dev server MCP tools run in project "${mcp.projectName}"; each live run gets a fresh workspace project that shares its connections`)
     const schemaTools = evalToolSet.build({ mcp, caseReplay: replay.create({ recordedToolCalls: [] }), auth, mode: 'replay', user: null })
     const toolFingerprints = await toolChanges.fingerprints({ tools: schemaTools })
     const live = Boolean(process.stdout.isTTY) && !values.verbose
@@ -106,7 +112,12 @@ async function main(): Promise<void> {
     const ran: RanDataset[] = []
     let explained = new Map<string, CaseExplanation>()
     try {
-        for (const [index, dataset] of datasets.entries()) {
+        const runnable = await Promise.all(datasets.map((dataset) => withoutSkipped({ dataset, mcp })))
+        const skipped = runnable.flatMap((dataset) => dataset.skipped)
+        if (values.upload && skipped.length > 0) {
+            throw new Error(`--upload refused: ${skipped.length} live case(s) would be skipped, so the baseline would leave them out: ${skippedCases.describe(skipped)}`)
+        }
+        for (const [index, dataset] of runnable.entries()) {
             ran.push(await runDataset({ dataset, repeats, recordMode, keep: values.keep, upload: values.upload, verbose: values.verbose, live, modelId: values.model, auth, mcp, schemaTools, baselineRead: baselineReads[index], toolFingerprints }))
         }
         if (!recordMode) {
@@ -135,9 +146,21 @@ async function main(): Promise<void> {
     process.exit(broken.length === 0 ? 0 : 1)
 }
 
+async function withoutSkipped({ dataset, mcp }: { dataset: { name: string, cases: EvalCase[] }, mcp: McpTools }): Promise<RunnableDataset> {
+    return skippedCases.split({
+        dataset,
+        projectName: mcp.projectName,
+        unmetOf: async (candidate) => isNil(candidate.live) ? [] : scriptedUser.unmetConnections({ answers: candidate.live.answers, listConnections: (pieceName) => evalToolSet.listConnections({ mcp, pieceName }) }),
+    })
+}
+
+function printSkipped({ skipped }: { skipped: SkippedCase[] }): void {
+    skipped.forEach(({ candidate, reason }) => console.log(colors.yellow(`  - case ${candidate.caseNumber} · ${candidate.title}: skipped: ${reason}`)))
+}
+
 function modeNote({ cases, recordMode }: { cases: EvalCase[], recordMode: boolean }): string {
     const liveCases = cases.filter((candidate) => !isNil(candidate.live)).length
-    const liveNote = `${liveCases} LIVE case(s): writes and read actions run in the eval project, test runs, write actions and publishing are faked, cards get scripted answers`
+    const liveNote = `${liveCases} LIVE case(s): each run gets its own fresh workspace project (deleted after the run), writes and read actions run there, test runs, write actions and publishing are faked, cards get scripted answers`
     if (liveCases === cases.length) {
         return liveNote
     }
@@ -199,11 +222,12 @@ function printUntested({ cases, changedTools }: { cases: EvalCase[], changedTool
     console.log(colors.yellow(`\nThese cases answer a tool you changed from recordings, so their result does not test your change. Use the agent bench for that:\n${lines.join('\n')}`))
 }
 
-async function runDataset({ dataset, repeats, recordMode, keep, upload, verbose, live, modelId, auth, mcp, schemaTools, baselineRead, toolFingerprints }: { dataset: { name: string, cases: EvalCase[] }, repeats: number, recordMode: boolean, keep: boolean, upload: boolean, verbose: boolean, live: boolean, modelId: string, auth: Record<string, unknown>, mcp: McpTools, schemaTools: ToolSet, baselineRead: BaselineRead, toolFingerprints: ToolFingerprints }): Promise<RanDataset> {
-    const { name, cases } = dataset
+async function runDataset({ dataset, repeats, recordMode, keep, upload, verbose, live, modelId, auth, mcp, schemaTools, baselineRead, toolFingerprints }: { dataset: RunnableDataset, repeats: number, recordMode: boolean, keep: boolean, upload: boolean, verbose: boolean, live: boolean, modelId: string, auth: Record<string, unknown>, mcp: McpTools, schemaTools: ToolSet, baselineRead: BaselineRead, toolFingerprints: ToolFingerprints }): Promise<RanDataset> {
+    const { name, cases, skipped } = dataset
     const changedTools = changedSinceBaseline({ baselineRead, toolFingerprints })
     const splits = new Map(await Promise.all(cases.map(async (candidate) => [candidate.id, await replay.splitStale({ tools: schemaTools, recordedToolCalls: candidate.recordedToolCalls })] as const)))
     console.log(`\n${colors.bold(colors.cyan(`=== ${name}`))}: ${cases.length} case(s) × ${repeats} run(s) · model ${modelId} · judge ${evalChecks.judgeModelId()} (reasons ${evalChecks.reasonModelId}) · web and catalog reads run live · ${modeNote({ cases, recordMode })}${upload ? ' · UPLOADS a main baseline to PostHog' : ' · nothing is uploaded'}`)
+    printSkipped({ skipped })
     printToolChanges({ baselineRead, changedTools })
     printStale({ cases, stale: (candidate) => splits.get(candidate.id)?.stale ?? [] })
     const touched = (candidate: EvalCase): boolean => toolChanges.touches({ evalCase: candidate, changedTools: changedTools ?? [] })
@@ -219,8 +243,8 @@ async function runDataset({ dataset, repeats, recordMode, keep, upload, verbose,
         onResult: (result) => isNil(table) ? print({ result, verbose }) : table.finish({ ...result, runCostUsd: result.scores.costUsd }),
     })
     table?.stop()
-    printCleanupProblems({ results })
-    return { name, cases, results, baselineRead, changedTools }
+    printNotes({ results })
+    return { name, cases, skipped, results, baselineRead, changedTools }
 }
 
 async function explainAll({ ran, auth }: { ran: RanDataset[], auth: Record<string, unknown> }): Promise<Map<string, CaseExplanation>> {
@@ -248,7 +272,7 @@ function printExplanation({ summary, title, explanation }: { summary: CaseSummar
     console.log(`      ${colors.dim('means   ')}  ${colors.bold(explanation.means)}`)
 }
 
-async function reportDataset({ name, cases, results, explained, live, browse, recordMode, upload, modelId, toolFingerprints, baselineRead, changedTools }: RanDataset & { explained: Map<string, CaseExplanation>, live: boolean, browse: boolean, recordMode: boolean, upload: boolean, modelId: string, toolFingerprints: ToolFingerprints }): Promise<DatasetOutcome> {
+async function reportDataset({ name, cases, skipped, results, explained, live, browse, recordMode, upload, modelId, toolFingerprints, baselineRead, changedTools }: RanDataset & { explained: Map<string, CaseExplanation>, live: boolean, browse: boolean, recordMode: boolean, upload: boolean, modelId: string, toolFingerprints: ToolFingerprints }): Promise<DatasetOutcome> {
     if (live && !browse) {
         results.filter((result) => result.verdict === 'fail').sort((a, b) => a.candidate.caseNumber - b.candidate.caseNumber || a.trial - b.trial).forEach((result) => print({ result, verbose: false }))
     }
@@ -259,7 +283,8 @@ async function reportDataset({ name, cases, results, explained, live, browse, re
     }
     const failing = summaries.filter((summary) => summary.verdict === 'fail').length
     const clearlyFailing = summaries.filter((summary) => clearVerdict(summary) === 'fail').length
-    console.log(`${colors.green(`${summaries.length - failing} pass`)} · ${failing > 0 ? colors.red(`${failing} fail`) : `${failing} fail`} ${colors.dim(`(${clearlyFailing} clearly)`)} · ${summaries.length} cases`)
+    printSkipped({ skipped })
+    console.log(`${colors.green(`${summaries.length - failing} pass`)} · ${failing > 0 ? colors.red(`${failing} fail`) : `${failing} fail`} ${colors.dim(`(${clearlyFailing} clearly)`)}${skipped.length > 0 ? ` · ${colors.yellow(`${skipped.length} skipped`)}` : ''} · ${summaries.length + skipped.length} cases`)
     if (recordMode) {
         await saveFixtures({ cases, results })
         return { status: 'ok', reason: '' }
@@ -277,6 +302,10 @@ async function reportDataset({ name, cases, results, explained, live, browse, re
         const experimentId = await posthogExperiments.upload({ runs: results, suiteKey: name, runSource: isNil(process.env['CI']) ? 'local' : 'ci', applicationVersion: gitSha(), modelVersion: modelId, promptVersion: promptVersion(), toolFingerprints })
         console.log(`\nUploaded main baseline for ${name}: experiment ${experimentId}`)
     }
+    return skippedCases.withSkipped({ outcome: baselineOutcome({ name, modelId, baselineRead, labels }), name, skipped })
+}
+
+function baselineOutcome({ name, modelId, baselineRead, labels }: { name: string, modelId: string, baselineRead: BaselineRead, labels: DiffLabel[] }): DatasetOutcome {
     switch (baselineRead.kind) {
         case 'error': return { status: 'broken', reason: `could not read the main baseline for ${name}: ${baselineRead.message}` }
         case 'missing': return { status: 'unchecked', reason: `no main baseline for ${name} on ${modelId}` }
@@ -315,52 +344,54 @@ async function runPool({ runs, run, onResult }: { runs: PlannedRun[], run: (plan
 }
 
 async function evaluate({ candidate, trial, recordedToolCalls, mcp, modelId, auth, recordMode, keep }: { candidate: EvalCase, trial: number, recordedToolCalls: RecordedToolCall[], mcp: McpTools, modelId: string, auth: Record<string, unknown>, recordMode: boolean, keep: boolean }): Promise<CaseResult> {
-    const live = !isNil(candidate.live)
-    const fresh = live ? await tryCatch(() => evalToolSet.connectMcp()) : null
-    if (!isNil(fresh?.error)) {
-        return crashedResult({ candidate, trial, reason: `could not open an eval conversation for this run: ${fresh.error.message}`, cleanupProblems: [] })
+    if (isNil(candidate.live)) {
+        const turn = await tryCatch(async () => ({ outcome: await evalAgentTurn.run({ evalCase: candidate, recordedToolCalls, mcp, modelId, auth, mode: recordMode ? 'record' : 'replay' }), codeCheck: evalCodeChecks.notRun }))
+        return gradeTurn({ candidate, trial, auth, turn, notes: [] })
     }
-    const runMcp = fresh?.data ?? mcp
-    const turn = await tryCatch(() => evalAgentTurn.run({ evalCase: candidate, recordedToolCalls, mcp: runMcp, modelId, auth, mode: runMode({ candidate, recordMode }) }))
-    const removed = live && !keep ? await createdResources.remove({ mcp: runMcp, created: createdResources.fromToolCalls({ toolCalls: turn.data?.toolCalls ?? [] }) }) : []
-    if (live) {
-        await runMcp.close().catch(() => undefined)
-    }
-    const cleanupProblems = removed.map((problem) => `case ${candidate.caseNumber} run ${trial + 1}: ${problem}`)
+    const { seed, codeChecks } = candidate.live
+    const { result, notes } = await evalWorkspace.run({
+        keep,
+        use: async (workspaceMcp) => {
+            const seeded = await tryCatch(() => evalSeed.create({ mcp: workspaceMcp, seed }))
+            if (!isNil(seeded.error)) {
+                throw new Error(`seed failed: ${seeded.error.message}`)
+            }
+            const outcome = await evalAgentTurn.run({ evalCase: candidate, recordedToolCalls, mcp: workspaceMcp, modelId, auth, mode: 'live', seeded: seeded.data })
+            return { outcome, codeCheck: await evalCodeChecks.run({ checks: codeChecks, outcome, mcp: workspaceMcp }) }
+        },
+    })
+    return gradeTurn({ candidate, trial, auth, turn: result, notes: notes.map((note) => `case ${candidate.caseNumber} run ${trial + 1}: ${note}`) })
+}
+
+async function gradeTurn({ candidate, trial, auth, turn, notes }: { candidate: EvalCase, trial: number, auth: Record<string, unknown>, turn: Result<CheckedTurn>, notes: string[] }): Promise<CaseResult> {
     if (!isNil(turn.error)) {
-        return crashedResult({ candidate, trial, reason: turn.error.message, cleanupProblems })
+        return crashedResult({ candidate, trial, reason: turn.error.message, notes })
     }
-    const outcome = turn.data
-    const graded = await tryCatch(async () => outcome.timedOut ? timedOutScores({ outcome }) : evalChecks.grade({ evalCase: candidate, outcome, auth }))
+    const { outcome, codeCheck } = turn.data
+    const graded = await tryCatch(async () => outcome.timedOut ? timedOutScores({ outcome, codeCheck }) : evalChecks.grade({ evalCase: candidate, outcome, auth, codeCheck }))
     if (!isNil(graded.error)) {
-        return crashedResult({ candidate, trial, reason: graded.error.message, cleanupProblems })
+        return crashedResult({ candidate, trial, reason: graded.error.message, notes })
     }
-    return { candidate, trial, verdict: evalChecks.verdictOf({ scores: graded.data }), scores: graded.data, stops: outcome.stops.map((stop) => stop.reason), transcript: outcome.transcript, newFixtures: outcome.newFixtures, cleanupProblems, crashed: false }
+    const runNotes = [...notes, ...outcome.notes.map((note) => `case ${candidate.caseNumber} run ${trial + 1}: ${note}`)]
+    return { candidate, trial, verdict: evalChecks.verdictOf({ scores: graded.data }), scores: graded.data, stops: outcome.stops.map((stop) => stop.reason), transcript: outcome.transcript, newFixtures: outcome.newFixtures, notes: runNotes, crashed: false }
 }
 
-function crashedResult({ candidate, trial, reason, cleanupProblems }: { candidate: EvalCase, trial: number, reason: string, cleanupProblems: string[] }): CaseResult {
-    return { candidate, trial, verdict: 'unknown', scores: crashedScores({ reason }), stops: [], transcript: '', newFixtures: [], cleanupProblems, crashed: true }
+function crashedResult({ candidate, trial, reason, notes }: { candidate: EvalCase, trial: number, reason: string, notes: string[] }): CaseResult {
+    return { candidate, trial, verdict: 'unknown', scores: crashedScores({ reason }), stops: [], transcript: '', newFixtures: [], notes, crashed: true }
 }
 
-function printCleanupProblems({ results }: { results: CaseResult[] }): void {
-    results.flatMap((result) => result.cleanupProblems).forEach((problem) => console.log(colors.dim(`cleanup: ${problem}`)))
+function printNotes({ results }: { results: CaseResult[] }): void {
+    results.flatMap((result) => result.notes).forEach((note) => console.log(colors.yellow(`note: ${note}`)))
 }
 
-function runMode({ candidate, recordMode }: { candidate: EvalCase, recordMode: boolean }): ReplayMode {
-    if (!isNil(candidate.live)) {
-        return 'live'
-    }
-    return recordMode ? 'record' : 'replay'
-}
-
-function timedOutScores({ outcome }: { outcome: TurnOutcome }): RunScores {
+function timedOutScores({ outcome, codeCheck }: { outcome: TurnOutcome, codeCheck: CodeCheckResult }): RunScores {
     const message = `The turn did not finish within ${Math.round(outcome.elapsedMs / 1000)}s`
-    return { expected: 'fail', honest: 'unknown', validToolCalls: 'unknown', rejectedToolCalls: outcome.rejectedToolInputs.length, costUsd: outcome.costUsd, stepsToDecision: outcome.steps, speed: outcome.metrics, problemTypes: [], reasons: { expected: message, honest: message, toolCalls: message }, judge: null }
+    return { expected: 'fail', honest: 'unknown', validToolCalls: 'unknown', codeChecks: codeCheck.verdict, rejectedToolCalls: outcome.rejectedToolInputs.length, costUsd: outcome.costUsd, stepsToDecision: outcome.steps, speed: outcome.metrics, problemTypes: [], reasons: { expected: message, honest: message, toolCalls: message, codeChecks: codeCheck.reason }, judge: null }
 }
 
 function crashedScores({ reason }: { reason: string }): RunScores {
     const message = `The run crashed: ${reason}`
-    return { expected: 'unknown', honest: 'unknown', validToolCalls: 'unknown', rejectedToolCalls: 0, costUsd: null, stepsToDecision: 0, speed: null, problemTypes: [], reasons: { expected: message, honest: message, toolCalls: message }, judge: null }
+    return { expected: 'unknown', honest: 'unknown', validToolCalls: 'unknown', codeChecks: 'unknown', rejectedToolCalls: 0, costUsd: null, stepsToDecision: 0, speed: null, problemTypes: [], reasons: { expected: message, honest: message, toolCalls: message, codeChecks: message }, judge: null }
 }
 
 function summarize({ datasetName, candidate, results }: { datasetName: string, candidate: EvalCase, results: CaseResult[] }): CaseSummary {
@@ -473,7 +504,7 @@ function gitSha(): string {
 
 function promptVersion(): string {
     const guides = evalPrompts.guides()
-    const text = [evalPrompts.systemPrompt(), ...Object.keys(guides).sort().map((topic) => guides[topic])].join('\n')
+    const text = [evalPrompts.systemPrompt({ project: EVAL_PROJECT }), ...Object.keys(guides).sort().map((topic) => guides[topic])].join('\n')
     return createHash('sha256').update(text).digest('hex').slice(0, PROMPT_HASH_CHARS)
 }
 
@@ -545,6 +576,7 @@ function print({ result, verbose }: { result: CaseResult, verbose: boolean }): v
     line('did the expected thing', scores.expected, scores.reasons.expected)
     line('honest about results', scores.honest, scores.reasons.honest)
     line(`valid tool calls (${scores.rejectedToolCalls} rejected)`, scores.validToolCalls, scores.reasons.toolCalls)
+    line('code checks', scores.codeChecks, scores.reasons.codeChecks)
     const escalations = isNil(scores.judge) ? [] : [{ check: 'expected', audit: scores.judge.expected }, { check: 'honest', audit: scores.judge.honest }]
     escalations.forEach(({ check, audit }) => {
         if (!isNil(audit.escalation)) {
@@ -556,9 +588,9 @@ function print({ result, verbose }: { result: CaseResult, verbose: boolean }): v
         console.log(`    ${speedLine(scores.speed)}`)
     }
     result.stops.forEach((reason) => console.log(`    replay note: ${reason}`))
+    result.notes.forEach((note) => console.log(`    note: ${note}`))
 }
 
-const ENV_FILE = '.env.dev'
 const DEFAULT_MODEL = 'z-ai/glm-5.3'
 const DEFAULT_DATASETS = ['chat-prod-failures', 'chat-core']
 const MUST_PASS_DATASETS = new Set(['chat-core'])
@@ -590,6 +622,7 @@ type CaseSummary = {
 type RanDataset = {
     name: string
     cases: EvalCase[]
+    skipped: SkippedCase[]
     results: CaseResult[]
     baselineRead: BaselineRead
     changedTools: string[] | null
@@ -603,9 +636,9 @@ type BaselineRead =
 
 type DiffLabel = 'same' | 'unclear' | 'edited' | 'FIXED' | 'REGRESSED'
 
-type DatasetOutcome = {
-    status: 'ok' | 'unchecked' | 'broken'
-    reason: string
+type CheckedTurn = {
+    outcome: TurnOutcome
+    codeCheck: CodeCheckResult
 }
 
 type PlannedRun = {
@@ -615,6 +648,6 @@ type PlannedRun = {
 
 type CaseResult = UploadedRun & {
     newFixtures: RecordedToolCall[]
-    cleanupProblems: string[]
+    notes: string[]
     crashed: boolean
 }

@@ -20,7 +20,7 @@ function createRecorder(): MetricsRecorder {
             }
             return [toolName, {
                 ...tool,
-                execute: async (input: unknown, options: ToolExecutionOptions) => {
+                execute: async (input: unknown, options: ToolExecutionOptions<unknown>) => {
                     const callStartedAt = Date.now()
                     const output = await execute(input, options)
                     const finishedAt = Date.now()
@@ -43,10 +43,10 @@ function summarize({ modelCalls, toolTimings, toolCalls, rejectedToolCalls, tota
         modelMs: sum(modelCalls.map((call) => call.durationMs)),
         modelMsPerCall: modelCalls.map((call) => call.durationMs),
         toolMs: sum(toolTimings.map((timing) => timing.durationMs)),
-        inputTokens: sumTokens(modelCalls.map((call) => call.usage.inputTokens.total)),
-        cachedInputTokens: sumTokens(modelCalls.map((call) => call.usage.inputTokens.cacheRead)),
-        outputTokens: sumTokens(modelCalls.map((call) => call.usage.outputTokens.total)),
-        reasoningTokens: sumTokens(modelCalls.map((call) => call.usage.outputTokens.reasoning)),
+        inputTokens: sumTokens(modelCalls.map((call) => call.usage?.inputTokens.total)),
+        cachedInputTokens: sumTokens(modelCalls.map((call) => call.usage?.inputTokens.cacheRead)),
+        outputTokens: sumTokens(modelCalls.map((call) => call.usage?.outputTokens.total)),
+        reasoningTokens: sumTokens(modelCalls.map((call) => call.usage?.outputTokens.reasoning)),
         toolCalls: effective.length,
         toolCallsByName: effective.reduce<Record<string, number>>((counts, call) => ({ ...counts, [call.toolName]: (counts[call.toolName] ?? 0) + 1 }), {}),
         wasted: {
@@ -73,7 +73,7 @@ function sumTokens(values: (number | undefined)[]): number | null {
 
 const BUILD_TOOL = 'ap_build_flow'
 const PIECE_PROPS_TOOL = 'ap_get_piece_props'
-const FLOW_EDIT_TOOLS = new Set(['ap_add_branch', 'ap_add_step', 'ap_delete_branch', 'ap_delete_step', 'ap_update_step', 'ap_update_trigger'])
+const FLOW_EDIT_TOOLS = new Set(['ap_add_branch', 'ap_add_step', 'ap_apply_flow_operations', 'ap_delete_branch', 'ap_delete_step', 'ap_update_branch', 'ap_update_step', 'ap_update_trigger'])
 
 export const runMetrics = {
     createRecorder,
@@ -102,7 +102,7 @@ export type RunMetrics = {
     firstBuildMs: number | null
 }
 
-type ModelCall = { durationMs: number, usage: LanguageModelV4Usage }
+type ModelCall = { durationMs: number, usage: LanguageModelV4Usage | null }
 
 type ToolTiming = { toolName: string, durationMs: number, finishedAtMs: number, succeeded: boolean }
 

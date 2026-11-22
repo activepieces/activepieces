@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/core-utils'
+import { isNil, tryCatch } from '@activepieces/core-utils'
 import { AppConnectionStatus, pickDefaultConnectionExternalId } from '@activepieces/shared'
 import { z } from 'zod'
 import { agentWorkerTools, GateDecision } from '../../../src/lib/execute/jobs/ee/agent/agent-worker-tools'
@@ -42,6 +42,19 @@ function create({ answers, listConnections, projectId }: { answers: LiveSettings
     }
 }
 
+async function unmetConnections({ answers, listConnections }: { answers: LiveSettings['answers'], listConnections: (pieceName: string) => Promise<ProjectConnection[]> }): Promise<string[]> {
+    const wanted = Object.entries(answers.connections).filter(([, choice]) => choice !== NO_CONNECTION)
+    const unmet = await Promise.all(wanted.map(async ([piece, choice]) => {
+        const pieceName = agentWorkerTools.normalizePieceName(piece)
+        const { data: connections, error } = await tryCatch(() => listConnections(pieceName))
+        if (!isNil(error)) {
+            return [`could not list ${pieceName} connections to find "${choice}": ${error.message}`]
+        }
+        return isNil(pickConnection({ connections, override: choice })) ? [`needs connection "${choice}" (${pieceName})`] : []
+    }))
+    return unmet.flat()
+}
+
 function answersCard(toolName: string): boolean {
     return toolName === QUESTIONS_CARD || CONNECTION_CARDS.has(toolName)
 }
@@ -66,6 +79,7 @@ export const ProjectConnection = z.object({ externalId: z.string(), displayName:
 export const scriptedUser = {
     create,
     answersCard,
+    unmetConnections,
 }
 
 export type ScriptedUser = Pick<DisplayToolOptions, 'waitForApproval'> & Required<Pick<DisplayToolOptions, 'onGateOpened'>> & {

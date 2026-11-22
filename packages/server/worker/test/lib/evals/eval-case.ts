@@ -106,7 +106,7 @@ function toModelMessages({ message, toolNamesById }: { message: TracedMessage, t
         return text.length === 0 ? [] : [{ role: 'user', content: text }]
     }
     if (message.role === 'assistant') {
-        const content: AssistantModelMessage['content'] = message.parts.flatMap((part) => {
+        const content: AssistantModelMessage['content'] = message.parts.flatMap((part): AssistantPart[] => {
             if (part.type === 'text' && part.content.length > 0) {
                 return [{ type: 'text' as const, text: part.content }]
             }
@@ -228,6 +228,8 @@ export const evalCase = {
 export type DatasetItem = z.infer<typeof DatasetItem>
 
 type TracedMessage = z.infer<typeof TracedMessage>
+
+type AssistantPart = Exclude<AssistantModelMessage['content'], string>[number]
 
 export type RecordedToolCall = z.infer<typeof ToolFixture>
 
