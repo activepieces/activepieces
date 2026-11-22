@@ -1,9 +1,11 @@
 import { AppConnection, Project } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import * as appConnectionServiceModule from '../../../../src/app/app-connection/app-connection-service/app-connection-service'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { encryptUtils } from '../../../../src/app/helper/encryption'
+import * as projectRepoModule from '../../../../src/app/project/project-repo'
 import { db } from '../../../helpers/db'
 import { createMockConnection, createMockProject } from '../../../helpers/mocks'
 import { createTestContext, TestContext } from '../../../helpers/test-context'
@@ -16,7 +18,7 @@ let previousEnvironment: string | undefined
 let contextsCreated = 0
 
 beforeAll(async () => {
-    app = await setupTestEnvironment()
+    app = await setupTestEnvironment({ fresh: true })
 })
 
 beforeEach(() => {
@@ -25,6 +27,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+    vi.restoreAllMocks()
     if (previousEnvironment === undefined) {
         delete process.env['AP_ENVIRONMENT']
     }
@@ -112,10 +115,18 @@ describe('eval workspace', () => {
     it('leaves nothing behind when creating a workspace fails midway', async () => {
         const ctx = await context()
         const connection = await saveConnection({ ctx })
-        await withFailingUpdates({ table: 'app_connection' }, async () => {
-            const response = await evalRequest({ method: 'POST', url: WORKSPACE_URL, body: { baseProjectId: ctx.project.id } })
-            expect(response.statusCode).toBe(StatusCodes.INTERNAL_SERVER_ERROR)
+        const originalConnectionsRepo = appConnectionServiceModule.appConnectionsRepo
+        vi.spyOn(appConnectionServiceModule, 'appConnectionsRepo').mockImplementation((entityManager) => {
+            if (entityManager) {
+                throw new Error('forced failure')
+            }
+            return originalConnectionsRepo(entityManager)
         })
+
+        const response = await evalRequest({ method: 'POST', url: WORKSPACE_URL, body: { baseProjectId: ctx.project.id } })
+        vi.restoreAllMocks()
+
+        expect(response.statusCode).toBe(StatusCodes.INTERNAL_SERVER_ERROR)
 
         const evalProjects = await databaseConnection().getRepository<Project>('project').createQueryBuilder('project')
             .where('project."platformId" = :platformId', { platformId: ctx.platform.id })
@@ -131,10 +142,18 @@ describe('eval workspace', () => {
         const connection = await saveConnection({ ctx })
         const { projectId } = (await evalRequest({ method: 'POST', url: WORKSPACE_URL, body: { baseProjectId: ctx.project.id } })).json()
 
-        await withFailingUpdates({ table: 'project' }, async () => {
-            const response = await evalRequest({ method: 'DELETE', url: `${WORKSPACE_URL}/${projectId}` })
-            expect(response.statusCode).toBeGreaterThanOrEqual(StatusCodes.INTERNAL_SERVER_ERROR)
+        const originalProjectRepo = projectRepoModule.projectRepo
+        vi.spyOn(projectRepoModule, 'projectRepo').mockImplementation((entityManager) => {
+            if (entityManager) {
+                throw new Error('forced failure')
+            }
+            return originalProjectRepo(entityManager)
         })
+
+        const response = await evalRequest({ method: 'DELETE', url: `${WORKSPACE_URL}/${projectId}` })
+        vi.restoreAllMocks()
+
+        expect(response.statusCode).toBeGreaterThanOrEqual(StatusCodes.INTERNAL_SERVER_ERROR)
 
         expect((await findProject(projectId))?.deleted).toBeNull()
         expect(await connectionProjectIds(connection.id)).toEqual([ctx.project.id, projectId])
@@ -199,18 +218,6 @@ async function findProject(id: string): Promise<Project | null> {
 async function connectionProjectIds(id: string): Promise<string[]> {
     const connection = await db.findOneByOrFail<AppConnection>('app_connection', { id })
     return connection.projectIds
-}
-
-async function withFailingUpdates({ table }: { table: string }, run: () => Promise<void>): Promise<void> {
-    const ds = databaseConnection()
-    await ds.query('CREATE OR REPLACE FUNCTION eval_test_fail_update() RETURNS trigger AS $$ BEGIN RAISE EXCEPTION \'forced failure\'; END; $$ LANGUAGE plpgsql')
-    await ds.query(`CREATE TRIGGER eval_test_fail_update BEFORE UPDATE ON "${table}" FOR EACH ROW EXECUTE FUNCTION eval_test_fail_update()`)
-    try {
-        await run()
-    }
-    finally {
-        await ds.query(`DROP TRIGGER eval_test_fail_update ON "${table}"`)
-    }
 }
 
 function evalRequest({ method, url, body }: { method: 'POST' | 'DELETE', url: string, body?: Record<string, unknown> }): ReturnType<FastifyInstance['inject']> {

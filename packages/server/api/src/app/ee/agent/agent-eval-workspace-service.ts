@@ -1,4 +1,4 @@
-import { apId, isNil } from '@activepieces/core-utils'
+import { apId, isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
 import { PiecesFilterType, Project, ProjectPlan, ProjectType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -7,9 +7,8 @@ import { z } from 'zod'
 import { appConnectionsRepo } from '../../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
-import { SystemJobName } from '../../helper/system-jobs/common'
-import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { projectRepo, projectService } from '../../project/project-service'
+import { platformProjectJobs } from '../projects/platform-project-service'
 import { ProjectPlanEntity } from '../projects/project-plan/project-plan.entity'
 
 export const agentEvalWorkspaceService = (log: FastifyBaseLogger) => ({
@@ -23,7 +22,10 @@ export const agentEvalWorkspaceService = (log: FastifyBaseLogger) => ({
     },
 
     async create({ platformId, ownerId, baseProjectId }: CreateWorkspaceParams): Promise<Project> {
-        await sweepStaleWorkspaces({ platformId, log })
+        const { error: sweepError } = await tryCatch(() => sweepStaleWorkspaces({ platformId, log }))
+        if (!isNil(sweepError)) {
+            log.warn({ error: sweepError, platform: { id: platformId } }, 'Failed to sweep stale eval workspaces')
+        }
         const project = await transaction(async (entityManager) => {
             const metadata = { [EVAL_WORKSPACE_METADATA_KEY]: true, baseProjectId }
             const savedProject = await projectService(log).create({
@@ -93,19 +95,7 @@ async function deleteWorkspaces({ platformId, projects, log }: DeleteWorkspacesP
             .execute()
         return UpdatedRows.parse(result.raw ?? []).map((row) => row.id)
     })
-    await Promise.all(deletedIds.map((id) => scheduleHardDelete({ projectId: id, platformId, log })))
-}
-
-async function scheduleHardDelete({ projectId, platformId, log }: { projectId: string, platformId: string, log: FastifyBaseLogger }): Promise<void> {
-    await systemJobsSchedule(log).upsertJob({
-        job: {
-            name: SystemJobName.HARD_DELETE_PROJECT,
-            data: { projectId, platformId, preDeletedFlowIds: [] },
-            jobId: `hard-delete-project-${projectId}`,
-        },
-        schedule: { type: 'one-time', date: apDayjs() },
-        customConfig: { attempts: 25, backoff: { type: 'fixed', delay: 60000 } },
-    })
+    await Promise.all(deletedIds.map((id) => platformProjectJobs.scheduleHardDeleteProjectJob({ id, platformId, log })))
 }
 
 function isEvalWorkspace(project: Pick<Project, 'displayName' | 'metadata'>): boolean {
