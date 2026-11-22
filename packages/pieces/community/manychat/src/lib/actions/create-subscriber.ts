@@ -65,7 +65,7 @@ export const createSubscriberAction = createAction({
 		}),
 		consent_phrase: Property.ShortText({
 			displayName: 'Consent Phrase',
-			description: 'The consent text the subscriber accepted. Needed when SMS Opt-in is on.',
+			description: 'The consent text the subscriber accepted. Needed if SMS Opt-in is on.',
 			required: false,
 		}),
 	},
