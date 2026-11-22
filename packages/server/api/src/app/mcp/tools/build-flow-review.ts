@@ -28,8 +28,23 @@ async function resolveDropdownLabels({ pieceName, pieceVersion, componentName, c
     const resolved: string[] = []
     const problems: FlowProblem[] = []
     for (const [field, prop] of Object.entries(component.props)) {
-        const labels = labelsToResolve(currentInput[field])
-        if (!DROPDOWN_TYPES.has(prop.type) || labels.length === 0 || (!isNil(fields) && !fields.includes(field))) {
+        if (!isNil(fields) && !fields.includes(field)) {
+            continue
+        }
+        const value = currentInput[field]
+        if (prop.type === PropertyType.DYNAMIC && isObject(value) && !Array.isArray(value)) {
+            const schema = await dynamicSchemaFor({ field, pieceName, pieceVersion, componentName, input: currentInput, projectId, platformId, log })
+            if (isNil(schema)) {
+                continue
+            }
+            const remap = remapDynamicKeys({ stepName, field, value, schema })
+            resolved.push(...remap.resolved)
+            problems.push(...remap.problems)
+            currentInput = { ...currentInput, [field]: remap.input }
+            continue
+        }
+        const labels = labelsToResolve(value)
+        if (!DROPDOWN_TYPES.has(prop.type) || labels.length === 0) {
             continue
         }
         const options = await optionsFor({ prop, field, pieceName, pieceVersion, componentName, input: currentInput, projectId, platformId, log })
@@ -184,6 +199,52 @@ async function optionsFor({ prop, field, pieceName, pieceVersion, componentName,
     }
     const { data: result } = await tryCatch(() => mcpUtils.executePropertyResolution({ pieceName, pieceVersion, actionOrTriggerName: componentName, propertyName: field, input, projectId, platformId, log }))
     return result?.status === 'options' && result.options.length > 0 ? result.options : undefined
+}
+
+async function dynamicSchemaFor({ field, pieceName, pieceVersion, componentName, input, projectId, platformId, log }: {
+    field: string
+    pieceName: string
+    pieceVersion: string
+    componentName: string
+    input: Record<string, unknown>
+    projectId: string
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<PiecePropertyMap | undefined> {
+    const { data: result } = await tryCatch(() => mcpUtils.executePropertyResolution({ pieceName, pieceVersion, actionOrTriggerName: componentName, propertyName: field, input, projectId, platformId, log }))
+    return result?.status === 'dynamic' && Object.keys(result.props).length > 0 ? result.props : undefined
+}
+
+function remapDynamicKeys({ stepName, field, value, schema }: {
+    stepName: string
+    field: string
+    value: Record<string, unknown>
+    schema: PiecePropertyMap
+}): LabelResolution {
+    const entries = Object.entries(value).map(([key, item]) => ({ key, item, target: dynamicKeyFor({ key, schema }) }))
+    const renamed = entries.filter((entry) => !isNil(entry.target) && entry.target !== entry.key)
+    const unknownKeys = entries.filter((entry) => isNil(entry.target)).map((entry) => JSON.stringify(entry.key))
+    const problems = unknownKeys.length === 0 ? [] : [{ step: stepName, field, message: `unknown key ${unknownKeys.join(', ')}, valid keys: ${formatDynamicKeys(schema)}` }]
+    return {
+        input: Object.fromEntries(entries.map((entry) => [entry.target ?? entry.key, entry.item])),
+        resolved: renamed.map((entry) => `${stepName}.${field}: key "${entry.key}" → ${JSON.stringify(entry.target)}`),
+        problems,
+    }
+}
+
+function dynamicKeyFor({ key, schema }: { key: string, schema: PiecePropertyMap }): string | undefined {
+    if (Object.hasOwn(schema, key)) {
+        return key
+    }
+    const wanted = key.trim().toLowerCase()
+    const matches = Object.entries(schema).filter(([, prop]) => prop.displayName.trim().toLowerCase() === wanted)
+    return matches.length === 1 ? matches[0][0] : undefined
+}
+
+function formatDynamicKeys(schema: PiecePropertyMap): string {
+    const keys = Object.entries(schema).map(([key, prop]) => prop.displayName === key ? key : `${key} (${prop.displayName})`)
+    const shown = keys.slice(0, MAX_SHOWN_OPTIONS).join(', ')
+    return keys.length > MAX_SHOWN_OPTIONS ? `${shown}, … (${keys.length - MAX_SHOWN_OPTIONS} more)` : shown
 }
 
 function pickOption({ options, label }: { options: DropdownOption[], label: string }): { value: unknown, changed: boolean, problem?: string } {
