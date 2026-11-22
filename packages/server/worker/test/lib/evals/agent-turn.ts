@@ -1,4 +1,4 @@
-import { aiProviderCredentials, AIProviderName, isNil, tryCatch } from '@activepieces/core-utils'
+import { aiProviderCredentials, AIProviderName, isNil, toError, tryCatch } from '@activepieces/core-utils'
 import { AgentPhase, agentToolSkills, PersistedAgentPartType, PersistedToolCallStatus } from '@activepieces/shared'
 import { activepiecesAiCost, aiUtils } from '@activepieces/server-utils'
 import { LanguageModelV4StreamPart, SharedV4ProviderMetadata } from '@ai-sdk/provider'
@@ -43,7 +43,7 @@ async function run({ evalCase, recordedToolCalls, mcp, modelId, auth, mode }: { 
             info: () => {},
             warn: (obj, msg) => {
                 if (REJECTION_WARNINGS.has(msg)) {
-                    warnings.push(`${msg}: ${String(obj['toolName'] ?? 'unknown tool')}`)
+                    warnings.push(rejectionLine({ toolName: String(obj['toolName'] ?? 'unknown tool'), reason: isNil(obj['error']) ? msg : `${msg}: ${toError(obj['error']).message}`, input: obj['input'] }))
                 }
             },
             error: () => {},
@@ -145,8 +145,13 @@ function withCost({ model, recorder }: { model: LanguageModel, recorder: Metrics
 
 function rejectedToolParts(parts: AgentTurnResult['uiParts']): string[] {
     return parts.flatMap((part) => part.type === PersistedAgentPartType.TOOL_CALL && !isNil(part.errorText) && REJECTED_PATTERN.test(part.errorText)
-        ? [`${part.toolName}: ${part.errorText.slice(0, ERROR_PREVIEW_CHARS)}`]
+        ? [rejectionLine({ toolName: part.toolName, reason: part.errorText, input: part.input })]
         : [])
+}
+
+function rejectionLine({ toolName, reason, input }: { toolName: string, reason: string, input: unknown }): string {
+    const [summary] = reason.split(SCHEMA_DUMP_MARK)
+    return `${toolName}: ${summary}, input: ${typeof input === 'string' ? input : JSON.stringify(input ?? null)}`
 }
 
 function turnToolCalls(parts: AgentTurnResult['uiParts']): TurnToolCall[] {
@@ -215,7 +220,7 @@ const OPENROUTER_PROVISION_ENV = 'AP_OPENROUTER_PROVISION_KEY'
 const MINTED_KEY_LIMIT_USD = 25
 const TURN_TIMEOUT_MS = 5 * 60_000
 const TRANSCRIPT_FIELD_MAX = 2_000
-const ERROR_PREVIEW_CHARS = 160
+const SCHEMA_DUMP_MARK = '\nInput schema:'
 const STOPPED_RESULT = '(not run: this is a replayed test, writes never run and the test ends the turn here)'
 const TRUNCATED_MARK = '… (the test cut this text short, the real call was complete)'
 const TIER = { id: 'smart', thinkingBudget: 10_000 }

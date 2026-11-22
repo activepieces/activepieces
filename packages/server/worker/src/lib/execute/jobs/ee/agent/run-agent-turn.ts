@@ -211,9 +211,10 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
                 return null
             }
             if (toolCall.toolName === LAZY_TOOL_NAME && isParsableJson(toolCall.input)) {
+                log.warn({ toolName: toolCall.toolName, input: toolCall.input, error }, 'Returning a malformed lazy tool call to the model')
                 return null
             }
-            log.warn({ toolName: toolCall.toolName, error }, 'Repairing malformed tool call')
+            log.warn({ toolName: toolCall.toolName, input: toolCall.input, error }, 'Repairing malformed tool call')
             const schema = await inputSchema({ toolName: toolCall.toolName })
             const { data: repaired } = await tryCatch(async () => {
                 const { text } = await generateText({
