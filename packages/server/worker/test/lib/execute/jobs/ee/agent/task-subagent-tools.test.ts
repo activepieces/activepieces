@@ -562,24 +562,24 @@ describe('createCalledAgentTools', () => {
             await params.tools[TASK_COMPLETION_TOOL_NAME].execute?.({ status: 'done', summary: 'Stripe sells payments.', artifacts: [] }, EXECUTION_OPTIONS)
             return turnResult()
         })
-        const loadAgent = vi.fn().mockResolvedValue(CALLED_AGENT)
-        const tools = createCalledAgentTools({ ...CALLED_PARAMS, loadAgent, tools: [{ toolName: 'researcher', agentId: 'agent-b', description: 'Researches companies.' }] })
+        const startAgent = vi.fn().mockResolvedValue(STARTED_AGENT)
+        const tools = createCalledAgentTools({ ...CALLED_PARAMS, startAgent, tools: [{ toolName: 'researcher', agentId: 'agent-b', description: 'Researches companies.' }] })
 
         const result = await tools['researcher'].execute?.({ request: 'Research Stripe' }, EXECUTION_OPTIONS)
 
         const params = runAgentTurn.mock.calls[0][0]
-        expect(loadAgent).toHaveBeenCalledWith({ agentId: 'agent-b' })
+        expect(startAgent).toHaveBeenCalledWith({ agentId: 'agent-b' })
         expect(params.systemPrompt).toBe('B INSTRUCTIONS')
         expect(params.models).toBe(CALLED_MODELS)
         expect(params.stepCeiling).toBe(7)
         expect(Object.keys(params.tools).sort()).toEqual(['gmail_send', TASK_COMPLETION_TOOL_NAME].sort())
         expect(params.messages).toEqual([{ role: 'user', content: 'Research Stripe' }])
-        expect(beginTask).toHaveBeenCalledWith({ title: 'Researcher' })
+        expect(beginTask).toHaveBeenCalledWith({ title: 'Researcher', sameTitleOnly: true })
         expect(result).toMatchObject({ taskId: 'task-9', status: 'done', summary: 'Stripe sells payments.', activity: { title: 'Researcher', status: 'done' }, tokens: { input: 1000, output: 100 } })
     })
 
     it('tells the caller why when the agent became unavailable after the turn started, without running it', async () => {
-        const tools = createCalledAgentTools({ ...CALLED_PARAMS, loadAgent: vi.fn().mockResolvedValue({ unavailableReason: 'The agent behind this tool is not published.' }), tools: [{ toolName: 'researcher', agentId: 'agent-b', description: 'Researches companies.' }] })
+        const tools = createCalledAgentTools({ ...CALLED_PARAMS, startAgent: vi.fn().mockResolvedValue({ unavailableReason: 'The agent behind this tool is not published.' }), tools: [{ toolName: 'researcher', agentId: 'agent-b', description: 'Researches companies.' }] })
 
         const result = await tools['researcher'].execute?.({ request: 'Research Stripe' }, EXECUTION_OPTIONS)
 
@@ -587,8 +587,20 @@ describe('createCalledAgentTools', () => {
         expect(result).toMatchObject({ status: 'failed', summary: expect.stringContaining('not published') })
     })
 
+    it('resumes only a task this same agent started, so another agent never inherits its history', async () => {
+        runAgentTurn.mockImplementation(async (params: { tools: ToolSet }) => {
+            await params.tools[TASK_COMPLETION_TOOL_NAME].execute?.({ status: 'done', summary: 'Done.', artifacts: [] }, EXECUTION_OPTIONS)
+            return turnResult()
+        })
+        const tools = createCalledAgentTools({ ...CALLED_PARAMS, startAgent: vi.fn().mockResolvedValue(STARTED_AGENT), tools: [{ toolName: 'researcher', agentId: 'agent-b', description: 'Researches companies.' }] })
+
+        await tools['researcher'].execute?.({ request: 'Continue', taskId: 'task-9' }, EXECUTION_OPTIONS)
+
+        expect(beginTask).toHaveBeenCalledWith({ title: 'Researcher', taskId: 'task-9', sameTitleOnly: true })
+    })
+
     it('offers an unavailable agent tool with the reason in its description and its answer', async () => {
-        const tools = createCalledAgentTools({ ...CALLED_PARAMS, loadAgent: vi.fn(), tools: [{ toolName: 'researcher', unavailableReason: 'The agent behind this tool was deleted.' }] })
+        const tools = createCalledAgentTools({ ...CALLED_PARAMS, startAgent: vi.fn(), tools: [{ toolName: 'researcher', unavailableReason: 'The agent behind this tool was deleted.' }] })
 
         const answer = await tools['researcher'].execute?.({ request: 'Research Stripe' }, EXECUTION_OPTIONS)
 
@@ -647,16 +659,12 @@ const BASE_PARAMS = {
 
 const CALLED_MODELS: RunAgentTurnParams['models'] = [{ model: 'b-model', provider: AIProviderName.ANTHROPIC, modelId: 'b', thinkingBudget: 0 }]
 
-const CALLED_AGENT = {
+const STARTED_AGENT = {
     displayName: 'Researcher',
     systemPrompt: 'B INSTRUCTIONS',
-    credentials: { provider: AIProviderName.ANTHROPIC },
-    providerConfigId: 'key-b',
-    modelId: 'b',
-    thinkingBudget: 0,
-    tools: [],
-    flowTools: [],
     maxSteps: 7,
+    models: CALLED_MODELS,
+    withTools: (run: (tools: ToolSet) => Promise<unknown>) => run(toolSet(['gmail_send'])),
 }
 
 const CALLED_PARAMS = {
@@ -667,7 +675,6 @@ const CALLED_PARAMS = {
     eventEmitter: BASE_PARAMS.eventEmitter,
     abortSignal: BASE_PARAMS.abortSignal,
     log: BASE_PARAMS.log,
-    prepareAgent: () => ({ models: CALLED_MODELS, withTools: (run: (tools: ToolSet) => Promise<unknown>) => run(toolSet(['gmail_send'])) }),
 }
 
 const EXECUTION_OPTIONS: ToolExecutionOptions = { toolCallId: 'call-1', messages: [] }

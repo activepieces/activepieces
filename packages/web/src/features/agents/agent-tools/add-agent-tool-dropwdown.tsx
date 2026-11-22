@@ -10,7 +10,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-import { agentToolsGate } from './lib/agent-tools-gate';
+import { useAgentsAvailable } from '../hooks/agents-hooks';
+
 import { useAgentToolDialogStore } from './stores/agents-tools';
 import { useFlowToolDialogStore } from './stores/flows-tools';
 import { useMcpToolDialogStore } from './stores/mcp-tools';
@@ -33,7 +34,7 @@ export const AddToolDropdown = ({
   const { openAddPieceToolDialog } = usePieceToolsDialogStore();
   const { setShowAddMcpDialog } = useMcpToolDialogStore();
   const { setShowAddAgentDialog } = useAgentToolDialogStore();
-  const agentToolsOn = agentToolsGate.useAgentToolsOn();
+  const agentToolsOn = useAgentsAvailable();
 
   return (
     <DropdownMenu

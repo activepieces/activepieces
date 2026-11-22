@@ -1,5 +1,5 @@
 import { isNil, unique } from '@activepieces/core-utils';
-import { Agent, AgentToolType } from '@activepieces/shared';
+import { Agent, AgentTool, AgentToolType } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronLeft, History, SearchX, Settings2 } from 'lucide-react';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
@@ -38,14 +38,18 @@ import { AgentRuns } from './runs';
 const pieceDisplayName = (pieceName: string): string =>
   pieceName.replace('@activepieces/piece-', '');
 
+function toolLabel(tool: AgentTool): string {
+  if (tool.type === AgentToolType.PIECE) {
+    return pieceDisplayName(tool.pieceMetadata.pieceName);
+  }
+  if (tool.type === AgentToolType.AGENT) {
+    return tool.agentDisplayName ?? tool.toolName;
+  }
+  return tool.toolName;
+}
+
 const buildCapabilityNote = (agent: Agent): string => {
-  const toolNames = unique(
-    agent.draft.tools.map((tool) =>
-      tool.type === AgentToolType.PIECE
-        ? pieceDisplayName(tool.pieceMetadata.pieceName)
-        : tool.toolName,
-    ),
-  );
+  const toolNames = unique(agent.draft.tools.map(toolLabel));
   if (toolNames.length === 0) {
     return t('{name} has no tools yet, so replies may need review', {
       name: agent.displayName,

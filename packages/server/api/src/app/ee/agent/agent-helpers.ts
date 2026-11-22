@@ -550,11 +550,10 @@ async function resolveAgentTools({ projectId, tools, log }: { projectId: string,
             log.warn({ tool: { name: toolRequest.toolName } }, '[agentHelpers#resolveAgentTools] Offering an agent tool as unavailable, its agent is missing, private, unpublished or calls agents itself')
             return { toolName: toolRequest.toolName, unavailableReason: agentToolRules.unavailableReason({ target }) }
         }
-        const description = target.description?.trim()
         return {
             toolName: toolRequest.toolName,
             agentId: target.id,
-            description: isNil(description) || description.length === 0 ? `Ask the agent "${target.displayName}" to do a task` : description,
+            description: target.description?.trim() || `Ask the agent "${target.displayName}" to do a task`,
         }
     })
 }

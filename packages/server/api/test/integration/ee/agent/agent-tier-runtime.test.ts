@@ -7,6 +7,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest
 import { aiModelCandidates } from '../../../../src/app/ai/ai-model-candidates'
 import { accessTokenManager } from '../../../../src/app/authentication/lib/access-token-manager'
 import { agentRpcHandlers } from '../../../../src/app/ee/agent/agent-rpc-handlers'
+import { configuredToolConversationOrThrow } from '../../../../src/app/ee/agent/rpc/rpc-shared'
 import * as jobQueueModule from '../../../../src/app/workers/job-queue/job-queue'
 import { db } from '../../../helpers/db'
 import { createMockProject, mockAndSaveAIProvider } from '../../../helpers/mocks'
@@ -230,6 +231,20 @@ describe('an agent on a platform tier', () => {
         expect(response.statusCode).toBe(StatusCodes.OK)
         const job = add.mock.calls.map(([call]) => call).find((call) => call.data.jobType === WorkerJobType.EXECUTE_AGENT_RUN)
         expect(job.data.modelTierId).toBe(tier.id)
+    })
+
+    it('runs the tools of an agent called as a tool on its own tier, and records them under its name', async () => {
+        const { ctx, tier, keyId } = await tierOnKey({ servesOwnProject: true })
+        const callerTier = await createTier({ ctx, entries: [{ configId: keyId, modelId: TIER_MODEL }] })
+        const called = await createAgent({ ctx, draft: { modelTierId: tier.id } })
+        const published = await ctx.post(`/v1/agents/${called.id}/publish`, {})
+        expect(published.statusCode).toBe(StatusCodes.OK)
+        const caller = await createAgent({ ctx, draft: { modelTierId: callerTier.id } })
+        const conversation = await createConversation({ ctx, body: { agentId: caller.id } })
+
+        const run = await configuredToolConversationOrThrow({ conversationId: conversation.id, calledAgentId: called.id })
+
+        expect(run).toMatchObject({ modelTierId: tier.id, agent: { id: called.id, displayName: 'Inbox sorter' } })
     })
 
     it('records the tier a flow step ran on, so its tools are granted the same keys', async () => {

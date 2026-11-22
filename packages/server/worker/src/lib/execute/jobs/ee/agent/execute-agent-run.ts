@@ -1,6 +1,6 @@
 import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, AiCallContext, AIProviderName, AiUsageEnvironment, ErrorCode, formatPieceError, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { aiUtils, wideEvent } from '@activepieces/server-utils'
-import { AGENT_RUN_USAGE_ORIGIN, AgentAbortReason, AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentModelCandidate, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, agentToolSkills, AgentToolType, AiProviderCredentials, apErrorOf, CalledAgentConfig, chatBilling, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentMessageSchema, PersistedAgentPart, PersistedAgentPartType, PersistedAgentRole, ResolvedAgentFlowTool, RpcTimeoutError, SaveAgentMessagesRequest, SkillSurface, WorkerJobType } from '@activepieces/shared'
+import { AGENT_RUN_USAGE_ORIGIN, AgentAbortReason, AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentModelCandidate, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, agentToolSkills, AgentToolType, AiProviderCredentials, apErrorOf, chatBilling, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentMessageSchema, PersistedAgentPart, PersistedAgentPartType, PersistedAgentRole, ResolvedAgentFlowTool, RpcTimeoutError, SaveAgentMessagesRequest, SkillSurface, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, LanguageModel, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { toResolvedAiFile } from '../../ai/ai-files'
@@ -15,7 +15,7 @@ import { declinedActions } from './declined-actions'
 import { classifyAgentRunError, delayWithJitter, drainOf, firstStepUsesFastModel, isTransientFailureText, NO_STEP_CONTENT, runAgentTurn, StreamDrain, trackStepContent, TurnModel } from './run-agent-turn'
 import { displayToolUtils } from './tools/display-tools'
 import { taskContext } from './tools/task-context'
-import { createCalledAgentTools, createTaskSubagentTools, PreparedCalledAgent, taskTokensOf } from './tools/task-subagent-tools'
+import { createCalledAgentTools, createTaskSubagentTools, StartCalledAgent, taskTokensOf } from './tools/task-subagent-tools'
 
 const BATCH_SIZE = 10
 const BATCH_FLUSH_MS = 50
@@ -283,13 +283,12 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 run: (stepMcpToolSet) => {
                     const calledAgentTools = createCalledAgentTools({
                         tools: dryRun || discoveryOnly ? [] : configuredAgentTools,
-                        loadAgent: ({ agentId }) => ctx.apiClient.getCalledAgentConfig({ platformId, conversationId, agentId }),
-                        prepareAgent: calledAgentPreparer({ ctx, conversationId, runId, flowRunId, billing, metadata, webTools, taintState, eventEmitter, log }),
+                        startAgent: calledAgentStarter({ ctx, platformId, conversationId, runId, flowRunId, billing, metadata, webTools, taintState, eventEmitter, log }),
                         tier: config.tier, creditsLeftFor, eventEmitter, abortSignal: abortController.signal, log,
                         beginTask: (input) => ctx.apiClient.beginAgentTask({ platformId, conversationId, ...input }),
                         finishTask: (input) => ctx.apiClient.finishAgentTask({ platformId, conversationId, ...input }),
                     })
-                    const baseTools = agentWorkerTools.wrapToolsWithUserWaitBarrier({ tools: { ...allTools, ...calledAgentTools, ...agentWorkerTools.wrapToolsWithTaint({ tools: stepMcpToolSet, taintState }) } })
+                    const baseTools = agentWorkerTools.wrapToolsWithUserWaitBarrier({ tools: { ...allTools, ...agentWorkerTools.wrapToolsWithTaint({ tools: stepMcpToolSet, taintState }), ...calledAgentTools } })
                     const taskTools = createTaskSubagentTools({
                         tools: baseTools, guides: config.guides, models: turnModels, researchModels: isNil(fastTurnModel) ? turnModels : [fastTurnModel], tier: config.tier,
                         taskPrompt: config.taskSystemPrompt, creditsLeftFor, eventEmitter, abortSignal: abortController.signal, log,
@@ -385,7 +384,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                         ...(uiParts.length > 0 ? [{ role: PersistedAgentRole.ASSISTANT, parts: uiParts, thinkingDurationMs, tainted: taintState.readInThisReply() }] : []),
                     ],
                     ...answeredByOf({ answeredBy: turn.answeredBy }),
-                    ...(calledAgentToolNames.length > 0 ? { calledAgentToolNames } : {}),
+                    calledAgentToolNames,
                 }
                 const { error: cancelSaveError } = await tryCatch(() => ctx.apiClient.saveAgentMessages(cancelSavePayload))
                 if (cancelSaveError) {
@@ -442,7 +441,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 ...spreadIfDefined('title', autoTitle),
                 ...spreadIfDefined('modelName', isNil(data.modelName) && isNil(config.platformTier) ? config.tier.id : undefined),
                 ...answeredByOf({ answeredBy: turn.answeredBy }),
-                ...(calledAgentToolNames.length > 0 ? { calledAgentToolNames } : {}),
+                calledAgentToolNames,
             }
             await retryWithBackoff({ fn: () => ctx.apiClient.saveAgentMessages(savePayload), description: 'Saving the transcript', throwOnExhausted: true, log })
 
@@ -626,8 +625,9 @@ function skillsFor({ source, guides }: { source: AgentRunSource, guides: Record<
     return isNil(surface) ? undefined : { surface, guides }
 }
 
-function calledAgentPreparer({ ctx, conversationId, runId, flowRunId, billing, metadata, webTools, taintState, eventEmitter, log }: {
+function calledAgentStarter({ ctx, platformId, conversationId, runId, flowRunId, billing, metadata, webTools, taintState, eventEmitter, log }: {
     ctx: JobContext
+    platformId: string
     conversationId: string
     runId: string | undefined
     flowRunId: string | undefined
@@ -637,10 +637,15 @@ function calledAgentPreparer({ ctx, conversationId, runId, flowRunId, billing, m
     taintState: TaintState
     eventEmitter: AgentEventEmitter
     log: JobContext['log']
-}): (agent: CalledAgentConfig) => PreparedCalledAgent {
-    return (agent) => {
-        const model = aiUtils.createModel({ credentials: agent.credentials, modelId: agent.modelId, metadata, billing, turnAlreadyCharged: true, providerConfigId: agent.providerConfigId })
-        const models = turnModelsFor({ credentials: agent.credentials, modelId: agent.modelId, thinkingBudget: agent.thinkingBudget, candidates: agent.candidates, model, billing, metadata })
+}): StartCalledAgent {
+    return async ({ agentId }) => {
+        const agent = await ctx.apiClient.getCalledAgentConfig({ platformId, conversationId, agentId })
+        if ('unavailableReason' in agent) {
+            return agent
+        }
+        const agentBilling: ActivepiecesAiBilling = { ...billing, context: { ...billing.context, agentId } }
+        const model = aiUtils.createModel({ credentials: agent.credentials, modelId: agent.modelId, metadata, billing: agentBilling, turnAlreadyCharged: true, providerConfigId: agent.providerConfigId })
+        const models = turnModelsFor({ credentials: agent.credentials, modelId: agent.modelId, thinkingBudget: agent.thinkingBudget, candidates: agent.candidates, model, billing: agentBilling, metadata })
         const agentKey = { provider: agent.credentials.provider, providerConfigId: agent.providerConfigId, modelId: agent.modelId }
         const tools = agentToolPolicy.withValidNames({ tools: agent.tools })
         const flowTools = agentToolPolicy.withValidNames({ tools: agent.flowTools, reserved: tools.map((configured) => configured.toolName) })
@@ -648,14 +653,14 @@ function calledAgentPreparer({ ctx, conversationId, runId, flowRunId, billing, m
             ...Object.fromEntries(Object.entries(webTools).filter(([name]) => UNATTENDED_WEB_TOOLS.includes(name))),
             ...agentWorkerTools.createConfiguredPieceTools({
                 tools: tools.filter(isPieceTool),
-                runPieceTool: ({ toolName, instruction, piece }) => ctx.apiClient.executePieceTool({ conversationId, ...spreadIfDefined('runId', runId), toolName, instruction, piece, ...agentKey, ...spreadIfDefined('flowRunId', flowRunId) }),
+                runPieceTool: ({ toolName, instruction, piece }) => ctx.apiClient.executePieceTool({ conversationId, ...spreadIfDefined('runId', runId), toolName, instruction, piece, ...agentKey, ...spreadIfDefined('flowRunId', flowRunId), calledAgentId: agentId }),
                 taintState,
                 eventEmitter,
                 log,
             }),
             ...agentWorkerTools.createConfiguredFlowTools({
                 tools: flowTools,
-                runFlowTool: ({ toolName, flowId, flowVersionId, returnsResponse, toolInput }) => ctx.apiClient.executeFlowTool({ conversationId, ...spreadIfDefined('runId', runId), ...spreadIfDefined('flowRunId', flowRunId), toolName, flowId, ...spreadIfDefined('flowVersionId', flowVersionId), toolInput, returnsResponse }),
+                runFlowTool: ({ toolName, flowId, flowVersionId, returnsResponse, toolInput }) => ctx.apiClient.executeFlowTool({ conversationId, ...spreadIfDefined('runId', runId), ...spreadIfDefined('flowRunId', flowRunId), toolName, flowId, ...spreadIfDefined('flowVersionId', flowVersionId), toolInput, returnsResponse, calledAgentId: agentId }),
                 taintState,
                 log,
             }),
@@ -667,6 +672,9 @@ function calledAgentPreparer({ ctx, conversationId, runId, flowRunId, billing, m
             }),
         }
         return {
+            displayName: agent.displayName,
+            systemPrompt: agent.systemPrompt,
+            maxSteps: agent.maxSteps,
             models,
             withTools: (run) => agentMcpClient.withStepMcpTools({
                 tools: tools.filter(isMcpTool),

@@ -22,7 +22,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 
-import { agentToolsGate } from '../lib/agent-tools-gate';
+import { useProjectAgents } from '../../hooks/agents-hooks';
 import { useAgentToolDialogStore } from '../stores/agents-tools';
 
 export function AgentAgentToolDialog({
@@ -56,7 +56,7 @@ function AgentToolDialogContent({
     ),
   );
   const { setShowAddAgentDialog } = useAgentToolDialogStore();
-  const { agents } = agentToolsGate.useProjectAgents();
+  const { agents } = useProjectAgents();
   const candidates = agents.filter(
     (agent) =>
       agent.isPublished &&

@@ -5,6 +5,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { agentHelpers } from '.././agent-helpers'
 import { agentService } from '.././agent-service'
 import { agentToolPinning } from '.././agent-tool-pinning'
+import { agentToolRules } from '.././agent-tool-rules'
 import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
 import { redisConnections } from '../../../database/redis-connections'
 import { applicationEvents } from '../../../helper/application-events'
@@ -56,12 +57,12 @@ export async function connectionForConfiguredTool({ piece, projectId, platformId
     return { externalId: pinned, ...spreadIfDefined('label', connection?.displayName) }
 }
 
-export async function configuredToolConversationOrThrow({ conversationId }: { conversationId: string }): Promise<ConfiguredToolRun> {
+export async function configuredToolConversationOrThrow({ conversationId, calledAgentId }: { conversationId: string, calledAgentId?: string }): Promise<ConfiguredToolRun> {
     const conversation = await agentHelpers.conversationRepo().findOne({ where: { id: conversationId }, relations: { agent: true } })
     if (isNil(conversation) || !CONFIGURED_TOOL_SOURCES.includes(conversation.source) || isNil(conversation.projectId)) {
         throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'This run is not allowed to run a configured piece tool' } })
     }
-    return {
+    const run: ConfiguredToolRun = {
         projectId: conversation.projectId,
         platformId: conversation.platformId,
         userId: conversation.userId,
@@ -72,6 +73,14 @@ export async function configuredToolConversationOrThrow({ conversationId }: { co
             ...spreadIfDefined('displayName', conversation.agent?.displayName),
         }),
     }
+    if (isNil(calledAgentId)) {
+        return run
+    }
+    const [called] = await agentToolRules.findTargets({ projectId: conversation.projectId, ids: [calledAgentId] })
+    if (isNil(called) || isNil(called.published) || !agentToolRules.isCallable(called)) {
+        throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'The called agent is not available to this run' } })
+    }
+    return { ...run, modelTierId: called.published.modelTierId ?? null, agent: { id: called.id, displayName: called.displayName } }
 }
 
 export async function loadOrStartConversation({ conversationId, runId, platformId, userId, source, projectId, modelName, agentId, flowRunId, waitpointId }: {

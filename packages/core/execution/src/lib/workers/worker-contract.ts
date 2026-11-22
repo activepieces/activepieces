@@ -236,6 +236,7 @@ export type BeginAgentTaskRequest = {
     conversationId: string
     title: string
     taskId?: string
+    sameTitleOnly?: boolean
 }
 
 export type BeginAgentTaskResponse = {
@@ -334,6 +335,7 @@ export type ExecutePieceToolRequest = {
     provider?: AIProviderName
     providerConfigId?: string
     modelId: string
+    calledAgentId?: string
     piece: AgentPieceToolMetadata
 }
 
@@ -367,6 +369,7 @@ export type ExecuteFlowToolRequest = {
     flowVersionId?: string
     toolInput: Record<string, unknown>
     returnsResponse: boolean
+    calledAgentId?: string
 }
 
 export type ExecuteFlowToolResponse = {

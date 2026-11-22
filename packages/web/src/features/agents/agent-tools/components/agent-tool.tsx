@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
-import { agentToolsGate } from '../lib/agent-tools-gate';
+import { useProjectAgents } from '../../hooks/agents-hooks';
 import { useAgentToolDialogStore } from '../stores/agents-tools';
 
 export const AgentAgentToolComponent = ({
@@ -24,7 +24,7 @@ export const AgentAgentToolComponent = ({
   removeTool,
 }: AgentAgentToolsAccordionProps) => {
   const { setShowAddAgentDialog } = useAgentToolDialogStore();
-  const { agents, complete } = agentToolsGate.useProjectAgents();
+  const { agents, complete } = useProjectAgents();
 
   const problemOf = (tool: AgentAgentTool): string | null => {
     if (!complete) {

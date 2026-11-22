@@ -7,11 +7,12 @@ import { AgentTaskEntity } from './agent-task-entity'
 
 const agentTaskRepo = repoFactory(AgentTaskEntity)
 
-async function begin({ platformId, conversationId, title, taskId }: {
+async function begin({ platformId, conversationId, title, taskId, sameTitleOnly = false }: {
     platformId: string
     conversationId: string
     title: string
     taskId?: string
+    sameTitleOnly?: boolean
 }): Promise<{ taskId: string, claimId: string, messages: Record<string, unknown>[] }> {
     const claimId = apId()
     if (isNil(taskId)) {
@@ -40,6 +41,7 @@ async function begin({ platformId, conversationId, title, taskId }: {
         .set({ status: SubagentTaskStatus.RUNNING, title, claimId })
         .where('id = :taskId AND "platformId" = :platformId AND "conversationId" = :conversationId', { taskId, platformId, conversationId })
         .andWhere('(status != :running OR updated < :staleBefore)', { running: SubagentTaskStatus.RUNNING, staleBefore })
+        .andWhere('(:sameTitleOnly = false OR title = :title)', { sameTitleOnly, title })
         .returning(['id', 'messages'])
         .execute()
     const claimedRows: unknown = claimed.raw
