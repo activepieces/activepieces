@@ -10,6 +10,7 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 import { frameAuth } from '../..';
+import { frameCommon } from '../common';
 
 export const frameRegisterTrigger = ({
   name,
@@ -38,7 +39,7 @@ export const frameRegisterTrigger = ({
     props: {
       account_id: Property.Dropdown({
         displayName: 'Account',
-        description: 'Accounts accessible via a given User',
+        description: 'The Frame.io account that owns the team.',
         required: true,
         refreshers: [],
         auth: frameAuth,
@@ -47,21 +48,29 @@ export const frameRegisterTrigger = ({
             return {
               options: [],
               disabled: true,
-              placeholder: 'Please authenticate first',
+              placeholder: 'Connect your Frame.io account first',
             };
           }
 
-          const response = await httpClient.sendRequest<Account[]>({
-            method: HttpMethod.GET,
-            url: `https://api.frame.io/v2/accounts`,
-            authentication: {
-              type: AuthenticationType.BEARER_TOKEN,
-              token: auth.secret_text,
-            },
-            queryParams: {},
-          });
-
           try {
+            const response = await httpClient.sendRequest<Account[]>({
+              method: HttpMethod.GET,
+              url: `${frameCommon.baseUrl}/accounts`,
+              authentication: {
+                type: AuthenticationType.BEARER_TOKEN,
+                token: auth.secret_text,
+              },
+              queryParams: {},
+            });
+
+            if (response.body.length === 0) {
+              return {
+                disabled: false,
+                options: [],
+                placeholder: 'No accounts found.',
+              };
+            }
+
             return {
               disabled: false,
               options: response.body.map((account) => {
@@ -71,18 +80,18 @@ export const frameRegisterTrigger = ({
                 };
               }),
             };
-          } catch (error) {
+          } catch {
             return {
               options: [],
               disabled: true,
-              placeholder: `Couldn't load Accounts:\n${error}`,
+              placeholder: `Couldn't load accounts. Check your connection.`,
             };
           }
         },
       }),
       team_id: Property.Dropdown({
         displayName: 'Team',
-        description: 'Teams accessible via a given Account',
+        description: 'Every project in this team can start the flow.',
         required: true,
         refreshers: ['account_id'],
         auth: frameAuth,
@@ -91,28 +100,36 @@ export const frameRegisterTrigger = ({
             return {
               options: [],
               disabled: true,
-              placeholder: 'Please authenticate first',
+              placeholder: 'Connect your Frame.io account first',
             };
           }
           if (!account_id) {
             return {
               options: [],
               disabled: true,
-              placeholder: 'Please select an account first',
+              placeholder: 'Select an account first',
             };
           }
 
-          const response = await httpClient.sendRequest<Team[]>({
-            method: HttpMethod.GET,
-            url: `https://api.frame.io/v2/accounts/${account_id}/teams`,
-            authentication: {
-              type: AuthenticationType.BEARER_TOKEN,
-              token: auth.secret_text,
-            },
-            queryParams: {},
-          });
-
           try {
+            const response = await httpClient.sendRequest<Team[]>({
+              method: HttpMethod.GET,
+              url: `${frameCommon.baseUrl}/accounts/${account_id}/teams`,
+              authentication: {
+                type: AuthenticationType.BEARER_TOKEN,
+                token: auth.secret_text,
+              },
+              queryParams: {},
+            });
+
+            if (response.body.length === 0) {
+              return {
+                disabled: false,
+                options: [],
+                placeholder: 'No teams found in this account.',
+              };
+            }
+
             return {
               disabled: false,
               options: response.body.map((team) => {
@@ -122,11 +139,11 @@ export const frameRegisterTrigger = ({
                 };
               }),
             };
-          } catch (error) {
+          } catch {
             return {
               options: [],
               disabled: true,
-              placeholder: `Couldn't load Teams:\n${error}`,
+              placeholder: `Couldn't load teams. Check your connection.`,
             };
           }
         },
@@ -137,7 +154,7 @@ export const frameRegisterTrigger = ({
     async onEnable(context) {
       const response = await httpClient.sendRequest<WebhookInformation>({
         method: HttpMethod.POST,
-        url: `https://api.frame.com/api/v2/teams/${context.propsValue.team_id}/hooks`,
+        url: `${frameCommon.baseUrl}/teams/${context.propsValue.team_id}/hooks`,
         body: {
           name: displayName,
           url: context.webhookUrl,
@@ -160,7 +177,7 @@ export const frameRegisterTrigger = ({
       if (webhook != null) {
         const request: HttpRequest = {
           method: HttpMethod.DELETE,
-          url: `https://api.frame.io/v2/hooks/${webhook.id}`,
+          url: `${frameCommon.baseUrl}/hooks/${webhook.id}`,
           authentication: {
             type: AuthenticationType.BEARER_TOKEN,
             token: context.auth.secret_text,
