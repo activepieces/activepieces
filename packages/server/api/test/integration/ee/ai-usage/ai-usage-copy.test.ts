@@ -1,4 +1,4 @@
-import { AIProviderName, AiUsageEnvironment, AiUsageOrigin, apId } from '@activepieces/core-utils'
+import { AIProviderName, AiUsageEnvironment, AiUsageOrigin, apId, omit } from '@activepieces/core-utils'
 import { FastifyInstance } from 'fastify'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { AiUsageBlock } from '../../../../src/app/ai/usage/ai-usage-block'
@@ -63,6 +63,7 @@ async function startCursorAt({ platformId, minutesAgo }: { platformId: string, m
 function block(overrides: Partial<AiUsageBlock> = {}): AiUsageBlock {
     return {
         v: 1,
+        platformId: ctx.platform.id,
         origin: AiUsageOrigin.FLOW_STEP,
         environment: AiUsageEnvironment.PRODUCTION,
         projectId: ctx.project.id,
@@ -132,6 +133,17 @@ describe('AI usage copy from Autumn', () => {
         expect(totals.spend).toBeCloseTo(0.005, 9)
         expect(totals.managedCredits).toBe(4)
         expect(await fiveMinuteCalls()).toBe(2)
+    })
+
+    it('skips events of other platforms that share the same Autumn customer, and old blocks without a platform', async () => {
+        await startCursorAt({ platformId: ctx.platform.id, minutesAgo: 30 })
+        addEvent({ minutesAgo: 25, properties: { usage: block() } })
+        addEvent({ minutesAgo: 20, properties: { usage: block({ platformId: apId() }) } })
+        addEvent({ minutesAgo: 15, properties: { usage: omit(block(), ['platformId']) } })
+
+        await aiUsageCopy(app.log).run()
+
+        expect((await dailyTotals()).calls).toBe(1)
     })
 
     it('skips an event with fractional tokens and cleans a model id with a NUL, then keeps copying', async () => {

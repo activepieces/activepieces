@@ -1,7 +1,6 @@
 import {
   createAction,
   Property,
-  OAuth2PropertyValue,
 } from '@activepieces/pieces-framework';
 import { googleCloudStorageAuth } from '../common/auth';
 import { gcsCommon } from '../common/client';
@@ -35,7 +34,7 @@ export const createObjectAcl = createAction({
   },
   async run(context) {
     const { bucket, object, entity, role, generation } = context.propsValue;
-    const auth = context.auth as OAuth2PropertyValue;
+    const accessToken = await gcsCommon.getAccessToken({ auth: context.auth, server: context.server });
 
     const aclEntry = {
       entity,
@@ -51,7 +50,7 @@ export const createObjectAcl = createAction({
       const response = await gcsCommon.makeRequest(
         HttpMethod.POST,
         path,
-        auth.access_token,
+        accessToken,
         aclEntry
       );
 

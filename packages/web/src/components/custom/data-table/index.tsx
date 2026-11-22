@@ -657,7 +657,10 @@ export function DataTable<
                   colSpan={visibleColumnCount}
                   className="h-[350px] text-center"
                 >
-                  <div className="flex flex-col items-center justify-center gap-2">
+                  <div
+                    className="flex flex-col items-center justify-center gap-2"
+                    data-testid="data-table-empty-state"
+                  >
                     {emptyStateIcon ? emptyStateIcon : <></>}
                     <p className="text-lg font-semibold">
                       {emptyStateTextTitle}

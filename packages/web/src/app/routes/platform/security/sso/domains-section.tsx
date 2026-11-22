@@ -40,6 +40,7 @@ import {
 import { samlSsoApi } from '@/features/platform-admin';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
+import { DomainVerificationStatus } from '@/lib/statuses';
 
 export const DomainsSection = ({ platform, refetch }: DomainsSectionProps) => {
   const samlConnected = !!platform.federatedAuthProviders?.saml;
@@ -113,7 +114,11 @@ const DomainRow = ({
       }
     >
       <StatusDot
-        tone={verified ? 'success' : 'warning'}
+        status={
+          verified
+            ? DomainVerificationStatus.VERIFIED
+            : DomainVerificationStatus.VERIFYING
+        }
         className="text-xs text-gray-11"
       >
         {verified ? t('Verified') : t('Verifying')}

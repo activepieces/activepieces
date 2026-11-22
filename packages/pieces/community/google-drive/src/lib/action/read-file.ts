@@ -27,6 +27,11 @@ export const readFile = createAction({
   },
   outputSchema: readFileActionOutputSchema,
   run: async ({ auth, propsValue, files }) => {
-    return downloadFileFromDrive(auth, files, propsValue.fileId, propsValue.fileName)
+    return downloadFileFromDrive({
+      auth,
+      files,
+      fileId: propsValue.fileId,
+      fileName: propsValue.fileName,
+    })
   },
 });

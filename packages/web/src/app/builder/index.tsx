@@ -49,6 +49,7 @@ const BuilderPage = () => {
     rightSidebar,
     selectedStepName,
     removeAllStepTestsListeners,
+    abortTestRunSubscription,
     selectedStep,
     stepDataPanelView,
     isStepDataPanelOpen,
@@ -58,6 +59,7 @@ const BuilderPage = () => {
     state.rightSidebar,
     state.selectedStep,
     state.removeAllStepTestsListeners,
+    state.abortTestRunSubscription,
     flowStructureUtil.getStep(
       state.selectedStep ?? '',
       state.flowVersion.trigger,
@@ -70,8 +72,9 @@ const BuilderPage = () => {
   useEffect(() => {
     return () => {
       removeAllStepTestsListeners();
+      abortTestRunSubscription();
     };
-  }, [removeAllStepTestsListeners]);
+  }, [removeAllStepTestsListeners, abortTestRunSubscription]);
   flowCanvasHooks.useShowBuilderIsSavingWarningBeforeLeaving();
   flowCanvasHooks.useFlushPendingEditsOnLeave();
   flowCanvasHooks.useRefreshDraftOnPush();
