@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { magicalApiAuth } from '../common/auth';
 import { isHttpUrl, runJob, normalizeRequestId } from '../common/poll';
 import { parseResumeOutputSchema } from '../common/output-schemas';
@@ -8,7 +8,7 @@ export const parseResume = createAction({
   name: 'parse_resume',
   classification: 'READ',
   displayName: 'Parse Resume',
-  description: 'Extract structured data (name, email, experience, skills, etc.) from a resume file.',
+  description: 'Extract contact details, experience, education and skills from a resume file.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -16,15 +16,21 @@ export const parseResume = createAction({
     idempotent: true,
   },
   props: {
+    info: Property.MarkDown({
+      value: 'Each new job uses MagicalAPI credits. If a run times out, paste the Request ID from its error under **Advanced** to get the result.',
+      variant: MarkdownVariant.INFO,
+    }),
     url: Property.ShortText({
       displayName: 'Resume URL',
-      description: 'Provide the direct link to a publicly accessible resume file (PDF, DOC, or DOCX)',
+      description: 'Public link to a PDF, DOC or DOCX file, up to 10 MB.',
+      placeholder: 'https://example.com/resume.pdf',
       required: false,
     }),
     request_id: Property.ShortText({
-      displayName: 'Request ID (for retries)',
-      description: 'If a previous run timed out, paste the Request ID here to get the result.',
+      displayName: 'Request ID',
+      description: "Gets a timed-out run's result once. Clear it to start new jobs.",
       required: false,
+      advanced: true,
     }),
   },
   outputSchema: parseResumeOutputSchema,

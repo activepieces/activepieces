@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { magicalApiAuth } from '../common/auth';
 import { runJob, normalizeRequestId } from '../common/poll';
 import { companyDataOutputSchema } from '../common/output-schemas';
@@ -8,33 +8,50 @@ export const getCompanyData = createAction({
   name: 'get_company_data',
   classification: 'READ',
   displayName: 'Get Company Data',
-  description: 'Given a company name, LinkedIn username, or website, fetch comprehensive company info.',
+  description: 'Get public LinkedIn data about a company.',
   audience: 'both',
   aiMetadata: {
     description:
       'Fetches public LinkedIn company data (name, tagline, about, website, industry, size, headquarters, founded year, followers, locations, funding, recent posts) from any one of: a company name (e.g. "Microsoft"), its LinkedIn username (the slug after /company/, e.g. "microsoft"), or its website URL. Use to enrich a company record. Each new lookup costs about 150 MagicalAPI credits. At least one identifier is required, or pass the Request ID from a prior timed-out run to fetch that result; the call polls up to 60 seconds. Idempotent: a read-only lookup (but every new lookup spends credits).',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'company',
+      display: 'tabs',
+      label: 'Company',
+      description: 'Fill in any one of these. MagicalAPI looks the company up by it.',
+      props: ['company_name', 'company_username', 'company_website'],
+    },
+  ],
   props: {
+    info: Property.MarkDown({
+      value: 'Fill in only one tab below. Each new job uses MagicalAPI credits. If a run times out, paste the Request ID from its error under **Advanced** to get the result.',
+      variant: MarkdownVariant.INFO,
+    }),
     company_name: Property.ShortText({
-      displayName: 'Company Name',
-      description: "Provide the company's legal name (e.g., 'Microsoft').",
+      displayName: 'Name',
+      description: 'As it appears on LinkedIn.',
+      placeholder: 'Microsoft',
       required: false,
     }),
     company_username: Property.ShortText({
-      displayName: 'Company LinkedIn Username',
-      description: "Provide the username from the company's LinkedIn URL (e.g., 'microsoft').",
+      displayName: 'LinkedIn Username',
+      description: 'The part after linkedin.com/company/ in its page URL.',
+      placeholder: 'microsoft',
       required: false,
     }),
     company_website: Property.ShortText({
-      displayName: 'Company Website',
-      description: "Provide the company's official website URL.",
+      displayName: 'Website',
+      description: "The company's website address.",
+      placeholder: 'https://www.microsoft.com',
       required: false,
     }),
     request_id: Property.ShortText({
-      displayName: 'Request ID (for retries)',
-      description: 'If a previous run timed out, paste the Request ID here to get the result.',
+      displayName: 'Request ID',
+      description: "Gets a timed-out run's result once. Clear it to start new jobs.",
       required: false,
+      advanced: true,
     }),
   },
   outputSchema: companyDataOutputSchema,

@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { magicalApiAuth } from '../common/auth';
 import { isHttpUrl, runJob, normalizeRequestId } from '../common/poll';
 import { scoreResumeOutputSchema } from '../common/output-schemas';
@@ -8,7 +8,7 @@ export const scoreResume = createAction({
   name: 'score_resume',
   classification: 'READ',
   displayName: 'Score Resume',
-  description: 'Scores a resume against a job description and provides a reason.',
+  description: 'Score how well a resume matches a job description.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -16,20 +16,27 @@ export const scoreResume = createAction({
     idempotent: true,
   },
   props: {
+    info: Property.MarkDown({
+      value: 'Each new job uses MagicalAPI credits. If a run times out, paste the Request ID from its error under **Advanced** to get the result.',
+      variant: MarkdownVariant.INFO,
+    }),
     url: Property.ShortText({
       displayName: 'Resume URL',
-      description: 'Provide a direct URL to a publicly accessible resume file (PDF, DOC, or DOCX).',
+      description: 'Public link to a PDF, DOC or DOCX file, up to 10 MB.',
+      placeholder: 'https://example.com/resume.pdf',
       required: false,
     }),
     job_description: Property.LongText({
       displayName: 'Job Description',
-      description: 'Provide the job description to score the resume against.',
+      description: 'The job posting text to compare the resume with.',
+      placeholder: 'Paste the job posting here',
       required: false,
     }),
     request_id: Property.ShortText({
-      displayName: 'Request ID (for retries)',
-      description: 'If a previous run timed out, paste the Request ID here to get the result.',
+      displayName: 'Request ID',
+      description: "Gets a timed-out run's result once. Clear it to start new jobs.",
       required: false,
+      advanced: true,
     }),
   },
   outputSchema: scoreResumeOutputSchema,
