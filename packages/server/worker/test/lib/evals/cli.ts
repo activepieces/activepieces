@@ -2,24 +2,24 @@ import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { existsSync } from 'node:fs'
 import { parseArgs } from 'node:util'
-import { isNil, tryCatch } from '@activepieces/core-utils'
+import { isNil, Result, tryCatch } from '@activepieces/core-utils'
 import { ToolSet } from 'ai'
 import { evalAgentTurn, TurnOutcome } from './agent-turn'
 import { RunMetrics } from './run-metrics'
 import { caseSummary, CaseExplanation } from './case-summary'
 import { evalChecks, RunScores, RunVerdict, Verdict } from './checks'
 import { colors } from './colors'
-import { createdResources } from './created-resources'
 import { evalCase, EvalCase, RecordedToolCall } from './eval-case'
 import { posthogDataset } from './posthog-dataset'
 import { Baseline, posthogExperiments, UploadedRun, VerdictCounts } from './posthog-experiments'
 import { progressTable } from './progress-table'
 import { evalPrompts } from './prompts'
-import { replay, ReplayMode, StaleRecording } from './replay'
+import { replay, StaleRecording } from './replay'
 import { resultsBrowser } from './results-browser'
 import { speedCompare } from './speed-compare'
 import { toolChanges, ToolFingerprints } from './tool-changes'
 import { evalToolSet, McpTools } from './tool-set'
+import { evalWorkspace } from './workspace'
 
 async function main(): Promise<void> {
     if (existsSync(ENV_FILE)) {
@@ -94,11 +94,6 @@ async function main(): Promise<void> {
     }
     const [auth, mcp, baselineReads] = setup.data
     console.log(`Dev server MCP tools run in project "${mcp.projectName}"`)
-    const hasLiveCases = datasets.some((dataset) => dataset.cases.some((candidate) => !isNil(candidate.live)))
-    const crowded = hasLiveCases ? await createdResources.crowdedWarning({ mcp }) : null
-    if (!isNil(crowded)) {
-        console.log(colors.yellow(crowded))
-    }
     const schemaTools = evalToolSet.build({ mcp, caseReplay: replay.create({ recordedToolCalls: [] }), auth, mode: 'replay', user: null })
     const toolFingerprints = await toolChanges.fingerprints({ tools: schemaTools })
     const live = Boolean(process.stdout.isTTY) && !values.verbose
@@ -137,7 +132,7 @@ async function main(): Promise<void> {
 
 function modeNote({ cases, recordMode }: { cases: EvalCase[], recordMode: boolean }): string {
     const liveCases = cases.filter((candidate) => !isNil(candidate.live)).length
-    const liveNote = `${liveCases} LIVE case(s): writes and read actions run in the eval project, test runs, write actions and publishing are faked, cards get scripted answers`
+    const liveNote = `${liveCases} LIVE case(s): each run gets its own fresh workspace project (deleted after the run), writes and read actions run there, test runs, write actions and publishing are faked, cards get scripted answers`
     if (liveCases === cases.length) {
         return liveNote
     }
@@ -315,18 +310,18 @@ async function runPool({ runs, run, onResult }: { runs: PlannedRun[], run: (plan
 }
 
 async function evaluate({ candidate, trial, recordedToolCalls, mcp, modelId, auth, recordMode, keep }: { candidate: EvalCase, trial: number, recordedToolCalls: RecordedToolCall[], mcp: McpTools, modelId: string, auth: Record<string, unknown>, recordMode: boolean, keep: boolean }): Promise<CaseResult> {
-    const live = !isNil(candidate.live)
-    const fresh = live ? await tryCatch(() => evalToolSet.connectMcp()) : null
-    if (!isNil(fresh?.error)) {
-        return crashedResult({ candidate, trial, reason: `could not open an eval conversation for this run: ${fresh.error.message}`, cleanupProblems: [] })
+    if (isNil(candidate.live)) {
+        const turn = await tryCatch(() => evalAgentTurn.run({ evalCase: candidate, recordedToolCalls, mcp, modelId, auth, mode: recordMode ? 'record' : 'replay' }))
+        return gradeTurn({ candidate, trial, auth, turn, cleanupProblems: [] })
     }
-    const runMcp = fresh?.data ?? mcp
-    const turn = await tryCatch(() => evalAgentTurn.run({ evalCase: candidate, recordedToolCalls, mcp: runMcp, modelId, auth, mode: runMode({ candidate, recordMode }) }))
-    const removed = live && !keep ? await createdResources.remove({ mcp: runMcp, created: createdResources.fromToolCalls({ toolCalls: turn.data?.toolCalls ?? [] }) }) : []
-    if (live) {
-        await runMcp.close().catch(() => undefined)
-    }
-    const cleanupProblems = removed.map((problem) => `case ${candidate.caseNumber} run ${trial + 1}: ${problem}`)
+    const { result, notes } = await evalWorkspace.run({
+        keep,
+        use: (workspaceMcp) => evalAgentTurn.run({ evalCase: candidate, recordedToolCalls, mcp: workspaceMcp, modelId, auth, mode: 'live' }),
+    })
+    return gradeTurn({ candidate, trial, auth, turn: result, cleanupProblems: notes.map((note) => `case ${candidate.caseNumber} run ${trial + 1}: ${note}`) })
+}
+
+async function gradeTurn({ candidate, trial, auth, turn, cleanupProblems }: { candidate: EvalCase, trial: number, auth: Record<string, unknown>, turn: Result<TurnOutcome>, cleanupProblems: string[] }): Promise<CaseResult> {
     if (!isNil(turn.error)) {
         return crashedResult({ candidate, trial, reason: turn.error.message, cleanupProblems })
     }
@@ -344,13 +339,6 @@ function crashedResult({ candidate, trial, reason, cleanupProblems }: { candidat
 
 function printCleanupProblems({ results }: { results: CaseResult[] }): void {
     results.flatMap((result) => result.cleanupProblems).forEach((problem) => console.log(colors.dim(`cleanup: ${problem}`)))
-}
-
-function runMode({ candidate, recordMode }: { candidate: EvalCase, recordMode: boolean }): ReplayMode {
-    if (!isNil(candidate.live)) {
-        return 'live'
-    }
-    return recordMode ? 'record' : 'replay'
 }
 
 function timedOutScores({ outcome }: { outcome: TurnOutcome }): RunScores {
