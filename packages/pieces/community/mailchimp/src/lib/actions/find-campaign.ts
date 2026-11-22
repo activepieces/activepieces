@@ -1,18 +1,18 @@
+import { mailchimpOutputSchemas } from '../common/output-schemas';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
-import { mailchimpCommon } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { mailchimpApi } from '../common/client';
 import { mailchimpAuth } from '../..';
-import mailchimp from '@mailchimp/mailchimp_marketing';
-import { MailchimpClient, CampaignGetOptions } from '../common/types';
 
 export const findCampaign = createAction({
   auth: mailchimpAuth,
   name: 'find_campaign',
   classification: 'SEARCH',
   displayName: 'Find Campaign',
-  description: 'Search all campaigns for the specified query terms',
+  description: 'Search sent campaigns for the specified query terms. Mailchimp search does not include drafts or scheduled campaigns; use List Campaigns for those.',
   audience: 'both',
-  aiMetadata: { description: 'Searches all campaigns in the account by a free-text query (matching titles, subject lines, and related fields) and returns the matches. Use to locate a campaign by name or wording before reading or acting on it. Read-only and idempotent; a query is required.', idempotent: true },
+  aiMetadata: { description: 'Searches sent campaigns only (Mailchimp search skips drafts and scheduled campaigns; use List Campaigns for those) by a free-text query (matching titles, subject lines, and related fields) and returns the matches. Use to locate a campaign by name or wording before reading or acting on it. Read-only and idempotent; a query is required.', idempotent: true },
+  outputSchema: mailchimpOutputSchemas['findCampaign'],
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',
@@ -31,39 +31,32 @@ export const findCampaign = createAction({
     }),
   },
   async run(context) {
-    const accessToken = getAccessTokenOrThrow(context.auth);
-    const server = await mailchimpCommon.getMailChimpServerPrefix(accessToken);
-
-    const client = mailchimp as unknown as MailchimpClient;
-    client.setConfig({
-      accessToken: accessToken,
-      server: server,
+    const query = mailchimpApi.requireText({ value: context.propsValue.query, label: 'Search Query' });
+    const fields = mailchimpApi.toStringList(context.propsValue.fields);
+    const excludeFields = mailchimpApi.toStringList(context.propsValue.exclude_fields);
+    const client = mailchimpApi.createClient({ accessToken: context.auth.access_token });
+    const searchResult = await client.request<SearchCampaignsResponse>({
+      method: HttpMethod.GET,
+      path: '/search-campaigns',
+      queryParams: {
+        query,
+        fields: fields.length > 0 ? fields.join(',') : undefined,
+        exclude_fields: excludeFields.length > 0 ? excludeFields.join(',') : undefined,
+      },
+      operation: 'search campaigns',
     });
-
-    try {
-      const searchParams: any = {
-        query: context.propsValue.query,
-      };
-
-      if (context.propsValue.fields) {
-        searchParams.fields = context.propsValue.fields.split(',').map(f => f.trim());
-      }
-
-      if (context.propsValue.exclude_fields) {
-        searchParams.exclude_fields = context.propsValue.exclude_fields.split(',').map(f => f.trim());
-      }
-
-      const searchResult = await client.searchCampaigns.search(searchParams);
-
-      return {
-        success: true,
-        query: context.propsValue.query,
-        results: searchResult.results,
-        total_items: searchResult.total_items,
-        _links: searchResult._links,
-      };
-    } catch (error: any) {
-      throw new Error(`Failed to search campaigns: ${error.message || JSON.stringify(error)}`);
-    }
+    return {
+      success: true,
+      query: context.propsValue.query,
+      results: searchResult.results ?? [],
+      total_items: searchResult.total_items ?? 0,
+      _links: searchResult._links ?? [],
+    };
   },
 });
+
+type SearchCampaignsResponse = {
+  results?: unknown[];
+  total_items?: number;
+  _links?: unknown[];
+};

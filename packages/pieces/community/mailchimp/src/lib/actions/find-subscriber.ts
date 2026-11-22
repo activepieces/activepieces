@@ -1,7 +1,9 @@
+import { mailchimpOutputSchemas } from '../common/output-schemas';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { mailchimpAuth } from '../..';
 import { mailchimpCommon } from '../common';
-import mailchimp from '@mailchimp/mailchimp_marketing';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { mailchimpApi } from '../common/client';
 
 export const findSubscriber = createAction({
   auth: mailchimpAuth,
@@ -9,10 +11,11 @@ export const findSubscriber = createAction({
   classification: 'READ',
   displayName: 'Find Subscriber',
   description: 'Search for subscribers across all lists or within a specific list. This action provides comprehensive subscriber information including merge fields, interests, and activity data.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Looks up a subscriber by exact email, returning merge fields, interests, and activity data: when an audience (list) is specified it checks that one list, and when left empty it searches every list in the account. Use to find a contact and inspect their profile or status. Requires the email; read-only and idempotent.', idempotent: true },
+  outputSchema: mailchimpOutputSchemas['findSubscriber'],
   props: {
-    list_id: mailchimpCommon.mailChimpListIdDropdown,
+    list_id: mailchimpCommon.mailChimpOptionalListIdDropdown,
     email: Property.ShortText({
       displayName: 'Email Address',
       description: 'Email address of the subscriber to search for',
@@ -30,279 +33,182 @@ export const findSubscriber = createAction({
     }),
   },
   async run(context) {
-    const access_token = context.auth.access_token;
-    const mailChimpServerPrefix = await mailchimpCommon.getMailChimpServerPrefix(access_token);
-    
-    mailchimp.setConfig({
-      accessToken: access_token,
-      server: mailChimpServerPrefix,
-    });
+    const searchEmail = mailchimpApi.requireText({ value: context.propsValue.email, label: 'Email Address' });
+    const listId = mailchimpApi.optionalText(context.propsValue.list_id);
+    const fields = mailchimpApi.toStringList(context.propsValue.include_fields);
+    const excludeFields = mailchimpApi.toStringList(context.propsValue.exclude_fields);
+    const queryParams = {
+      fields: fields.length > 0 ? fields.join(',') : undefined,
+      exclude_fields: excludeFields.length > 0 ? excludeFields.join(',') : undefined,
+    };
+    const client = mailchimpApi.createClient({ accessToken: context.auth.access_token });
+    const subscriberHash = mailchimpCommon.getMD5EmailHash(searchEmail.trim());
 
-    try {
-      const searchEmail = context.propsValue.email!;
-      const listId = context.propsValue.list_id;
-      
-      const options: any = {};
-      
-      if (context.propsValue.include_fields && context.propsValue.include_fields.length > 0) {
-        options.fields = context.propsValue.include_fields.join(',');
-      }
-      
-      if (context.propsValue.exclude_fields && context.propsValue.exclude_fields.length > 0) {
-        options.exclude_fields = context.propsValue.exclude_fields.join(',');
-      }
+    const fetchMember = (id: string) =>
+      client.requestOrNotFound<SubscriberRecord>({
+        method: HttpMethod.GET,
+        path: `/lists/${encodeURIComponent(id)}/members/${subscriberHash}`,
+        queryParams,
+        operation: 'find subscriber',
+      });
 
-      if (listId) {
-        try {
-          const subscriberHash = mailchimpCommon.getMD5EmailHash(searchEmail);
-          const subscriber = await (mailchimp as any).lists.getListMember(listId, subscriberHash, options);
-          
-          return {
-            success: true,
-            found: true,
-            match_type: 'exact',
-            search_query: searchEmail,
-            search_scope: `List: ${listId}`,
-            total_matches: 1,
-            subscribers: [{
-              id: subscriber.id,
-              email_address: subscriber.email_address,
-              unique_email_id: subscriber.unique_email_id,
-              email_type: subscriber.email_type,
-              status: subscriber.status,
-              merge_fields: subscriber.merge_fields,
-              interests: subscriber.interests,
-              stats: subscriber.stats,
-              ip_signup: subscriber.ip_signup,
-              timestamp_signup: subscriber.timestamp_signup,
-              ip_opt: subscriber.ip_opt,
-              timestamp_opt: subscriber.timestamp_opt,
-              member_rating: subscriber.member_rating,
-              last_changed: subscriber.last_changed,
-              language: subscriber.language,
-              vip: subscriber.vip,
-              email_client: subscriber.email_client,
-              location: subscriber.location,
-              tags_count: subscriber.tags_count,
-              list_id: subscriber.list_id,
-            }],
-            primary_subscriber: {
-              id: subscriber.id,
-              email_address: subscriber.email_address,
-              status: subscriber.status,
-              list_id: subscriber.list_id,
-              full_name: subscriber.merge_fields?.FNAME && subscriber.merge_fields?.LNAME ? 
-                `${subscriber.merge_fields.FNAME} ${subscriber.merge_fields.LNAME}` : 
-                subscriber.merge_fields?.FNAME || subscriber.merge_fields?.LNAME || 'N/A',
-              company: subscriber.merge_fields?.COMPANY || 'N/A',
-              phone: subscriber.merge_fields?.PHONE || 'N/A',
-              member_since: subscriber.timestamp_signup ? 
-                new Date(subscriber.timestamp_signup).toLocaleDateString() : 'N/A',
-              last_activity: subscriber.last_changed ? 
-                new Date(subscriber.last_changed).toLocaleDateString() : 'N/A',
-              member_rating: subscriber.member_rating || 0,
-              vip_status: subscriber.vip ? 'VIP' : 'Standard',
-              email_type: subscriber.email_type || 'html',
-              language: subscriber.language || 'en',
-            },
-            search_summary: {
-              query: searchEmail,
-              scope: `Limited to list: ${listId}`,
-              exact_matches: 1,
-              partial_matches: 0,
-              total_results: 1,
-            },
-          };
-        } catch (listError: any) {
-          if (listError.status === 404) {
-            return {
-              success: true,
-              found: false,
-              match_type: 'none',
-              search_query: searchEmail,
-              search_scope: `List: ${listId}`,
-              message: `Subscriber with email "${searchEmail}" not found in the specified list`,
-              search_summary: {
-                query: searchEmail,
-                scope: `Limited to list: ${listId}`,
-                exact_matches: 0,
-                partial_matches: 0,
-                total_results: 0,
-                suggestions: [
-                  'Verify the email address is spelled correctly',
-                  'Check if the subscriber exists in a different list',
-                  'Ensure the subscriber has not been unsubscribed or deleted',
-                  'Try searching without specifying a list ID to search across all lists',
-                ],
-              },
-            };
-          }
-          throw listError;
-        }
-      } else {
-        const allLists = await (mailchimp as any).lists.getAllLists({
-          fields: ['lists.id', 'lists.name'],
-          count: 1000,
+    if (listId !== undefined) {
+      const subscriber = await fetchMember(listId);
+      if (subscriber === null) {
+        await client.request<unknown>({
+          method: HttpMethod.GET,
+          path: `/lists/${encodeURIComponent(listId)}`,
+          queryParams: { fields: 'id' },
+          operation: 'find subscriber (audience lookup)',
         });
-
-        const foundSubscribers: any[] = [];
-        const searchPromises = allLists.lists.map(async (list: any) => {
-          try {
-            const subscriberHash = mailchimpCommon.getMD5EmailHash(searchEmail);
-            const subscriber = await (mailchimp as any).lists.getListMember(list.id, subscriberHash, options);
-            
-            return {
-              id: subscriber.id,
-              email_address: subscriber.email_address,
-              unique_email_id: subscriber.unique_email_id,
-              email_type: subscriber.email_type,
-              status: subscriber.status,
-              merge_fields: subscriber.merge_fields,
-              interests: subscriber.interests,
-              stats: subscriber.stats,
-              ip_signup: subscriber.ip_signup,
-              timestamp_signup: subscriber.timestamp_signup,
-              ip_opt: subscriber.ip_opt,
-              timestamp_opt: subscriber.timestamp_opt,
-              member_rating: subscriber.member_rating,
-              last_changed: subscriber.last_changed,
-              language: subscriber.language,
-              vip: subscriber.vip,
-              email_client: subscriber.email_client,
-              location: subscriber.location,
-              tags_count: subscriber.tags_count,
-              list_id: subscriber.list_id,
-              list_name: list.name,
-            };
-          } catch (error: any) {
-            if (error.status === 404) {
-              return null;
-            }
-            return {
-              list_id: list.id,
-              list_name: list.name,
-              error: `Failed to check list: ${error.message}`,
-            };
-          }
-        });
-
-        const results = await Promise.all(searchPromises);
-        const validSubscribers = results.filter(result => result && !result.error);
-        const errors = results.filter(result => result && result.error);
-
-        if (validSubscribers.length > 0) {
-          return {
-            success: true,
-            found: true,
-            match_type: 'exact',
-            search_query: searchEmail,
-            search_scope: 'All Lists',
-            total_matches: validSubscribers.length,
-            subscribers: validSubscribers,
-            primary_subscriber: {
-              id: validSubscribers[0].id,
-              email_address: validSubscribers[0].email_address,
-              status: validSubscribers[0].status,
-              list_id: validSubscribers[0].list_id,
-              list_name: validSubscribers[0].list_name,
-              full_name: validSubscribers[0].merge_fields?.FNAME && validSubscribers[0].merge_fields?.LNAME ? 
-                `${validSubscribers[0].merge_fields.FNAME} ${validSubscribers[0].merge_fields.LNAME}` : 
-                validSubscribers[0].merge_fields?.FNAME || validSubscribers[0].merge_fields?.LNAME || 'N/A',
-              company: validSubscribers[0].merge_fields?.COMPANY || 'N/A',
-              phone: validSubscribers[0].merge_fields?.PHONE || 'N/A',
-              member_since: validSubscribers[0].timestamp_signup ? 
-                new Date(validSubscribers[0].timestamp_signup).toLocaleDateString() : 'N/A',
-              last_activity: validSubscribers[0].last_changed ? 
-                new Date(validSubscribers[0].last_changed).toLocaleDateString() : 'N/A',
-              member_rating: validSubscribers[0].member_rating || 0,
-              vip_status: validSubscribers[0].vip ? 'VIP' : 'Standard',
-              email_type: validSubscribers[0].email_type || 'html',
-              language: validSubscribers[0].language || 'en',
-            },
-            search_summary: {
-              query: searchEmail,
-              scope: 'Searched across all lists',
-              exact_matches: validSubscribers.length,
-              partial_matches: 0,
-              total_results: validSubscribers.length,
-              lists_searched: allLists.lists.length,
-              search_errors: errors.length > 0 ? errors : undefined,
-            },
-          };
-        } else {
-          return {
-            success: true,
-            found: false,
-            match_type: 'none',
-            search_query: searchEmail,
-            search_scope: 'All Lists',
-            message: `No subscribers found matching the email: ${searchEmail}`,
-            search_summary: {
-              query: searchEmail,
-              scope: 'Searched across all lists',
-              exact_matches: 0,
-              partial_matches: 0,
-              total_results: 0,
-              lists_searched: allLists.lists.length,
-              search_errors: errors.length > 0 ? errors : undefined,
-              suggestions: [
-                'Verify the email address is spelled correctly',
-                'Check if the subscriber exists in a different list',
-                'Ensure the subscriber has not been unsubscribed or deleted',
-                'Consider checking if the email was entered with different capitalization',
-                'Verify the subscriber is not in an archived or deleted list',
-              ],
-            },
-          };
-        }
+        return notFound({ searchEmail, scope: `List: ${listId}`, summaryScope: `Limited to list: ${listId}`, listsSearched: 1 });
       }
-    } catch (error: any) {
-      if (error.status === 400) {
-        return {
-          success: false,
-          error: 'Invalid search request',
-          message: 'The search request was invalid. This could be due to malformed search parameters or invalid list ID.',
-          detail: error.detail || 'Bad request',
-          suggestions: [
-            'Verify the email address format is correct',
-            'Check that the list ID (if provided) is valid',
-            'Ensure all required parameters are provided',
-            'Validate the field names in include/exclude fields',
-          ],
-        };
-      }
-      
-      if (error.status === 403) {
-        return {
-          success: false,
-          error: 'Access denied',
-          message: 'You do not have permission to search for subscribers. Check your API key permissions.',
-          detail: error.detail || 'Forbidden',
-          suggestions: [
-            'Verify your API key has the necessary permissions',
-            'Check that you have access to the specified list (if provided)',
-            'Ensure your account is active and in good standing',
-            'Confirm you have subscriber read permissions enabled',
-          ],
-        };
-      }
-      
-      if (error.status === 404 && context.propsValue.list_id) {
-        return {
-          success: false,
-          error: 'List not found',
-          message: `The list with ID "${context.propsValue.list_id}" could not be found.`,
-          detail: error.detail || 'The requested resource could not be found',
-          suggestions: [
-            'Verify the list ID is correct and exists in your Mailchimp account',
-            'Check that you have access to the specified list',
-            'Ensure the list has not been deleted or archived',
-            'Try searching without specifying a list ID to search across all lists',
-          ],
-        };
-      }
-      
-      throw new Error(`Failed to search for subscriber: ${error.message || JSON.stringify(error)}`);
+      const record = toRecord({ subscriber, listName: null });
+      return found({ searchEmail, scope: `List: ${listId}`, summaryScope: `Limited to list: ${listId}`, records: [record], listsSearched: 1 });
     }
+
+    const lists = await client.listAll<{ id: string; name: string }>({
+      path: '/lists',
+      itemsKey: 'lists',
+      queryParams: { fields: 'lists.id,lists.name,total_items' },
+      operation: 'find subscriber (list audiences)',
+    });
+    const records: SubscriberOutput[] = [];
+    for (let index = 0; index < lists.length; index += CONCURRENCY) {
+      const batch = lists.slice(index, index + CONCURRENCY);
+      const results = await Promise.all(
+        batch.map(async (list) => {
+          const subscriber = await fetchMember(list.id);
+          return subscriber === null ? null : toRecord({ subscriber, listName: list.name });
+        })
+      );
+      for (const result of results) {
+        if (result !== null) {
+          records.push(result);
+        }
+      }
+    }
+    if (records.length === 0) {
+      return notFound({ searchEmail, scope: 'All Lists', summaryScope: 'Searched across all lists', listsSearched: lists.length });
+    }
+    return found({ searchEmail, scope: 'All Lists', summaryScope: 'Searched across all lists', records, listsSearched: lists.length });
   },
 });
+
+function toRecord({ subscriber, listName }: { subscriber: SubscriberRecord; listName: string | null }): SubscriberOutput {
+  return { ...subscriber, list_name: listName };
+}
+
+function mergeText({ record, key }: { record: SubscriberOutput; key: string }): string | null {
+  const value = record.merge_fields?.[key];
+  return typeof value === 'string' && value.length > 0 ? value : null;
+}
+
+function toIso(value: string | undefined): string | null {
+  if (!value) {
+    return null;
+  }
+  const time = Date.parse(value);
+  return Number.isNaN(time) ? null : new Date(time).toISOString();
+}
+
+function found({
+  searchEmail,
+  scope,
+  summaryScope,
+  records,
+  listsSearched,
+}: {
+  searchEmail: string;
+  scope: string;
+  summaryScope: string;
+  records: SubscriberOutput[];
+  listsSearched: number;
+}) {
+  const primary = records[0];
+  const firstName = mergeText({ record: primary, key: 'FNAME' });
+  const lastName = mergeText({ record: primary, key: 'LNAME' });
+  const fullName = [firstName, lastName].filter((part) => part !== null).join(' ');
+  return {
+    success: true,
+    found: true,
+    match_type: 'exact',
+    search_query: searchEmail,
+    search_scope: scope,
+    total_matches: records.length,
+    subscribers: records,
+    primary_subscriber: {
+      id: primary.id,
+      email_address: primary.email_address,
+      status: primary.status,
+      list_id: primary.list_id,
+      list_name: primary.list_name,
+      full_name: fullName.length > 0 ? fullName : null,
+      company: mergeText({ record: primary, key: 'COMPANY' }),
+      phone: mergeText({ record: primary, key: 'PHONE' }),
+      member_since: toIso(primary.timestamp_signup),
+      last_activity: toIso(primary.last_changed),
+      member_rating: primary.member_rating ?? null,
+      vip_status: primary.vip ? 'VIP' : 'Standard',
+      email_type: primary.email_type ?? null,
+      language: primary.language || null,
+    },
+    search_summary: {
+      query: searchEmail,
+      scope: summaryScope,
+      exact_matches: records.length,
+      partial_matches: 0,
+      total_results: records.length,
+      lists_searched: listsSearched,
+    },
+  };
+}
+
+function notFound({
+  searchEmail,
+  scope,
+  summaryScope,
+  listsSearched,
+}: {
+  searchEmail: string;
+  scope: string;
+  summaryScope: string;
+  listsSearched: number;
+}) {
+  return {
+    success: true,
+    found: false,
+    match_type: 'none',
+    search_query: searchEmail,
+    search_scope: scope,
+    total_matches: 0,
+    subscribers: [],
+    message: `No subscriber found with the email "${searchEmail}"`,
+    search_summary: {
+      query: searchEmail,
+      scope: summaryScope,
+      exact_matches: 0,
+      partial_matches: 0,
+      total_results: 0,
+      lists_searched: listsSearched,
+    },
+  };
+}
+
+const CONCURRENCY = 5;
+
+type SubscriberRecord = {
+  id: string;
+  email_address: string;
+  status: string;
+  list_id: string;
+  email_type?: string;
+  merge_fields?: Record<string, unknown>;
+  timestamp_signup?: string;
+  last_changed?: string;
+  member_rating?: number;
+  vip?: boolean;
+  language?: string;
+};
+
+type SubscriberOutput = SubscriberRecord & { list_name: string | null };

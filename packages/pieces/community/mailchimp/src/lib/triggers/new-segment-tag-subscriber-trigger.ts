@@ -1,3 +1,4 @@
+import { mailchimpOutputSchemas } from '../common/output-schemas';
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { mailchimpCommon } from '../common';
@@ -141,6 +142,11 @@ export const mailChimpNewSegmentTagSubscriberTrigger = createTrigger({
       required: false,
     }),
   },
+  handshakeConfiguration: mailchimpCommon.handshakeConfiguration,
+  async onHandshake(context) {
+    return mailchimpCommon.respondToHandshake({ payload: context.payload });
+  },
+  outputSchema: mailchimpOutputSchemas['triggerSegmentTag'],
   sampleData: {
     type: 'segment_tag',
     fired_at: '2024-01-15T10:30:00Z',
@@ -200,7 +206,7 @@ export const mailChimpNewSegmentTagSubscriberTrigger = createTrigger({
         server,
         listId: context.propsValue.list_id as string,
         token: accessToken,
-        webhookUrl: context.webhookUrl!,
+        webhookUrl: mailchimpCommon.withHandshakeMarker(context.webhookUrl),
         events: { 
           profile: true,
         },

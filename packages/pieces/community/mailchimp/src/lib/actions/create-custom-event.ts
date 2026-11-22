@@ -1,3 +1,4 @@
+import { mailchimpOutputSchemas } from '../common/output-schemas';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { mailchimpCommon } from '../common';
@@ -13,6 +14,7 @@ export const createCustomEvent = createAction({
   description: 'Log a custom event for an existing subscriber, for use in automations and segmentation',
   audience: 'both',
   aiMetadata: { description: 'Records a named event (with optional properties) against an existing subscriber, identified by email, in an audience (list). Use to feed subscriber behavior into automations or segments. Not idempotent: each call logs a new, distinct event occurrence.', idempotent: false },
+  outputSchema: mailchimpOutputSchemas['createCustomEvent'],
   props: {
     list_id: mailchimpCommon.mailChimpListIdDropdown,
     email: Property.ShortText({

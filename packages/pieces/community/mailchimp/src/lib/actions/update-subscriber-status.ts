@@ -1,3 +1,4 @@
+import { mailchimpOutputSchemas } from '../common/output-schemas';
 import { mailchimpCommon } from '../common';
 import mailchimp from '@mailchimp/mailchimp_marketing';
 import { createAction, Property } from '@activepieces/pieces-framework';
@@ -9,8 +10,9 @@ export const updateSubscriberInList = createAction({
   classification: 'WRITE',
   displayName: 'Update Member in an Audience (List)',
   description: 'Update a member in an existing Mailchimp audience (list)',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Updates the subscription status (subscribed, unsubscribed, cleaned, pending, transactional) of an existing member in an audience (list), identified by email. Use to change a known contact\'s status; the member must already exist, or the call fails. Idempotent: setting the same status repeatedly converges to that state.', idempotent: true },
+  outputSchema: mailchimpOutputSchemas['member'],
   props: {
     email: Property.ShortText({
       displayName: 'Email',

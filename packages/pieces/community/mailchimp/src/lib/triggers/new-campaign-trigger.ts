@@ -1,4 +1,5 @@
-import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
+import { mailchimpOutputSchemas } from '../common/output-schemas';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { mailchimpCommon } from '../common';
 import { MailChimpCampaignWebhookRequest } from '../common/types';
@@ -14,11 +15,11 @@ type WebhookData = {
 const getCampaignEventSummary = (request: MailChimpCampaignWebhookRequest): any => {
   const data = request.data;
   return {
-    campaign_id: data.campaign_id,
+    campaign_id: data.campaign_id || data.id,
     campaign_title: data.campaign_title,
-    campaign_subject: data.campaign_subject,
+    campaign_subject: data.campaign_subject || data.subject,
     campaign_send_time: data.campaign_send_time,
-    campaign_status: data.campaign_status,
+    campaign_status: data.campaign_status || data.status,
     list_id: data.list_id,
     subscriber_id: data.id,
     event_timestamp: request.fired_at,
@@ -36,12 +37,12 @@ const inferCampaignType = (data: any): string => {
 };
 
 const assessDeliveryStatus = (data: any): string => {
-  const status = data.campaign_status || '';
+  const status = data.campaign_status || data.status || '';
   if (status === 'sent') return 'Delivered';
   if (status === 'sending') return 'In Progress';
   if (status === 'scheduled') return 'Scheduled';
   if (status === 'paused') return 'Paused';
-  if (status === 'canceled') return 'Canceled';
+  if (status === 'canceled' || status === 'cancel' || status === 'cancelled') return 'Canceled';
   return 'Unknown';
 };
 
@@ -61,6 +62,11 @@ export const mailChimpNewCampaignTrigger = createTrigger({
   props: {
     list_id: mailchimpCommon.mailChimpListIdDropdown,
   },
+  handshakeConfiguration: mailchimpCommon.handshakeConfiguration,
+  async onHandshake(context) {
+    return mailchimpCommon.respondToHandshake({ payload: context.payload });
+  },
+  outputSchema: mailchimpOutputSchemas['triggerCampaign'],
   sampleData: {
     type: 'campaign',
     fired_at: '2024-01-15T10:30:00Z',
@@ -84,7 +90,7 @@ export const mailChimpNewCampaignTrigger = createTrigger({
         server,
         listId: context.propsValue.list_id as string,
         token: accessToken,
-        webhookUrl: context.webhookUrl!,
+        webhookUrl: mailchimpCommon.withHandshakeMarker(context.webhookUrl),
         events: { 
           campaign: true,
         },
