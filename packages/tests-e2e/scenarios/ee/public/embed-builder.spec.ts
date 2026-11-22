@@ -7,12 +7,13 @@ test.describe('Embedded builder', { tag: ['@feature:embed-builder', '@surface'] 
   test('create a signing key and open the embedded builder with a JWT signed by it', async ({ page, cleanup, embed }) => {
     const embedPage = new EmbedPage(page);
     await embedPage.visitSigningKeys();
+    const displayName = embed.uniqueKeyName();
     const signingKey = await embedPage.createSigningKey({
-      displayName: embed.uniqueKeyName(),
+      displayName,
       onCreated: (signingKeyId) => cleanup.track({ resource: 'signing-keys', id: signingKeyId }),
     });
     await embedPage.reload();
-    await expect(embedPage.signingKeyRow(signingKey.displayName)).toBeVisible();
+    await expect(embedPage.signingKeyRow(displayName)).toBeVisible();
 
     const token = embed.signToken({ signingKey });
     const embedded = await embed.exchange({ token });
