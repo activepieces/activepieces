@@ -1,4 +1,4 @@
-import { aiProviderCredentials, AIProviderName, isNil } from '@activepieces/core-utils'
+import { aiProviderCredentials, AIProviderName, isNil, tryCatch } from '@activepieces/core-utils'
 import { AgentRunSource } from '@activepieces/shared'
 import { aiUtils } from '@activepieces/server-utils'
 import { ToolExecutionOptions, ToolSet } from 'ai'
@@ -44,6 +44,9 @@ function build({ mcp, caseReplay, auth, mode, user }: { mcp: McpTools, caseRepla
     const approve = async (): Promise<GateDecision> => ({ outcome: 'approved' })
     const dismissCard = async (): Promise<GateDecision> => ({ outcome: 'declined' })
     const noop = async (): Promise<void> => {}
+    const storeSelectedConnection = async (toolInput: { pieceName: string, connectionExternalId: string, label: string, projectId: string }): Promise<void> => {
+        await tryCatch(() => executeOnDevServer({ toolName: STORE_SELECTED_CONNECTION_TOOL, toolInput, conversationId: mcp.conversationId }))
+    }
     const buildPlanTools = agentWorkerTools.createBuildPlanTools({ eventEmitter, getProjectId: () => EVAL_PROJECT.id })
     const mcpTools = agentMcpClient.withToolTimeouts({
         mcpToolSet: replayed({ tools: mcp.toolSet, caseReplay, mode }),
@@ -55,7 +58,7 @@ function build({ mcp, caseReplay, auth, mode, user }: { mcp: McpTools, caseRepla
         source: AgentRunSource.CHAT,
         groups: {
             local: agentWorkerTools.createLocalTools({ onSetProjectContext: async () => ({ success: true }), projects: [EVAL_PROJECT] }),
-            display: agentWorkerTools.createDisplayTools({ waitForApproval: user?.waitForApproval ?? dismissCard, displayToolTimeoutMs: DISPLAY_TOOL_TIMEOUT_MS, onConnectionSelected: noop, onGateOpened: user?.onGateOpened ?? noop }),
+            display: agentWorkerTools.createDisplayTools({ waitForApproval: user?.waitForApproval ?? dismissCard, displayToolTimeoutMs: DISPLAY_TOOL_TIMEOUT_MS, onConnectionSelected: storeSelectedConnection, onGateOpened: user?.onGateOpened ?? noop }),
             crossProject: agentWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: approve, onGateOpened: noop, taintState }),
             web: replayed({
                 tools: {
@@ -148,6 +151,7 @@ const EVAL_USER_ID = 'eval-user'
 const McpCredentials = z.object({ mcpServerUrl: z.string(), mcpToken: z.string(), conversationId: z.string(), projectName: z.string() })
 const ExecuteToolResponse = z.object({ result: z.unknown() })
 const LIST_CONNECTIONS_TOOL = 'ap_list_connections'
+const STORE_SELECTED_CONNECTION_TOOL = '__store_selected_connection'
 const ListConnectionsOutput = z.object({ structuredContent: z.object({ connections: z.array(ProjectConnection) }) })
 
 const silentLog = Fastify({ logger: false }).log
