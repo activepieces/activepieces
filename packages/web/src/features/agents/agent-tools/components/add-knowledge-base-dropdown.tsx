@@ -29,7 +29,7 @@ export const AddKnowledgeBaseDropdown = ({
     <DropdownMenu modal={false} open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger disabled={disabled} asChild>
         {children ?? (
-          <Button variant="outline" size="sm">
+          <Button type="button" variant="outline" size="sm">
             <Plus className="size-4 mr-2" />
             {t('Add')}
           </Button>

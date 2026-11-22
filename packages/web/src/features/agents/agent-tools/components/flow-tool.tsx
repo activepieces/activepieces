@@ -58,6 +58,7 @@ export const AgentFlowToolComponent = ({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
+                    type="button"
                     disabled={disabled}
                     onClick={() => removeTool(tool.toolName)}
                     variant="ghost"
@@ -79,6 +80,7 @@ export const AgentFlowToolComponent = ({
           ))}
         </div>
         <Button
+          type="button"
           variant="link"
           className="mt-4"
           size="xs"

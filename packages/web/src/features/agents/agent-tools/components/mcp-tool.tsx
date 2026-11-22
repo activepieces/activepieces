@@ -60,6 +60,7 @@ export const AgentMcpToolComponent = ({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
+                    type="button"
                     disabled={disabled}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -85,6 +86,7 @@ export const AgentMcpToolComponent = ({
         </div>
 
         <Button
+          type="button"
           variant="link"
           className="mt-4"
           size="xs"

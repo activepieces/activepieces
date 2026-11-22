@@ -72,6 +72,7 @@ export const AgentAgentToolComponent = ({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
+                      type="button"
                       disabled={disabled}
                       onClick={() => removeTool(tool.toolName)}
                       variant="ghost"
@@ -88,6 +89,7 @@ export const AgentAgentToolComponent = ({
           })}
         </div>
         <Button
+          type="button"
           variant="link"
           className="mt-4"
           size="xs"
