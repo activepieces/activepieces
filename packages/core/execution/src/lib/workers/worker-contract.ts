@@ -85,6 +85,7 @@ export type WorkerToApiContract = {
     uploadFlowBundle(input: UploadFlowBundleRequest): Promise<void>
     recordTriggerRun(input: RecordTriggerRunRequest): Promise<void>
     extendLock(input: { jobId: string, token: string, queueName: string }): Promise<void>
+    beginShutdown(): Promise<void>
     disableFlow(input: DisableFlowRequest): Promise<void>
     sendAgentEvent(input: SendAgentEventRequest): Promise<void>
     getAgentConfig(input: GetAgentConfigRequest): Promise<AgentConfigResponse>
@@ -261,8 +262,16 @@ export type SaveAgentFileResponse = {
 export type UpdateAgentProgressRequest = {
     conversationId: string
     runId?: string
-    uiMessages: unknown[]
+    uiMessages?: unknown[]
     messages?: unknown[]
+    turn?: AgentProgressTurn
+}
+
+export type AgentProgressTurn = {
+    baseMessageCount: number
+    messages: unknown[]
+    baseUiMessageCount: number
+    uiMessages: unknown[]
 }
 
 export type HeartbeatAgentConversationRequest = {
@@ -358,6 +367,7 @@ export type ResumeFlowStepRequest = {
 
 export type ExecuteAgentToolResponse = {
     result: unknown
+    cancelReason?: string
 }
 
 export type SendAgentEmailRequest = {

@@ -4,7 +4,7 @@ icon: 📊
 
 # AI Usage Page
 
-The AI Center page (`/platform/ai/usage`) that answers one question: **where is my AI money going?** These choices came from a grill session on 2026-10-20 and shape every screen. Cloud and self-hosted Enterprise only — the read API does not exist on Community — and the page stays **hidden until launch**: reachable by URL, no sidebar entry and no global-search entry, the same way `/platform/ai/tiers` ships on main.
+The AI Center page (`/platform/ai/usage`) that answers one question: **where is my AI money going?** These choices came from a grill session on 2026-10-20 and shape every screen. Cloud and self-hosted Enterprise only — the read API does not exist on Community — and it is listed under **AI Center → Usage** in the sidebar and in global search (launched 2026-11-15). The `production` scope is labelled **Published** in the UI, because "Production" confused admins; the default period is the last 7 days.
 
 ## Rules
 - **Served by Autumn-copied data, not a live query.** The three endpoints read from our own Postgres copy of Autumn's usage, not Autumn itself — see [decision 000053](../decisions/000053-ai-usage-is-copied-from-autumn-into-our-postgres.md) for the why and its gotchas (ids Autumn drops as null, the copy's paging deadline). A platform with no billing connection has `trackingSince: null` forever.
@@ -26,7 +26,7 @@ The AI Center page (`/platform/ai/usage`) that answers one question: **where is 
 
 - **"Previous period" means the same span right before**, except month views: "This month" and "Last month" compare with the same days of the month before (Oct 1–20 vs Sep 1–20). The chart legend reads its ranges straight from the read API's `ranges` field (not re-derived from chart point labels), since that is the only place the month-truncation rule is computed correctly.
 
-- **Never compare against a period that isn't fully tracked.** If tracking started after the previous period began, every change % (hero, cards, lists) is hidden and the hero says so; a partial comparison would show fake growth like +400%. If tracking started inside the current period, the chart starts at that date and a note says "covers 25 of 90 days".
+- **Never compare against a period that isn't fully tracked.** If tracking started after the previous period began, every change % (hero, cards, lists) is hidden and the hero shows an info icon instead; a partial comparison would show fake growth like +400%. The "vs previous period" label lives in the change chip's tooltip, and there is no "tracking started" note (dropped 2026-11-15 as noise).
 
 - **Every bar says what it is a share of.** Overview bars are a share of all AI spend in the period; detail-page bars are a share of that item's spend. Each bar shows its % and a tooltip that names the whole.
 
@@ -45,7 +45,7 @@ The AI Center page (`/platform/ai/usage`) that answers one question: **where is 
 4. The cost footnote.
 
 ## Gotchas
-- **Launching the page also means listing its docs.** `docs/admin-guide/guides/ai-usage.mdx` and the `endpoints/ai-usage/*` reference pages exist but are left out of `docs/docs.json` while the page is hidden, and the other AI Center guides do not link them. At launch, add `admin-guide/guides/ai-usage` to the Admin Guide "AI Center" group and the API Reference "Usage" group back, editing `docs.json` as text (a JSON re-dump reformats the whole file).
+- **The usage docs are listed in `docs/docs.json`** (Admin Guide "AI Center" group and API Reference "Usage" group). Edit `docs.json` as text; a JSON re-dump reformats the whole file.
 - **There is no list filtered by a parent item.** `/v1/ai-usage/items` only lists a whole dimension for the platform, so a related card on a detail page links to the platform-wide list and says so ("All flows on the platform"). A real "this project's flows" list needs a parent filter on the read API first.
 - An item's `name` is `null` for a deleted entity, and also for three sentinel ids that are never real rows: `no-project` (platform-level chat with no project), `activepieces-credits` (the managed-credits "key"), and `unknown-<provider>` (a key that was deleted but still has usage). The UI tells these apart by id, not by a flag — see `usageAdapters.itemDisplayName` in `usage-tab/usage-adapters.ts`.
 - A key or model item's `parent` field is never set by the read API (name lookup has no parent column for keys, and models are not looked up by name at all) — their subtitle is the provider's display name instead, reused from `SUPPORTED_AI_PROVIDERS` in `packages/web/src/features/agents/ai-providers.ts`.

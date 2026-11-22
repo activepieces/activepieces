@@ -604,12 +604,15 @@ export const TiptapEditor = ({
                   variant="ghost"
                   size="icon-xs"
                   withoutTooltip
-                  textToCopy={[...typeErrors, previewErrorMsg ?? '']
+                  value={[...typeErrors, previewErrorMsg ?? '']
                     .filter(Boolean)
                     .join('\n')}
                 />
               </div>
-              <div className="px-3 pb-2 text-danger-11 break-all whitespace-pre-wrap space-y-0.5">
+              <div
+                className="px-3 pb-2 text-danger-11 break-all whitespace-pre-wrap space-y-0.5"
+                data-testid="formula-error"
+              >
                 {typeErrors.map((err, i) => (
                   <div key={i}>{err}</div>
                 ))}
@@ -628,11 +631,14 @@ export const TiptapEditor = ({
                 variant="ghost"
                 size="icon-xs"
                 withoutTooltip
-                textToCopy={previewResult}
+                value={previewResult}
               />
             </div>
 
-            <div className="px-3 pb-2 text-gray-12 break-all whitespace-pre-wrap">
+            <div
+              className="px-3 pb-2 text-gray-12 break-all whitespace-pre-wrap"
+              data-testid="formula-preview"
+            >
               {previewResult || (
                 <span className="text-gray-11 italic">{t('empty')}</span>
               )}

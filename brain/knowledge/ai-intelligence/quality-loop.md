@@ -35,6 +35,7 @@ How the AI team learns what goes wrong in real chats, turns it into tests, and p
 ## Key files
 
 - `.agents/skills/ai-task/`: the `quality` moment and its `sql/quality-*.sql` queries
+- `packages/server/worker/test/lib/evals/`: the PostHog eval CLI, see *running-chat-evals*
 - `packages/server/worker/test/lib/agent-eval/`: the eval harness, replay and judge (`runner`)
 - `packages/server/utils/src/ai-observability.ts`: exports AI spans to PostHog (`aiObservability`)
 - `.github/workflows/agent-evals.yml`: the PR, nightly and weekly eval runs

@@ -97,6 +97,7 @@ const TemplatesPage = () => {
               <>
                 <div className="flex flex-row w-full justify-between gap-1">
                   <SearchInput
+                    data-testid="templates-search-input"
                     value={search}
                     onChange={handleSearchChange}
                     placeholder={t('Search templates by name or description')}

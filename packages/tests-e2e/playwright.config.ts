@@ -67,6 +67,10 @@ const config: PlaywrightTestConfig = {
       use: {
         ...devices['Desktop Chrome'],
         headless: true,
+        ...(E2E_INSTANCE_URL && {
+          channel: 'chromium',
+          launchOptions: { args: [`--unsafely-treat-insecure-origin-as-secure=${E2E_INSTANCE_URL}`] },
+        }),
       },
     },
   ],

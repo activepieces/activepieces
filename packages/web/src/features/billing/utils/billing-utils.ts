@@ -4,20 +4,39 @@ import {
   CreditsBillableFeature,
   PlanName,
   PlatformBillingInformation,
+  PlatformPlan,
+  InvitationStatus,
+  UserStatus,
 } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 
 import { formatUtils } from '@/lib/format-utils';
+import { CreditsSeverity } from '@/lib/statuses';
 
 const DAILY_RESET_INTERVAL = 'day';
+
 const MINUTES_PER_HOUR = 60;
+
 const CREDITS_WARNING_PERCENT = 70;
+
 const CREDITS_DANGER_PERCENT = 90;
+
 const COMPACT_CREDITS_FROM = 1_000_000;
+
+function formatDate(date: dayjs.ConfigType): string {
+  return dayjs(date).format(BILLING_DATE_FORMAT);
+}
 
 function isPaidPlan(planName: string | null | undefined): planName is string {
   return !isNil(planName) && planName !== PlanName.FREE;
+}
+
+function planDisplayName(info: PlanDisplayNameInfo | undefined): string {
+  return (
+    info?.autumnPlanName ??
+    (info && isPaidPlan(info.plan.plan) ? info.plan.plan : t('Free'))
+  );
 }
 
 function isYearlyPlan(info: IsYearlyPlanInfo): boolean {
@@ -36,12 +55,12 @@ function percentUsed({ used, total }: PercentUsedParams): number {
 
 function creditsSeverity(percent: number): CreditsSeverity {
   if (percent >= CREDITS_DANGER_PERCENT) {
-    return 'error';
+    return CreditsSeverity.ERROR;
   }
   if (percent >= CREDITS_WARNING_PERCENT) {
-    return 'warning';
+    return CreditsSeverity.WARNING;
   }
-  return 'default';
+  return CreditsSeverity.DEFAULT;
 }
 
 function formatCredits(credits: number): string {
@@ -63,10 +82,14 @@ function shouldShowCreditsAlert({
   if (isEmbedded || !isProjectRoute || edition === ApEdition.COMMUNITY) {
     return false;
   }
-  if (isUnlimited || !isBillingEnforced || severity === 'default') {
+  if (
+    isUnlimited ||
+    !isBillingEnforced ||
+    severity === CreditsSeverity.DEFAULT
+  ) {
     return false;
   }
-  return severity === 'error' || !isDismissalActive;
+  return severity === CreditsSeverity.ERROR || !isDismissalActive;
 }
 
 function resolveCreditsAction({
@@ -97,7 +120,7 @@ function resolveSeatCap(info: PlatformBillingInformation): SeatCap {
     scheduledCap,
     effectiveLimit: capBinds ? scheduledCap : limit,
     scheduledPlanName: info.scheduledPlanName ?? t('Free'),
-    switchDate: dayjs(info.cancelAt).format(BILLING_DATE_FORMAT),
+    switchDate: formatDate(info.cancelAt),
   };
 }
 
@@ -110,9 +133,9 @@ function scheduledCapNotice(info: PlatformBillingInformation): string {
 }
 
 function resolveCreditsReset({
-  dateFormat,
+  dateFormat = BILLING_DATE_FORMAT,
   ...params
-}: CreditsResetParams & { dateFormat: string }): CreditsResetLine | null {
+}: CreditsResetParams & { dateFormat?: string }): CreditsResetLine | null {
   const reset = resolveResetMoment(params);
   if (isNil(reset)) {
     return null;
@@ -150,8 +173,50 @@ function formatTimeUntil(value: string): string {
   });
 }
 
+function reservedSeats({
+  users,
+  invitations,
+  now = new Date(),
+}: {
+  users: { email: string; status: UserStatus }[];
+  invitations: {
+    email: string;
+    status: InvitationStatus;
+    updated: string;
+  }[];
+  now?: Date;
+}): number {
+  const active = users.filter((user) => user.status === UserStatus.ACTIVE);
+  const existingUserEmails = new Set(
+    users.map((user) => user.email.toLowerCase()),
+  );
+  const cutoff = dayjs(now).subtract(INVITATION_RESERVATION_DAYS, 'day');
+  const pending = new Set(
+    invitations
+      .filter(
+        (invitation) =>
+          RESERVING_STATUSES.includes(invitation.status) &&
+          dayjs(invitation.updated).isAfter(cutoff),
+      )
+      .map((invitation) => invitation.email.toLowerCase())
+      .filter((email) => !existingUserEmails.has(email)),
+  );
+  return active.length + pending.size;
+}
+
+export const seatUtils = { reservedSeats };
+
+const INVITATION_RESERVATION_DAYS = 7;
+
+const RESERVING_STATUSES = [
+  InvitationStatus.PENDING,
+  InvitationStatus.ACCEPTED,
+];
+
 export const billingUtils = {
+  formatDate,
   isPaidPlan,
+  planDisplayName,
   isYearlyPlan,
   percentUsed,
   creditsSeverity,
@@ -163,14 +228,30 @@ export const billingUtils = {
   resolveCreditsReset,
 };
 
-export const BILLING_DATE_FORMAT = 'MMM D, YYYY';
+const BILLING_DATE_FORMAT = 'MMM D, YYYY';
+
+export const enterpriseDocs = {
+  switchToEnterpriseUrl:
+    'https://www.activepieces.com/docs/install/configuration/overview#enterprise-edition-optional',
+};
+
+export const enterpriseMotion = {
+  appear:
+    'animate-in fade-in-0 slide-in-from-bottom-1 duration-200 ease-expand-out motion-reduce:animate-none',
+  swap: 'animate-in fade-in-0 duration-200 ease-expand-out motion-reduce:animate-none',
+};
+
+export type PlanDisplayNameInfo = Pick<
+  PlatformBillingInformation,
+  'autumnPlanName'
+> & {
+  plan: Pick<PlatformPlan, 'plan'>;
+};
 
 export type IsYearlyPlanInfo = Pick<
   PlatformBillingInformation,
   'planInterval' | 'creditsResetInterval'
 >;
-
-export type CreditsSeverity = 'default' | 'warning' | 'error';
 
 export type ShouldShowCreditsAlertParams = {
   edition: ApEdition | null | undefined;

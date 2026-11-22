@@ -228,6 +228,7 @@ const ImportTableForm = ({
       <form
         onSubmit={form.handleSubmit((data) => importFile(data))}
         className="space-y-4"
+        data-editing="true"
       >
         <ApMarkdown
           className="text-left"
@@ -374,7 +375,7 @@ const ImportTableForm = ({
               <CopyButton
                 variant="ghost"
                 withoutTooltip={true}
-                textToCopy={serverError}
+                value={serverError}
               />
             </div>
           </div>
