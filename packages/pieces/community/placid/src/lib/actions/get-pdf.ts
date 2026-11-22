@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { placidAuth } from '../auth';
 import { PlacidClient } from '../common/client';
+import { placidSchemas } from '../common/output-schemas';
 
 export const getPdf = createAction({
 	auth: placidAuth,
@@ -10,10 +11,12 @@ export const getPdf = createAction({
 	description: 'Retrieves the generated PDF by its ID.',
 	audience: 'both',
 	aiMetadata: { description: 'Look up a previously created Placid PDF by its ID to read its current status and download URL. Use this to poll a queued render to completion or fetch the result of an earlier Create PDF call. Requires the PDF ID. Idempotent read-only lookup.', idempotent: true },
+	outputSchema: placidSchemas.pdf,
 	props: {
 		pdfId: Property.ShortText({
 			displayName: 'PDF ID',
-			description: 'The ID of the PDF to retrieve',
+			description: 'The ID of the PDF to retrieve.',
+			placeholder: '136034145',
 			required: true,
 		}),
 	},

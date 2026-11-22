@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { placidAuth } from '../auth';
-import { PlacidClient } from '../common/client';
+import { PlacidClient, placidHelpers } from '../common/client';
+import { placidSchemas } from '../common/output-schemas';
 import {
 	videoTemplateDropdown,
 	webhookProperty,
@@ -8,7 +9,6 @@ import {
 	passthroughProperty,
 	templateLayersProperty,
 } from '../common/props';
-import { isNil } from '@activepieces/pieces-framework';
 import { PlacidCreateVideoRequest } from '../common';
 
 export const createVideo = createAction({
@@ -17,8 +17,9 @@ export const createVideo = createAction({
 	classification: 'WRITE',
 	displayName: 'Create Video',
 	description: 'Produces a video based on a template.',
-	audience: 'both',
-	aiMetadata: { description: 'Render a video from a Placid template by filling its layers with provided data; choose this to produce a rendered video asset from a template. Requires a template UUID. By default the render is queued and returns immediately; enabling create_now blocks and polls until the video finishes. Not idempotent — each call queues a new render job.', idempotent: false },
+	audience: 'human',
+	aiMetadata: { description: 'Render a video from a Placid template by filling its layers with provided data; choose this to produce a rendered video asset from a template. Requires a template UUID. By default the render is queued and returns immediately; enabling create_now waits up to 5 minutes for the video to finish and returns it still queued after that; a failed render returns the Placid error message. Not idempotent — each call queues a new render job.', idempotent: false },
+	outputSchema: placidSchemas.video,
 	props: {
 		template: videoTemplateDropdown,
 		layers: templateLayersProperty('video'),
@@ -29,32 +30,19 @@ export const createVideo = createAction({
 		}),
 		outputFilename: Property.ShortText({
 			displayName: 'Output File Name',
+			description: 'File name without extension, e.g. invoice-123.',
+			placeholder: 'invoice-123',
 			required: false,
 		}),
 		webhook_success: webhookProperty,
-		create_now: createNowProperty,
+		create_now: createNowProperty('video'),
 		passthrough: passthroughProperty,
 	},
 	async run(context) {
 		const { template, outputFps, outputFilename, webhook_success, create_now, passthrough } =
 			context.propsValue;
 
-		const layers = context.propsValue.layers ?? {};
-
-		const modifiedLayers: Record<string, any> = {};
-
-		for (const [key, value] of Object.entries(layers)) {
-			if (value === '' || isNil(value)) continue;
-
-			const [mainKey, subKey] = key.split(':::');
-			if (!mainKey || !subKey) continue;
-
-			if (!modifiedLayers[mainKey]) {
-				modifiedLayers[mainKey] = {};
-			}
-
-			modifiedLayers[mainKey][subKey] = value;
-		}
+		const modifiedLayers = placidHelpers.flattenDynamicLayers(context.propsValue.layers);
 
 		const client = new PlacidClient(context.auth);
 
@@ -63,12 +51,11 @@ export const createVideo = createAction({
 			...(outputFps && { fps: outputFps }),
 		};
 
-		// Videos require a clips array structure
 		const request: PlacidCreateVideoRequest = {
 			clips: [
 				{
 					template_uuid: template,
-					...(modifiedLayers && { layers: modifiedLayers }),
+					...(modifiedLayers ? { layers: modifiedLayers } : {}),
 				},
 			],
 			...(Object.keys(modifications).length && { modifications }),

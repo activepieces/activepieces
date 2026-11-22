@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { placidAuth } from '../auth';
-import { PlacidClient } from '../common/client';
+import { PlacidClient, placidHelpers } from '../common/client';
+import { placidSchemas } from '../common/output-schemas';
 import {
 	imageTemplateDropdown,
 	webhookProperty,
@@ -8,7 +9,6 @@ import {
 	passthroughProperty,
 	templateLayersProperty,
 } from '../common/props';
-import { isNil } from '@activepieces/pieces-framework';
 import { PlacidCreateImageRequest } from '../common';
 
 export const createImage = createAction({
@@ -17,13 +17,15 @@ export const createImage = createAction({
 	classification: 'WRITE',
 	displayName: 'Create Image',
 	description: 'Generates a dynamic image from a specified template using input data.',
-	audience: 'both',
-	aiMetadata: { description: 'Render a dynamic image from a Placid template by filling its layers with provided data; choose this to produce a rendered image asset from a template. Requires a template UUID. By default the render is queued and returns immediately; enabling create_now blocks and polls until the image finishes. Not idempotent — each call queues a new render job.', idempotent: false },
+	audience: 'human',
+	aiMetadata: { description: 'Render a dynamic image from a Placid template by filling its layers with provided data; choose this to produce a rendered image asset from a template. Requires a template UUID. By default the render is queued and returns immediately; enabling create_now waits up to 5 minutes for the image to finish and returns it still queued after that; a failed render returns the Placid error message. Not idempotent — each call queues a new render job.', idempotent: false },
+	outputSchema: placidSchemas.image,
 	props: {
 		template: imageTemplateDropdown,
 		layers: templateLayersProperty('image'),
 		outputDpi: Property.StaticDropdown({
 			displayName: 'Output DPI',
+			description: 'Resolution of the output; leave empty for the template default.',
 			required: false,
 			options: {
 				disabled: false,
@@ -36,32 +38,19 @@ export const createImage = createAction({
 		}),
 		outputFilename: Property.ShortText({
 			displayName: 'Output File Name',
+			description: 'File name without extension, e.g. invoice-123.',
+			placeholder: 'invoice-123',
 			required: false,
 		}),
 		webhook_success: webhookProperty,
-		create_now: createNowProperty,
+		create_now: createNowProperty('image'),
 		passthrough: passthroughProperty,
 	},
 	async run(context) {
 		const { template, webhook_success, create_now, passthrough, outputDpi, outputFilename } =
 			context.propsValue;
 
-		const layers = context.propsValue.layers ?? {};
-
-		const modifiedLayers: Record<string, any> = {};
-
-		for (const [key, value] of Object.entries(layers)) {
-			if (value === '' || isNil(value)) continue;
-
-			const [mainKey, subKey] = key.split(':::');
-			if (!mainKey || !subKey) continue;
-
-			if (!modifiedLayers[mainKey]) {
-				modifiedLayers[mainKey] = {};
-			}
-
-			modifiedLayers[mainKey][subKey] = value;
-		}
+		const modifiedLayers = placidHelpers.flattenDynamicLayers(context.propsValue.layers);
 
 		const client = new PlacidClient(context.auth);
 
@@ -72,7 +61,7 @@ export const createImage = createAction({
 
 		const request: PlacidCreateImageRequest = {
 			template_uuid: template,
-			...(modifiedLayers && { layers: modifiedLayers }),
+			...(modifiedLayers ? { layers: modifiedLayers } : {}),
 			...(webhook_success && { webhook_success }),
 			...(create_now !== undefined && { create_now }),
 			...(passthrough && { passthrough }),
