@@ -1,10 +1,15 @@
 import { chunk, isNil, tryCatch } from '@activepieces/core-utils'
 import { LiveSettings, SeedFlow, SeedTable } from './eval-case'
+import { seedConnections } from './seed-connections'
 import { evalToolSet, McpTools, ToolResult } from './tool-set'
 
-async function create({ mcp, seed }: { mcp: McpTools, seed: LiveSettings['seed'] }): Promise<SeededState> {
+async function create({ mcp, seed, answers }: { mcp: McpTools, seed: LiveSettings['seed'], answers: LiveSettings['answers'] }): Promise<SeededState> {
+    const resolved = await seedConnections.resolve({ flows: seed.flows, answers, listConnections: (pieceName) => evalToolSet.listConnections({ mcp, pieceName }) })
+    if (resolved.unmet.length > 0) {
+        throw new Error(`skipped: ${resolved.unmet.join('; ')}`)
+    }
     const tables = await Promise.all(seed.tables.map((table) => seedTable({ mcp, table })))
-    const folders = await Promise.all(byFolder(seed.flows).map((flows) => seedInOrder({ mcp, flows })))
+    const folders = await Promise.all(byFolder(resolved.flows).map((flows) => seedInOrder({ mcp, flows })))
     return { flows: folders.flat(), tables }
 }
 

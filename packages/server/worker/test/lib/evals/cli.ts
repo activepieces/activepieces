@@ -19,8 +19,9 @@ import { EVAL_PROJECT, evalPrompts } from './prompts'
 import { replay, StaleRecording } from './replay'
 import { repoPaths } from './repo-paths'
 import { resultsBrowser } from './results-browser'
-import { scriptedUser } from './scripted-user'
+import { ProjectConnection, scriptedUser } from './scripted-user'
 import { evalSeed } from './seed'
+import { seedConnections } from './seed-connections'
 import { DatasetOutcome, RunnableDataset, SkippedCase, skippedCases } from './skipped-cases'
 import { speedCompare } from './speed-compare'
 import { toolChanges, ToolFingerprints } from './tool-changes'
@@ -150,7 +151,15 @@ async function withoutSkipped({ dataset, mcp }: { dataset: { name: string, cases
     return skippedCases.split({
         dataset,
         projectName: mcp.projectName,
-        unmetOf: async (candidate) => isNil(candidate.live) ? [] : scriptedUser.unmetConnections({ answers: candidate.live.answers, listConnections: (pieceName) => evalToolSet.listConnections({ mcp, pieceName }) }),
+        unmetOf: async (candidate) => {
+            if (isNil(candidate.live)) {
+                return []
+            }
+            const { answers, seed } = candidate.live
+            const listConnections = (pieceName: string): Promise<ProjectConnection[]> => evalToolSet.listConnections({ mcp, pieceName })
+            const [forCards, forSeed] = await Promise.all([scriptedUser.unmetConnections({ answers, listConnections }), seedConnections.unmet({ flows: seed.flows, answers, listConnections })])
+            return [...new Set([...forCards, ...forSeed])]
+        },
     })
 }
 
@@ -348,15 +357,12 @@ async function evaluate({ candidate, trial, recordedToolCalls, mcp, modelId, aut
         const turn = await tryCatch(async () => ({ outcome: await evalAgentTurn.run({ evalCase: candidate, recordedToolCalls, mcp, modelId, auth, mode: recordMode ? 'record' : 'replay' }), codeCheck: evalCodeChecks.notRun }))
         return gradeTurn({ candidate, trial, auth, turn, notes: [] })
     }
-    const { seed, codeChecks } = candidate.live
+    const { seed, codeChecks, answers } = candidate.live
     const { result, notes } = await evalWorkspace.run({
         keep,
         use: async (workspaceMcp) => {
-            const seeded = await tryCatch(() => evalSeed.create({ mcp: workspaceMcp, seed }))
-            if (!isNil(seeded.error)) {
-                throw new Error(`seed failed: ${seeded.error.message}`)
-            }
-            const outcome = await evalAgentTurn.run({ evalCase: candidate, recordedToolCalls, mcp: workspaceMcp, modelId, auth, mode: 'live', seeded: seeded.data })
+            const seeded = await evalSeed.create({ mcp: workspaceMcp, seed, answers })
+            const outcome = await evalAgentTurn.run({ evalCase: candidate, recordedToolCalls, mcp: workspaceMcp, modelId, auth, mode: 'live', seeded })
             return { outcome, codeCheck: await evalCodeChecks.run({ checks: codeChecks, outcome, mcp: workspaceMcp }) }
         },
     })

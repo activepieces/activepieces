@@ -80,6 +80,7 @@ export const scriptedUser = {
     create,
     answersCard,
     unmetConnections,
+    pickConnection,
 }
 
 export type ScriptedUser = Pick<DisplayToolOptions, 'waitForApproval'> & Required<Pick<DisplayToolOptions, 'onGateOpened'>> & {
