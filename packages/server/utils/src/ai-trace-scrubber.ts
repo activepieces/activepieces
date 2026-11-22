@@ -155,7 +155,7 @@ function holdsSecret({ key, value }: { key: string, value: unknown }): boolean {
 
 function isSensitiveHeaderPair(record: Record<string, unknown>): boolean {
     const name = record['name'] ?? record['key']
-    return typeof name === 'string' && 'value' in record && isSensitiveKey(name)
+    return typeof name === 'string' && typeof record['value'] === 'string' && SENSITIVE_HEADER_NAMES.includes(name.toLowerCase())
 }
 
 function isSensitiveKey(key: string): boolean {
@@ -174,6 +174,8 @@ const SCAN_BUDGET_PER_CHAR = 10
 const SENSITIVE_KEY_PARTS = ['token', 'password', 'passwd', 'secret', 'apikey', 'authorization', 'credential', 'privatekey', 'accesskey', 'cookie']
 
 const SENSITIVE_EXACT_KEYS = ['auth', 'authfields']
+
+const SENSITIVE_HEADER_NAMES = ['authorization', 'proxy-authorization', 'cookie', 'set-cookie', 'x-api-key', 'api-key']
 
 const ERROR_DETAIL_ATTRIBUTES = new Set(['exception.message', 'exception.stacktrace'])
 

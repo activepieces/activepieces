@@ -113,6 +113,15 @@ describe('aiTraceScrubber', () => {
             headers: [{ name: 'Authorization', value: '[REDACTED]' }, { name: 'Accept', value: 'application/json' }],
         })
     })
+
+    it('masks only header-style name/value pairs, keeping metrics whose name merely mentions a token', () => {
+        const input = { headers: [{ name: 'x-API-key', value: 'hidden-1' }, { key: 'Cookie', value: 'hidden-2' }], metrics: [{ name: 'Token count', value: 5 }, { name: 'Total tokens', value: '12' }] }
+
+        expect(aiTraceScrubber.scrubJson({ value: input })).toEqual({
+            headers: [{ name: 'x-API-key', value: '[REDACTED]' }, { key: 'Cookie', value: '[REDACTED]' }],
+            metrics: [{ name: 'Token count', value: 5 }, { name: 'Total tokens', value: '12' }],
+        })
+    })
 })
 
 function exportOneSpan(record: (tracer: ReturnType<BasicTracerProvider['getTracer']>) => void): ReadableSpan {
