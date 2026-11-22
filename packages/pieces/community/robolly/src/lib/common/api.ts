@@ -110,7 +110,7 @@ async function renderTemplate({
 		),
 		...Object.fromEntries(
 			Object.entries(fields)
-				.filter(([, value]) => value !== '')
+				.filter(([, value]) => value !== undefined && value !== null && value !== '')
 				.map(([key, value]) => [key, String(value)]),
 		),
 	};
