@@ -10,11 +10,11 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 #### Code steps always run on Deno; the API no longer creates legacy code steps
 
-Code steps now always run on the Deno runtime. When a flow is created, updated, imported or duplicated through the API, every code step's `useDeno` is forced to `true`: a request that sets `useDeno: false` is still accepted, but the step is saved as a Deno step. Existing saved flows keep running their legacy (non-Deno) code steps until a step is edited, at which point it moves to Deno. This removes the legacy per-step Node runtime that ran with full `child_process`/native-module access, a code-execution hardening.
+Code steps now always run on the Deno runtime. Whenever a flow is written through the API — created, updated, imported, duplicated, moved or pasted — every code step's `useDeno` is forced to `true`: a request that sets `useDeno: false` is still accepted, but the step is saved as a Deno step. This also converts legacy code steps that are moved or duplicated indirectly: moving or duplicating a container step (a loop or router) re-adds its children, so legacy code steps inside it switch to Deno even though you did not edit them. Existing saved flows keep running their legacy (non-Deno) code steps until the flow is next modified. This removes the legacy per-step Node runtime that ran with full `child_process`/native-module access, a code-execution hardening.
 
 #### What you need to do
 
-- If a code step relied on legacy (non-Deno) bundling behaviour, confirm it runs on Deno before re-saving it. The Deno runtime is already the default the flow builder uses for new code steps.
+- If a code step relied on legacy (non-Deno) bundling behaviour, confirm it runs on Deno before the flow is next modified — including moving or duplicating a loop or router that contains it, not only editing the step itself. The Deno runtime is already the default the flow builder uses for new code steps.
 
 #### Fireflies.ai 0.2.0: three find actions are no longer AI agent tools, and Upload Audio returns a smaller output
 
