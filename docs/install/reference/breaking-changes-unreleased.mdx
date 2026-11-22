@@ -8,6 +8,16 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Browserless 0.3.0: Generate PDF now uses Custom Width and Custom Height
+
+**Generate PDF** always sent a paper size (A4 when Paper Size was empty), and Browserless gives the paper size priority, so **Custom Width** and **Custom Height** were ignored. From 0.3.0 the paper size is sent only when both custom fields are empty.
+
+After you upgrade, steps that fill in Custom Width or Custom Height produce PDFs of that size instead of the Paper Size (or A4). The step output's `metadata.format` still shows the Paper Size value.
+
+#### What you need to do
+
+- Generate PDF steps that set Custom Width or Custom Height but expect A4 or another paper size: clear both custom fields.
+
 #### Fireflies.ai 0.2.0: three find actions are no longer AI agent tools, and Upload Audio returns a smaller output
 
 **Find Meeting by ID**, **Find Recent Meeting** and **Find Meeting by Call Details** are now shown only in the flow builder. AI agents and MCP clients get **Get Meeting**, **Get Meeting Summary** and **Find Meetings** instead.

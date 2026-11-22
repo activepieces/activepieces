@@ -10,7 +10,11 @@ export const getPageContent = createAction({
     name: 'get_page_content',
     classification: 'READ',
     displayName: 'Get Page Content',
-    description: 'Load a page in a real browser and return its fully rendered HTML, including content added by JavaScript.',
+    description: 'Load a page in a real browser and return its rendered HTML.',
+    propertyGroups: [
+        { key: 'page', display: 'section', label: 'Page', icon: 'send', props: ['url', 'waitUntil'] },
+        { key: 'wait', display: 'section', label: 'Wait for the page', icon: 'calendar', props: ['waitForSelector', 'navigationTimeout', 'waitForTimeout'] },
+    ],
     audience: 'both',
     aiMetadata: {
         description:
@@ -18,28 +22,29 @@ export const getPageContent = createAction({
         idempotent: true,
     },
     props: {
-        url: browserlessProps.url({ required: true, description: 'The page to load, for example https://example.com/pricing' }),
+        url: browserlessProps.url({ required: true, description: 'The page to load.' }),
         waitUntil: browserlessProps.waitUntil(),
         navigationTimeout: browserlessProps.navigationTimeout(),
         waitForSelector: browserlessProps.waitForSelector(),
         waitForTimeout: browserlessProps.waitForTimeout(),
         rejectResourceTypes: Property.StaticMultiSelectDropdown({
             displayName: 'Skip Resource Types',
-            description: 'Resource types the browser should not download, which makes the page load faster.',
+            description: 'Files the browser skips, so the page loads faster.',
             required: false,
+            advanced: true,
             options: {
                 options: [
                     { label: 'Images', value: 'image' },
                     { label: 'Stylesheets', value: 'stylesheet' },
                     { label: 'Fonts', value: 'font' },
-                    { label: 'Media (video/audio)', value: 'media' },
+                    { label: 'Video and Audio', value: 'media' },
                 ],
             },
         }),
-        bestAttempt: browserlessProps.bestAttempt(),
-        blockAds: browserlessProps.blockAds(),
-        maxCharacters: browserlessProps.maxCharacters(),
-        timeout: browserlessProps.sessionTimeout(),
+        bestAttempt: browserlessProps.bestAttempt({ advanced: true }),
+        blockAds: browserlessProps.blockAds({ advanced: true }),
+        maxCharacters: browserlessProps.maxCharacters({ advanced: true }),
+        timeout: browserlessProps.sessionTimeout({ advanced: true }),
     },
     outputSchema: browserlessOutputSchemas.getPageContent,
     async run(context) {

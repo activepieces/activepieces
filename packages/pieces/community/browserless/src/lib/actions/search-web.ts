@@ -1,5 +1,5 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { MarkdownVariant, Property, createAction } from '@activepieces/pieces-framework';
 import { browserlessAuth } from '../common/auth';
 import { BrowserlessApiError, browserlessApi } from '../common/client';
 import { browserlessBody, browserlessProps } from '../common/props';
@@ -11,7 +11,12 @@ export const searchWeb = createAction({
     name: 'search_web',
     classification: 'SEARCH',
     displayName: 'Search the Web',
-    description: 'Search the web (pages, news or images) and optionally read each result page as markdown.',
+    description: 'Search the web, news or images and optionally read each result.',
+    propertyGroups: [
+        { key: 'search', display: 'section', label: 'Search', icon: 'send', props: ['query', 'sources', 'limit', 'tbs'] },
+        { key: 'narrow', display: 'section', label: 'Narrow results', icon: 'filter', props: ['categories', 'lang', 'country', 'location'] },
+        { key: 'read', display: 'section', label: 'Read result pages', icon: 'file', props: ['readInfo', 'scrapeFormats', 'onlyMainContent', 'proxy', 'maxCharacters'] },
+    ],
     audience: 'both',
     aiMetadata: {
         description:
@@ -21,12 +26,13 @@ export const searchWeb = createAction({
     props: {
         query: Property.ShortText({
             displayName: 'Search Query',
-            description: 'What to search for, for example `best headless browser 2026`.',
+            description: 'What to search for.',
+            placeholder: 'best headless browser',
             required: true,
         }),
         sources: Property.StaticMultiSelectDropdown({
             displayName: 'Sources',
-            description: 'Where to search. Web is used when empty.',
+            description: 'Where to search. Empty: Web.',
             required: false,
             defaultValue: ['web'],
             options: {
@@ -39,7 +45,7 @@ export const searchWeb = createAction({
         }),
         limit: Property.Number({
             displayName: 'Results per Source',
-            description: 'Results per source (default 10, capped by your plan).',
+            description: 'Up to 100, capped by your plan. Empty: 10.',
             required: false,
         }),
         tbs: Property.StaticDropdown({
@@ -57,7 +63,7 @@ export const searchWeb = createAction({
         }),
         categories: Property.StaticMultiSelectDropdown({
             displayName: 'Categories',
-            description: 'Narrow results to GitHub repositories, research papers or PDF documents.',
+            description: 'Narrow results to GitHub, research papers or PDFs.',
             required: false,
             options: {
                 options: [
@@ -69,22 +75,31 @@ export const searchWeb = createAction({
         }),
         lang: Property.ShortText({
             displayName: 'Language',
-            description: 'Two-letter language code for results, for example `en` or `de` (default `en`).',
+            description: 'Empty: en.',
+            placeholder: 'en',
+            width: 'half',
             required: false,
         }),
         country: Property.ShortText({
             displayName: 'Country',
-            description: 'Two-letter country code for local results, for example `us` or `gb`.',
+            description: 'For local results.',
+            placeholder: 'us',
+            width: 'half',
             required: false,
         }),
         location: Property.ShortText({
             displayName: 'Location',
-            description: 'City or region to narrow results, used with Country.',
+            description: 'City or region to narrow results; use with Country.',
+            placeholder: 'London',
             required: false,
+        }),
+        readInfo: Property.MarkDown({
+            value: 'Only Main Content, Proxy and Maximum Characters need Read Result Pages As.',
+            variant: MarkdownVariant.INFO,
         }),
         scrapeFormats: Property.StaticMultiSelectDropdown({
             displayName: 'Read Result Pages As',
-            description: 'Also read each result page in these formats (slower, costs more).',
+            description: 'Also read each result page in these formats; slower and costs more.',
             required: false,
             options: {
                 options: [
@@ -96,15 +111,15 @@ export const searchWeb = createAction({
         }),
         onlyMainContent: Property.Checkbox({
             displayName: 'Only Main Content',
-            description: 'When reading result pages, drop navigation, headers and footers.',
+            description: 'Drop navigation, headers and footers from result pages.',
             required: false,
             defaultValue: false,
         }),
         proxy: browserlessProps.proxy({
-            description: 'Proxy network used to read result pages. Browserless uses Residential when empty; Datacenter is cheaper.',
+            description: 'Proxy network. Empty: Residential; Datacenter is cheaper.',
         }),
         maxCharacters: browserlessProps.maxCharacters(),
-        timeout: browserlessProps.sessionTimeout(),
+        timeout: browserlessProps.sessionTimeout({ advanced: true }),
     },
     outputSchema: browserlessOutputSchemas.searchWeb,
     async run(context) {

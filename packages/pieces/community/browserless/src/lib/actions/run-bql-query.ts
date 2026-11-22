@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { browserlessAuth } from '../common/auth';
 import { BrowserlessApiError, browserlessApi } from '../common/client';
@@ -12,120 +12,166 @@ export const runBqlQuery = createAction({
     name: 'run_bql_query',
     classification: 'WRITE',
     displayName: 'Run BQL Query',
-    description: 'Execute Browser Query Language (BQL) GraphQL-based queries for advanced browser automation',
+    description: 'Run a Browser Query Language (BQL) query for advanced automation.',
     audience: 'both',
     aiMetadata: { description: 'Runs a raw Browser Query Language (BQL) GraphQL query against a headless Chromium browser for advanced automation such as navigation, clicking, typing, and multi-step scripted browser flows. Use when the simpler screenshot/scrape/PDF actions cannot express the interaction; requires a valid BQL query string and supports session options like stealth, proxy, and cookies. It fails when the query returns errors and no data; partial results keep their errors in the output. Not idempotent: the query can click, type and submit forms, so a retry can repeat those effects.', idempotent: false },
     auth: browserlessAuth,
+    propertyGroups: [
+        {
+            key: 'query',
+            display: 'section',
+            label: 'Query',
+            icon: 'code',
+            props: ['query', 'operationName', 'variables', 'timeout'],
+        },
+        {
+            key: 'session',
+            display: 'section',
+            label: 'Session',
+            icon: 'sliders',
+            props: ['stealth', 'headless', 'humanlike', 'blockAds', 'blockConsentModals', 'record'],
+        },
+        {
+            key: 'network',
+            display: 'section',
+            label: 'Network',
+            icon: 'send',
+            props: ['proxyInfo', 'proxy', 'proxyCountry', 'proxySticky'],
+        },
+        {
+            key: 'browser',
+            display: 'section',
+            label: 'Browser',
+            icon: 'user',
+            props: ['viewportInfo', 'viewportWidth', 'viewportHeight', 'userAgent', 'cookies'],
+        },
+    ],
     props: {
         query: Property.LongText({
             displayName: 'BQL Query',
-            description: 'GraphQL-based BQL query for browser automation. Example: mutation { goto(url: "https://example.com") { status } }',
+            description: 'The BQL (GraphQL) query or mutation to run.',
+            placeholder: 'mutation { goto(url: "https://example.com") { status } }',
             required: true,
         }),
         variables: Property.Object({
-            displayName: 'Query Variables',
-            description: 'Variables to pass to the BQL query (JSON object)',
+            displayName: 'Variables',
+            description: 'Values for the variables your query declares.',
             required: false,
         }),
         operationName: Property.ShortText({
             displayName: 'Operation Name',
-            description: 'Name of the GraphQL operation to execute',
+            description: 'Which operation to run when the query has several.',
             required: false,
         }),
         timeout: Property.Number({
-            displayName: 'Timeout (ms)',
-            description: 'Maximum execution time in milliseconds',
+            displayName: 'Timeout',
+            description: 'Milliseconds the query may run.',
             required: false,
             defaultValue: DEFAULT_TIMEOUT_MS,
         }),
 
         stealth: Property.Checkbox({
             displayName: 'Stealth Mode',
-            description: 'Enable stealth mode for bot detection bypass',
+            description: 'Hide signs of automation from bot detection.',
             required: false,
             defaultValue: true,
         }),
         headless: Property.Checkbox({
-            displayName: 'Headless Mode',
-            description: 'Run browser in headless mode (set to false for GUI)',
+            displayName: 'Headless',
+            description: 'Run without a visible browser window.',
             required: false,
             defaultValue: true,
         }),
         humanlike: Property.Checkbox({
             displayName: 'Human-like Behavior',
-            description: 'Enable human-like mouse movement, typing, and delays',
+            description: 'Move the mouse and type with human-like delays.',
             required: false,
             defaultValue: false,
         }),
+        proxyInfo: Property.MarkDown({
+            value: 'Proxy Country and Sticky Proxy apply only when Proxy is Residential.',
+            variant: MarkdownVariant.INFO,
+        }),
         proxy: Property.StaticDropdown({
-            displayName: 'Proxy Type',
-            description: 'Type of proxy to use',
+            displayName: 'Proxy',
+            description: 'Route the browser through a residential proxy.',
             required: false,
+            defaultValue: 'none',
+            display: 'cards',
             options: {
                 options: [
+                    { label: 'None', value: 'none' },
                     { label: 'Residential', value: 'residential' },
-                    { label: 'None', value: 'none' }
                 ]
             }
         }),
         proxyCountry: Property.ShortText({
             displayName: 'Proxy Country',
-            description: 'Country code for residential proxy (e.g., us, gb, de)',
+            description: 'Two-letter country code for the proxy exit.',
+            placeholder: 'us',
             required: false,
         }),
         proxySticky: Property.Checkbox({
             displayName: 'Sticky Proxy',
-            description: 'Maintain same proxy IP across session',
+            description: 'Keep the same proxy IP for the whole session.',
             required: false,
             defaultValue: false,
         }),
         blockAds: Property.Checkbox({
             displayName: 'Block Ads',
-            description: 'Enable ad blocker (uBlock Origin)',
+            description: 'Load pages with an ad blocker.',
             required: false,
             defaultValue: false,
         }),
         blockConsentModals: Property.Checkbox({
             displayName: 'Block Consent Modals',
-            description: 'Automatically block/dismiss cookie consent banners',
+            description: 'Dismiss cookie consent banners automatically.',
             required: false,
             defaultValue: false,
         }),
         record: Property.Checkbox({
             displayName: 'Record Session',
-            description: 'Enable session recording for debugging',
+            description: 'Save a recording of the session for debugging.',
             required: false,
             defaultValue: false,
         }),
         slowMo: Property.Number({
-            displayName: 'Slow Motion (ms)',
-            description: 'Add delays between browser actions in milliseconds',
+            displayName: 'Slow Motion',
+            description: 'Milliseconds to pause between browser actions.',
             required: false,
+            advanced: true,
         }),
         ignoreHTTPSErrors: Property.Checkbox({
             displayName: 'Ignore HTTPS Errors',
-            description: 'Ignore HTTPS certificate errors during navigation',
+            description: 'Open pages even when their certificate is invalid.',
             required: false,
             defaultValue: false,
+            advanced: true,
         }),
         userAgent: Property.ShortText({
             displayName: 'User Agent',
-            description: 'Custom user agent string',
+            description: 'Browser user agent string to send instead of the default.',
             required: false,
+        }),
+        viewportInfo: Property.MarkDown({
+            value: 'Set both width and height, or leave both empty.',
+            variant: MarkdownVariant.INFO,
         }),
         viewportWidth: Property.Number({
             displayName: 'Viewport Width',
-            description: 'Browser viewport width',
+            description: 'Pixels.',
             required: false,
+            width: 'half',
         }),
         viewportHeight: Property.Number({
             displayName: 'Viewport Height',
-            description: 'Browser viewport height',
+            description: 'Pixels.',
             required: false,
+            width: 'half',
         }),
         cookies: Property.Array({
             displayName: 'Cookies',
-            description: 'Cookies to set before executing BQL query',
+            description: 'Cookies to set before the query runs.',
             required: false,
             properties: {
                 name: Property.ShortText({
@@ -175,7 +221,7 @@ export const runBqlQuery = createAction({
                 }),
                 expires: Property.Number({
                     displayName: 'Expires',
-                    description: 'Expiration date as timestamp (session cookie if not set)',
+                    description: 'Unix timestamp in seconds. Empty: a session cookie.',
                     required: false,
                 }),
             }
@@ -260,7 +306,7 @@ export const runBqlQuery = createAction({
                 browserType: 'chromium',
                 executionTime: browserlessApi.headerValue({ headers: response.headers, name: 'x-response-time' }) ?? 'unknown',
                 timestamp: new Date().toISOString(),
-                stealth: props.stealth === true,
+                stealth: props.stealth !== false,
             },
         };
     },

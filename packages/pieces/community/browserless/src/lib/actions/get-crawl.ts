@@ -12,17 +12,17 @@ export const getCrawl = createAction({
     name: 'get_crawl',
     classification: 'READ',
     displayName: 'Get Crawl Results',
-    description: 'Get the status of a crawl and one page of its scraped pages.',
+    description: 'Get a crawl\'s status and a batch of its scraped pages.',
     audience: 'both',
     aiMetadata: {
         description:
-            'Returns the status and progress counters of a crawl started with Start Crawl, plus one batch of crawled pages (URL, title, HTTP status and a temporary link to the page content). Call again while status is in-progress; when has_more is true pass next_skip as Skip to read the next batch. Read-only and safe to retry.',
+            'Returns the status and progress counters of a crawl started with Start Crawl, plus one batch of crawled pages (URL, title, HTTP status and a temporary link to the page content). Call again while status is in-progress; when has_more is true pass next_skip as Skip Pages to read the next batch. Read-only and safe to retry.',
         idempotent: true,
     },
     props: {
         crawlId: browserlessCrawl.crawlIdProp(),
         skip: Property.Number({
-            displayName: 'Skip',
+            displayName: 'Skip Pages',
             description: 'Pages to skip; use Next Skip from the previous run.',
             required: false,
         }),
@@ -30,7 +30,7 @@ export const getCrawl = createAction({
     outputSchema: browserlessOutputSchemas.getCrawl,
     async run(context) {
         const crawlId = browserlessCrawl.parseCrawlId(context.propsValue.crawlId);
-        const skip = browserlessBody.optionalNumber({ value: context.propsValue.skip, label: 'Skip', min: 0 });
+        const skip = browserlessBody.optionalNumber({ value: context.propsValue.skip, label: 'Skip Pages', min: 0 });
 
         const response = await browserlessApi.request<unknown>({
             auth: context.auth.props,

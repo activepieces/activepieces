@@ -1,5 +1,5 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { MarkdownVariant, Property, createAction } from '@activepieces/pieces-framework';
 import { browserlessAuth } from '../common/auth';
 import { browserlessApi } from '../common/client';
 import { browserlessBody, browserlessProps } from '../common/props';
@@ -11,7 +11,11 @@ export const unblockPage = createAction({
     name: 'unblock_page',
     classification: 'READ',
     displayName: 'Unblock Page',
-    description: 'Open a page that blocks bots (Cloudflare, CAPTCHAs and similar) and return its HTML, cookies and a screenshot.',
+    description: 'Open a page that blocks bots and return its HTML and cookies.',
+    propertyGroups: [
+        { key: 'page', display: 'section', label: 'Page', icon: 'send', props: ['url', 'returnContent', 'returnCookies', 'returnScreenshot'] },
+        { key: 'protection', display: 'section', label: 'Bot protection', icon: 'user', props: ['solveCaptchas', 'proxyInfo', 'proxy', 'proxyCountry'] },
+    ],
     audience: 'both',
     aiMetadata: {
         description:
@@ -19,46 +23,51 @@ export const unblockPage = createAction({
         idempotent: false,
     },
     props: {
-        url: browserlessProps.url({ required: true, description: 'The blocked page to open, for example https://example.com/products' }),
+        url: browserlessProps.url({ required: true, description: 'The blocked page to open.' }),
         returnContent: Property.Checkbox({
             displayName: 'Return HTML',
-            description: 'Return the page HTML.',
+            description: 'Include the page HTML in the output.',
             required: false,
             defaultValue: true,
         }),
         returnCookies: Property.Checkbox({
             displayName: 'Return Cookies',
-            description: 'Return the cookies the site set, so later requests can reuse the unblocked session.',
+            description: 'Include the cookies the site set, to reuse the session.',
             required: false,
             defaultValue: true,
         }),
         returnScreenshot: Property.Checkbox({
             displayName: 'Return Screenshot',
-            description: 'Return a full-page screenshot as a file.',
+            description: 'Include a full-page screenshot as a file.',
             required: false,
             defaultValue: false,
         }),
         solveCaptchas: Property.Checkbox({
             displayName: 'Solve CAPTCHAs',
-            description: 'Let Browserless solve CAPTCHAs it meets (10 units per successful solve).',
+            description: 'Let Browserless solve CAPTCHAs it meets; 10 units per solve.',
             required: false,
             defaultValue: false,
         }),
+        proxyInfo: Property.MarkDown({
+            value: 'Proxy Country is used only when a proxy is chosen.',
+            variant: MarkdownVariant.INFO,
+        }),
         proxy: browserlessProps.proxy({
-            description: 'Proxy network to route the browser through. Residential works best against bot detection.',
+            description: 'Proxy network. Residential works best against bot detection.',
         }),
         proxyCountry: Property.ShortText({
             displayName: 'Proxy Country',
-            description: 'Two-letter country code for the proxy exit, for example `us` or `de`.',
+            description: 'Two-letter country code for the proxy exit.',
+            placeholder: 'us',
             required: false,
         }),
-        waitUntil: browserlessProps.waitUntil(),
-        navigationTimeout: browserlessProps.navigationTimeout(),
-        waitForSelector: browserlessProps.waitForSelector(),
-        waitForTimeout: browserlessProps.waitForTimeout(),
-        bestAttempt: browserlessProps.bestAttempt(),
-        maxCharacters: browserlessProps.maxCharacters(),
-        timeout: browserlessProps.sessionTimeout(),
+        waitUntil: browserlessProps.waitUntil({ advanced: true }),
+        navigationTimeout: browserlessProps.navigationTimeout({ advanced: true }),
+        waitForSelector: browserlessProps.waitForSelector({ advanced: true }),
+        waitForTimeout: browserlessProps.waitForTimeout({ advanced: true }),
+        bestAttempt: browserlessProps.bestAttempt({ advanced: true }),
+        maxCharacters: browserlessProps.maxCharacters({ advanced: true }),
+        timeout: browserlessProps.sessionTimeout({ advanced: true }),
     },
     outputSchema: browserlessOutputSchemas.unblockPage,
     async run(context) {

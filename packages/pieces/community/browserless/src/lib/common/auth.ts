@@ -3,30 +3,20 @@ import { PieceAuth, Property } from '@activepieces/pieces-framework';
 import { browserlessApi } from './client';
 
 export const browserlessAuth = PieceAuth.CustomAuth({
-    description: `
-    To obtain your API credentials:
+    description: `Connect your Browserless account.
 
-    1. Sign up for a free Browserless account at https://www.browserless.io
-    2. Navigate to your dashboard
-    3. Find your API Key/Token in the account settings
-    4. Choose your preferred regional endpoint for optimal performance
-
-    Regional Endpoints:
-    • US West (SFO): https://production-sfo.browserless.io
-    • Europe UK (London): https://production-lon.browserless.io
-    • Europe (Amsterdam): https://production-ams.browserless.io
-
-    For custom/dedicated instances, select "Custom" and enter your specific endpoint URL.
-    `,
+1. Sign up or log in at https://www.browserless.io.
+2. Copy the API Token from your dashboard.
+3. Pick the region your account uses, or Custom Endpoint for a dedicated or self-hosted instance.`,
     props: {
         apiToken: PieceAuth.SecretText({
             displayName: 'API Token',
-            description: 'Your Browserless API token (found in your dashboard)',
+            description: 'Copy it from your Browserless dashboard.',
             required: true,
         }),
         region: Property.StaticDropdown({
             displayName: 'Region',
-            description: 'Choose the regional endpoint closest to you for optimal performance',
+            description: 'The Browserless region your account runs in.',
             required: true,
             options: {
                 options: [
@@ -51,7 +41,8 @@ export const browserlessAuth = PieceAuth.CustomAuth({
         }),
         customBaseUrl: Property.ShortText({
             displayName: 'Custom Base URL',
-            description: 'Only for "Custom Endpoint": the address of your dedicated or self-hosted Browserless, for example https://chrome.browserless.io',
+            description: 'Only for Custom Endpoint: your dedicated or self-hosted Browserless address.',
+            placeholder: 'https://browserless.example.com',
             required: false,
         }),
     },

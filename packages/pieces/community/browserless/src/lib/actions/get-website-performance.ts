@@ -11,19 +11,25 @@ export const getWebsitePerformance = createAction({
     name: 'get_website_performance',
     classification: 'READ',
     displayName: 'Get Website Performance',
-    description: 'Analyze website performance metrics using Lighthouse',
+    description: 'Score a page\'s performance, accessibility and SEO with Lighthouse.',
+    propertyGroups: [
+        { key: 'audit', display: 'section', label: 'Audit', icon: 'send', props: ['url', 'categories', 'onlyCategories', 'includeFullReport'] },
+        { key: 'device', display: 'section', label: 'Device', icon: 'sliders', props: ['device', 'throttling', 'locale', 'timeout'] },
+        { key: 'budgets', display: 'section', label: 'Resource limits', icon: 'tag', props: ['budgets'] },
+    ],
     audience: 'human',
     aiMetadata: { description: 'Runs a Lighthouse audit on a public URL in a headless browser and returns performance, accessibility, best-practices and SEO scores (0-100) plus Core Web Vitals. Use to measure a page\'s quality; the URL is required, and you can scope the audit to specific categories and simulate a desktop or mobile device with network throttling. Read-only analysis: re-running with the same input re-audits the page without side effects (scores may vary slightly run to run).', idempotent: true },
     auth: browserlessAuth,
     props: {
         url: Property.ShortText({
             displayName: 'URL',
-            description: 'The URL of the website to analyze',
+            description: 'The page to audit.',
+            placeholder: 'https://example.com',
             required: true,
         }),
         categories: Property.Array({
-            displayName: 'Performance Categories',
-            description: 'Categories to audit (Lighthouse 12+ has no PWA category).',
+            displayName: 'Categories',
+            description: 'Categories to score. Empty: all. PWA has no score on Lighthouse 12.',
             required: false,
             properties: {
                 category: Property.StaticDropdown({
@@ -43,7 +49,8 @@ export const getWebsitePerformance = createAction({
         }),
         device: Property.StaticDropdown({
             displayName: 'Device Type',
-            description: 'Device type for performance analysis',
+            description: 'Which device Lighthouse emulates.',
+            display: 'cards',
             required: false,
             defaultValue: 'desktop',
             options: {
@@ -55,7 +62,8 @@ export const getWebsitePerformance = createAction({
         }),
         throttling: Property.StaticDropdown({
             displayName: 'Network Throttling',
-            description: 'Network throttling simulation',
+            description: 'Simulated network speed during the audit.',
+            display: 'cards',
             required: false,
             defaultValue: 'mobileSlow4G',
             options: {
@@ -69,36 +77,40 @@ export const getWebsitePerformance = createAction({
         }),
         onlyCategories: Property.Checkbox({
             displayName: 'Only Category Scores',
-            description: 'Return only category scores without detailed audit results',
+            description: 'With no categories picked, score only the four main ones.',
             required: false,
             defaultValue: false,
         }),
         locale: Property.ShortText({
             displayName: 'Locale',
-            description: 'Locale for the analysis (e.g., en-US, de-DE)',
+            description: 'Language of the report text.',
+            placeholder: 'en-US',
             required: false,
             defaultValue: 'en-US',
         }),
         userAgent: Property.ShortText({
             displayName: 'User Agent',
-            description: 'Custom user agent string',
+            description: 'Browser user agent string to send instead of the default.',
             required: false,
+            advanced: true,
         }),
         timeout: Property.Number({
-            displayName: 'Timeout (ms)',
-            description: 'Max page load wait in ms during the audit (under 480000).',
+            displayName: 'Page Load Timeout',
+            description: 'Milliseconds to wait for the page to load during the audit.',
             required: false,
             defaultValue: 60000,
         }),
         waitForSelector: Property.ShortText({
             displayName: 'Wait for Selector',
-            description: 'Not supported by Lighthouse audits; this setting is ignored.',
+            description: 'Not used: Lighthouse audits ignore this setting.',
             required: false,
+            advanced: true,
         }),
         emulateMediaType: Property.StaticDropdown({
             displayName: 'Emulate Media Type',
-            description: 'Not supported by Lighthouse audits; this setting is ignored.',
+            description: 'Not used: Lighthouse audits ignore this setting.',
             required: false,
+            advanced: true,
             options: {
                 options: [
                     { label: 'Screen', value: 'screen' },
@@ -108,7 +120,7 @@ export const getWebsitePerformance = createAction({
         }),
         budgets: Property.Array({
             displayName: 'Performance Budgets',
-            description: 'Lighthouse performance budgets for resource sizes',
+            description: 'Maximum sizes per resource type; the report flags overruns.',
             required: false,
             properties: {
                 resourceType: Property.StaticDropdown({
@@ -129,27 +141,29 @@ export const getWebsitePerformance = createAction({
                     }
                 }),
                 budget: Property.Number({
-                    displayName: 'Budget Size (KB)',
-                    description: 'Maximum allowed size in kilobytes',
+                    displayName: 'Budget Size',
+                    description: 'Maximum size in kilobytes.',
                     required: true,
                 })
             }
         }),
         stealth: Property.Checkbox({
             displayName: 'Stealth Mode',
-            description: 'Enable stealth mode for bot detection bypass',
+            description: 'Hide signs of automation from bot detection.',
             required: false,
+            advanced: true,
             defaultValue: false,
         }),
         blockAds: Property.Checkbox({
             displayName: 'Block Ads',
-            description: 'Enable ad blocker during performance analysis',
+            description: 'Load the page with an ad blocker.',
             required: false,
+            advanced: true,
             defaultValue: false,
         }),
         includeFullReport: Property.Checkbox({
             displayName: 'Include Full Report',
-            description: 'Also return the full Lighthouse report (often several MB).',
+            description: 'Also return the full Lighthouse report, often several MB.',
             required: false,
             defaultValue: true,
         }),
@@ -158,7 +172,7 @@ export const getWebsitePerformance = createAction({
     async run(context) {
         const props = context.propsValue;
         const device = props.device === 'mobile' ? 'mobile' : 'desktop';
-        const timeout = browserlessBody.optionalNumber({ value: props.timeout, label: 'Timeout', min: 1 });
+        const timeout = browserlessBody.optionalNumber({ value: props.timeout, label: 'Page Load Timeout', min: 1 });
         const selectedCategories = (props.categories ?? [])
             .map(browserlessValues.record)
             .map((entry) => entry['category'])

@@ -13,7 +13,12 @@ export const startCrawl = createAction({
     name: 'start_crawl',
     classification: 'SEARCH',
     displayName: 'Start Crawl',
-    description: 'Start crawling a website in the background. Browserless follows links and scrapes every page it finds; use Get Crawl Results to read them.',
+    description: 'Crawl a website in the background; read the pages with Get Crawl Results.',
+    propertyGroups: [
+        { key: 'start', display: 'section', label: 'Start', icon: 'send', props: ['url', 'limit', 'maxDepth'] },
+        { key: 'scope', display: 'section', label: 'Scope', icon: 'filter', props: ['includePaths', 'excludePaths', 'allowSubdomains', 'allowExternalLinks', 'sitemap'] },
+        { key: 'output', display: 'section', label: 'Output', icon: 'file', props: ['formats', 'onlyMainContent'] },
+    ],
     audience: 'both',
     aiMetadata: {
         description:
@@ -21,26 +26,26 @@ export const startCrawl = createAction({
         idempotent: false,
     },
     props: {
-        url: browserlessProps.url({ required: true, description: 'Where the crawl starts, for example https://example.com/docs' }),
+        url: browserlessProps.url({ required: true, description: 'Where the crawl starts.' }),
         limit: Property.Number({
             displayName: 'Maximum Pages',
-            description: 'Stop after this many pages (capped by your plan); each page costs units.',
+            description: 'Stop after this many pages; each page costs units.',
             required: false,
             defaultValue: DEFAULT_LIMIT,
         }),
         maxDepth: Property.Number({
             displayName: 'Maximum Link Depth',
-            description: 'How many links away from the start URL to follow (0-20, default 5).',
+            description: 'How many links away from the start to follow, 0 to 20. Empty: 5.',
             required: false,
         }),
         includePaths: Property.Array({
             displayName: 'Only Paths Matching',
-            description: 'Regexes; only matching paths are crawled, e.g. `^/docs/`.',
+            description: 'Regular expressions; only matching paths are crawled.',
             required: false,
         }),
         excludePaths: Property.Array({
             displayName: 'Skip Paths Matching',
-            description: 'Regular expressions for paths to skip, for example `^/blog/`.',
+            description: 'Regular expressions for paths to skip.',
             required: false,
         }),
         allowSubdomains: Property.Checkbox({
@@ -57,11 +62,11 @@ export const startCrawl = createAction({
         }),
         sitemap: Property.StaticDropdown({
             displayName: 'Sitemap',
-            description: 'How to use the sitemap to find pages.',
+            description: 'How to find pages. Empty: Auto.',
             required: false,
             options: {
                 options: [
-                    { label: 'Auto (default)', value: 'auto' },
+                    { label: 'Auto', value: 'auto' },
                     { label: 'Only the sitemap', value: 'force' },
                     { label: 'Ignore the sitemap', value: 'skip' },
                 ],
@@ -69,7 +74,7 @@ export const startCrawl = createAction({
         }),
         formats: Property.StaticMultiSelectDropdown({
             displayName: 'Page Formats',
-            description: 'What to store for each page (default markdown).',
+            description: 'What to store for each page. Empty: Markdown.',
             required: false,
             options: {
                 options: [
@@ -81,12 +86,13 @@ export const startCrawl = createAction({
         }),
         onlyMainContent: Property.Checkbox({
             displayName: 'Only Main Content',
-            description: 'Drop navigation, headers and footers from each page (Browserless default is on).',
+            description: 'Drop navigation, headers and footers from each page.',
             required: false,
             defaultValue: true,
         }),
         proxy: browserlessProps.proxy({
-            description: 'Proxy network for fetching pages. Browserless uses Residential when empty; Datacenter is cheaper.',
+            description: 'Proxy network. Empty: Residential; Datacenter is cheaper.',
+            advanced: true,
         }),
     },
     outputSchema: browserlessOutputSchemas.startCrawl,

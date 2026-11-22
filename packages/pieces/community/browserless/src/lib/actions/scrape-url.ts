@@ -14,154 +14,202 @@ export const scrapeUrl = createAction({
     name: 'scrape_url',
     classification: 'READ',
     displayName: 'Scrape URL',
-    description: 'Extract content from a web page',
+    description: 'Read the text and HTML of chosen elements on a web page.',
     audience: 'both',
     aiMetadata: { description: 'Loads a web page in a headless browser and extracts the elements matched by the CSS selectors you supply. Use when you know which CSS selectors hold the data; for a whole page as markdown or text use Smart Scrape, for raw HTML use Get Page Content. The page URL and at least one selector are required. Read-only and safe to retry.', idempotent: true },
     auth: browserlessAuth,
+    propertyGroups: [
+        {
+            key: 'page',
+            display: 'section',
+            label: 'Page',
+            icon: 'send',
+            props: ['url', 'waitUntil', 'timeout'],
+        },
+        {
+            key: 'elements',
+            display: 'section',
+            label: 'Elements',
+            icon: 'tag',
+            props: ['elements'],
+        },
+        {
+            key: 'browser',
+            display: 'section',
+            label: 'Browser',
+            icon: 'user',
+            props: ['viewportWidth', 'viewportHeight', 'userAgent', 'cookies'],
+        },
+        {
+            key: 'wait',
+            display: 'section',
+            label: 'Wait for the page',
+            icon: 'calendar',
+            props: ['waitForSelector', 'waitForTimeout'],
+        },
+    ],
     props: {
         url: Property.ShortText({
             displayName: 'URL',
-            description: 'The URL of the page to scrape',
+            description: 'The page to scrape.',
+            placeholder: 'https://example.com',
             required: true,
         }),
         elements: Property.Array({
             displayName: 'Elements to Extract',
-            description: 'CSS selectors for elements to extract',
+            description: 'CSS selectors of the elements to read.',
             required: true,
             properties: {
                 selector: Property.ShortText({
                     displayName: 'CSS Selector',
-                    description: 'CSS selector for the element',
+                    description: 'CSS selector of one element.',
+                    placeholder: 'h1',
                     required: true,
                 }),
                 timeout: Property.Number({
-                    displayName: 'Timeout (ms)',
-                    description: 'Timeout in milliseconds for this specific selector',
+                    displayName: 'Element Timeout',
+                    description: 'Milliseconds to wait for this element.',
                     required: false,
                 }),
             }
         }),
         waitForSelector: Property.ShortText({
             displayName: 'Wait for Selector',
-            description: 'CSS selector to wait for before scraping',
+            description: 'CSS selector to wait for before scraping.',
+            placeholder: '#content',
             required: false,
         }),
         waitForSelectorTimeout: Property.Number({
-            displayName: 'Wait for Selector Timeout',
-            description: 'Timeout in milliseconds for waiting for selector',
+            displayName: 'Selector Timeout',
+            description: 'Milliseconds to wait for the selector.',
             required: false,
+            advanced: true,
         }),
         waitForSelectorVisible: Property.Checkbox({
-            displayName: 'Wait for Selector Visible',
-            description: 'Wait for selector to be visible',
+            displayName: 'Selector Must Be Visible',
+            description: 'Wait until the selector is visible.',
             required: false,
             defaultValue: true,
+            advanced: true,
         }),
         waitForSelectorHidden: Property.Checkbox({
-            displayName: 'Wait for Selector Hidden',
-            description: 'Wait for selector to be hidden',
+            displayName: 'Selector Must Be Hidden',
+            description: 'Wait until the selector is hidden instead.',
             required: false,
             defaultValue: false,
+            advanced: true,
         }),
         waitForTimeout: Property.Number({
-            displayName: 'Wait Timeout (ms)',
-            description: 'Timeout in milliseconds to wait before scraping',
+            displayName: 'Extra Wait',
+            description: 'Milliseconds to wait after the page loads, for late content.',
             required: false,
         }),
         waitForEvent: Property.ShortText({
             displayName: 'Wait for Event',
-            description: 'Event name to wait for before scraping',
+            description: 'Page event to wait for before scraping.',
             required: false,
+            advanced: true,
         }),
         waitForEventTimeout: Property.Number({
-            displayName: 'Wait for Event Timeout',
-            description: 'Timeout in milliseconds for wait event',
+            displayName: 'Event Timeout',
+            description: 'Milliseconds to wait for the event.',
             required: false,
+            advanced: true,
         }),
         debugConsole: Property.Checkbox({
-            displayName: 'Debug Console',
-            description: 'Include console logs in debug output',
+            displayName: 'Include Console Logs',
+            description: "Add the page's console messages to the output.",
             required: false,
             defaultValue: false,
+            advanced: true,
         }),
         debugCookies: Property.Checkbox({
-            displayName: 'Debug Cookies',
-            description: 'Include cookies in debug output',
+            displayName: 'Include Cookies',
+            description: "Add the page's cookies to the output.",
             required: false,
             defaultValue: false,
+            advanced: true,
         }),
         debugNetwork: Property.Checkbox({
-            displayName: 'Debug Network',
-            description: 'Include network requests in debug output',
+            displayName: 'Include Network Requests',
+            description: "Add the page's network requests to the output.",
             required: false,
             defaultValue: false,
+            advanced: true,
         }),
         bestAttempt: Property.Checkbox({
             displayName: 'Best Attempt',
-            description: 'Attempt to proceed when awaited events fail or timeout',
+            description: 'Use what has loaded when a wait times out, instead of failing.',
             required: false,
             defaultValue: false,
+            advanced: true,
         }),
         userAgent: Property.ShortText({
             displayName: 'User Agent',
-            description: 'Custom user agent string',
+            description: 'Browser user agent string to send instead of the default.',
             required: false,
         }),
         cookies: Property.Array({
             displayName: 'Cookies',
-            description: 'Cookies to set before scraping',
+            description: 'Cookies to set before the page loads.',
             required: false,
             properties: {
                 name: Property.ShortText({
                     displayName: 'Cookie Name',
+                    description: 'Cookie name.',
                     required: true,
                 }),
                 value: Property.ShortText({
                     displayName: 'Cookie Value',
+                    description: 'Cookie value.',
                     required: true,
                 }),
                 domain: Property.ShortText({
                     displayName: 'Domain',
+                    description: "Domain the cookie belongs to. Empty: the page's domain.",
                     required: false,
                 }),
             }
         }),
         timeout: Property.Number({
-            displayName: 'Timeout (ms)',
-            description: 'Maximum time to wait for the page to load',
+            displayName: 'Page Load Timeout',
+            description: 'Milliseconds to wait for the page to load.',
             required: false,
             defaultValue: DEFAULT_TIMEOUT_MS,
         }),
         waitUntil: Property.StaticDropdown({
             displayName: 'Wait Until',
-            description: 'When to consider navigation complete',
+            description: 'When the page counts as loaded.',
             required: false,
             defaultValue: DEFAULT_WAIT_UNTIL,
             options: {
                 options: [
                     { label: 'Load Event', value: 'load' },
                     { label: 'DOM Content Loaded', value: 'domcontentloaded' },
-                    { label: 'Network Idle 0', value: 'networkidle0' },
-                    { label: 'Network Idle 2', value: 'networkidle2' }
+                    { label: 'Network Idle (0 connections)', value: 'networkidle0' },
+                    { label: 'Network Idle (2 connections)', value: 'networkidle2' }
                 ]
             }
         }),
         waitForFunction: Property.LongText({
             displayName: 'Wait for Function',
-            description: 'JavaScript function to wait for before scraping (should return true when ready)',
+            description: 'JavaScript that returns true when the page is ready.',
             required: false,
+            advanced: true,
         }),
         viewportWidth: Property.Number({
             displayName: 'Viewport Width',
-            description: 'Browser viewport width in pixels',
+            description: 'Pixels.',
             required: false,
             defaultValue: DEFAULT_VIEWPORT.width,
+            width: 'half',
         }),
         viewportHeight: Property.Number({
             displayName: 'Viewport Height',
-            description: 'Browser viewport height in pixels',
+            description: 'Pixels.',
             required: false,
             defaultValue: DEFAULT_VIEWPORT.height,
+            width: 'half',
         }),
     },
     outputSchema: browserlessOutputSchemas.scrapeUrl,
@@ -179,10 +227,10 @@ export const scrapeUrl = createAction({
             throw new Error('Add at least one CSS selector under Elements to Extract.');
         }
 
-        const navigationTimeout = browserlessBody.optionalNumber({ value: props.timeout, label: 'Timeout', min: 0 }) ?? DEFAULT_TIMEOUT_MS;
-        const selectorTimeout = browserlessBody.optionalNumber({ value: props.waitForSelectorTimeout, label: 'Wait for Selector Timeout', min: 0 });
-        const eventTimeout = browserlessBody.optionalNumber({ value: props.waitForEventTimeout, label: 'Wait for Event Timeout', min: 0 });
-        const waitForTimeout = browserlessBody.optionalNumber({ value: props.waitForTimeout, label: 'Wait Timeout', min: 0 });
+        const navigationTimeout = browserlessBody.optionalNumber({ value: props.timeout, label: 'Page Load Timeout', min: 0 }) ?? DEFAULT_TIMEOUT_MS;
+        const selectorTimeout = browserlessBody.optionalNumber({ value: props.waitForSelectorTimeout, label: 'Selector Timeout', min: 0 });
+        const eventTimeout = browserlessBody.optionalNumber({ value: props.waitForEventTimeout, label: 'Event Timeout', min: 0 });
+        const waitForTimeout = browserlessBody.optionalNumber({ value: props.waitForTimeout, label: 'Extra Wait', min: 0 });
         const viewportWidth = browserlessBody.optionalNumber({ value: props.viewportWidth, label: 'Viewport Width', min: 1 }) ?? DEFAULT_VIEWPORT.width;
         const viewportHeight = browserlessBody.optionalNumber({ value: props.viewportHeight, label: 'Viewport Height', min: 1 }) ?? DEFAULT_VIEWPORT.height;
 

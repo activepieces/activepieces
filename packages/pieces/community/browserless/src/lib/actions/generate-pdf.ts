@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { browserlessAuth } from '../common/auth';
 import { browserlessApi } from '../common/client';
@@ -9,24 +9,66 @@ export const generatePdf = createAction({
     name: 'generate_pdf',
     classification: 'READ',
     displayName: 'Generate PDF',
-    description: 'Convert a web page to PDF',
+    description: 'Convert a web page or HTML to a PDF file.',
     audience: 'human',
     aiMetadata: { description: 'Renders content in a headless browser and returns it as a PDF file. Source the content either from a page URL or from a raw HTML string (provide exactly one, not both). Use to produce a printable PDF of a page or supplied markup, with control over paper format, orientation, margins, and headers/footers. Not idempotent: each call runs a fresh headless-browser render, so repeating it produces a new PDF of the page or markup as it renders at that moment.', idempotent: false },
     auth: browserlessAuth,
+    propertyGroups: [
+        {
+            key: 'source',
+            display: 'section',
+            label: 'Source',
+            icon: 'send',
+            props: ['sourceInfo', 'url', 'html'],
+        },
+        {
+            key: 'paper',
+            display: 'section',
+            label: 'Paper',
+            icon: 'file',
+            props: ['format', 'landscape', 'width', 'height', 'scale', 'pageRanges', 'preferCSSPageSize', 'printBackground'],
+        },
+        {
+            key: 'margins',
+            display: 'section',
+            label: 'Margins',
+            icon: 'sliders',
+            props: ['marginTop', 'marginRight', 'marginBottom', 'marginLeft'],
+        },
+        {
+            key: 'headerFooter',
+            display: 'section',
+            label: 'Header and footer',
+            icon: 'text',
+            props: ['displayHeaderFooter', 'headerTemplate', 'footerTemplate'],
+        },
+        {
+            key: 'wait',
+            display: 'section',
+            label: 'Wait for the page',
+            icon: 'calendar',
+            props: ['waitForSelector', 'waitForTimeout', 'timeout'],
+        },
+    ],
     props: {
+        sourceInfo: Property.MarkDown({
+            value: 'Fill in either URL or HTML, not both.',
+            variant: MarkdownVariant.INFO,
+        }),
         url: Property.ShortText({
             displayName: 'URL',
-            description: 'The URL of the page to convert to PDF',
+            description: 'The page to convert.',
+            placeholder: 'https://example.com',
             required: false,
         }),
         html: Property.LongText({
-            displayName: 'HTML Content',
-            description: 'HTML content to render as PDF (alternative to URL)',
+            displayName: 'HTML',
+            description: 'HTML to render instead of a URL.',
             required: false,
         }),
         format: Property.StaticDropdown({
-            displayName: 'Paper Format',
-            description: 'Paper format for the PDF',
+            displayName: 'Paper Size',
+            description: 'Standard paper size. Ignored when Custom Width or Height is set.',
             required: false,
             defaultValue: 'A4',
             options: {
@@ -47,153 +89,178 @@ export const generatePdf = createAction({
         }),
         landscape: Property.Checkbox({
             displayName: 'Landscape',
-            description: 'Use landscape orientation',
+            description: 'Turn the page sideways.',
             required: false,
             defaultValue: false,
         }),
         printBackground: Property.Checkbox({
             displayName: 'Print Background',
-            description: 'Include background graphics',
+            description: 'Include background colors and images.',
             required: false,
             defaultValue: true,
         }),
         marginTop: Property.ShortText({
             displayName: 'Top Margin',
-            description: 'Top margin (e.g., "10mm", "0.4in")',
+            description: 'Any CSS length.',
+            placeholder: '10mm',
             required: false,
+            width: 'half',
         }),
         marginRight: Property.ShortText({
             displayName: 'Right Margin',
-            description: 'Right margin (e.g., "10mm", "0.4in")',
+            description: 'Any CSS length.',
+            placeholder: '10mm',
             required: false,
+            width: 'half',
         }),
         marginBottom: Property.ShortText({
             displayName: 'Bottom Margin',
-            description: 'Bottom margin (e.g., "10mm", "0.4in")',
+            description: 'Any CSS length.',
+            placeholder: '10mm',
             required: false,
+            width: 'half',
         }),
         marginLeft: Property.ShortText({
             displayName: 'Left Margin',
-            description: 'Left margin (e.g., "10mm", "0.4in")',
+            description: 'Any CSS length.',
+            placeholder: '10mm',
             required: false,
+            width: 'half',
         }),
         headerTemplate: Property.LongText({
             displayName: 'Header Template',
-            description: 'HTML template for the print header',
+            description: 'HTML for the header on each page; needs Show Header and Footer.',
             required: false,
         }),
         footerTemplate: Property.LongText({
             displayName: 'Footer Template',
-            description: 'HTML template for the print footer',
+            description: 'HTML for the footer on each page; needs Show Header and Footer.',
             required: false,
         }),
         displayHeaderFooter: Property.Checkbox({
-            displayName: 'Display Header/Footer',
-            description: 'Display header and footer',
+            displayName: 'Show Header and Footer',
+            description: 'Add a header and footer to every page.',
             required: false,
             defaultValue: false,
         }),
         scale: Property.Number({
             displayName: 'Scale',
-            description: 'Scale of the webpage rendering (0.1 - 2.0)',
+            description: 'Zoom of the page rendering, from 0.1 to 2.',
             required: false,
         }),
         waitForSelector: Property.ShortText({
             displayName: 'Wait for Selector',
-            description: 'CSS selector to wait for before generating PDF',
+            description: 'CSS selector to wait for before creating the PDF.',
+            placeholder: '#content',
             required: false,
         }),
         waitForSelectorTimeout: Property.Number({
-            displayName: 'Wait for Selector Timeout',
-            description: 'Timeout in milliseconds for waiting for selector',
+            displayName: 'Selector Timeout',
+            description: 'Milliseconds to wait for the selector.',
             required: false,
+            advanced: true,
         }),
         waitForSelectorVisible: Property.Checkbox({
-            displayName: 'Wait for Selector Visible',
-            description: 'Wait for selector to be visible',
+            displayName: 'Selector Must Be Visible',
+            description: 'Wait until the selector is visible.',
             required: false,
             defaultValue: true,
+            advanced: true,
         }),
         waitForSelectorHidden: Property.Checkbox({
-            displayName: 'Wait for Selector Hidden',
-            description: 'Wait for selector to be hidden',
+            displayName: 'Selector Must Be Hidden',
+            description: 'Wait until the selector is hidden instead.',
             required: false,
             defaultValue: false,
+            advanced: true,
         }),
         preferCSSPageSize: Property.Checkbox({
-            displayName: 'Prefer CSS Page Size',
-            description: 'Give any CSS @page size declared in the page priority over format',
+            displayName: 'Use CSS Page Size',
+            description: 'Let a CSS @page size in the page override Paper Size.',
             required: false,
             defaultValue: false,
         }),
         pageRanges: Property.ShortText({
             displayName: 'Page Ranges',
-            description: 'Paper ranges to print, e.g. "1-5, 8, 11-13"',
+            description: 'Pages to include. Empty: all pages.',
+            placeholder: '1-5, 8, 11-13',
             required: false,
         }),
         width: Property.ShortText({
             displayName: 'Custom Width',
-            description: 'Custom width of paper (e.g., "8.5in", "210mm")',
+            description: 'Any CSS length.',
+            placeholder: '8.5in',
             required: false,
+            width: 'half',
         }),
         height: Property.ShortText({
             displayName: 'Custom Height',
-            description: 'Custom height of paper (e.g., "11in", "297mm")',
+            description: 'Any CSS length.',
+            placeholder: '11in',
             required: false,
+            width: 'half',
         }),
         omitBackground: Property.Checkbox({
-            displayName: 'Omit Background',
-            description: 'Hide default white background and allow transparent PDFs',
+            displayName: 'Transparent Background',
+            description: 'Drop the default white background.',
             required: false,
             defaultValue: false,
+            advanced: true,
         }),
         tagged: Property.Checkbox({
-            displayName: 'Tagged PDF',
-            description: 'Generate tagged (accessible) PDF',
+            displayName: 'Accessible PDF',
+            description: 'Add tags that screen readers use.',
             required: false,
             defaultValue: false,
+            advanced: true,
         }),
         outline: Property.Checkbox({
-            displayName: 'Generate Outline',
-            description: 'Generate document outline',
+            displayName: 'Add Outline',
+            description: 'Add a clickable table of contents from the headings.',
             required: false,
             defaultValue: false,
+            advanced: true,
         }),
         timeout: Property.Number({
-            displayName: 'Timeout (ms)',
-            description: 'Maximum time in milliseconds to wait for the page to load',
+            displayName: 'Page Load Timeout',
+            description: 'Milliseconds to wait for the page to load.',
             required: false,
         }),
         waitForFunction: Property.LongText({
             displayName: 'Wait for Function',
-            description: 'JavaScript function to wait for before generating PDF',
+            description: 'JavaScript that returns true when the page is ready.',
             required: false,
+            advanced: true,
         }),
         waitForFunctionPolling: Property.ShortText({
-            displayName: 'Wait for Function Polling',
-            description: 'Polling interval for wait function ("raf", "mutation", or number in ms)',
+            displayName: 'Function Polling',
+            description: 'raf, mutation, or a number of milliseconds between checks.',
             required: false,
+            advanced: true,
         }),
         waitForFunctionTimeout: Property.Number({
-            displayName: 'Wait for Function Timeout',
-            description: 'Timeout in milliseconds for wait function (0 to disable)',
+            displayName: 'Function Timeout',
+            description: 'Milliseconds to wait for the function. 0 means no limit.',
             required: false,
+            advanced: true,
         }),
         userAgent: Property.ShortText({
             displayName: 'User Agent',
-            description: 'Custom user agent string to use for the request',
+            description: 'Browser user agent string to send instead of the default.',
             required: false,
+            advanced: true,
         }),
         waitForTimeout: Property.Number({
-            displayName: 'Wait Timeout (ms)',
-            description: 'Timeout in milliseconds to wait before generating PDF',
+            displayName: 'Extra Wait',
+            description: 'Milliseconds to wait after the page loads, for late content.',
             required: false,
         }),
         bestAttempt: Property.Checkbox({
             displayName: 'Best Attempt',
-            description: 'Attempt to proceed when awaited events fail or timeout',
+            description: 'Use what has loaded when a wait times out, instead of failing.',
             required: false,
             defaultValue: false,
+            advanced: true,
         }),
     },
     outputSchema: browserlessOutputSchemas.generatePdf,
@@ -202,16 +269,16 @@ export const generatePdf = createAction({
         const hasUrl = browserlessBody.nonEmpty(props.url);
         const hasHtml = browserlessBody.nonEmpty(props.html);
         if (!hasUrl && !hasHtml) {
-            throw new Error('Either URL or HTML content must be provided');
+            throw new Error('Fill in either URL or HTML.');
         }
         if (hasUrl && hasHtml) {
-            throw new Error('Cannot provide both URL and HTML content. Choose one.');
+            throw new Error('Fill in either URL or HTML, not both.');
         }
         const scale = browserlessBody.optionalNumber({ value: props.scale, label: 'Scale', min: 0.1, max: 2 });
-        const navigationTimeout = browserlessBody.optionalNumber({ value: props.timeout, label: 'Timeout', min: 0 });
-        const waitForTimeout = browserlessBody.optionalNumber({ value: props.waitForTimeout, label: 'Wait Timeout', min: 0 });
-        const selectorTimeout = browserlessBody.optionalNumber({ value: props.waitForSelectorTimeout, label: 'Wait for Selector Timeout', min: 0 });
-        const functionTimeout = browserlessBody.optionalNumber({ value: props.waitForFunctionTimeout, label: 'Wait for Function Timeout', min: 0 });
+        const navigationTimeout = browserlessBody.optionalNumber({ value: props.timeout, label: 'Page Load Timeout', min: 0 });
+        const waitForTimeout = browserlessBody.optionalNumber({ value: props.waitForTimeout, label: 'Extra Wait', min: 0 });
+        const selectorTimeout = browserlessBody.optionalNumber({ value: props.waitForSelectorTimeout, label: 'Selector Timeout', min: 0 });
+        const functionTimeout = browserlessBody.optionalNumber({ value: props.waitForFunctionTimeout, label: 'Function Timeout', min: 0 });
 
         const margin = {
             ...(browserlessBody.nonEmpty(props.marginTop) ? { top: props.marginTop } : {}),
@@ -221,7 +288,7 @@ export const generatePdf = createAction({
         };
 
         const options = {
-            format: props.format || 'A4',
+            ...(browserlessBody.nonEmpty(props.width) || browserlessBody.nonEmpty(props.height) ? {} : { format: props.format || 'A4' }),
             landscape: props.landscape === true,
             printBackground: props.printBackground !== false,
             displayHeaderFooter: props.displayHeaderFooter === true,

@@ -11,7 +11,7 @@ export const browserlessCrawl = {
 function crawlIdProp() {
     return Property.ShortText({
         displayName: 'Crawl ID',
-        description: 'The ID returned by Start Crawl (looks like `crawl_abc123`). List Crawls shows recent IDs.',
+        description: 'The ID that Start Crawl returned. List Crawls shows recent ones.',
         required: true,
     });
 }
@@ -19,7 +19,7 @@ function crawlIdProp() {
 function parseCrawlId(value: unknown): string {
     const id = typeof value === 'string' ? value.trim() : '';
     if (!/^[A-Za-z0-9_-]{1,200}$/.test(id)) {
-        throw new Error('Crawl ID must look like `crawl_abc123` (letters, digits, - and _ only).');
+        throw new Error('Crawl ID may contain only letters, digits, - and _.');
     }
     return id;
 }

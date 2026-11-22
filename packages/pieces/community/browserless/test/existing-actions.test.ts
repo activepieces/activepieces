@@ -88,9 +88,23 @@ describe('generate_pdf', () => {
         const seen = stubFetch(replies([{ binary: Buffer.from('%PDF') }]));
         await runAction({ action: generatePdf, propsValue: { html: '<h1>Hi</h1>' } });
         expect(seen[0].body).toMatchObject({ html: '<h1>Hi</h1>' });
-        await expect(runAction({ action: generatePdf, propsValue: {} })).rejects.toThrow(/Either URL or HTML/);
-        await expect(runAction({ action: generatePdf, propsValue: { url: 'https://a.com', html: '<p>' } })).rejects.toThrow(/Cannot provide both/);
+        await expect(runAction({ action: generatePdf, propsValue: {} })).rejects.toThrow(/Fill in either URL or HTML/);
+        await expect(runAction({ action: generatePdf, propsValue: { url: 'https://a.com', html: '<p>' } })).rejects.toThrow(/not both/);
         await expect(runAction({ action: generatePdf, propsValue: { url: 'https://a.com', scale: 3 } })).rejects.toThrow(/Scale must be at most 2/);
+    });
+    test('sends the paper size only without a custom size', async () => {
+        const seen = stubFetch(replies([{ binary: Buffer.from('%PDF') }, { binary: Buffer.from('%PDF') }, { binary: Buffer.from('%PDF') }, { binary: Buffer.from('%PDF') }]));
+        await runAction({ action: generatePdf, propsValue: { url: 'https://example.com', format: 'Legal' } });
+        const widthOnly = await runAction({ action: generatePdf, propsValue: { url: 'https://example.com', format: 'Legal', width: '8.5in' } });
+        await runAction({ action: generatePdf, propsValue: { url: 'https://example.com', format: 'Legal', height: '11in' } });
+        await runAction({ action: generatePdf, propsValue: { url: 'https://example.com', format: 'Legal', width: '8.5in', height: '11in' } });
+        expect(seen[0].body).toMatchObject({ options: { format: 'Legal' } });
+        expect(seen[1].body).toMatchObject({ options: { width: '8.5in' } });
+        expect(seen[1].body).not.toHaveProperty('options.format');
+        expect(seen[2].body).toMatchObject({ options: { height: '11in' } });
+        expect(seen[2].body).not.toHaveProperty('options.format');
+        expect(seen[3].body).not.toHaveProperty('options.format');
+        expect(widthOnly.output).toMatchObject({ metadata: { format: 'Legal' } });
     });
     test('a redirect from a custom endpoint fails instead of saving the redirect body as a PDF', async () => {
         stubFetch(replies([{ status: 302, text: '<a href="/login">Found</a>', headers: { location: 'https://proxy.example/login' } }]));

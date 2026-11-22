@@ -5,13 +5,15 @@ export const browserlessProps = {
         Property.ShortText({
             displayName: 'URL',
             description,
+            placeholder: 'https://example.com',
             required,
         }),
-    waitUntil: () =>
+    waitUntil: (params?: { advanced?: boolean }) =>
         Property.StaticDropdown({
             displayName: 'Wait Until',
-            description: 'When the page counts as loaded. "Network Idle" waits longest and suits pages that load data with JavaScript.',
+            description: 'When the page counts as loaded. Network Idle waits longest.',
             required: false,
+            ...(params?.advanced ? { advanced: true } : {}),
             options: {
                 options: [
                     { label: 'Load Event', value: 'load' },
@@ -21,43 +23,50 @@ export const browserlessProps = {
                 ],
             },
         }),
-    navigationTimeout: () =>
+    navigationTimeout: (params?: { advanced?: boolean }) =>
         Property.Number({
-            displayName: 'Page Load Timeout (ms)',
-            description: 'How long to wait for the page to load before failing (Browserless default 30000).',
+            displayName: 'Page Load Timeout',
+            description: 'Milliseconds to wait for the page to load. Empty: 30000.',
             required: false,
+            ...(params?.advanced ? { advanced: true } : {}),
         }),
-    waitForSelector: () =>
+    waitForSelector: (params?: { advanced?: boolean }) =>
         Property.ShortText({
             displayName: 'Wait for Selector',
-            description: 'A CSS selector (for example `#content` or `.price`) to wait for before reading the page.',
+            description: 'CSS selector to wait for before reading the page.',
+            placeholder: '#content',
             required: false,
+            ...(params?.advanced ? { advanced: true } : {}),
         }),
-    waitForTimeout: () =>
+    waitForTimeout: (params?: { advanced?: boolean }) =>
         Property.Number({
-            displayName: 'Extra Wait (ms)',
-            description: 'Extra time to wait after the page loads, for animations or late content.',
+            displayName: 'Extra Wait',
+            description: 'Milliseconds to wait after the page loads, for late content.',
             required: false,
+            ...(params?.advanced ? { advanced: true } : {}),
         }),
-    bestAttempt: () =>
+    bestAttempt: (params?: { advanced?: boolean }) =>
         Property.Checkbox({
             displayName: 'Best Attempt',
-            description: 'Continue with whatever has loaded when a wait or the page load times out, instead of failing.',
+            description: 'Use what has loaded when a wait times out, instead of failing.',
             required: false,
             defaultValue: false,
+            ...(params?.advanced ? { advanced: true } : {}),
         }),
-    blockAds: () =>
+    blockAds: (params?: { advanced?: boolean }) =>
         Property.Checkbox({
             displayName: 'Block Ads',
             description: 'Load the page with an ad blocker, which is usually faster.',
             required: false,
             defaultValue: false,
+            ...(params?.advanced ? { advanced: true } : {}),
         }),
-    proxy: ({ description }: { description: string }) =>
+    proxy: ({ description, advanced }: { description: string; advanced?: boolean }) =>
         Property.StaticDropdown({
             displayName: 'Proxy',
             description,
             required: false,
+            ...(advanced ? { advanced: true } : {}),
             options: {
                 options: [
                     { label: 'Datacenter (2 units/MB)', value: 'datacenter' },
@@ -65,18 +74,20 @@ export const browserlessProps = {
                 ],
             },
         }),
-    maxCharacters: () =>
+    maxCharacters: (params?: { advanced?: boolean }) =>
         Property.Number({
             displayName: 'Maximum Characters',
-            description: 'Cut long text fields to this many characters (default 100000, 0 = no limit).',
+            description: 'Cut long text to this many characters. 0 means no limit.',
             required: false,
             defaultValue: DEFAULT_MAX_CHARACTERS,
+            ...(params?.advanced ? { advanced: true } : {}),
         }),
-    sessionTimeout: () =>
+    sessionTimeout: (params?: { advanced?: boolean }) =>
         Property.Number({
-            displayName: 'Timeout (ms)',
-            description: 'Maximum time the whole request may take on Browserless. Browser time is billed per 30 seconds, so a lower limit caps cost. Keep it under 540000.',
+            displayName: 'Timeout',
+            description: 'Milliseconds the whole request may run, at most 540000.',
             required: false,
+            ...(params?.advanced ? { advanced: true } : {}),
         }),
 };
 
