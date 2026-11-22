@@ -73,7 +73,7 @@ function sumTokens(values: (number | undefined)[]): number | null {
 
 const BUILD_TOOL = 'ap_build_flow'
 const PIECE_PROPS_TOOL = 'ap_get_piece_props'
-const FLOW_EDIT_TOOLS = new Set(['ap_add_branch', 'ap_add_step', 'ap_delete_branch', 'ap_delete_step', 'ap_update_step', 'ap_update_trigger'])
+const FLOW_EDIT_TOOLS = new Set(['ap_add_branch', 'ap_add_step', 'ap_apply_flow_operations', 'ap_delete_branch', 'ap_delete_step', 'ap_update_branch', 'ap_update_step', 'ap_update_trigger'])
 
 export const runMetrics = {
     createRecorder,

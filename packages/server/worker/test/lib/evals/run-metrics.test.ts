@@ -41,6 +41,23 @@ describe('runMetrics.summarize', () => {
         })
     })
 
+    it('counts flow-operation and branch edits after a build as fixes and tolerates calls without usage', () => {
+        const metrics = runMetrics.summarize({
+            modelCalls: [{ durationMs: 500, usage: null }],
+            toolTimings: [{ toolName: 'ap_build_flow', durationMs: 10, finishedAtMs: 10, succeeded: true }],
+            toolCalls: [
+                { toolName: 'ap_build_flow', input: {}, output: ok },
+                { toolName: 'ap_apply_flow_operations', input: {}, output: ok },
+                { toolName: 'ap_update_branch', input: {}, output: ok },
+            ],
+            rejectedToolCalls: 0,
+            totalMs: 100,
+        })
+
+        expect(metrics.wasted.fixRoundsAfterBuild).toBe(2)
+        expect(metrics).toMatchObject({ modelCalls: 1, modelMs: 500, inputTokens: null, outputTokens: null })
+    })
+
     it('does not count edits before a build succeeds as fixes', () => {
         const failed = { content: [{ type: 'text', text: '❌ Flow failed' }], isError: true }
         const metrics = runMetrics.summarize({
