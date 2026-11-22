@@ -24,7 +24,7 @@ async function connectMcp(): Promise<McpTools> {
     }
     const client = connection.mcpClient
     return {
-        toolSet: Object.fromEntries(Object.entries(connection.mcpToolSet).flatMap(([name, tool]) => isTool(tool) ? [[name, tool]] : [])),
+        toolSet: onlyTools(connection.mcpToolSet),
         close: () => client.close(),
         projectName,
         conversationId,
@@ -44,6 +44,13 @@ function build({ mcp, caseReplay, auth, mode, user }: { mcp: McpTools, caseRepla
     const approve = async (): Promise<GateDecision> => ({ outcome: 'approved' })
     const dismissCard = async (): Promise<GateDecision> => ({ outcome: 'declined' })
     const noop = async (): Promise<void> => {}
+    const buildPlanTools = agentWorkerTools.createBuildPlanTools({ eventEmitter, getProjectId: () => EVAL_PROJECT.id })
+    const mcpTools = agentMcpClient.withToolTimeouts({
+        mcpToolSet: replayed({ tools: mcp.toolSet, caseReplay, mode }),
+        brokenConnectors: new Set(),
+        taintState,
+        onToolResult: buildPlanTools.onFlowToolResult,
+    })
     return agentToolPolicy.selectToolsForSource({
         source: AgentRunSource.CHAT,
         groups: {
@@ -59,10 +66,10 @@ function build({ mcp, caseReplay, auth, mode, user }: { mcp: McpTools, caseRepla
                 mode,
             }),
             thinking: agentWorkerTools.createThinkingTools(),
-            buildPlan: agentWorkerTools.createBuildPlanTools({ eventEmitter, getProjectId: () => EVAL_PROJECT.id }).tools,
+            buildPlan: buildPlanTools.tools,
             email: {},
             agentSurface: agentWorkerTools.createAgentSurfaceTools({ executeTool, taintState, eventEmitter, waitForApproval: approve, onGateOpened: noop }),
-            mcp: replayed({ tools: mcp.toolSet, caseReplay, mode }),
+            mcp: onlyTools(mcpTools),
             configuredPiece: {},
             configuredFlow: {},
             knowledgeBase: {},
@@ -121,6 +128,10 @@ function devServerApiKey(): string {
 
 function searchWeb({ request, auth }: { request: { system: string, prompt: string, abortSignal: AbortSignal }, auth: Record<string, unknown> }): ReturnType<typeof aiUtils.searchWeb> {
     return aiUtils.searchWeb({ ...request, credentials: aiProviderCredentials({ provider: AIProviderName.OPENROUTER, auth, config: {} }), modelId: SEARCH_MODEL_ID, billing: null })
+}
+
+function onlyTools(tools: Record<string, unknown>): ToolSet {
+    return Object.fromEntries(Object.entries(tools).flatMap(([name, tool]) => isTool(tool) ? [[name, tool]] : []))
 }
 
 function isTool(value: unknown): value is ToolSet[string] {
