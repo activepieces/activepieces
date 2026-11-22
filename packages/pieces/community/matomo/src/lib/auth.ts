@@ -4,22 +4,17 @@ import {
 } from '@activepieces/pieces-framework';
 import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
-import { getVersion } from './api';
+import { matomoApi } from './api';
 
-export type MatomoAuthType = {
-  tokenAuth: string;
-  domain: string;
-  siteId: string;
-};
 
 const description = `
 Authenticate with Matomo.
 
-Your Matomo domain is the URL of your Matomo account, e.g. https://matomo.example.com
+Matomo Domain: the address you open Matomo at, e.g. matomo.example.com with https:// in front.
 
-Your Token Auth key can be found in your Matomo account under Settings > API.
+Token Auth: in Matomo go to Administration → Personal → Security → Auth tokens → Create new token. Matomo shows the token only once, so copy it right away. If your Matomo runs on plain http, untick 'Only allow secure requests' when creating the token.
 
-Your Site ID can be found in your Matomo account under Administration > Websites.
+Site ID: the number shown for your website under Administration → Websites → Manage.
 `;
 
 export const matomoAuth = PieceAuth.CustomAuth({
@@ -28,7 +23,7 @@ export const matomoAuth = PieceAuth.CustomAuth({
     domain: Property.ShortText({
       displayName: 'Matomo Domain',
       description:
-        'The domain of your Matomo account: https://matomo.example.com',
+        'The address of your Matomo, starting with http:// or https://.',
       required: true,
     }),
     tokenAuth: PieceAuth.SecretText({
@@ -52,7 +47,7 @@ export const matomoAuth = PieceAuth.CustomAuth({
     } catch (e) {
       return {
         valid: false,
-        error: (e as Error)?.message,
+        error: e instanceof Error ? e.message : 'Could not connect to Matomo. Check the domain, token and site ID.',
       };
     }
   },
@@ -60,16 +55,28 @@ export const matomoAuth = PieceAuth.CustomAuth({
 });
 
 const validateAuth = async (auth: MatomoAuthType) => {
-  await propsValidation.validateZod(auth, {
-    domain: z.string().check(z.url()),
-    tokenAuth: z.string().check(z.regex(/^[a-zA-Z0-9]+$/)),
-    siteId: z.string().check(z.regex(/^[0-9]+$/)),
-  });
-
-  const response = await getVersion(auth);
-  if (response.success !== true) {
-    throw new Error(
-      'Authentication failed. Please check your setup and try again.'
-    );
+  if (!/^https?:\/\//i.test(auth.domain.trim())) {
+    throw new Error('Matomo Domain must start with http:// or https://');
   }
+  try {
+    await propsValidation.validateZod(auth, {
+      domain: z.string().check(z.url()),
+      tokenAuth: z.string().check(z.regex(/^[a-zA-Z0-9]+$/)),
+      siteId: z.string().check(z.regex(/^[0-9]+$/)),
+    });
+  } catch {
+    throw new Error('Invalid connection details: the domain must be a full URL (https://matomo.example.com), the token must be letters and digits only, and the site ID must be a number.');
+  }
+  try {
+    await matomoApi.call({ auth, method: 'SitesManager.getSiteFromId', idSite: auth.siteId });
+  } catch (e) {
+    const detail = e instanceof Error ? e.message : '';
+    throw new Error(`Could not connect to Matomo with this token and site ID. ${detail}`.trim());
+  }
+};
+
+export type MatomoAuthType = {
+  tokenAuth: string;
+  domain: string;
+  siteId: string;
 };
