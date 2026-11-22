@@ -160,6 +160,8 @@ export function DataTable<
     header: ({ table }) => (
       <div className="flex items-center h-full">
         <Checkbox
+          data-testid="data-table-select-all"
+          aria-label={t('Select all')}
           checked={table.getIsAllPageRowsSelected()}
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
         />
