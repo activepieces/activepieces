@@ -1027,6 +1027,23 @@ describe('ap_set_build_plan', () => {
         expect(plans.at(-1)?.steps).toEqual(PLAN.steps)
     })
 
+    it('lets only flows built this turn update the card', async () => {
+        const plans: BuildPlanEvent[] = []
+        const { eventEmitter } = makeMockEventEmitter()
+        const { tools, onFlowToolResult } = agentWorkerTools.createBuildPlanTools({ eventEmitter: { ...eventEmitter, emitBuildPlan: (plan) => { plans.push(plan) } }, getProjectId: () => null })
+        await tools['ap_set_build_plan'].execute?.({ phase: 'building', flowName: PLAN.flowName, tagline: PLAN.tagline, iconName: PLAN.iconName, steps: PLAN.steps }, CALL)
+        const emitted = plans.length
+
+        onFlowToolResult({ toolName: 'ap_update_step', result: result({ flowId: 'other', name: 'Other', steps: [['Step', 'ok']] }) })
+        expect(plans).toHaveLength(emitted)
+
+        onFlowToolResult({ toolName: 'ap_build_flow', result: result({ flowId: 'mine', name: 'Mine', steps: [['Step', 'problem']] }) })
+        expect(plans).toHaveLength(emitted + 1)
+
+        onFlowToolResult({ toolName: 'ap_update_step', result: result({ flowId: 'mine', name: 'Mine', steps: [['Step', 'ok']] }) })
+        expect(plans).toHaveLength(emitted + 2)
+    })
+
     it('asks for the card fields when the first call leaves them out', async () => {
         const { eventEmitter } = makeMockEventEmitter()
         const { tools } = agentWorkerTools.createBuildPlanTools({ eventEmitter: { ...eventEmitter, emitBuildPlan: () => {} }, getProjectId: () => null })

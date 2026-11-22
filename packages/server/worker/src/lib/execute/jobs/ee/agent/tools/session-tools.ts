@@ -183,7 +183,8 @@ export function createBuildPlanTools({ eventEmitter, getProjectId }: {
     }
     const onFlowToolResult = ({ toolName, result }: { toolName: string, result: unknown }): string | undefined => {
         const built = buildPlanSync.builtFlowOf({ result })
-        if (!isNil(built)) {
+        const acceptable = !isNil(built) && (BUILD_TOOL_NAMES.has(toolName) || builtFlows.has(built.flowId))
+        if (!isNil(built) && acceptable) {
             builtFlows.set(built.flowId, built)
             if (!isNil(currentPlan)) {
                 emit(buildPlanSync.withBuiltRows({ plan: currentPlan, builtFlows: [...builtFlows.values()], plannedRows }))
@@ -269,6 +270,8 @@ function schemaForOutputField(field: AgentOutputField): z.ZodType {
             return z.string().describe(field.description ?? field.displayName)
     }
 }
+
+const BUILD_TOOL_NAMES = new Set(['ap_build_flow', 'ap_create_flow'])
 
 function builtFlowOf({ result }: { result: unknown }): BuiltFlow | null {
     const structured = isObject(result) && isObject(result['structuredContent']) ? result['structuredContent'] : null
