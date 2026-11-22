@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { propsValidation } from '@activepieces/pieces-common';
-import { runwayAuth } from '../common';
+import { runwayAuth, runwayTaskIdProperty } from '../common';
 import RunwayML from '@runwayml/sdk';
 import * as z from 'zod/mini'
 
@@ -9,15 +9,11 @@ export const cancelOrDeleteTask = createAction({
 	name: 'cancel_or_delete_task',
 	classification: 'DESTRUCTIVE',
 	displayName: 'Cancel or Delete Task',
-	description: 'Cancel or delete a task. Running/pending tasks are cancelled, completed tasks are deleted.',
+	description: 'Cancel a running task, or delete a finished one.',
 	audience: 'both',
 	aiMetadata: { description: 'Aborts or removes a Runway task by ID: a running, pending, or throttled task is cancelled, while an already-completed task is deleted. Use when an agent needs to stop a generation in progress or clean up a finished task. Mutating and not idempotent (a repeat call on an already-removed task reports it as already deleted); requires a valid task UUID.', idempotent: false },
 	props: {
-		taskId: Property.ShortText({
-			displayName: 'Task ID',
-			description: 'The ID of the task to cancel or delete (UUID format)',
-			required: true
-		}),
+		taskId: runwayTaskIdProperty,
 	},
 	async run({ auth, propsValue }) {
 		await propsValidation.validateZod(propsValue, {
@@ -63,7 +59,7 @@ export const cancelOrDeleteTask = createAction({
 					wasRunning: false
 				};
 			}
-			throw new Error(`Failed to ${action.slice(0, -1)} task: ${error.message || 'Unknown error'}`);
+			throw new Error(`Failed to ${wasRunning ? 'cancel' : 'delete'} task: ${error.message || 'Unknown error'}`);
 		}
 	},
 });

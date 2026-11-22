@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { AuthenticationType, httpClient, HttpMethod, propsValidation } from '@activepieces/pieces-common';
-import { runwayAuth } from '../common';
+import { httpClient, HttpMethod, propsValidation } from '@activepieces/pieces-common';
+import { runwayAuth, runwayTaskIdProperty } from '../common';
 import RunwayML from '@runwayml/sdk';
 import * as z from 'zod/mini'
 
@@ -44,18 +44,14 @@ export const getTaskDetails = createAction({
 	name: 'get_task_details',
 	classification: 'READ',
 	displayName: 'Get Task Details',
-	description: 'Retrieve details of an existing Runway task by its ID',
+	description: 'Get the status and output files of a Runway task.',
 	audience: 'both',
 	aiMetadata: { description: 'Looks up a Runway generation task by its ID and returns its current status, progress, and output URLs; optionally downloads the generated files as attachments when the task has succeeded. Use to poll the result of an image or video generation started by the generate actions. Read-only and idempotent; requires a valid task UUID.', idempotent: true },
 	props: {
-		taskId: Property.ShortText({ 
-			displayName: 'Task ID', 
-			description: 'The unique ID of the task to retrieve (UUID format)',
-			required: true 
-		}),
+		taskId: runwayTaskIdProperty,
 		downloadOutput: Property.Checkbox({ 
 			displayName: 'Download Output Files', 
-			description: 'Download and return the generated files as attachments (if task succeeded)',
+			description: 'Save the generated files to the flow once the task has succeeded.',
 			required: false,
 			defaultValue: false
 		}),
@@ -93,7 +89,6 @@ export const getTaskDetails = createAction({
 						const headResponse = await httpClient.sendRequest({
 							method: HttpMethod.HEAD,
 							url,
-							authentication: { type: AuthenticationType.BEARER_TOKEN, token: apiKey },
 							timeout: 30000,
 						});
 						
@@ -105,7 +100,6 @@ export const getTaskDetails = createAction({
 							method: HttpMethod.GET,
 							url,
 							responseType: 'arraybuffer',
-							authentication: { type: AuthenticationType.BEARER_TOKEN, token: apiKey },
 							timeout: 300000, // 5 minutes for large video files
 						});
 
