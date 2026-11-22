@@ -249,6 +249,7 @@ export const replay = {
     endsTurn,
     isStopOutput,
     splitStale,
+    stubbedTools: STUBBED_TOOLS,
 }
 
 export type StaleRecording = {

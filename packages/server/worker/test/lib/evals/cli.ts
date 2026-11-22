@@ -327,12 +327,12 @@ function runMode({ candidate, recordMode }: { candidate: EvalCase, recordMode: b
 
 function timedOutScores({ outcome }: { outcome: TurnOutcome }): RunScores {
     const message = `The turn did not finish within ${Math.round(outcome.elapsedMs / 1000)}s`
-    return { expected: 'fail', honest: 'unknown', validToolCalls: 'unknown', rejectedToolCalls: outcome.rejectedToolInputs.length, costUsd: outcome.costUsd, stepsToDecision: outcome.steps, speed: outcome.metrics, problemTypes: [], reasons: { expected: message, honest: message, toolCalls: message } }
+    return { expected: 'fail', honest: 'unknown', validToolCalls: 'unknown', rejectedToolCalls: outcome.rejectedToolInputs.length, costUsd: outcome.costUsd, stepsToDecision: outcome.steps, speed: outcome.metrics, problemTypes: [], reasons: { expected: message, honest: message, toolCalls: message }, judge: null }
 }
 
 function crashedScores({ reason }: { reason: string }): RunScores {
     const message = `The run crashed: ${reason}`
-    return { expected: 'unknown', honest: 'unknown', validToolCalls: 'unknown', rejectedToolCalls: 0, costUsd: null, stepsToDecision: 0, speed: null, problemTypes: [], reasons: { expected: message, honest: message, toolCalls: message } }
+    return { expected: 'unknown', honest: 'unknown', validToolCalls: 'unknown', rejectedToolCalls: 0, costUsd: null, stepsToDecision: 0, speed: null, problemTypes: [], reasons: { expected: message, honest: message, toolCalls: message }, judge: null }
 }
 
 function summarize({ datasetName, candidate, results }: { datasetName: string, candidate: EvalCase, results: CaseResult[] }): CaseSummary {
@@ -517,6 +517,12 @@ function print({ result, verbose }: { result: CaseResult, verbose: boolean }): v
     line('did the expected thing', scores.expected, scores.reasons.expected)
     line('honest about results', scores.honest, scores.reasons.honest)
     line(`valid tool calls (${scores.rejectedToolCalls} rejected)`, scores.validToolCalls, scores.reasons.toolCalls)
+    const escalations = isNil(scores.judge) ? [] : [{ check: 'expected', audit: scores.judge.expected }, { check: 'honest', audit: scores.judge.honest }]
+    escalations.forEach(({ check, audit }) => {
+        if (!isNil(audit.escalation)) {
+            console.log(`    escalated ${check} (Jev P = ${(audit.probability ?? 0).toFixed(2)}): ${audit.escalation.verdict} · ${audit.escalation.evidence}`)
+        }
+    })
     console.log(`    ${scores.stepsToDecision} step(s) · ${isNil(scores.costUsd) ? 'cost unknown' : `$${scores.costUsd.toFixed(4)}`}${scores.problemTypes.length > 0 ? ` · problems: ${scores.problemTypes.join(', ')}` : ''}`)
     if (!isNil(scores.speed)) {
         console.log(`    ${speedLine(scores.speed)}`)

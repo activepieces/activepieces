@@ -1,4 +1,4 @@
-import { aiProviderCredentials, AIProviderName, isNil, toError, tryCatch } from '@activepieces/core-utils'
+import { aiProviderCredentials, AIProviderName, isNil, isObject, toError, tryCatch } from '@activepieces/core-utils'
 import { AgentPhase, agentToolSkills, PersistedAgentPartType, PersistedToolCallStatus } from '@activepieces/shared'
 import { activepiecesAiCost, aiUtils } from '@activepieces/server-utils'
 import { LanguageModelV4StreamPart, SharedV4ProviderMetadata } from '@ai-sdk/provider'
@@ -64,8 +64,10 @@ async function run({ evalCase, recordedToolCalls, mcp, modelId, auth, mode }: { 
     }
     const rejected = [...warnings, ...rejectedToolParts(parts)]
     const toolCalls = turnToolCalls(parts)
+    const transcript = timedOut ? `${renderTranscript(parts)}\n(the turn did not finish within ${timeoutMs / 1000}s)` : renderTranscript(parts)
+    const flowsAfter = isNil(live) ? '' : await renderFlowsAfter({ mcp, toolCalls })
     return {
-        transcript: timedOut ? `${renderTranscript(parts)}\n(the turn did not finish within ${timeoutMs / 1000}s)` : renderTranscript(parts),
+        transcript: `${transcript}${flowsAfter}`,
         rejectedToolInputs: rejected,
         toolCalls,
         stops: caseReplay.stops(),
@@ -166,15 +168,72 @@ function renderTranscript(parts: AgentTurnResult['uiParts']): string {
             return [`ASSISTANT: ${part.text}`]
         }
         if (part.type === PersistedAgentPartType.TOOL_CALL) {
-            const output = replay.isStopOutput(part.output) ? STOPPED_RESULT : part.errorText ?? JSON.stringify(part.output ?? null)
-            return [`TOOL_CALL: ${part.toolName} ${truncate(JSON.stringify(part.input))}`, `TOOL_RESULT: ${truncate(output)}`]
+            const { toolName } = agentToolSkills.effectiveToolCall({ toolName: part.toolName, input: part.input })
+            const output = replay.isStopOutput(part.output) ? STOPPED_RESULT : part.errorText ?? part.output
+            return [toolCallLine({ toolName: part.toolName, input: part.input }), toolResultLine({ toolName, output })]
         }
         return []
     }).join('\n')
 }
 
-function truncate(text: string): string {
-    return text.length <= TRANSCRIPT_FIELD_MAX ? text : `${text.slice(0, TRANSCRIPT_FIELD_MAX)}${TRUNCATED_MARK}`
+function toolCallLine({ toolName, input }: { toolName: string, input: unknown }): string {
+    const call = agentToolSkills.effectiveToolCall({ toolName, input })
+    return `TOOL_CALL: ${call.toolName} ${cutIfLive({ toolName: call.toolName, text: JSON.stringify(call.input ?? null) })}`
+}
+
+function toolResultLine({ toolName, output }: { toolName: string, output: unknown }): string {
+    return `TOOL_RESULT: ${cutIfLive({ toolName, text: resultText(output) })}`
+}
+
+function resultText(output: unknown): string {
+    if (typeof output === 'string') {
+        return output
+    }
+    if (isObject(output) && output['isError'] !== true && !isNil(output['structuredContent'])) {
+        return JSON.stringify(output['structuredContent'])
+    }
+    return contentText(isObject(output) ? output['content'] : output) ?? JSON.stringify(output ?? null)
+}
+
+function contentText(content: unknown): string | null {
+    if (!Array.isArray(content)) {
+        return null
+    }
+    const texts = content.flatMap((item) => isObject(item) && typeof item['text'] === 'string' ? [item['text']] : [])
+    return texts.length === 0 ? null : texts.join('\n')
+}
+
+function cutIfLive({ toolName, text }: { toolName: string, text: string }): string {
+    if (!replay.isLive(toolName) || text.length <= LIVE_TOOL_FIELD_MAX) {
+        return text
+    }
+    return `${text.slice(0, LIVE_TOOL_FIELD_MAX)}${TRUNCATED_MARK}`
+}
+
+async function renderFlowsAfter({ mcp, toolCalls }: { mcp: McpTools, toolCalls: TurnToolCall[] }): Promise<string> {
+    const execute = mcp.toolSet[FLOW_STRUCTURE_TOOL]?.execute
+    const flowIds = [...new Set(toolCalls.flatMap(changedFlowIds))]
+    if (isNil(execute) || flowIds.length === 0) {
+        return ''
+    }
+    const flows = await Promise.all(flowIds.map(async (flowId) => {
+        const { data } = await tryCatch(async () => execute({ flowId }, { toolCallId: FLOW_STRUCTURE_TOOL, messages: [], context: {} }))
+        const isError = isNil(data) || (isObject(data) && data['isError'] === true)
+        return isError ? [] : [`FLOW ${flowId}:\n${isObject(data) ? contentText(data['content']) ?? resultText(data) : resultText(data)}`]
+    }))
+    const rendered = flows.flat()
+    return rendered.length === 0 ? '' : `\n${FLOWS_AFTER_MARK}\n${rendered.join('\n')}`
+}
+
+function changedFlowIds(call: TurnToolCall): string[] {
+    const { toolName, input } = agentToolSkills.effectiveToolCall({ toolName: call.toolName, input: call.input })
+    if (replay.isRead(toolName)) {
+        return []
+    }
+    const fromInput = isObject(input) && typeof input['flowId'] === 'string' ? [input['flowId']] : []
+    const structured = isObject(call.output) && isObject(call.output['structuredContent']) ? call.output['structuredContent'] : {}
+    const fromOutput = typeof structured['flowId'] === 'string' ? [structured['flowId']] : []
+    return [...fromInput, ...fromOutput]
 }
 
 async function resolveAuth(): Promise<Record<string, unknown>> {
@@ -219,7 +278,9 @@ const OPENROUTER_INFERENCE_ENV = 'OPENROUTER_API_KEY'
 const OPENROUTER_PROVISION_ENV = 'AP_OPENROUTER_PROVISION_KEY'
 const MINTED_KEY_LIMIT_USD = 25
 const TURN_TIMEOUT_MS = 5 * 60_000
-const TRANSCRIPT_FIELD_MAX = 2_000
+const LIVE_TOOL_FIELD_MAX = 2_000
+const FLOW_STRUCTURE_TOOL = 'ap_flow_structure'
+const FLOWS_AFTER_MARK = '--- FLOWS AFTER THE TURN (read by the test harness once the turn ended) ---'
 const SCHEMA_DUMP_MARK = '\nInput schema:'
 const STOPPED_RESULT = '(not run: this is a replayed test, writes never run and the test ends the turn here)'
 const TRUNCATED_MARK = '… (the test cut this text short, the real call was complete)'
@@ -233,6 +294,8 @@ export const evalAgentTurn = {
     run,
     resolveAuth,
     cleanupAuth,
+    toolCallLine,
+    toolResultLine,
 }
 
 type MintedKey = { apiKey: string, hash: string | null, provisionKey: string }
