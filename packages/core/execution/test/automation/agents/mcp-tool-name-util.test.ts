@@ -128,6 +128,10 @@ describe('uniqueToolName', () => {
         expect(mcpToolNameUtils.uniqueToolName({ sourceName: 'Researcher', taken: ['researcher', 'researcher_2'] })).toBe('researcher_3')
     })
 
+    it('steers clear of the ap_ prefix that built-in tools reserve', () => {
+        expect(mcpToolNameUtils.uniqueToolName({ sourceName: 'AP Helper', taken: [] })).toBe('tool_ap_helper')
+    })
+
     it('stays within the provider length limit when it adds a number', () => {
         const name = mcpToolNameUtils.uniqueToolName({ sourceName: 'a'.repeat(64), taken: [mcpToolNameUtils.suggestToolName('a'.repeat(64))] })
         expect(mcpToolNameUtils.isProviderSafeIdentifier(name)).toBe(true)

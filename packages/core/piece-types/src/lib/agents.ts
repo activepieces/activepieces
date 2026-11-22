@@ -300,7 +300,8 @@ function suggestToolName(sourceName: string): string {
 }
 
 function uniqueToolName({ sourceName, taken }: { sourceName: string, taken: string[] }): string {
-    const base = suggestToolName(sourceName)
+    const suggested = suggestToolName(sourceName)
+    const base = suggested.startsWith(RESERVED_TOOL_PREFIX) ? `tool_${suggested}`.slice(0, MAX_IDENTIFIER_LENGTH) : suggested
     const isFree = (name: string) => !taken.includes(name)
     if (isFree(base)) {
         return base
@@ -339,6 +340,7 @@ function createPieceToolName(pieceName: string, actionName: string): string {
 
 const MAX_PREFIX_LENGTH = 53
 const MAX_IDENTIFIER_LENGTH = 64
+const RESERVED_TOOL_PREFIX = 'ap_'
 const PROVIDER_TOOL_NAME_PATTERN = /^[a-zA-Z_][a-zA-Z0-9_-]{0,63}$/
 
 export const mcpToolNameUtils = { createToolName, createPieceToolName, toValidToolName, suggestToolName, uniqueToolName, isProviderSafeIdentifier, toProviderSafeIdentifier }
