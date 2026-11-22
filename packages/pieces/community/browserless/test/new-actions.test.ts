@@ -237,8 +237,8 @@ describe('crawl actions', () => {
     });
     test('crawl IDs are validated before use in the path', async () => {
         const seen = stubFetch(replies([{ body: {} }]));
-        await expect(runAction({ action: getCrawl, propsValue: { crawlId: '../session' } })).rejects.toThrow(/Crawl ID must look like/);
-        await expect(runAction({ action: cancelCrawl, propsValue: { crawlId: 'a/b' } })).rejects.toThrow(/Crawl ID must look like/);
+        await expect(runAction({ action: getCrawl, propsValue: { crawlId: '../session' } })).rejects.toThrow(/Crawl ID may contain only/);
+        await expect(runAction({ action: cancelCrawl, propsValue: { crawlId: 'a/b' } })).rejects.toThrow(/Crawl ID may contain only/);
         expect(seen).toHaveLength(0);
     });
     test('list_crawls passes filters and the cursor', async () => {
