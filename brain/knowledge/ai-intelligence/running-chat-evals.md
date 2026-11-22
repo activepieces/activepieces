@@ -8,11 +8,12 @@ icon: 🧪
 
 ## Before you run
 
-- Start the dev server yourself. The CLI uses its MCP tools and the `/v1/agents/eval/*` routes. `mcp-credentials` and `execute-tool` answer 404 unless `AP_ENVIRONMENT` is `dev`, and `execute-tool` only runs tools for eval conversations.
-- `.env.dev` at the repo root, which the CLI loads on its own, needs:
+- Start the dev server yourself. The CLI uses its MCP tools and the `/v1/agents/eval/*` routes, which answer 404 unless `AP_ENVIRONMENT` is `dev`; `execute-tool` only runs tools for eval conversations. It talks to `AP_EVAL_BASE_URL` (default `http://localhost:3000/api`).
+- `.env.dev` at the repo root (found from the CLI's own location, so any working directory works) or the environment needs:
   - `AP_API_KEY`: the same value the dev server runs with.
   - `OPENROUTER_API_KEY`, or `AP_OPENROUTER_PROVISION_KEY` to mint a temporary key per run.
-  - `AP_POSTHOG_API_KEY`: reads the datasets and the baseline.
+  - `AP_POSTHOG_API_KEY`: reads the datasets and the baseline. `AP_POSTHOG_PROJECT_ID` (default `18070`) and `AP_POSTHOG_HOST` (default `https://us.posthog.com`) point it at another PostHog.
+- A check at start lists every missing variable and an unreachable dev server in one message, then exits. `--steps`, `--set-cut` and `--set-target` only need `AP_POSTHOG_API_KEY`; `--compare` needs nothing.
 
 ## Run
 
@@ -21,13 +22,21 @@ icon: 🧪
 - `npm run evals -- --dataset chat-core --case 2 --case 5`: only those cases.
 - `--repeats 1`: a quick check. `--model <id>`: another model (default `z-ai/glm-5.3`).
 - `--verbose`: print every run with its transcript instead of the live table.
-- After each live run the harness deletes the flows and tables that run created (ids from the create/build tool results, read after the "flows after the turn" block); folders stay, the dev server has no folder delete. `--keep` skips the cleanup; the CLI warns at start when the eval project already holds more than 20 flows.
+- `--keep`: don't delete live runs' workspace projects; each kept one prints its name and id.
+
+## Live cases
+
+- A case with `metadata.mode: "live"` runs against real data. Each run calls `POST /v1/agents/eval/workspace`, which creates a fresh `eval-…` project and conversation and shares the base project's connections with it (the platform owner's first project, the same one replay cases run in). The run then deletes it with `DELETE /v1/agents/eval/workspace/:projectId`, also when the run throws. The server sweeps workspaces older than an hour, so a killed run doesn't leave one forever. The agent's system prompt names the workspace project.
+- `metadata.seed` is created in the workspace before the user message: each `seed.flows[]` item is an `ap_build_flow` input (`flowName`, `trigger`, `steps`, `folderName`), each `seed.tables[]` item an `ap_create_table` input plus optional `records` (inserted with `ap_insert_records`, values sent as text). A seed that fails crashes the run with the reason. The judge sees the seeded ids and flow structures as the state before the turn, next to the flows after it.
+- `metadata.codeChecks` is graded by code as the **code checks** gate: `noQuestionCards` (no `ap_show_questions`), `cardShown` (that card showed), `noWrites` (no workspace change, write action or other non-read tool), `noDeletes` (no `ap_delete_*` or delete/remove action). Every flow the turn changed must also pass `ap_validate_flow`, unless `skipFlowValidates`. Replay cases pass this gate.
+- `metadata.answers.connections` maps a piece to the connection the scripted user picks (`none` declines). When the base project has no connection by that name or id, the case prints `skipped: needs connection <name>` and does not run.
 
 ## Reading the result
 
 - In a terminal a live table shows each case's title (`metadata.title` in PostHog, falling back to its check), one mark per run (✓, ✗, spinner, `·` not started), runs done, cost so far and elapsed time. A case gets its verdict as soon as the remaining runs can't change it. Outside a terminal it prints line by line.
 - When the runs finish, a results browser opens: ↑↓ to move, Enter to open a case's runs and then a run's failure reasons and transcript, Esc to go back, a case number to jump, q to quit. The verdicts and the baseline diff print after you quit.
 - **Judge:** Jev 1.14 answers each check (`EVALS_JUDGE_MODEL` overrides it) and sees the user message plus the steps with unwrapped `ap_lazy_tool` calls and full workspace tool inputs/results (only skill, research and web reads are cut at 2,000 chars); live cases also get a "flows after the turn" block and a note that stubbed tools (`ap_test_flow` etc.) are faked. P(pass) between 0.35 and 0.65 is escalated to Sonnet 5.5, which returns pass/fail with one evidence line and may say `unclear` (`?`) only when the evidence is missing. A failed check gets a one-line reason from Haiku 5.5; `--save` stores per-check P, verdict, evidence and the judged text. There is no 1–10 score.
+- **Gates:** a run passes when the judged checks (did the expected thing, honest), valid tool calls and code checks all pass. All four print per run, go into `--save`, and upload to PostHog; a baseline saved before the code checks gate existed is read with the other three.
 - **Case verdict:** a `chat-core` case passes only when every run passes (pass^k, as Anthropic recommends for regression cases). Any other case passes when more than half pass. An unclear run doesn't count as a pass.
 - **Case summary:** after the runs, every case gets `expected`, `happened` and `means` lines (Haiku 5.5, only for cases with a failed or unclear run), e.g. "a user hits this about 1 time in 5".
 - **Diff:** each case shows `before → now` against the main baseline: `same`, `FIXED`, `REGRESSED` or `unclear`. A change counts only when at least 80% of at least 3 runs agree on both sides.
@@ -56,5 +65,5 @@ All of these need `--dataset <name>`:
 
 ## Key files
 
-- `packages/server/worker/test/lib/evals/`: the CLI (`cli.ts`), replay, judge (`checks.ts`), live table and results browser
+- `packages/server/worker/test/lib/evals/`: the CLI (`cli.ts`), replay, judge (`checks.ts`), `evalWorkspace`, `evalSeed`, `evalCodeChecks`, `preflight`, live table and results browser
 - `packages/server/api/src/app/ee/agent/agent-eval-controller.ts`: the dev-server routes the CLI calls (`agentEvalModule`)

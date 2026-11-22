@@ -37,4 +37,23 @@ describe('scriptedUser', () => {
         expect(await withAnswer.waitForApproval({ gateId: 'q' })).toEqual({ outcome: 'approved', payload: { answers: 'every Monday at 9' } })
         expect(await withDefault.waitForApproval({ gateId: 'q' })).toEqual({ outcome: 'approved', payload: { answers: expect.stringContaining('sensible defaults') } })
     })
+
+    it('names the connections a live case needs that the base project lacks, so the case is skipped', async () => {
+        const listConnections = vi.fn(async (pieceName: string): Promise<ProjectConnection[]> => pieceName === '@activepieces/piece-slack'
+            ? [{ externalId: 'slack-1', displayName: 'Team Slack', status: 'ACTIVE' }]
+            : [])
+
+        const missing = await scriptedUser.missingConnections({ answers: { questions: null, connections: { slack: 'Team Slack', gmail: 'Work Gmail', hubspot: 'none' } }, listConnections })
+
+        expect(missing).toEqual(['Work Gmail'])
+        expect(listConnections).not.toHaveBeenCalledWith('@activepieces/piece-hubspot')
+    })
+
+    it('counts a connection it could not list as missing', async () => {
+        const listConnections = vi.fn(async (): Promise<ProjectConnection[]> => {
+            throw new Error('no ap_list_connections')
+        })
+
+        expect(await scriptedUser.missingConnections({ answers: { questions: null, connections: { slack: 'Team Slack' } }, listConnections })).toEqual(['Team Slack'])
+    })
 })

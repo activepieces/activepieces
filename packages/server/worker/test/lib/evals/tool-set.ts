@@ -8,7 +8,7 @@ import { agentMcpClient } from '../../../src/lib/execute/jobs/ee/agent/agent-mcp
 import { agentToolPolicy } from '../../../src/lib/execute/jobs/ee/agent/agent-tool-policy'
 import { agentWorkerTools, GateDecision } from '../../../src/lib/execute/jobs/ee/agent/agent-worker-tools'
 import { devServer } from './dev-server'
-import { EVAL_PROJECT } from './prompts'
+import { EVAL_PROJECT, PromptProject } from './prompts'
 import { replay, Replay, ReplayMode } from './replay'
 import { ProjectConnection, ScriptedUser } from './scripted-user'
 
@@ -51,7 +51,8 @@ function build({ mcp, caseReplay, auth, mode, user }: { mcp: McpTools, caseRepla
     const storeSelectedConnection = async (toolInput: { pieceName: string, connectionExternalId: string, label: string, projectId: string }): Promise<void> => {
         await tryCatch(() => executeOnDevServer({ toolName: STORE_SELECTED_CONNECTION_TOOL, toolInput, conversationId: mcp.conversationId }))
     }
-    const buildPlanTools = agentWorkerTools.createBuildPlanTools({ eventEmitter, getProjectId: () => EVAL_PROJECT.id })
+    const project = projectOf({ mcp, mode })
+    const buildPlanTools = agentWorkerTools.createBuildPlanTools({ eventEmitter, getProjectId: () => project.id })
     const mcpTools = agentMcpClient.withToolTimeouts({
         mcpToolSet: replayed({ tools: mcp.toolSet, caseReplay, mode }),
         brokenConnectors: new Set(),
@@ -60,7 +61,7 @@ function build({ mcp, caseReplay, auth, mode, user }: { mcp: McpTools, caseRepla
     return agentToolPolicy.selectToolsForSource({
         source: AgentRunSource.CHAT,
         groups: {
-            local: agentWorkerTools.createLocalTools({ onSetProjectContext: async () => ({ success: true }), projects: [EVAL_PROJECT] }),
+            local: agentWorkerTools.createLocalTools({ onSetProjectContext: async () => ({ success: true }), projects: [project] }),
             display: agentWorkerTools.createDisplayTools({ waitForApproval: user?.waitForApproval ?? dismissCard, displayToolTimeoutMs: DISPLAY_TOOL_TIMEOUT_MS, onConnectionSelected: storeSelectedConnection, onGateOpened: user?.onGateOpened ?? noop }),
             crossProject: agentWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: approve, onGateOpened: noop, taintState }),
             web: replayed({
@@ -82,6 +83,10 @@ function build({ mcp, caseReplay, auth, mode, user }: { mcp: McpTools, caseRepla
             completion: {},
         },
     })
+}
+
+function projectOf({ mcp, mode }: { mcp: McpTools, mode: ReplayMode }): PromptProject {
+    return mode === 'live' ? { id: mcp.projectId, displayName: mcp.projectName, type: EVAL_PROJECT.type } : EVAL_PROJECT
 }
 
 function replayed({ tools, caseReplay, mode }: { tools: ToolSet, caseReplay: Replay, mode: ReplayMode }): ToolSet {
@@ -169,6 +174,7 @@ export const evalToolSet = {
     connectMcp,
     connect,
     build,
+    projectOf,
     call,
     readResult,
     listConnections,

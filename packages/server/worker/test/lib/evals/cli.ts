@@ -13,10 +13,13 @@ import { colors } from './colors'
 import { evalCase, EvalCase, RecordedToolCall } from './eval-case'
 import { posthogDataset } from './posthog-dataset'
 import { Baseline, posthogExperiments, UploadedRun, VerdictCounts } from './posthog-experiments'
+import { preflight } from './preflight'
 import { progressTable } from './progress-table'
-import { evalPrompts } from './prompts'
+import { EVAL_PROJECT, evalPrompts } from './prompts'
 import { replay, StaleRecording } from './replay'
+import { repoPaths } from './repo-paths'
 import { resultsBrowser } from './results-browser'
+import { scriptedUser } from './scripted-user'
 import { evalSeed } from './seed'
 import { speedCompare } from './speed-compare'
 import { toolChanges, ToolFingerprints } from './tool-changes'
@@ -24,8 +27,9 @@ import { evalToolSet, McpTools } from './tool-set'
 import { evalWorkspace } from './workspace'
 
 async function main(): Promise<void> {
-    if (existsSync(ENV_FILE)) {
-        process.loadEnvFile(ENV_FILE)
+    const envFile = repoPaths.envFile()
+    if (existsSync(envFile)) {
+        process.loadEnvFile(envFile)
     }
     const { values } = parseArgs({
         options: {
@@ -61,6 +65,10 @@ async function main(): Promise<void> {
     if (editing && datasetNames.length !== 1) {
         throw new Error('--steps, --set-cut and --set-target work on one dataset: pass --dataset <name>')
     }
+    const notReady = await preflight.check({ needs: editing ? ['posthog'] : ['devServer', 'openRouter', 'posthog'] })
+    if (!isNil(notReady)) {
+        throw new Error(notReady)
+    }
     if (values.upload && (recordMode || onlyCases.size > 0)) {
         throw new Error('--upload is for the full main run only: drop --case and --record')
     }
@@ -95,7 +103,7 @@ async function main(): Promise<void> {
         throw setup.error
     }
     const [auth, mcp, baselineReads] = setup.data
-    console.log(`Dev server MCP tools run in project "${mcp.projectName}"`)
+    console.log(`Dev server MCP tools run in project "${mcp.projectName}"; each live run gets a fresh workspace project that shares its connections`)
     const schemaTools = evalToolSet.build({ mcp, caseReplay: replay.create({ recordedToolCalls: [] }), auth, mode: 'replay', user: null })
     const toolFingerprints = await toolChanges.fingerprints({ tools: schemaTools })
     const live = Boolean(process.stdout.isTTY) && !values.verbose
@@ -104,7 +112,7 @@ async function main(): Promise<void> {
     let explained = new Map<string, CaseExplanation>()
     try {
         for (const [index, dataset] of datasets.entries()) {
-            ran.push(await runDataset({ dataset, repeats, recordMode, keep: values.keep, upload: values.upload, verbose: values.verbose, live, modelId: values.model, auth, mcp, schemaTools, baselineRead: baselineReads[index], toolFingerprints }))
+            ran.push(await runDataset({ dataset: await withoutSkipped({ dataset, mcp }), repeats, recordMode, keep: values.keep, upload: values.upload, verbose: values.verbose, live, modelId: values.model, auth, mcp, schemaTools, baselineRead: baselineReads[index], toolFingerprints }))
         }
         if (!recordMode) {
             console.log(colors.dim('\nWriting a short summary for each case…'))
@@ -130,6 +138,17 @@ async function main(): Promise<void> {
     const unchecked = outcomes.filter((outcome) => outcome.status === 'unchecked')
     console.log(`\n${finalLine({ broken, unchecked })}`)
     process.exit(broken.length === 0 ? 0 : 1)
+}
+
+async function withoutSkipped({ dataset, mcp }: { dataset: { name: string, cases: EvalCase[] }, mcp: McpTools }): Promise<{ name: string, cases: EvalCase[] }> {
+    const checked = await Promise.all(dataset.cases.map(async (candidate) => ({
+        candidate,
+        missing: isNil(candidate.live) ? [] : await scriptedUser.missingConnections({ answers: candidate.live.answers, listConnections: (pieceName) => evalToolSet.listConnections({ mcp, pieceName }) }),
+    })))
+    checked.filter(({ missing }) => missing.length > 0).forEach(({ candidate, missing }) => {
+        console.log(colors.yellow(`${dataset.name} case ${candidate.caseNumber} · ${candidate.title}: skipped: needs connection ${missing.join(', ')} in project "${mcp.projectName}"`))
+    })
+    return { name: dataset.name, cases: checked.filter(({ missing }) => missing.length === 0).map(({ candidate }) => candidate) }
 }
 
 function modeNote({ cases, recordMode }: { cases: EvalCase[], recordMode: boolean }): string {
@@ -471,7 +490,7 @@ function gitSha(): string {
 
 function promptVersion(): string {
     const guides = evalPrompts.guides()
-    const text = [evalPrompts.systemPrompt(), ...Object.keys(guides).sort().map((topic) => guides[topic])].join('\n')
+    const text = [evalPrompts.systemPrompt({ project: EVAL_PROJECT }), ...Object.keys(guides).sort().map((topic) => guides[topic])].join('\n')
     return createHash('sha256').update(text).digest('hex').slice(0, PROMPT_HASH_CHARS)
 }
 
@@ -557,7 +576,6 @@ function print({ result, verbose }: { result: CaseResult, verbose: boolean }): v
     result.stops.forEach((reason) => console.log(`    replay note: ${reason}`))
 }
 
-const ENV_FILE = '.env.dev'
 const DEFAULT_MODEL = 'z-ai/glm-5.3'
 const DEFAULT_DATASETS = ['chat-prod-failures', 'chat-core']
 const MUST_PASS_DATASETS = new Set(['chat-core'])

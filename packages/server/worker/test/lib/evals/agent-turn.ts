@@ -29,7 +29,7 @@ async function run({ evalCase, recordedToolCalls, mcp, modelId, auth, mode, seed
 
     const { data: result, error } = await tryCatch(() => runAgentTurn({
         models: [{ model, provider: AIProviderName.OPENROUTER, modelId, thinkingBudget: TIER.thinkingBudget }],
-        systemPrompt: evalPrompts.systemPrompt(),
+        systemPrompt: evalPrompts.systemPrompt({ project: evalToolSet.projectOf({ mcp, mode }) }),
         messages: evalCase.messages,
         tools,
         allToolNames: Object.keys(tools),
