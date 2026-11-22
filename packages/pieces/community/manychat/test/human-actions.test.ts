@@ -23,11 +23,11 @@ describe('piece metadata', () => {
   test('existing actions keep their names and prop names', () => {
     const expected: Record<string, string[]> = {
       addTagToUser: ['subscriberId', 'tagId'],
-      createSubscriber: ['first_name', 'last_name', 'phone', 'whatsapp_phone', 'email', 'gender', 'has_opt_in_sms', 'has_opt_in_email', 'consent_phrase'],
+      createSubscriber: ['first_name', 'last_name', 'contact_info', 'phone', 'whatsapp_phone', 'email', 'gender', 'has_opt_in_sms', 'has_opt_in_email', 'consent_phrase'],
       findUserByCustomField: ['field', 'value'],
       findUserByName: ['name'],
       removeTagFromUser: ['subscriberId', 'tagId'],
-      sendContentToUser: ['subscriber_id', 'platform', 'content_type', 'text_content', 'media_url', 'message_tag'],
+      sendContentToUser: ['window_info', 'subscriber_id', 'platform', 'content_type', 'text_content', 'media_url', 'message_tag'],
       setCustomField: ['subscriber_id', 'field_id', 'field_value'],
     };
     const actions = manychat.actions();
@@ -36,10 +36,10 @@ describe('piece metadata', () => {
     }
   });
 
-  test('18 actions, 0.86.4 floor, every action has a schema, Set Custom Field is human-only', () => {
+  test('18 actions, 0.88.2 floor, every action has a schema, Set Custom Field is human-only', () => {
     const actions = Object.values(manychat.actions());
     expect(actions).toHaveLength(18);
-    expect(manychat.minimumSupportedRelease).toBe('0.86.4');
+    expect(manychat.minimumSupportedRelease).toBe('0.88.2');
     for (const action of actions) {
       expect(action.outputSchema).toBeDefined();
       expect(typeof action.aiMetadata?.idempotent).toBe('boolean');
@@ -64,7 +64,7 @@ describe('piece metadata', () => {
   });
 });
 
-describe('Send Content to User', () => {
+describe('Send Content to Subscriber', () => {
   test('sends the API key from the connection, not the auth object', async () => {
     const seen = stubManychat({ replies: [ok()] });
     const result = await sendContentToUserAction.run(
@@ -148,7 +148,7 @@ describe('subscribers', () => {
   test('Create Subscriber keeps the at-least-one contact check from main', async () => {
     const seen = stubManychat({ replies: [ok()] });
     await expect(createSubscriberAction.run(actionContext({ propsValue: { first_name: 'Ada' } }))).rejects.toThrow(
-      'To create a subscriber you must fill in at least one field: phone or email or whatsapp_phone.',
+      'Fill in at least one of Phone Number, WhatsApp Phone or Email.',
     );
     expect(seen).toHaveLength(0);
   });
@@ -161,7 +161,7 @@ describe('subscribers', () => {
     expect(seen[0].path).toBe('/fb/subscriber/updateSubscriber');
     expect(seen[0].body).toEqual({ subscriber_id: 1234567890123, first_name: 'Ada', email: 'ada@example.com', has_opt_in_email: false });
     expect(result).toEqual(SUBSCRIBER);
-    await expect(updateSubscriberAction.run(actionContext({ propsValue: { subscriber_id: SUBSCRIBER_ID, phone: '+1' } }))).rejects.toThrow('SMS Opt-in is required');
+    await expect(updateSubscriberAction.run(actionContext({ propsValue: { subscriber_id: SUBSCRIBER_ID, phone: '+1' } }))).rejects.toThrow('SMS Opt-in is required when Phone Number is set (ManyChat rule).');
     await expect(updateSubscriberAction.run(actionContext({ propsValue: { subscriber_id: SUBSCRIBER_ID } }))).rejects.toThrow('at least one field');
     expect(seen).toHaveLength(1);
   });
@@ -195,7 +195,7 @@ describe('subscribers', () => {
     expect(seen[0].query.has('email')).toBe(false);
   });
 
-  test('Find User by Name and by Custom Field return found + result', async () => {
+  test('Find Subscriber by Name and by Custom Field return found + result', async () => {
     const seen = stubManychat({ replies: [ok({ data: [SUBSCRIBER] }), ok({ data: [] })] });
     expect(await findUserByNameAction.run(actionContext({ propsValue: { name: 'Ada Test' } }))).toEqual({ found: true, result: [SUBSCRIBER] });
     expect(await findUserByCustomFieldAction.run(actionContext({ propsValue: { field: 21, value: 'hello' } }))).toEqual({ found: false, result: [] });
@@ -305,7 +305,7 @@ describe('QA edge cases', () => {
   test('Send Content rejects whitespace-only text before any request', async () => {
     const seen = stubManychat({ replies: [ok()] });
     await expect(sendContentToUserAction.run(actionContext({ propsValue: { subscriber_id: 1, content_type: 'text', text_content: '   ' } }))).rejects.toThrow(
-      'Text content is required',
+      'Message Text is required when Content Type is Text.',
     );
     expect(seen).toHaveLength(0);
   });

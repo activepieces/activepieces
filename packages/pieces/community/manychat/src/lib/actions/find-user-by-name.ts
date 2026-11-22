@@ -7,8 +7,8 @@ export const findUserByNameAction = createAction({
 	auth: manychatAuth,
 	name: 'findUserByName',
 	classification: 'SEARCH',
-	displayName: 'Find User by Name',
-	description: 'Finds users by full name. ManyChat returns at most 100 matches.',
+	displayName: 'Find Subscriber by Name',
+	description: 'Finds subscribers by full name. ManyChat returns at most 100 matches.',
 	audience: 'both',
 	aiMetadata: {
 		description:
@@ -18,8 +18,8 @@ export const findUserByNameAction = createAction({
 	outputSchema: manychatOutputSchemas.searchResult,
 	props: {
 		name: Property.ShortText({
-			displayName: 'Name',
-			description: "Provide user's full name to search.",
+			displayName: 'Full Name',
+			placeholder: 'Jane Doe',
 			required: true,
 		}),
 	},

@@ -12,13 +12,14 @@ export const createTagAction = createAction({
 	audience: 'both',
 	aiMetadata: {
 		description:
-			'Creates a new tag in the ManyChat account and returns its ID and name. Check "List Tags" first, since the tag may already exist; then assign it with "Add Tag to User". Each call tries to create another tag.',
+			'Creates a new tag in the ManyChat account and returns its ID and name. Check "List Tags" first, since the tag may already exist; then assign it with "Add Tag to Subscriber". Each call tries to create another tag.',
 		idempotent: false,
 	},
 	outputSchema: manychatOutputSchemas.tag,
 	props: {
 		name: Property.ShortText({
 			displayName: 'Tag Name',
+			placeholder: 'VIP',
 			required: true,
 		}),
 	},

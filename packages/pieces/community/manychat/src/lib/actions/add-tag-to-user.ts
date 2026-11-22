@@ -8,8 +8,8 @@ export const addTagToUserAction = createAction({
 	auth: manychatAuth,
 	name: 'addTagToUser',
 	classification: 'WRITE',
-	displayName: 'Add Tag to User',
-	description: 'Adds a tag to a user and returns the updated user.',
+	displayName: 'Add Tag to Subscriber',
+	description: 'Adds a tag to a subscriber and returns the updated subscriber.',
 	audience: 'both',
 	aiMetadata: {
 		description:
@@ -23,7 +23,7 @@ export const addTagToUserAction = createAction({
 	},
 	async run({ auth, propsValue }) {
 		const apiKey = manychatUtils.apiKeyOf(auth);
-		const id = manychatInput.subscriberIdText({ value: propsValue.subscriberId, label: 'User ID' });
+		const id = manychatInput.subscriberIdText({ value: propsValue.subscriberId, label: 'Subscriber ID' });
 		await manychatClient.request({
 			apiKey,
 			method: 'POST',

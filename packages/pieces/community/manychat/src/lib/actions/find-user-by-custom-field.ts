@@ -8,8 +8,8 @@ export const findUserByCustomFieldAction = createAction({
 	auth: manychatAuth,
 	name: 'findUserByCustomField',
 	classification: 'SEARCH',
-	displayName: 'Find User by Custom Field',
-	description: 'Finds users whose text or number custom field equals a value. ManyChat returns at most 100 matches.',
+	displayName: 'Find Subscriber by Custom Field',
+	description: 'Finds subscribers whose text or number custom field equals a value. ManyChat returns at most 100 matches.',
 	audience: 'both',
 	aiMetadata: {
 		description:
@@ -21,7 +21,7 @@ export const findUserByCustomFieldAction = createAction({
 		field: manychatProps.customFieldDropdown({ allowedTypes: ['text', 'number'] }),
 		value: Property.ShortText({
 			displayName: 'Value',
-			description: 'The value to search for.',
+			description: 'The value the field must equal.',
 			required: true,
 		}),
 	},
