@@ -221,15 +221,15 @@ export const AssistantMessage = memo(function AssistantMessage({
                     initialRating={feedbackRating}
                   />
                 )}
-                {message.thinkingDurationMs !== undefined && (
-                  <span className="ml-1 text-xs tabular-nums text-gray-11">
-                    {formatTurnDuration({
-                      totalMs: message.thinkingDurationMs,
-                      toolMs: message.toolDurationMs,
-                    })}
-                  </span>
-                )}
               </>
+            )}
+            {!isStreaming && message.thinkingDurationMs !== undefined && (
+              <span className="ml-1 text-xs tabular-nums text-gray-11">
+                {formatTurnDuration({
+                  totalMs: message.thinkingDurationMs,
+                  toolMs: message.toolDurationMs,
+                })}
+              </span>
             )}
           </MessageActions>
         </div>
