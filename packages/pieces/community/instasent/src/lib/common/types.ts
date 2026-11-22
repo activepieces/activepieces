@@ -45,7 +45,7 @@ export interface ApiResponse<T> {
     streamId: string;
     projectId: string;
     datasourceId: string;
-    errors: any[];
+    errors: unknown[];
     accepted: Array<{
         position: number;
         item: T;
