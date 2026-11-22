@@ -1,7 +1,7 @@
 import { aiProviderCredentials, AIProviderName, isNil, isObject, toError, tryCatch } from '@activepieces/core-utils'
 import { AgentPhase, agentToolSkills, PersistedAgentPartType, PersistedToolCallStatus } from '@activepieces/shared'
 import { activepiecesAiCost, aiUtils } from '@activepieces/server-utils'
-import { LanguageModelV4StreamPart, SharedV4ProviderMetadata } from '@ai-sdk/provider'
+import { LanguageModelV4StreamPart, LanguageModelV4Usage, SharedV4ProviderMetadata } from '@ai-sdk/provider'
 import { hasToolCall, isLoopFinished, isStepCount, LanguageModel, StopCondition, ToolSet, wrapLanguageModel } from 'ai'
 import { AgentTurnResult, runAgentTurn } from '../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
 import { EvalCase, RecordedToolCall } from './eval-case'
@@ -98,11 +98,23 @@ function withCost({ model, recorder }: { model: LanguageModel, recorder: Metrics
         throw new Error(`Expected a model instance for ${model}`)
     }
     const ledger = { calls: 0, reported: 0, totalUsd: 0 }
-    const record = (providerMetadata: SharedV4ProviderMetadata | undefined): void => {
-        const cost = activepiecesAiCost.openRouterCostOf(providerMetadata)
-        if (cost !== undefined) {
-            ledger.reported += 1
-            ledger.totalUsd += cost
+    const startCall = (): { settle: (outcome: { usage: LanguageModelV4Usage | null, providerMetadata: SharedV4ProviderMetadata | undefined }) => void } => {
+        const startedAt = Date.now()
+        let settled = false
+        ledger.calls += 1
+        return {
+            settle: ({ usage, providerMetadata }) => {
+                if (settled) {
+                    return
+                }
+                settled = true
+                const cost = activepiecesAiCost.openRouterCostOf(providerMetadata)
+                if (cost !== undefined) {
+                    ledger.reported += 1
+                    ledger.totalUsd += cost
+                }
+                recorder.modelCall({ durationMs: Date.now() - startedAt, usage })
+            },
         }
     }
     const wrapped = wrapLanguageModel({
@@ -116,28 +128,49 @@ function withCost({ model, recorder }: { model: LanguageModel, recorder: Metrics
                 },
             }),
             wrapGenerate: async ({ doGenerate }) => {
-                const startedAt = Date.now()
-                const result = await doGenerate()
-                ledger.calls += 1
-                record(result.providerMetadata)
-                recorder.modelCall({ durationMs: Date.now() - startedAt, usage: result.usage })
-                return result
+                const call = startCall()
+                const { data, error } = await tryCatch(doGenerate)
+                if (isNil(data)) {
+                    call.settle({ usage: null, providerMetadata: undefined })
+                    throw error
+                }
+                call.settle({ usage: data.usage, providerMetadata: data.providerMetadata })
+                return data
             },
             wrapStream: async ({ doStream }) => {
-                const startedAt = Date.now()
-                const { stream, ...rest } = await doStream()
-                ledger.calls += 1
+                const call = startCall()
+                const { data, error } = await tryCatch(doStream)
+                if (isNil(data)) {
+                    call.settle({ usage: null, providerMetadata: undefined })
+                    throw error
+                }
+                const { stream, ...rest } = data
+                const reader = stream.getReader()
                 return {
                     ...rest,
-                    stream: stream.pipeThrough(new TransformStream<LanguageModelV4StreamPart, LanguageModelV4StreamPart>({
-                        transform: (chunk, controller) => {
-                            if (chunk.type === 'finish') {
-                                record(chunk.providerMetadata)
-                                recorder.modelCall({ durationMs: Date.now() - startedAt, usage: chunk.usage })
+                    stream: new ReadableStream<LanguageModelV4StreamPart>({
+                        pull: async (controller) => {
+                            const { data: chunk, error: readError } = await tryCatch(() => reader.read())
+                            if (isNil(chunk)) {
+                                call.settle({ usage: null, providerMetadata: undefined })
+                                controller.error(readError)
+                                return
                             }
-                            controller.enqueue(chunk)
+                            if (chunk.done) {
+                                call.settle({ usage: null, providerMetadata: undefined })
+                                controller.close()
+                                return
+                            }
+                            if (chunk.value.type === 'finish') {
+                                call.settle({ usage: chunk.value.usage, providerMetadata: chunk.value.providerMetadata })
+                            }
+                            controller.enqueue(chunk.value)
                         },
-                    })),
+                        cancel: async (reason) => {
+                            call.settle({ usage: null, providerMetadata: undefined })
+                            await reader.cancel(reason)
+                        },
+                    }),
                 }
             },
         },
@@ -294,6 +327,7 @@ export const evalAgentTurn = {
     run,
     resolveAuth,
     cleanupAuth,
+    withCost,
     toolCallLine,
     toolResultLine,
 }

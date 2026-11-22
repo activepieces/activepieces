@@ -43,10 +43,10 @@ function summarize({ modelCalls, toolTimings, toolCalls, rejectedToolCalls, tota
         modelMs: sum(modelCalls.map((call) => call.durationMs)),
         modelMsPerCall: modelCalls.map((call) => call.durationMs),
         toolMs: sum(toolTimings.map((timing) => timing.durationMs)),
-        inputTokens: sumTokens(modelCalls.map((call) => call.usage.inputTokens.total)),
-        cachedInputTokens: sumTokens(modelCalls.map((call) => call.usage.inputTokens.cacheRead)),
-        outputTokens: sumTokens(modelCalls.map((call) => call.usage.outputTokens.total)),
-        reasoningTokens: sumTokens(modelCalls.map((call) => call.usage.outputTokens.reasoning)),
+        inputTokens: sumTokens(modelCalls.map((call) => call.usage?.inputTokens.total)),
+        cachedInputTokens: sumTokens(modelCalls.map((call) => call.usage?.inputTokens.cacheRead)),
+        outputTokens: sumTokens(modelCalls.map((call) => call.usage?.outputTokens.total)),
+        reasoningTokens: sumTokens(modelCalls.map((call) => call.usage?.outputTokens.reasoning)),
         toolCalls: effective.length,
         toolCallsByName: effective.reduce<Record<string, number>>((counts, call) => ({ ...counts, [call.toolName]: (counts[call.toolName] ?? 0) + 1 }), {}),
         wasted: {
@@ -102,7 +102,7 @@ export type RunMetrics = {
     firstBuildMs: number | null
 }
 
-type ModelCall = { durationMs: number, usage: LanguageModelV4Usage }
+type ModelCall = { durationMs: number, usage: LanguageModelV4Usage | null }
 
 type ToolTiming = { toolName: string, durationMs: number, finishedAtMs: number, succeeded: boolean }
 
