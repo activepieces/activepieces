@@ -12,11 +12,13 @@ const IN_LOOP_COMPACTION_THRESHOLD = 0.6
 const RUNAWAY_TURN_CONTEXT_MULTIPLE = 90
 const STREAM_RETRY_BASE_DELAY_MS = 1_000
 const MODEL_STREAM_STALL_MS = 60_000
+const MODEL_THINKING_STALL_MS = 5 * 60_000
 const SDK_RETRIES = 3
 const SDK_RETRIES_BEFORE_FALLBACK = 1
 const MIN_THINKING_BUDGET = 1_024
 const CONTENT_CHUNK_TYPES = new Set(['text-delta', 'reasoning-delta', 'tool-input-start', 'tool-input-available', 'source-url', 'source-document', 'file'])
-const MODEL_OUTPUT_CHUNK_TYPES = new Set<string>(['text-delta', 'reasoning-delta', 'tool-input-start', 'tool-input-delta', 'tool-call', 'tool-result', 'tool-error', 'source', 'file'])
+const MODEL_OUTPUT_CHUNK_TYPES = new Set<string>(['text-delta', 'reasoning-start', 'reasoning-delta', 'reasoning-end', 'tool-input-start', 'tool-input-delta', 'tool-call', 'tool-result', 'tool-error', 'source', 'file'])
+const VISIBLE_THINKING_PROVIDERS = new Set<AIProviderName>([AIProviderName.ANTHROPIC, AIProviderName.BEDROCK, AIProviderName.ACTIVEPIECES, AIProviderName.OPENROUTER])
 const USER_FAULT_STATUS_CODES = new Set([401, 403, 404])
 const MODEL_UNAVAILABLE_PATTERNS = [/\bis deprecated\b/i, /no longer (available|supported)/i, /\bmodel_not_found\b/i, /\bunknown model\b/i, /\bdecommissioned\b/i]
 const USER_CONFIG_ENTITY_TYPES = new Set<string>(Object.values(AI_PROVIDER_ENTITY_TYPES))
@@ -151,7 +153,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
         abortSignal: AbortSignal.any([abortSignal, watchdog.signal]),
         onChunk: ({ chunk }) => {
             if (MODEL_OUTPUT_CHUNK_TYPES.has(chunk.type)) {
-                watchdog.touch()
+                watchdog.touch({ thinking: chunk.type === 'reasoning-start' })
             }
         },
         onToolExecutionStart: () => {
@@ -201,6 +203,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
             lastStepUsedFast = usesFastModel
             onStepModel?.(stepModel)
             const thinkingOff = disableThinking || stepBudget.thinkingBudget === 0
+            watchdog.stepStarted({ thinking: !thinkingOff || forcesCompletion || !VISIBLE_THINKING_PROVIDERS.has(stepModel.provider) })
             return {
                 ...(usesFastModel ? { model: stepModel.model } : {}),
                 activeTools,
@@ -285,13 +288,13 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
         log.debug({ phase: phaseState.phase, continuations, emptyContinuations, streamRetries }, 'Chat turn loop iteration')
         const uiPartsCountBefore = uiParts.length
         currentAttemptMessages = []
-        const watchdog = createStallWatchdog({ idleMs: MODEL_STREAM_STALL_MS })
+        const watchdog = createStallWatchdog({ idleMs: MODEL_STREAM_STALL_MS, thinkingIdleMs: MODEL_THINKING_STALL_MS })
         const result = runStreamAttempt({ attemptMessages: llmMessages, watchdog })
         const drained = await drainStream(result).finally(() => watchdog.stop())
         const producedVisibleOutput = uiParts.length > uiPartsCountBefore || (watchdog.stalled() && watchdog.sawChunk())
         if (watchdog.stalled() && !abortSignal.aborted) {
-            log.warn({ stallMs: MODEL_STREAM_STALL_MS, streamRetries, model: { id: current().modelId } }, 'Chat model stopped streaming — aborting the attempt')
-            streamError = modelStalledError()
+            log.warn({ stallMs: watchdog.stallMs(), streamRetries, model: { id: current().modelId } }, 'Chat model stopped streaming — aborting the attempt')
+            streamError = modelStalledError({ stallMs: watchdog.stallMs() })
         }
         // On abort/error we leave the loop WITHOUT reaching the clean-exit pushes below, so fold
         // this attempt's completed steps in here — otherwise the turn's work is lost from the
@@ -415,12 +418,14 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
     }
 }
 
-function createStallWatchdog({ idleMs }: { idleMs: number }): StallWatchdog {
+function createStallWatchdog({ idleMs, thinkingIdleMs }: { idleMs: number, thinkingIdleMs: number }): StallWatchdog {
     const controller = new AbortController()
     let timer: ReturnType<typeof setTimeout> | null = null
     let toolsRunning = 0
     let chunkSeen = false
     let stopped = false
+    let thinking = false
+    let stallMs = idleMs
     const clear = (): void => {
         if (!isNil(timer)) {
             clearTimeout(timer)
@@ -432,16 +437,22 @@ function createStallWatchdog({ idleMs }: { idleMs: number }): StallWatchdog {
         if (stopped || toolsRunning > 0) {
             return
         }
+        stallMs = thinking ? thinkingIdleMs : idleMs
         timer = setTimeout(() => {
             stopped = true
-            controller.abort(modelStalledError())
-        }, idleMs)
+            controller.abort(modelStalledError({ stallMs }))
+        }, stallMs)
     }
     arm()
     return {
         signal: controller.signal,
-        touch: (): void => {
+        stepStarted: (step): void => {
+            thinking = step.thinking
+            arm()
+        },
+        touch: (chunk): void => {
             chunkSeen = true
+            thinking = chunk.thinking
             arm()
         },
         toolStarted: (): void => {
@@ -457,12 +468,13 @@ function createStallWatchdog({ idleMs }: { idleMs: number }): StallWatchdog {
             clear()
         },
         stalled: (): boolean => controller.signal.aborted,
+        stallMs: (): number => stallMs,
         sawChunk: (): boolean => chunkSeen,
     }
 }
 
-function modelStalledError(): Error {
-    const error = new Error(`The AI model stopped responding: no output for ${MODEL_STREAM_STALL_MS / 1_000}s`)
+function modelStalledError({ stallMs }: { stallMs: number }): Error {
+    const error = new Error(`The AI model stopped responding: no output for ${stallMs / 1_000}s`)
     error.name = MODEL_STALLED_ERROR_NAME
     return error
 }
@@ -680,7 +692,8 @@ function extractResultText(result: unknown): string {
 
 type StallWatchdog = {
     signal: AbortSignal
-    touch: () => void
+    stepStarted: (step: { thinking: boolean }) => void
+    touch: (chunk: { thinking: boolean }) => void
     toolStarted: () => void
     toolEnded: () => void
     stop: () => void
