@@ -4,7 +4,7 @@ icon: 🔌
 
 # Embed
 
-Running the Activepieces builder inside someone else's SaaS: a signed JWT provisions the user, an iframe hosts the builder, and a per-request CSP decides who is allowed to frame it. Enterprise + Cloud only — the signing-key and embed-subdomain modules gate on `platform.plan.embeddingEnabled`; the token exchange does not.
+Running the Activepieces builder inside someone else's SaaS: a signed JWT provisions the user, an iframe hosts the builder, and a per-request CSP decides who is allowed to frame it. Enterprise + Cloud only — both modules gate on `platform.plan.embeddingEnabled`.
 
 The integration steps a customer follows (SDK script, `activepieces.configure(...)`, piece customization, predefined connections) are public and live at [docs/embedding](https://www.activepieces.com/docs/embedding). This page is the parts that are not public: what the server actually does, plus the SDK↔client handshake the docs treat as a black box.
 
