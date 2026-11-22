@@ -73,9 +73,18 @@ export function createAgentSurfaceTools({ executeTool, taintState, eventEmitter,
         }),
 
         ap_add_agent_tool: tool({
-            description: `${ADD_AGENT_TOOL_DESCRIPTION} ${ADD_AGENT_AS_TOOL_NOTE}`,
-            inputSchema: addAgentToolInput,
-            execute: async (toolInput, { toolCallId }: ToolExecutionOptions<undefined>) => runAfterApprovalIfTainted({ toolName: 'ap_add_agent_tool', toolInput, toolCallId }),
+            description: 'Give a saved agent piece actions it can call, so it can do the work rather than only reason about it. Look them up first (ap_research_pieces for the piece and action names, ap_list_connections for the connection). Pass every action for one piece in a single call — one call per piece, never several at once for the same agent. To let it hand work to other agents instead, pass agentIds (the agentId of published agents from ap_list_agents) and leave out pieceName and actionNames. An agent that calls other agents cannot itself be called by one.',
+            inputSchema: z.object({
+                agentId: z.string().optional().describe('The id returned by ap_list_agents, ap_create_agent or ap_update_agent. Leave it out when you are changing the agent this conversation belongs to'),
+                pieceName: z.string().optional().describe('Full piece name, e.g. "@activepieces/piece-gmail"'),
+                actionNames: z.array(z.string()).optional().describe('Action names within that piece, e.g. ["gmail_search_mail"]'),
+                connectionExternalId: z.string().optional().describe('externalId from ap_list_connections, for a piece that needs an account'),
+                publish: z.boolean().optional().describe('Make the agent live with these tools in the same step'),
+                agentIds: z.array(z.string()).optional().describe('agentId values of published agents from ap_list_agents, to add as tools this agent can call'),
+            }),
+            execute: async (toolInput, { toolCallId }: ToolExecutionOptions<undefined>) => {
+                return runAfterApprovalIfTainted({ toolName: 'ap_add_agent_tool', toolInput, toolCallId })
+            },
         }),
 
         ap_remove_agent_tool: tool({
@@ -199,18 +208,6 @@ function schemaForOutputField(field: AgentOutputField): z.ZodType {
     }
 }
 
-
-const ADD_AGENT_TOOL_DESCRIPTION = 'Give a saved agent piece actions it can call, so it can do the work rather than only reason about it. Look them up first (ap_research_pieces for the piece and action names, ap_list_connections for the connection). Pass every action for one piece in a single call — one call per piece, never several at once for the same agent.'
-const ADD_AGENT_AS_TOOL_NOTE = 'To let it hand work to other agents instead, pass agentIds (the agentId of published agents from ap_list_agents) and leave out pieceName and actionNames. An agent that calls other agents cannot itself be called by one.'
-
-const addAgentToolInput = z.object({
-    agentId: z.string().optional().describe('The id returned by ap_list_agents, ap_create_agent or ap_update_agent. Leave it out when you are changing the agent this conversation belongs to'),
-    pieceName: z.string().optional().describe('Full piece name, e.g. "@activepieces/piece-gmail"'),
-    actionNames: z.array(z.string()).optional().describe('Action names within that piece, e.g. ["gmail_search_mail"]'),
-    connectionExternalId: z.string().optional().describe('externalId from ap_list_connections, for a piece that needs an account'),
-    publish: z.boolean().optional().describe('Make the agent live with these tools in the same step'),
-    agentIds: z.array(z.string()).optional().describe('agentId values of published agents from ap_list_agents, to add as tools this agent can call'),
-})
 
 const AGENT_CHANGE_LABELS: Record<string, string> = {
     ap_add_agent_tool: 'Add tools to a saved agent',

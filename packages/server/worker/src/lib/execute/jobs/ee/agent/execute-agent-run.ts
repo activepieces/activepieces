@@ -1,6 +1,6 @@
 import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, AiCallContext, AIProviderName, AiUsageEnvironment, ErrorCode, formatPieceError, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { aiUtils, wideEvent } from '@activepieces/server-utils'
-import { AGENT_RUN_USAGE_ORIGIN, AgentAbortReason, AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentModelCandidate, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, agentToolSkills, AgentToolType, AiProviderCredentials, apErrorOf, chatBilling, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentMessageSchema, PersistedAgentPart, PersistedAgentPartType, PersistedAgentRole, ResolvedAgentFlowTool, RpcTimeoutError, SaveAgentMessagesRequest, SkillSurface, WorkerJobType } from '@activepieces/shared'
+import { AGENT_RUN_USAGE_ORIGIN, AgentAbortReason, AgentConfigResponse, AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentModelCandidate, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, agentToolSkills, AgentToolType, AiProviderCredentials, apErrorOf, chatBilling, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentMessageSchema, PersistedAgentPart, PersistedAgentPartType, PersistedAgentRole, ResolvedAgentFlowTool, RpcTimeoutError, SaveAgentMessagesRequest, SkillSurface, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, LanguageModel, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { toResolvedAiFile } from '../../ai/ai-files'
@@ -52,7 +52,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
         const { conversationId, runId, projectId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun, discoveryOnly, source: jobSource, flowRunId, waitpointId } = data
         const log = ctx.log.child({ conversation: { id: conversationId }, agentRun: { source: jobSource ?? AgentRunSource.CHAT }, ...spreadIfDefined('run', isNil(runId) ? undefined : { id: runId }) })
 
-        const configuredTools = agentToolPolicy.withValidNames({ tools: (data.tools ?? []).filter(isNamedHere) })
+        const configuredTools = agentToolPolicy.withValidNames({ tools: (data.tools ?? []).filter((tool) => tool.type !== AgentToolType.AGENT) })
         const configuredFlowTools = agentToolPolicy.withValidNames({ tools: data.flowTools ?? [], reserved: configuredTools.map((tool) => tool.toolName) })
         const configuredAgentTools = agentToolPolicy.withValidNames({ tools: data.agentTools ?? [], reserved: [...configuredTools, ...configuredFlowTools].map((tool) => tool.toolName) })
         const calledAgentToolNames = configuredAgentTools.flatMap((tool) => 'unavailableReason' in tool ? [] : [tool.toolName])
@@ -160,7 +160,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 turnAlreadyCharged: true,
                 ...spreadIfDefined('providerConfigId', config.providerConfigId),
             })
-            const turnModels = turnModelsFor({ credentials, modelId: config.modelId, thinkingBudget: config.tier.thinkingBudget, candidates: config.candidates, model, billing, metadata })
+            const turnModels = turnModelsFor({ config, model, billing, metadata })
             const fastTurnModel: TurnModel | undefined = isNil(config.platformTier)
                 ? { model: fastModel, provider, modelId: config.fastModelId, thinkingBudget: config.tier.thinkingBudget }
                 : isNil(config.fastCandidate) ? undefined : candidateTurnModel({ candidate: config.fastCandidate, billing, metadata })
@@ -551,20 +551,12 @@ function usageContextOf({ source, data, agentId }: { source: AgentRunSource, dat
     return { origin, environment, ...spreadIfDefined('agentId', agentId), ...spreadIfDefined('flowId', data.flowId), ...spreadIfDefined('flowRunId', data.flowRunId) }
 }
 
-function turnModelsFor({ credentials, modelId, thinkingBudget, candidates, model, billing, metadata }: {
-    credentials: AiProviderCredentials
-    modelId: string
-    thinkingBudget: number
-    candidates: AgentModelCandidate[] | undefined
-    model: LanguageModel
-    billing: ActivepiecesAiBilling
-    metadata: ModelMetadata
-}): [TurnModel, ...TurnModel[]] {
-    const single: TurnModel = { model, provider: credentials.provider, modelId, thinkingBudget }
-    if (isNil(candidates) || candidates.length === 0) {
+function turnModelsFor({ config, model, billing, metadata }: { config: Pick<AgentConfigResponse, 'credentials' | 'modelId' | 'candidates'> & { tier: { thinkingBudget: number } }, model: LanguageModel, billing: ActivepiecesAiBilling, metadata: ModelMetadata }): [TurnModel, ...TurnModel[]] {
+    const single: TurnModel = { model, provider: config.credentials.provider, modelId: config.modelId, thinkingBudget: config.tier.thinkingBudget }
+    if (isNil(config.candidates) || config.candidates.length === 0) {
         return [single]
     }
-    const [first, ...rest] = candidates
+    const [first, ...rest] = config.candidates
     return [
         { ...candidateTurnModel({ candidate: first, billing }), model },
         ...rest.map((candidate) => candidateTurnModel({ candidate, billing, metadata })),
@@ -645,7 +637,7 @@ function calledAgentStarter({ ctx, platformId, conversationId, runId, flowRunId,
         }
         const agentBilling: ActivepiecesAiBilling = { ...billing, context: { ...billing.context, agentId } }
         const model = aiUtils.createModel({ credentials: agent.credentials, modelId: agent.modelId, metadata, billing: agentBilling, turnAlreadyCharged: true, providerConfigId: agent.providerConfigId })
-        const models = turnModelsFor({ credentials: agent.credentials, modelId: agent.modelId, thinkingBudget: agent.thinkingBudget, candidates: agent.candidates, model, billing: agentBilling, metadata })
+        const models = turnModelsFor({ config: { ...agent, tier: { thinkingBudget: agent.thinkingBudget } }, model, billing: agentBilling, metadata })
         const agentKey = { provider: agent.credentials.provider, providerConfigId: agent.providerConfigId, modelId: agent.modelId }
         const tools = agentToolPolicy.withValidNames({ tools: agent.tools })
         const flowTools = agentToolPolicy.withValidNames({ tools: agent.flowTools, reserved: tools.map((configured) => configured.toolName) })
@@ -684,10 +676,6 @@ function calledAgentStarter({ ctx, platformId, conversationId, runId, flowRunId,
             }),
         }
     }
-}
-
-function isNamedHere(tool: AgentTool): boolean {
-    return tool.type !== AgentToolType.FLOW && tool.type !== AgentToolType.AGENT
 }
 
 function isPieceTool(tool: AgentTool): tool is AgentPieceTool {

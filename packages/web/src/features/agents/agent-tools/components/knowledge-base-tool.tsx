@@ -60,7 +60,6 @@ function KnowledgeBaseToolPills({
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                type="button"
                 disabled={disabled}
                 onClick={(e) => {
                   e.stopPropagation();
