@@ -22,6 +22,7 @@ test.describe('Password reset', { tag: ['@feature:password', '@surface'] }, () =
     await authenticationPage.waitForSignedIn();
     const oldPasswordSignIn = await e2eApi.signIn({ request, email, password: OLD_PASSWORD });
     expect(oldPasswordSignIn.status()).toBe(401);
+    await page.close();
   });
 
   test('a new password that is too short shows an error, and the server refuses it', async ({ page, request, session, mailbox, cleanup }) => {

@@ -10,13 +10,18 @@ Long-lived platform service credentials (prefixed `sk-`) for machine-to-machine 
 `api_key`: id, platformId (FK, CASCADE), displayName, hashedValue (SHA-256, looked up every request), truncatedValue (last 4 chars for display), lastUsedAt (updated on each authenticated request).
 
 ### How it works
-- Endpoints under `/v1/api-keys`, all `platformAdminOnly`: `POST` (create, returns `ApiKeyResponseWithValue` with raw value once), `GET` (list, `SeekPage` without value), `DELETE /:id`.
-- Service: `add` (generates key, stores hashed/truncated), `getByValue` (lookup by SHA-256 hash, updates `lastUsedAt` — used by auth middleware), `list`, `delete`.
+- Endpoints under `/v1/api-keys`, all `platformAdminOnly([USER])`: `POST` (create, 201, returns `ApiKeyResponseWithValue` with raw value once), `GET` (list, `SeekPage` without value), `DELETE /:id`. A platform member and an API key itself both get 403.
+- Service: `add` (generates key, stores hashed/truncated), `getByValue` (lookup by SHA-256 hash, updates `lastUsedAt` — used by auth middleware), `list`, `delete` (404 when the id is not on the platform).
+- Auth: a `Bearer sk-…` header goes to `getByValue`; any other bearer is a JWT. The key becomes a `SERVICE` principal of its platform.
+- UI: `/platform/api-keys` (the old `/platform/security/api-keys` redirects). The UI calls delete **Revoke**. The list shows `sk-...` + the last 4 chars and "Last used" / "Never used".
 
 ### Gotchas
 - **A route is only reachable with an API key if its `security` lists `PrincipalType.SERVICE`.** Otherwise the key gets 403. To publish an endpoint: add `SERVICE` to its `securityAccess` call, give it `tags` and a `description` (no `hide: true`) so Fastify Swagger puts it in the OpenAPI spec, add a `docs/endpoints/<area>/<action>.mdx` page with `openapi: <METHOD> <path>`, and test it with a key. From then on its shape is a public contract. Every AI Center route (providers, tiers, capabilities, usage) is `USER`-only as of 2026-10-29, so none of it is public yet.
 - Key generated with `secureApId(61)` + `sk-` prefix = 64 chars; hashed with `cryptoUtils.hashSHA256`.
 - Plaintext is only ever available at creation time.
+- **A deleted (revoked) or unknown key gets 401**, not 403: `getByValue` finds nothing and auth throws `AUTHENTICATION` ("invalid api key"). No cache, so a revoke takes effect on the next request.
+- Without `apiKeysEnabled` the endpoints answer 402, and the page shows sample keys without sending the list request.
+- The name is required only in the UI (an HTML `required` input). The server takes any string, and the UI accepts a name of only spaces.
 
 ### Key files
 Entry point: `apiKeyModule`, registered on the Fastify app in `packages/server/api/src/app/app.ts`.
@@ -27,5 +32,6 @@ Entry point: `apiKeyModule`, registered on the Fastify app in `packages/server/a
 - `packages/web/src/features/platform-admin/api/api-key-api.ts` — frontend API client
 - `packages/web/src/features/platform-admin/hooks/api-key-hooks.ts` — React Query hooks
 - `packages/web/src/app/routes/platform/security/api-keys/` — platform admin UI page and create dialog
+- `packages/tests-e2e/scenarios/ee/admin/api-keys.spec.ts` — the E2E spec: create in the UI and call the API, revoke and get 401, role gate, empty name
 
-Paths verified 2026-07-17.
+Paths verified 2026-11-22.

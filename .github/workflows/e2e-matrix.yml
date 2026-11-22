@@ -26,6 +26,14 @@ on:
       - benchmark/docker-compose.minio.yml
       - benchmark/docker-compose.mail.yml
       - packages/tests-e2e/**
+      - packages/pieces/community/mcp/**
+      - packages/pieces/core/approval/**
+      - packages/pieces/core/delay/**
+      - packages/pieces/core/forms/**
+      - packages/pieces/core/http/**
+      - packages/pieces/core/manual-trigger/**
+      - packages/pieces/core/store/**
+      - packages/pieces/core/subflows/**
 
 permissions:
   contents: read
@@ -69,8 +77,8 @@ jobs:
       # from archives of this commit's source instead of from the Cloud registry.
       - name: Pack the pieces the suite uses
         run: |
-          PIECES="packages/pieces/core/webhook packages/pieces/core/schedule packages/pieces/core/file-helper packages/pieces/community/activepieces"
-          npx turbo run build --filter=@activepieces/piece-webhook --filter=@activepieces/piece-schedule --filter=@activepieces/piece-file-helper --filter=@activepieces/piece-activepieces
+          PIECES="packages/pieces/core/webhook packages/pieces/core/schedule packages/pieces/core/file-helper packages/pieces/community/activepieces packages/pieces/core/approval packages/pieces/core/delay packages/pieces/core/forms packages/pieces/core/http packages/pieces/core/manual-trigger packages/pieces/core/store packages/pieces/core/subflows packages/pieces/community/mcp"
+          npx turbo run build --filter=@activepieces/piece-webhook --filter=@activepieces/piece-schedule --filter=@activepieces/piece-file-helper --filter=@activepieces/piece-activepieces --filter=@activepieces/piece-approval --filter=@activepieces/piece-delay --filter=@activepieces/piece-forms --filter=@activepieces/piece-http --filter=@activepieces/piece-manual-trigger --filter=@activepieces/piece-store --filter=@activepieces/piece-subflows --filter=@activepieces/piece-mcp
           CHANGED_PIECES="$(printf '%s\n' $PIECES)" npx ts-node -r tsconfig-paths/register -P packages/server/engine/tsconfig.lib.json tools/scripts/pieces/prepare-pieces-for-publish.ts
           mkdir e2e-pieces
           npm pack --json --pack-destination "$GITHUB_WORKSPACE/e2e-pieces" $(printf '%s/dist ' $PIECES) > "$GITHUB_WORKSPACE/e2e-pieces/pieces.json"
@@ -130,6 +138,9 @@ jobs:
       AP_EXECUTION_MODE: ${{ matrix.executionMode }}
       # The compose file passes an unset value as "", which the worker reads as invalid and replaces with 1 slot.
       AP_WORKER_CONCURRENCY: 5
+      # The compose default (0.5 CPU, 1 GiB) fits one slot. Five slots peak near 1.5 GiB, and at the default the kernel kills the split cells' worker for memory.
+      WORKER_CPUS: 2
+      WORKER_MEMORY: 3G
       AP_PIECES_SYNC_MODE: NONE
       AP_LOG_LEVEL: info
       AP_FILE_STORAGE_LOCATION: ${{ matrix.fileStorage }}
@@ -234,8 +245,10 @@ jobs:
           fi
 
       - name: Show app and worker logs on failure
-        if: failure()
-        run: docker compose logs --tail=2000 app worker
+        if: failure() || cancelled()
+        run: |
+          docker compose ps -a
+          docker compose logs --tail=2000 app worker
 
       # The stack lives only for this job, so traces hold no real credentials.
       - name: Upload test results

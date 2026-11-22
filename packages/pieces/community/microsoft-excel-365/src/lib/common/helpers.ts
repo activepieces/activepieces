@@ -30,7 +30,7 @@ export async function getLastUsedRow(
 	const client = createMSGraphClient(accessToken, cloud);
 
 	const response = await client
-		.api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/usedRange`)
+		.api(`${drivePath}/items/${workbookId}/workbook/worksheets/${encodeURIComponent(worksheetId)}/usedRange`)
 		.get();
 
 	const usedRange = response.address.split('!')[1];
@@ -62,7 +62,7 @@ export async function getHeaders(
 
 	const response = await client
 		.api(
-			`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='A1:ZZ1')/usedRange`
+			`${drivePath}/items/${workbookId}/workbook/worksheets/${encodeURIComponent(worksheetId)}/range(address='A1:ZZ1')/usedRange`
 		)
 		.get();
 	const columns = response.values?.[0] ?? [];

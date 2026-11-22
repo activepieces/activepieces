@@ -4,6 +4,7 @@ import {
   CreditsBillableFeature,
   PlanName,
   PlatformBillingInformation,
+  PlatformPlan,
   InvitationStatus,
   UserStatus,
 } from '@activepieces/shared';
@@ -29,6 +30,13 @@ function formatDate(date: dayjs.ConfigType): string {
 
 function isPaidPlan(planName: string | null | undefined): planName is string {
   return !isNil(planName) && planName !== PlanName.FREE;
+}
+
+function planDisplayName(info: PlanDisplayNameInfo | undefined): string {
+  return (
+    info?.autumnPlanName ??
+    (info && isPaidPlan(info.plan.plan) ? info.plan.plan : t('Free'))
+  );
 }
 
 function isYearlyPlan(info: IsYearlyPlanInfo): boolean {
@@ -208,6 +216,7 @@ const RESERVING_STATUSES = [
 export const billingUtils = {
   formatDate,
   isPaidPlan,
+  planDisplayName,
   isYearlyPlan,
   percentUsed,
   creditsSeverity,
@@ -230,6 +239,13 @@ export const enterpriseMotion = {
   appear:
     'animate-in fade-in-0 slide-in-from-bottom-1 duration-200 ease-expand-out motion-reduce:animate-none',
   swap: 'animate-in fade-in-0 duration-200 ease-expand-out motion-reduce:animate-none',
+};
+
+export type PlanDisplayNameInfo = Pick<
+  PlatformBillingInformation,
+  'autumnPlanName'
+> & {
+  plan: Pick<PlatformPlan, 'plan'>;
 };
 
 export type IsYearlyPlanInfo = Pick<

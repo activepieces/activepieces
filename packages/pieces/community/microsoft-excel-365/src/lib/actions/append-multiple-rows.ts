@@ -257,7 +257,7 @@ export const appendMultipleRowsAction = createAction({
 
 		const client = createMSGraphClient(auth.access_token, cloud);
 
-		const url = `${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='${rangeFrom}:${rangeTo}')`;
+		const url = `${drivePath}/items/${workbookId}/workbook/worksheets/${encodeURIComponent(worksheetId)}/range(address='${rangeFrom}:${rangeTo}')`;
 
 		const requestBody = {
 			values: formattedValues,
