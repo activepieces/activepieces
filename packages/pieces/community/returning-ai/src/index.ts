@@ -7,7 +7,7 @@ import { returningAiAuth } from './lib/auth';
 export const returningAi = createPiece({
   displayName: 'Returning AI',
   auth: returningAiAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: `https://cdn.activepieces.com/pieces/returning-ai.png`,
   authors: ['mg-wunna'],
   actions: [sendMessage, replyMessage, reactMessage],
