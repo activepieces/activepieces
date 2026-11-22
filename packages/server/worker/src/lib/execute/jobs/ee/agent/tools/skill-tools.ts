@@ -1,4 +1,4 @@
-import { isNil, isObject, tryCatch, unique } from '@activepieces/core-utils'
+import { isNil, isObject, tryCatch, tryCatchSync, unique } from '@activepieces/core-utils'
 import { AGENT_SKILLS, AgentSkill, agentToolSkills, chatBilling, GET_TOOL_SCHEMA_NAME, LAZY_TOOL_NAME, LOAD_SKILL_NAME, MAX_CORE_TOOLS, SkillSurface } from '@activepieces/shared'
 import { asSchema, jsonSchema, JSONValue, Schema, tool, ToolExecutionOptions, ToolResultPart, ToolSet } from 'ai'
 import { z } from 'zod'
@@ -50,20 +50,26 @@ export function unwrapLazyToolChunk({ chunk, heldStarts }: {
         return { emit: [], hold: { callId, chunk } }
     }
     const heldStart = heldStarts.get(callId)
-    if (heldStart === undefined) {
-        return { emit: [chunk] }
-    }
-    if (type === 'tool-input-delta') {
+    if (type === 'tool-input-delta' && heldStart !== undefined) {
         return { emit: [] }
     }
-    if (type === 'tool-input-available' || type === 'tool-input-error') {
+    if ((type === 'tool-input-available' || type === 'tool-input-error') && (heldStart !== undefined || chunk['toolName'] === LAZY_TOOL_NAME)) {
         const inner = agentToolSkills.effectiveToolCall({ toolName: LAZY_TOOL_NAME, input: chunk['input'] })
-        return {
-            emit: [{ ...heldStart, toolName: inner.toolName }, { ...chunk, toolName: inner.toolName, input: inner.input }],
-            release: callId,
-        }
+        const unwrapped = { ...chunk, toolName: inner.toolName, input: inner.input }
+        return heldStart === undefined
+            ? { emit: [unwrapped] }
+            : { emit: [{ ...heldStart, toolName: inner.toolName }, unwrapped], release: callId }
     }
     return { emit: [chunk] }
+}
+
+export async function decodeReroutedInput({ target, input }: { target: ToolSet[string], input: unknown }): Promise<unknown> {
+    if (!isObject(input) || Array.isArray(input)) {
+        return input
+    }
+    const schema = plainJsonSchema<unknown>(await asSchema(target.inputSchema).jsonSchema)
+    const properties = isObject(schema) && isObject(schema['properties']) ? schema['properties'] : {}
+    return Object.fromEntries(Object.entries(input).map(([key, value]) => [key, decodedArg({ value, propertySchema: properties[key] })]))
 }
 
 function createSkillTools({ registry, surface, guides, loadedSkills, onSkillLoaded, canAffordPaidTool, wasRerouted }: {
@@ -171,7 +177,7 @@ function lazyToolModelOutput({ output, reroutedTool }: { output: ToolResultPart[
 
 function lazyToolInputSchema({ registry, canAffordPaidTool }: { registry: ToolSet, canAffordPaidTool: () => boolean }): Schema<LazyToolInput> {
     const advertised = asSchema(LAZY_TOOL_ADVERTISED_SCHEMA)
-    return jsonSchema<LazyToolInput>(async () => plainJsonSchema(await advertised.jsonSchema), {
+    return jsonSchema<LazyToolInput>(async () => plainJsonSchema(stripSchemaNoise(plainJsonSchema<unknown>(await advertised.jsonSchema))), {
         validate: async (value) => {
             const call = agentToolSkills.lazyCall(value)
             if (call === undefined) {
@@ -277,7 +283,70 @@ async function withoutNoise(schema: unknown): Promise<unknown> {
     const properties = isObject(schema['properties'])
         ? Object.fromEntries(Object.entries(schema['properties']).filter(([key]) => !labelKeys.has(key)))
         : undefined
-    return Object.fromEntries(Object.entries({ ...schema, properties }).filter(([key, value]) => value !== undefined && !SCHEMA_NOISE_KEYS.has(key)))
+    return stripSchemaNoise({ ...schema, properties })
+}
+
+function stripSchemaNoise(schema: unknown): unknown {
+    if (!isObject(schema)) {
+        return schema
+    }
+    return Object.fromEntries(Object.entries(schema)
+        .filter(([key, value]) => value !== undefined && !SCHEMA_NOISE_KEYS.has(key) && !(key === 'additionalProperties' && isEmptySubschema(value)))
+        .map(([key, value]) => [key, stripSubschemas({ key, value })]))
+}
+
+function stripSubschemas({ key, value }: { key: string, value: unknown }): unknown {
+    if (SUBSCHEMA_MAP_KEYS.has(key) && isObject(value)) {
+        return Object.fromEntries(Object.entries(value).map(([name, subschema]) => [name, stripSchemaNoise(subschema)]))
+    }
+    if (SUBSCHEMA_LIST_KEYS.has(key) && Array.isArray(value)) {
+        return value.map(stripSchemaNoise)
+    }
+    if (SUBSCHEMA_KEYS.has(key)) {
+        return Array.isArray(value) ? value.map(stripSchemaNoise) : stripSchemaNoise(value)
+    }
+    return value
+}
+
+function isEmptySubschema(value: unknown): boolean {
+    return typeof value === 'boolean' || (isObject(value) && Object.keys(value).length === 0)
+}
+
+function decodedArg({ value, propertySchema }: { value: unknown, propertySchema: unknown }): unknown {
+    if (typeof value !== 'string') {
+        return value
+    }
+    const types = declaredTypes(propertySchema)
+    if (types.length === 0 || types.includes('string')) {
+        return value
+    }
+    const { data, error } = tryCatchSync((): unknown => JSON.parse(value))
+    if (error !== null) {
+        return value
+    }
+    return jsonTypesOf(data).some((type) => types.includes(type)) ? data : value
+}
+
+function declaredTypes(schema: unknown): string[] {
+    if (!isObject(schema)) {
+        return []
+    }
+    const own = typeof schema['type'] === 'string' ? [schema['type']] : Array.isArray(schema['type']) ? schema['type'].filter((type): type is string => typeof type === 'string') : []
+    const members = [schema['anyOf'], schema['oneOf']].flatMap((list) => Array.isArray(list) ? list.flatMap(declaredTypes) : [])
+    return unique([...own, ...members])
+}
+
+function jsonTypesOf(value: unknown): string[] {
+    if (value === null) {
+        return ['null']
+    }
+    if (Array.isArray(value)) {
+        return ['array']
+    }
+    if (typeof value === 'number') {
+        return Number.isInteger(value) ? ['integer', 'number'] : ['number']
+    }
+    return [typeof value]
 }
 
 async function workerLabelKeys(schema: unknown): Promise<Set<string>> {
@@ -319,7 +388,10 @@ const LAZY_TOOL_ADVERTISED_SCHEMA = LAZY_TOOL_OUTER_SCHEMA.extend({
 
 const LABEL_FIELDS = new Set(Object.keys(cardTitleFields))
 const LABEL_SCHEMA = asSchema(z.object(cardTitleFields))
-const SCHEMA_NOISE_KEYS = new Set(['$schema', 'additionalProperties'])
+const SCHEMA_NOISE_KEYS = new Set(['$schema', 'propertyNames'])
+const SUBSCHEMA_MAP_KEYS = new Set(['properties', 'patternProperties', '$defs', 'definitions'])
+const SUBSCHEMA_LIST_KEYS = new Set(['anyOf', 'oneOf', 'allOf', 'prefixItems'])
+const SUBSCHEMA_KEYS = new Set(['items', 'additionalProperties', 'not'])
 
 export type LazyToolChunkResult = {
     emit: unknown[]

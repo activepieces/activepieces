@@ -126,6 +126,27 @@ describe('repairing a call in skills mode', () => {
         expect(JSON.stringify(model.doStreamCalls[1]?.prompt)).toContain('next time call ap_lazy_tool with tool: \\"ap_web_search\\"')
     })
 
+    it('decodes an object argument sent as JSON text when a deferred tool is called by name', async () => {
+        const search = vi.fn(async () => SEARCH_RESULT)
+        const explore = vi.fn(async () => SEARCH_RESULT)
+        const model = scriptedModel({ toolCalls: [{ id: 'direct-1', toolName: 'ap_explore_data', input: JSON.stringify({ actionName: 'get_rows', input: '{"a":1}' }) }] })
+
+        await runSkillsTurn({ model, search, explore })
+
+        expect(explore).toHaveBeenCalledWith({ actionName: 'get_rows', input: { a: 1 } }, expect.objectContaining({ toolCallId: 'direct-1' }))
+    })
+
+    it('still rejects an object argument sent as JSON text through ap_lazy_tool', async () => {
+        const search = vi.fn(async () => SEARCH_RESULT)
+        const explore = vi.fn(async () => SEARCH_RESULT)
+        const model = scriptedModel({ toolCalls: [{ id: 'lazy-1', toolName: 'ap_lazy_tool', input: JSON.stringify({ tool: 'ap_explore_data', input: { actionName: 'get_rows', input: '{"a":1}' } }) }] })
+
+        await runSkillsTurn({ model, search, explore })
+
+        expect(explore).not.toHaveBeenCalled()
+        expect(JSON.stringify(model.doStreamCalls[1]?.prompt)).toContain('Invalid input for \\"ap_explore_data\\"')
+    })
+
     it('adds no reminder when the model already called ap_lazy_tool', async () => {
         const search = vi.fn(async () => SEARCH_RESULT)
         const model = scriptedModel({ toolCalls: [{ id: 'lazy-1', toolName: 'ap_lazy_tool', input: '{"tool":"ap_web_search","input":{"query":"more"}}' }] })
@@ -176,7 +197,7 @@ describe('the build phase in skills mode', () => {
     })
 })
 
-async function runSkillsTurn({ model, search }: { model: MockLanguageModelV3, search: () => Promise<typeof SEARCH_RESULT> }): Promise<void> {
+async function runSkillsTurn({ model, search, explore = vi.fn(async () => SEARCH_RESULT) }: { model: MockLanguageModelV3, search: () => Promise<typeof SEARCH_RESULT>, explore?: () => Promise<typeof SEARCH_RESULT> }): Promise<void> {
     await runAgentTurn({
         models: [{ model, provider: AIProviderName.ANTHROPIC, modelId: TIER.modelId, thinkingBudget: TIER.thinkingBudget }],
         systemPrompt: 'You are a test agent.',
@@ -185,8 +206,9 @@ async function runSkillsTurn({ model, search }: { model: MockLanguageModelV3, se
             ...fillerTools(),
             ap_web_search: tool({ description: 'search the web', inputSchema: z.object({ query: z.string() }), execute: search }),
             ap_research_pieces: tool({ description: 'research pieces', inputSchema: z.object({ query: z.string() }), execute: search }),
+            ap_explore_data: tool({ description: 'explore data', inputSchema: z.object({ actionName: z.string(), input: z.record(z.string(), z.unknown()) }), execute: explore }),
         },
-        allToolNames: [...Object.keys(fillerTools()), 'ap_web_search', 'ap_research_pieces'],
+        allToolNames: [...Object.keys(fillerTools()), 'ap_web_search', 'ap_research_pieces', 'ap_explore_data'],
         tier: TIER,
         phaseState: { phase: 'discovery' },
         abortSignal: new AbortController().signal,

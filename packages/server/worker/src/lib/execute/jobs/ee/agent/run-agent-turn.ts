@@ -2,7 +2,7 @@ import { AiProviderKeyStatus, AIProviderName, ErrorCode, formatPieceError, isFal
 import { agentAiUtils, aiProviderSignal, ContentPartLike } from '@activepieces/server-utils'
 import { AgentPhase, AgentRunSource, agentToolClassification, agentToolPhases, agentToolSkills, AI_PROVIDER_ENTITY_TYPES, aiProviderUtils, apErrorOf, CHAT_CREDITS_PER_TOOL_CALL, chatBilling, ChatToolCall, LAZY_TOOL_NAME, PersistedAgentPart, SkillSurface, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
 import { APICallError, generateText, isLoopFinished, isStepCount, LanguageModel, LanguageModelUsage, ModelMessage, NoSuchToolError, RetryError, StepResultPerformance, StopCondition, streamText, ToolChoice, ToolExecutionOptions, ToolSet } from 'ai'
-import { buildSkillSurface } from './tools/skill-tools'
+import { buildSkillSurface, decodeReroutedInput } from './tools/skill-tools'
 
 const MAX_AUTO_CONTINUATIONS = 3
 const MAX_EMPTY_CONTINUATIONS = 2
@@ -202,10 +202,12 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
         },
         repairToolCall: async ({ toolCall, error, inputSchema }) => {
             if (NoSuchToolError.isInstance(error)) {
-                if (!isNil(skillSurface) && toolCall.toolName in skillSurface.tools && isParsableJson(toolCall.input)) {
+                const target = skillSurface?.tools[toolCall.toolName]
+                if (!isNil(target) && isParsableJson(toolCall.input)) {
                     log.info({ toolName: toolCall.toolName }, 'Rerouting a deferred tool called by name through ap_lazy_tool')
                     reroutedCallIds.add(toolCall.toolCallId)
-                    return { ...toolCall, toolName: LAZY_TOOL_NAME, input: JSON.stringify({ tool: toolCall.toolName, input: JSON.parse(toolCall.input) }) }
+                    const input = await decodeReroutedInput({ target, input: JSON.parse(toolCall.input) })
+                    return { ...toolCall, toolName: LAZY_TOOL_NAME, input: JSON.stringify({ tool: toolCall.toolName, input }) }
                 }
                 log.warn({ toolName: toolCall.toolName }, 'Model called a tool that is not active in this phase')
                 return null
