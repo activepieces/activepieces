@@ -417,6 +417,7 @@ export const autumnConsole = {
             path: '/api/v1/invite-rewards',
             token: consoleSecretOrThrow(),
             body: { autumnCustomerId, inviteeEmail },
+            retryOnServerError: true,
         })
     },
     async getCreds(log: FastifyBaseLogger, platformId: string): Promise<ConsoleCustomerCall | null> {
@@ -424,16 +425,17 @@ export const autumnConsole = {
     },
 }
 
-async function consoleRequest<T>({ path, method = 'post', token, body, query, expectedErrorStatuses = [] }: ConsoleRequestParams): Promise<T> {
+async function consoleRequest<T>({ path, method = 'post', token, body, query, expectedErrorStatuses = [], retryOnServerError = false }: ConsoleRequestParams): Promise<T> {
     const url = `${AUTUMN_CONSOLE_URL}${path}`
     const config: AxiosRequestConfig = {
         timeout: CONSOLE_REQUEST_TIMEOUT_MS,
         params: query,
         headers: isNil(token) ? undefined : { Authorization: `Bearer ${token}` },
     }
+    const client = retryOnServerError ? safeHttp.retryingAxios : safeHttp.axios
     const { data: response, error } = await tryCatch(() => method === 'get'
-        ? safeHttp.axios.get<ConsoleEnvelope<T>>(url, config)
-        : safeHttp.axios.post<ConsoleEnvelope<T>>(url, body ?? {}, config))
+        ? client.get<ConsoleEnvelope<T>>(url, config)
+        : client.post<ConsoleEnvelope<T>>(url, body ?? {}, config))
     if (!isNil(error)) {
         if (!isAxiosError(error) || isNil(error.response) || !expectedErrorStatuses.includes(error.response.status)) {
             system.globalLogger().error({ error, url }, 'Autumn console request failed')
@@ -851,6 +853,7 @@ type ConsoleRequestParams = {
     body?: unknown
     query?: Record<string, string>
     expectedErrorStatuses?: number[]
+    retryOnServerError?: boolean
 }
 
 export type BalanceCacheRef = {
