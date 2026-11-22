@@ -8,7 +8,7 @@ export const poper = createPiece({
   minimumSupportedRelease: '0.30.0',
   categories: [PieceCategory.MARKETING],
   description:
-    'AI Driven Pop-up Builder that can convert visitors into customers,increase subscriber count, and skyrocket sales.',
+    'AI popup builder that turns website visitors into leads and customers.',
   logoUrl: 'https://cdn.activepieces.com/pieces/poper.png',
   authors: ['thirstycode'],
   actions: [],
