@@ -68,7 +68,7 @@ afterEach(() => {
 // coverage: the archive only reaches the handler if that route attaches attachMultipartFieldsToBody.
 describe('POST /v1/pieces — private piece installation (EE)', () => {
     it('should install a private piece from a tgz archive and persist metadata', async () => {
-        const ctx = await createTestContext(app!)
+        const ctx = await createTestContext(app!, { plan: { customPiecesEnabled: true } })
 
         const formData = new FormData()
         formData.append(
@@ -101,7 +101,7 @@ describe('POST /v1/pieces — private piece installation (EE)', () => {
         expect(saved.archiveId).toBeDefined()
     })
 
-    it('should still install on a self-hosted platform whose plan has custom pieces disabled', async () => {
+    it('should reject the install when the plan has custom pieces disabled', async () => {
         const ctx = await createTestContext(app!, { plan: { customPiecesEnabled: false } })
 
         const formData = new FormData()
@@ -121,6 +121,7 @@ describe('POST /v1/pieces — private piece installation (EE)', () => {
             body: formData,
         })
 
-        expect(response.statusCode).toBe(StatusCodes.CREATED)
+        expect(response.statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
+        expect(interactionSpy).not.toHaveBeenCalled()
     })
 })

@@ -1,16 +1,15 @@
 import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
-import { AddPieceRequestBody, ApEdition, PieceScope, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
+import { AddPieceRequestBody, PieceScope, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 import { FastifyPluginAsyncZod, FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { attachMultipartFieldsToBody } from '../../helper/multipart-body'
-import { system } from '../../helper/system/system'
 import { pieceInstallService } from '../../pieces/piece-install-service'
 import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 
 export const platformPieceModule: FastifyPluginAsyncZod = async (app) => {
-    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => system.getEdition() !== ApEdition.CLOUD || platform.plan.customPiecesEnabled))
+    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.customPiecesEnabled))
     await app.register(platformPieceController, { prefix: '/v1/pieces' })
 }
 

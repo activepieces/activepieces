@@ -1,7 +1,6 @@
 import { ApErrorParams, ErrorCode } from '@activepieces/core-utils';
 import {
   AddPieceRequestBody,
-  ApEdition,
   ApFlagId,
   PackageType,
   PieceScope,
@@ -73,9 +72,7 @@ const InstallPieceDialog = ({
 }: InstallPieceDialogProps) => {
   const { platform } = platformHooks.useCurrentPlatform();
   const isEnabled = platform.plan.managePiecesEnabled;
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const lockedOnPlan =
-    edition === ApEdition.CLOUD && !platform.plan.customPiecesEnabled;
+  const lockedOnPlan = !platform.plan.customPiecesEnabled;
   const lockedReason = t(
     'Installing custom pieces is not available on your plan.',
   );
