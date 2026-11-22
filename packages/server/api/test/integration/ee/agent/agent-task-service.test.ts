@@ -40,18 +40,6 @@ describe('agentTaskService', () => {
         await expect(agentTaskService.begin({ platformId: ctx.platform.id, conversationId, title: 'Research', taskId: started.taskId })).rejects.toThrow()
     })
 
-    it('resumes a called agent task only for the agent that started it', async () => {
-        const ctx = await createTestContext(app)
-        const conversationId = await conversation(ctx)
-        const started = await agentTaskService.begin({ platformId: ctx.platform.id, conversationId, title: 'Researcher' })
-        await agentTaskService.finish({ platformId: ctx.platform.id, conversationId, taskId: started.taskId, claimId: started.claimId, status: SubagentTaskStatus.BLOCKED, messages: [{ role: 'user', content: 'research it' }], summary: 'Blocked.', artifacts: [] })
-
-        await expect(agentTaskService.begin({ platformId: ctx.platform.id, conversationId, title: 'Writer', taskId: started.taskId, sameTitleOnly: true })).rejects.toThrow()
-        const resumed = await agentTaskService.begin({ platformId: ctx.platform.id, conversationId, title: 'Researcher', taskId: started.taskId, sameTitleOnly: true })
-
-        expect(resumed.messages).toEqual([{ role: 'user', content: 'research it' }])
-    })
-
     it('never resumes or lists a task from another platform', async () => {
         const owner = await createTestContext(app)
         const other = await createTestContext(app)

@@ -574,7 +574,7 @@ describe('createCalledAgentTools', () => {
         expect(params.stepCeiling).toBe(7)
         expect(Object.keys(params.tools).sort()).toEqual(['gmail_send', TASK_COMPLETION_TOOL_NAME].sort())
         expect(params.messages).toEqual([{ role: 'user', content: 'Research Stripe' }])
-        expect(beginTask).toHaveBeenCalledWith({ title: 'Researcher', sameTitleOnly: true })
+        expect(beginTask).toHaveBeenCalledWith({ title: 'Researcher' })
         expect(result).toMatchObject({ taskId: 'task-9', status: 'done', summary: 'Stripe sells payments.', activity: { title: 'Researcher', status: 'done' }, tokens: { input: 1000, output: 100 } })
     })
 
@@ -585,18 +585,6 @@ describe('createCalledAgentTools', () => {
 
         expect(runAgentTurn).not.toHaveBeenCalled()
         expect(result).toMatchObject({ status: 'failed', summary: expect.stringContaining('not published') })
-    })
-
-    it('resumes only a task this same agent started, so another agent never inherits its history', async () => {
-        runAgentTurn.mockImplementation(async (params: { tools: ToolSet }) => {
-            await params.tools[TASK_COMPLETION_TOOL_NAME].execute?.({ status: 'done', summary: 'Done.', artifacts: [] }, EXECUTION_OPTIONS)
-            return turnResult()
-        })
-        const tools = createCalledAgentTools({ ...CALLED_PARAMS, startAgent: vi.fn().mockResolvedValue(STARTED_AGENT), tools: [{ toolName: 'researcher', agentId: 'agent-b', description: 'Researches companies.' }] })
-
-        await tools['researcher'].execute?.({ request: 'Continue', taskId: 'task-9' }, EXECUTION_OPTIONS)
-
-        expect(beginTask).toHaveBeenCalledWith({ title: 'Researcher', taskId: 'task-9', sameTitleOnly: true })
     })
 
     it('offers an unavailable agent tool with the reason in its description and its answer', async () => {

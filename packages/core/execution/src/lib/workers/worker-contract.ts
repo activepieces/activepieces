@@ -236,7 +236,6 @@ export type BeginAgentTaskRequest = {
     conversationId: string
     title: string
     taskId?: string
-    sameTitleOnly?: boolean
 }
 
 export type BeginAgentTaskResponse = {

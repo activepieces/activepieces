@@ -1,5 +1,5 @@
 import { isNil, isObject, omit, parseToJsonIfPossible, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { AGENT_SURFACE_TOOLS, AgentPhase, BeginAgentTaskRequest, BeginAgentTaskResponse, CalledAgentConfig, chatBilling, FinishAgentTaskRequest, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus, ResolvedAgentAgentTool, SkillSurface, SubagentActivity, SubagentLink, subagentProgressId, SubagentTaskArtifact, SubagentTimelineEntry, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
+import { AGENT_SURFACE_TOOLS, AgentPhase, BeginAgentTaskResponse, CalledAgentConfig, chatBilling, FinishAgentTaskRequest, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus, ResolvedAgentAgentTool, SkillSurface, SubagentActivity, SubagentLink, subagentProgressId, SubagentTaskArtifact, SubagentTimelineEntry, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
 import { hasToolCall, isLoopFinished, ModelMessage, tool, ToolSet } from 'ai'
 import pLimit from 'p-limit'
 import { z } from 'zod'
@@ -93,19 +93,17 @@ async function runCalledAgent({ deps, agentId, startAgent, request, taskId, prog
         title: agent.displayName,
         brief: request,
         taskId,
-        sameTitleOnly: true,
         progressId,
         profile: { tools, models: agent.models, stepCeiling: agent.maxSteps },
         systemPrompt: agent.systemPrompt,
     }))
 }
 
-async function runTask({ deps, title, brief, taskId, sameTitleOnly, progressId, profile, systemPrompt }: {
+async function runTask({ deps, title, brief, taskId, progressId, profile, systemPrompt }: {
     deps: TaskRunDeps
     title: string
     brief: string
     taskId?: string
-    sameTitleOnly?: boolean
     progressId: string
     profile: TaskProfile
     systemPrompt: string
@@ -114,7 +112,7 @@ async function runTask({ deps, title, brief, taskId, sameTitleOnly, progressId, 
     if (abortSignal.aborted) {
         return { status: 'failed', summary: 'Stopped before it started.' }
     }
-    const { data: begun, error } = await tryCatch(() => beginTask({ title, ...spreadIfDefined('taskId', taskId), ...spreadIfDefined('sameTitleOnly', sameTitleOnly) }))
+    const { data: begun, error } = await tryCatch(() => beginTask({ title, ...(isNil(taskId) ? {} : { taskId }) }))
     if (error || isNil(begun)) {
         return { status: 'failed', summary: `Could not start this task: ${error instanceof Error ? error.message : 'unknown error'}` }
     }
@@ -567,7 +565,7 @@ type TaskDeps = {
     tier: RunAgentTurnParams['tier']
     taskPrompt: string
     creditsLeftFor: (runKey: string) => RunAgentTurnParams['creditsLeft']
-    beginTask: (input: Omit<BeginAgentTaskRequest, 'platformId' | 'conversationId'>) => Promise<BeginAgentTaskResponse>
+    beginTask: (input: { title: string, taskId?: string }) => Promise<BeginAgentTaskResponse>
     finishTask: (input: Omit<FinishAgentTaskRequest, 'platformId' | 'conversationId'>) => Promise<void>
     eventEmitter: AgentEventEmitter
     abortSignal: AbortSignal
