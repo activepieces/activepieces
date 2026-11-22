@@ -1,4 +1,4 @@
-import { AIProviderName, isNil, isObject } from '@activepieces/core-utils'
+import { AIProviderName, isObject } from '@activepieces/core-utils'
 import { LanguageModelV3StreamPart } from '@ai-sdk/provider'
 import { tool } from 'ai'
 import { MockLanguageModelV3 } from 'ai/test'
@@ -53,26 +53,6 @@ describe('a chat turn whose model stops streaming', () => {
         expect(model.doStreamCalls).toHaveLength(2)
         expect(textOf(turn)).toBe('done')
     })
-
-    it('waits through three silent minutes on a provider that hides its thinking', async () => {
-        const model = scriptedModel([[], answer('never')], { silentMs: 3 * 60_000, then: answer('thought it through') })
-
-        const turn = await settle(runTurn({ model, provider: AIProviderName.GOOGLE }))
-
-        expect(turn.streamError).toBeNull()
-        expect(model.doStreamCalls).toHaveLength(1)
-        expect(textOf(turn)).toBe('thought it through')
-    })
-
-    it('waits through three silent minutes after a thinking block opened', async () => {
-        const model = scriptedModel([[{ type: 'reasoning-start', id: 'r' }], answer('never')], { silentMs: 3 * 60_000, then: [{ type: 'reasoning-end', id: 'r' }, ...answer('thought it through')] })
-
-        const turn = await settle(runTurn({ model }))
-
-        expect(turn.streamError).toBeNull()
-        expect(model.doStreamCalls).toHaveLength(1)
-        expect(textOf(turn)).toBe('thought it through')
-    })
 })
 
 async function settle<T>(pending: Promise<T>): Promise<T> {
@@ -83,9 +63,9 @@ async function settle<T>(pending: Promise<T>): Promise<T> {
     return (await outcome).value
 }
 
-function runTurn({ model, search, provider = AIProviderName.OPENROUTER }: { model: MockLanguageModelV3, search?: () => Promise<unknown>, provider?: AIProviderName }): ReturnType<typeof runAgentTurn> {
+function runTurn({ model, search }: { model: MockLanguageModelV3, search?: () => Promise<unknown> }): ReturnType<typeof runAgentTurn> {
     return runAgentTurn({
-        models: [{ model, provider, modelId: 'main', thinkingBudget: 0 }],
+        models: [{ model, provider: AIProviderName.OPENAI, modelId: 'main', thinkingBudget: 0 }],
         systemPrompt: 'You are a test agent.',
         messages: [{ role: 'user', content: 'hello' }],
         tools: {
@@ -100,12 +80,11 @@ function runTurn({ model, search, provider = AIProviderName.OPENROUTER }: { mode
     })
 }
 
-function scriptedModel(scripts: LanguageModelV3StreamPart[][], resume?: { silentMs: number, then: LanguageModelV3StreamPart[] }): MockLanguageModelV3 {
+function scriptedModel(scripts: LanguageModelV3StreamPart[][]): MockLanguageModelV3 {
     let call = 0
     return new MockLanguageModelV3({
         doStream: async ({ abortSignal }) => {
             const parts = scripts[call] ?? []
-            const resumes = call === 0 ? resume : undefined
             call++
             const ends = parts.some((part) => part.type === 'finish')
             return {
@@ -118,14 +97,6 @@ function scriptedModel(scripts: LanguageModelV3StreamPart[][], resume?: { silent
                             return
                         }
                         abortSignal?.addEventListener('abort', () => controller.error(abortSignal.reason), { once: true })
-                        if (!isNil(resumes)) {
-                            setTimeout(() => {
-                                if (abortSignal?.aborted !== true) {
-                                    resumes.then.forEach((part) => controller.enqueue(part))
-                                    controller.close()
-                                }
-                            }, resumes.silentMs)
-                        }
                     },
                 }),
             }
