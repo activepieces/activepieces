@@ -1,5 +1,9 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  MarkdownVariant,
+  Property,
+} from '@activepieces/pieces-framework';
 import { browseAiApiCall } from '../common/client';
 import { browseAiAuth } from '../common/auth';
 import { robotIdDropdown, robotParameters } from '../common/props';
@@ -19,19 +23,27 @@ export const runRobotAction = createAction({
   },
   props: {
     robotId: robotIdDropdown,
+    robotParams: robotParameters,
+    runInfo: Property.MarkDown({
+      variant: MarkdownVariant.INFO,
+      value:
+        'The step returns the queued task. To get the scraped data, use Get Task Details or a Task Finished trigger.',
+    }),
     recordVideo: Property.Checkbox({
       displayName: 'Record Video',
       description:
-        'Try to record a video while running the task.',
+        'Asks Browse AI to record a video of the run. Not always possible.',
       required: false,
+      advanced: true,
       defaultValue: false,
     }),
-    robotParams: robotParameters,
   },
   async run(context) {
     const { robotId, recordVideo } = context.propsValue;
 
-    const inputParameters = context.propsValue.robotParams ?? {};
+    const inputParameters = withoutEmptyValues(
+      context.propsValue.robotParams ?? {}
+    );
 
     try {
       const response = await browseAiApiCall({
@@ -64,3 +76,13 @@ export const runRobotAction = createAction({
     }
   },
 });
+
+function withoutEmptyValues(
+  params: Record<string, unknown>
+): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(params).filter(
+      ([, value]) => value !== undefined && value !== null && value !== ''
+    )
+  );
+}
