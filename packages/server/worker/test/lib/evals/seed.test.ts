@@ -79,7 +79,7 @@ describe('evalSeed.create', () => {
 
         expect(built?.input).toEqual({ flowName: 'Lead alerts', steps: [{ ...step, auth: 'slack-team' }] })
         await expect(evalSeed.create({ mcp, seed: { flows: [{ flowName: 'Lead alerts', steps: [{ ...step, auth: 'Sales Slack' }] }], tables: [] }, answers: NO_ANSWERS }))
-            .rejects.toThrow('skipped: needs connection "Sales Slack" (@activepieces/piece-slack)')
+            .rejects.toThrow('seed failed: needs connection "Sales Slack" (@activepieces/piece-slack)')
     })
 
     it('fails when the dev server does not offer the seed tool', async () => {

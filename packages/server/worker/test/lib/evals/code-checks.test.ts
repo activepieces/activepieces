@@ -126,7 +126,10 @@ describe('evalCodeChecks.run', () => {
             ] } }),
             ap_read_step_settings: async (input) => ({ content: [{ type: 'text', text: 'settings' }], structuredContent: input['stepName'] === 'step_1'
                 ? { type: 'PIECE', settings: { pieceName: '@activepieces/piece-hubspot', actionName: 'create_contact', input: { email: '{{trigger.email}}' } } }
-                : { type: 'PIECE', settings: { pieceName: '@activepieces/piece-gmail', actionName: 'send_email', input: { to: '' } } } }),
+                : { type: 'PIECE', settings: { pieceName: '@activepieces/piece-gmail', actionName: 'send_email', input: { to: 'ops@example.test' } } } }),
+            ap_get_piece_props: async (input) => ({ structuredContent: { props: input['pieceName'] === '@activepieces/piece-hubspot'
+                ? [{ name: 'email', type: 'SHORT_TEXT', required: true }, { name: 'owner', type: 'DROPDOWN', required: true }]
+                : [{ name: 'to', type: 'SHORT_TEXT', required: true }] } }),
             ap_validate_step_config: async (input) => {
                 validatedConfigs.push(input)
                 return { content: [{ type: 'text', text: '✅ Valid configuration' }], structuredContent: { valid: true, errors: [] } }
@@ -148,6 +151,7 @@ describe('evalCodeChecks.run', () => {
         const mcp = mcpWith({
             ap_validate_flow: async () => ({ structuredContent: { valid: false, issues: [{ category: 'step_validity', severity: 'error', stepName: 'step_1', message: '"Fetch payments" is invalid' }] } }),
             ap_read_step_settings: async () => ({ structuredContent: { type: 'PIECE', settings: { pieceName: 'stripe', actionName: 'list_payments', input: {} } } }),
+            ap_get_piece_props: async () => ({ structuredContent: { props: [{ name: 'limit', type: 'NUMBER', required: false }] } }),
             ap_validate_step_config: async () => ({ structuredContent: { valid: false, errors: ['limit: Required'] } }),
         })
 

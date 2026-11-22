@@ -56,6 +56,18 @@ describe('seedConnections.resolve', () => {
         ])
     })
 
+    it('refuses a display name two connections share instead of picking one', async () => {
+        const twins = vi.fn(async (): Promise<ProjectConnection[]> => [
+            { externalId: 'slack-a', displayName: 'Slack', status: 'ACTIVE' },
+            { externalId: 'slack-b', displayName: 'Slack', status: 'ACTIVE' },
+        ])
+        const flows = [{ flowName: 'F', steps: [{ pieceName: 'slack', auth: 'Slack' }, { pieceName: 'slack', auth: 'slack-b' }] }]
+
+        expect(await seedConnections.unmet({ flows, answers: { questions: null, connections: {} }, listConnections: twins })).toEqual([
+            'ambiguous connection name "Slack" (@activepieces/piece-slack): 2 connections share it, name one by externalId',
+        ])
+    })
+
     it('treats a piece the case declines as missing', async () => {
         const flows = [{ flowName: 'F', steps: [{ pieceName: 'slack', auth: '{{connection:slack}}' }] }]
 

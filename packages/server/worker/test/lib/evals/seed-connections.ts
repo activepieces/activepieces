@@ -14,8 +14,8 @@ async function resolve({ flows, answers, listConnections }: ResolveParams): Prom
     return { flows: resolved.map((entry) => entry.flow), unmet: [...new Set(resolved.flatMap((entry) => entry.unmet))] }
 }
 
-async function unmet(params: ResolveParams): Promise<string[]> {
-    return (await resolve(params)).unmet
+async function unmet({ flows, answers, listConnections }: ResolveParams): Promise<string[]> {
+    return (await resolve({ flows, answers, listConnections })).unmet
 }
 
 async function resolveFlow({ flow, answers, connectionsOf }: { flow: SeedFlow, answers: LiveSettings['answers'], connectionsOf: (pieceName: string) => Promise<ListedConnections> }): Promise<{ flow: SeedFlow, unmet: string[] }> {
@@ -43,17 +43,22 @@ async function resolveComponent({ component, answers, connectionsOf }: { compone
     if (!isNil(listed.error)) {
         return { component, unmet: [`could not list ${pieceName} connections to find "${reference}": ${listed.error}`] }
     }
-    const externalId = externalIdFor({ reference, pieceName, connections: listed.connections, answers })
+    const named = namedConnections({ reference, connections: listed.connections })
+    if (named.length > 1) {
+        return { component, unmet: [`ambiguous connection name "${reference}" (${pieceName}): ${named.length} connections share it, name one by externalId`] }
+    }
+    const externalId = named[0]?.externalId ?? externalIdForPiece({ reference, pieceName, connections: listed.connections, answers })
     return isNil(externalId)
         ? { component, unmet: [`needs connection "${reference}" (${pieceName})`] }
         : { component: { ...component, auth: externalId }, unmet: [] }
 }
 
-function externalIdFor({ reference, pieceName, connections, answers }: { reference: string, pieceName: string, connections: ProjectConnection[], answers: LiveSettings['answers'] }): string | null {
-    const exact = connections.find((connection) => connection.externalId === reference) ?? connections.find((connection) => connection.displayName === reference)
-    if (!isNil(exact)) {
-        return exact.externalId
-    }
+function namedConnections({ reference, connections }: { reference: string, connections: ProjectConnection[] }): ProjectConnection[] {
+    const byId = connections.filter((connection) => connection.externalId === reference)
+    return byId.length > 0 ? byId : connections.filter((connection) => connection.displayName === reference)
+}
+
+function externalIdForPiece({ reference, pieceName, connections, answers }: { reference: string, pieceName: string, connections: ProjectConnection[], answers: LiveSettings['answers'] }): string | null {
     if (agentWorkerTools.normalizePieceName(reference) !== pieceName) {
         return null
     }

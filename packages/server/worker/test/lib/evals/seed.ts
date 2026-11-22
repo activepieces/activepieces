@@ -6,7 +6,7 @@ import { evalToolSet, McpTools, ToolResult } from './tool-set'
 async function create({ mcp, seed, answers }: { mcp: McpTools, seed: LiveSettings['seed'], answers: LiveSettings['answers'] }): Promise<SeededState> {
     const resolved = await seedConnections.resolve({ flows: seed.flows, answers, listConnections: (pieceName) => evalToolSet.listConnections({ mcp, pieceName }) })
     if (resolved.unmet.length > 0) {
-        throw new Error(`skipped: ${resolved.unmet.join('; ')}`)
+        throw new Error(`seed failed: ${resolved.unmet.join('; ')}`)
     }
     const tables = await Promise.all(seed.tables.map((table) => seedTable({ mcp, table })))
     const folders = await Promise.all(byFolder(resolved.flows).map((flows) => seedInOrder({ mcp, flows })))

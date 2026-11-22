@@ -1,9 +1,9 @@
 import { isNil, isObject, tryCatch } from '@activepieces/core-utils'
-import { agentToolClassification, agentToolSkills, FlowActionType } from '@activepieces/shared'
+import { agentToolClassification, agentToolSkills } from '@activepieces/shared'
 import { z } from 'zod'
-import { agentWorkerTools } from '../../../src/lib/execute/jobs/ee/agent/agent-worker-tools'
 import { evalAgentTurn, TurnOutcome, TurnToolCall } from './agent-turn'
 import { RunVerdict } from './checks'
+import { declinedSteps } from './declined-steps'
 import { CodeChecks } from './eval-case'
 import { replay } from './replay'
 import { evalToolSet, McpTools } from './tool-set'
@@ -70,26 +70,8 @@ async function realIssues({ mcp, flowId, issues, declined }: { mcp: McpTools, fl
     if (issues.length === 0) {
         return [{ message: 'ap_validate_flow reported it invalid' }]
     }
-    const checked = await Promise.all(issues.map(async (issue) => await onlyMissesDeclinedConnection({ mcp, flowId, issue, declined }) ? [] : [issue]))
+    const checked = await Promise.all(issues.map(async (issue) => issue.category === STEP_VALIDITY && !isNil(issue.stepName) && await declinedSteps.onlyMissesConnection({ mcp, flowId, stepName: issue.stepName, declined }) ? [] : [issue]))
     return checked.flat()
-}
-
-async function onlyMissesDeclinedConnection({ mcp, flowId, issue, declined }: { mcp: McpTools, flowId: string, issue: ValidationIssue, declined: Set<string> }): Promise<boolean> {
-    if (declined.size === 0 || issue.category !== STEP_VALIDITY || isNil(issue.stepName)) {
-        return false
-    }
-    const { data: read } = await tryCatch(() => evalToolSet.call({ mcp, toolName: READ_STEP_SETTINGS_TOOL, input: { flowId, stepName: issue.stepName } }))
-    const step = PieceStep.safeParse(evalToolSet.readResult(read).structured)
-    if (!step.success) {
-        return false
-    }
-    const { pieceName, actionName, input } = step.data.settings
-    const { auth, ...rest } = input
-    if (!declined.has(agentWorkerTools.normalizePieceName(pieceName)) || (typeof auth === 'string' && auth.trim().length > 0)) {
-        return false
-    }
-    const { data: checked } = await tryCatch(() => evalToolSet.call({ mcp, toolName: VALIDATE_STEP_CONFIG_TOOL, input: { stepType: PIECE_ACTION_STEP, pieceName, actionName, input: rest, auth: STAND_IN_AUTH } }))
-    return evalToolSet.readResult(checked).structured['valid'] === true
 }
 
 function writesOf(call: TurnToolCall): string[] {
@@ -165,15 +147,7 @@ const DELETE_ACTION_PATTERN = /(^|[_\-.])delete([_\-.]|$)/i
 const MAX_ISSUES = 5
 const INFO_SEVERITY = 'info'
 const STEP_VALIDITY = 'step_validity'
-const READ_STEP_SETTINGS_TOOL = 'ap_read_step_settings'
-const VALIDATE_STEP_CONFIG_TOOL = 'ap_validate_step_config'
-const PIECE_ACTION_STEP = 'PIECE_ACTION'
-const STAND_IN_AUTH = 'eval-declined-connection'
 const ValidationIssue = z.object({ category: z.string().optional(), severity: z.string().optional(), stepName: z.string().optional(), message: z.string() })
-const PieceStep = z.object({
-    type: z.literal(FlowActionType.PIECE),
-    settings: z.object({ pieceName: z.string(), actionName: z.string(), input: z.record(z.string(), z.unknown()).default({}) }),
-})
 const SIDE_EFFECT_TOOLS = [
     'ap_add_agent_tool',
     'ap_change_flow_status',
