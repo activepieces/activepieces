@@ -1,6 +1,6 @@
 import { ActivepiecesError, applyFunctionToValuesSync, connectionTemplate, ErrorCode, extractMustacheTokens, isNil, isObject, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { AiMetadata, OutputSchema, OutputSchemaField, PieceMetadataModel, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
-import { BranchOperator, EngineResponse, EngineResponseStatus, FlowActionType, flowStructureUtil, McpServerType, McpToolResult, ProjectScopedMcpServer, PropertyExecutionType, PropertySettings, singleValueConditions, WorkerJobType } from '@activepieces/shared'
+import { BranchOperator, EngineResponse, EngineResponseStatus, FlowActionType, flowStructureUtil, McpServerType, McpToolResult, MISSING_AUTH_INPUT_TEXT, ProjectScopedMcpServer, PropertyExecutionType, PropertySettings, singleValueConditions, WorkerJobType } from '@activepieces/shared'
 import type { BranchedAction, Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -184,7 +184,7 @@ function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentTyp
 
     const hasAuth = pieceAuth !== undefined && pieceAuth !== null && requireAuth
     if (hasAuth && !input.auth) {
-        missing.push('auth (connection required — use ap_list_connections)')
+        missing.push(MISSING_AUTH_INPUT_TEXT)
     }
     const parts: string[] = []
     if (unknownKeys.length > 0) {

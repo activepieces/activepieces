@@ -1,3 +1,4 @@
+import Fastify from 'fastify'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const { mockGetUserProjects, mockGetSelectedConnection, mockGetPieceMetadata, mockExecutePieceActionRun, mockRecordAgentAction } = vi.hoisted(() => ({
@@ -30,7 +31,7 @@ vi.mock('../../../../../src/app/ee/agent/rpc/rpc-shared', async (importOriginal)
     recordAgentAction: mockRecordAgentAction,
 }))
 
-const noopLogger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }
+const silentLog = Fastify({ logger: false }).log
 
 const gmailMetadata = {
     displayName: 'Gmail',
@@ -48,8 +49,8 @@ async function exploreGmail(input: Record<string, unknown>) {
         platformId: 'plat-1',
         userId: 'user-1',
         conversationId: 'conv-1',
-        log: noopLogger as never,
-    } as never)
+        log: silentLog,
+    })
 }
 
 describe('runAgentAction without a picked connection', () => {
@@ -90,12 +91,24 @@ describe('runAgentAction without a picked connection', () => {
         expect(mockExecutePieceActionRun).toHaveBeenCalledWith(expect.objectContaining({ connectionExternalId: 'conn-ext-1' }))
     })
 
-    it('runs an action that needs no account', async () => {
+    it('runs an action that declares requireAuth false on a piece that has auth', async () => {
         mockGetSelectedConnection.mockResolvedValue(null)
         mockGetPieceMetadata.mockResolvedValue({ ...gmailMetadata, actions: { gmail_search_mail: { displayName: 'Search Mail', requireAuth: false } } })
 
         await exploreGmail({ query: 'invoices' })
 
         expect(mockExecutePieceActionRun).toHaveBeenCalledTimes(1)
+    })
+})
+
+describe('the missing-auth text the worker matches', () => {
+    it('is what diagnosePieceProps reports for a piece call without auth', async () => {
+        const { MISSING_AUTH_INPUT_TEXT } = await import('@activepieces/shared')
+        const { mcpUtils } = await import('../../../../../src/app/mcp/tools/mcp-utils')
+
+        const diagnosis = mcpUtils.diagnosePieceProps({ props: {}, input: {}, pieceAuth: gmailMetadata.auth, requireAuth: true, componentType: 'action' })
+
+        expect(diagnosis.missing).toContain(MISSING_AUTH_INPUT_TEXT)
+        expect(MISSING_AUTH_INPUT_TEXT).toContain('auth (connection required')
     })
 })

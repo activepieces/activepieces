@@ -1,9 +1,9 @@
-import { isObject, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { isNil, isObject, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { ActionPreviewEvent, agentToolClassification } from '@activepieces/shared'
 import { tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { z } from 'zod'
 import { executeBatchAction, MAX_BATCH_SIZE, MAX_IDENTICAL_ACTION_FAILURES } from './configured-tools'
-import { AgentEventEmitter, cardTitleFields, extractResultText, extractUserFacingError, GateDecision, gateNoResponseMessage, isSuccessResult, normalizePieceName, stableStringify, TaintState, TOOL_EXECUTION_TIMEOUT_MS, truncateLargeResult, withToolTimeout } from './tool-primitives'
+import { AgentEventEmitter, cardTitleFields, extractUserFacingError, GateDecision, gateNoResponseMessage, isMissingConnectionResult, isSuccessResult, normalizePieceName, stableStringify, TaintState, TOOL_EXECUTION_TIMEOUT_MS, truncateLargeResult, withToolTimeout } from './tool-primitives'
 
 export function createProgressGuard() {
     const failureCounts = new Map<string, number>()
@@ -20,8 +20,11 @@ export function createProgressGuard() {
         `✋ This exact action already ran successfully earlier in this turn (${actionName}) — it was NOT run again to avoid a duplicate side effect. Treat it as done; only repeat it if the user explicitly asks or the input changes.`
 
     return {
-        checkPieceConnection: ({ pieceName }: { pieceName: string }): { content: { type: string, text: string }[] } | null => {
+        checkPieceConnection: ({ pieceName, inputs }: { pieceName: string, inputs: Record<string, unknown>[] }): { content: { type: string, text: string }[] } | null => {
             if ((missingConnectionCounts.get(normalizePieceName(pieceName)) ?? 0) < MAX_MISSING_CONNECTION_FAILURES) {
+                return null
+            }
+            if (inputs.length > 0 && inputs.every(hasAuthInput)) {
                 return null
             }
             return { content: [{ type: 'text', text: `✋ Not run. Stop calling ${pieceName} actions until ap_show_connection_picker returns selected, or tell the user you need the account.` }] }
@@ -111,7 +114,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
             }),
             execute: async (toolInput, options) => {
                 const isBatch = toolInput.items && toolInput.items.length > 0
-                const connectionBreaker = progressGuard.checkPieceConnection({ pieceName: toolInput.pieceName })
+                const connectionBreaker = progressGuard.checkPieceConnection({ pieceName: toolInput.pieceName, inputs: isBatch ? toolInput.items! : [toolInput.input ?? {}] })
                 if (connectionBreaker) {
                     return connectionBreaker
                 }
@@ -172,7 +175,11 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
 
                 if (isBatch) {
                     return executeBatchAction({
-                        executeWithTimeout,
+                        executeWithTimeout: async (toolName, itemInput) => {
+                            const itemResult = await executeWithTimeout(toolName, itemInput)
+                            progressGuard.recordConnectionResult({ pieceName: toolInput.pieceName, result: itemResult })
+                            return itemResult
+                        },
                         eventEmitter,
                         toolCallId: options.toolCallId,
                         pieceName: toolInput.pieceName,
@@ -240,7 +247,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                 input: z.record(z.string(), z.unknown()).optional().describe('Input for the read action (keep limits small)'),
             }),
             execute: async (toolInput) => {
-                const connectionBreaker = progressGuard.checkPieceConnection({ pieceName: toolInput.pieceName })
+                const connectionBreaker = progressGuard.checkPieceConnection({ pieceName: toolInput.pieceName, inputs: [toolInput.input ?? {}] })
                 if (connectionBreaker) {
                     return connectionBreaker
                 }
@@ -309,11 +316,9 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
     }
 }
 
-function isMissingConnectionResult(result: unknown): boolean {
-    if (isObject(result) && result['missingConnection'] === true) {
-        return true
-    }
-    return extractResultText(result).includes('auth (connection required')
+function hasAuthInput(input: Record<string, unknown>): boolean {
+    const auth = input['auth']
+    return !isNil(auth) && auth !== ''
 }
 
 const MAX_MISSING_CONNECTION_FAILURES = 2

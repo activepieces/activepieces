@@ -260,4 +260,51 @@ describe('wrapToolsWithFailureGuard', () => {
 
         expect(calls).toBe(2)
     })
+
+    it('strips card titles from the arguments of a lazily called tool too', async () => {
+        let calls = 0
+        const guarded = wrapToolsWithFailureGuard({
+            tools: {
+                ap_lazy_tool: {
+                    inputSchema: jsonSchema({ type: 'object' }),
+                    execute: async () => {
+                        calls += 1
+                        return { content: [{ type: 'text', text: '❌ Cannot run action: missing field' }] }
+                    },
+                },
+            },
+            log: silentLog,
+        })
+
+        for (const [index, title] of ['Send email', 'Sending it', 'Send now'].entries()) {
+            await guarded.ap_lazy_tool.execute?.({ tool: 'ap_execute_action', title, input: { pieceName: 'p', actionName: 'a', title, doneTitle: title } }, { ...callOptions, toolCallId: `l${index}` })
+        }
+
+        expect(calls).toBe(2)
+    })
+
+    it('never answers a missing-connection failure with its change-the-parameters message', async () => {
+        let calls = 0
+        const guarded = wrapToolsWithFailureGuard({
+            tools: {
+                ap_execute_action: {
+                    inputSchema: jsonSchema({ type: 'object' }),
+                    execute: async () => {
+                        calls += 1
+                        return { success: false, missingConnection: true, error: '❌ No Gmail account is selected in this conversation. Call ap_show_connection_picker' }
+                    },
+                },
+            },
+            log: silentLog,
+        })
+        const input = { pieceName: '@activepieces/piece-gmail', actionName: 'gmail_search_mail', input: {} }
+
+        const results = []
+        for (const index of [1, 2, 3, 4]) {
+            results.push(await guarded.ap_execute_action.execute?.(input, { ...callOptions, toolCallId: `c${index}` }))
+        }
+
+        expect(calls).toBe(4)
+        expect(JSON.stringify(results)).not.toContain('change the parameters')
+    })
 })

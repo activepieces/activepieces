@@ -425,7 +425,7 @@ export type AgentAllowedMimeType = typeof CHAT_ALLOWED_MIME_TYPES[number]
 export { CHAT_ALLOWED_MIME_TYPES }
 
 export * from './agent'
-export { agentToolClassification } from './tool-classification'
+export { agentToolClassification, MISSING_AUTH_INPUT_TEXT } from './tool-classification'
 export { CHAT_CREDITS_PER_TOOL_CALL, chatBilling, type ChatToolCall, type TurnCredits } from './chat-billing'
 export { AGENT_SELF_EDIT_TOOLS, AGENT_SURFACE_TOOLS, agentToolPhases, type AgentPhase } from './tool-phases'
 export { AGENT_SKILLS, agentToolSkills, LAZY_TOOL_NAME, GET_TOOL_SCHEMA_NAME, LOAD_SKILL_NAME, MAX_CORE_TOOLS, SKILLS_NOTE_HEADING, type AgentSkill, type SkillSurface } from './tool-skills'

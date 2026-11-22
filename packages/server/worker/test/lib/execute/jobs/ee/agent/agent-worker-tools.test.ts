@@ -663,6 +663,34 @@ describe('agentWorkerTools', () => {
             expect(executeTool).toHaveBeenCalledTimes(3)
         })
 
+        it('lets a call that brings its own auth through after the piece breaker trips', async () => {
+            const { eventEmitter } = makeMockEventEmitter()
+            const executeTool = vi.fn().mockResolvedValue({ success: false, missingConnection: true, error: '❌ No Gmail account is selected in this conversation.' })
+            const tools = agentWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ outcome: 'approved' }), guides: {}, taintState: { tainted: false } })
+
+            await tools.ap_explore_data.execute({ pieceName: '@activepieces/piece-gmail', actionName: 'gmail_search_mail', input: { q: 'a' } }, { ...callOptions, toolCallId: 'x1' })
+            await tools.ap_explore_data.execute({ pieceName: '@activepieces/piece-gmail', actionName: 'gmail_search_mail', input: { q: 'b' } }, { ...callOptions, toolCallId: 'x2' })
+            executeTool.mockResolvedValue(mcpSuccess('found'))
+            await tools.ap_explore_data.execute({ pieceName: '@activepieces/piece-gmail', actionName: 'gmail_search_mail', input: { q: 'c', auth: 'conn-1' } }, { ...callOptions, toolCallId: 'x3' })
+            await tools.ap_execute_action.execute({ pieceName: '@activepieces/piece-gmail', actionName: 'gmail_list_labels', items: [{ auth: 'conn-1' }, { auth: 'conn-1' }] }, { ...callOptions, toolCallId: 'x4' })
+            const blank = await tools.ap_explore_data.execute({ pieceName: '@activepieces/piece-gmail', actionName: 'gmail_search_mail', input: { q: 'd', auth: '' } }, { ...callOptions, toolCallId: 'x5' })
+
+            expect(executeTool).toHaveBeenCalledTimes(5)
+            expect((blank as { content: Array<{ text: string }> }).content[0].text).toContain('Stop calling')
+        })
+
+        it('counts a batch whose items come back without a connection', async () => {
+            const { eventEmitter } = makeMockEventEmitter()
+            const executeTool = vi.fn().mockResolvedValue({ success: false, missingConnection: true, error: '❌ No Gmail account is selected in this conversation.' })
+            const tools = agentWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ outcome: 'approved' }), guides: {}, taintState: { tainted: false } })
+
+            await tools.ap_execute_action.execute({ pieceName: '@activepieces/piece-gmail', actionName: 'gmail_get_email', items: [{ id: '1' }, { id: '2' }] }, { ...callOptions, toolCallId: 'b1' })
+            const next = await tools.ap_execute_action.execute({ pieceName: '@activepieces/piece-gmail', actionName: 'gmail_get_email', input: { id: '3' } }, { ...callOptions, toolCallId: 'b2' })
+
+            expect(executeTool).toHaveBeenCalledTimes(2)
+            expect((next as { content: Array<{ text: string }> }).content[0].text).toContain('Stop calling')
+        })
+
         it('keeps other pieces running while one piece has no connection', async () => {
             const { eventEmitter } = makeMockEventEmitter()
             const executeTool = vi.fn().mockResolvedValue({ success: false, missingConnection: true, error: '❌ No Gmail account is selected in this conversation.' })

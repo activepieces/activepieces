@@ -1,13 +1,15 @@
-import { AiProviderKeyStatus, AIProviderName, ErrorCode, formatPieceError, isFallbackWorthy, isNil, isObject, isProviderBillingError, isTransientProviderError, omit, ProviderOutcomeSignal, spreadIfDefined, toError, tryCatch, tryCatchSync, unique } from '@activepieces/core-utils'
+import { AiProviderKeyStatus, AIProviderName, ErrorCode, formatPieceError, isFallbackWorthy, isNil, isObject, isProviderBillingError, isTransientProviderError, ProviderOutcomeSignal, spreadIfDefined, toError, tryCatch, tryCatchSync, unique } from '@activepieces/core-utils'
 import { agentAiUtils, aiProviderSignal, ContentPartLike } from '@activepieces/server-utils'
 import { AgentPhase, AgentRunSource, agentToolClassification, agentToolPhases, agentToolSkills, AI_PROVIDER_ENTITY_TYPES, aiProviderUtils, apErrorOf, CHAT_CREDITS_PER_TOOL_CALL, chatBilling, ChatToolCall, LAZY_TOOL_NAME, PersistedAgentPart, SkillSurface, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
 import { APICallError, generateText, isLoopFinished, isStepCount, LanguageModel, LanguageModelUsage, ModelMessage, NoSuchToolError, RetryError, StepResultPerformance, StopCondition, streamText, ToolChoice, ToolExecutionOptions, ToolSet } from 'ai'
 import { buildSkillSurface, decodeReroutedInput } from './tools/skill-tools'
+import { isMissingConnectionResult } from './tools/tool-primitives'
 
 const MAX_AUTO_CONTINUATIONS = 3
 const MAX_EMPTY_CONTINUATIONS = 2
 const MAX_STREAM_RETRIES = 1
 const MAX_IDENTICAL_TOOL_FAILURES = 2
+const CARD_TITLE_KEYS = ['title', 'activeTitle', 'doneTitle']
 const IN_LOOP_COMPACTION_THRESHOLD = 0.6
 const RUNAWAY_TURN_CONTEXT_MULTIPLE = 90
 const STREAM_RETRY_BASE_DELAY_MS = 1_000
@@ -474,6 +476,9 @@ export function wrapToolsWithFailureGuard({ tools, log }: { tools: ToolSet, log:
                 const isFailure = text.length > 0 && agentToolClassification.hasFailureTextPrefix(text)
                 const isEmptyRead = text.length > 0 && !isFailure && looksEmptyResultText(text)
                 const isTransient = isFailure && isTransientFailureText(text)
+                if (isMissingConnectionResult(result)) {
+                    return result
+                }
                 // Brake on repeated UNPRODUCTIVE identical calls — permanent failures AND empty reads —
                 // so the agent stops re-running the same find that keeps returning nothing (the Attio
                 // thrash). Transient errors (429/5xx/timeout) are exempt: retrying those can succeed.
@@ -491,9 +496,21 @@ export function wrapToolsWithFailureGuard({ tools, log }: { tools: ToolSet, log:
 }
 
 function fingerprintInput(input: unknown): string {
-    const keyed = isObject(input) ? omit(input, ['title', 'activeTitle', 'doneTitle']) : input
-    const { data } = tryCatchSync(() => JSON.stringify(keyed))
+    const { data } = tryCatchSync(() => JSON.stringify(withoutCardTitles(input)))
     return data ?? ''
+}
+
+function withoutCardTitles(input: unknown): unknown {
+    if (!isObject(input)) {
+        return input
+    }
+    const untitled = withoutTitleKeys(input)
+    const nested = untitled['input']
+    return isObject(nested) ? { ...untitled, input: withoutTitleKeys(nested) } : untitled
+}
+
+function withoutTitleKeys(record: Record<string, unknown>): Record<string, unknown> {
+    return Object.fromEntries(Object.entries(record).filter(([key]) => !CARD_TITLE_KEYS.includes(key)))
 }
 
 export function jsonInputFrom(text: string): string | undefined {
