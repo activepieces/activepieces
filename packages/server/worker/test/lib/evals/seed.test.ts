@@ -10,7 +10,7 @@ describe('evalSeed.create', () => {
         })
         const flow = { flowName: 'New lead alert', trigger: { pieceName: '@activepieces/piece-webhook', triggerName: 'catch_webhook' }, steps: [] }
 
-        const seeded = await evalSeed.create({ mcp, seed: { flows: [flow], tables: [] } })
+        const seeded = await evalSeed.create({ mcp, seed: { flows: [flow], tables: [] }, answers: NO_ANSWERS })
 
         expect(calls).toEqual([{ toolName: 'ap_build_flow', input: flow }])
         expect(seeded).toEqual({ flows: [{ name: 'New lead alert', id: 'flow-1' }], tables: [] })
@@ -24,7 +24,7 @@ describe('evalSeed.create', () => {
         const records = Array.from({ length: 51 }, (_, index) => ({ Name: `Lead ${index}`, Score: index }))
         const fields = [{ name: 'Name', type: 'TEXT' }, { name: 'Score', type: 'NUMBER' }]
 
-        const seeded = await evalSeed.create({ mcp, seed: { flows: [], tables: [{ name: 'Leads', fields, records }] } })
+        const seeded = await evalSeed.create({ mcp, seed: { flows: [], tables: [{ name: 'Leads', fields, records }] }, answers: NO_ANSWERS })
 
         expect(calls[0]).toEqual({ toolName: 'ap_create_table', input: { name: 'Leads', fields } })
         expect(calls.slice(1).map((call) => call.toolName)).toEqual(['ap_insert_records', 'ap_insert_records'])
@@ -51,7 +51,7 @@ describe('evalSeed.create', () => {
             },
         })
 
-        const seeded = await evalSeed.create({ mcp, seed: { flows: [{ flowName: 'A', folderName: 'Sales' }, { flowName: 'B', folderName: 'Sales' }], tables: [{ name: 'Leads', records: [{ Name: 'Ann', Note: null }] }] } })
+        const seeded = await evalSeed.create({ mcp, seed: { flows: [{ flowName: 'A', folderName: 'Sales' }, { flowName: 'B', folderName: 'Sales' }], tables: [{ name: 'Leads', records: [{ Name: 'Ann', Note: null }] }] }, answers: NO_ANSWERS })
 
         expect(order).toEqual(['table', 'A', 'B'])
         expect(running.most).toBe(1)
@@ -64,13 +64,28 @@ describe('evalSeed.create', () => {
             ap_build_flow: async () => result({ text: '❌ Piece "@activepieces/piece-nope" not found' }),
         })
 
-        await expect(evalSeed.create({ mcp, seed: { flows: [{ flowName: 'Broken' }], tables: [] } })).rejects.toThrow('could not seed flow "Broken": ❌ Piece "@activepieces/piece-nope" not found')
+        await expect(evalSeed.create({ mcp, seed: { flows: [{ flowName: 'Broken' }], tables: [] }, answers: NO_ANSWERS })).rejects.toThrow('could not seed flow "Broken": ❌ Piece "@activepieces/piece-nope" not found')
+    })
+
+    it('builds a seed flow with the plain externalId and skips the run when a connection is missing', async () => {
+        const { mcp, calls } = mcpWith({
+            ap_list_connections: async () => ({ structuredContent: { connections: [{ externalId: 'slack-team', displayName: 'Team Slack', status: 'ACTIVE' }] } }),
+            ap_build_flow: async () => result({ text: '✅ Flow created', structured: { flowId: 'flow-1' } }),
+        })
+        const step = { name: 'notify', pieceName: '@activepieces/piece-slack', actionName: 'send_message', auth: '{{connection:slack}}' }
+
+        await evalSeed.create({ mcp, seed: { flows: [{ flowName: 'Lead alerts', steps: [step] }], tables: [] }, answers: NO_ANSWERS })
+        const built = calls.find((call) => call.toolName === 'ap_build_flow')
+
+        expect(built?.input).toEqual({ flowName: 'Lead alerts', steps: [{ ...step, auth: 'slack-team' }] })
+        await expect(evalSeed.create({ mcp, seed: { flows: [{ flowName: 'Lead alerts', steps: [{ ...step, auth: 'Sales Slack' }] }], tables: [] }, answers: NO_ANSWERS }))
+            .rejects.toThrow('seed failed: needs connection "Sales Slack" (@activepieces/piece-slack)')
     })
 
     it('fails when the dev server does not offer the seed tool', async () => {
         const { mcp } = mcpWith({})
 
-        await expect(evalSeed.create({ mcp, seed: { flows: [], tables: [{ name: 'Leads' }] } })).rejects.toThrow('does not offer ap_create_table')
+        await expect(evalSeed.create({ mcp, seed: { flows: [], tables: [{ name: 'Leads' }] }, answers: NO_ANSWERS })).rejects.toThrow('does not offer ap_create_table')
     })
 })
 
@@ -89,3 +104,5 @@ function mcpWith(handlers: Record<string, (input: Record<string, unknown>) => Pr
 function result({ text, structured }: { text: string, structured?: Record<string, unknown> }): unknown {
     return { content: [{ type: 'text', text }], ...(structured === undefined ? {} : { structuredContent: structured }) }
 }
+
+const NO_ANSWERS = { questions: null, connections: {} }

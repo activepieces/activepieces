@@ -116,6 +116,60 @@ describe('evalCodeChecks.run', () => {
         expect(result).toEqual({ verdict: 'fail', reason: 'flow flow-bad is not valid: step_1: channel is required' })
     })
 
+    it('accepts a step invalid only because its declined connection is missing, and fails any other invalid step', async () => {
+        const validatedConfigs: unknown[] = []
+        const mcp = mcpWith({
+            ap_validate_flow: async () => ({ content: [{ type: 'text', text: '❌ 2 invalid steps' }], structuredContent: { valid: false, issues: [
+                { category: 'step_validity', severity: 'error', stepName: 'step_1', message: '"Create contact" is invalid (use ap_update_step to fix).' },
+                { category: 'step_validity', severity: 'error', stepName: 'step_2', message: '"Send email" is invalid (use ap_update_step to fix).' },
+                { category: 'empty_branch', severity: 'info', stepName: 'step_3', message: 'fallback branch is empty' },
+            ] } }),
+            ap_read_step_settings: async (input) => ({ content: [{ type: 'text', text: 'settings' }], structuredContent: input['stepName'] === 'step_1'
+                ? { type: 'PIECE', settings: { pieceName: '@activepieces/piece-hubspot', actionName: 'create_contact', input: { email: '{{trigger.email}}' } } }
+                : { type: 'PIECE', settings: { pieceName: '@activepieces/piece-gmail', actionName: 'send_email', input: { to: 'ops@example.test' } } } }),
+            ap_get_piece_props: async (input) => ({ structuredContent: { props: input['pieceName'] === '@activepieces/piece-hubspot'
+                ? [{ name: 'email', type: 'SHORT_TEXT', required: true }, { name: 'owner', type: 'DROPDOWN', required: true }]
+                : [{ name: 'to', type: 'SHORT_TEXT', required: true }] } }),
+            ap_validate_step_config: async (input) => {
+                validatedConfigs.push(input)
+                return { content: [{ type: 'text', text: '✅ Valid configuration' }], structuredContent: { valid: true, errors: [] } }
+            },
+        })
+        const calls = [call({ toolName: 'ap_update_step', input: { flowId: 'flow-1' } })]
+
+        const declinedHubspot = await evalCodeChecks.run({ checks: {}, outcome: outcomeOf({ calls }), mcp, declinedPieces: ['@activepieces/piece-hubspot'] })
+
+        expect(declinedHubspot).toEqual({ verdict: 'fail', reason: 'flow flow-1 is not valid: step_2: "Send email" is invalid (use ap_update_step to fix).' })
+        expect(validatedConfigs).toEqual([{ stepType: 'PIECE_ACTION', pieceName: '@activepieces/piece-hubspot', actionName: 'create_contact', input: { email: '{{trigger.email}}' }, auth: 'eval-declined-connection' }])
+
+        const declinedBoth = await evalCodeChecks.run({ checks: {}, outcome: outcomeOf({ calls }), mcp, declinedPieces: ['@activepieces/piece-hubspot', '@activepieces/piece-gmail'] })
+
+        expect(declinedBoth.verdict).toBe('pass')
+    })
+
+    it('fails a declined-connection step that is still invalid with a stand-in connection', async () => {
+        const mcp = mcpWith({
+            ap_validate_flow: async () => ({ structuredContent: { valid: false, issues: [{ category: 'step_validity', severity: 'error', stepName: 'step_1', message: '"Fetch payments" is invalid' }] } }),
+            ap_read_step_settings: async () => ({ structuredContent: { type: 'PIECE', settings: { pieceName: 'stripe', actionName: 'list_payments', input: {} } } }),
+            ap_get_piece_props: async () => ({ structuredContent: { props: [{ name: 'limit', type: 'NUMBER', required: false }] } }),
+            ap_validate_step_config: async () => ({ structuredContent: { valid: false, errors: ['limit: Required'] } }),
+        })
+
+        const result = await evalCodeChecks.run({ checks: {}, outcome: outcomeOf({ calls: [call({ toolName: 'ap_update_step', input: { flowId: 'flow-1' } })] }), mcp, declinedPieces: ['@activepieces/piece-stripe'] })
+
+        expect(result).toEqual({ verdict: 'fail', reason: 'flow flow-1 is not valid: step_1: "Fetch payments" is invalid' })
+    })
+
+    it('fails a step whose connection was not declined, without looking further', async () => {
+        const mcp = mcpWith({
+            ap_validate_flow: async () => ({ structuredContent: { valid: false, issues: [{ category: 'step_validity', severity: 'error', stepName: 'step_1', message: '"Create contact" is invalid' }] } }),
+        })
+
+        const result = await evalCodeChecks.run({ checks: {}, outcome: outcomeOf({ calls: [call({ toolName: 'ap_update_step', input: { flowId: 'flow-1' } })] }), mcp })
+
+        expect(result.verdict).toBe('fail')
+    })
+
     it('skips flow validation with skipFlowValidates', async () => {
         const result = await evalCodeChecks.run({ checks: { skipFlowValidates: true }, outcome: outcomeOf({ calls: [call({ toolName: 'ap_update_step', input: { flowId: 'flow-1' } })] }), mcp: mcpWith({}) })
 

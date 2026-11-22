@@ -92,6 +92,7 @@ async function run({ evalCase, recordedToolCalls, mcp, modelId, auth, mode, seed
         timedOut,
         elapsedMs,
         cardsShown: user?.cardsShown() ?? [],
+        declinedPieces: user?.declinedPieces() ?? [],
         notes: [...notes],
         metrics,
     }
@@ -293,16 +294,29 @@ function changedFlowIds(toolCalls: TurnToolCall[]): string[] {
 
 function changedFlowIdsOf(call: TurnToolCall): string[] {
     const { toolName, input } = agentToolSkills.effectiveToolCall({ toolName: call.toolName, input: call.input })
-    if (replay.isRead(toolName)) {
+    if (call.errored || replay.isStopOutput(call.output)) {
         return []
     }
-    const fromInput = isObject(input) && typeof input['flowId'] === 'string' ? [input['flowId']] : []
     const structured = isObject(call.output) && isObject(call.output['structuredContent']) ? call.output['structuredContent'] : {}
     const fromOutput = typeof structured['flowId'] === 'string' ? [structured['flowId']] : []
-    if (toolName === DUPLICATE_FLOW_TOOL) {
-        return fromOutput.length > 0 ? fromOutput : duplicatedFlowId(call)
+    if (CREATE_FLOW_TOOLS.has(toolName)) {
+        return fromOutput
     }
-    return [...fromInput, ...fromOutput]
+    if (toolName === DUPLICATE_FLOW_TOOL) {
+        return fromOutput.length > 0 || !succeeded(call) ? fromOutput : duplicatedFlowId(call)
+    }
+    if (!EDIT_FLOW_TOOLS.has(toolName) || !succeeded(call)) {
+        return []
+    }
+    return isObject(input) && typeof input['flowId'] === 'string' ? [input['flowId']] : []
+}
+
+function succeeded(call: TurnToolCall): boolean {
+    const { output } = call
+    if (evalToolSet.readResult(output).failed) {
+        return false
+    }
+    return !(isObject(output) && (!isNil(output['error']) || output['success'] === false))
 }
 
 function duplicatedFlowId(call: TurnToolCall): string[] {
@@ -357,6 +371,20 @@ const TURN_TIMEOUT_MS = 5 * 60_000
 const LIVE_TOOL_FIELD_MAX = 2_000
 const FLOW_STRUCTURE_TOOL = 'ap_flow_structure'
 const DUPLICATE_FLOW_TOOL = 'ap_duplicate_flow'
+const CREATE_FLOW_TOOLS = new Set(['ap_build_flow', 'ap_create_flow'])
+const EDIT_FLOW_TOOLS = new Set([
+    'ap_add_branch',
+    'ap_add_step',
+    'ap_apply_flow_operations',
+    'ap_delete_branch',
+    'ap_delete_step',
+    'ap_manage_notes',
+    'ap_move_flow_to_folder',
+    'ap_rename_flow',
+    'ap_update_branch',
+    'ap_update_step',
+    'ap_update_trigger',
+])
 const DUPLICATE_COPY_PREFIX = 'Copy:'
 const TRAILING_ID_PATTERN = /\(id: ([A-Za-z0-9_-]+)\)$/
 const SEEDED_MARK = '--- SEEDED BEFORE THE TURN (the test harness created these in the project before the user message; compare them with the flows after the turn) ---'
@@ -394,6 +422,7 @@ export type TurnOutcome = {
     timedOut: boolean
     elapsedMs: number
     cardsShown: string[]
+    declinedPieces: string[]
     notes: string[]
     metrics: RunMetrics
 }
