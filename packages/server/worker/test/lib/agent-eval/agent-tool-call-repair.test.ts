@@ -5,7 +5,6 @@ import { convertArrayToReadableStream, MockLanguageModelV3 } from 'ai/test'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { runAgentTurn } from '../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
-import { redactSecrets } from '../../../src/lib/utils/redact-secrets'
 
 const silentLog = { debug: () => undefined, info: () => undefined, warn: () => undefined, error: () => undefined } as never
 
@@ -123,35 +122,38 @@ describe('repairing a tool call the model got wrong', () => {
     it('logs the rejected input and the validator message before repairing', async () => {
         const { warnings } = await turnWhereTheModelRepairsWith({ toolInput: '{"query":123}', repairText: '{"query":"123"}' })
 
-        expect(warnings).toEqual([{ message: 'Repairing malformed tool call', fields: { toolName: 'ap_web_search', input: { query: 123 }, error: { message: expect.stringContaining('query') } } }])
+        expect(warnings).toEqual([{ message: 'Repairing malformed tool call', fields: { toolName: 'ap_web_search', input: { query: 123 }, error: { name: 'AI_InvalidToolInputError', issues: [{ path: 'query', code: 'invalid_type' }] } } }])
     })
 
     it('logs only the length of an input that is not JSON, since it may hold anything', async () => {
         const { warnings } = await turnWhereTheModelRepairsWith({ repairText: '{"query":"activepieces pricing"}' })
 
-        expect(warnings).toEqual([{ message: 'Repairing malformed tool call', fields: { toolName: 'ap_web_search', input: { unparsable: true, length: MALFORMED_INPUT.length }, error: { message: expect.any(String) } } }])
+        expect(warnings).toEqual([{ message: 'Repairing malformed tool call', fields: { toolName: 'ap_web_search', input: { unparsable: true, length: MALFORMED_INPUT.length }, error: { name: 'AI_InvalidToolInputError', issues: [] } } }])
     })
 
     it('logs a rejected lazy call once and hands it back to the model without a repair call', async () => {
         const { warnings, repairPrompts, ranWith } = await turnWhereTheModelRepairsWith({ toolName: LAZY_TOOL_NAME, toolInput: '{}', repairText: '{}' })
 
-        expect(warnings).toEqual([{ message: 'Returning a malformed lazy tool call to the model', fields: { toolName: LAZY_TOOL_NAME, input: {}, error: { message: expect.stringContaining('named no `tool`') } } }])
+        expect(warnings).toEqual([{ message: 'Returning a malformed lazy tool call to the model', fields: { toolName: LAZY_TOOL_NAME, input: {}, error: { name: expect.any(String), issues: expect.any(Array) } } }])
         expect(repairPrompts).toEqual([])
         expect(ranWith).toEqual([])
     })
 })
 
-describe('redacting a tool input before it is logged', () => {
-    it('masks credentials at any depth and keeps the task data', () => {
-        const input = JSON.stringify({
-            tool: 'ap_execute_action',
-            input: { pieceName: 'p', auth: { token: 'x' }, authFields: { key: 'y' }, nested: [{ Password: 'z', API_KEY: 'k', clientSecret: 's', note: 'keep' }], props: { accessToken: 'a', refreshToken: 'r', Credentials: 'c', query: 'q' } },
-        })
+describe('keeping secrets out of the repair warning', () => {
+    it('never logs a secret from a valid JSON input, neither in the input nor through the validator error', async () => {
+        const { warnings } = await turnWhereTheModelRepairsWith({ toolInput: '{"query":123,"apiKey":"sk-hidden-1","auth":{"token":"hidden-2"}}', repairText: '{"query":"123"}' })
 
-        expect(redactSecrets.jsonText(input)).toEqual({
-            tool: 'ap_execute_action',
-            input: { pieceName: 'p', auth: '[REDACTED]', authFields: '[REDACTED]', nested: [{ Password: '[REDACTED]', API_KEY: '[REDACTED]', clientSecret: '[REDACTED]', note: 'keep' }], props: { accessToken: '[REDACTED]', refreshToken: '[REDACTED]', Credentials: '[REDACTED]', query: 'q' } },
-        })
+        expect(warnings).toHaveLength(1)
+        expect(JSON.stringify(warnings)).not.toMatch(/hidden-/)
+        expect(warnings[0].fields['input']).toEqual({ query: 123, apiKey: '[REDACTED]', auth: '[REDACTED]' })
+    })
+
+    it('never logs a secret from an input that is not JSON', async () => {
+        const { warnings } = await turnWhereTheModelRepairsWith({ toolInput: '{ query: "x", apiKey: "sk-hidden-3", }', repairText: '{"query":"x"}' })
+
+        expect(warnings).toHaveLength(1)
+        expect(JSON.stringify(warnings)).not.toMatch(/hidden-/)
     })
 })
 

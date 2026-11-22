@@ -1,8 +1,7 @@
 import { AiProviderKeyStatus, AIProviderName, ErrorCode, formatPieceError, isFallbackWorthy, isNil, isObject, isProviderBillingError, isTransientProviderError, ProviderOutcomeSignal, spreadIfDefined, toError, tryCatch, tryCatchSync, unique } from '@activepieces/core-utils'
-import { agentAiUtils, aiProviderSignal, ContentPartLike } from '@activepieces/server-utils'
+import { agentAiUtils, aiProviderSignal, aiTraceScrubber, ContentPartLike } from '@activepieces/server-utils'
 import { AgentPhase, AgentRunSource, agentToolClassification, agentToolPhases, agentToolSkills, AI_PROVIDER_ENTITY_TYPES, aiProviderUtils, apErrorOf, CHAT_CREDITS_PER_TOOL_CALL, chatBilling, ChatToolCall, LAZY_TOOL_NAME, PersistedAgentPart, SkillSurface, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
 import { APICallError, generateText, isLoopFinished, isStepCount, LanguageModel, LanguageModelUsage, ModelMessage, NoSuchToolError, RetryError, StepResultPerformance, StopCondition, streamText, ToolChoice, ToolExecutionOptions, ToolSet } from 'ai'
-import { redactSecrets } from '../../../../utils/redact-secrets'
 import { buildSkillSurface, decodeReroutedInput } from './tools/skill-tools'
 import { isMissingConnectionResult } from './tools/tool-primitives'
 
@@ -11,6 +10,7 @@ const MAX_EMPTY_CONTINUATIONS = 2
 const MAX_STREAM_RETRIES = 1
 const MAX_IDENTICAL_TOOL_FAILURES = 2
 const CARD_TITLE_KEYS = ['title', 'activeTitle', 'doneTitle']
+const MAX_ERROR_CAUSE_DEPTH = 3
 const IN_LOOP_COMPACTION_THRESHOLD = 0.6
 const RUNAWAY_TURN_CONTEXT_MULTIPLE = 90
 const STREAM_RETRY_BASE_DELAY_MS = 1_000
@@ -216,10 +216,10 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
                 return null
             }
             if (toolCall.toolName === LAZY_TOOL_NAME && isParsableJson(toolCall.input)) {
-                log.warn({ toolName: toolCall.toolName, input: redactSecrets.jsonText(toolCall.input), error: { message: error.message } }, 'Returning a malformed lazy tool call to the model')
+                log.warn({ toolName: toolCall.toolName, input: redactedToolInput(toolCall.input), error: repairErrorSummary(error) }, 'Returning a malformed lazy tool call to the model')
                 return null
             }
-            log.warn({ toolName: toolCall.toolName, input: redactSecrets.jsonText(toolCall.input), error: { message: error.message } }, 'Repairing malformed tool call')
+            log.warn({ toolName: toolCall.toolName, input: redactedToolInput(toolCall.input), error: repairErrorSummary(error) }, 'Repairing malformed tool call')
             const schema = await inputSchema({ toolName: toolCall.toolName })
             const { data: repaired } = await tryCatch(async () => {
                 const { text } = await generateText({
@@ -576,6 +576,30 @@ export function looksEmptyResultText(text: string): boolean {
 }
 
 
+function redactedToolInput(text: string): unknown {
+    const { data, error } = tryCatchSync((): unknown => JSON.parse(text))
+    return isNil(error) ? aiTraceScrubber.scrubJson({ value: data }) : { unparsable: true, length: text.length }
+}
+
+function repairErrorSummary(error: Error): { name: string, issues: ValidationIssueSummary[] } {
+    return { name: error.name, issues: validationIssuesIn({ error, depth: 0 }) }
+}
+
+function validationIssuesIn({ error, depth }: { error: unknown, depth: number }): ValidationIssueSummary[] {
+    if (!isObject(error) || depth > MAX_ERROR_CAUSE_DEPTH) {
+        return []
+    }
+    const issues = error['issues']
+    if (Array.isArray(issues)) {
+        return issues.filter(isObject).map((issue) => ({ path: issuePath(issue['path']), code: typeof issue['code'] === 'string' ? issue['code'] : 'unknown' }))
+    }
+    return validationIssuesIn({ error: error['cause'], depth: depth + 1 })
+}
+
+function issuePath(path: unknown): string {
+    return Array.isArray(path) ? path.filter((segment) => typeof segment === 'string' || typeof segment === 'number').join('.') : ''
+}
+
 function isParsableJson(text: string): boolean {
     return tryCatchSync((): unknown => JSON.parse(text)).error === null
 }
@@ -639,6 +663,8 @@ type AgentTurnLogger = {
     warn: (obj: Record<string, unknown>, msg: string) => void
     error: (obj: Record<string, unknown>, msg: string) => void
 }
+
+type ValidationIssueSummary = { path: string, code: string }
 
 export type AgentTurnToolCall = {
     toolName: string
