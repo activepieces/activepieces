@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { e2eApi } from '../../../fixtures/api';
 import { expect, test } from '../../../fixtures/embed-connections';
+import webhookEcho from '../../../fixtures/templates/webhook-echo.json';
 import { EmbedConnectionsPage } from '../../../pages/embed-connections.page';
 
 test.describe('Embedded connections and MCP', { tag: ['@feature:embed-conn', '@surface'] }, () => {
@@ -25,17 +26,17 @@ test.describe('Embedded connections and MCP', { tag: ['@feature:embed-conn', '@s
     ]);
   });
 
-  test('the embedded MCP page lists the tools of the project', async ({ embed, embedConnections }) => {
+  test('the embedded MCP page lists the tools of the project', async ({ seed, embed, embedConnections }) => {
     const token = embed.signToken({ signingKey: await embed.createSigningKey() });
     const embedded = await embed.exchange({ token });
     const tool = await embedConnections.seedMcpTool({ projectId: embedded.projectId });
-    await embed.seedFlow({ projectId: embedded.projectId });
+    await seed.flow({ template: webhookEcho, publish: true, session: embedConnections.projectSession(embedded.projectId) });
     const embedPage = new EmbedConnectionsPage(await embed.hostPage());
 
     await embedPage.openMcpTools({ token });
 
     const tools = await embedConnections.readMcpFlowTools({ projectId: embedded.projectId });
-    expect(tools, 'Only the flow with the MCP trigger is a tool').toEqual([{ id: tool.flowId, name: tool.flowName }]);
+    expect(tools, 'Only the published flow with the MCP trigger is a tool, not the published webhook flow').toEqual([{ id: tool.flowId, name: tool.flowName }]);
     await expect(embedPage.mcpFlowToolNames()).toHaveText(tools.map((projectTool) => projectTool.name));
   });
 
