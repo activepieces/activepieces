@@ -1,33 +1,47 @@
 import { AppConnection, Project } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { encryptUtils } from '../../../../src/app/helper/encryption'
 import { db } from '../../../helpers/db'
 import { createMockConnection } from '../../../helpers/mocks'
 import { createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
+const WORKSPACE_URL = '/api/v1/agents/eval/workspace'
+
 let app: FastifyInstance
 let previousEnvironment: string | undefined
 
 beforeAll(async () => {
     app = await setupTestEnvironment()
+})
+
+beforeEach(() => {
     previousEnvironment = process.env['AP_ENVIRONMENT']
     process.env['AP_ENVIRONMENT'] = 'dev'
 })
 
+afterEach(() => {
+    if (previousEnvironment === undefined) {
+        delete process.env['AP_ENVIRONMENT']
+    }
+    else {
+        process.env['AP_ENVIRONMENT'] = previousEnvironment
+    }
+})
+
 afterAll(async () => {
-    process.env['AP_ENVIRONMENT'] = previousEnvironment
     await teardownTestEnvironment()
 })
 
 describe('eval workspace', () => {
     it('creates an isolated project that shares the base connections, then deletes it', async () => {
-        const ctx = await createTestContext(app, { plan: { agentsEnabled: true, chatEnabled: true } })
+        const ctx = await context()
         const connection = await saveConnection({ ctx })
 
-        const created = await evalRequest({ method: 'POST', url: '/api/v1/agents/eval/workspace', body: { baseProjectId: ctx.project.id } })
+        const created = await evalRequest({ method: 'POST', url: WORKSPACE_URL, body: { baseProjectId: ctx.project.id } })
         expect(created.statusCode).toBe(StatusCodes.OK)
         const body = created.json()
         expect(body.mcpServerUrl).toEqual(expect.any(String))
@@ -36,43 +50,101 @@ describe('eval workspace', () => {
         expect(body.projectId).not.toBe(ctx.project.id)
         expect(body.projectName).toMatch(/^eval-/)
 
-        const project = await db.findOneBy<Project>('project', { id: body.projectId })
+        const project = await findProject(body.projectId)
         expect(project?.platformId).toBe(ctx.platform.id)
-        const shared = await db.findOneByOrFail<AppConnection>('app_connection', { id: connection.id })
-        expect(shared.projectIds).toEqual([ctx.project.id, body.projectId])
+        expect(project?.metadata?.['sharedConnectionIds']).toEqual([connection.id])
+        expect(await connectionProjectIds(connection.id)).toEqual([ctx.project.id, body.projectId])
 
-        const deleted = await evalRequest({ method: 'DELETE', url: `/api/v1/agents/eval/workspace/${body.projectId}` })
+        const deleted = await evalRequest({ method: 'DELETE', url: `${WORKSPACE_URL}/${body.projectId}` })
         expect(deleted.statusCode).toBe(StatusCodes.NO_CONTENT)
 
-        const gone = await db.findOneBy<Project>('project', { id: body.projectId })
-        expect(gone).toBeNull()
-        const restored = await db.findOneByOrFail<AppConnection>('app_connection', { id: connection.id })
-        expect(restored.projectIds).toEqual([ctx.project.id])
+        const gone = await findProject(body.projectId)
+        expect(gone?.deleted).not.toBeNull()
+        expect(await connectionProjectIds(connection.id)).toEqual([ctx.project.id])
+    })
+
+    it('records only the connections it shared', async () => {
+        const ctx = await context()
+        const unrelated = await saveConnection({ ctx, projectIds: ['other-project-id'] })
+        const shared = await saveConnection({ ctx })
+
+        const created = await evalRequest({ method: 'POST', url: WORKSPACE_URL, body: { baseProjectId: ctx.project.id } })
+        const { projectId } = created.json()
+        const project = await findProject(projectId)
+
+        expect(project?.metadata?.['sharedConnectionIds']).toEqual([shared.id])
+        expect(await connectionProjectIds(unrelated.id)).toEqual(['other-project-id'])
+    })
+
+    it('sweeps stale eval workspaces when creating a new one', async () => {
+        const ctx = await context()
+        const connection = await saveConnection({ ctx })
+        const first = (await evalRequest({ method: 'POST', url: WORKSPACE_URL, body: { baseProjectId: ctx.project.id } })).json()
+        await db.update('project', first.projectId, { created: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() })
+
+        const second = (await evalRequest({ method: 'POST', url: WORKSPACE_URL, body: { baseProjectId: ctx.project.id } })).json()
+
+        expect((await findProject(first.projectId))?.deleted).not.toBeNull()
+        expect((await findProject(second.projectId))?.deleted).toBeNull()
+        expect(await connectionProjectIds(connection.id)).toEqual([ctx.project.id, second.projectId])
     })
 
     it('refuses to delete a project the eval workspace endpoint did not create', async () => {
-        const ctx = await createTestContext(app, { plan: { agentsEnabled: true, chatEnabled: true } })
+        const ctx = await context()
 
-        const response = await evalRequest({ method: 'DELETE', url: `/api/v1/agents/eval/workspace/${ctx.project.id}` })
+        const response = await evalRequest({ method: 'DELETE', url: `${WORKSPACE_URL}/${ctx.project.id}` })
 
         expect(response.statusCode).toBe(StatusCodes.NOT_FOUND)
-        const project = await db.findOneBy<Project>('project', { id: ctx.project.id })
-        expect(project?.deleted).toBeNull()
+        expect((await findProject(ctx.project.id))?.deleted).toBeNull()
     })
 
     it('rejects a base project outside the eval platform', async () => {
-        await createTestContext(app, { plan: { agentsEnabled: true, chatEnabled: true } })
+        await context()
 
-        const response = await evalRequest({ method: 'POST', url: '/api/v1/agents/eval/workspace', body: { baseProjectId: 'missing-project-id' } })
+        const response = await evalRequest({ method: 'POST', url: WORKSPACE_URL, body: { baseProjectId: 'missing-project-id' } })
 
         expect(response.statusCode).toBe(StatusCodes.NOT_FOUND)
     })
+
+    it('answers 404 outside the dev environment', async () => {
+        const ctx = await context()
+        process.env['AP_ENVIRONMENT'] = 'prod'
+
+        const created = await evalRequest({ method: 'POST', url: WORKSPACE_URL, body: { baseProjectId: ctx.project.id } })
+        const deleted = await evalRequest({ method: 'DELETE', url: `${WORKSPACE_URL}/${ctx.project.id}` })
+
+        expect(created.statusCode).toBe(StatusCodes.NOT_FOUND)
+        expect(deleted.statusCode).toBe(StatusCodes.NOT_FOUND)
+    })
+
+    it('forbids calls without the api key', async () => {
+        const ctx = await context()
+
+        const created = await app.inject({ method: 'POST', url: WORKSPACE_URL, body: { baseProjectId: ctx.project.id } })
+        const deleted = await app.inject({ method: 'DELETE', url: `${WORKSPACE_URL}/${ctx.project.id}`, headers: { 'api-key': 'wrong-key' } })
+
+        expect(created.statusCode).toBe(StatusCodes.FORBIDDEN)
+        expect(deleted.statusCode).toBe(StatusCodes.FORBIDDEN)
+    })
 })
 
-async function saveConnection({ ctx }: { ctx: TestContext }): Promise<AppConnection> {
-    const connection = createMockConnection({ platformId: ctx.platform.id, projectIds: [ctx.project.id] }, ctx.user.id)
+async function context(): Promise<TestContext> {
+    return createTestContext(app, { plan: { agentsEnabled: true, chatEnabled: true } })
+}
+
+async function saveConnection({ ctx, projectIds }: { ctx: TestContext, projectIds?: string[] }): Promise<AppConnection> {
+    const connection = createMockConnection({ platformId: ctx.platform.id, projectIds: projectIds ?? [ctx.project.id] }, ctx.user.id)
     await db.save('app_connection', { ...connection, value: await encryptUtils.encryptObject(connection.value) })
     return connection
+}
+
+async function findProject(id: string): Promise<Project | null> {
+    return databaseConnection().getRepository<Project>('project').findOne({ where: { id }, withDeleted: true })
+}
+
+async function connectionProjectIds(id: string): Promise<string[]> {
+    const connection = await db.findOneByOrFail<AppConnection>('app_connection', { id })
+    return connection.projectIds
 }
 
 function evalRequest({ method, url, body }: { method: 'POST' | 'DELETE', url: string, body?: Record<string, unknown> }): ReturnType<FastifyInstance['inject']> {
