@@ -4801,7 +4801,7 @@
     },
     "packages/pieces/community/instasent": {
       "name": "@activepieces/piece-instasent",
-      "version": "0.1.7",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
