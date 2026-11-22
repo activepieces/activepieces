@@ -153,6 +153,23 @@ describe('subscribers', () => {
     expect(seen).toHaveLength(0);
   });
 
+  test('Create Subscriber treats whitespace-only contact fields as empty', async () => {
+    const seen = stubManychat({ replies: [ok()] });
+    await expect(createSubscriberAction.run(actionContext({ propsValue: { first_name: 'Ada', phone: '   ', email: ' ' } }))).rejects.toThrow(
+      'Fill in at least one of Phone Number, WhatsApp Phone or Email.',
+    );
+    expect(seen).toHaveLength(0);
+  });
+
+  test('Create Subscriber does not send a blank consent phrase', async () => {
+    const seen = stubManychat({ replies: [ok({ data: SUBSCRIBER })] });
+    await createSubscriberAction.run(
+      actionContext({ propsValue: { first_name: 'Ada', email: 'ada@example.com', has_opt_in_email: true, consent_phrase: '' } }),
+    );
+    expect(seen).toHaveLength(1);
+    expect(seen[0].body).not.toHaveProperty('consent_phrase');
+  });
+
   test('Update Subscriber maps yes/no, sends only given fields and enforces the opt-in rules', async () => {
     const seen = stubManychat({ replies: [ok({ data: SUBSCRIBER })] });
     const result = await updateSubscriberAction.run(
