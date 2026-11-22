@@ -1,9 +1,11 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { bigcommerceAuth } from '../common/auth';
-import { bigCommerceApiService } from '../common/requests';
+import { dedupeWebhookEvent, disableWebhook, enableWebhook } from '../common/shared-runs';
+import { webhookEventOutputSchema } from '../common/schemas';
 
 const TRIGGER_NAME = 'customer created';
 const CACHE_KEY = `${TRIGGER_NAME}-trigger-store-key`;
+const SEEN_KEY = `${TRIGGER_NAME}-seen-event-hashes`;
 const TRIGGER_SCOPE = 'store/customer/created';
 
 export const customerCreated = createTrigger({
@@ -11,10 +13,10 @@ export const customerCreated = createTrigger({
   name: 'customerCreated',
   classification: 'READ',
   displayName: 'Customer Created',
-  description: 'Triggers when a new customer is created',
+  description: 'Triggers when a new customer is created. Repeated deliveries of the same event within 15 minutes are ignored. BigCommerce may deactivate the webhook after repeated failed deliveries; turn the flow off and on again to re-register it.',
   aiMetadata: {
     description:
-      'Fires when a new customer is created in the BigCommerce store. The event identifies the new customer.',
+      'Fires when a new customer is created in the BigCommerce store. The event identifies the new customer. BigCommerce sends only the resource type and ID, not the full record. Repeated deliveries of the same event (same hash) within 15 minutes are ignored.',
   },
   props: {},
   sampleData: {
@@ -30,34 +32,29 @@ export const customerCreated = createTrigger({
       channel_ids: [1],
     },
   },
+  outputSchema: webhookEventOutputSchema,
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    const webhook = await bigCommerceApiService.createWebhook({
+    await enableWebhook({
       auth: context.auth.props,
-      payload: {
-        scope: TRIGGER_SCOPE,
-        destination: context.webhookUrl,
-        is_active: true,
-      },
+      scope: TRIGGER_SCOPE,
+      webhookUrl: context.webhookUrl,
+      store: context.store,
+      cacheKey: CACHE_KEY,
     });
-
-    await context.store.put(CACHE_KEY, webhook.data.id);
   },
   async onDisable(context) {
-    const webhookId = (await context.store.get(CACHE_KEY)) as string;
-
-    if (webhookId) {
-      await bigCommerceApiService
-        .deleteWebhook({
-          auth: context.auth.props,
-          webhookId,
-        })
-        .then(async () => {
-          await context.store.delete(CACHE_KEY);
-        });
-    }
+    await disableWebhook({
+      auth: context.auth.props,
+      store: context.store,
+      cacheKey: CACHE_KEY,
+    });
   },
   async run(context) {
-    return [context.payload.body];
+    return await dedupeWebhookEvent({
+      store: context.store,
+      storeKey: SEEN_KEY,
+      body: context.payload.body,
+    });
   },
 });

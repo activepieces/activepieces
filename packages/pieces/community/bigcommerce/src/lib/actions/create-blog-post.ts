@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { bigcommerceAuth } from '../common/auth';
-import { bigCommerceApiService } from '../common/requests';
+import { blogPostOutputSchema } from '../common/schemas';
+import { runCreateBlogPost } from '../common/shared-runs';
 
 export const createBlogPost = createAction({
   auth: bigcommerceAuth,
@@ -8,12 +9,13 @@ export const createBlogPost = createAction({
   classification: 'WRITE',
   displayName: 'Create Blog Post',
   description: 'Creates a blog post',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
-      "Creates a blog post in a BigCommerce store's blog. Requires a title and body (HTML supported); author, URL, published date, meta description/keywords, tags, and a published flag are optional. Use to publish store blog content. Not idempotent: each call creates a new post.",
+      "Creates a blog post in a BigCommerce store's blog. Requires a title and body (HTML supported); author, URL, published date, meta description/keywords, tags, and a published flag are optional. Use to publish store blog content. Agents should use Create Blog Post (AI). Not idempotent: each call creates a new post.",
     idempotent: false,
   },
+  outputSchema: blogPostOutputSchema,
   props: {
     title: Property.ShortText({
       displayName: 'Title',
@@ -65,18 +67,21 @@ export const createBlogPost = createAction({
     }),
   },
   async run(context) {
-    return await bigCommerceApiService.createBlogPost({
+    const { tags } = context.propsValue;
+    return await runCreateBlogPost({
       auth: context.auth.props,
-      payload: {
+      input: {
         title: context.propsValue.title,
         body: context.propsValue.body,
         author: context.propsValue.author,
-        tags: context.propsValue.tags,
-        is_published: context.propsValue.is_published,
+        url: context.propsValue.url,
+        published_date: context.propsValue.published_date,
         meta_description: context.propsValue.meta_description,
         meta_keywords: context.propsValue.meta_keywords,
-        published_date: context.propsValue.published_date,
-        url: context.propsValue.url,
+        tags: Array.isArray(tags)
+          ? tags.map((tag) => String(tag).trim()).filter((tag) => tag !== '')
+          : undefined,
+        is_published: context.propsValue.is_published,
       },
     });
   },

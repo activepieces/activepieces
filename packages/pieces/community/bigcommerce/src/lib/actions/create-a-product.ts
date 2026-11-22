@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { bigcommerceAuth } from '../common/auth';
 import { bigCommerceApiService } from '../common/requests';
+import { productOutputSchema } from '../common/schemas';
 
 export const createAProduct = createAction({
   auth: bigcommerceAuth,
@@ -14,10 +15,12 @@ export const createAProduct = createAction({
       'Creates a new catalog product in a BigCommerce store. Use to add an item to the store. Requires name, type (physical or digital), weight, and price; SKU, description, and brand_id are optional. Not idempotent: each call adds a new product, so search the catalog first if it may already exist.',
     idempotent: false,
   },
+  outputSchema: productOutputSchema,
   props: {
     name: Property.ShortText({
       displayName: 'Product Name',
-      description: 'Name of the product',
+      description: 'Name of the product as shown in the store',
+      placeholder: 'Blue T-Shirt',
       required: true,
     }),
     type: Property.StaticDropdown({
@@ -31,6 +34,18 @@ export const createAProduct = createAction({
         ],
       },
     }),
+    weight: Property.Number({
+      displayName: 'Weight',
+      description: 'Product weight in the weight unit set in your store settings (for example lb or kg)',
+      placeholder: '1.5',
+      required: true,
+    }),
+    price: Property.Number({
+      displayName: 'Price',
+      description: 'Product price in the store default currency',
+      placeholder: '19.99',
+      required: true,
+    }),
     sku: Property.ShortText({
       displayName: 'SKU',
       description: 'Product SKU',
@@ -40,16 +55,6 @@ export const createAProduct = createAction({
       displayName: 'Description',
       description: 'Product description',
       required: false,
-    }),
-    weight: Property.Number({
-      displayName: 'Weight',
-      description: 'Product weight',
-      required: true,
-    }),
-    price: Property.Number({
-      displayName: 'Price',
-      description: 'Product price',
-      required: true,
     }),
     brand_id: Property.Number({
       displayName: 'Brand ID',

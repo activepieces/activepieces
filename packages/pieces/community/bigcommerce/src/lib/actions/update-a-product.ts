@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { bigcommerceAuth } from '../common/auth';
 import { bigCommerceApiService } from '../common/requests';
+import { productOutputSchema } from '../common/schemas';
 
 export const updateAProduct = createAction({
   auth: bigcommerceAuth,
@@ -14,6 +15,7 @@ export const updateAProduct = createAction({
       'Updates an existing catalog product in a BigCommerce store, identified by its productId. Only the fields you supply are sent (null/undefined values are dropped so existing data is preserved), so use it for partial edits to name, type, SKU, description, weight, price, or brand. Idempotent: re-applying the same field values leaves the product in the same state.',
     idempotent: true,
   },
+  outputSchema: productOutputSchema,
   props: {
     productId: Property.ShortText({
       displayName: 'Product ID',
@@ -65,9 +67,8 @@ export const updateAProduct = createAction({
   async run(context) {
     const { productId, ...payload } = context.propsValue;
 
-    // Filter out null/undefined values to prevent overwriting existing data with nulls
     const filteredPayload = Object.fromEntries(
-      Object.entries(payload).filter(([_, v]) => v !== null && v !== undefined)
+      Object.entries(payload).filter(([, v]) => v !== null && v !== undefined && v !== '')
     );
 
     return await bigCommerceApiService.updateProduct({
