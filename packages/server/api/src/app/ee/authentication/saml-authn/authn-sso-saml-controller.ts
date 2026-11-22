@@ -1,5 +1,5 @@
 import { assertNotNullOrUndefined } from '@activepieces/core-utils'
-import { PrincipalType, TelemetryEventName, UserIdentityProvider } from '@activepieces/shared'
+import { TelemetryEventName, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import { authenticationSideEffects } from '../../../authentication/authentication-side-effects'
@@ -8,7 +8,6 @@ import { networkUtils } from '../../../helper/network-utils'
 import { rejectedPromiseHandler } from '../../../helper/promise-handler'
 import { telemetry } from '../../../helper/telemetry.utils'
 import { platformUtils } from '../../../platform/platform.utils'
-import { platformMustHaveFeatureEnabled } from '../ee-authorization'
 import { authnSsoSamlService } from './authn-sso-saml-service'
 
 export const authnSsoSamlController: FastifyPluginAsyncZod = async (app) => {
@@ -55,23 +54,6 @@ export const authnSsoSamlController: FastifyPluginAsyncZod = async (app) => {
     app.post('/discover', DiscoverRequest, async (req) => {
         return authnSsoSamlService(req.log).discoverByDomain(req.body.domain)
     })
-
-    app.post('/sso-domain', UpdateSsoDomainRequest, async (req) => {
-        return authnSsoSamlService(req.log).updateSsoDomain({
-            platformId: req.principal.platform.id,
-            ssoDomain: req.body.ssoDomain,
-            userId: req.principal.id,
-            ip: networkUtils.clientIp(req),
-        })
-    })
-
-    app.post('/sso-domain/verify', VerifySsoDomainRequest, async (req) => {
-        return authnSsoSamlService(req.log).verifySsoDomain({
-            platformId: req.principal.platform.id,
-            userId: req.principal.id,
-            ip: networkUtils.clientIp(req),
-        })
-    })
 }
 
 const AcsRequest = {
@@ -111,23 +93,4 @@ const DiscoverRequest = {
             }),
         },
     },
-}
-
-const UpdateSsoDomainRequest = {
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
-    },
-    preHandler: platformMustHaveFeatureEnabled((platform) => platform.plan.ssoEnabled),
-    schema: {
-        body: z.object({
-            ssoDomain: z.string().max(253).nullable(),
-        }),
-    },
-}
-
-const VerifySsoDomainRequest = {
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
-    },
-    preHandler: platformMustHaveFeatureEnabled((platform) => platform.plan.ssoEnabled),
 }

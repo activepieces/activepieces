@@ -1,14 +1,14 @@
-import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, PlatformId, UserId } from '@activepieces/core-utils'
-import { ApEdition, EmailDomain, SAMLAuthnProviderConfig, SsoDomainVerification, SsoDomainVerificationStatus, UserIdentityProvider } from '@activepieces/shared'
+import { assertNotNullOrUndefined, isNil, PlatformId } from '@activepieces/core-utils'
+import { ApEdition, SAMLAuthnProviderConfig, SsoDomainVerificationStatus, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { AuthenticationResult } from '../../../authentication/authentication-utils'
 import { authenticationService } from '../../../authentication/authentication.service'
 import { domainHelper } from '../../../helper/domain-helper'
 import { system } from '../../../helper/system/system'
-import { platformRepo, platformService } from '../../../platform/platform.service'
+import { platformService } from '../../../platform/platform.service'
 import { platformUtils } from '../../../platform/platform.utils'
 import { platformPlanService } from '../../platform/platform-plan/platform-plan.service'
-import { emailDomainRepo, emailDomainService } from '../email-domain/email-domain.service'
+import { emailDomainRepo } from '../email-domain/email-domain.service'
 import { createSamlClient, IdpLoginResponse } from './saml-client'
 
 export const authnSsoSamlService = (log: FastifyBaseLogger) => {
@@ -75,42 +75,7 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
             const plan = await platformPlanService(log).getOrCreateForPlatform(verifiedDomain.platformId)
             return plan.ssoEnabled ? verifiedDomain.platformId : null
         },
-        async updateSsoDomain({ platformId, ssoDomain, userId, ip }: UpdateSsoDomainParams): Promise<SsoDomainState> {
-            const value = ssoDomain?.trim().toLowerCase() || null
-            const shownDomain = await findShownDomain(platformId)
-            if (value === (shownDomain?.domain ?? null)) {
-                return getSsoDomainState(platformId)
-            }
-            await emailDomainService(log).replace({ platformId, removedId: shownDomain?.id ?? null, addedDomain: value, userId, ip })
-            return getSsoDomainState(platformId)
-        },
-        async verifySsoDomain({ platformId, userId, ip }: VerifySsoDomainParams): Promise<SsoDomainState> {
-            const shownDomain = await findShownDomain(platformId)
-            if (isNil(shownDomain)) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.VALIDATION,
-                    params: {
-                        message: 'No SSO domain configured for this platform',
-                    },
-                })
-            }
-            await emailDomainService(log).verify({ platformId, id: shownDomain.id, userId, ip })
-            return getSsoDomainState(platformId)
-        },
     }
-}
-
-async function findShownDomain(platformId: PlatformId): Promise<EmailDomain | null> {
-    const platform = await platformRepo().findOneByOrFail({ id: platformId })
-    if (isNil(platform.ssoDomain)) {
-        return null
-    }
-    return emailDomainRepo().findOneBy({ platformId, domain: platform.ssoDomain })
-}
-
-async function getSsoDomainState(platformId: PlatformId): Promise<SsoDomainState> {
-    const platform = await platformRepo().findOneByOrFail({ id: platformId })
-    return { ssoDomain: platform.ssoDomain ?? null, ssoDomainVerification: platform.ssoDomainVerification ?? null }
 }
 
 type LoginResponse = {
@@ -128,22 +93,4 @@ type DiscoverResult = {
 
 type FindPlatformIdByDomainParams = {
     domain: string
-}
-
-type UpdateSsoDomainParams = {
-    platformId: PlatformId
-    ssoDomain: string | null
-    userId: UserId
-    ip: string
-}
-
-type VerifySsoDomainParams = {
-    platformId: PlatformId
-    userId: UserId
-    ip: string
-}
-
-type SsoDomainState = {
-    ssoDomain: string | null
-    ssoDomainVerification: SsoDomainVerification | null
 }

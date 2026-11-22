@@ -1,9 +1,9 @@
 import {
-  PlatformWithoutSensitiveData,
+  EmailDomain,
+  EmailDomainWithUsage,
   SsoDomainVerificationStatus,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ReactNode } from 'react';
 
 import { adminLayout } from '@/app/components/admin';
 import { DomainVerification } from '@/app/routes/platform/security/sso/domain-verification';
@@ -14,24 +14,22 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 
 export const VerifyDomainDialog = ({
-  platform,
-  refetch,
+  emailDomain,
+  refetchPlatform,
   open,
   onOpenChange,
-  children,
+  onAdded,
+  onLocked,
 }: VerifyDomainDialogProps) => {
   const pending =
-    !!platform.ssoDomain &&
-    platform.ssoDomainVerification?.status ===
-      SsoDomainVerificationStatus.PENDING_VERIFICATION;
+    emailDomain?.verificationStatus ===
+    SsoDomainVerificationStatus.PENDING_VERIFICATION;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      {children && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent
         className={adminLayout.dialog.md}
         onInteractOutside={(event) => event.preventDefault()}
@@ -39,8 +37,8 @@ export const VerifyDomainDialog = ({
         <DialogHeader>
           <DialogTitle>
             {pending
-              ? t('Verify {domain}', { domain: platform.ssoDomain })
-              : t('Verify a domain')}
+              ? t('Verify {domain}', { domain: emailDomain.domain })
+              : t('Add a domain')}
           </DialogTitle>
           <DialogDescription>
             {pending
@@ -48,19 +46,25 @@ export const VerifyDomainDialog = ({
                   'Add this TXT record at your DNS provider, then verify. Verify within 7 days or the domain is dropped.',
                 )
               : t(
-                  'Prove your company owns its email domain with a DNS record.',
+                  'People with an email at this domain follow the sign-in rules you set.',
                 )}
           </DialogDescription>
         </DialogHeader>
         <DomainVerification
-          platform={platform}
-          refetch={refetch}
+          emailDomain={emailDomain}
+          refetchPlatform={refetchPlatform}
+          onAdded={onAdded}
           onVerified={() => onOpenChange(false)}
+          onLocked={() => {
+            onOpenChange(false);
+            onLocked();
+          }}
           showIntro={false}
           secondaryAction={
             <Button
               type="button"
               variant="outline"
+              data-testid="sso-domain-dialog-close"
               onClick={() => onOpenChange(false)}
             >
               {pending ? t('Verify later') : t('Cancel')}
@@ -73,9 +77,10 @@ export const VerifyDomainDialog = ({
 };
 
 type VerifyDomainDialogProps = {
-  platform: PlatformWithoutSensitiveData;
-  refetch: () => Promise<void>;
+  emailDomain: EmailDomainWithUsage | null;
+  refetchPlatform: () => Promise<void>;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  children?: ReactNode;
+  onAdded: (emailDomain: EmailDomain) => void;
+  onLocked: () => void;
 };

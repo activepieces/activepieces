@@ -74,6 +74,10 @@ async function deleteUser({ request, session, userId }: { request: APIRequestCon
   await deleteById({ request, session, resource: 'users', id: userId });
 }
 
+async function deleteEmailDomain({ request, session, emailDomainId }: { request: APIRequestContext; session: E2eSession; emailDomainId: string }) {
+  await deleteById({ request, session, resource: 'email-domains', id: emailDomainId });
+}
+
 async function deleteStaleData({ request, session }: { request: APIRequestContext; session: E2eSession }) {
   const staleFlows = await listStale({ request, session, resource: 'flows', nameOf: (flow: FlowSummary) => flow.version.displayName, cursor: undefined });
   for (const flow of staleFlows) {
@@ -188,6 +192,7 @@ export const e2eApi = {
   signUp,
   signIn,
   deleteUser,
+  deleteEmailDomain,
   deleteStaleData,
   describeFlow,
   describeRun,
@@ -195,7 +200,7 @@ export const e2eApi = {
 
 export type E2eSession = { token: string; projectId: string };
 
-type Resource = 'flows' | 'app-connections' | 'users' | 'user-invitations';
+type Resource = 'flows' | 'app-connections' | 'users' | 'user-invitations' | 'email-domains';
 type FlowSummary = { id: string; created: string; version: { displayName: string } };
 type ConnectionSummary = { id: string; created: string; displayName: string };
 type FlowState = {

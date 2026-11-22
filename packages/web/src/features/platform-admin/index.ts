@@ -7,6 +7,7 @@ export { auditEventsApi } from './api/audit-events-api';
 export { embedSubdomainApi } from './api/embed-subdomain-api';
 export { projectRoleApi } from './api/project-role-api';
 export { samlSsoApi } from './api/saml-sso-api';
+export { emailDomainApi } from './api/email-domain-api';
 export { signingKeyApi } from './api/signing-key-api';
 export { workersApi } from './api/workers-api';
 export {
@@ -32,6 +33,11 @@ export {
 } from './hooks/signing-key-hooks';
 export { auditLogQueries, auditLogKeys } from './hooks/audit-log-hooks';
 export { ssoMutations } from './hooks/sso-hooks';
+export {
+  emailDomainQueries,
+  emailDomainMutations,
+  emailDomainKeys,
+} from './hooks/email-domain-hooks';
 export {
   newMemberSettingsMutations,
   newMemberSettingsQueries,

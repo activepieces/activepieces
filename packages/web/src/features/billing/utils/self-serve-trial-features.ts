@@ -325,7 +325,10 @@ export const selfServeTrialFeatures = {
   lockedCopy,
 };
 
-const FEATURES_NOT_IN_TRIAL: FeatureKey[] = ['DEDICATED_WORKERS'];
+const FEATURES_NOT_IN_TRIAL: FeatureKey[] = [
+  'DEDICATED_WORKERS',
+  'MULTIPLE_EMAIL_DOMAINS',
+];
 
 type SelfServeTrialFeature = {
   icon: LucideIcon;

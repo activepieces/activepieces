@@ -143,4 +143,5 @@ export type FeatureKey =
   | 'BILLING'
   | 'MCPS'
   | 'SECRET_MANAGERS'
-  | 'DEDICATED_WORKERS';
+  | 'DEDICATED_WORKERS'
+  | 'MULTIPLE_EMAIL_DOMAINS';

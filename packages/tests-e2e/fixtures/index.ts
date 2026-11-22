@@ -3,6 +3,7 @@ import {
   AuthenticationPage,
   AutomationsPage,
   BuilderPage,
+  EmailDomainsPage,
   InvitationPage,
   PasswordResetPage,
   PlatformSwitcherPage,
@@ -22,6 +23,10 @@ export const test = base.extend<CustomFixtures>({
 
   builderPage: async ({ page, request, session }, use) => {
     await use(new BuilderPage({ page, describeRun: (runId) => e2eApi.describeRun({ request, session, runId }) }));
+  },
+
+  emailDomainsPage: async ({ page }, use) => {
+    await use(new EmailDomainsPage(page));
   },
 
   invitationPage: async ({ page }, use) => {
@@ -76,6 +81,14 @@ export const test = base.extend<CustomFixtures>({
     }
   },
 
+  emailDomainCleanup: async ({ request, session }, use) => {
+    const emailDomainIds: string[] = [];
+    await use({ track: (emailDomainId) => emailDomainIds.push(emailDomainId) });
+    for (const emailDomainId of emailDomainIds) {
+      await e2eApi.deleteEmailDomain({ request, session, emailDomainId });
+    }
+  },
+
   mailbox: async ({ request }, use) => {
     await use(e2eMail.connect({ request }));
   },
@@ -87,6 +100,7 @@ type CustomFixtures = {
   authenticationPage: AuthenticationPage;
   automationsPage: AutomationsPage;
   builderPage: BuilderPage;
+  emailDomainsPage: EmailDomainsPage;
   invitationPage: InvitationPage;
   runsPage: RunsPage;
   passwordResetPage: PasswordResetPage;
@@ -96,5 +110,6 @@ type CustomFixtures = {
   connectionCleanup: { track: (connectionId: string) => void };
   invitationCleanup: { track: (invitationId: string) => void };
   userCleanup: { track: (userId: string) => void };
+  emailDomainCleanup: { track: (emailDomainId: string) => void };
   mailbox: Mailbox;
 };

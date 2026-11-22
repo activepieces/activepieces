@@ -17,7 +17,7 @@ const SSOPage = () => {
     <AdminPage width="content">
       <AdminPageHeader
         title={t('Authentication')}
-        description={t('Verify your domain and choose how people sign in.')}
+        description={t('Choose how people sign in to your platform.')}
         resources={adminPageResources.sso}
       />
       <DomainsSection platform={platform} refetch={refetch} />
