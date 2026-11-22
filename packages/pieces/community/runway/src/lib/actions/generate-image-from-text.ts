@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { propsValidation } from '@activepieces/pieces-common';
 import { runwayAuth } from '../common';
 import RunwayML from '@runwayml/sdk';
@@ -9,29 +9,28 @@ export const generateImageFromText = createAction({
 	name: 'generate_image_from_text',
 	classification: 'READ',
 	displayName: 'Generate Image From Text',
-	description: 'Generates an image using a text prompt via Runway\'s AI models',
+	description: 'Start an image generation from a text prompt.',
 	audience: 'both',
 	aiMetadata: { description: 'Submits a text-to-image generation job to Runway and returns the created task ID; the image is produced asynchronously, so poll Get Task Details with that ID to retrieve the result. Choose when an agent needs to create an image from a prompt. Each call starts a new billable generation, so it is not idempotent; the gen4_image_turbo model requires at least one reference image.', idempotent: false },
+	propertyGroups: [
+		{ key: 'model', display: 'section', label: 'Model', icon: 'sliders', props: ['model', 'ratio'] },
+		{ key: 'prompt', display: 'section', label: 'Prompt and References', icon: 'text', props: ['promptText', 'referenceImagesInfo', 'referenceImages'] },
+	],
 	props: {
 		model: Property.StaticDropdown({
 			displayName: 'Model',
-			description: 'AI model to use for image generation',
 			required: true,
+			display: 'cards',
 			options: {
 				options: [
-					{ label: 'Gen4 Image (High Quality)', value: 'gen4_image' },
-					{ label: 'Gen4 Image Turbo (Fast)', value: 'gen4_image_turbo' },
+					{ label: 'Gen4 Image', value: 'gen4_image', description: 'Best quality' },
+					{ label: 'Gen4 Image Turbo', value: 'gen4_image_turbo', description: 'Fastest' },
 				],
 			},
 		}),
-		promptText: Property.LongText({ 
-			displayName: 'Prompt', 
-			description: 'Describe what you want to see in the image (max 1000 characters)',
-			required: true,
-		}),
 		ratio: Property.StaticDropdown({
-			displayName: 'Image Ratio',
-			description: 'Resolution of the output image',
+			displayName: 'Resolution',
+			description: 'Width and height of the generated image.',
 			required: true,
 			options: {
 				options: [
@@ -54,32 +53,43 @@ export const generateImageFromText = createAction({
 				],
 			},
 		}),
-		seed: Property.Number({ 
-			displayName: 'Seed (Optional)', 
-			description: 'Random seed for reproducible results (0-4294967295)',
-			required: false,
+		promptText: Property.LongText({
+			displayName: 'Prompt',
+			description: 'What the image should show. Up to 1,000 characters.',
+			required: true,
+		}),
+		referenceImagesInfo: Property.MarkDown({
+			value: 'Gen4 Image Turbo needs at least one reference image.',
+			variant: MarkdownVariant.INFO,
 		}),
 		referenceImages: Property.Array({
-			displayName: 'Reference Images (Optional)',
-			description: 'Up to 3 reference images (required for gen4_image_turbo)',
+			displayName: 'Reference Images',
+			description: 'Up to 3 images. Give one a tag to mention it in the prompt as @tag.',
 			required: false,
 			properties: {
-				uri: Property.ShortText({ 
-					displayName: 'Image URL', 
-					description: 'HTTPS URL or data URI of the reference image',
-					required: true 
+				uri: Property.ShortText({
+					displayName: 'Image URL',
+					description: 'HTTPS link or data URI of the image.',
+					required: true
 				}),
-				tag: Property.ShortText({ 
-					displayName: 'Tag', 
-					description: 'Name to reference this image in your prompt using @tag (3-16 characters, alphanumeric + underscore)',
-					required: false 
+				tag: Property.ShortText({
+					displayName: 'Tag',
+					description: '3–16 letters, numbers or underscores, starting with a letter.',
+					required: false
 				}),
 			},
 		}),
+		seed: Property.Number({
+			displayName: 'Seed',
+			description: 'Use the same seed and prompt to get the same result.',
+			required: false,
+			advanced: true,
+		}),
 		publicFigureThreshold: Property.StaticDropdown({
 			displayName: 'Public Figure Detection',
-			description: 'How strict content moderation should be for recognizable public figures',
+			description: 'How strictly to block images of recognizable public figures.',
 			required: false,
+			advanced: true,
 			defaultValue: 'auto',
 			options: {
 				options: [
@@ -130,7 +140,7 @@ export const generateImageFromText = createAction({
 
 		try {
 			const task = await client.textToImage.create(requestBody);
-			
+
 			return {
 				success: true,
 				taskId: task.id,
