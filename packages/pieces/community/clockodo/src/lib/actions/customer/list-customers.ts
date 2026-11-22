@@ -1,3 +1,4 @@
+import { clockodoOutputSchemas } from '../../common/output-schemas';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { makeClient } from '../../common';
 import { CustomerListFilter } from '../../common/models/customer';
@@ -8,9 +9,10 @@ export default createAction({
   name: 'list_customers',
   classification: 'SEARCH',
   displayName: 'Get Customers',
-  description: 'Fetches customers from clockodo',
+  description: 'Fetches customers from Clockodo',
   audience: 'both',
-  aiMetadata: { description: 'List clockodo customers, optionally filtered by active status. Read-only and repeatable. Use to discover customers or resolve a customer ID by name before another call; supply a page number to read one page at a time, or omit it to retrieve all matching customers.', idempotent: true },
+  outputSchema: clockodoOutputSchemas.customers,
+  aiMetadata: { description: 'List Clockodo customers, optionally filtered by active status. Read-only and repeatable. Use to discover customers or resolve a customer ID by name before another call; supply a page number to read one page at a time, or omit it to retrieve all matching customers.', idempotent: true },
   props: {
     active_filter: Property.Checkbox({
       displayName: 'Active Filter',
@@ -27,22 +29,21 @@ export default createAction({
   async run({ auth, propsValue }) {
     const client = makeClient(auth.props);
     const filter: CustomerListFilter = {
-      active: propsValue.active_filter,
+      active: propsValue.active_filter ?? undefined,
     };
-    if (propsValue.page !== undefined) {
+    if (propsValue.page !== undefined && propsValue.page !== null) {
       const res = await client.listCustomers({
         page: propsValue.page,
         filter,
       });
       return {
-        pagination: res.paging,
-        customers: res.customers,
-      };
-    } else {
-      const customers = await client.listAllCustomers(filter);
-      return {
-        customers,
+        ...(res.paging ? { pagination: res.paging } : {}),
+        customers: res.items,
       };
     }
+    const customers = await client.listAllCustomers(filter);
+    return {
+      customers,
+    };
   },
 });

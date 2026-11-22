@@ -1,55 +1,67 @@
-import { AppConnectionValueForAuthProperty, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
-import {
-  DedupeStrategy,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
-import { currentYear } from '../common';
+import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+import { currentYear, makeClient, newestFirst, pollNewById } from '../common';
 import { ClockodoClient } from '../common/client';
+import { clockodoOutputSchemas } from '../common/output-schemas';
+import { Absence } from '../common/models/absence';
 import { clockodoAuth } from '../auth';
 
-const polling: Polling<AppConnectionValueForAuthProperty<typeof clockodoAuth>, unknown> = {
-  strategy: DedupeStrategy.LAST_ITEM,
-  items: async ({ auth }) => {
+const STORE_KEY = 'clockodo_new_absence_last_id';
 
-    const client = new ClockodoClient(
-      auth.props.email,
-      auth.props.token,
-      auth.props.company_name,
-      auth.props.company_email
-    );
-    const res = await client.listAbsences({ year: currentYear() });
-    return res.absences
-      .sort((a, b) => b.id - a.id)
-      .map((a) => ({
-        id: a.id,
-        data: a,
-      }));
-  },
-};
+async function fetchAbsences(client: ClockodoClient): Promise<Absence[]> {
+  const year = currentYear();
+  const byId = new Map<number, Absence>();
+  for (const y of [year - 1, year, year + 1]) {
+    const absences = await client.listAbsences({ year: y });
+    for (const absence of absences) {
+      byId.set(absence.id, absence);
+    }
+  }
+  return [...byId.values()];
+}
 
 export default createTrigger({
   auth: clockodoAuth,
   name: 'new_absence_enquiry',
   classification: 'READ',
   displayName: 'New Absence Enquiry',
-  description: 'Triggers when a new absence enquiry is created',
+  description: 'Triggers when a new absence is created in Clockodo (any status)',
   aiMetadata: {
-    description: 'Fires when a new absence enquiry (such as a vacation, sick leave, or other time-off request) is created in Clockodo for the current year. Emits the newly created absence record, including its details such as the absence type, date range, and requesting employee.',
+    description:
+      'Fires once for each new absence (vacation, sick day or other time off) of any status (requested or already approved) created in Clockodo whose dates fall in the previous, current or next calendar year, so requests across the year boundary are included. Emits the absence record with its type, status, date range and user.',
   },
   type: TriggerStrategy.POLLING,
   props: {},
-  sampleData: {},
+  outputSchema: clockodoOutputSchemas.absence,
+  sampleData: {
+    id: 4410923,
+    users_id: 349802,
+    date_since: '2026-12-28',
+    date_until: '2027-01-02',
+    status: 0,
+    type: 1,
+    note: 'Family trip',
+    count_days: 4,
+    half_day: false,
+    count_hours: null,
+    sick_note: false,
+    date_enquired: '2026-11-20',
+    date_approved: null,
+    approved_by: null,
+  },
   onEnable: async (context) => {
-    await pollingHelper.onEnable(polling, context);
+    const items = await fetchAbsences(makeClient(context.auth.props));
+    await context.store.delete(STORE_KEY);
+    await pollNewById({ store: context.store, storeKey: STORE_KEY, items });
   },
   onDisable: async (context) => {
-    await pollingHelper.onDisable(polling, context);
+    await context.store.delete(STORE_KEY);
   },
   run: async (context) => {
-    return await pollingHelper.poll(polling, context);
+    const items = await fetchAbsences(makeClient(context.auth.props));
+    return pollNewById({ store: context.store, storeKey: STORE_KEY, items });
   },
   test: async (context) => {
-    return await pollingHelper.test(polling, context);
+    const items = await fetchAbsences(makeClient(context.auth.props));
+    return newestFirst({ items, limit: 5 });
   },
 });

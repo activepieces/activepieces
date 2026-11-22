@@ -1,45 +1,43 @@
-import { QueryParams } from '@activepieces/pieces-common';
+export type QueryValue = string | number | boolean | null | undefined;
 
-export interface Paging {
+export type QueryFilter = Record<string, QueryValue>;
+
+export function buildListQuery({
+  params,
+  filter,
+}: {
+  params?: QueryFilter;
+  filter?: QueryFilter;
+}): Record<string, string> {
+  const query: Record<string, string> = {};
+  for (const [key, value] of Object.entries(params ?? {})) {
+    if (hasValue(value)) {
+      query[key] = String(value);
+    }
+  }
+  for (const [key, value] of Object.entries(filter ?? {})) {
+    if (hasValue(value)) {
+      query['filter[' + key + ']'] = String(value);
+    }
+  }
+  return query;
+}
+
+function hasValue(value: QueryValue): value is string | number | boolean {
+  if (value === null || value === undefined) {
+    return false;
+  }
+  return typeof value !== 'string' || value.length > 0;
+}
+
+export type Paging = {
   items_per_page: number;
   current_page: number;
   count_pages: number;
   count_items: number;
-}
+};
 
-export interface ListRequest<T extends object> {
-  page?: number;
-  filter?: T;
-}
-
-function emptyValueFilter(
-  accessor: (key: string) => any
-): (key: string) => boolean {
-  return (key: string) => {
-    const val = accessor(key);
-    return (
-      val !== null &&
-      val !== undefined &&
-      (typeof val != 'string' || val.length > 0)
-    );
-  };
-}
-
-export function prepareListRequest(request: ListRequest<any>): QueryParams {
-  const params: QueryParams = {};
-  const requestObj = request as Record<string, any>;
-  Object.keys(request)
-    .filter((k) => k != 'filter')
-    .filter(emptyValueFilter((k) => requestObj[k]))
-    .forEach((k: string) => {
-      params[k] = (request as Record<string, any>)[k].toString();
-    });
-  if (request.filter) {
-    Object.keys(request.filter)
-      .filter(emptyValueFilter((k) => request.filter[k]))
-      .forEach((k) => {
-        params['filter[' + k + ']'] = request.filter[k].toString();
-      });
-  }
-  return params;
-}
+export type ListPage<T> = {
+  items: T[];
+  paging?: Paging;
+};

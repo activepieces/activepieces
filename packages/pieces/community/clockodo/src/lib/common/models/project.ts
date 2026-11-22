@@ -1,60 +1,48 @@
-import { Paging } from './common';
-
-export interface Project {
+export type Project = {
   id: number;
   customers_id: number;
   name: string;
-  number?: string;
+  number?: string | null;
   active: boolean;
   billable_default: boolean;
-  note?: string;
-  budget_money?: number;
-  budget_is_hours: boolean;
-  budget_is_not_strict: boolean;
+  note?: string | null;
+  budget?: ProjectBudget | null;
   completed: boolean;
-  billed_money?: number;
-  billed_completely?: boolean;
-  revenue_factor?: number;
-}
+  billed_money?: number | null;
+  billed_completely?: boolean | null;
+  revenue_factor?: number | null;
+};
 
-export interface ProjectCreateRequest {
+export type ProjectCreateRequest = {
   name: string;
   customers_id: number;
   number?: string | null;
   active?: boolean;
   billable_default?: boolean;
   note?: string | null;
-  budget_money?: number | null;
-  budget_is_hours?: boolean;
-  budget_is_not_strict?: boolean;
-}
+  budget?: ProjectBudget;
+};
 
-export interface ProjectUpdateRequest {
-  name?: string;
-  customers_id?: number;
-  number?: string | null;
+export type ProjectUpdateRequest = Partial<ProjectCreateRequest>;
+
+export type ProjectBillingRequest = {
+  billed: boolean;
+};
+
+export type ProjectBudget = {
+  amount: number;
+  monetary: boolean;
+  hard: boolean;
+  from_subprojects: boolean;
+};
+
+export type ProjectBudgetInput = {
+  amount?: number | null;
+  is_hours?: boolean | null;
+  is_not_strict?: boolean | null;
+};
+
+export type ProjectListFilter = {
   active?: boolean;
-  billable_default?: boolean;
-  note?: string | null;
-  budget_money?: number | null;
-  budget_is_hours?: boolean;
-  budget_is_not_strict?: boolean;
-  hourly_rate?: number | null;
-  completed?: boolean;
-  billed_money?: number | null;
-  billed_completely?: boolean;
-}
-
-export interface ProjectListFilter {
-  active?: boolean;
   customers_id?: number;
-}
-
-export interface ProjectListResponse {
-  paging: Paging;
-  projects: Project[];
-}
-
-export interface ProjectSingleResponse {
-  project: Project;
-}
+};

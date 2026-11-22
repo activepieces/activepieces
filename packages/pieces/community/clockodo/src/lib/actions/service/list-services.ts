@@ -1,3 +1,4 @@
+import { clockodoOutputSchemas } from '../../common/output-schemas';
 import { makeClient } from '../../common';
 import { clockodoAuth } from '../../auth';
 import { createAction } from '@activepieces/pieces-framework';
@@ -7,15 +8,15 @@ export default createAction({
   name: 'list_services',
   classification: 'SEARCH',
   displayName: 'Get Services',
-  description: 'Fetches services from clockodo',
+  description: 'Fetches services from Clockodo',
   audience: 'both',
-  aiMetadata: { description: 'List all clockodo services (billable activity types). Read-only, repeatable, and takes no filters. Use to discover available services or resolve a service ID by name before another call.', idempotent: true },
+  outputSchema: clockodoOutputSchemas.services,
+  aiMetadata: { description: 'List all Clockodo services (billable activity types). Read-only, repeatable, and takes no filters. Use to discover available services or resolve a service ID by name before another call.', idempotent: true },
   props: {},
   async run({ auth }) {
-    const client = makeClient(auth.props);
-    const res = await client.listServices();
+    const services = await makeClient(auth.props).listServices();
     return {
-      services: res.services,
+      services,
     };
   },
 });
