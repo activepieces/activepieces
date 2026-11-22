@@ -31,9 +31,10 @@ export const dumplingAi = createPiece({
 		createCustomApiCallAction({
 			baseUrl: () => DUMPLING_BASE_URL,
 			auth: dumplingAuth,
-			authMapping: async (auth) => ({
-				Authorization: `Bearer ${auth.secret_text}`,
-			}),
+			authMapping: async (auth, propsValue) =>
+				isDumplingUrl(propsValue['url'])
+					? { Authorization: `Bearer ${auth.secret_text}` }
+					: {},
 			props: {
 				url: {
 					description: `Full URL, or a path relative to ${DUMPLING_BASE_URL}`,
@@ -44,3 +45,22 @@ export const dumplingAi = createPiece({
 	],
 	triggers: [],
 });
+
+function isDumplingUrl(value: unknown): boolean {
+	const raw = typeof value === 'object' && value !== null && 'url' in value ? value.url : value;
+	if (typeof raw !== 'string') {
+		return false;
+	}
+	if (!raw.startsWith('http://') && !raw.startsWith('https://')) {
+		return true;
+	}
+	return parseOrigin(raw) === new URL(DUMPLING_BASE_URL).origin;
+}
+
+function parseOrigin(raw: string): string | null {
+	try {
+		return new URL(raw).origin;
+	} catch {
+		return null;
+	}
+}
