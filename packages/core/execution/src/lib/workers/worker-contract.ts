@@ -228,6 +228,7 @@ export type SaveAgentMessagesRequest = {
     modelName?: string
     answeredBy?: AgentTurnModel
     failure?: { message: string, userMessage?: string }
+    calledAgentToolNames?: string[]
 }
 
 export type BeginAgentTaskRequest = {

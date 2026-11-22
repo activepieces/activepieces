@@ -55,6 +55,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
         const configuredTools = agentToolPolicy.withValidNames({ tools: (data.tools ?? []).filter(isNamedHere) })
         const configuredFlowTools = agentToolPolicy.withValidNames({ tools: data.flowTools ?? [], reserved: configuredTools.map((tool) => tool.toolName) })
         const configuredAgentTools = agentToolPolicy.withValidNames({ tools: data.agentTools ?? [], reserved: [...configuredTools, ...configuredFlowTools].map((tool) => tool.toolName) })
+        const calledAgentToolNames = configuredAgentTools.flatMap((tool) => 'unavailableReason' in tool ? [] : [tool.toolName])
         const configuredPieceTools = configuredTools.filter(isPieceTool)
         const configuredKnowledgeBaseTools = configuredTools.filter(isKnowledgeBaseTool)
         const reportedTools = [...configuredPieceTools, ...configuredKnowledgeBaseTools]
@@ -280,13 +281,6 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 skip: (dryRun ?? false) || (discoveryOnly ?? false),
                 log,
                 run: (stepMcpToolSet) => {
-                    const baseTools = agentWorkerTools.wrapToolsWithUserWaitBarrier({ tools: { ...allTools, ...agentWorkerTools.wrapToolsWithTaint({ tools: stepMcpToolSet, taintState }) } })
-                    const taskTools = createTaskSubagentTools({
-                        tools: baseTools, guides: config.guides, models: turnModels, researchModels: isNil(fastTurnModel) ? turnModels : [fastTurnModel], tier: config.tier,
-                        taskPrompt: config.taskSystemPrompt, creditsLeftFor, eventEmitter, abortSignal: abortController.signal, log,
-                        beginTask: (input) => ctx.apiClient.beginAgentTask({ platformId, conversationId, ...input }),
-                        finishTask: (input) => ctx.apiClient.finishAgentTask({ platformId, conversationId, ...input }),
-                    })
                     const calledAgentTools = createCalledAgentTools({
                         tools: dryRun || discoveryOnly ? [] : configuredAgentTools,
                         loadAgent: ({ agentId }) => ctx.apiClient.getCalledAgentConfig({ platformId, conversationId, agentId }),
@@ -295,7 +289,14 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                         beginTask: (input) => ctx.apiClient.beginAgentTask({ platformId, conversationId, ...input }),
                         finishTask: (input) => ctx.apiClient.finishAgentTask({ platformId, conversationId, ...input }),
                     })
-                    const mergedTools = { ...baseTools, ...taskTools, ...calledAgentTools }
+                    const baseTools = agentWorkerTools.wrapToolsWithUserWaitBarrier({ tools: { ...allTools, ...calledAgentTools, ...agentWorkerTools.wrapToolsWithTaint({ tools: stepMcpToolSet, taintState }) } })
+                    const taskTools = createTaskSubagentTools({
+                        tools: baseTools, guides: config.guides, models: turnModels, researchModels: isNil(fastTurnModel) ? turnModels : [fastTurnModel], tier: config.tier,
+                        taskPrompt: config.taskSystemPrompt, creditsLeftFor, eventEmitter, abortSignal: abortController.signal, log,
+                        beginTask: (input) => ctx.apiClient.beginAgentTask({ platformId, conversationId, ...input }),
+                        finishTask: (input) => ctx.apiClient.finishAgentTask({ platformId, conversationId, ...input }),
+                    })
+                    const mergedTools = { ...baseTools, ...taskTools }
                     const allToolNames = Object.keys(mergedTools)
                     log.info({ toolCount: allToolNames.length, mcpToolCount: Object.keys(mcpToolSet).length, phase: phaseState.phase }, '[executeAgentRun] Tool set assembled')
                     log.debug({ toolNames: allToolNames }, '[executeAgentRun] Tool set details')
@@ -384,6 +385,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                         ...(uiParts.length > 0 ? [{ role: PersistedAgentRole.ASSISTANT, parts: uiParts, thinkingDurationMs, tainted: taintState.readInThisReply() }] : []),
                     ],
                     ...answeredByOf({ answeredBy: turn.answeredBy }),
+                    ...(calledAgentToolNames.length > 0 ? { calledAgentToolNames } : {}),
                 }
                 const { error: cancelSaveError } = await tryCatch(() => ctx.apiClient.saveAgentMessages(cancelSavePayload))
                 if (cancelSaveError) {
@@ -440,6 +442,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 ...spreadIfDefined('title', autoTitle),
                 ...spreadIfDefined('modelName', isNil(data.modelName) && isNil(config.platformTier) ? config.tier.id : undefined),
                 ...answeredByOf({ answeredBy: turn.answeredBy }),
+                ...(calledAgentToolNames.length > 0 ? { calledAgentToolNames } : {}),
             }
             await retryWithBackoff({ fn: () => ctx.apiClient.saveAgentMessages(savePayload), description: 'Saving the transcript', throwOnExhausted: true, log })
 
