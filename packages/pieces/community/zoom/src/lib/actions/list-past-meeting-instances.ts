@@ -18,7 +18,7 @@ export const zoomListPastMeetingInstances = createAction({
   },
   outputSchema: listPastMeetingInstancesOutputSchema,
   props: {
-    meeting_id: zoomProps.meetingId({ description: 'The numeric Zoom meeting ID, for example 85746065432.' }),
+    meeting_id: zoomProps.meetingId({ description: 'The number in the meeting link after /j/, or from List Meetings.', placeholder: '85746065432' }),
   },
   async run(context) {
     const meetingId = zoomClient.normalizeMeetingId(context.propsValue.meeting_id);
