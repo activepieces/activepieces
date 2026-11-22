@@ -92,6 +92,7 @@ async function run({ evalCase, recordedToolCalls, mcp, modelId, auth, mode, seed
         timedOut,
         elapsedMs,
         cardsShown: user?.cardsShown() ?? [],
+        declinedPieces: user?.declinedPieces() ?? [],
         notes: [...notes],
         metrics,
     }
@@ -421,6 +422,7 @@ export type TurnOutcome = {
     timedOut: boolean
     elapsedMs: number
     cardsShown: string[]
+    declinedPieces: string[]
     notes: string[]
     metrics: RunMetrics
 }

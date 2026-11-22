@@ -363,7 +363,8 @@ async function evaluate({ candidate, trial, recordedToolCalls, mcp, modelId, aut
         use: async (workspaceMcp) => {
             const seeded = await evalSeed.create({ mcp: workspaceMcp, seed, answers })
             const outcome = await evalAgentTurn.run({ evalCase: candidate, recordedToolCalls, mcp: workspaceMcp, modelId, auth, mode: 'live', seeded })
-            return { outcome, codeCheck: await evalCodeChecks.run({ checks: codeChecks, outcome, mcp: workspaceMcp }) }
+            const declinedPieces = [...outcome.declinedPieces, ...scriptedUser.declinedByAnswers({ answers })]
+            return { outcome, codeCheck: await evalCodeChecks.run({ checks: codeChecks, outcome, mcp: workspaceMcp, declinedPieces }) }
         },
     })
     return gradeTurn({ candidate, trial, auth, turn: result, notes: notes.map((note) => `case ${candidate.caseNumber} run ${trial + 1}: ${note}`) })

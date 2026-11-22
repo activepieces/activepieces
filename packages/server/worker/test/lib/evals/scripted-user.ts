@@ -7,16 +7,15 @@ import { LiveSettings } from './eval-case'
 function create({ answers, listConnections, projectId }: { answers: LiveSettings['answers'], listConnections: (pieceName: string) => Promise<ProjectConnection[]>, projectId: string }): ScriptedUser {
     const openCards = new Map<string, OpenCard>()
     const shown: string[] = []
+    const declined: string[] = []
     const overrides = new Map(Object.entries(answers.connections).map(([piece, choice]) => [agentWorkerTools.normalizePieceName(piece), choice]))
 
     const answerConnectionCard = async ({ piece }: { piece: string }): Promise<GateDecision> => {
         const pieceName = agentWorkerTools.normalizePieceName(piece)
         const override = overrides.get(pieceName)
-        if (override === NO_CONNECTION) {
-            return DECLINED
-        }
-        const chosen = pickConnection({ connections: await listConnections(pieceName), override })
+        const chosen = override === NO_CONNECTION ? undefined : pickConnection({ connections: await listConnections(pieceName), override })
         if (isNil(chosen)) {
+            declined.push(pieceName)
             return DECLINED
         }
         return { outcome: 'approved', payload: { connectionExternalId: chosen.externalId, label: chosen.displayName, projectId } }
@@ -39,6 +38,7 @@ function create({ answers, listConnections, projectId }: { answers: LiveSettings
             return answerConnectionCard({ piece: card.piece })
         },
         cardsShown: () => [...shown],
+        declinedPieces: () => [...new Set(declined)],
     }
 }
 
@@ -53,6 +53,10 @@ async function unmetConnections({ answers, listConnections }: { answers: LiveSet
         return isNil(pickConnection({ connections, override: choice })) ? [`needs connection "${choice}" (${pieceName})`] : []
     }))
     return unmet.flat()
+}
+
+function declinedByAnswers({ answers }: { answers: LiveSettings['answers'] }): string[] {
+    return Object.entries(answers.connections).flatMap(([piece, choice]) => choice === NO_CONNECTION ? [agentWorkerTools.normalizePieceName(piece)] : [])
 }
 
 function answersCard(toolName: string): boolean {
@@ -81,10 +85,12 @@ export const scriptedUser = {
     answersCard,
     unmetConnections,
     pickConnection,
+    declinedByAnswers,
 }
 
 export type ScriptedUser = Pick<DisplayToolOptions, 'waitForApproval'> & Required<Pick<DisplayToolOptions, 'onGateOpened'>> & {
     cardsShown: () => string[]
+    declinedPieces: () => string[]
 }
 
 export type ProjectConnection = z.infer<typeof ProjectConnection>
