@@ -283,6 +283,28 @@ describe('wrapToolsWithFailureGuard', () => {
         expect(calls).toBe(2)
     })
 
+    it('treats a changed task title inside a real tool\'s input as a new call', async () => {
+        let calls = 0
+        const guarded = wrapToolsWithFailureGuard({
+            tools: {
+                ap_execute_action: {
+                    inputSchema: jsonSchema({ type: 'object' }),
+                    execute: async () => {
+                        calls += 1
+                        return { content: [{ type: 'text', text: '❌ Cannot run action: nothing found' }] }
+                    },
+                },
+            },
+            log: silentLog,
+        })
+
+        for (const [index, title] of ['Roadmap', 'Roadmap', 'Q3 Roadmap'].entries()) {
+            await guarded.ap_execute_action.execute?.({ pieceName: '@activepieces/piece-notion', actionName: 'search', input: { title } }, { ...callOptions, toolCallId: `n${index}` })
+        }
+
+        expect(calls).toBe(3)
+    })
+
     it('never answers a missing-connection failure with its change-the-parameters message', async () => {
         let calls = 0
         const guarded = wrapToolsWithFailureGuard({

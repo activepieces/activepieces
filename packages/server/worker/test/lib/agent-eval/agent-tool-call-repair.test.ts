@@ -5,6 +5,7 @@ import { convertArrayToReadableStream, MockLanguageModelV3 } from 'ai/test'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { runAgentTurn } from '../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
+import { redactSecrets } from '../../../src/lib/utils/redact-secrets'
 
 const silentLog = { debug: () => undefined, info: () => undefined, warn: () => undefined, error: () => undefined } as never
 
@@ -119,18 +120,38 @@ describe('repairing a tool call the model got wrong', () => {
         expect(ranWith).toEqual([])
     })
 
-    it('logs the whole rejected input and the validator error before repairing', async () => {
+    it('logs the rejected input and the validator message before repairing', async () => {
         const { warnings } = await turnWhereTheModelRepairsWith({ toolInput: '{"query":123}', repairText: '{"query":"123"}' })
 
-        expect(warnings).toEqual([{ message: 'Repairing malformed tool call', fields: { toolName: 'ap_web_search', input: '{"query":123}', error: expect.objectContaining({ message: expect.stringContaining('query') }) } }])
+        expect(warnings).toEqual([{ message: 'Repairing malformed tool call', fields: { toolName: 'ap_web_search', input: { query: 123 }, error: { message: expect.stringContaining('query') } } }])
+    })
+
+    it('logs only the length of an input that is not JSON, since it may hold anything', async () => {
+        const { warnings } = await turnWhereTheModelRepairsWith({ repairText: '{"query":"activepieces pricing"}' })
+
+        expect(warnings).toEqual([{ message: 'Repairing malformed tool call', fields: { toolName: 'ap_web_search', input: { unparsable: true, length: MALFORMED_INPUT.length }, error: { message: expect.any(String) } } }])
     })
 
     it('logs a rejected lazy call once and hands it back to the model without a repair call', async () => {
         const { warnings, repairPrompts, ranWith } = await turnWhereTheModelRepairsWith({ toolName: LAZY_TOOL_NAME, toolInput: '{}', repairText: '{}' })
 
-        expect(warnings).toEqual([{ message: 'Returning a malformed lazy tool call to the model', fields: { toolName: LAZY_TOOL_NAME, input: '{}', error: expect.objectContaining({ message: expect.stringContaining('named no `tool`') }) } }])
+        expect(warnings).toEqual([{ message: 'Returning a malformed lazy tool call to the model', fields: { toolName: LAZY_TOOL_NAME, input: {}, error: { message: expect.stringContaining('named no `tool`') } } }])
         expect(repairPrompts).toEqual([])
         expect(ranWith).toEqual([])
+    })
+})
+
+describe('redacting a tool input before it is logged', () => {
+    it('masks credentials at any depth and keeps the task data', () => {
+        const input = JSON.stringify({
+            tool: 'ap_execute_action',
+            input: { pieceName: 'p', auth: { token: 'x' }, authFields: { key: 'y' }, nested: [{ Password: 'z', API_KEY: 'k', clientSecret: 's', note: 'keep' }], props: { accessToken: 'a', refreshToken: 'r', Credentials: 'c', query: 'q' } },
+        })
+
+        expect(redactSecrets.jsonText(input)).toEqual({
+            tool: 'ap_execute_action',
+            input: { pieceName: 'p', auth: '[REDACTED]', authFields: '[REDACTED]', nested: [{ Password: '[REDACTED]', API_KEY: '[REDACTED]', clientSecret: '[REDACTED]', note: 'keep' }], props: { accessToken: '[REDACTED]', refreshToken: '[REDACTED]', Credentials: '[REDACTED]', query: 'q' } },
+        })
     })
 })
 

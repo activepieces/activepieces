@@ -2,6 +2,7 @@ import { AiProviderKeyStatus, AIProviderName, ErrorCode, formatPieceError, isFal
 import { agentAiUtils, aiProviderSignal, ContentPartLike } from '@activepieces/server-utils'
 import { AgentPhase, AgentRunSource, agentToolClassification, agentToolPhases, agentToolSkills, AI_PROVIDER_ENTITY_TYPES, aiProviderUtils, apErrorOf, CHAT_CREDITS_PER_TOOL_CALL, chatBilling, ChatToolCall, LAZY_TOOL_NAME, PersistedAgentPart, SkillSurface, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
 import { APICallError, generateText, isLoopFinished, isStepCount, LanguageModel, LanguageModelUsage, ModelMessage, NoSuchToolError, RetryError, StepResultPerformance, StopCondition, streamText, ToolChoice, ToolExecutionOptions, ToolSet } from 'ai'
+import { redactSecrets } from '../../../../utils/redact-secrets'
 import { buildSkillSurface, decodeReroutedInput } from './tools/skill-tools'
 import { isMissingConnectionResult } from './tools/tool-primitives'
 
@@ -215,10 +216,10 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
                 return null
             }
             if (toolCall.toolName === LAZY_TOOL_NAME && isParsableJson(toolCall.input)) {
-                log.warn({ toolName: toolCall.toolName, input: toolCall.input, error }, 'Returning a malformed lazy tool call to the model')
+                log.warn({ toolName: toolCall.toolName, input: redactSecrets.jsonText(toolCall.input), error: { message: error.message } }, 'Returning a malformed lazy tool call to the model')
                 return null
             }
-            log.warn({ toolName: toolCall.toolName, input: toolCall.input, error }, 'Repairing malformed tool call')
+            log.warn({ toolName: toolCall.toolName, input: redactSecrets.jsonText(toolCall.input), error: { message: error.message } }, 'Repairing malformed tool call')
             const schema = await inputSchema({ toolName: toolCall.toolName })
             const { data: repaired } = await tryCatch(async () => {
                 const { text } = await generateText({
@@ -466,7 +467,7 @@ export function wrapToolsWithFailureGuard({ tools, log }: { tools: ToolSet, log:
         guarded[name] = {
             ...toolDef,
             execute: async (input: unknown, options: ToolExecutionOptions<undefined>) => {
-                const key = `${name}::${fingerprintInput(input)}`
+                const key = `${name}::${fingerprintInput({ toolName: name, input })}`
                 if ((failureCounts.get(key) ?? 0) >= MAX_IDENTICAL_TOOL_FAILURES) {
                     log.warn({ tool: { name } }, 'Short-circuited repeated unproductive tool call')
                     return { content: [{ type: 'text', text: `✋ This exact ${name} call already came back the same unproductive way ${MAX_IDENTICAL_TOOL_FAILURES} times (an error, or an empty result) and was NOT retried. Stop repeating it: change the parameters, switch the action (e.g. a list/search action instead of a find-one), or try a different approach. Do not re-send the identical call.` }] }
@@ -495,18 +496,18 @@ export function wrapToolsWithFailureGuard({ tools, log }: { tools: ToolSet, log:
     return guarded
 }
 
-function fingerprintInput(input: unknown): string {
-    const { data } = tryCatchSync(() => JSON.stringify(withoutCardTitles(input)))
+function fingerprintInput({ toolName, input }: { toolName: string, input: unknown }): string {
+    const { data } = tryCatchSync(() => JSON.stringify(withoutCardTitles({ toolName, input })))
     return data ?? ''
 }
 
-function withoutCardTitles(input: unknown): unknown {
+function withoutCardTitles({ toolName, input }: { toolName: string, input: unknown }): unknown {
     if (!isObject(input)) {
         return input
     }
     const untitled = withoutTitleKeys(input)
     const nested = untitled['input']
-    return isObject(nested) ? { ...untitled, input: withoutTitleKeys(nested) } : untitled
+    return toolName === LAZY_TOOL_NAME && isObject(nested) ? { ...untitled, input: withoutTitleKeys(nested) } : untitled
 }
 
 function withoutTitleKeys(record: Record<string, unknown>): Record<string, unknown> {
