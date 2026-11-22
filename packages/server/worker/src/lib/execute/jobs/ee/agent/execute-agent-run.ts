@@ -52,7 +52,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
         const { conversationId, runId, projectId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun, discoveryOnly, source: jobSource, flowRunId, waitpointId } = data
         const log = ctx.log.child({ conversation: { id: conversationId }, agentRun: { source: jobSource ?? AgentRunSource.CHAT }, ...spreadIfDefined('run', isNil(runId) ? undefined : { id: runId }) })
 
-        const configuredTools = agentToolPolicy.withValidNames({ tools: data.tools ?? [] })
+        const configuredTools = agentToolPolicy.withValidNames({ tools: (data.tools ?? []).filter(isNamedHere) })
         const configuredFlowTools = agentToolPolicy.withValidNames({ tools: data.flowTools ?? [], reserved: configuredTools.map((tool) => tool.toolName) })
         const configuredAgentTools = agentToolPolicy.withValidNames({ tools: data.agentTools ?? [], reserved: [...configuredTools, ...configuredFlowTools].map((tool) => tool.toolName) })
         const configuredPieceTools = configuredTools.filter(isPieceTool)
@@ -673,6 +673,10 @@ function calledAgentPreparer({ ctx, conversationId, runId, flowRunId, billing, m
             }),
         }
     }
+}
+
+function isNamedHere(tool: AgentTool): boolean {
+    return tool.type !== AgentToolType.FLOW && tool.type !== AgentToolType.AGENT
 }
 
 function isPieceTool(tool: AgentTool): tool is AgentPieceTool {

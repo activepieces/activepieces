@@ -74,6 +74,7 @@ export const AgentAgentToolComponent = ({
                     <Button
                       type="button"
                       disabled={disabled}
+                      aria-label={t('Remove agent')}
                       onClick={() => removeTool(tool.toolName)}
                       variant="ghost"
                       size="icon"
