@@ -64,7 +64,8 @@ function renderToolCatalog({ tools }: { tools: { name: string, description?: str
 function renderSkillsNote({ surface }: { surface: SkillSurface }): string {
     const lines = [
         `\n\n${SKILLS_NOTE_HEADING}`,
-        `Every tool named in these instructions or listed below is real and callable. Never guess a tool's arguments. Load the skills the work in front of you needs, together in one \`${LOAD_SKILL_NAME}\` call, and load another when the work reaches it. Each returns its playbook and the input schema of every tool in it. Or fetch one tool's schema with \`${GET_TOOL_SCHEMA_NAME}\`. A loaded skill stays in the conversation, so do not load it again.`,
+        `Only a few tools are attached to you directly. Every other tool named in these instructions or listed below is real and reachable, but calling it by its own name fails: call \`${LAZY_TOOL_NAME}\` with its name as \`tool\` and its arguments as \`input\`, e.g. \`${LAZY_TOOL_NAME}({ "tool": "ap_validate_flow", "input": { "flowId": "..." } })\`.`,
+        `Never guess a tool's arguments. Load the skills the work in front of you needs, together in one \`${LOAD_SKILL_NAME}\` call, and load another when the work reaches it. Each returns its playbook and the input schema of every tool in it. Or fetch one tool's schema with \`${GET_TOOL_SCHEMA_NAME}\`. A loaded skill stays in the conversation, so do not load it again.`,
         'If a call is rejected for its input, fix it from the schema in the error and retry once.',
     ]
     return surface === 'CHAT' ? [...lines, '', 'Skills:', renderSkillIndex()].join('\n') : lines.join('\n')
