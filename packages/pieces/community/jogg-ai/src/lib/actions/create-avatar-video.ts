@@ -6,13 +6,16 @@ import {
 import { createAction, Property } from '@activepieces/pieces-framework';
 import * as z from 'zod/mini'
 import { joggAiAuth } from '../..';
+import { joggAiClient } from '../common/client';
+import { joggAiOutputSchemas } from '../common/output-schemas';
 
 export const createAvatarVideo = createAction({
   name: 'createAvatarVideo',
   classification: 'WRITE',
   displayName: 'Create Avatar Video',
   description: 'Creates an avatar video using JoggAI API',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: joggAiOutputSchemas.createAvatarVideo,
   aiMetadata: {
     description:
       'Starts generation of a talking-avatar video on JoggAI from a chosen avatar and voice, with the speech sourced either from a typed script OR from an audio URL (exactly one is required, never both). Use to turn a script or voiceover into a narrated avatar video; the call kicks off an async job whose output is polled via Get Generated Video or received through the video-generation triggers. Not idempotent: each call queues and is billed for a new video.',
@@ -85,8 +88,7 @@ export const createAvatarVideo = createAction({
               })
             ),
           };
-        } catch (error) {
-          console.error('Failed to fetch avatars', error);
+        } catch {
           return {
             options: [],
             placeholder: 'Unable to load avatars',
@@ -120,57 +122,54 @@ export const createAvatarVideo = createAction({
           };
         }
 
-        try {
-          let response;
-          try {
-            response = await httpClient.sendRequest({
-              method: HttpMethod.GET,
-              url: 'https://api.jogg.ai/v1/voices/custom',
-              headers: {
-                'x-api-key': auth.secret_text,
-              },
-            });
-          } catch {
-            response = await httpClient.sendRequest({
-              method: HttpMethod.GET,
-              url: 'https://api.jogg.ai/v1/voices',
-              headers: {
-                'x-api-key': auth.secret_text,
-              },
-            });
-          }
-
-          if (response.body.code !== 0) {
-            return {
-              options: [],
-              placeholder: `Error loading voices: ${response.body.msg}`,
-            };
-          }
-
-          const voices = response.body.data?.voices || [];
-          return {
-            options: voices.map(
-              (voice: {
-                name: string;
-                voice_id: string;
-                language?: string;
-                gender?: string;
-                age?: string;
-              }) => ({
-                label: voice.language
-                  ? `${voice.name} (${voice.language}, ${voice.gender}, ${voice.age})`
-                  : voice.name,
-                value: voice.voice_id,
-              })
-            ),
-          };
-        } catch (error) {
-          console.error('Failed to fetch voices', error);
+        const [customResult, publicResult] = await Promise.allSettled([
+          joggAiClient.request({
+            apiKey: auth.secret_text,
+            method: HttpMethod.GET,
+            path: '/v1/voices/custom',
+            op: 'list custom voices',
+          }),
+          joggAiClient.request({
+            apiKey: auth.secret_text,
+            method: HttpMethod.GET,
+            path: '/v1/voices',
+            op: 'list voices',
+          }),
+        ]);
+        const voices = [customResult, publicResult].flatMap((result) =>
+          result.status === 'fulfilled'
+            ? joggAiClient.listOf({ value: result.value, key: 'voices' })
+            : []
+        );
+        if (voices.length === 0) {
           return {
             options: [],
-            placeholder: 'Unable to load voices',
+            placeholder:
+              publicResult.status === 'rejected'
+                ? 'Unable to load voices. Check your API key.'
+                : 'No voices found',
           };
         }
+        const seen = new Set<string>();
+        return {
+          options: voices.flatMap((voice) => {
+            const value = voice['voice_id'];
+            if (typeof value !== 'string' || seen.has(value)) {
+              return [];
+            }
+            seen.add(value);
+            const name = typeof voice['name'] === 'string' ? voice['name'] : value;
+            const details = [voice['language'], voice['gender'], voice['age']].filter(
+              (part): part is string => typeof part === 'string' && part.length > 0
+            );
+            return [
+              {
+                label: details.length > 0 ? `${name} (${details.join(', ')})` : name,
+                value,
+              },
+            ];
+          }),
+        };
       },
     }),
     script: Property.LongText({
@@ -272,31 +271,12 @@ export const createAvatarVideo = createAction({
       requestBody.video_name = video_name;
     }
 
-    const response = await httpClient.sendRequest({
+    return joggAiClient.requestEnvelope({
+      apiKey: auth.secret_text,
       method: HttpMethod.POST,
-      url: 'https://api.jogg.ai/v1/create_video_from_talking_avatar',
-      headers: {
-        'x-api-key': auth.secret_text,
-        'Content-Type': 'application/json',
-      },
+      path: '/v1/create_video_from_talking_avatar',
+      op: 'create avatar video',
       body: requestBody,
     });
-
-    if (response.body.code !== 0) {
-      const errorMessages: Record<number, string> = {
-        10104: 'Record not found',
-        10105: 'Invalid API key',
-        18020: 'Insufficient credit',
-        18025: 'No permission to call APIs',
-        40000: 'Parameter error',
-        50000: 'System error',
-      };
-
-      const message =
-        errorMessages[response.body.code] || `API Error: ${response.body.msg}`;
-      throw new Error(message);
-    }
-
-    return response.body;
   },
 });

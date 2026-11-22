@@ -1,18 +1,20 @@
 import {
-  httpClient,
   HttpMethod,
   propsValidation,
 } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import * as z from 'zod/mini'
 import { joggAiAuth } from '../..';
+import { joggAiClient } from '../common/client';
+import { joggAiOutputSchemas } from '../common/output-schemas';
 
 export const updateProductInfo = createAction({
   name: 'updateProductInfo',
   classification: 'WRITE',
   displayName: 'Update Product Info',
   description: 'Updates existing product information using product ID',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: joggAiOutputSchemas.updateProductEnvelope,
   aiMetadata: {
     description:
       'Updates an existing JoggAI product identified by its product_id, overwriting any supplied fields (name, description, target audience, media); supplied media replaces the product’s existing media rather than appending. Use to modify a product you already created; requires the product_id and at least one field to change. Idempotent: re-sending the same fields leaves the product in the same state.',
@@ -130,39 +132,20 @@ export const updateProductInfo = createAction({
       requestBody.target_audience = target_audience;
     }
     if (media && media.length > 0) {
-      requestBody.media = media as Array<{
-        type: number;
-        name: string;
-        url: string;
-        description?: string;
-      }>;
+      requestBody.media = joggAiClient.records(media).map((item) => ({
+        type: Number(item['type']),
+        name: String(item['name'] ?? ''),
+        url: String(item['url'] ?? ''),
+        ...(typeof item['description'] === 'string' ? { description: item['description'] } : {}),
+      }));
     }
 
-    const response = await httpClient.sendRequest({
+    return joggAiClient.requestEnvelope({
+      apiKey: auth.secret_text,
       method: HttpMethod.PUT,
-      url: 'https://api.jogg.ai/v1/product',
-      headers: {
-        'x-api-key': auth.secret_text,
-        'Content-Type': 'application/json',
-      },
+      path: '/v1/product',
+      op: 'update product',
       body: requestBody,
     });
-
-    if (response.body.code !== 0) {
-      const errorMessages: Record<number, string> = {
-        10104: 'Record not found',
-        10105: 'Invalid API key',
-        18020: 'Insufficient credit',
-        18025: 'No permission to call APIs',
-        40000: 'Parameter error',
-        50000: 'System error',
-      };
-
-      const message =
-        errorMessages[response.body.code] || `API Error: ${response.body.msg}`;
-      throw new Error(message);
-    }
-
-    return response.body;
   },
 });
