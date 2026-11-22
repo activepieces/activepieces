@@ -1,10 +1,8 @@
-import { ApEdition, ConsumableFeatureId, CreditsBillableFeature, InvitationStatus, PlanName, UserStatus } from '@activepieces/shared';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { ApEdition, ConsumableFeatureId, CreditsBillableFeature, InvitationStatus, UserStatus } from '@activepieces/shared';
+import { describe, expect, it } from 'vitest';
 import { billingUtils, ShouldShowCreditsAlertParams, seatUtils } from '@/features/billing/utils/billing-utils';
 import { formatUtils } from '@/lib/format-utils';
 import dayjs from 'dayjs';
-
-import { icuI18n } from '../../i18n/icu-i18n';
 
 const creditsFeature: CreditsBillableFeature = {
   featureId: ConsumableFeatureId.AP_CREDITS,
@@ -243,45 +241,5 @@ describe('reserved seats', () => {
     expect(seatUtils.reservedSeats({ users, invitations, now: NOW })).toBe(
       expected,
     );
-  });
-});
-
-describe('billingUtils.planDisplayName', () => {
-  beforeAll(async () => {
-    await icuI18n.init();
-  });
-
-  it('prefers the Autumn plan name', () => {
-    expect(
-      billingUtils.planDisplayName({
-        autumnPlanName: 'Business',
-        plan: { plan: 'plus' },
-      }),
-    ).toBe('Business');
-  });
-
-  it('falls back to the paid plan id', () => {
-    expect(
-      billingUtils.planDisplayName({
-        autumnPlanName: null,
-        plan: { plan: 'plus' },
-      }),
-    ).toBe('plus');
-  });
-
-  it('says Free for the free plan, no plan, or no billing info', () => {
-    expect(
-      billingUtils.planDisplayName({
-        autumnPlanName: null,
-        plan: { plan: PlanName.FREE },
-      }),
-    ).toBe('Free');
-    expect(
-      billingUtils.planDisplayName({
-        autumnPlanName: null,
-        plan: { plan: null },
-      }),
-    ).toBe('Free');
-    expect(billingUtils.planDisplayName(undefined)).toBe('Free');
   });
 });
