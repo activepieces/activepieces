@@ -59,7 +59,7 @@ function build({ mcp, caseReplay, auth, mode, user }: { mcp: McpTools, caseRepla
                 mode,
             }),
             thinking: agentWorkerTools.createThinkingTools(),
-            buildPlan: agentWorkerTools.createBuildPlanTools({ eventEmitter, getProjectId: () => EVAL_PROJECT.id }),
+            buildPlan: agentWorkerTools.createBuildPlanTools({ eventEmitter, getProjectId: () => EVAL_PROJECT.id }).tools,
             email: {},
             agentSurface: agentWorkerTools.createAgentSurfaceTools({ executeTool, taintState, eventEmitter, waitForApproval: approve, onGateOpened: noop }),
             mcp: replayed({ tools: mcp.toolSet, caseReplay, mode }),
