@@ -7,7 +7,7 @@ export const newOutgoingChat = createTrigger({
   name: 'newOutgoingChat',
   classification: 'READ',
   displayName: 'New Outgoing Chat',
-  description: 'Fires when a new outgoing chat is initiated.',
+  description: 'Fires when you start a new chat with a contact.',
   aiMetadata: {
     description: 'Fires when a new outgoing TimelinesAI WhatsApp chat is initiated, i.e. the connected account starts a conversation with a contact. Represents the start of an outbound conversation, carrying the chat and WhatsApp account details.',
   },
@@ -66,7 +66,7 @@ export const newOutgoingChat = createTrigger({
     if (webhook_id) {
       await timelinesAiCommon.deleteWebhook({
         apiKey: context.auth,
-        webhook_id: webhook_id as number,
+        webhook_id,
       });
     }
   },

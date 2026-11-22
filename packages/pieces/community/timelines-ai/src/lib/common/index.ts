@@ -29,7 +29,8 @@ import {
 
 export const timelinesAiAuth = PieceAuth.SecretText({
   displayName: 'API Key',
-  description: 'Your TimelinesAI API key.',
+  description:
+    'To get your API key:\n1. Log in to TimelinesAI.\n2. Go to **Integrations** and open **Public API**.\n3. Copy the API token and paste it here.',
   required: true,
 });
 
@@ -51,7 +52,6 @@ export const timelinesAiCommon = {
     createWebhook: '/webhooks',
     deleteWebhook: (webhook_id: number) => `/webhooks/${webhook_id}`,
   },
-  // API Calls
   sendMessageToExistingChat: async ({
     apiKey,
     ...messageParams

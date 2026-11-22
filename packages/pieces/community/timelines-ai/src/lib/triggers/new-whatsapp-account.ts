@@ -7,7 +7,7 @@ export const newWhatsappAccount = createTrigger({
   name: 'newWhatsappAccount',
   classification: 'READ',
   displayName: 'New WhatsApp Account',
-  description: 'Fires when a new WhatsApp account is added/registered.',
+  description: 'Fires when a WhatsApp account is connected.',
   aiMetadata: {
     description: 'Fires when a WhatsApp account is connected to TimelinesAI. Represents a newly registered/connected account, carrying its id, phone number, status, and owner details.',
   },
@@ -45,7 +45,7 @@ export const newWhatsappAccount = createTrigger({
     if (webhook_id) {
       await timelinesAiCommon.deleteWebhook({
         apiKey: context.auth,
-        webhook_id: webhook_id,
+        webhook_id,
       });
     }
   },

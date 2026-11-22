@@ -8,6 +8,14 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### TimelinesAI 0.3.0: Find Chat without filters returns every chat
+
+**Find Chat** now sends only the filters you add. Before, an unset Closed, Read, Group Chat or ChatGPT Auto-Reply switch was sent as "off", so a step with no filters returned only open, unread, one-to-one chats without ChatGPT auto-reply.
+
+#### What you need to do
+
+- Find Chat steps that relied on that narrower result: add the filters you need. Each of the four flags now narrows to chats where it is on (for example, only closed chats).
+
 #### Fireflies.ai 0.2.0: three find actions are no longer AI agent tools, and Upload Audio returns a smaller output
 
 **Find Meeting by ID**, **Find Recent Meeting** and **Find Meeting by Call Details** are now shown only in the flow builder. AI agents and MCP clients get **Get Meeting**, **Get Meeting Summary** and **Find Meetings** instead.

@@ -7,7 +7,7 @@ export const newReceivedMessage = createTrigger({
   name: 'newReceivedMessage',
   classification: 'READ',
   displayName: 'New Received Message',
-  description: 'Fires when a message is received (incoming).',
+  description: 'Fires when a message is received in any chat.',
   aiMetadata: {
     description: 'Fires when an incoming WhatsApp message is received in TimelinesAI. Represents a single inbound message with its text, sender/recipient, any attachments, and the parent chat context.',
   },
@@ -73,7 +73,7 @@ export const newReceivedMessage = createTrigger({
     if (webhook_id) {
       await timelinesAiCommon.deleteWebhook({
         apiKey: context.auth,
-        webhook_id: webhook_id as number,
+        webhook_id,
       });
     }
   },

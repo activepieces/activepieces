@@ -7,7 +7,7 @@ export const newSentMessage = createTrigger({
   name: 'newSentMessage',
   classification: 'READ',
   displayName: 'New Sent Message',
-  description: 'Fires when a message is sent (outgoing).',
+  description: 'Fires when a message is sent from any of your numbers.',
   aiMetadata: {
     description: 'Fires when an outgoing WhatsApp message is sent from TimelinesAI. Represents a single outbound message with its text, sender/recipient, any attachments, and the parent chat context.',
   },

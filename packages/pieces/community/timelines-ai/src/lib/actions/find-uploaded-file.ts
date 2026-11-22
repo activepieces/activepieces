@@ -6,13 +6,14 @@ export const findUploadedFile = createAction({
   name: 'findUploadedFile',
   classification: 'SEARCH',
   displayName: 'Find Uploaded File',
-  description: 'Locate an uploaded file by filename or identifier.',
+  description: 'Finds uploaded files by name.',
   audience: 'both',
   aiMetadata: { description: 'Lists files previously uploaded to TimelinesAI, optionally filtered by filename; with no filename it returns all uploaded files. Use to find a file and its uid before attaching it to a chat message. Read-only and idempotent.', idempotent: true },
   props: {
     filename: Property.ShortText({
       displayName: 'Filename',
-      description: 'The name of the uploaded file to search for.',
+      description: 'Empty: returns every uploaded file.',
+      placeholder: 'invoice.pdf',
       required: false,
     }),
   },
