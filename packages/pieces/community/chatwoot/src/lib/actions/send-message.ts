@@ -63,29 +63,46 @@ export const sendMessage = createAction({
   name: 'send_message',
   classification: 'WRITE',
   displayName: 'Send Message',
-  description: 'Send a message reply to a Chatwoot conversation',
+  description: 'Reply in a Chatwoot conversation or add a private note.',
   audience: 'both',
   aiMetadata: {
     description:
       'Posts a new message to an existing Chatwoot conversation, identified by its numeric conversation display ID. Use to reply to a customer or, by enabling the private-note option, to leave an internal note visible only to agents rather than to the contact. Not idempotent — each call appends another message.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'destination',
+      display: 'section',
+      label: 'Send to',
+      icon: 'send',
+      props: ['conversationId'],
+    },
+    {
+      key: 'message',
+      display: 'section',
+      label: 'Message',
+      icon: 'text',
+      props: ['message', 'isPrivate'],
+    },
+  ],
   props: {
     conversationId: Property.Number({
       displayName: 'Conversation ID',
       description:
-        'The numeric conversation display ID. Available from the trigger output.',
+        'From the trigger, or the number after /conversations/ in Chatwoot.',
       required: true,
     }),
     message: Property.LongText({
       displayName: 'Message',
-      description: 'The text message to send',
+      description:
+        "What the contact sees, or the note's text when Private Note is on.",
+      placeholder: "Thanks for reaching out! We're looking into it.",
       required: true,
     }),
     isPrivate: Property.Checkbox({
       displayName: 'Private Note',
-      description:
-        'If checked, sends as a private note visible only to agents (not the contact)',
+      description: 'Only agents see it; the contact is not notified.',
       required: true,
       defaultValue: false,
     }),
