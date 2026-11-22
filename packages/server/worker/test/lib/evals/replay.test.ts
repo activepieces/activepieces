@@ -49,12 +49,32 @@ describe('replay.resolveCall', () => {
     it('fakes publishing, retries and unknown tools in live mode because only allowlisted tools run for real', async () => {
         const caseReplay = replay.create({ recordedToolCalls: [] })
         const live = vi.fn(async () => ({ ran: true }))
-        const toolNames = ['ap_lock_and_publish', 'ap_retry_run', 'ap_create_agent', 'ap_brand_new_capability']
+        const toolNames = ['ap_lock_and_publish', 'ap_retry_run', 'ap_brand_new_capability']
 
         const outputs = await Promise.all(toolNames.map((toolName) => replay.resolveCall({ caseReplay, mode: 'live', toolName, input: {}, live })))
 
         expect(outputs).toEqual(Array(toolNames.length).fill(expect.objectContaining({ structuredContent: { status: 'SUCCEEDED' } })))
         expect(live).not.toHaveBeenCalled()
+    })
+
+    it('gives faked code runs and agent changes results shaped like the real tool', async () => {
+        const caseReplay = replay.create({ recordedToolCalls: [] })
+        const live = vi.fn(async () => ({ ran: true }))
+
+        const code = await replay.resolveCall({ caseReplay, mode: 'live', toolName: 'ap_run_code', input: { code: 'export const code = async () => 1' }, live })
+        const created = await replay.resolveCall({ caseReplay, mode: 'live', toolName: 'ap_create_agent', input: { displayName: 'Lead triager', instructions: 'Sort leads' }, live })
+        const updated = await replay.resolveCall({ caseReplay, mode: 'live', toolName: 'ap_update_agent', input: { agentId: 'a1', publish: true }, live })
+
+        expect(code).toEqual({ text: expect.stringContaining('Code ran'), producedFiles: [], stubbed: true })
+        expect(created).toEqual(expect.objectContaining({ agentId: expect.any(String), displayName: 'Lead triager', published: false, stubbed: true }))
+        expect(updated).toEqual(expect.objectContaining({ agentId: 'a1', published: true }))
+        expect(live).not.toHaveBeenCalled()
+    })
+
+    it('names the faked tools apart from the note about every other tool', () => {
+        expect(replay.stubbedTools).toEqual(expect.arrayContaining(['ap_lock_and_publish', 'ap_retry_run', 'ap_run_code', 'ap_create_agent']))
+        expect(replay.stubbedTools.every((name) => /^ap_[a-z_]+$/.test(name))).toBe(true)
+        expect(replay.stubbedToolsNote.length).toBeGreaterThan(0)
     })
 
     it('runs allowlisted workspace writes and reads for real in live mode', async () => {

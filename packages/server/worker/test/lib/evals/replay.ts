@@ -1,5 +1,5 @@
 import { isNil, isObject } from '@activepieces/core-utils'
-import { agentToolClassification, FlowRunStatus } from '@activepieces/shared'
+import { agentToolClassification, AppConnectionStatus, FlowRunStatus } from '@activepieces/shared'
 import { asSchema, ToolSet } from 'ai'
 import { agentWorkerTools } from '../../../src/lib/execute/jobs/ee/agent/agent-worker-tools'
 import { RecordedToolCall, ToolFault } from './eval-case'
@@ -80,7 +80,7 @@ async function resolveLiveCall({ caseReplay, toolName, input, live }: { caseRepl
         return { content: [{ type: 'text', text: injected }], isError: true }
     }
     if (isStubbed({ toolName, input })) {
-        return STUBBED_SUCCESS
+        return stubbedResult({ toolName, input })
     }
     if (isNil(live)) {
         throw new Error(`${toolName} has nothing to run in live mode`)
@@ -95,6 +95,34 @@ function isStubbed({ toolName, input }: { toolName: string, input: unknown }): b
     const actionName = isObject(input) && typeof input['actionName'] === 'string' ? input['actionName'] : ''
     const actionInput = isObject(input) && isObject(input['input']) ? input['input'] : undefined
     return agentToolClassification.requiresActionPreview({ actionName, input: actionInput })
+}
+
+function stubbedResult({ toolName, input }: { toolName: string, input: unknown }): unknown {
+    const fields = isObject(input) ? input : {}
+    switch (toolName) {
+        case 'ap_run_code': return { text: '✅ Code ran (no output returned).', producedFiles: [], stubbed: true }
+        case 'ap_remember': return { remembered: true, stubbed: true }
+        case 'ap_revalidate_connection': return { connectionExternalId: fields['connectionExternalId'], status: AppConnectionStatus.ACTIVE, working: true, note: 'This connection is valid — safe to build on.', stubbed: true }
+        case 'ap_create_agent':
+        case 'ap_update_agent':
+        case 'ap_add_agent_tool':
+        case 'ap_remove_agent_tool': return stubbedAgent({ fields, created: toolName === 'ap_create_agent' })
+        default: return STUBBED_SUCCESS
+    }
+}
+
+function stubbedAgent({ fields, created }: { fields: Record<string, unknown>, created: boolean }): unknown {
+    const agentId = !created && typeof fields['agentId'] === 'string' ? fields['agentId'] : STUBBED_AGENT_ID
+    const displayName = typeof fields['displayName'] === 'string' ? fields['displayName'] : STUBBED_AGENT_NAME
+    const published = fields['publish'] === true
+    return {
+        agentId,
+        displayName,
+        published,
+        url: `${STUBBED_AGENT_URL}/${agentId}`,
+        note: published ? `"${displayName}" is live: new runs use this version.` : 'Saved to the draft. Nothing runs this agent until it is published.',
+        stubbed: true,
+    }
 }
 
 async function splitStale({ tools, recordedToolCalls }: { tools: ToolSet, recordedToolCalls: RecordedToolCall[] }): Promise<{ fresh: RecordedToolCall[], stale: StaleRecording[] }> {
@@ -219,6 +247,9 @@ const LIVE_TOOLS = new Set([
     'ap_web_search',
 ])
 const EXECUTE_ACTION_TOOL = 'ap_execute_action'
+const STUBBED_AGENT_ID = 'evalStubbedAgent'
+const STUBBED_AGENT_NAME = 'Eval agent'
+const STUBBED_AGENT_URL = 'https://eval.invalid/agents'
 const STUBBED_SUCCESS = { content: [{ type: 'text', text: 'Finished successfully.' }], structuredContent: { status: FlowRunStatus.SUCCEEDED } }
 const READ_TOOLS = new Set([
     ...LIVE_TOOLS,
@@ -268,14 +299,21 @@ const WORKSPACE_WRITE_TOOLS = new Set([
     'ap_update_trigger',
 ])
 const STUBBED_TOOLS = [
+    'ap_add_agent_tool',
     'ap_change_flow_status',
+    'ap_create_agent',
     'ap_lock_and_publish',
+    'ap_remember',
+    'ap_remove_agent_tool',
     'ap_retry_run',
+    'ap_revalidate_connection',
     'ap_run_action',
+    'ap_run_code',
     'ap_test_flow',
     'ap_test_step',
-    'every other tool that is not a read or a flow, table or folder change',
+    'ap_update_agent',
 ]
+const STUBBED_TOOLS_NOTE = 'any other tool that is not a read or a flow, table or folder change'
 
 export const replay = {
     create,
@@ -286,6 +324,7 @@ export const replay = {
     isStopOutput,
     splitStale,
     stubbedTools: STUBBED_TOOLS,
+    stubbedToolsNote: STUBBED_TOOLS_NOTE,
 }
 
 export type StaleRecording = {
