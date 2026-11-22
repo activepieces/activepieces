@@ -1,4 +1,4 @@
-import { AiProviderKeyStatus, AIProviderName, ErrorCode, formatPieceError, isFallbackWorthy, isNil, isObject, isProviderBillingError, isTransientProviderError, ProviderOutcomeSignal, spreadIfDefined, toError, tryCatch, tryCatchSync, unique } from '@activepieces/core-utils'
+import { AiProviderKeyStatus, AIProviderName, ErrorCode, formatPieceError, isFallbackWorthy, isNil, isObject, isProviderBillingError, isTransientProviderError, omit, ProviderOutcomeSignal, spreadIfDefined, toError, tryCatch, tryCatchSync, unique } from '@activepieces/core-utils'
 import { agentAiUtils, aiProviderSignal, ContentPartLike } from '@activepieces/server-utils'
 import { AgentPhase, AgentRunSource, agentToolClassification, agentToolPhases, agentToolSkills, AI_PROVIDER_ENTITY_TYPES, aiProviderUtils, apErrorOf, CHAT_CREDITS_PER_TOOL_CALL, chatBilling, ChatToolCall, LAZY_TOOL_NAME, PersistedAgentPart, SkillSurface, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
 import { APICallError, generateText, isLoopFinished, isStepCount, LanguageModel, LanguageModelUsage, ModelMessage, NoSuchToolError, RetryError, StepResultPerformance, StopCondition, streamText, ToolChoice, ToolExecutionOptions, ToolSet } from 'ai'
@@ -452,7 +452,7 @@ export function delayWithJitter(baseMs: number): Promise<void> {
 // Centralized loop-breaker: an identical (tool + input) call that already failed
 // MAX_IDENTICAL_TOOL_FAILURES times is short-circuited with a directive to change
 // approach, instead of letting the model re-fire the same failing call indefinitely.
-function wrapToolsWithFailureGuard({ tools, log }: { tools: ToolSet, log: AgentTurnLogger }): ToolSet {
+export function wrapToolsWithFailureGuard({ tools, log }: { tools: ToolSet, log: AgentTurnLogger }): ToolSet {
     const failureCounts = new Map<string, number>()
     const guarded: ToolSet = {}
     for (const [name, toolDef] of Object.entries(tools)) {
@@ -491,7 +491,8 @@ function wrapToolsWithFailureGuard({ tools, log }: { tools: ToolSet, log: AgentT
 }
 
 function fingerprintInput(input: unknown): string {
-    const { data } = tryCatchSync(() => JSON.stringify(input))
+    const keyed = isObject(input) ? omit(input, ['title', 'activeTitle', 'doneTitle']) : input
+    const { data } = tryCatchSync(() => JSON.stringify(keyed))
     return data ?? ''
 }
 

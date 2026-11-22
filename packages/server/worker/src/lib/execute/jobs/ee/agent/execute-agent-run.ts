@@ -741,6 +741,7 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
     // the turn — injected as `auth` into piece-introspection tools so the model can't resolve
     // props/dropdowns against a guessed externalId. Keyed by normalized piece name.
     const selectedConnectionByPiece = new Map<string, string>()
+    const actionProgressGuard = agentWorkerTools.createProgressGuard()
     const localTools = agentWorkerTools.createLocalTools({
         onSetProjectContext: async (projectId) => {
             const { error } = await tryCatch(() => ctx.apiClient.updateProjectContext({ conversationId, runId, projectId, provider: runKey().provider, providerConfigId: runKey().providerConfigId }))
@@ -795,6 +796,7 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
             const externalId = selected['externalId']
             const label = selected['label']
             selectedConnectionByPiece.set(pieceName, externalId)
+            actionProgressGuard.connectionPicked({ pieceName })
             return { externalId, label: typeof label === 'string' ? label : externalId }
         },
         pieceNeedsNoConnection: async (pieceName) => {
@@ -812,6 +814,7 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
         },
         onConnectionSelected: async ({ pieceName, connectionExternalId, label, projectId: connProjectId }) => {
             selectedConnectionByPiece.set(pieceName, connectionExternalId)
+            actionProgressGuard.connectionPicked({ pieceName })
             await tryCatch(() => ctx.apiClient.executeAgentTool({
                 toolName: '__store_selected_connection',
                 toolInput: { pieceName, connectionExternalId, label, projectId: connProjectId },
@@ -821,7 +824,7 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
         onConnectorReconnected: (connectorUuid) => brokenConnectors.delete(connectorUuid),
         onGateOpened: storePendingGate,
     })
-    const crossProjectTools = agentWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter: toolEventEmitter, waitForApproval, onGateOpened: storePendingGate, isDeclaredReadOnly, taintState })
+    const crossProjectTools = agentWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter: toolEventEmitter, waitForApproval, onGateOpened: storePendingGate, isDeclaredReadOnly, taintState, progressGuard: actionProgressGuard })
     const agentSurfaceTools = agentsAvailable && !dryRun && !discoveryOnly
         ? agentWorkerTools.createAgentSurfaceTools({ executeTool: executeCrossProjectTool, taintState, eventEmitter: toolEventEmitter, waitForApproval, onGateOpened: storePendingGate })
         : {}

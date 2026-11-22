@@ -732,6 +732,9 @@ async function runAgentAction({ toolInput, projects, availableProjectIds, conver
             return { success: false, error: denial }
         }
     }
+    if (declared.requiresAuth === true && isNil(connectionExternalId) && !hasAuthInput(parsedInput)) {
+        return missingConnectionResult({ pieceName: normalizedPiece, pieceDisplayName: declared.pieceDisplayName })
+    }
 
     const result = await executePieceActionRun({
         projectId: resolvedProjectId,
@@ -774,6 +777,19 @@ async function runAgentAction({ toolInput, projects, availableProjectIds, conver
         }
     }
     return result
+}
+
+function hasAuthInput(input: Record<string, unknown> | undefined): boolean {
+    const auth = input?.auth
+    return !isNil(auth) && auth !== ''
+}
+
+function missingConnectionResult({ pieceName, pieceDisplayName }: { pieceName: string, pieceDisplayName?: string }): { success: false, missingConnection: true, error: string } {
+    return {
+        success: false,
+        missingConnection: true,
+        error: `❌ No ${pieceDisplayName ?? pieceName} account is selected in this conversation. Call ap_show_connection_picker for ${pieceName}, then re-send this call. Retrying before that fails the same way.`,
+    }
 }
 
 async function runAgentCode({ toolInput, projects, platformId, userId, conversationId, log }: {
@@ -1039,6 +1055,7 @@ async function declaredActionOf({ pieceName, actionName, projectId, platformId, 
         ...spreadIfDefined('actionDisplayName', action?.displayName),
         ...spreadIfDefined('classification', action?.classification),
         ...spreadIfDefined('readOnly', isNil(action?.classification) ? undefined : isReadOnlyClassification(action.classification)),
+        ...spreadIfDefined('requiresAuth', isNil(action) ? undefined : action.requireAuth && !isNil(metadata?.auth)),
     }
 }
 
@@ -1055,4 +1072,5 @@ type DeclaredAction = {
     actionDisplayName?: string
     classification?: ActionClassification
     readOnly?: boolean
+    requiresAuth?: boolean
 }
