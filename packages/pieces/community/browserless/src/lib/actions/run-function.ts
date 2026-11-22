@@ -10,7 +10,7 @@ export const runFunction = createAction({
     name: 'run_function',
     classification: 'WRITE',
     displayName: 'Run Puppeteer Function',
-    description: 'Run your own Puppeteer code in a Browserless browser and return what it returns.',
+    description: 'Run your own Puppeteer code in a browser and return its result.',
     audience: 'both',
     aiMetadata: {
         description:
@@ -23,12 +23,12 @@ export const runFunction = createAction({
         }),
         code: Property.LongText({
             displayName: 'Code',
-            description: 'The Puppeteer module to run.',
+            description: 'The Puppeteer module to run, as in the example above.',
             required: true,
         }),
         context: Property.Object({
             displayName: 'Context',
-            description: 'Values your function receives as `context`.',
+            description: 'Values your function receives as context.',
             required: false,
         }),
         timeout: browserlessProps.sessionTimeout(),

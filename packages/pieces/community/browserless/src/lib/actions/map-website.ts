@@ -11,7 +11,11 @@ export const mapWebsite = createAction({
     name: 'map_website',
     classification: 'SEARCH',
     displayName: 'Map Website URLs',
-    description: 'List the URLs of a website from its sitemap and links, optionally ordered by relevance to a search term.',
+    description: 'List a website\'s URLs from its sitemap and links.',
+    propertyGroups: [
+        { key: 'site', display: 'section', label: 'Site', icon: 'send', props: ['url', 'search', 'limit'] },
+        { key: 'options', display: 'section', label: 'Options', icon: 'sliders', props: ['sitemap', 'includeSubdomains', 'ignoreQueryParameters'] },
+    ],
     audience: 'both',
     aiMetadata: {
         description:
@@ -19,24 +23,26 @@ export const mapWebsite = createAction({
         idempotent: true,
     },
     props: {
-        url: browserlessProps.url({ required: true, description: 'The website to map, for example https://example.com' }),
+        url: browserlessProps.url({ required: true, description: 'The website to map.' }),
         search: Property.ShortText({
             displayName: 'Search Term',
-            description: 'Order the URLs by relevance to this term, for example `pricing`.',
+            description: 'Order the URLs by relevance to this term.',
+            placeholder: 'pricing',
             required: false,
         }),
         limit: Property.Number({
             displayName: 'Maximum URLs',
-            description: 'How many URLs to return (1-5000, default 500).',
+            description: 'How many URLs to return, up to 5000.',
             required: false,
+            defaultValue: 500,
         }),
         sitemap: Property.StaticDropdown({
             displayName: 'Sitemap',
-            description: 'How to use the site\'s sitemap.',
+            description: 'How to use the site\'s sitemap. Empty: sitemap and page links.',
             required: false,
             options: {
                 options: [
-                    { label: 'Use sitemap and page links (default)', value: 'include' },
+                    { label: 'Use sitemap and page links', value: 'include' },
                     { label: 'Only the sitemap', value: 'only' },
                     { label: 'Ignore the sitemap', value: 'skip' },
                 ],
@@ -50,14 +56,15 @@ export const mapWebsite = createAction({
         }),
         ignoreQueryParameters: Property.Checkbox({
             displayName: 'Ignore Query Parameters',
-            description: 'Skip URLs that only differ by their ?query part.',
+            description: 'Treat URLs that differ only in query parameters as one.',
             required: false,
             defaultValue: true,
         }),
         proxy: browserlessProps.proxy({
-            description: 'Proxy network for fetching the site. Browserless uses Residential when empty; Datacenter is cheaper.',
+            description: 'Proxy network. Empty: Residential; Datacenter is cheaper.',
+            advanced: true,
         }),
-        timeout: browserlessProps.sessionTimeout(),
+        timeout: browserlessProps.sessionTimeout({ advanced: true }),
     },
     outputSchema: browserlessOutputSchemas.mapWebsite,
     async run(context) {

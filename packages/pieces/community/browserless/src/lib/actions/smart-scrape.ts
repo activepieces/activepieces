@@ -1,5 +1,5 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { MarkdownVariant, Property, createAction } from '@activepieces/pieces-framework';
 import { browserlessAuth } from '../common/auth';
 import { BrowserlessApiError, browserlessApi } from '../common/client';
 import { browserlessBody, browserlessProps } from '../common/props';
@@ -11,7 +11,11 @@ export const smartScrape = createAction({
     name: 'smart_scrape',
     classification: 'READ',
     displayName: 'Smart Scrape',
-    description: 'Get a page as markdown, text, HTML or links. Browserless tries a fast fetch first and falls back to a real browser, proxy or CAPTCHA solving when the site blocks it.',
+    description: 'Get a page as markdown, text, HTML or links, even when it blocks bots.',
+    propertyGroups: [
+        { key: 'page', display: 'section', label: 'Page', icon: 'send', props: ['url', 'formats'] },
+        { key: 'cleanup', display: 'section', label: 'Clean-up', icon: 'filter', props: ['cleanupInfo', 'onlyMainContent', 'includeTags', 'excludeTags'] },
+    ],
     audience: 'both',
     aiMetadata: {
         description:
@@ -19,10 +23,10 @@ export const smartScrape = createAction({
         idempotent: false,
     },
     props: {
-        url: browserlessProps.url({ required: true, description: 'The page to read, for example https://example.com/blog/post' }),
+        url: browserlessProps.url({ required: true, description: 'The page to read.' }),
         formats: Property.StaticMultiSelectDropdown({
             displayName: 'Formats',
-            description: 'What to return. Markdown is the best choice for AI steps.',
+            description: 'What to return. Markdown suits AI steps best.',
             required: false,
             defaultValue: ['markdown'],
             options: {
@@ -31,8 +35,8 @@ export const smartScrape = createAction({
                     { label: 'Plain Text', value: 'rawText' },
                     { label: 'HTML', value: 'html' },
                     { label: 'Links', value: 'links' },
-                    { label: 'Screenshot (file)', value: 'screenshot' },
-                    { label: 'PDF (file)', value: 'pdf' },
+                    { label: 'Screenshot', value: 'screenshot' },
+                    { label: 'PDF', value: 'pdf' },
                 ],
             },
         }),
@@ -42,26 +46,32 @@ export const smartScrape = createAction({
             required: false,
             defaultValue: false,
         }),
+        cleanupInfo: Property.MarkDown({
+            value: 'Keep Only These Selectors cannot be combined with the other two options.',
+            variant: MarkdownVariant.INFO,
+        }),
         includeTags: Property.Array({
             displayName: 'Keep Only These Selectors',
-            description: 'CSS selectors to keep; cannot be combined with Remove or Only Main Content.',
+            description: 'CSS selectors to keep; everything else is dropped.',
             required: false,
         }),
         excludeTags: Property.Array({
             displayName: 'Remove These Selectors',
-            description: 'CSS selectors to remove (for example `.cookie-banner`).',
+            description: 'CSS selectors to remove, such as .cookie-banner.',
             required: false,
         }),
         waitFor: Property.Number({
-            displayName: 'Extra Wait (ms)',
-            description: 'Wait after load (0-30000 ms); above 0 forces a real browser.',
+            displayName: 'Extra Wait',
+            description: 'Milliseconds to wait after load, max 30000; above 0 uses a browser.',
             required: false,
+            advanced: true,
         }),
         proxy: browserlessProps.proxy({
-            description: 'Proxy network used when a plain fetch is blocked. Browserless uses Residential when empty; Datacenter is cheaper.',
+            description: 'Proxy network. Empty: Residential; Datacenter is cheaper.',
+            advanced: true,
         }),
-        maxCharacters: browserlessProps.maxCharacters(),
-        timeout: browserlessProps.sessionTimeout(),
+        maxCharacters: browserlessProps.maxCharacters({ advanced: true }),
+        timeout: browserlessProps.sessionTimeout({ advanced: true }),
     },
     outputSchema: browserlessOutputSchemas.smartScrape,
     async run(context) {

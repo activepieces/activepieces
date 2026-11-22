@@ -35,11 +35,11 @@ export const listCrawls = createAction({
         }),
         limit: Property.Number({
             displayName: 'Limit',
-            description: 'How many crawls to return in this batch.',
+            description: 'How many crawls to return, up to 1000.',
             required: false,
         }),
         cursor: Property.ShortText({
-            displayName: 'Cursor',
+            displayName: 'Next Cursor',
             description: 'Next Cursor from a previous run, to read the next batch.',
             required: false,
         }),
