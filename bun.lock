@@ -8380,6 +8380,18 @@
         "vitest": "5.0.5",
       },
     },
+    "packages/pieces/community/send21": {
+      "name": "@activepieces/piece-send21",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+        "vitest": "5.0.5",
+      },
+    },
     "packages/pieces/community/sender": {
       "name": "@activepieces/piece-sender",
       "version": "0.2.1",
@@ -12800,6 +12812,8 @@
     "@activepieces/piece-segment": ["@activepieces/piece-segment@workspace:packages/pieces/community/segment"],
 
     "@activepieces/piece-send-it": ["@activepieces/piece-send-it@workspace:packages/pieces/community/send-it"],
+
+    "@activepieces/piece-send21": ["@activepieces/piece-send21@workspace:packages/pieces/community/send21"],
 
     "@activepieces/piece-sender": ["@activepieces/piece-sender@workspace:packages/pieces/community/sender"],
 

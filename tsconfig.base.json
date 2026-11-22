@@ -1233,6 +1233,9 @@
       "@activepieces/piece-segment": [
         "packages/pieces/community/segment/src/index.ts"
       ],
+      "@activepieces/piece-send21": [
+        "packages/pieces/community/send21/src/index.ts"
+      ],
       "@activepieces/piece-sender": [
         "packages/pieces/community/sender/src/index.ts"
       ],
