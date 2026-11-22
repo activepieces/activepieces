@@ -40,10 +40,12 @@ function lazyCall(input: unknown): (Record<string, unknown> & { tool: string }) 
     if (!isRecord(input)) {
         return undefined
     }
-    if (typeof input['tool'] === 'string') {
-        return { ...input, tool: input['tool'] }
-    }
     const { input: wrapped, ...outer } = input
+    const toolName = outer['tool']
+    if (typeof toolName === 'string') {
+        const duplicated = isRecord(wrapped) && wrapped['tool'] === toolName && isRecord(wrapped['input'])
+        return duplicated ? { ...outer, ...wrapped, tool: toolName } : { ...input, tool: toolName }
+    }
     return isRecord(wrapped) && typeof wrapped['tool'] === 'string' ? { ...outer, ...wrapped, tool: wrapped['tool'] } : undefined
 }
 

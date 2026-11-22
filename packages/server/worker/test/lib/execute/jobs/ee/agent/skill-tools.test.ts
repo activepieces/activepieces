@@ -296,6 +296,15 @@ describe('ap_lazy_tool input schema', () => {
         await expect(validateWrapped({ surface: chatSurface(), value: { input: { tool: 'ap_add_step', title: 'Your step', input: { value: 'x' } } } })).resolves.toMatchObject({ success: true, value: { tool: 'ap_add_step', title: 'Your step', input: { value: 'x' } } })
     })
 
+    it('accepts the call wrapped twice in the same tool and keeps its labels', async () => {
+        await expect(validateWrapped({ surface: chatSurface(), value: { tool: 'ap_add_step', title: 'Your step', input: { tool: 'ap_add_step', input: { value: 'x' } } } })).resolves.toMatchObject({ success: true, value: { tool: 'ap_add_step', title: 'Your step', input: { value: 'x' } } })
+    })
+
+    it('rejects an inner call that names a different tool', async () => {
+        const result = await validateWrapped({ surface: chatSurface(), value: { tool: 'ap_add_step', input: { tool: 'ap_other', input: { value: 'x' } } } })
+        expect(result.success).toBe(false)
+    })
+
     it('runs a tool that is attached directly when it is called through the lazy tool', async () => {
         const surface = chatSurface()
         expect(surface.coreToolNames).toContain('ap_research_pieces')
