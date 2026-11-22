@@ -1,17 +1,15 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { cambaiAuth } from '../auth';
-import { API_BASE_URL, MAX_POLLING_ATTEMPTS, POLLING_INTERVAL_MS } from '../common';
-import { listFoldersDropdown } from '../common';
+import { cambCommon, cambOutputSchemas, listFoldersDropdown } from '../common';
 
 export const createTextToSound = createAction({
     auth: cambaiAuth,
     name: 'create_text_to_sound',
-    classification: 'READ',
+    classification: 'WRITE',
     displayName: 'Create Text-to-Sound',
     description: 'Convert input text into “sound effects” using an AI model.',
-    audience: 'both',
-    aiMetadata: { description: 'Generates a sound-effect audio clip from a text prompt describing the desired effect using Camb.AI, polling until the generation task completes and returning the audio. Use to synthesize non-speech sound effects (not spoken voice — use Create Text-to-Speech for that). Duration is capped at 10 seconds (defaults to 8). Not idempotent: each call starts a new generation task and produces fresh audio.', idempotent: false },
+    audience: 'human',
+    outputSchema: cambOutputSchemas['textToSound'],
     props: {
         prompt: Property.LongText({
             displayName: 'Prompt',
@@ -36,70 +34,15 @@ export const createTextToSound = createAction({
         folder_id: listFoldersDropdown,
     },
     async run(context) {
-        const { auth } = context;
         const { prompt, duration, project_name, project_description, folder_id } = context.propsValue;
-
-        const payload: Record<string, unknown> = { prompt };
-        if (duration) payload['duration'] = duration;
-        if (project_name) payload['project_name'] = project_name;
-        if (project_description) payload['project_description'] = project_description;
-        if (folder_id) payload['folder_id'] = folder_id;
-
-
-        const initialResponse = await httpClient.sendRequest<{ task_id: string }>({
-            method: HttpMethod.POST,
-            url: `${API_BASE_URL}/text-to-sound`,
-            headers: {
-                'x-api-key': auth.secret_text,
-                'Content-Type': 'application/json'
-            },
-            body: payload,
+        return cambCommon.runTextToSound({
+            apiKey: context.auth.secret_text,
+            files: context.files,
+            prompt,
+            duration: duration ?? undefined,
+            projectName: project_name,
+            projectDescription: project_description,
+            folderId: folder_id ?? undefined,
         });
-
-        const taskId = initialResponse.body.task_id;
-        let attempts = 0;
-        let run_id: string | null = null;
-        while (attempts < MAX_POLLING_ATTEMPTS) {
-            const statusResponse = await httpClient.sendRequest<{
-                status: string, run_id?: string
-            }>({
-                method: HttpMethod.GET,
-                url: `${API_BASE_URL}/text-to-sound/${taskId}`,
-                headers: {
-                    'x-api-key': auth.secret_text,
-                },
-            });
-
-            const status = statusResponse.body.status;
-
-            if (status === 'SUCCESS') {
-
-                run_id = statusResponse.body.run_id ?? null;
-                break;
-            }
-
-            if (status === 'FAILED') {
-
-                throw new Error(`Sound generation task failed: ${JSON.stringify(statusResponse.body)}`);
-            }
-
-
-            await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL_MS));
-            attempts++;
-        }
-
-
-        if (!run_id) {
-            throw new Error("Sound generation task timed out or failed to return a run_id.");
-        }
-        const audioResponse = await httpClient.sendRequest({
-            method: HttpMethod.GET,
-            url: `${API_BASE_URL}/text-to-sound-result/${run_id}`,
-            headers: { 'x-api-key': auth.secret_text },
-            responseType: 'arraybuffer',
-        });
-
-        return { audio: audioResponse.body };
-
     },
 });

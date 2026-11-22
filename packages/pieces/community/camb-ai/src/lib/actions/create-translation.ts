@@ -1,16 +1,15 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { cambaiAuth } from '../auth';
-import { API_BASE_URL, listSourceLanguagesDropdown, listTargetLanguagesDropdown ,POLLING_INTERVAL_MS,MAX_POLLING_ATTEMPTS} from '../common';
+import { cambCommon, cambOutputSchemas, listFoldersDropdown, listSourceLanguagesDropdown, listTargetLanguagesDropdown } from '../common';
 
 export const createTranslation = createAction({
     auth: cambaiAuth,
     name: 'create_translation',
-    classification: 'READ',
+    classification: 'WRITE',
     displayName: 'Create Translation',
     description: 'Translate text from a source language to a target language.',
-    audience: 'both',
-    aiMetadata: { description: 'Translates text from a source language to a target language via Camb.AI, polling until the translation task completes. Each input line is treated as a separate segment to translate, and both languages are chosen from Camb.AI dropdowns; optionally tune formality, gender, and target audience age. Use for text translation only (not audio — use Create Transcription for speech-to-text). Not idempotent: each call starts a new translation task.', idempotent: false },
+    audience: 'human',
+    outputSchema: cambOutputSchemas['translation'],
     props: {
         texts: Property.LongText({
             displayName: 'Text to Translate',
@@ -53,64 +52,26 @@ export const createTranslation = createAction({
             description: 'A memorable name for your project to help organize tasks in your Camb.ai workspace.',
             required: false,
         }),
+        project_description: Property.LongText({
+            displayName: 'Project Description',
+            description: 'Provide details about your project\'s goals and specifications for documentation purposes.',
+            required: false,
+        }),
+        folder_id: listFoldersDropdown,
     },
     async run(context) {
-        const { auth } = context;
-        const { texts, source_language, target_language, formality, gender, age, project_name } = context.propsValue;
-
-        const payload: Record<string, unknown> = {
-            texts: texts.split('\n').filter(line => line.trim().length > 0),
-            source_language: Number(source_language),
-            target_language: Number(target_language),
-        };
-        if (formality !== undefined) payload['formality'] = formality;
-        if (gender !== undefined) payload['gender'] = gender;
-        if (age) payload['age'] = age;
-        if (project_name) payload['project_name'] = project_name;
-
-        const initialResponse = await httpClient.sendRequest<{ task_id: string }>({
-            method: HttpMethod.POST,
-            url: `${API_BASE_URL}/translate`,
-            headers: { 'x-api-key': auth.secret_text, 'Content-Type': 'application/json' },
-            body: payload,
+        const { texts, source_language, target_language, formality, gender, age, project_name, project_description, folder_id } = context.propsValue;
+        return cambCommon.runTranslation({
+            apiKey: context.auth.secret_text,
+            texts,
+            sourceLanguage: Number(source_language),
+            targetLanguage: Number(target_language),
+            formality: formality ?? undefined,
+            gender: gender ?? undefined,
+            age: age ?? undefined,
+            projectName: project_name,
+            projectDescription: project_description,
+            folderId: folder_id ?? undefined,
         });
-        const taskId = initialResponse.body.task_id;
-        let run_id: string | null = null;
-        
-        let attempts = 0;
-        while (attempts < MAX_POLLING_ATTEMPTS) {
-            const statusResponse = await httpClient.sendRequest<{ status: string; run_id?: string }>({
-                method: HttpMethod.GET,
-                url: `${API_BASE_URL}/translate/${taskId}`,
-                headers: { 'x-api-key': auth.secret_text },
-            });
-          
-            if (statusResponse.body.status === 'SUCCESS') {
-
-                run_id = statusResponse.body.run_id ?? null;
-                break;
-            }
-            if (statusResponse.body.status === 'ERROR' || statusResponse.body.status === 'FAILED') {
-
-                throw new Error(`Translation task failed: ${JSON.stringify(statusResponse.body)}`);
-            }
-            await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL_MS));
-            attempts++;
-        }
-        
-
-        if (!run_id) {
-            throw new Error("Translation task timed out or failed to return a task_id.");
-        }
-
-        const resultResponse = await httpClient.sendRequest<{ translations: string[] }>({
-            method: HttpMethod.GET,
-            url: `${API_BASE_URL}/translation-result/${run_id}`,
-            headers: { 'x-api-key': auth.secret_text },
-        }); 
-
-        return resultResponse.body;
-
-        
     },
 });

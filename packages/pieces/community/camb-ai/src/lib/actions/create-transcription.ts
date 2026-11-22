@@ -1,18 +1,15 @@
-import { createAction, Property, ApFile, DynamicPropsValue } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient, HttpMessageBody, HttpHeaders } from '@activepieces/pieces-common';
+import { createAction, Property, DynamicPropsValue } from '@activepieces/pieces-framework';
 import { cambaiAuth } from '../auth';
-import { API_BASE_URL, listSourceLanguagesDropdown, POLLING_INTERVAL_MS, LONG_MAX_POLLING_ATTEMPTS } from '../common';
-import FormData from 'form-data';
-import { listFoldersDropdown } from '../common';
+import { cambCommon, cambOutputSchemas, listFoldersDropdown, listSourceLanguagesDropdown } from '../common';
 
 export const createTranscription = createAction({
     auth: cambaiAuth,
     name: 'create_transcription',
-    classification: 'READ',
+    classification: 'WRITE',
     displayName: 'Create Transcription',
     description: 'Creates a task to process speech into readable text.',
-    audience: 'both',
-    aiMetadata: { description: 'Transcribes speech from an audio/video source into text via Camb.AI, polling until the transcription task completes. The media can be supplied either as an uploaded file (max 20MB) or as a public file URL, selected via the media source mode; you must specify the spoken language. Use to convert recorded speech to text. Not idempotent: each call starts a new transcription task.', idempotent: false },
+    audience: 'human',
+    outputSchema: cambOutputSchemas['transcription'],
     props: {
         language: listSourceLanguagesDropdown,
         source_type: Property.StaticDropdown({
@@ -33,7 +30,7 @@ export const createTranscription = createAction({
             required: true,
             refreshers: ['source_type'],
             props: async (context) => {
-                const sourceType = (context['source_type'] as unknown as string);
+                const sourceType = context['source_type'];
                 const fields: DynamicPropsValue = {};
                 if (sourceType === 'file') {
                     fields['media_file'] = Property.File({
@@ -64,70 +61,35 @@ export const createTranscription = createAction({
         folder_id: listFoldersDropdown,
     },
     async run(context) {
-        const { auth } = context;
         const { language, source_type, media, project_name, project_description, folder_id } = context.propsValue;
-
-        const formData = new FormData();
-        
-        formData.append('language', Number(language).toString());
-        if (project_name) formData.append('project_name', project_name);
-        if (project_description) formData.append('project_description', project_description);
-        if (folder_id) formData.append('folder_id', folder_id.toString());
-
+        const mediaFile = toFile(media['media_file']);
+        const mediaUrl = media['media_url'];
         if (source_type === 'url') {
-            if (!media['media_url']) throw new Error("Media URL is required when source is 'File URL'.");
-            formData.append('media_url', media['media_url'] as string);
-        } else {
-            if (!media['media_file']) throw new Error("Media File is required when source is 'Upload File'.");
-            const fileData = media['media_file'] as ApFile;
-            formData.append('media_file', fileData.data, fileData.filename);
-        }
-        
-
-        const requestBody = await formData.getBuffer();
-        const headers: HttpHeaders = {
-            'x-api-key': auth.secret_text,
-            ...formData.getHeaders(),
-        };
-
-        const initialResponse = await httpClient.sendRequest<{ task_id: string }>({
-            method: HttpMethod.POST,
-            url: `${API_BASE_URL}/transcribe`,
-            headers: headers,
-            body: requestBody, 
-        });
-        const taskId = initialResponse.body.task_id;
-        let run_id: string | null = null;
-
-        let attempts = 0;
-        while (attempts < LONG_MAX_POLLING_ATTEMPTS) {
-            const statusResponse = await httpClient.sendRequest<{ status: string; run_id?: string }>({
-                method: HttpMethod.GET,
-                url: `${API_BASE_URL}/transcribe/${taskId}`,
-                headers: { 'x-api-key': auth.secret_text },
-            });
-
-            if (statusResponse.body.status === 'SUCCESS') {
-                run_id = statusResponse.body.run_id ?? null;
-                break;
+            if (typeof mediaUrl !== 'string' || mediaUrl.trim() === '') {
+                throw new Error("Media URL is required when source is 'File URL'.");
             }
-            if (statusResponse.body.status === 'FAILED') {
-                throw new Error(`Transcription task failed: ${JSON.stringify(statusResponse.body)}`);
-            }
-            await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL_MS));
-            attempts++;
+        } else if (!mediaFile) {
+            throw new Error("Media File is required when source is 'Upload File'.");
         }
-
-        if (!run_id) {
-            throw new Error("Transcription task timed out or failed to return a task_id.");
-        }
-        const resultResponse = await httpClient.sendRequest<{ transcriptions: string[] }>({
-            method: HttpMethod.GET,
-            url: `${API_BASE_URL}/transcription-result/${run_id}`,
-            headers: { 'x-api-key': auth.secret_text },
+        return cambCommon.runTranscription({
+            apiKey: context.auth.secret_text,
+            language: Number(language),
+            mediaUrl: source_type === 'url' && typeof mediaUrl === 'string' ? mediaUrl.trim() : undefined,
+            mediaFile: source_type === 'url' ? undefined : mediaFile,
+            projectName: project_name,
+            projectDescription: project_description,
+            folderId: folder_id ?? undefined,
         });
-
-        return resultResponse.body;
-       
     },
 });
+
+function toFile(value: unknown): { data: Buffer; filename: string } | undefined {
+    if (typeof value !== 'object' || value === null || !('data' in value) || !('filename' in value)) {
+        return undefined;
+    }
+    const { data, filename } = value;
+    if (!Buffer.isBuffer(data) || typeof filename !== 'string') {
+        return undefined;
+    }
+    return { data, filename };
+}
