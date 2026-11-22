@@ -7,7 +7,7 @@ describe('scriptedUser', () => {
             { externalId: 'old', displayName: 'Old Slack', status: 'ERROR' },
             { externalId: 'slack-1', displayName: 'Team Slack', status: 'ACTIVE' },
         ])
-        const user = scriptedUser.create({ answers: { questions: null, connections: {} }, listConnections })
+        const user = scriptedUser.create({ answers: { questions: null, connections: {} }, listConnections, projectId: 'proj-1' })
 
         await user.onGateOpened({ gateId: 'g1', toolName: 'ap_show_connection_picker', displayName: 'Slack', toolInput: { piece: 'slack', displayName: 'Slack' } })
         const decision = await user.waitForApproval({ gateId: 'g1' })
@@ -18,7 +18,7 @@ describe('scriptedUser', () => {
 
     it('dismisses the card when the case says the user has no connection', async () => {
         const listConnections = vi.fn(async (): Promise<ProjectConnection[]> => [])
-        const user = scriptedUser.create({ answers: { questions: null, connections: { '@activepieces/piece-hubspot': 'none' } }, listConnections })
+        const user = scriptedUser.create({ answers: { questions: null, connections: { '@activepieces/piece-hubspot': 'none' } }, listConnections, projectId: 'proj-1' })
 
         await user.onGateOpened({ gateId: 'g1', toolName: 'ap_show_connection_picker', displayName: 'HubSpot', toolInput: { piece: 'hubspot', displayName: 'HubSpot' } })
 
@@ -28,8 +28,8 @@ describe('scriptedUser', () => {
 
     it('answers question cards with the case answer, or sensible defaults', async () => {
         const listConnections = vi.fn(async (): Promise<ProjectConnection[]> => [])
-        const withAnswer = scriptedUser.create({ answers: { questions: 'every Monday at 9', connections: {} }, listConnections })
-        const withDefault = scriptedUser.create({ answers: { questions: null, connections: {} }, listConnections })
+        const withAnswer = scriptedUser.create({ answers: { questions: 'every Monday at 9', connections: {} }, listConnections, projectId: 'proj-1' })
+        const withDefault = scriptedUser.create({ answers: { questions: null, connections: {} }, listConnections, projectId: 'proj-1' })
 
         await withAnswer.onGateOpened({ gateId: 'q', toolName: 'ap_show_questions', displayName: 'Questions', toolInput: {} })
         await withDefault.onGateOpened({ gateId: 'q', toolName: 'ap_show_questions', displayName: 'Questions', toolInput: {} })

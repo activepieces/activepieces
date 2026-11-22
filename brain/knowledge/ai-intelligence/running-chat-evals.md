@@ -21,12 +21,13 @@ icon: 🧪
 - `npm run evals -- --dataset chat-core --case 2 --case 5`: only those cases.
 - `--repeats 1`: a quick check. `--model <id>`: another model (default `z-ai/glm-5.3`).
 - `--verbose`: print every run with its transcript instead of the live table.
+- After each live run the harness deletes the flows and tables that run created (ids from the create/build tool results, read after the "flows after the turn" block); folders stay, the dev server has no folder delete. `--keep` skips the cleanup; the CLI warns at start when the eval project already holds more than 20 flows.
 
 ## Reading the result
 
 - In a terminal a live table shows each case's title (`metadata.title` in PostHog, falling back to its check), one mark per run (✓, ✗, spinner, `·` not started), runs done, cost so far and elapsed time. A case gets its verdict as soon as the remaining runs can't change it. Outside a terminal it prints line by line.
 - When the runs finish, a results browser opens: ↑↓ to move, Enter to open a case's runs and then a run's failure reasons and transcript, Esc to go back, a case number to jump, q to quit. The verdicts and the baseline diff print after you quit.
-- **Judge:** Jev 1.14 answers each check (`EVALS_JUDGE_MODEL` overrides it) and sees the user message plus the replayed steps. P(pass) between 0.35 and 0.65 is `unclear` (`?`), never a guess. A failed check gets a one-line reason from Haiku 5.5. There is no 1–10 score.
+- **Judge:** Jev 1.14 answers each check (`EVALS_JUDGE_MODEL` overrides it) and sees the user message plus the steps with unwrapped `ap_lazy_tool` calls and full workspace tool inputs/results (only skill, research and web reads are cut at 2,000 chars); live cases also get a "flows after the turn" block and a note that stubbed tools (`ap_test_flow` etc.) are faked. P(pass) between 0.35 and 0.65 is escalated to Sonnet 5.5, which returns pass/fail with one evidence line and may say `unclear` (`?`) only when the evidence is missing. A failed check gets a one-line reason from Haiku 5.5; `--save` stores per-check P, verdict, evidence and the judged text. There is no 1–10 score.
 - **Case verdict:** a `chat-core` case passes only when every run passes (pass^k, as Anthropic recommends for regression cases). Any other case passes when more than half pass. An unclear run doesn't count as a pass.
 - **Case summary:** after the runs, every case gets `expected`, `happened` and `means` lines (Haiku 5.5, only for cases with a failed or unclear run), e.g. "a user hits this about 1 time in 5".
 - **Diff:** each case shows `before → now` against the main baseline: `same`, `FIXED`, `REGRESSED` or `unclear`. A change counts only when at least 80% of at least 3 runs agree on both sides.

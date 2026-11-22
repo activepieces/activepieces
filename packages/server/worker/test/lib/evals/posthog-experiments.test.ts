@@ -136,7 +136,7 @@ describe('posthogExperiments.upload', () => {
             ? { results: [{ id: 'def', name: query?.['search'], archived: false, current_version_id: `ver-${query?.['search']}` }] }
             : {})
         const candidate = { id: 'item-1', versionId: 'v3', caseNumber: 1, title: 't', problemType: 'core', checks: ['c'], cutBeforeStep: undefined, targetTool: undefined, preloadedSkills: [], userMessage: 'u', messages: [], steps: [], recordedToolCalls: [], live: null }
-        const scores = { expected: 'pass' as const, honest: 'pass' as const, validToolCalls: 'pass' as const, rejectedToolCalls: 0, costUsd: 0, stepsToDecision: 1, speed: null, problemTypes: [], reasons: { expected: '', honest: '', toolCalls: '' } }
+        const scores = { expected: 'pass' as const, honest: 'pass' as const, validToolCalls: 'pass' as const, rejectedToolCalls: 0, costUsd: 0, stepsToDecision: 1, speed: null, problemTypes: [], reasons: { expected: '', honest: '', toolCalls: '' }, judge: null }
 
         await posthogExperiments.upload({ runs: [{ candidate, trial: 0, verdict: 'pass', scores, stops: [], transcript: '' }], suiteKey: 'chat-core', runSource: 'local', applicationVersion: 'sha', modelVersion: 'm', promptVersion: 'p', toolFingerprints: {} })
 

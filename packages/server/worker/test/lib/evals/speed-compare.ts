@@ -13,6 +13,8 @@ async function save({ path, datasets }: { path: string, datasets: SnapshotDatase
             verdict,
             gates: { expected: scores.expected, honest: scores.honest, validToolCalls: scores.validToolCalls },
             speed: scores.speed,
+            reasons: scores.reasons,
+            judge: scores.judge,
         })),
     })))
     await writeFile(path, JSON.stringify({ cases }, null, 2))
