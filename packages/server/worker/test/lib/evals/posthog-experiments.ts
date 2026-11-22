@@ -126,10 +126,32 @@ function resultsFor({ scores, itemId, scorers }: { scores: RunScores, itemId: st
         valueResult({ itemId, scorerVersionId: scorers.rejectedToolCalls, value: scores.rejectedToolCalls, reasoning: scores.reasons.toolCalls }),
         valueResult({ itemId, scorerVersionId: scorers.costUsd, value: scores.costUsd, reasoning: '' }),
         valueResult({ itemId, scorerVersionId: scorers.stepsToDecision, value: scores.stepsToDecision, reasoning: '' }),
+        ...speedResults({ itemId, scores, scorers }),
         scores.problemTypes.length === 0
             ? { item_id: itemId, scorer_version_id: scorers.problemType, status: 'not_applicable', value: null, evaluated_at: new Date().toISOString() }
             : valueResult({ itemId, scorerVersionId: scorers.problemType, value: scores.problemTypes, reasoning: scores.reasons.expected }),
     ]
+}
+
+function speedResults({ itemId, scores, scorers }: { itemId: string, scores: RunScores, scorers: Scorers }): Record<string, unknown>[] {
+    const { speed } = scores
+    if (isNil(speed)) {
+        return []
+    }
+    const { wasted } = speed
+    return [
+        valueResult({ itemId, scorerVersionId: scorers.turnSeconds, value: toSeconds(speed.totalMs), reasoning: '' }),
+        valueResult({ itemId, scorerVersionId: scorers.modelSeconds, value: toSeconds(speed.modelMs), reasoning: '' }),
+        valueResult({ itemId, scorerVersionId: scorers.toolCalls, value: speed.toolCalls, reasoning: '' }),
+        valueResult({ itemId, scorerVersionId: scorers.wastedToolCalls, value: wasted.rejectedInputs + wasted.repeatedPieceProps + wasted.fixRoundsAfterBuild, reasoning: `${wasted.rejectedInputs} rejected, ${wasted.repeatedPieceProps} repeated props, ${wasted.fixRoundsAfterBuild} fixes after build` }),
+        valueResult({ itemId, scorerVersionId: scorers.inputTokens, value: speed.inputTokens, reasoning: `cached ${speed.cachedInputTokens ?? 'unknown'}` }),
+        valueResult({ itemId, scorerVersionId: scorers.outputTokens, value: speed.outputTokens, reasoning: `reasoning ${speed.reasoningTokens ?? 'unknown'}` }),
+        valueResult({ itemId, scorerVersionId: scorers.firstBuildSeconds, value: isNil(speed.firstBuildMs) ? null : toSeconds(speed.firstBuildMs), reasoning: '' }),
+    ]
+}
+
+function toSeconds(ms: number): number {
+    return Math.round(ms / 100) / 10
 }
 
 function passed(verdict: RunVerdict): boolean | null {
@@ -156,6 +178,13 @@ async function ensureScorers(): Promise<Scorers> {
         costUsd: id('costUsd'),
         stepsToDecision: id('stepsToDecision'),
         problemType: id('problemType'),
+        turnSeconds: id('turnSeconds'),
+        modelSeconds: id('modelSeconds'),
+        toolCalls: id('toolCalls'),
+        wastedToolCalls: id('wastedToolCalls'),
+        inputTokens: id('inputTokens'),
+        outputTokens: id('outputTokens'),
+        firstBuildSeconds: id('firstBuildSeconds'),
     }
 }
 
@@ -189,6 +218,13 @@ const SCORERS: Record<string, ScorerDefinition> = {
     rejectedToolCalls: { name: 'Rejected tool calls', kind: 'numeric', tags: ['chat-eval', 'code', 'gate'], description: 'Code: number of tool calls rejected for bad input, including repairs.', config: { min: 0, step: 1, passing_rule: { operator: 'lte', threshold: 0 } } },
     costUsd: { name: 'Cost per run (USD)', kind: 'numeric', tags: ['chat-eval', 'code', 'tracked'], description: 'Code: OpenRouter cost of the agent\'s model calls in this run.', config: { min: 0, passing_rule: { operator: 'lte', threshold: 0.05 } } },
     stepsToDecision: { name: 'Steps to decision', kind: 'numeric', tags: ['chat-eval', 'code', 'tracked'], description: 'Code: model steps the agent took in the graded window.', config: { min: 0, step: 1, passing_rule: { operator: 'lte', threshold: 3 } } },
+    turnSeconds: { name: 'Turn time (s)', kind: 'numeric', tags: ['chat-eval', 'code', 'speed'], description: 'Code: wall time of the whole turn, from the user message to the last reply.', config: { min: 0 } },
+    modelSeconds: { name: 'Model time (s)', kind: 'numeric', tags: ['chat-eval', 'code', 'speed'], description: 'Code: time spent waiting on the model, summed over its calls.', config: { min: 0 } },
+    toolCalls: { name: 'Tool calls', kind: 'numeric', tags: ['chat-eval', 'code', 'speed'], description: 'Code: tool calls the agent made in the turn.', config: { min: 0, step: 1 } },
+    wastedToolCalls: { name: 'Wasted tool calls', kind: 'numeric', tags: ['chat-eval', 'code', 'speed'], description: 'Code: rejected inputs, repeated ap_get_piece_props with the same input, and flow edits after the first successful build.', config: { min: 0, step: 1 } },
+    inputTokens: { name: 'Input tokens', kind: 'numeric', tags: ['chat-eval', 'code', 'speed'], description: 'Code: input tokens over all model calls in the turn, cached ones included.', config: { min: 0, step: 1 } },
+    outputTokens: { name: 'Output tokens', kind: 'numeric', tags: ['chat-eval', 'code', 'speed'], description: 'Code: output tokens over all model calls in the turn, reasoning included.', config: { min: 0, step: 1 } },
+    firstBuildSeconds: { name: 'Time to first build (s)', kind: 'numeric', tags: ['chat-eval', 'code', 'speed'], description: 'Code: time from the user message to the first ap_build_flow that succeeded. Empty when nothing was built.', config: { min: 0 } },
     problemType: {
         name: 'Problem type (eval)',
         kind: 'categorical',
@@ -238,6 +274,13 @@ type Scorers = {
     costUsd: string
     stepsToDecision: string
     problemType: string
+    turnSeconds: string
+    modelSeconds: string
+    toolCalls: string
+    wastedToolCalls: string
+    inputTokens: string
+    outputTokens: string
+    firstBuildSeconds: string
 }
 
 type ExperimentItem = z.infer<typeof ExperimentItem>

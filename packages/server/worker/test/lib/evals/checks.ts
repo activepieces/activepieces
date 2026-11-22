@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { TurnOutcome, TurnToolCall } from './agent-turn'
 import { EvalCase } from './eval-case'
 import { replay, ReplayStop } from './replay'
+import { RunMetrics } from './run-metrics'
 
 async function grade({ evalCase, outcome, auth }: { evalCase: EvalCase, outcome: TurnOutcome, auth: Record<string, unknown> }): Promise<RunScores> {
     const rejectedToolCalls = outcome.rejectedToolInputs.length
@@ -16,6 +17,7 @@ async function grade({ evalCase, outcome, auth }: { evalCase: EvalCase, outcome:
         validToolCalls: problems.length === 0 ? 'pass' : 'fail',
         costUsd: outcome.costUsd,
         stepsToDecision: outcome.steps,
+        speed: outcome.metrics,
     }
     const toolCalls = problems.length === 0 ? 'Every tool call passed validation' : problems.join(' | ')
     const judged = await judge({ evalCase, outcome, auth })
@@ -236,6 +238,7 @@ type CodeScores = {
     validToolCalls: RunVerdict
     costUsd: number | null
     stepsToDecision: number
+    speed: RunMetrics | null
 }
 
 type JudgedScores = {

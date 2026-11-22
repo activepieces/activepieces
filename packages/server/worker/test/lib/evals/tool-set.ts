@@ -8,7 +8,8 @@ import { agentMcpClient } from '../../../src/lib/execute/jobs/ee/agent/agent-mcp
 import { agentToolPolicy } from '../../../src/lib/execute/jobs/ee/agent/agent-tool-policy'
 import { agentWorkerTools, GateDecision } from '../../../src/lib/execute/jobs/ee/agent/agent-worker-tools'
 import { EVAL_PROJECT } from './prompts'
-import { replay, Replay } from './replay'
+import { replay, Replay, ReplayMode } from './replay'
+import { ProjectConnection, ScriptedUser } from './scripted-user'
 
 async function connectMcp(): Promise<McpTools> {
     const baseUrl = devServerUrl()
@@ -30,12 +31,12 @@ async function connectMcp(): Promise<McpTools> {
     }
 }
 
-function build({ mcp, caseReplay, auth, recordMode }: { mcp: McpTools, caseReplay: Replay, auth: Record<string, unknown>, recordMode: boolean }): ToolSet {
+function build({ mcp, caseReplay, auth, mode, user }: { mcp: McpTools, caseReplay: Replay, auth: Record<string, unknown>, mode: ReplayMode, user: ScriptedUser | null }): ToolSet {
     const taintState = agentWorkerTools.createTaintState({ carried: false })
     const eventEmitter = agentWorkerTools.createEventEmitter({ sendEvent: async () => {}, userId: EVAL_USER_ID, conversationId: mcp.conversationId })
     const executeTool = async (toolName: string, toolInput: Record<string, unknown>): Promise<unknown> => replay.resolveCall({
         caseReplay,
-        recordMode,
+        mode,
         toolName,
         input: toolInput,
         live: () => executeOnDevServer({ toolName, toolInput, conversationId: mcp.conversationId }),
@@ -47,7 +48,7 @@ function build({ mcp, caseReplay, auth, recordMode }: { mcp: McpTools, caseRepla
         source: AgentRunSource.CHAT,
         groups: {
             local: agentWorkerTools.createLocalTools({ onSetProjectContext: async () => ({ success: true }), projects: [EVAL_PROJECT] }),
-            display: agentWorkerTools.createDisplayTools({ waitForApproval: dismissCard, displayToolTimeoutMs: DISPLAY_TOOL_TIMEOUT_MS, onConnectionSelected: noop, onGateOpened: noop }),
+            display: agentWorkerTools.createDisplayTools({ waitForApproval: user?.waitForApproval ?? dismissCard, displayToolTimeoutMs: DISPLAY_TOOL_TIMEOUT_MS, onConnectionSelected: noop, onGateOpened: user?.onGateOpened ?? noop }),
             crossProject: agentWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: approve, onGateOpened: noop, taintState }),
             web: replayed({
                 tools: {
@@ -55,13 +56,13 @@ function build({ mcp, caseReplay, auth, recordMode }: { mcp: McpTools, caseRepla
                     ...agentWorkerTools.createProviderSearchTools({ search: (request) => searchWeb({ request, auth }), billedAtCost: false, taintState }),
                 },
                 caseReplay,
-                recordMode,
+                mode,
             }),
             thinking: agentWorkerTools.createThinkingTools(),
             buildPlan: agentWorkerTools.createBuildPlanTools({ eventEmitter, getProjectId: () => EVAL_PROJECT.id }),
             email: {},
             agentSurface: agentWorkerTools.createAgentSurfaceTools({ executeTool, taintState, eventEmitter, waitForApproval: approve, onGateOpened: noop }),
-            mcp: replayed({ tools: mcp.toolSet, caseReplay, recordMode }),
+            mcp: replayed({ tools: mcp.toolSet, caseReplay, mode }),
             configuredPiece: {},
             configuredFlow: {},
             knowledgeBase: {},
@@ -70,20 +71,28 @@ function build({ mcp, caseReplay, auth, recordMode }: { mcp: McpTools, caseRepla
     })
 }
 
-function replayed({ tools, caseReplay, recordMode }: { tools: ToolSet, caseReplay: Replay, recordMode: boolean }): ToolSet {
+function replayed({ tools, caseReplay, mode }: { tools: ToolSet, caseReplay: Replay, mode: ReplayMode }): ToolSet {
     return Object.fromEntries(Object.entries(tools).map(([toolName, tool]) => {
         const liveExecute = tool.execute
         return [toolName, {
             ...tool,
             execute: async (input: unknown, options: ToolExecutionOptions) => replay.resolveCall({
                 caseReplay,
-                recordMode,
+                mode,
                 toolName,
                 input,
                 live: isNil(liveExecute) ? undefined : async () => liveExecute(input, options),
             }),
         }]
     }))
+}
+
+async function listConnections({ mcp, pieceName }: { mcp: McpTools, pieceName: string }): Promise<ProjectConnection[]> {
+    const execute = mcp.toolSet[LIST_CONNECTIONS_TOOL]?.execute
+    if (isNil(execute)) {
+        throw new Error(`The dev server MCP does not offer ${LIST_CONNECTIONS_TOOL}`)
+    }
+    return ListConnectionsOutput.parse(await execute({ pieceName }, { toolCallId: LIST_CONNECTIONS_TOOL, messages: [], context: {} })).structuredContent.connections
 }
 
 async function executeOnDevServer({ toolName, toolInput, conversationId }: { toolName: string, toolInput: Record<string, unknown>, conversationId: string }): Promise<unknown> {
@@ -127,12 +136,15 @@ const EVAL_USER_ID = 'eval-user'
 
 const McpCredentials = z.object({ mcpServerUrl: z.string(), mcpToken: z.string(), conversationId: z.string(), projectName: z.string() })
 const ExecuteToolResponse = z.object({ result: z.unknown() })
+const LIST_CONNECTIONS_TOOL = 'ap_list_connections'
+const ListConnectionsOutput = z.object({ structuredContent: z.object({ connections: z.array(ProjectConnection) }) })
 
 const silentLog = Fastify({ logger: false }).log
 
 export const evalToolSet = {
     connectMcp,
     build,
+    listConnections,
 }
 
 export type McpTools = {

@@ -7,7 +7,7 @@ import { toolChanges } from './tool-changes'
 describe('toolChanges', () => {
     const listFlows = (description: string, schema: z.ZodObject): ToolSet => ({ ap_list_flows: tool({ description, inputSchema: schema }) })
     const evalCaseWith = ({ recordedToolCalls, targetTool }: { recordedToolCalls: RecordedToolCall[], targetTool?: string }): EvalCase => ({
-        id: 'item', versionId: 'v1', caseNumber: 1, title: 't', userMessage: 'u', checks: [], problemType: 'core', cutBeforeStep: 0, targetTool, messages: [], steps: [], preloadedSkills: [], recordedToolCalls,
+        id: 'item', versionId: 'v1', caseNumber: 1, title: 't', userMessage: 'u', checks: [], problemType: 'core', cutBeforeStep: 0, targetTool, messages: [], steps: [], preloadedSkills: [], recordedToolCalls, live: null,
     })
 
     it('flags a tool whose description or input schema changed, and added or removed tools', async () => {
