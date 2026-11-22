@@ -21,6 +21,7 @@ icon: 🧪
 - `npm run evals -- --dataset chat-core --case 2 --case 5`: only those cases.
 - `--repeats 1`: a quick check. `--model <id>`: another model (default `z-ai/glm-5.3`).
 - `--verbose`: print every run with its transcript instead of the live table.
+- After each live run the harness deletes the flows and tables that run created (ids from the create/build tool results, read after the "flows after the turn" block); folders stay, the dev server has no folder delete. `--keep` skips the cleanup; the CLI warns at start when the eval project already holds more than 20 flows.
 
 ## Reading the result
 

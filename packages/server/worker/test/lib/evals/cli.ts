@@ -9,6 +9,7 @@ import { RunMetrics } from './run-metrics'
 import { caseSummary, CaseExplanation } from './case-summary'
 import { evalChecks, RunScores, RunVerdict, Verdict } from './checks'
 import { colors } from './colors'
+import { createdResources } from './created-resources'
 import { evalCase, EvalCase, RecordedToolCall } from './eval-case'
 import { posthogDataset } from './posthog-dataset'
 import { Baseline, posthogExperiments, UploadedRun, VerdictCounts } from './posthog-experiments'
@@ -39,6 +40,7 @@ async function main(): Promise<void> {
             'save': { type: 'string' },
             'compare': { type: 'string' },
             'against': { type: 'string' },
+            'keep': { type: 'boolean', default: false },
         },
     })
     if (!isNil(values.compare) || !isNil(values.against)) {
@@ -92,6 +94,10 @@ async function main(): Promise<void> {
     }
     const [auth, mcp, baselineReads] = setup.data
     console.log(`Dev server MCP tools run in project "${mcp.projectName}"`)
+    const crowded = datasets.some((dataset) => dataset.cases.some((candidate) => !isNil(candidate.live))) ? await createdResources.crowdedWarning({ mcp }) : null
+    if (!isNil(crowded)) {
+        console.log(colors.yellow(crowded))
+    }
     const schemaTools = evalToolSet.build({ mcp, caseReplay: replay.create({ recordedToolCalls: [] }), auth, mode: 'replay', user: null })
     const toolFingerprints = await toolChanges.fingerprints({ tools: schemaTools })
     const live = Boolean(process.stdout.isTTY) && !values.verbose
@@ -100,7 +106,7 @@ async function main(): Promise<void> {
     let explained = new Map<string, CaseExplanation>()
     try {
         for (const [index, dataset] of datasets.entries()) {
-            ran.push(await runDataset({ dataset, repeats, recordMode, upload: values.upload, verbose: values.verbose, live, modelId: values.model, auth, mcp, schemaTools, baselineRead: baselineReads[index], toolFingerprints }))
+            ran.push(await runDataset({ dataset, repeats, recordMode, keep: values.keep, upload: values.upload, verbose: values.verbose, live, modelId: values.model, auth, mcp, schemaTools, baselineRead: baselineReads[index], toolFingerprints }))
         }
         if (!recordMode) {
             console.log(colors.dim('\nWriting a short summary for each case…'))
@@ -192,7 +198,7 @@ function printUntested({ cases, changedTools }: { cases: EvalCase[], changedTool
     console.log(colors.yellow(`\nThese cases answer a tool you changed from recordings, so their result does not test your change. Use the agent bench for that:\n${lines.join('\n')}`))
 }
 
-async function runDataset({ dataset, repeats, recordMode, upload, verbose, live, modelId, auth, mcp, schemaTools, baselineRead, toolFingerprints }: { dataset: { name: string, cases: EvalCase[] }, repeats: number, recordMode: boolean, upload: boolean, verbose: boolean, live: boolean, modelId: string, auth: Record<string, unknown>, mcp: McpTools, schemaTools: ToolSet, baselineRead: BaselineRead, toolFingerprints: ToolFingerprints }): Promise<RanDataset> {
+async function runDataset({ dataset, repeats, recordMode, keep, upload, verbose, live, modelId, auth, mcp, schemaTools, baselineRead, toolFingerprints }: { dataset: { name: string, cases: EvalCase[] }, repeats: number, recordMode: boolean, keep: boolean, upload: boolean, verbose: boolean, live: boolean, modelId: string, auth: Record<string, unknown>, mcp: McpTools, schemaTools: ToolSet, baselineRead: BaselineRead, toolFingerprints: ToolFingerprints }): Promise<RanDataset> {
     const { name, cases } = dataset
     const changedTools = changedSinceBaseline({ baselineRead, toolFingerprints })
     const splits = new Map(await Promise.all(cases.map(async (candidate) => [candidate.id, await replay.splitStale({ tools: schemaTools, recordedToolCalls: candidate.recordedToolCalls })] as const)))
@@ -207,11 +213,12 @@ async function runDataset({ dataset, repeats, recordMode, upload, verbose, live,
         runs,
         run: (planned) => {
             table?.start(planned)
-            return evaluate({ ...planned, recordedToolCalls: splits.get(planned.candidate.id)?.fresh ?? [], mcp, modelId, auth, recordMode })
+            return evaluate({ ...planned, recordedToolCalls: splits.get(planned.candidate.id)?.fresh ?? [], mcp, modelId, auth, recordMode, keep })
         },
         onResult: (result) => isNil(table) ? print({ result, verbose }) : table.finish({ ...result, runCostUsd: result.scores.costUsd }),
     })
     table?.stop()
+    printCleanupProblems({ results })
     return { name, cases, results, baselineRead, changedTools }
 }
 
@@ -306,16 +313,21 @@ async function runPool({ runs, run, onResult }: { runs: PlannedRun[], run: (plan
     return results
 }
 
-async function evaluate({ candidate, trial, recordedToolCalls, mcp, modelId, auth, recordMode }: { candidate: EvalCase, trial: number, recordedToolCalls: RecordedToolCall[], mcp: McpTools, modelId: string, auth: Record<string, unknown>, recordMode: boolean }): Promise<CaseResult> {
+async function evaluate({ candidate, trial, recordedToolCalls, mcp, modelId, auth, recordMode, keep }: { candidate: EvalCase, trial: number, recordedToolCalls: RecordedToolCall[], mcp: McpTools, modelId: string, auth: Record<string, unknown>, recordMode: boolean, keep: boolean }): Promise<CaseResult> {
     const { data, error } = await tryCatch(async () => {
         const outcome = await evalAgentTurn.run({ evalCase: candidate, recordedToolCalls, mcp, modelId, auth, mode: runMode({ candidate, recordMode }) })
+        const cleanupProblems = isNil(candidate.live) || keep ? [] : await createdResources.remove({ mcp, created: createdResources.fromToolCalls({ toolCalls: outcome.toolCalls }) })
         const scores = outcome.timedOut ? timedOutScores({ outcome }) : await evalChecks.grade({ evalCase: candidate, outcome, auth })
-        return { scores, stops: outcome.stops.map((stop) => stop.reason), transcript: outcome.transcript, newFixtures: outcome.newFixtures }
+        return { scores, stops: outcome.stops.map((stop) => stop.reason), transcript: outcome.transcript, newFixtures: outcome.newFixtures, cleanupProblems: cleanupProblems.map((problem) => `case ${candidate.caseNumber} run ${trial + 1}: ${problem}`) }
     })
     if (error) {
-        return { candidate, trial, verdict: 'unknown', scores: crashedScores({ reason: error.message }), stops: [], transcript: '', newFixtures: [], crashed: true }
+        return { candidate, trial, verdict: 'unknown', scores: crashedScores({ reason: error.message }), stops: [], transcript: '', newFixtures: [], cleanupProblems: [], crashed: true }
     }
     return { candidate, trial, verdict: evalChecks.verdictOf({ scores: data.scores }), ...data, crashed: false }
+}
+
+function printCleanupProblems({ results }: { results: CaseResult[] }): void {
+    results.flatMap((result) => result.cleanupProblems).forEach((problem) => console.log(colors.dim(`cleanup: ${problem}`)))
 }
 
 function runMode({ candidate, recordMode }: { candidate: EvalCase, recordMode: boolean }): ReplayMode {
@@ -587,5 +599,6 @@ type PlannedRun = {
 
 type CaseResult = UploadedRun & {
     newFixtures: RecordedToolCall[]
+    cleanupProblems: string[]
     crashed: boolean
 }
