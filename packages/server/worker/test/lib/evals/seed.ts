@@ -3,9 +3,23 @@ import { LiveSettings, SeedFlow, SeedTable } from './eval-case'
 import { evalToolSet, McpTools, ToolResult } from './tool-set'
 
 async function create({ mcp, seed }: { mcp: McpTools, seed: LiveSettings['seed'] }): Promise<SeededState> {
-    const flows = await Promise.all(seed.flows.map((flow) => seedFlow({ mcp, flow })))
     const tables = await Promise.all(seed.tables.map((table) => seedTable({ mcp, table })))
-    return { flows, tables }
+    const folders = await Promise.all(byFolder(seed.flows).map((flows) => seedInOrder({ mcp, flows })))
+    return { flows: folders.flat(), tables }
+}
+
+function byFolder(flows: SeedFlow[]): SeedFlow[][] {
+    const folderOf = (flow: SeedFlow): string | null => typeof flow['folderName'] === 'string' ? flow['folderName'] : null
+    const unfiled = flows.filter((flow) => isNil(folderOf(flow))).map((flow) => [flow])
+    const folders = [...new Set(flows.flatMap((flow) => {
+        const folder = folderOf(flow)
+        return isNil(folder) ? [] : [folder]
+    }))]
+    return [...unfiled, ...folders.map((folder) => flows.filter((flow) => folderOf(flow) === folder))]
+}
+
+async function seedInOrder({ mcp, flows }: { mcp: McpTools, flows: SeedFlow[] }): Promise<SeededFlow[]> {
+    return flows.reduce<Promise<SeededFlow[]>>(async (seeded, flow) => [...await seeded, await seedFlow({ mcp, flow })], Promise.resolve([]))
 }
 
 async function seedFlow({ mcp, flow }: { mcp: McpTools, flow: SeedFlow }): Promise<SeededFlow> {
@@ -44,7 +58,14 @@ async function callTool({ mcp, toolName, input, label }: { mcp: McpTools, toolNa
 }
 
 function asTextRecord(record: Record<string, unknown>): Record<string, string> {
-    return Object.fromEntries(Object.entries(record).map(([field, value]) => [field, typeof value === 'string' ? value : JSON.stringify(value)]))
+    return Object.fromEntries(Object.entries(record).map(([field, value]) => [field, textOf(value)]))
+}
+
+function textOf(value: unknown): string {
+    if (isNil(value)) {
+        return ''
+    }
+    return typeof value === 'string' ? value : JSON.stringify(value)
 }
 
 const BUILD_FLOW_TOOL = 'ap_build_flow'

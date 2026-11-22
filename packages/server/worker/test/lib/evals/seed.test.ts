@@ -32,6 +32,33 @@ describe('evalSeed.create', () => {
         expect(seeded.tables).toEqual([{ name: 'Leads', id: 'tab-1', records: 51 }])
     })
 
+    it('seeds tables first, keeps empty values empty, and builds flows sharing a folder one at a time', async () => {
+        const order: string[] = []
+        const running = { now: 0, most: 0 }
+        const { mcp, calls } = mcpWith({
+            ap_create_table: async () => {
+                order.push('table')
+                return result({ text: '✅ Table created', structured: { id: 'tab-1' } })
+            },
+            ap_insert_records: async () => result({ text: '✅ Inserted records.' }),
+            ap_build_flow: async (input) => {
+                order.push(String(input['flowName']))
+                running.now += 1
+                running.most = Math.max(running.most, running.now)
+                await new Promise((resolve) => setTimeout(resolve, 5))
+                running.now -= 1
+                return result({ text: '✅ Flow created', structured: { flowId: `id-${String(input['flowName'])}` } })
+            },
+        })
+
+        const seeded = await evalSeed.create({ mcp, seed: { flows: [{ flowName: 'A', folderName: 'Sales' }, { flowName: 'B', folderName: 'Sales' }], tables: [{ name: 'Leads', records: [{ Name: 'Ann', Note: null }] }] } })
+
+        expect(order).toEqual(['table', 'A', 'B'])
+        expect(running.most).toBe(1)
+        expect(calls.find((call) => call.toolName === 'ap_insert_records')?.input).toEqual({ tableId: 'tab-1', records: [{ Name: 'Ann', Note: '' }] })
+        expect(seeded.flows).toEqual([{ name: 'A', id: 'id-A' }, { name: 'B', id: 'id-B' }])
+    })
+
     it('fails with the tool\'s own message when a seed tool reports an error', async () => {
         const { mcp } = mcpWith({
             ap_build_flow: async () => result({ text: '❌ Piece "@activepieces/piece-nope" not found' }),
