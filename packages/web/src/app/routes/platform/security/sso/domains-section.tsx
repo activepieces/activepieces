@@ -1,4 +1,6 @@
 import {
+  ApEdition,
+  ApFlagId,
   EmailDomainWithUsage,
   PlatformWithoutSensitiveData,
   SsoDomainVerificationStatus,
@@ -52,6 +54,7 @@ import {
   emailDomainMutations,
   emailDomainQueries,
 } from '@/features/platform-admin';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
 
@@ -153,6 +156,8 @@ const DomainRow = ({
 }: DomainRowProps) => {
   const samlIsOnlyMethod =
     useSignInMethods(platform).isOnlyWorkingMethod('saml');
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const ssoFollowsDomains = edition === ApEdition.CLOUD;
   const [dnsRecordOpen, setDnsRecordOpen] = useState(false);
   const { mutateAsync: removeDomain } =
     emailDomainMutations.useRemoveEmailDomain({ refetchPlatform });
@@ -171,7 +176,10 @@ const DomainRow = ({
     ? t('domainPeopleCount', { count: emailDomain.peopleCount })
     : undefined;
   const losesSso =
-    verified && samlConnected && emailDomain.peopleCount > 0
+    verified &&
+    samlConnected &&
+    emailDomain.peopleCount > 0 &&
+    (removesSaml || ssoFollowsDomains)
       ? t('domainRemoveLosesSso', { count: emailDomain.peopleCount, domain })
       : undefined;
 
@@ -258,9 +266,14 @@ const DomainRow = ({
                 ? t(
                     'People who use single sign-on will have to sign in another way.',
                   )
-                : samlConnected
+                : samlConnected && ssoFollowsDomains
                 ? t(
                     'People at {domain} stop following your sign-in rules. Single sign-on stays on for your other verified domains.',
+                    { domain },
+                  )
+                : samlConnected
+                ? t(
+                    "Single sign-on stays on. To verify {domain} again, you'll need a new DNS record.",
                     { domain },
                   )
                 : t(

@@ -31,6 +31,7 @@ import { SamlDeletionWarning } from '@/app/routes/platform/security/sso/saml-del
 import { ssoPaths } from '@/app/routes/platform/security/sso/sso-paths';
 import { useSignInMethods } from '@/app/routes/platform/security/sso/use-sign-in-methods';
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -52,9 +53,19 @@ import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 export const SamlSetupPage = () => {
-  const { data: domains, isLoading } = emailDomainQueries.useEmailDomains();
+  const {
+    data: domains,
+    isLoading,
+    isError,
+    refetch,
+  } = emailDomainQueries.useEmailDomains();
   if (isLoading) {
     return null;
+  }
+  if (isError) {
+    return (
+      <DataFetchErrorState entity={t('domains')} onRetry={() => refetch()} />
+    );
   }
   return <SamlSetup domains={domains ?? []} />;
 };

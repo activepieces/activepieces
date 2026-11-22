@@ -2075,6 +2075,7 @@
   "Upgrade your plan": "Upgrade your plan",
   "domainRemoveLosesSso": "{count, plural, =1 {1 member at {domain} can no longer sign in with single sign-on.} other {# members at {domain} can no longer sign in with single sign-on.}}",
   "People at {domain} stop following your sign-in rules. Single sign-on stays on for your other verified domains.": "People at {domain} stop following your sign-in rules. Single sign-on stays on for your other verified domains.",
+  "Single sign-on stays on. To verify {domain} again, you'll need a new DNS record.": "Single sign-on stays on. To verify {domain} again, you'll need a new DNS record.",
   "Unlock multiple domains": "Unlock multiple domains",
   "Verify every domain you own to use SSO and set sign-in methods for everyone.": "Verify every domain you own to use SSO and set sign-in methods for everyone.",
   "Choose how people sign in to your platform.": "Choose how people sign in to your platform.",
