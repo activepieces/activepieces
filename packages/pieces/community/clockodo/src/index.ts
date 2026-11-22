@@ -1,8 +1,4 @@
-import {
-  PieceAuth,
-  Property,
-  createPiece,
-} from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 
 import { PieceCategory } from '@activepieces/pieces-framework';
 import actions from './lib/actions';
@@ -12,7 +8,7 @@ import { clockodoAuth } from './lib/auth';
 export const clockodo = createPiece({
   displayName: 'Clockodo',
   description: 'Time tracking made easy',
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/clockodo.png',
   categories: [PieceCategory.PRODUCTIVITY],
   authors: ["JanHolger","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],

@@ -1,3 +1,4 @@
+import { clockodoOutputSchemas } from '../../common/output-schemas';
 import { makeClient } from '../../common';
 import { clockodoAuth } from '../../auth';
 import { createAction } from '@activepieces/pieces-framework';
@@ -7,15 +8,15 @@ export default createAction({
   name: 'list_teams',
   classification: 'SEARCH',
   displayName: 'Get Teams',
-  description: 'Fetches teams from clockodo',
+  description: 'Fetches teams from Clockodo',
   audience: 'both',
-  aiMetadata: { description: 'List all clockodo teams. Read-only, repeatable, and takes no filters. Use to discover teams or resolve a team ID by name before assigning a user or another call.', idempotent: true },
+  outputSchema: clockodoOutputSchemas.teams,
+  aiMetadata: { description: 'List all Clockodo teams. Read-only, repeatable, and takes no filters. Use to discover teams or resolve a team ID by name before assigning a user or another call.', idempotent: true },
   props: {},
   async run({ auth }) {
-    const client = makeClient(auth.props);
-    const res = await client.listTeams();
+    const teams = await makeClient(auth.props).listTeams();
     return {
-      teams: res.teams,
+      teams,
     };
   },
 });

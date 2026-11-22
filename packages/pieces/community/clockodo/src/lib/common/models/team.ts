@@ -1,20 +1,15 @@
-export interface Team {
+export type Team = {
   id: number;
   name: string;
-}
+  leader?: number | null;
+};
 
-export interface TeamCreateRequest {
+export type TeamCreateRequest = {
   name: string;
-}
+  leader?: number;
+};
 
-export interface TeamUpdateRequest {
+export type TeamUpdateRequest = {
   name: string;
-}
-
-export interface TeamListResponse {
-  teams: Team[];
-}
-
-export interface TeamSingleResponse {
-  team: Team;
-}
+  leader?: number;
+};

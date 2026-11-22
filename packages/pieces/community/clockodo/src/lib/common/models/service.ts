@@ -1,29 +1,16 @@
-export interface Service {
+export type Service = {
   id: number;
   name: string;
-  number?: string;
+  number?: string | null;
   active: boolean;
-  note?: string;
-}
+  note?: string | null;
+};
 
-export interface ServiceCreateRequest {
+export type ServiceCreateRequest = {
   name: string;
   number?: string | null;
   active?: boolean;
   note?: string | null;
-}
+};
 
-export interface ServiceUpdateRequest {
-  name?: string;
-  number?: string | null;
-  active?: boolean;
-  note?: string | null;
-}
-
-export interface ServiceListResponse {
-  services: Service[];
-}
-
-export interface ServiceSingleResponse {
-  service: Service;
-}
+export type ServiceUpdateRequest = Partial<ServiceCreateRequest>;

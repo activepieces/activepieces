@@ -1,64 +1,79 @@
-import { AppConnectionValueForAuthProperty, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
-import {
-  DedupeStrategy,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
-import { currentYear } from '../common';
+import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+import { makeClient, newestFirst, pollNewById } from '../common';
 import { ClockodoClient } from '../common/client';
+import { clockodoRequests } from '../common/requests';
+import { clockodoOutputSchemas } from '../common/output-schemas';
+import { Entry } from '../common/models/entry';
 import { clockodoAuth } from '../auth';
 
-const polling: Polling<AppConnectionValueForAuthProperty<typeof clockodoAuth>, unknown> = {
-  strategy: DedupeStrategy.LAST_ITEM,
-  items: async ({ auth }) => {
-    const { email, token, company_name, company_email } = auth.props;
-    const client = new ClockodoClient(
-      email,
-      token,
-      company_name,
-      company_email
-    );
-    const time_since = currentYear() - 1 + '-01-01T00:00:00Z';
-    const time_until = currentYear() + 1 + '-12-31T23:59:59Z';
-    let res = await client.listEntries({ time_since, time_until });
-    if (res.paging.count_pages > 1) {
-      res = await client.listEntries({
-        time_since,
-        time_until,
-        page: res.paging.count_pages,
-      });
-    }
-    return res.entries
-      .sort((a, b) => b.id - a.id)
-      .map((a) => ({
-        id: a.id,
-        data: a,
-      }));
-  },
-};
+const DAY_MS = 24 * 60 * 60 * 1000;
+const LOOKBACK_DAYS = 90;
+const LOOKAHEAD_DAYS = 30;
+const STORE_KEY = 'clockodo_new_entry_last_id';
+
+async function fetchWindow(client: ClockodoClient): Promise<Entry[]> {
+  const now = Date.now();
+  return client.listAllEntries({
+    time_since: clockodoRequests.toClockodoDateTime({
+      value: new Date(now - LOOKBACK_DAYS * DAY_MS).toISOString(),
+      field: 'time_since',
+    }),
+    time_until: clockodoRequests.toClockodoDateTime({
+      value: new Date(now + LOOKAHEAD_DAYS * DAY_MS).toISOString(),
+      field: 'time_until',
+    }),
+  });
+}
 
 export default createTrigger({
   auth: clockodoAuth,
   name: 'new_entry',
   classification: 'READ',
   displayName: 'New Entry',
-  description: 'Triggers when a new time entry is created',
+  description:
+    'Triggers when a new time entry is created (entries dated within the last 90 days or the next 30 days)',
   aiMetadata: {
-    description: 'Fires when a new time entry is created in Clockodo, such as logged work time, a lump-sum service, or a recorded expense. Emits the newly created entry record, including details like the associated customer, project, service, duration, and billing information.',
+    description:
+      'Fires once for each new time entry created in Clockodo, including back-dated entries whose start time is within the last 90 days and running clock entries. Emits the entry record with its customer, project, service, user, start/end time and billing flag.',
   },
   type: TriggerStrategy.POLLING,
   props: {},
-  sampleData: {},
+  outputSchema: clockodoOutputSchemas.entry,
+  sampleData: {
+    id: 158722301,
+    type: 1,
+    customers_id: 2194711,
+    projects_id: 1786523,
+    services_id: 803245,
+    users_id: 349802,
+    billable: 1,
+    texts_id: 5521093,
+    text: 'Sprint planning',
+    time_since: '2026-11-20T09:00:00Z',
+    time_until: '2026-11-20T10:30:00Z',
+    time_insert: '2026-11-20T10:31:12Z',
+    time_last_change: '2026-11-20T10:31:12Z',
+    duration: 5400,
+    hourly_rate: 85,
+    customers_name: 'Acme GmbH',
+    projects_name: 'Website relaunch',
+    services_name: 'Consulting',
+    users_name: 'Jane Doe',
+  },
   onEnable: async (context) => {
-    await pollingHelper.onEnable(polling, context);
+    const items = await fetchWindow(makeClient(context.auth.props));
+    await context.store.delete(STORE_KEY);
+    await pollNewById({ store: context.store, storeKey: STORE_KEY, items });
   },
   onDisable: async (context) => {
-    await pollingHelper.onDisable(polling, context);
+    await context.store.delete(STORE_KEY);
   },
   run: async (context) => {
-    return await pollingHelper.poll(polling, context);
+    const items = await fetchWindow(makeClient(context.auth.props));
+    return pollNewById({ store: context.store, storeKey: STORE_KEY, items });
   },
   test: async (context) => {
-    return await pollingHelper.test(polling, context);
+    const items = await fetchWindow(makeClient(context.auth.props));
+    return newestFirst({ items, limit: 5 });
   },
 });

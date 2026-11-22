@@ -1,42 +1,24 @@
-import { Paging } from './common';
-
-export interface Customer {
+export type Customer = {
   id: number;
   name: string;
-  number?: string;
+  number?: string | null;
   active: boolean;
   billable_default: boolean;
-  note?: string;
+  note?: string | null;
   color: number;
-}
+};
 
-export interface CustomerCreateRequest {
+export type CustomerCreateRequest = {
   name: string;
   number?: string | null;
   active?: boolean;
   billable_default?: boolean;
   note?: string | null;
   color?: number;
-}
+};
 
-export interface CustomerUpdateRequest {
-  name?: string;
-  number?: string | null;
+export type CustomerUpdateRequest = Partial<CustomerCreateRequest>;
+
+export type CustomerListFilter = {
   active?: boolean;
-  billable_default?: boolean;
-  note?: string | null;
-  color?: number;
-}
-
-export interface CustomerListFilter {
-  active?: boolean;
-}
-
-export interface CustomerListResponse {
-  paging: Paging;
-  customers: Customer[];
-}
-
-export interface CustomerSingleResponse {
-  customer: Customer;
-}
+};
