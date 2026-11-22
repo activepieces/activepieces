@@ -4,10 +4,10 @@ import { FastifyPluginAsyncZod, FastifyPluginCallbackZod } from 'fastify-type-pr
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
-import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 import { attachMultipartFieldsToBody } from '../../helper/multipart-body'
 import { system } from '../../helper/system/system'
 import { pieceInstallService } from '../../pieces/piece-install-service'
+import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 
 export const platformPieceModule: FastifyPluginAsyncZod = async (app) => {
     app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => planAllowsCustomPieces(platform.plan.plan)))

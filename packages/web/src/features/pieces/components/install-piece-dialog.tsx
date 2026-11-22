@@ -1,6 +1,7 @@
 import { ApErrorParams, ErrorCode } from '@activepieces/core-utils';
 import {
   AddPieceRequestBody,
+  ApEdition,
   ApFlagId,
   PackageType,
   PieceScope,
@@ -43,6 +44,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
@@ -68,9 +74,14 @@ const InstallPieceDialog = ({
 }: InstallPieceDialogProps) => {
   const { platform } = platformHooks.useCurrentPlatform();
   const isEnabled = platform.plan.managePiecesEnabled;
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const lockedOnFreePlan =
-    platform.plan.plan === PlanName.FREE ||
-    platform.plan.plan === PlanName.FREE_LEGACY;
+    edition === ApEdition.CLOUD &&
+    (platform.plan.plan === PlanName.FREE ||
+      platform.plan.plan === PlanName.FREE_LEGACY);
+  const lockedReason = t(
+    'Installing custom pieces is not available on the free plan.',
+  );
   const [isOpen, setIsOpen] = useState(false);
 
   const { data: privatePiecesEnabled } = flagsHooks.useFlag<boolean>(
@@ -176,22 +187,40 @@ const InstallPieceDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => setIsOpen(open)}>
-      <DialogTrigger asChild>
-        <AnimatedIconButton
-          {...adminControl(AdminControl.PIECES_INSTALL_OPEN)}
-          icon={PlusIcon}
-          iconSize={16}
-          size="sm"
-          disabled={lockedOnFreePlan}
-          title={
-            lockedOnFreePlan
-              ? t('Installing custom pieces is not available on the free plan.')
-              : undefined
-          }
-        >
-          {t('Install Piece')}
-        </AnimatedIconButton>
-      </DialogTrigger>
+      {lockedOnFreePlan ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span
+              className="inline-flex"
+              tabIndex={0}
+              role="button"
+              aria-disabled
+              aria-label={lockedReason}
+            >
+              <AnimatedIconButton
+                icon={PlusIcon}
+                iconSize={16}
+                size="sm"
+                disabled
+              >
+                {t('Install Piece')}
+              </AnimatedIconButton>
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>{lockedReason}</TooltipContent>
+        </Tooltip>
+      ) : (
+        <DialogTrigger asChild>
+          <AnimatedIconButton
+            {...adminControl(AdminControl.PIECES_INSTALL_OPEN)}
+            icon={PlusIcon}
+            iconSize={16}
+            size="sm"
+          >
+            {t('Install Piece')}
+          </AnimatedIconButton>
+        </DialogTrigger>
+      )}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t('Install a piece')}</DialogTitle>
