@@ -4,8 +4,7 @@ import { McpTools } from './tool-set'
 
 function fromToolCalls({ toolCalls }: { toolCalls: CreatingToolCall[] }): CreatedResources {
     const found = toolCalls.flatMap((call) => call.errored ? [] : createdBy(call))
-    const idsOf = (kind: ResourceKind): string[] => [...new Set(found.filter((resource) => resource.kind === kind).map((resource) => resource.id))]
-    return { flowIds: idsOf('flow'), tableIds: idsOf('table'), folderIds: idsOf('folder') }
+    return { flowIds: idsOf({ found, kind: 'flow' }), tableIds: idsOf({ found, kind: 'table' }), folderIds: idsOf({ found, kind: 'folder' }) }
 }
 
 async function remove({ mcp, created }: { mcp: McpTools, created: CreatedResources }): Promise<string[]> {
@@ -36,6 +35,10 @@ async function deleteOne({ mcp, toolName, input, label }: { mcp: McpTools, toolN
         return [`could not delete ${label}: ${error.message}`]
     }
     return isObject(data) && data['isError'] === true ? [`could not delete ${label}: ${outputText(data) ?? 'the tool returned an error'}`] : []
+}
+
+function idsOf({ found, kind }: { found: CreatedResource[], kind: ResourceKind }): string[] {
+    return [...new Set(found.filter((resource) => resource.kind === kind).map((resource) => resource.id))]
 }
 
 function createdBy(call: CreatingToolCall): CreatedResource[] {

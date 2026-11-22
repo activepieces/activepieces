@@ -2,6 +2,7 @@ import { tool, ToolSet } from 'ai'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { CreatingToolCall, createdResources } from './created-resources'
+import { McpTools } from './tool-set'
 
 describe('createdResources.fromToolCalls', () => {
     it('collects flow, table and folder ids from create and build results', () => {
@@ -70,6 +71,6 @@ function mcpResult({ text, structured }: { text: string, structured?: Record<str
     return { content: [{ type: 'text', text }], ...(structured === undefined ? {} : { structuredContent: structured }) }
 }
 
-function mcpWith({ toolSet }: { toolSet: ToolSet }): Parameters<typeof createdResources.remove>[0]['mcp'] {
-    return { toolSet, close: async () => {}, projectName: 'Eval project', conversationId: 'eval-conversation' }
+function mcpWith({ toolSet }: { toolSet: ToolSet }): McpTools {
+    return { toolSet, close: async () => {}, projectId: 'proj-1', projectName: 'Eval project', conversationId: 'eval-conversation' }
 }

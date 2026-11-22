@@ -40,13 +40,14 @@ describe('evalToolSet.build', () => {
         const user = scriptedUser.create({
             answers: { questions: null, connections: {} },
             listConnections: async () => [{ externalId: 'gmail-conn', displayName: 'Work Gmail', status: 'ACTIVE' }],
+            projectId: EVAL_PROJECT_ID,
         })
         const tools = buildWith({ mcpTools: {}, user })
         await tools['ap_show_connection_picker']?.execute?.({ piece: 'gmail', displayName: 'Gmail' }, { toolCallId: 'call-1', messages: [], context: undefined })
 
         expect(requests).toContainEqual({
             toolName: '__store_selected_connection',
-            toolInput: { pieceName: '@activepieces/piece-gmail', connectionExternalId: 'gmail-conn', label: 'Work Gmail', projectId: expect.any(String) },
+            toolInput: { pieceName: '@activepieces/piece-gmail', connectionExternalId: 'gmail-conn', label: 'Work Gmail', projectId: EVAL_PROJECT_ID },
             conversationId: 'eval-conversation',
         })
     })
@@ -54,10 +55,12 @@ describe('evalToolSet.build', () => {
 
 function buildWith({ mcpTools, user = null }: { mcpTools: ToolSet, user?: ScriptedUser | null }): ToolSet {
     return evalToolSet.build({
-        mcp: { toolSet: mcpTools, close: async () => {}, projectName: 'Eval project', conversationId: 'eval-conversation' },
+        mcp: { toolSet: mcpTools, close: async () => {}, projectId: EVAL_PROJECT_ID, projectName: 'Eval project', conversationId: 'eval-conversation' },
         caseReplay: replay.create({ recordedToolCalls: [] }),
         auth: {},
         mode: 'live',
         user,
     })
 }
+
+const EVAL_PROJECT_ID = 'proj-real-1'

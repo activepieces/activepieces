@@ -17,7 +17,7 @@ async function connectMcp(): Promise<McpTools> {
     if (!res.ok) {
         throw new Error(`Could not get MCP credentials from the dev server at ${baseUrl} (${res.status}). Is it running? ${await res.text()}`)
     }
-    const { conversationId, projectName, ...mcpCredentials } = McpCredentials.parse(await res.json())
+    const { conversationId, projectId, projectName, ...mcpCredentials } = McpCredentials.parse(await res.json())
     const connection = await agentMcpClient.connect({ mcpCredentials, conversationId, log: silentLog })
     if (isNil(connection.mcpClient)) {
         throw new Error(`Could not connect to the dev server MCP at ${mcpCredentials.mcpServerUrl}`)
@@ -26,6 +26,7 @@ async function connectMcp(): Promise<McpTools> {
     return {
         toolSet: onlyTools(connection.mcpToolSet),
         close: () => client.close(),
+        projectId,
         projectName,
         conversationId,
     }
@@ -148,7 +149,7 @@ const DISPLAY_TOOL_TIMEOUT_MS = 1_000
 const SEARCH_MODEL_ID = 'google/gemini-2.5-flash'
 const EVAL_USER_ID = 'eval-user'
 
-const McpCredentials = z.object({ mcpServerUrl: z.string(), mcpToken: z.string(), conversationId: z.string(), projectName: z.string() })
+const McpCredentials = z.object({ mcpServerUrl: z.string(), mcpToken: z.string(), conversationId: z.string(), projectId: z.string(), projectName: z.string() })
 const ExecuteToolResponse = z.object({ result: z.unknown() })
 const LIST_CONNECTIONS_TOOL = 'ap_list_connections'
 const STORE_SELECTED_CONNECTION_TOOL = '__store_selected_connection'
@@ -165,6 +166,7 @@ export const evalToolSet = {
 export type McpTools = {
     toolSet: ToolSet
     close: () => Promise<void>
+    projectId: string
     projectName: string
     conversationId: string
 }

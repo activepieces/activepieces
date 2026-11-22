@@ -94,7 +94,8 @@ async function main(): Promise<void> {
     }
     const [auth, mcp, baselineReads] = setup.data
     console.log(`Dev server MCP tools run in project "${mcp.projectName}"`)
-    const crowded = datasets.some((dataset) => dataset.cases.some((candidate) => !isNil(candidate.live))) ? await createdResources.crowdedWarning({ mcp }) : null
+    const hasLiveCases = datasets.some((dataset) => dataset.cases.some((candidate) => !isNil(candidate.live)))
+    const crowded = hasLiveCases ? await createdResources.crowdedWarning({ mcp }) : null
     if (!isNil(crowded)) {
         console.log(colors.yellow(crowded))
     }
@@ -314,16 +315,31 @@ async function runPool({ runs, run, onResult }: { runs: PlannedRun[], run: (plan
 }
 
 async function evaluate({ candidate, trial, recordedToolCalls, mcp, modelId, auth, recordMode, keep }: { candidate: EvalCase, trial: number, recordedToolCalls: RecordedToolCall[], mcp: McpTools, modelId: string, auth: Record<string, unknown>, recordMode: boolean, keep: boolean }): Promise<CaseResult> {
-    const { data, error } = await tryCatch(async () => {
-        const outcome = await evalAgentTurn.run({ evalCase: candidate, recordedToolCalls, mcp, modelId, auth, mode: runMode({ candidate, recordMode }) })
-        const cleanupProblems = isNil(candidate.live) || keep ? [] : await createdResources.remove({ mcp, created: createdResources.fromToolCalls({ toolCalls: outcome.toolCalls }) })
-        const scores = outcome.timedOut ? timedOutScores({ outcome }) : await evalChecks.grade({ evalCase: candidate, outcome, auth })
-        return { scores, stops: outcome.stops.map((stop) => stop.reason), transcript: outcome.transcript, newFixtures: outcome.newFixtures, cleanupProblems: cleanupProblems.map((problem) => `case ${candidate.caseNumber} run ${trial + 1}: ${problem}`) }
-    })
-    if (error) {
-        return { candidate, trial, verdict: 'unknown', scores: crashedScores({ reason: error.message }), stops: [], transcript: '', newFixtures: [], cleanupProblems: [], crashed: true }
+    const live = !isNil(candidate.live)
+    const fresh = live ? await tryCatch(() => evalToolSet.connectMcp()) : null
+    if (!isNil(fresh?.error)) {
+        return crashedResult({ candidate, trial, reason: `could not open an eval conversation for this run: ${fresh.error.message}`, cleanupProblems: [] })
     }
-    return { candidate, trial, verdict: evalChecks.verdictOf({ scores: data.scores }), ...data, crashed: false }
+    const runMcp = fresh?.data ?? mcp
+    const turn = await tryCatch(() => evalAgentTurn.run({ evalCase: candidate, recordedToolCalls, mcp: runMcp, modelId, auth, mode: runMode({ candidate, recordMode }) }))
+    const removed = live && !keep ? await createdResources.remove({ mcp: runMcp, created: createdResources.fromToolCalls({ toolCalls: turn.data?.toolCalls ?? [] }) }) : []
+    if (live) {
+        await runMcp.close().catch(() => undefined)
+    }
+    const cleanupProblems = removed.map((problem) => `case ${candidate.caseNumber} run ${trial + 1}: ${problem}`)
+    if (!isNil(turn.error)) {
+        return crashedResult({ candidate, trial, reason: turn.error.message, cleanupProblems })
+    }
+    const outcome = turn.data
+    const graded = await tryCatch(async () => outcome.timedOut ? timedOutScores({ outcome }) : evalChecks.grade({ evalCase: candidate, outcome, auth }))
+    if (!isNil(graded.error)) {
+        return crashedResult({ candidate, trial, reason: graded.error.message, cleanupProblems })
+    }
+    return { candidate, trial, verdict: evalChecks.verdictOf({ scores: graded.data }), scores: graded.data, stops: outcome.stops.map((stop) => stop.reason), transcript: outcome.transcript, newFixtures: outcome.newFixtures, cleanupProblems, crashed: false }
+}
+
+function crashedResult({ candidate, trial, reason, cleanupProblems }: { candidate: EvalCase, trial: number, reason: string, cleanupProblems: string[] }): CaseResult {
+    return { candidate, trial, verdict: 'unknown', scores: crashedScores({ reason }), stops: [], transcript: '', newFixtures: [], cleanupProblems, crashed: true }
 }
 
 function printCleanupProblems({ results }: { results: CaseResult[] }): void {

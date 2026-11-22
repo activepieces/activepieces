@@ -14,7 +14,7 @@ import { evalToolSet, McpTools } from './tool-set'
 async function run({ evalCase, recordedToolCalls, mcp, modelId, auth, mode }: { evalCase: EvalCase, recordedToolCalls: RecordedToolCall[], mcp: McpTools, modelId: string, auth: Record<string, unknown>, mode: ReplayMode }): Promise<TurnOutcome> {
     const live = mode === 'live' ? evalCase.live : null
     const caseReplay = replay.create({ recordedToolCalls, faults: live?.faults })
-    const user = isNil(live) ? null : scriptedUser.create({ answers: live.answers, listConnections: (pieceName) => evalToolSet.listConnections({ mcp, pieceName }) })
+    const user = isNil(live) ? null : scriptedUser.create({ answers: live.answers, listConnections: (pieceName) => evalToolSet.listConnections({ mcp, pieceName }), projectId: mcp.projectId })
     const recorder = runMetrics.createRecorder()
     const tools = recorder.timeTools(evalToolSet.build({ mcp, caseReplay, auth, mode, user }))
     const phaseState: { phase: AgentPhase } = { phase: 'discovery' }

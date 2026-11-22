@@ -3,9 +3,8 @@ import { AppConnectionStatus, pickDefaultConnectionExternalId } from '@activepie
 import { z } from 'zod'
 import { agentWorkerTools, GateDecision } from '../../../src/lib/execute/jobs/ee/agent/agent-worker-tools'
 import { LiveSettings } from './eval-case'
-import { EVAL_PROJECT } from './prompts'
 
-function create({ answers, listConnections }: { answers: LiveSettings['answers'], listConnections: (pieceName: string) => Promise<ProjectConnection[]> }): ScriptedUser {
+function create({ answers, listConnections, projectId }: { answers: LiveSettings['answers'], listConnections: (pieceName: string) => Promise<ProjectConnection[]>, projectId: string }): ScriptedUser {
     const openCards = new Map<string, OpenCard>()
     const shown: string[] = []
     const overrides = new Map(Object.entries(answers.connections).map(([piece, choice]) => [agentWorkerTools.normalizePieceName(piece), choice]))
@@ -20,7 +19,7 @@ function create({ answers, listConnections }: { answers: LiveSettings['answers']
         if (isNil(chosen)) {
             return DECLINED
         }
-        return { outcome: 'approved', payload: { connectionExternalId: chosen.externalId, label: chosen.displayName, projectId: EVAL_PROJECT.id } }
+        return { outcome: 'approved', payload: { connectionExternalId: chosen.externalId, label: chosen.displayName, projectId } }
     }
 
     return {
