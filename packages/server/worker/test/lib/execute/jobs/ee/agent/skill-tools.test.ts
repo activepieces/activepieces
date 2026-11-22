@@ -66,8 +66,9 @@ describe('buildSkillSurface', () => {
         const playbook = String(await surface.tools['ap_load_skill']?.execute?.({ skills: ['flow_building'] }, CALL_OPTIONS))
         expect(surface.attachedToolNames()).toEqual(expect.arrayContaining(['ap_build_flow', 'ap_add_step', 'ap_test_flow', ...surface.coreToolNames]))
         expect(surface.attachedToolNames()).not.toContain('ap_list_tables')
-        expect(playbook).toContain('Tools now attached to you')
-        expect(playbook).not.toContain('Call: ap_lazy_tool with tool: "ap_build_flow"')
+        expect(playbook).toContain('Tools attached to you')
+        expect(playbook).not.toContain('### ap_build_flow')
+        expect(playbook).not.toContain(LAZY_TOOL_NAME)
     })
 
     it('lists tools no skill covers in the catalog note', () => {
@@ -123,6 +124,7 @@ describe('paid tools', () => {
 
         const fullPlaybook = String(await surfaceFor(true).tools['ap_load_skill']?.execute?.({ skills: ['web_and_media'] }, CALL_OPTIONS))
         expect(fullPlaybook).toContain('### ap_web_search')
+        expect(fullPlaybook).not.toContain(LAZY_TOOL_NAME)
     })
 })
 
@@ -361,6 +363,11 @@ describe('unwrapLazyToolChunk', () => {
         expect(available.release).toBe('c1')
     })
 
+    it('names a call rerouted from its own name after the inner tool, matching the start already sent', () => {
+        const available = unwrapLazyToolChunk({ chunk: { type: 'tool-input-available', toolCallId: 'c3', toolName: LAZY_TOOL_NAME, input: { tool: 'ap_add_step', input: { value: 'x', title: 'Your step' } } }, heldStarts: new Map() })
+        expect(available).toEqual({ emit: [{ type: 'tool-input-available', toolCallId: 'c3', toolName: 'ap_add_step', input: { value: 'x', title: 'Your step' } }] })
+    })
+
     it('passes other chunks through', () => {
         const chunk = { type: 'tool-input-start', toolCallId: 'c2', toolName: 'ap_web_search' }
         expect(unwrapLazyToolChunk({ chunk, heldStarts: new Map() }).emit).toEqual([chunk])
@@ -381,10 +388,9 @@ describe('ap_get_tool_schema', () => {
         return surface.tools['ap_get_tool_schema']?.execute?.({ tool: 'ap_create_task' }, CALL_OPTIONS)
     }
 
-    it('hides the pill labels the worker adds', async () => {
+    it('shows the pill labels so a call by the tool\'s own name carries them', async () => {
         const result = await schemaOf(z.object({ to: z.string(), ...cardTitleFields }))
-        expect(result).toMatchObject({ inputSchema: { properties: { to: { type: 'string' } } } })
-        expect(result).not.toMatchObject({ inputSchema: { properties: { title: expect.anything() } } })
+        expect(result).toMatchObject({ inputSchema: { properties: { to: { type: 'string' }, title: { type: 'string' }, doneTitle: { type: 'string' } } } })
     })
 
     it('keeps a real title input', async () => {
