@@ -27,7 +27,7 @@ export const robolly = createPiece({
         },
       },
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       }),
     }),
   ],
