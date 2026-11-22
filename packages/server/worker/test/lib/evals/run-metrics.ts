@@ -20,7 +20,7 @@ function createRecorder(): MetricsRecorder {
             }
             return [toolName, {
                 ...tool,
-                execute: async (input: unknown, options: ToolExecutionOptions) => {
+                execute: async (input: unknown, options: ToolExecutionOptions<unknown>) => {
                     const callStartedAt = Date.now()
                     const output = await execute(input, options)
                     const finishedAt = Date.now()

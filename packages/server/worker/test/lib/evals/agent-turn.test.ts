@@ -43,7 +43,7 @@ describe('evalAgentTurn.withCost', () => {
         const calls: unknown[] = []
         const { model } = evalAgentTurn.withCost({ recorder: recorderOf(calls), model: modelWith(async () => ({ stream: streamOf([{ type: 'finish', finishReason: { unified: 'stop', raw: undefined }, usage }]) })) })
         const { stream } = await instance(model).doStream(prompt)
-        await stream.pipeTo(new WritableStream())
+        await stream.pipeTo(new WritableStream<unknown>())
         expect(calls).toHaveLength(1)
     })
 
@@ -63,7 +63,7 @@ describe('evalAgentTurn.withCost', () => {
         const cancelled = await instance(model).doStream(prompt)
         await cancelled.stream.cancel()
         const drained = await instance(model).doStream(prompt)
-        await drained.stream.pipeTo(new WritableStream())
+        await drained.stream.pipeTo(new WritableStream<unknown>())
         expect(calls).toHaveLength(2)
         expect(calls).toEqual([expect.objectContaining({ usage: null }), expect.objectContaining({ usage: null })])
     })

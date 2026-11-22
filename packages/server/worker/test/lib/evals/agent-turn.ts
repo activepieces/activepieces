@@ -26,6 +26,13 @@ async function run({ evalCase, recordedToolCalls, mcp, modelId, auth, mode, seed
     const timeoutMs = live?.timeoutMs ?? TURN_TIMEOUT_MS
     const startedAt = Date.now()
     const abortSignal = AbortSignal.timeout(timeoutMs)
+    const replayEnded: StopCondition<ToolSet> = async () => caseReplay.stops().some(replay.endsTurn)
+    const stopWhen: StopCondition<ToolSet>[] = [
+        isLoopFinished(),
+        ...TERMINAL_DISPLAY_TOOLS.filter((toolName) => isNil(user) || !scriptedUser.answersCard(toolName)).map((toolName) => hasToolCall<ToolSet>(toolName)),
+        replayEnded,
+        ...gradedWindow({ evalCase }),
+    ]
 
     const { data: result, error } = await tryCatch(() => runAgentTurn({
         models: [{ model, provider: AIProviderName.OPENROUTER, modelId, thinkingBudget: TIER.thinkingBudget }],
@@ -50,7 +57,7 @@ async function run({ evalCase, recordedToolCalls, mcp, modelId, auth, mode, seed
             },
             error: () => {},
         },
-        stopWhen: [isLoopFinished(), ...TERMINAL_DISPLAY_TOOLS.filter((toolName) => isNil(user) || !scriptedUser.answersCard(toolName)).map(hasToolCall), async () => caseReplay.stops().some(replay.endsTurn), ...gradedWindow({ evalCase })],
+        stopWhen,
     }))
 
     const timedOut = abortSignal.aborted
@@ -132,7 +139,7 @@ function withCost({ model, recorder }: { model: LanguageModel, recorder: Metrics
             }),
             wrapGenerate: async ({ doGenerate }) => {
                 const call = startCall()
-                const { data, error } = await tryCatch(doGenerate)
+                const { data, error } = await tryCatch(async () => doGenerate())
                 if (isNil(data)) {
                     call.settle({ usage: null, providerMetadata: undefined })
                     throw error
@@ -142,7 +149,7 @@ function withCost({ model, recorder }: { model: LanguageModel, recorder: Metrics
             },
             wrapStream: async ({ doStream }) => {
                 const call = startCall()
-                const { data, error } = await tryCatch(doStream)
+                const { data, error } = await tryCatch(async () => doStream())
                 if (isNil(data)) {
                     call.settle({ usage: null, providerMetadata: undefined })
                     throw error
