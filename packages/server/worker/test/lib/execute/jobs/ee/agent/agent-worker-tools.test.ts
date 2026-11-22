@@ -1044,6 +1044,20 @@ describe('ap_set_build_plan', () => {
         expect(plans).toHaveLength(emitted + 2)
     })
 
+    it('keeps a granular build on the card after ap_create_flow', async () => {
+        const plans: BuildPlanEvent[] = []
+        const { eventEmitter } = makeMockEventEmitter()
+        const { tools, onFlowToolResult } = agentWorkerTools.createBuildPlanTools({ eventEmitter: { ...eventEmitter, emitBuildPlan: (plan) => { plans.push(plan) } }, getProjectId: () => null })
+        await tools['ap_set_build_plan'].execute?.({ phase: 'building', flowName: PLAN.flowName, tagline: PLAN.tagline, iconName: PLAN.iconName, steps: PLAN.steps }, CALL)
+        const emitted = plans.length
+
+        onFlowToolResult({ toolName: 'ap_create_flow', result: { structuredContent: { flowId: 'granular', displayName: 'Granular' } } })
+        expect(plans).toHaveLength(emitted)
+
+        onFlowToolResult({ toolName: 'ap_apply_flow_operations', result: result({ flowId: 'granular', name: 'Granular', steps: [['Step', 'ok']] }) })
+        expect(plans).toHaveLength(emitted + 1)
+    })
+
     it('asks for the card fields when the first call leaves them out', async () => {
         const { eventEmitter } = makeMockEventEmitter()
         const { tools } = agentWorkerTools.createBuildPlanTools({ eventEmitter: { ...eventEmitter, emitBuildPlan: () => {} }, getProjectId: () => null })

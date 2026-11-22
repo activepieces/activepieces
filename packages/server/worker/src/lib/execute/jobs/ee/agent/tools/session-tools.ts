@@ -177,13 +177,20 @@ export function createBuildPlanTools({ eventEmitter, getProjectId }: {
     let currentPlan: BuildPlanEvent | null = null
     let plannedRows: PlannedRow[] = []
     const builtFlows = new Map<string, BuiltFlow>()
+    const createdFlowIds = new Set<string>()
     const emit = (event: BuildPlanEvent): void => {
         currentPlan = event
         eventEmitter.emitBuildPlan(event)
     }
     const onFlowToolResult = ({ toolName, result }: { toolName: string, result: unknown }): string | undefined => {
+        if (toolName === 'ap_create_flow') {
+            const createdId = buildPlanSync.flowIdOf({ result })
+            if (!isNil(createdId)) {
+                createdFlowIds.add(createdId)
+            }
+        }
         const built = buildPlanSync.builtFlowOf({ result })
-        const acceptable = !isNil(built) && (BUILD_TOOL_NAMES.has(toolName) || builtFlows.has(built.flowId))
+        const acceptable = toolName === 'ap_build_flow' || (!isNil(built) && (createdFlowIds.has(built.flowId) || builtFlows.has(built.flowId)))
         if (!isNil(built) && acceptable) {
             builtFlows.set(built.flowId, built)
             if (!isNil(currentPlan)) {
@@ -271,7 +278,10 @@ function schemaForOutputField(field: AgentOutputField): z.ZodType {
     }
 }
 
-const BUILD_TOOL_NAMES = new Set(['ap_build_flow', 'ap_create_flow'])
+function flowIdOf({ result }: { result: unknown }): string | null {
+    const structured = isObject(result) && isObject(result['structuredContent']) ? result['structuredContent'] : null
+    return !isNil(structured) && typeof structured['flowId'] === 'string' ? structured['flowId'] : null
+}
 
 function builtFlowOf({ result }: { result: unknown }): BuiltFlow | null {
     const structured = isObject(result) && isObject(result['structuredContent']) ? result['structuredContent'] : null
@@ -355,6 +365,7 @@ const AGENT_CHANGE_LABELS: Record<string, string> = {
 
 export const buildPlanSync = {
     builtFlowOf,
+    flowIdOf,
     withBuiltRows,
 }
 
