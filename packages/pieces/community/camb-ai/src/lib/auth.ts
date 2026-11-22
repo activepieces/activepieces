@@ -1,5 +1,5 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpError, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { API_BASE_URL } from './common';
 
 export const cambaiAuth = PieceAuth.SecretText({
@@ -19,15 +19,22 @@ export const cambaiAuth = PieceAuth.SecretText({
                 url: `${API_BASE_URL}/source-languages`,
                 headers: {
                     'x-api-key': auth,
-                }
+                    Accept: 'application/json',
+                },
             });
             return {
                 valid: true,
             };
         } catch (e) {
+            if (e instanceof HttpError && (e.response.status === 401 || e.response.status === 403)) {
+                return {
+                    valid: false,
+                    error: 'Invalid API Key.',
+                };
+            }
             return {
                 valid: false,
-                error: 'Invalid API Key.',
+                error: 'Could not reach Camb.AI to check the API key. Please try again.',
             };
         }
     }

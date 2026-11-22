@@ -8,6 +8,9 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Camb.AI: Text-to-Speech, Text-to-Sound, Translation and Transcription are no longer AI agent tools
+Create Text-to-Speech, Create Text-to-Sound, Create Translation and Create Transcription are now available in flows only, not to AI agents. Agents use the new AI versions of these actions instead, which take plain text IDs (from List Voices, List Source/Target Languages and List Folders). Existing flow steps keep working unchanged. Create Text-to-Sound now saves the audio as a file and returns `audio_url`, `run_id` and `task_id` instead of the raw `audio` bytes; update any step that reads `audio`.
+
 #### Fireflies.ai 0.2.0: three find actions are no longer AI agent tools, and Upload Audio returns a smaller output
 
 **Find Meeting by ID**, **Find Recent Meeting** and **Find Meeting by Call Details** are now shown only in the flow builder. AI agents and MCP clients get **Get Meeting**, **Get Meeting Summary** and **Find Meetings** instead.

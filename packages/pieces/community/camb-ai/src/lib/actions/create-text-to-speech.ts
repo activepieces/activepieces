@@ -1,17 +1,15 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient, HttpResponse } from '@activepieces/pieces-common';
 import { cambaiAuth } from '../auth';
-import { API_BASE_URL, listSourceLanguagesDropdown, listVoicesDropdown ,POLLING_INTERVAL_MS,MAX_POLLING_ATTEMPTS } from '../common';
-import { listFoldersDropdown } from '../common';
+import { cambCommon, cambOutputSchemas, listFoldersDropdown, listSourceLanguagesDropdown, listVoicesDropdown } from '../common';
 
 export const createTextToSpeech = createAction({
     auth: cambaiAuth,
     name: 'create_text_to_speech',
-    classification: 'READ',
+    classification: 'WRITE',
     displayName: 'Create Text-to-Speech',
     description: 'Convert text into speech using a specified voice, language, gender, and age group.',
-    audience: 'both',
-    aiMetadata: { description: 'Synthesizes spoken-voice audio from text via Camb.AI text-to-speech, polling until the task completes and writing the resulting WAV to a file. Requires a language and a voice_id (both selected from Camb.AI dropdowns); optionally tune gender and age. Use for spoken narration/dialogue; for non-speech sound effects use Create Text-to-Sound instead. Not idempotent: each call starts a new synthesis task and produces a new audio file.', idempotent: false },
+    audience: 'human',
+    outputSchema: cambOutputSchemas['textToSpeech'],
     props: {
         text: Property.LongText({
             displayName: 'Text',
@@ -51,72 +49,18 @@ export const createTextToSpeech = createAction({
         folder_id: listFoldersDropdown,
     },
     async run(context) {
-        const { auth } = context;
         const { text, language, voice_id, gender, age, project_name, project_description, folder_id } = context.propsValue;
-
-        const payload: Record<string, unknown> = { text, language: Number(language), voice_id: Number(voice_id) };
-        if (gender !== undefined) payload['gender'] = gender;
-        if (age) payload['age'] = age;
-        if (project_name) payload['project_name'] = project_name;
-        if (project_description) payload['project_description'] = project_description;
-        if (folder_id) payload['folder_id'] = folder_id;
-
-
-        const initialResponse = await httpClient.sendRequest<{ task_id: string }>({
-            method: HttpMethod.POST,
-            url: `${API_BASE_URL}/tts`,
-            headers: { 'x-api-key': auth.secret_text, 'Content-Type': 'application/json' },
-            body: payload,
+        return cambCommon.runTts({
+            apiKey: context.auth.secret_text,
+            files: context.files,
+            text,
+            language: Number(language),
+            voiceId: Number(voice_id),
+            gender: gender ?? undefined,
+            age: age ?? undefined,
+            projectName: project_name,
+            projectDescription: project_description,
+            folderId: folder_id ?? undefined,
         });
-        const taskId = initialResponse.body.task_id;
-
-        let attempts = 0;
-        let run_id: string | null = null;
-        while (attempts < MAX_POLLING_ATTEMPTS) {
-            const statusResponse = await httpClient.sendRequest<{ status: string; run_id?: string }>({
-                method: HttpMethod.GET,
-                url: `${API_BASE_URL}/tts/${taskId}`,
-                headers: { 'x-api-key': auth.secret_text },
-            });
-
-            if (statusResponse.body.status === 'SUCCESS') {
-
-                run_id = statusResponse.body.run_id ?? null;
-                break;
-            }
-            if (statusResponse.body.status === 'FAILED') {
-
-                throw new Error(`Text-to-Speech task failed: ${JSON.stringify(statusResponse.body)}`);
-            }
-
-            await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL_MS));
-            attempts++;
-        }
-
-
-        if (!run_id) {
-            throw new Error("Text-to-Speech task timed out or failed to return a run_id.");
-        }
-
-
-        const audioResponse: HttpResponse = await httpClient.sendRequest({
-            method: HttpMethod.GET,
-            url: `${API_BASE_URL}/tts-result/${run_id}`,
-            headers: { 'x-api-key': auth.secret_text },
-            responseType: 'arraybuffer',
-        });
-        
-        const fileName = `speech_${run_id}.wav`;
-        const fileData = Buffer.from(audioResponse.body as ArrayBuffer);
-        const fileUrl = await context.files.write({
-            fileName,
-            data: fileData,
-        });
-
-        return {
-            message: "Speech generated successfully.",
-            audio_url: fileUrl,
-            run_id: run_id,
-        };
     },
 });
