@@ -772,6 +772,11 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
         return typeof result === 'boolean' ? result : undefined
     }
 
+    const actionRequiresAuth = async ({ pieceName, actionName }: { pieceName: string, actionName: string }): Promise<boolean | undefined> => {
+        const { result } = await ctx.apiClient.executeAgentTool({ toolName: '__action_requires_auth', toolInput: { pieceName, actionName }, platformId, userId, source, conversationId })
+        return typeof result === 'boolean' ? result : undefined
+    }
+
     const piecesTheAuthorGaveAnAccount = new Set(source !== AgentRunSource.AGENT ? [] : configuredPieceTools
         .filter((tool) => !isNil(tool.pieceMetadata.predefinedInput?.auth))
         .map((tool) => tool.pieceMetadata.pieceName))
@@ -824,7 +829,7 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
         onConnectorReconnected: (connectorUuid) => brokenConnectors.delete(connectorUuid),
         onGateOpened: storePendingGate,
     })
-    const crossProjectTools = agentWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter: toolEventEmitter, waitForApproval, onGateOpened: storePendingGate, isDeclaredReadOnly, taintState, progressGuard: actionProgressGuard })
+    const crossProjectTools = agentWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter: toolEventEmitter, waitForApproval, onGateOpened: storePendingGate, isDeclaredReadOnly, actionRequiresAuth, taintState, progressGuard: actionProgressGuard })
     const agentSurfaceTools = agentsAvailable && !dryRun && !discoveryOnly
         ? agentWorkerTools.createAgentSurfaceTools({ executeTool: executeCrossProjectTool, taintState, eventEmitter: toolEventEmitter, waitForApproval, onGateOpened: storePendingGate })
         : {}

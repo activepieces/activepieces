@@ -635,6 +635,11 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             const target = await resolveActionTarget({ pieceName, actionName, projects, availableProjectIds, conversationId, platformId, log })
             return 'error' in target ? null : target.declared.readOnly ?? null
         }
+        case '__action_requires_auth': {
+            const { pieceName, actionName } = runActionInput.pick({ pieceName: true, actionName: true }).parse(toolInput)
+            const target = await resolveActionTarget({ pieceName, actionName, projects, availableProjectIds, conversationId, platformId, log })
+            return 'error' in target ? null : target.declared.requiresAuth ?? null
+        }
         case 'ap_explore_data': {
             return runAgentAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, readOnlyOnly: true, log })
         }

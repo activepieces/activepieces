@@ -101,6 +101,32 @@ describe('runAgentAction without a picked connection', () => {
     })
 })
 
+describe('__action_requires_auth', () => {
+    async function requiresAuth(actions: Record<string, unknown>) {
+        mockGetUserProjects.mockResolvedValue([{ id: 'proj-1', displayName: 'Own', type: 'TEAM' }])
+        mockGetSelectedConnection.mockResolvedValue(null)
+        mockGetPieceMetadata.mockResolvedValue({ ...gmailMetadata, actions })
+        const { executeCrossProjectTool } = await import('../../../../../src/app/ee/agent/tools/agent-tools')
+        return executeCrossProjectTool({
+            toolName: '__action_requires_auth',
+            toolInput: { pieceName: '@activepieces/piece-gmail', actionName: 'gmail_search_mail' },
+            platformId: 'plat-1',
+            userId: 'user-1',
+            conversationId: 'conv-1',
+            log: silentLog,
+        })
+    }
+
+    it('reports whether the action declares it needs a connection', async () => {
+        expect(await requiresAuth({ gmail_search_mail: { displayName: 'Search Mail', requireAuth: true } })).toBe(true)
+        expect(await requiresAuth({ gmail_search_mail: { displayName: 'Search Mail', requireAuth: false } })).toBe(false)
+    })
+
+    it('answers null for an action it cannot find, so the worker does not block it', async () => {
+        expect(await requiresAuth({})).toBeNull()
+    })
+})
+
 describe('the missing-auth text the worker matches', () => {
     it('is what diagnosePieceProps reports for a piece call without auth', async () => {
         const { MISSING_AUTH_INPUT_TEXT } = await import('@activepieces/shared')

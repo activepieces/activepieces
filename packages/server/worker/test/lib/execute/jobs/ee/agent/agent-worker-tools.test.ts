@@ -579,6 +579,7 @@ describe('agentWorkerTools', () => {
 
     describe('ap_execute_action progress guard', () => {
         const callOptions = { messages: [], abortSignal: undefined as unknown as AbortSignal }
+        const everyActionNeedsAuth = async (): Promise<boolean> => true
 
         it('stops retrying an identical call after it fails MAX_IDENTICAL_ACTION_FAILURES times', async () => {
             const { eventEmitter } = makeMockEventEmitter()
@@ -620,10 +621,41 @@ describe('agentWorkerTools', () => {
             expect(executeTool).toHaveBeenCalledTimes(2)
         })
 
+        it('runs an action that needs no connection on a piece whose other actions are blocked, and still blocks one that does', async () => {
+            const { eventEmitter } = makeMockEventEmitter()
+            const executeTool = vi.fn().mockResolvedValue({ success: false, missingConnection: true, error: '❌ No Discord account is selected in this conversation.' })
+            const actionRequiresAuth = vi.fn(async ({ actionName }: { pieceName: string, actionName: string }) => actionName !== 'send_message_webhook')
+            const tools = agentWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ outcome: 'approved' }), guides: {}, taintState: { tainted: false }, actionRequiresAuth })
+
+            await tools.ap_execute_action.execute({ pieceName: '@activepieces/piece-discord', actionName: 'send_message', input: { text: 'a' } }, { ...callOptions, toolCallId: 'd1' })
+            await tools.ap_execute_action.execute({ pieceName: '@activepieces/piece-discord', actionName: 'send_message', input: { text: 'b' } }, { ...callOptions, toolCallId: 'd2' })
+            executeTool.mockResolvedValue(mcpSuccess('Sent'))
+            await tools.ap_execute_action.execute({ pieceName: '@activepieces/piece-discord', actionName: 'send_message_webhook', input: { text: 'c' } }, { ...callOptions, toolCallId: 'd3' })
+            await tools.ap_execute_action.execute({ pieceName: '@activepieces/piece-discord', actionName: 'send_message_webhook', input: { text: 'd' } }, { ...callOptions, toolCallId: 'd4' })
+            const authed = await tools.ap_execute_action.execute({ pieceName: '@activepieces/piece-discord', actionName: 'send_message', input: { text: 'e' } }, { ...callOptions, toolCallId: 'd5' })
+
+            expect(executeTool).toHaveBeenCalledTimes(4)
+            expect((authed as { content: Array<{ text: string }> }).content[0].text).toContain('Stop calling')
+            expect(actionRequiresAuth.mock.calls.filter(([params]) => params.actionName === 'send_message_webhook')).toHaveLength(1)
+        })
+
+        it('does not block when it cannot tell whether the action needs a connection', async () => {
+            const { eventEmitter } = makeMockEventEmitter()
+            const executeTool = vi.fn().mockResolvedValue({ success: false, missingConnection: true, error: '❌ No Discord account is selected in this conversation.' })
+            const actionRequiresAuth = vi.fn().mockRejectedValue(new Error('metadata unavailable'))
+            const tools = agentWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ outcome: 'approved' }), guides: {}, taintState: { tainted: false }, actionRequiresAuth })
+
+            for (const index of [1, 2, 3]) {
+                await tools.ap_execute_action.execute({ pieceName: '@activepieces/piece-discord', actionName: 'send_message', input: { text: `${index}` } }, { ...callOptions, toolCallId: `f${index}` })
+            }
+
+            expect(executeTool).toHaveBeenCalledTimes(3)
+        })
+
         it('stops every action of a piece with no connection after two missing-connection failures, across inputs, actions and both tools', async () => {
             const { eventEmitter } = makeMockEventEmitter()
             const executeTool = vi.fn().mockResolvedValue({ success: false, missingConnection: true, error: '❌ No Gmail account is selected in this conversation.' })
-            const tools = agentWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ outcome: 'approved' }), guides: {}, taintState: { tainted: false } })
+            const tools = agentWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ outcome: 'approved' }), guides: {}, taintState: { tainted: false }, actionRequiresAuth: everyActionNeedsAuth })
 
             await tools.ap_execute_action.execute({ pieceName: '@activepieces/piece-gmail', actionName: 'gmail_search_mail', input: { q: 'a' } }, { ...callOptions, toolCallId: 'm1' })
             await tools.ap_explore_data.execute({ pieceName: 'gmail', actionName: 'gmail_get_email', input: { id: '1' } }, { ...callOptions, toolCallId: 'm2' })
@@ -640,7 +672,7 @@ describe('agentWorkerTools', () => {
         it('counts the shared missing-auth validation text as a missing connection', async () => {
             const { eventEmitter } = makeMockEventEmitter()
             const executeTool = vi.fn().mockResolvedValue(mcpFailure('Cannot run action: Missing required inputs: auth (connection required — use ap_list_connections)'))
-            const tools = agentWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ outcome: 'approved' }), guides: {}, taintState: { tainted: false } })
+            const tools = agentWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ outcome: 'approved' }), guides: {}, taintState: { tainted: false }, actionRequiresAuth: everyActionNeedsAuth })
 
             await tools.ap_execute_action.execute({ pieceName: '@activepieces/piece-slack', actionName: 'send_message', input: { text: 'a' } }, { ...callOptions, toolCallId: 'v1' })
             await tools.ap_execute_action.execute({ pieceName: '@activepieces/piece-slack', actionName: 'send_message', input: { text: 'b' } }, { ...callOptions, toolCallId: 'v2' })
@@ -653,7 +685,7 @@ describe('agentWorkerTools', () => {
             const { eventEmitter } = makeMockEventEmitter()
             const executeTool = vi.fn().mockResolvedValue({ success: false, missingConnection: true, error: '❌ No Gmail account is selected in this conversation.' })
             const progressGuard = agentWorkerTools.createProgressGuard()
-            const tools = agentWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ outcome: 'approved' }), guides: {}, taintState: { tainted: false }, progressGuard })
+            const tools = agentWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ outcome: 'approved' }), guides: {}, taintState: { tainted: false }, actionRequiresAuth: everyActionNeedsAuth, progressGuard })
 
             await tools.ap_explore_data.execute({ pieceName: '@activepieces/piece-gmail', actionName: 'gmail_search_mail', input: { q: 'a' } }, { ...callOptions, toolCallId: 'r1' })
             await tools.ap_explore_data.execute({ pieceName: '@activepieces/piece-gmail', actionName: 'gmail_search_mail', input: { q: 'b' } }, { ...callOptions, toolCallId: 'r2' })
@@ -666,7 +698,7 @@ describe('agentWorkerTools', () => {
         it('lets a call that brings its own auth through after the piece breaker trips', async () => {
             const { eventEmitter } = makeMockEventEmitter()
             const executeTool = vi.fn().mockResolvedValue({ success: false, missingConnection: true, error: '❌ No Gmail account is selected in this conversation.' })
-            const tools = agentWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ outcome: 'approved' }), guides: {}, taintState: { tainted: false } })
+            const tools = agentWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ outcome: 'approved' }), guides: {}, taintState: { tainted: false }, actionRequiresAuth: everyActionNeedsAuth })
 
             await tools.ap_explore_data.execute({ pieceName: '@activepieces/piece-gmail', actionName: 'gmail_search_mail', input: { q: 'a' } }, { ...callOptions, toolCallId: 'x1' })
             await tools.ap_explore_data.execute({ pieceName: '@activepieces/piece-gmail', actionName: 'gmail_search_mail', input: { q: 'b' } }, { ...callOptions, toolCallId: 'x2' })
@@ -682,7 +714,7 @@ describe('agentWorkerTools', () => {
         it('counts a batch whose items come back without a connection', async () => {
             const { eventEmitter } = makeMockEventEmitter()
             const executeTool = vi.fn().mockResolvedValue({ success: false, missingConnection: true, error: '❌ No Gmail account is selected in this conversation.' })
-            const tools = agentWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ outcome: 'approved' }), guides: {}, taintState: { tainted: false } })
+            const tools = agentWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ outcome: 'approved' }), guides: {}, taintState: { tainted: false }, actionRequiresAuth: everyActionNeedsAuth })
 
             await tools.ap_execute_action.execute({ pieceName: '@activepieces/piece-gmail', actionName: 'gmail_get_email', items: [{ id: '1' }, { id: '2' }] }, { ...callOptions, toolCallId: 'b1' })
             const next = await tools.ap_execute_action.execute({ pieceName: '@activepieces/piece-gmail', actionName: 'gmail_get_email', input: { id: '3' } }, { ...callOptions, toolCallId: 'b2' })
@@ -694,7 +726,7 @@ describe('agentWorkerTools', () => {
         it('keeps other pieces running while one piece has no connection', async () => {
             const { eventEmitter } = makeMockEventEmitter()
             const executeTool = vi.fn().mockResolvedValue({ success: false, missingConnection: true, error: '❌ No Gmail account is selected in this conversation.' })
-            const tools = agentWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ outcome: 'approved' }), guides: {}, taintState: { tainted: false } })
+            const tools = agentWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ outcome: 'approved' }), guides: {}, taintState: { tainted: false }, actionRequiresAuth: everyActionNeedsAuth })
 
             await tools.ap_explore_data.execute({ pieceName: '@activepieces/piece-gmail', actionName: 'gmail_search_mail', input: { q: 'a' } }, { ...callOptions, toolCallId: 'o1' })
             await tools.ap_explore_data.execute({ pieceName: '@activepieces/piece-gmail', actionName: 'gmail_search_mail', input: { q: 'b' } }, { ...callOptions, toolCallId: 'o2' })

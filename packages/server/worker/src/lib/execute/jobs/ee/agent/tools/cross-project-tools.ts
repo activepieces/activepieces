@@ -63,15 +63,34 @@ export function createProgressGuard() {
     }
 }
 
-export function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, onGateOpened, isDeclaredReadOnly, taintState, progressGuard = createProgressGuard() }: {
+export function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, onGateOpened, isDeclaredReadOnly, actionRequiresAuth, taintState, progressGuard = createProgressGuard() }: {
     executeTool: (toolName: string, toolInput: Record<string, unknown>) => Promise<unknown>
     eventEmitter: AgentEventEmitter
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
     onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
     isDeclaredReadOnly?: (params: { pieceName: string, actionName: string }) => Promise<boolean | undefined>
+    actionRequiresAuth?: (params: { pieceName: string, actionName: string }) => Promise<boolean | undefined>
     taintState: TaintState
     progressGuard?: ProgressGuard
 }): ToolSet {
+    const requiresAuthByAction = new Map<string, Promise<boolean | undefined>>()
+    const requiresAuth = async ({ pieceName, actionName }: { pieceName: string, actionName: string }): Promise<boolean> => {
+        const key = `${normalizePieceName(pieceName)}::${actionName}`
+        const lookup = requiresAuthByAction.get(key) ?? lookUpRequiresAuth({ actionRequiresAuth, pieceName, actionName })
+        requiresAuthByAction.set(key, lookup)
+        const known = await lookup
+        if (isNil(known)) {
+            requiresAuthByAction.delete(key)
+        }
+        return known === true
+    }
+    const connectionBreakerFor = async ({ pieceName, actionName, inputs }: { pieceName: string, actionName: string, inputs: Record<string, unknown>[] }): Promise<{ content: { type: string, text: string }[] } | null> => {
+        const blocked = progressGuard.checkPieceConnection({ pieceName, inputs })
+        if (isNil(blocked)) {
+            return null
+        }
+        return await requiresAuth({ pieceName, actionName }) ? blocked : null
+    }
     const executeWithTimeout = (toolName: string, toolInput: Record<string, unknown>) =>
         withToolTimeout({
             fn: () => executeTool(toolName, toolInput),
@@ -114,7 +133,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
             }),
             execute: async (toolInput, options) => {
                 const isBatch = toolInput.items && toolInput.items.length > 0
-                const connectionBreaker = progressGuard.checkPieceConnection({ pieceName: toolInput.pieceName, inputs: isBatch ? toolInput.items! : [toolInput.input ?? {}] })
+                const connectionBreaker = await connectionBreakerFor({ pieceName: toolInput.pieceName, actionName: toolInput.actionName, inputs: isBatch ? toolInput.items! : [toolInput.input ?? {}] })
                 if (connectionBreaker) {
                     return connectionBreaker
                 }
@@ -247,7 +266,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                 input: z.record(z.string(), z.unknown()).optional().describe('Input for the read action (keep limits small)'),
             }),
             execute: async (toolInput) => {
-                const connectionBreaker = progressGuard.checkPieceConnection({ pieceName: toolInput.pieceName, inputs: [toolInput.input ?? {}] })
+                const connectionBreaker = await connectionBreakerFor({ pieceName: toolInput.pieceName, actionName: toolInput.actionName, inputs: [toolInput.input ?? {}] })
                 if (connectionBreaker) {
                     return connectionBreaker
                 }
@@ -314,6 +333,18 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
             },
         }),
     }
+}
+
+async function lookUpRequiresAuth({ actionRequiresAuth, pieceName, actionName }: {
+    actionRequiresAuth?: (params: { pieceName: string, actionName: string }) => Promise<boolean | undefined>
+    pieceName: string
+    actionName: string
+}): Promise<boolean | undefined> {
+    if (isNil(actionRequiresAuth)) {
+        return undefined
+    }
+    const { data } = await tryCatch(() => actionRequiresAuth({ pieceName, actionName }))
+    return data ?? undefined
 }
 
 function hasAuthInput(input: Record<string, unknown>): boolean {
