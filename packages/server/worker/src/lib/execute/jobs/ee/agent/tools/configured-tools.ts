@@ -235,14 +235,24 @@ export function createConfiguredFlowTools({ tools, runFlowTool, taintState, log 
 }
 
 export function createConfiguredAgentTools({ tools }: { tools: ResolvedAgentAgentTool[] }): ToolSet {
-    return Object.fromEntries(tools.map((configured) => [
-        configured.toolName,
-        tool({
-            description: configured.description,
-            inputSchema: z.object({ request: z.string().describe('What you want this agent to do, with everything it needs to know') }),
-            execute: async () => ({ content: [{ type: 'text', text: AGENT_TOOL_NOT_AVAILABLE }] }),
-        }),
-    ]))
+    return Object.fromEntries(tools.map((configured) => {
+        const { description, answer } = 'unavailableReason' in configured
+            ? unavailableAgentTool({ reason: configured.unavailableReason })
+            : { description: configured.description, answer: AGENT_TOOL_NOT_AVAILABLE }
+        return [
+            configured.toolName,
+            tool({
+                description,
+                inputSchema: z.object({ request: z.string().describe('What you want this agent to do, with everything it needs to know') }),
+                execute: async () => ({ content: [{ type: 'text', text: answer }] }),
+            }),
+        ]
+    }))
+}
+
+function unavailableAgentTool({ reason }: { reason: string }): { description: string, answer: string } {
+    const note = `Unavailable: ${reason} Do not call it. If the task needs it, tell the user this tool needs fixing in the agent's setup.`
+    return { description: note, answer: note }
 }
 
 const AGENT_TOOL_NOT_AVAILABLE = 'Calling other agents is not available yet. Do the task yourself with your other tools, or tell the user it is not possible yet.'

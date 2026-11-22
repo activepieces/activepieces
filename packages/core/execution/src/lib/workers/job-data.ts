@@ -320,11 +320,17 @@ export const ResolvedAgentFlowTool = z.object({
 })
 export type ResolvedAgentFlowTool = z.infer<typeof ResolvedAgentFlowTool>
 
-export const ResolvedAgentAgentTool = z.object({
-    toolName: z.string(),
-    agentId: z.string(),
-    description: z.string(),
-})
+export const ResolvedAgentAgentTool = z.union([
+    z.object({
+        toolName: z.string(),
+        agentId: z.string(),
+        description: z.string(),
+    }),
+    z.object({
+        toolName: z.string(),
+        unavailableReason: z.string(),
+    }),
+])
 export type ResolvedAgentAgentTool = z.infer<typeof ResolvedAgentAgentTool>
 
 export const ExecuteAgentRunJobData = z.object({

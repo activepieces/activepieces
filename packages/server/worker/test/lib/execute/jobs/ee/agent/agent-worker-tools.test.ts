@@ -32,6 +32,18 @@ function mcpFailure(text: string) {
 }
 
 describe('agentWorkerTools', () => {
+    describe('createConfiguredAgentTools', () => {
+        it('tells the model why an unavailable agent tool cannot be used, in its description and its answer', async () => {
+            const tools = agentWorkerTools.createConfiguredAgentTools({ tools: [{ toolName: 'ask_researcher', unavailableReason: 'The agent behind this tool is not published.' }] })
+
+            const researcher = tools['ask_researcher']
+            const answer = await researcher.execute?.({ request: 'Find three competitors.' }, { toolCallId: 'call-1', messages: [] })
+
+            expect(researcher.description).toContain('The agent behind this tool is not published.')
+            expect(answer).toEqual({ content: [{ type: 'text', text: researcher.description }] })
+        })
+    })
+
     describe('isSuccessResult', () => {
         it('returns true for MCP success result', () => {
             expect(agentWorkerTools.isSuccessResult(mcpSuccess('Done'))).toBe(true)

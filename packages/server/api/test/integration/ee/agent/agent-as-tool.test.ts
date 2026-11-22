@@ -202,7 +202,7 @@ describe('the agent tools a chat turn hands to the worker', () => {
         expect(job.data.agentTools).toEqual([{ toolName: 'ask_researcher', agentId: researcher.id, description: 'Researches companies on the web.' }])
     })
 
-    it('skips an agent that was made restricted after it was added', async () => {
+    it('offers an agent made restricted after it was added as unavailable, without its description', async () => {
         const ctx = await context()
         const researcher = await createPublishedAgent(ctx, { displayName: 'Researcher', description: 'Knows the salaries.' })
         const lead = await createPublishedAgent(ctx, { displayName: 'Lead', tools: [agentTool({ externalAgentId: researcher.externalId })] })
@@ -210,10 +210,22 @@ describe('the agent tools a chat turn hands to the worker', () => {
 
         const job = await sendMessage(ctx, lead.id)
 
-        expect(job.data.agentTools).toEqual([])
+        expect(job.data.agentTools).toEqual([{ toolName: 'ask_researcher', unavailableReason: 'The agent behind this tool was deleted or is no longer shared with this project.' }])
     })
 
-    it('keeps a flow step running when the agent behind its agent tool was deleted', async () => {
+    it('tells the model an agent tool is unavailable when its agent was unpublished', async () => {
+        const ctx = await context()
+        const researcher = await createPublishedAgent(ctx, { displayName: 'Researcher' })
+        const lead = await createPublishedAgent(ctx, { displayName: 'Lead', tools: [agentTool({ externalAgentId: researcher.externalId })] })
+        const unpublished = await ctx.post(`/v1/agents/${researcher.id}/unpublish`, {})
+        expect(unpublished.statusCode).toBe(StatusCodes.OK)
+
+        const job = await sendMessage(ctx, lead.id)
+
+        expect(job.data.agentTools).toEqual([{ toolName: 'ask_researcher', unavailableReason: 'The agent behind this tool is not published.' }])
+    })
+
+    it('keeps a flow step running and tells the model when the agent behind its agent tool was deleted', async () => {
         const ctx = await context()
         const researcher = await createPublishedAgent(ctx, { displayName: 'Researcher' })
         await ctx.delete(`/v1/agents/${researcher.id}`)
@@ -236,10 +248,10 @@ describe('the agent tools a chat turn hands to the worker', () => {
 
         expect(response.statusCode).toBe(StatusCodes.OK)
         const job = addSpy.mock.calls.map(([call]) => call).find((call) => call.data.jobType === WorkerJobType.EXECUTE_AGENT_RUN)
-        expect(job.data.agentTools).toEqual([])
+        expect(job.data.agentTools).toEqual([{ toolName: 'ask_researcher', unavailableReason: 'The agent behind this tool was deleted or is no longer shared with this project.' }])
     })
 
-    it('skips an agent tool whose agent was deleted, instead of failing the turn', async () => {
+    it('tells the model an agent tool is unavailable when its agent was deleted, instead of failing the turn', async () => {
         const ctx = await context()
         const researcher = await createPublishedAgent(ctx, { displayName: 'Researcher' })
         const lead = await createPublishedAgent(ctx, { displayName: 'Lead', tools: [agentTool({ externalAgentId: researcher.externalId })] })
@@ -248,6 +260,6 @@ describe('the agent tools a chat turn hands to the worker', () => {
 
         const job = await sendMessage(ctx, lead.id)
 
-        expect(job.data.agentTools).toEqual([])
+        expect(job.data.agentTools).toEqual([{ toolName: 'ask_researcher', unavailableReason: 'The agent behind this tool was deleted or is no longer shared with this project.' }])
     })
 })
