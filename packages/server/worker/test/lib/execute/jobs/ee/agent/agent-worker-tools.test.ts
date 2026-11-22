@@ -1,6 +1,7 @@
 import { ActionPreviewEvent, ActionReceiptEvent, AgentToolType, BuildPlanEvent, KnowledgeBaseSourceType, SendAgentEmailResponse, ToolProgressEvent } from '@activepieces/shared'
 import { asSchema } from 'ai'
 import { describe, expect, it, vi } from 'vitest'
+import { z } from 'zod'
 import { AgentEventEmitter, agentWorkerTools } from '../../../../../../src/lib/execute/jobs/ee/agent/agent-worker-tools'
 import { buildPlanSync } from '../../../../../../src/lib/execute/jobs/ee/agent/tools/session-tools'
 import { displayToolUtils } from '../../../../../../src/lib/execute/jobs/ee/agent/tools/display-tools'
@@ -15,6 +16,10 @@ function makeMockEventEmitter(): { eventEmitter: AgentEventEmitter, progressEven
         },
         progressEvents,
     }
+}
+
+function firstText(result: unknown): string {
+    return toolTextResult.parse(result).content[0].text
 }
 
 const mockLog = {
@@ -635,8 +640,26 @@ describe('agentWorkerTools', () => {
             const authed = await tools.ap_execute_action.execute({ pieceName: '@activepieces/piece-discord', actionName: 'send_message', input: { text: 'e' } }, { ...callOptions, toolCallId: 'd5' })
 
             expect(executeTool).toHaveBeenCalledTimes(4)
-            expect((authed as { content: Array<{ text: string }> }).content[0].text).toContain('Stop calling')
+            expect(firstText(authed)).toContain('Stop calling')
             expect(actionRequiresAuth.mock.calls.filter(([params]) => params.actionName === 'send_message_webhook')).toHaveLength(1)
+        })
+
+        it('asks once for an action whose answer is unknown, and again after a failed lookup', async () => {
+            const { eventEmitter } = makeMockEventEmitter()
+            const executeTool = vi.fn().mockResolvedValue({ success: false, missingConnection: true, error: '❌ No Discord account is selected in this conversation.' })
+            const unknownAnswer = vi.fn().mockResolvedValue(undefined)
+            const failingLookup = vi.fn().mockRejectedValue(new Error('metadata unavailable'))
+            const unknownTools = agentWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ outcome: 'approved' }), guides: {}, taintState: { tainted: false }, actionRequiresAuth: unknownAnswer })
+            const failingTools = agentWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ outcome: 'approved' }), guides: {}, taintState: { tainted: false }, actionRequiresAuth: failingLookup })
+
+            for (const tools of [unknownTools, failingTools]) {
+                for (const index of [1, 2, 3, 4]) {
+                    await tools.ap_execute_action.execute({ pieceName: '@activepieces/piece-discord', actionName: 'send_message', input: { text: `${index}` } }, { ...callOptions, toolCallId: `u${index}` })
+                }
+            }
+
+            expect(unknownAnswer).toHaveBeenCalledTimes(1)
+            expect(failingLookup).toHaveBeenCalledTimes(2)
         })
 
         it('does not block when it cannot tell whether the action needs a connection', async () => {
@@ -664,7 +687,7 @@ describe('agentWorkerTools', () => {
 
             expect(executeTool).toHaveBeenCalledTimes(2)
             for (const blocked of [third, fourth]) {
-                const text = (blocked as { content: Array<{ text: string }> }).content[0].text
+                const text = firstText(blocked)
                 expect(text).toContain('Stop calling @activepieces/piece-gmail actions until ap_show_connection_picker returns selected')
             }
         })
@@ -708,7 +731,7 @@ describe('agentWorkerTools', () => {
             const blank = await tools.ap_explore_data.execute({ pieceName: '@activepieces/piece-gmail', actionName: 'gmail_search_mail', input: { q: 'd', auth: '' } }, { ...callOptions, toolCallId: 'x5' })
 
             expect(executeTool).toHaveBeenCalledTimes(5)
-            expect((blank as { content: Array<{ text: string }> }).content[0].text).toContain('Stop calling')
+            expect(firstText(blank)).toContain('Stop calling')
         })
 
         it('counts a batch whose items come back without a connection', async () => {
@@ -720,7 +743,7 @@ describe('agentWorkerTools', () => {
             const next = await tools.ap_execute_action.execute({ pieceName: '@activepieces/piece-gmail', actionName: 'gmail_get_email', input: { id: '3' } }, { ...callOptions, toolCallId: 'b2' })
 
             expect(executeTool).toHaveBeenCalledTimes(2)
-            expect((next as { content: Array<{ text: string }> }).content[0].text).toContain('Stop calling')
+            expect(firstText(next)).toContain('Stop calling')
         })
 
         it('keeps other pieces running while one piece has no connection', async () => {
@@ -1215,3 +1238,5 @@ describe('picking the account a connection card would pre-select', () => {
         expect(displayToolUtils.preselectedConnection({ stored: undefined })).toBeNull()
     })
 })
+
+const toolTextResult = z.object({ content: z.array(z.object({ text: z.string() })).min(1) })

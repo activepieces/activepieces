@@ -73,16 +73,16 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
     taintState: TaintState
     progressGuard?: ProgressGuard
 }): ToolSet {
-    const requiresAuthByAction = new Map<string, Promise<boolean | undefined>>()
+    const requiresAuthByAction = new Map<string, Promise<RequiresAuthAnswer>>()
     const requiresAuth = async ({ pieceName, actionName }: { pieceName: string, actionName: string }): Promise<boolean> => {
         const key = `${normalizePieceName(pieceName)}::${actionName}`
         const lookup = requiresAuthByAction.get(key) ?? lookUpRequiresAuth({ actionRequiresAuth, pieceName, actionName })
         requiresAuthByAction.set(key, lookup)
-        const known = await lookup
-        if (isNil(known)) {
+        const answer = await lookup
+        if (answer.lookupFailed) {
             requiresAuthByAction.delete(key)
         }
-        return known === true
+        return answer.requiresAuth
     }
     const connectionBreakerFor = async ({ pieceName, actionName, inputs }: { pieceName: string, actionName: string, inputs: Record<string, unknown>[] }): Promise<{ content: { type: string, text: string }[] } | null> => {
         const blocked = progressGuard.checkPieceConnection({ pieceName, inputs })
@@ -339,12 +339,12 @@ async function lookUpRequiresAuth({ actionRequiresAuth, pieceName, actionName }:
     actionRequiresAuth?: (params: { pieceName: string, actionName: string }) => Promise<boolean | undefined>
     pieceName: string
     actionName: string
-}): Promise<boolean | undefined> {
+}): Promise<RequiresAuthAnswer> {
     if (isNil(actionRequiresAuth)) {
-        return undefined
+        return { requiresAuth: false, lookupFailed: false }
     }
-    const { data } = await tryCatch(() => actionRequiresAuth({ pieceName, actionName }))
-    return data ?? undefined
+    const { data, error } = await tryCatch(() => actionRequiresAuth({ pieceName, actionName }))
+    return { requiresAuth: data === true, lookupFailed: !isNil(error) }
 }
 
 function hasAuthInput(input: Record<string, unknown>): boolean {
@@ -355,3 +355,8 @@ function hasAuthInput(input: Record<string, unknown>): boolean {
 const MAX_MISSING_CONNECTION_FAILURES = 2
 
 export type ProgressGuard = ReturnType<typeof createProgressGuard>
+
+type RequiresAuthAnswer = {
+    requiresAuth: boolean
+    lookupFailed: boolean
+}
