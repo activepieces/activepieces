@@ -11,7 +11,7 @@ export const runway = createPiece({
   displayName: "Runway",
   description: "AI-powered content generation platform for creating high-quality images and videos using text prompts",
   auth: runwayAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: "https://cdn.activepieces.com/pieces/runway.png",
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ["sparkybug"],
