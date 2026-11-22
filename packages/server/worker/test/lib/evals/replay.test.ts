@@ -46,6 +46,28 @@ describe('replay.resolveCall', () => {
         expect(live).not.toHaveBeenCalled()
     })
 
+    it('fakes publishing, retries and unknown tools in live mode because only allowlisted tools run for real', async () => {
+        const caseReplay = replay.create({ recordedToolCalls: [] })
+        const live = vi.fn(async () => ({ ran: true }))
+        const toolNames = ['ap_lock_and_publish', 'ap_retry_run', 'ap_create_agent', 'ap_brand_new_capability']
+
+        const outputs = await Promise.all(toolNames.map((toolName) => replay.resolveCall({ caseReplay, mode: 'live', toolName, input: {}, live })))
+
+        expect(outputs).toEqual(Array(toolNames.length).fill(expect.objectContaining({ structuredContent: { status: 'SUCCEEDED' } })))
+        expect(live).not.toHaveBeenCalled()
+    })
+
+    it('runs allowlisted workspace writes and reads for real in live mode', async () => {
+        const caseReplay = replay.create({ recordedToolCalls: [] })
+        const live = vi.fn(async () => ({ ok: true }))
+        const toolNames = ['ap_update_step', 'ap_insert_records', 'ap_list_flows', 'ap_flow_structure']
+
+        const outputs = await Promise.all(toolNames.map((toolName) => replay.resolveCall({ caseReplay, mode: 'live', toolName, input: {}, live })))
+
+        expect(outputs).toEqual(Array(toolNames.length).fill({ ok: true }))
+        expect(live).toHaveBeenCalledTimes(toolNames.length)
+    })
+
     it('runs read-only actions for real in live mode', async () => {
         const caseReplay = replay.create({ recordedToolCalls: [] })
         const live = vi.fn(async () => ({ channels: [{ id: 'C1', name: 'general' }] }))

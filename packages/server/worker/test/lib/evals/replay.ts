@@ -90,7 +90,7 @@ async function resolveLiveCall({ caseReplay, toolName, input, live }: { caseRepl
 
 function isStubbed({ toolName, input }: { toolName: string, input: unknown }): boolean {
     if (toolName !== EXECUTE_ACTION_TOOL) {
-        return STUBBED_TOOLS.has(toolName)
+        return !runsLive(toolName)
     }
     const actionName = isObject(input) && typeof input['actionName'] === 'string' ? input['actionName'] : ''
     const actionInput = isObject(input) && isObject(input['input']) ? input['input'] : undefined
@@ -172,6 +172,10 @@ function isRead(toolName: string): boolean {
     return READ_TOOLS.has(toolName)
 }
 
+function runsLive(toolName: string): boolean {
+    return READ_TOOLS.has(toolName) || WORKSPACE_WRITE_TOOLS.has(toolName)
+}
+
 function isLive(toolName: string): boolean {
     return LIVE_TOOLS.has(toolName)
 }
@@ -214,7 +218,6 @@ const LIVE_TOOLS = new Set([
     'ap_setup_guide',
     'ap_web_search',
 ])
-const STUBBED_TOOLS = new Set(['ap_change_flow_status', 'ap_run_action', 'ap_test_flow', 'ap_test_step'])
 const EXECUTE_ACTION_TOOL = 'ap_execute_action'
 const STUBBED_SUCCESS = { content: [{ type: 'text', text: 'Finished successfully.' }], structuredContent: { status: FlowRunStatus.SUCCEEDED } }
 const READ_TOOLS = new Set([
@@ -240,6 +243,39 @@ const READ_TOOLS = new Set([
     'ap_validate_flow',
     'ap_validate_step_config',
 ])
+const WORKSPACE_WRITE_TOOLS = new Set([
+    'ap_add_branch',
+    'ap_add_step',
+    'ap_apply_flow_operations',
+    'ap_build_flow',
+    'ap_create_flow',
+    'ap_create_folder',
+    'ap_create_table',
+    'ap_delete_branch',
+    'ap_delete_flow',
+    'ap_delete_records',
+    'ap_delete_step',
+    'ap_delete_table',
+    'ap_duplicate_flow',
+    'ap_insert_records',
+    'ap_manage_fields',
+    'ap_manage_notes',
+    'ap_move_flow_to_folder',
+    'ap_rename_flow',
+    'ap_update_branch',
+    'ap_update_record',
+    'ap_update_step',
+    'ap_update_trigger',
+])
+const STUBBED_TOOLS = [
+    'ap_change_flow_status',
+    'ap_lock_and_publish',
+    'ap_retry_run',
+    'ap_run_action',
+    'ap_test_flow',
+    'ap_test_step',
+    'every other tool that is not a read or a flow, table or folder change',
+]
 
 export const replay = {
     create,
