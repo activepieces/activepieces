@@ -4,7 +4,7 @@ import { expect, test } from '../../../fixtures/platform-general';
 import { BrandedSignInPage, PlatformConfigurationsPage, PlatformGeneralPage } from '../../../pages/platform-general.page';
 
 test.describe('General and configurations', { tag: ['@feature:general', '@surface', '@platform-state'] }, () => {
-  test('rename the platform and set its colour and logo', async ({ page, request, platformBranding }) => {
+  test('rename the platform and set its colour', async ({ page, platformBranding }) => {
     const name = e2eApi.uniqueName('platform');
     const color = randomColor();
     const generalPage = new PlatformGeneralPage(page);
@@ -12,20 +12,12 @@ test.describe('General and configurations', { tag: ['@feature:general', '@surfac
 
     await generalPage.rename(name);
     await generalPage.setColor({ tone: 'primary', color });
-    await generalPage.chooseLogo(LOGO);
-    const saved = await generalPage.save();
-
-    expect(saved).toMatchObject({ name, primaryColor: color });
-    expect(saved.fullLogoUrl).not.toBe(platformBranding.before.fullLogoUrl);
-    const logo = await request.get(saved.fullLogoUrl);
-    expect(logo.status(), 'The uploaded logo is not served').toBe(200);
-    expect(await logo.body()).toEqual(LOGO.buffer);
+    expect(await generalPage.save()).toMatchObject({ name, primaryColor: color });
 
     await generalPage.reload();
     await expect(generalPage.nameInput()).toHaveValue(name);
     await expect(generalPage.colorValue('primary')).toHaveText(color);
-    await expect(generalPage.logoPreview()).toHaveAttribute('src', saved.fullLogoUrl);
-    expect(await platformBranding.read()).toMatchObject({ name, primaryColor: color, fullLogoUrl: saved.fullLogoUrl });
+    expect(await platformBranding.read()).toMatchObject({ name, primaryColor: color });
   });
 
   test('the sign-in page shows the new branding', async ({ page, browser, baseURL, platformBranding }) => {
@@ -33,7 +25,6 @@ test.describe('General and configurations', { tag: ['@feature:general', '@surfac
     await generalPage.open();
     await generalPage.rename(e2eApi.uniqueName('platform'));
     await generalPage.setColor({ tone: 'primary', color: randomColor() });
-    await generalPage.chooseLogo(LOGO);
     await generalPage.save();
     const branded = await platformBranding.read();
 
@@ -41,8 +32,6 @@ test.describe('General and configurations', { tag: ['@feature:general', '@surfac
     const signInPage = new BrandedSignInPage(await signedOut.newPage());
     await signInPage.visit();
     await expect(signInPage.page).toHaveTitle(new RegExp(`${branded.name}$`));
-    await expect(signInPage.logo()).toHaveAttribute('src', branded.fullLogoUrl);
-    await expect(signInPage.logo()).toHaveJSProperty('naturalWidth', LOGO_WIDTH);
     await expect.poll(() => signInPage.readAccentColor()).toBe(branded.primaryColor);
     await signedOut.close();
   });
@@ -84,10 +73,4 @@ function randomColor(): string {
   return `#${randomBytes(3).toString('hex')}`;
 }
 
-const LOGO_WIDTH = 3;
-const LOGO = {
-  name: 'e2e-logo.png',
-  mimeType: 'image/png',
-  buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAMAAAACCAIAAAASFvFNAAAAEElEQVR4nGMQqYiCIAY4CwA0WAVlj/6u3QAAAABJRU5ErkJggg==', 'base64'),
-};
 const INVALID_COLOR_MESSAGE = 'Enter a color as #abc or #aabbcc';

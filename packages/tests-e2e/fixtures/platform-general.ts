@@ -42,7 +42,6 @@ export type Platform = {
   name: string;
   primaryColor: string;
   themeColors?: Record<string, unknown> | null;
-  fullLogoUrl: string;
   plan: { customAppearanceEnabled: boolean };
 };
 

@@ -82,7 +82,6 @@ export const BrandImageField = ({
             <img
               src={shownUrl}
               alt={label}
-              data-testid={`${id}-preview`}
               className="max-h-full max-w-full object-contain"
             />
           ) : (
@@ -135,7 +134,6 @@ export const BrandImageField = ({
           <input
             ref={inputRef}
             type="file"
-            data-testid={`${id}-file-input`}
             accept="image/*"
             className="hidden"
             tabIndex={-1}

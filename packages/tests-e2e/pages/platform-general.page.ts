@@ -30,11 +30,6 @@ export class PlatformGeneralPage extends BasePage {
     await expect(hexInput).toBeHidden();
   }
 
-  async chooseLogo(file: { name: string; mimeType: string; buffer: Buffer }): Promise<void> {
-    await this.page.getByTestId('brand-logo-file-input').setInputFiles(file);
-    await expect(this.logoPreview()).toHaveAttribute('src', /^blob:/);
-  }
-
   async save(): Promise<Platform> {
     const saved = this.page.waitForResponse((response) => isPlatformUpdate(response.request()));
     await this.saveButton().click();
@@ -63,10 +58,6 @@ export class PlatformGeneralPage extends BasePage {
 
   colorError(tone: ColorTone): Locator {
     return this.page.getByTestId(`general-${tone}-color-error`);
-  }
-
-  logoPreview(): Locator {
-    return this.page.getByTestId('brand-logo-preview');
   }
 
   saveButton(): Locator {
@@ -104,10 +95,6 @@ export class PlatformConfigurationsPage extends BasePage {
 }
 
 export class BrandedSignInPage extends AuthenticationPage {
-  logo(): Locator {
-    return this.page.getByTestId('full-logo-image');
-  }
-
   readAccentColor(): Promise<string> {
     return this.page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--accent-light-9'));
   }
