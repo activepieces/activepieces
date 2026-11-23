@@ -107,6 +107,12 @@ More information on data types and accepted values:
                 required: true,
                 defaultValue: 'results.json',
               }),
+              prettyPrint: Property.Checkbox({
+                displayName: 'Pretty Print',
+                description: 'Indent the JSON so it is easier to read.',
+                required: false,
+                defaultValue: false,
+              }),
             };
           default:
             return {};
@@ -183,9 +189,10 @@ More information on data types and accepted values:
         if (typeof fileName !== 'string') {
           throw new Error('File Name is required.');
         }
+        const indent = formatOptions?.['prettyPrint'] === true ? 2 : undefined;
         return context.files.write({
           fileName,
-          data: Buffer.from(JSON.stringify(results)),
+          data: Buffer.from(JSON.stringify(results, null, indent)),
         });
       }
       default:

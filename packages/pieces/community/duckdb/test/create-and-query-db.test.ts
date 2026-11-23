@@ -290,7 +290,32 @@ describe('File Options', () => {
 
     expect(Object.keys(await build({ outputFormat: 'rows' }, ctx))).toEqual([]);
     expect(Object.keys(await build({ outputFormat: 'json' }, ctx))).toEqual(
-      ['fileName']
+      ['fileName', 'prettyPrint']
+    );
+  });
+});
+
+describe('JSON Pretty Print', () => {
+  const props = {
+    tables: [table({ data: [{ id: 1 }] })],
+    query: 'SELECT id FROM t',
+    outputFormat: 'json',
+  };
+
+  it('writes compact JSON by default', async () => {
+    const { written } = await runActionWithFiles(props);
+
+    expect(written[0].data.toString('utf-8')).toBe('[{"id":"1"}]');
+  });
+
+  it('indents the JSON when pretty print is on', async () => {
+    const { written } = await runActionWithFiles({
+      ...props,
+      formatOptions: { prettyPrint: true },
+    });
+
+    expect(written[0].data.toString('utf-8')).toBe(
+      JSON.stringify([{ id: '1' }], null, 2)
     );
   });
 });
