@@ -3,6 +3,7 @@ import { OAuth2PropertyValue, Store } from '@activepieces/pieces-framework';
 import { wrikeCommon } from './client';
 
 export const wrikeWebhook = { register, unregister, eventsOfType };
+export const WEBHOOK_ID_KEY = 'webhook_id';
 
 async function register({
   auth,
@@ -80,5 +81,3 @@ export type WrikeWebhookEvent = {
   folderId?: string;
   lastUpdatedDate?: string;
 };
-
-export const WEBHOOK_ID_KEY = 'webhook_id';
