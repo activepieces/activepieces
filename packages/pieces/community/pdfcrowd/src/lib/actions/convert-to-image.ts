@@ -1,6 +1,6 @@
 import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { pdfcrowdAuth } from '../common/auth';
-import { conversionOutputSchema, pdfcrowdConvert, pickSource, withExtension } from '../common/convert';
+import { baseName, conversionOutputSchema, pdfcrowdConvert, pickSource, withExtension } from '../common/convert';
 
 export const convertToImageAction = createAction({
   auth: pdfcrowdAuth,
@@ -82,7 +82,7 @@ export const convertToImageAction = createAction({
     return pdfcrowdConvert({
       auth,
       files,
-      filename: withExtension({ name: propsValue.filename, fallback: 'screenshot', extension: format }),
+      filename: withExtension({ name: baseName({ name: propsValue.filename, fallback: 'screenshot' }), fallback: 'screenshot', extension: format }),
       fields: {
         ...source,
         output_format: format,
