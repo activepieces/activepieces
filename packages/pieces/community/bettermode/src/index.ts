@@ -131,6 +131,10 @@ export const bettermode = createPiece({
     withTokenStore(createCustomApiCallAction({
       baseUrl: (auth) => (auth ? assertRegion(auth.props.region) : ''),
       auth: bettermodeAuth,
+      props: {
+        url: { description: 'Bettermode has one GraphQL endpoint: keep this URL and send a POST.', placeholder: 'https://api.bettermode.com' },
+        body: { description: 'A GraphQL request, for example {"query": "{ network { name } }"}' },
+      },
       authMapping: async (auth, propsValue) => {
         assertCustomCallUrl({ region: auth.props.region, url: readPath({ value: propsValue, path: ['url', 'url'] }) });
         return { Authorization: `Bearer ${(await getSession(auth.props)).token}` };
