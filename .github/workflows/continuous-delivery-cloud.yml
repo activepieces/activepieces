@@ -38,6 +38,7 @@ jobs:
       image_tag: ${{ steps.pick.outputs.image_tag || steps.hotfix.outputs.image_tag }}
       from_tag: ${{ steps.from.outputs.tag }}
       cloud_sha: ${{ steps.cloud.outputs.sha }}
+      cloud_image_tag: ${{ steps.cloud.outputs.image_tag }}
       skip: ${{ steps.pick.outputs.skip }}
     steps:
       # The App token can push a pick branch whose commits change workflow files; GITHUB_TOKEN cannot.
@@ -74,13 +75,15 @@ jobs:
       - name: Read the commit Cloud runs
         id: cloud
         run: |
-          CLOUD_SHA=$(ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal app version --config-file=config/app.yml 2>&1; exit"' \
-            | tr -d '\r' | { grep -oE '^[0-9]+\.[0-9]+\.[0-9]+\.[a-f0-9]{40}\.(beta|pick)$' || true; } | head -1 | cut -d. -f4)
+          CLOUD_TAG=$(ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal app version --config-file=config/app.yml 2>&1; exit"' \
+            | tr -d '\r' | { grep -oE '^[0-9]+\.[0-9]+\.[0-9]+\.[a-f0-9]{40}\.(beta|pick)$' || true; } | head -1)
+          CLOUD_SHA=$(echo "$CLOUD_TAG" | cut -d. -f4)
           if [ -z "$CLOUD_SHA" ]; then
             echo "::error::Could not read the version the Cloud fleet runs"
             exit 1
           fi
           echo "sha=$CLOUD_SHA" >> "$GITHUB_OUTPUT"
+          echo "image_tag=$CLOUD_TAG" >> "$GITHUB_OUTPUT"
           echo "Cloud runs \`$CLOUD_SHA\`" >> "$GITHUB_STEP_SUMMARY"
 
       # A scheduled run stops when every app and worker host, canary included, already runs the candidate,
@@ -265,9 +268,20 @@ jobs:
       from_tag: ${{ needs.cut.outputs.from_tag }}
     secrets: inherit
 
+  # Report only: the approver reads the numbers in this job's summary; a slower candidate does not block.
+  benchmark:
+    needs: [cut, build-pick]
+    if: always() && needs.cut.result == 'success' && needs.cut.outputs.skip != 'true' && (needs.build-pick.result == 'success' || needs.build-pick.result == 'skipped')
+    uses: ./.github/workflows/benchmark-compare.yml
+    with:
+      baseline_image: ghcr.io/activepieces/activepieces-cloud:${{ needs.cut.outputs.cloud_image_tag }}
+      candidate_image: ghcr.io/activepieces/activepieces-cloud:${{ needs.cut.outputs.image_tag }}
+      ref: ${{ needs.cut.outputs.sha }}
+    secrets: inherit
+
   # Posts each check's result on the candidate SHA, and names the check that failed.
   report:
-    needs: [cut, e2e-matrix, upgrade-test]
+    needs: [cut, e2e-matrix, upgrade-test, benchmark]
     if: always() && needs.cut.result == 'success' && needs.cut.outputs.skip != 'true'
     runs-on: ubuntu-latest
     permissions:
@@ -282,6 +296,7 @@ jobs:
           E2E_RESULT: ${{ needs.e2e-matrix.result }}
           UPGRADE_RESULT: ${{ needs.upgrade-test.result }}
           SWAPPED: ${{ needs.upgrade-test.outputs.swapped }}
+          BENCHMARK_RESULT: ${{ needs.benchmark.result }}
         run: |
           post() {
             STATE=failure
@@ -298,6 +313,7 @@ jobs:
           else
             post upgrade-test "$UPGRADE_RESULT" "Setup failed before the upgrade from $FROM_TAG, not the candidate"
           fi
+          echo "- \`benchmark\`: $BENCHMARK_RESULT (report only, the numbers are in the benchmark job summary)" >> "$GITHUB_STEP_SUMMARY"
 
   # Lists the tickets between the commit Cloud runs and the candidate, so the approver sees them.
   # Uses the path filter of the Linear release below. Never blocks the gate.
@@ -332,8 +348,9 @@ jobs:
           done
 
   # The one approval. A newer candidate cancels an older one that still waits here.
+  # It waits for the benchmark so the numbers are there, but does not read its result.
   approve:
-    needs: [cut, e2e-matrix, upgrade-test, tickets]
+    needs: [cut, e2e-matrix, upgrade-test, tickets, benchmark]
     if: ${{ !cancelled() && needs.cut.outputs.skip != 'true' && needs.e2e-matrix.result == 'success' && needs.upgrade-test.result == 'success' && needs.tickets.result == 'success' }}
     runs-on: ubuntu-latest
     environment:

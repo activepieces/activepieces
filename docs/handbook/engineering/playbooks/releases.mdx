@@ -62,10 +62,10 @@ The gate has no schedule yet. A daily run (Sunday to Thursday, 8 AM UTC) comes b
 
 Then, for the candidate:
 
-1. `e2e-matrix.yml` and `upgrade-test.yml` run on the candidate's `version.sha.beta` image. Nothing is built again.
+1. `e2e-matrix.yml`, `upgrade-test.yml` and `benchmark-compare.yml` run on the candidate's `version.sha.beta` image. Nothing is built again. The benchmark runs the image Cloud runs and the candidate in turns on one runner, on a light and a heavy flow, and its job summary shows the median change of each metric. It is report only.
 2. The `report` job posts the `e2e-matrix` and `upgrade-test` commit statuses on the candidate SHA. A red upgrade test says whether the candidate broke or the setup failed before the upgrade.
 3. The run summary lists the tickets between the commit Cloud runs and the candidate.
-4. The `approve` job waits for approval in the `production` GitHub Environment. It starts only when every check passed. The gate does not fall back to an older commit: when the matrix is red, fix `main`, or name an older commit in `sha`. A newer candidate cancels an older one that still waits.
+4. The `approve` job waits for approval in the `production` GitHub Environment. It starts when the benchmark has finished and every other check passed; the benchmark result does not block it. The gate does not fall back to an older commit: when the matrix is red, fix `main`, or name an older commit in `sha`. A newer candidate cancels an older one that still waits.
 5. Under the `promote-production` lock, the `deploy` job reads the Cloud version again and refuses to deploy when the canary and the fleet run different images, or when Cloud changed after the cut. It does not check that the candidate contains every hotfix Cloud runs. Then the breaking-migration check, the canary, the fleet, and the Linear "Cloud" release.
 
 If the gate refuses because the canary and the fleet differ (for example after `emergency-cloud-deploy.yml`, which deploys only the fleet), deploy the fleet's tag to the canary from `mrsk/prod`: `kamal deploy --version <tag> --config-file=config/app-canary.yml --skip-push`, then the same with `config/worker-canary.yml`.
