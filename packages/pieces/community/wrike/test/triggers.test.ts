@@ -1,4 +1,4 @@
-import { httpClient } from '@activepieces/pieces-common';
+import { HttpError, httpClient } from '@activepieces/pieces-common';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { newFolder } from '../src/lib/triggers/new-folder';
 import { newSubtask } from '../src/lib/triggers/new-subtask';
@@ -104,6 +104,46 @@ describe('wrike webhook triggers', () => {
     const match = await call({ fn: newSubtask.run, c: ctx({ body, propsValue: { parentTaskId: 'P1' } }) });
     expect(other).toEqual([]);
     expect(match).toHaveLength(1);
+  });
+
+  it('new_subtask keeps the other subtasks when one task lookup fails', async () => {
+    vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (req) => {
+      if (req.url.endsWith('/tasks/GONE')) {
+        throw new HttpError({}, { status: 404, responseBody: { error: 'not_found' } });
+      }
+      return { status: 200, headers: {}, body: { data: [{ id: 'S1', superTaskIds: ['P1'] }] } };
+    });
+    const body = [
+      event({ eventType: 'TaskCreated', taskId: 'GONE' }),
+      event({ eventType: 'TaskCreated', taskId: 'S1' }),
+    ];
+    const out = await call({ fn: newSubtask.run, c: ctx({ body }) });
+    expect(out).toEqual([{ ...body[1], task: { id: 'S1', superTaskIds: ['P1'] } }]);
+  });
+
+  it('onDisable keeps the webhook id when Wrike fails to delete it', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    vi.spyOn(httpClient, 'sendRequest').mockRejectedValue(new HttpError({}, { status: 500, responseBody: {} }));
+    const store = makeStore();
+    store.data.set('webhook_id', 'WH1');
+    await call({ fn: newTask.onDisable, c: ctx({ store }) });
+    expect(store.data.get('webhook_id')).toBe('WH1');
+  });
+
+  it('onDisable clears the webhook id once deleted or already gone', async () => {
+    const spy = vi.spyOn(httpClient, 'sendRequest');
+    const store = makeStore();
+
+    spy.mockResolvedValueOnce({ status: 200, headers: {}, body: {} });
+    store.data.set('webhook_id', 'WH1');
+    await call({ fn: newFolder.onDisable, c: ctx({ store }) });
+    expect(spy.mock.calls[0][0]).toMatchObject({ method: 'DELETE', url: 'https://www.wrike.com/api/v4/webhooks/WH1' });
+    expect(store.data.has('webhook_id')).toBe(false);
+
+    spy.mockRejectedValueOnce(new HttpError({}, { status: 404, responseBody: {} }));
+    store.data.set('webhook_id', 'WH2');
+    await call({ fn: newSubtask.onDisable, c: ctx({ store }) });
+    expect(store.data.has('webhook_id')).toBe(false);
   });
 
   it('onEnable subscribes to one event and uses the folder endpoint when a folder is set', async () => {

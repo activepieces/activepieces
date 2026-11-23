@@ -1,7 +1,7 @@
 import { Property } from '@activepieces/pieces-framework';
 import { wrikeAuth } from '../common/auth';
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
-import { wrikeWebhook } from '../common/webhook';
+import { WEBHOOK_ID_KEY, wrikeWebhook } from '../common/webhook';
 
 export const newTask = createTrigger({
   name: 'new_task',
@@ -37,15 +37,11 @@ export const newTask = createTrigger({
       eventType: 'TaskCreated',
       folderId: context.propsValue.folderId || undefined,
     });
-    await context.store.put('webhook_id', webhookId);
+    await context.store.put(WEBHOOK_ID_KEY, webhookId);
   },
 
   onDisable: async (context) => {
-    const webhookId = await context.store.get<string>('webhook_id');
-    if (webhookId) {
-      await wrikeWebhook.unregister({ auth: context.auth, webhookId });
-      await context.store.delete('webhook_id');
-    }
+    await wrikeWebhook.unregister({ auth: context.auth, store: context.store });
   },
 
   run: async (context) => {

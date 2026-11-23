@@ -3,7 +3,7 @@ import { wrikeAuth } from '../common/auth';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { wrikeCommon } from '../common/client';
-import { wrikeWebhook } from '../common/webhook';
+import { WEBHOOK_ID_KEY, wrikeWebhook } from '../common/webhook';
 
 export const newSubtask = createTrigger({
   name: 'new_subtask_created',
@@ -51,15 +51,11 @@ export const newSubtask = createTrigger({
       webhookUrl: context.webhookUrl,
       eventType: 'TaskCreated',
     });
-    await context.store.put('webhook_id', webhookId);
+    await context.store.put(WEBHOOK_ID_KEY, webhookId);
   },
 
   onDisable: async (context) => {
-    const webhookId = await context.store.get<string>('webhook_id');
-    if (webhookId) {
-      await wrikeWebhook.unregister({ auth: context.auth, webhookId });
-      await context.store.delete('webhook_id');
-    }
+    await wrikeWebhook.unregister({ auth: context.auth, store: context.store });
   },
 
   run: async (context) => {
@@ -68,7 +64,7 @@ export const newSubtask = createTrigger({
       body: context.payload.body,
       eventType: 'TaskCreated',
     });
-    const subtasks = await Promise.all(
+    const lookups = await Promise.allSettled(
       events.map(async (event) => {
         const response = await wrikeCommon.apiCall({
           auth: context.auth,
@@ -83,6 +79,8 @@ export const newSubtask = createTrigger({
         return isMatch ? { ...event, task } : null;
       })
     );
-    return subtasks.filter((subtask) => subtask !== null);
+    return lookups.flatMap((lookup) =>
+      lookup.status === 'fulfilled' && lookup.value !== null ? [lookup.value] : []
+    );
   },
 });

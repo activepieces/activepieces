@@ -1,7 +1,7 @@
 import { Property } from '@activepieces/pieces-framework';
 import { wrikeAuth } from '../common/auth';
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
-import { wrikeWebhook } from '../common/webhook';
+import { WEBHOOK_ID_KEY, wrikeWebhook } from '../common/webhook';
 
 export const newFolder = createTrigger({
   name: 'new_folder',
@@ -36,15 +36,11 @@ export const newFolder = createTrigger({
       eventType: 'FolderCreated',
       folderId: context.propsValue.parentFolderId || undefined,
     });
-    await context.store.put('webhook_id', webhookId);
+    await context.store.put(WEBHOOK_ID_KEY, webhookId);
   },
 
   onDisable: async (context) => {
-    const webhookId = await context.store.get<string>('webhook_id');
-    if (webhookId) {
-      await wrikeWebhook.unregister({ auth: context.auth, webhookId });
-      await context.store.delete('webhook_id');
-    }
+    await wrikeWebhook.unregister({ auth: context.auth, store: context.store });
   },
 
   run: async (context) => {

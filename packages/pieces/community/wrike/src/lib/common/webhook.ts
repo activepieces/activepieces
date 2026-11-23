@@ -1,5 +1,5 @@
-import { HttpMethod } from '@activepieces/pieces-common';
-import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { HttpError, HttpMethod } from '@activepieces/pieces-common';
+import { OAuth2PropertyValue, Store } from '@activepieces/pieces-framework';
 import { wrikeCommon } from './client';
 
 export const wrikeWebhook = { register, unregister, eventsOfType };
@@ -31,18 +31,28 @@ async function register({
 
 async function unregister({
   auth,
-  webhookId,
+  store,
 }: {
   auth: OAuth2PropertyValue;
-  webhookId: string;
+  store: Store;
 }): Promise<void> {
-  await wrikeCommon
-    .apiCall({
+  const webhookId = await store.get<string>(WEBHOOK_ID_KEY);
+  if (!webhookId) {
+    return;
+  }
+  try {
+    await wrikeCommon.apiCall({
       auth,
       method: HttpMethod.DELETE,
       resourceUri: `/webhooks/${webhookId}`,
-    })
-    .catch(() => undefined);
+    });
+  } catch (error) {
+    if (!(error instanceof HttpError) || error.response.status !== 404) {
+      console.warn('Failed to unregister Wrike webhook:', error);
+      return;
+    }
+  }
+  await store.delete(WEBHOOK_ID_KEY);
 }
 
 function eventsOfType({
@@ -70,3 +80,5 @@ export type WrikeWebhookEvent = {
   folderId?: string;
   lastUpdatedDate?: string;
 };
+
+export const WEBHOOK_ID_KEY = 'webhook_id';
