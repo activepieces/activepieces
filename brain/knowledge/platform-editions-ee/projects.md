@@ -16,12 +16,18 @@ A **Project** is the workspace within a platform where flows, connections, table
 - `update` — TEAM allows `displayName` + `icon`; PERSONAL allows neither.
 - `getOne`/`getOneOrThrow`, `getAllForUser` (admins see all platform projects, members see assigned), `getUserProjectOrThrow` (CE list), `getProjectIdsByPlatform`, `countByPlatformIdAndType` (limit enforcement).
 
-### Endpoints (CE level)
-- `GET /v1/projects` — CE returns personal project only.
-- `GET /v1/projects/:id` — single project.
-- `POST /v1/projects/:id` — update display name + metadata.
+### Endpoints
+Every edition registers the same `/v1/projects` routes from `platformProjectModule`.
+- `POST /v1/projects` — creates a TEAM project; refused once the plan's `billedTeamProjectsLimit` is reached.
+- `GET /v1/projects` — platform admins and operators see every platform project, members see the projects they belong to. Filters: `displayName`, `types`, `externalId`, `externalUserId`.
+- `GET /v1/projects/:id` — one project with its plan and usage.
+- `POST /v1/projects/:id` — update. A member with `WRITE_PROJECT` on the project can rename it; only a platform admin sets `isDefault`, `externalId` and `executionDataRetentionDays`.
+- `DELETE /v1/projects/:id` — platform admins and API keys only; a soft delete through `markForDeletion`.
 
 ### Gotchas
+- **The current project lives only in the browser.** A switch in the rail saves `projectId` in local storage (`authenticationSession.switchToProject`); the server keeps no current project, so each browser profile has its own.
+- **Platform Admin → Projects has no error state.** The table reads the whole `projectCollection` (one `GET /v1/projects` with `limit: 30000`) and pages and filters on the client, so it passes `isError={false}` to the table. The same collection fills the rail.
+- **A project name cannot hold `.` or `/`.** The server checks `SAFE_STRING_PATTERN` (`^[^./]+$`) on create and update, but the create dialog only checks for an empty name, so a name with a dot fails with the generic error toast.
 - `projectHooks.postCreate` is where EE creates the associated `ProjectPlan`, sets piece filters, and auto-subscribes an alert receiver (owner email for personal, `context.alertReceiverEmail` for team).
 - Soft-deleted projects stay in DB; a background job hard-deletes them.
 - **Raw SQL on `project` must add `"deleted" IS NULL` itself.** TypeORM adds it only to repository queries, so a raw `databaseConnection().query` or a join through `project` returns soft-deleted projects, names included. Usage name lookups (`ai-usage-names.ts`) hit this.
@@ -40,6 +46,8 @@ Entry point: `projectService`, a log-taking factory in `project-service.ts` that
 - `packages/server/api/src/app/ee/projects/` — the whole `/v1/projects` HTTP surface plus members, roles, releases, plans
 - `packages/core/shared/src/lib/management/project/` — `Project`, `ProjectPlan`, `ProjectIcon` and request schemas
 - `packages/web/src/features/projects/components/` — project switcher, platform switcher, create and edit dialogs
-- `packages/web/src/features/projects/stores/` — current-project store
+- `packages/web/src/features/projects/stores/` — current-project store and `projectCollection`
+- `packages/web/src/app/routes/platform/projects/` — the Platform Admin → Projects table
+- `packages/web/src/app/components/project-settings/` — the project settings dialog (rename, members, alerts)
 
-Paths verified 2026-07-17. An earlier version pointed at `project/project-controller.ts`; that file is gone and the `/v1/projects` routes now register from `ee/projects/platform-project-module.ts`.
+Paths verified 2026-11-16. An earlier version pointed at `project/project-controller.ts`; that file is gone and the `/v1/projects` routes now register from `ee/projects/platform-project-module.ts`.

@@ -1,11 +1,12 @@
+import { isNil } from '@activepieces/pieces-framework';
 import {
   ImapFlow,
   type CopyResponseObject,
+  type FetchMessageObject,
   type ListResponse,
   type MailboxLockObject,
 } from 'imapflow';
 import { type Attachment, type ParsedMail, simpleParser } from 'mailparser';
-import { Readable } from 'stream';
 import dayjs from 'dayjs';
 
 import { type ImapAuth } from './auth';
@@ -145,34 +146,83 @@ async function deleteEmail<T extends { success: boolean }>({
   )) as T;
 }
 
-async function fetchEmails<T extends Message[]>({
+async function fetchEmails({
   auth,
   lastPoll,
+  lastPollUids,
   mailbox,
 }: {
   auth: ImapAuth;
   lastPoll: number;
+  lastPollUids: number[];
   mailbox: string;
-}): Promise<T> {
-  return (await performMailboxOperation(auth, mailbox, async (imapClient) => {
-    const messages = [];
-    const since =
+}): Promise<Message[]> {
+  return performMailboxOperation(auth, mailbox, async (imapClient) => {
+    const after =
       lastPoll === 0
-        ? dayjs().subtract(DEFAULT_LOOKBACK_HOURS, 'hour').toISOString()
-        : dayjs(lastPoll).toISOString();
-    const res = imapClient.fetch({ since }, { source: true });
-
-    for await (const message of res) {
-      const { source, uid } = message;
-      const castedItem = await parseStream(source as unknown as Readable);
-      messages.push({
-        data: { ...castedItem, uid },
-        epochMilliSeconds: dayjs(castedItem.date).valueOf(),
-      });
+        ? dayjs().subtract(DEFAULT_LOOKBACK_HOURS, 'hour').valueOf()
+        : lastPoll;
+    const candidates = await imapClient.fetchAll(
+      { since: dayjs(after).subtract(1, 'day').toDate() },
+      { uid: true, internalDate: true }
+    );
+    const newUids = candidates
+      .filter((message) => {
+        const arrivedAt = arrivalEpoch(message);
+        return (
+          isNil(arrivedAt) ||
+          isNewArrival({ arrivedAt, uid: message.uid, after, lastPollUids })
+        );
+      })
+      .map((message) => message.uid);
+    if (newUids.length === 0) {
+      return [];
     }
 
+    const messages: Message[] = [];
+    for await (const message of imapClient.fetch(
+      newUids.join(','),
+      { uid: true, internalDate: true, source: true },
+      { uid: true }
+    )) {
+      if (isNil(message.source)) {
+        continue;
+      }
+      const parsed = await simpleParser(message.source);
+      const arrivedAt = arrivalEpoch(message) ?? parsed.date?.getTime();
+      if (
+        isNil(arrivedAt) ||
+        !isNewArrival({ arrivedAt, uid: message.uid, after, lastPollUids })
+      ) {
+        continue;
+      }
+      messages.push({
+        data: { ...parsed, uid: message.uid },
+        epochMilliSeconds: arrivedAt,
+      });
+    }
     return messages;
-  })) as T;
+  });
+}
+
+function isNewArrival({
+  arrivedAt,
+  uid,
+  after,
+  lastPollUids,
+}: {
+  arrivedAt: number;
+  uid: number;
+  after: number;
+  lastPollUids: number[];
+}): boolean {
+  return arrivedAt > after || (arrivedAt === after && !lastPollUids.includes(uid));
+}
+
+function arrivalEpoch(message: FetchMessageObject): number | undefined {
+  return isNil(message.internalDate)
+    ? undefined
+    : dayjs(message.internalDate).valueOf();
 }
 
 async function fetchMailboxes<T extends ListResponse[]>(
@@ -213,18 +263,6 @@ async function moveEmail<T extends { success: boolean; newUid?: number }>({
     },
     { readOnly: false }
   )) as T;
-}
-
-async function parseStream(stream: Readable) {
-  return new Promise<ParsedMail>((resolve, reject) => {
-    simpleParser(stream, (err, parsed) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(parsed);
-      }
-    });
-  });
 }
 
 async function performImapOperation<T>(

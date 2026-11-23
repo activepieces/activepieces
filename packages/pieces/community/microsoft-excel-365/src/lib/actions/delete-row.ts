@@ -41,7 +41,7 @@ export const deleteRowAction = createAction({
 
         const client = createMSGraphClient(access_token, cloud);
         await client
-            .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='${rowAddress}')/delete`)
+            .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${encodeURIComponent(worksheetId)}/range(address='${rowAddress}')/delete`)
             .post({ shift: 'Up' });
 
         return { success: true, deleted_row: row_id };

@@ -1,4 +1,5 @@
 import { AgentMcpTool, AgentToolType, McpAuthType, McpProtocol } from '@activepieces/shared'
+import { jsonSchema } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { agentMcpClient } from '../../../../../../src/lib/execute/jobs/ee/agent/agent-mcp-client'
@@ -372,5 +373,69 @@ describe('agentMcpClient — the auth config never reaches a log line', () => {
 
         expect(warnCalls).toHaveLength(1)
         expect(JSON.stringify(warnCalls)).not.toContain(secret)
+    })
+})
+
+describe('agentMcpClient.connect — transient server errors from the platform MCP', () => {
+    const credentials = { mcpServerUrl: 'https://cloud.example.com/mcp/platform', mcpToken: 'platform-token' }
+    const badGateway = Object.assign(new Error('MCP HTTP Transport Error: POSTing to endpoint (HTTP 502): {"title":"Error 502: Bad gateway"}'), { statusCode: 502 })
+
+    it('retries a 502 once and keeps the platform tools', async () => {
+        const client = fakeMcpClient()
+        const tools = vi.spyOn(client, 'tools').mockRejectedValueOnce(badGateway).mockResolvedValueOnce({ ap_list_flows: { inputSchema: jsonSchema({ type: 'object', properties: {} }) } })
+        mockCreateMCPClient.mockResolvedValueOnce(client)
+        const { log } = createTestLogger()
+
+        const connection = await agentMcpClient.connect({ mcpCredentials: credentials, conversationId: 'conversation-1', log })
+
+        expect(tools).toHaveBeenCalledTimes(2)
+        expect(connection.mcpClient).toBe(client)
+        expect(Object.keys(connection.mcpToolSet)).toEqual(['ap_list_flows'])
+    })
+
+    it('fails the turn and closes the client when the retry answers a 502 too', async () => {
+        const client = fakeMcpClient()
+        const tools = vi.spyOn(client, 'tools').mockRejectedValue(badGateway)
+        const close = vi.spyOn(client, 'close')
+        mockCreateMCPClient.mockResolvedValueOnce(client)
+        const { log } = createTestLogger()
+
+        await expect(agentMcpClient.connect({ mcpCredentials: credentials, conversationId: 'conversation-1', log })).rejects.toBe(badGateway)
+        expect(tools).toHaveBeenCalledTimes(2)
+        expect(close).toHaveBeenCalledTimes(1)
+    })
+
+    it('retries an initialize 502 once and connects', async () => {
+        const client = fakeMcpClient()
+        mockCreateMCPClient.mockRejectedValueOnce(badGateway).mockResolvedValueOnce(client)
+        const { log } = createTestLogger()
+
+        const connection = await agentMcpClient.connect({ mcpCredentials: credentials, conversationId: 'conversation-1', log })
+
+        expect(mockCreateMCPClient).toHaveBeenCalledTimes(2)
+        expect(connection.mcpClient).toBe(client)
+    })
+
+    it('falls back to no MCP tools without retrying when the server is unreachable', async () => {
+        mockCreateMCPClient.mockRejectedValue(new Error('fetch failed: connect ECONNREFUSED'))
+        const { log } = createTestLogger()
+
+        const connection = await agentMcpClient.connect({ mcpCredentials: credentials, conversationId: 'conversation-1', log })
+
+        expect(mockCreateMCPClient).toHaveBeenCalledTimes(1)
+        expect(connection).toEqual({ mcpClient: null, mcpToolSet: {} })
+    })
+
+    it('does not retry a client error', async () => {
+        const unauthorized = Object.assign(new Error('MCP HTTP Transport Error: POSTing to endpoint (HTTP 401)'), { statusCode: 401 })
+        const client = fakeMcpClient()
+        const tools = vi.spyOn(client, 'tools').mockRejectedValue(unauthorized)
+        const close = vi.spyOn(client, 'close')
+        mockCreateMCPClient.mockResolvedValueOnce(client)
+        const { log } = createTestLogger()
+
+        await expect(agentMcpClient.connect({ mcpCredentials: credentials, conversationId: 'conversation-1', log })).rejects.toBe(unauthorized)
+        expect(tools).toHaveBeenCalledTimes(1)
+        expect(close).toHaveBeenCalledTimes(1)
     })
 })
