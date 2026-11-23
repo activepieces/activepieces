@@ -101,7 +101,11 @@ async function problemsOfStep({ step, invalidReasons, platformId, log }: {
         const componentType = step.type === FlowActionType.PIECE ? 'action' : 'trigger'
         const component = isNil(componentName) ? undefined : await findComponent({ pieceName: step.settings.pieceName, pieceVersion: step.settings.pieceVersion, componentName, componentType, platformId, log })
         const fieldProblems = isNil(component) ? [] : pieceFieldProblems({ stepName: step.name, props: component.props, input: step.settings.input ?? {} })
-        return [...fieldProblems, ...invalidReasons.map((reason) => reasonToProblem({ stepName: step.name, reason }))]
+        const problems = [...fieldProblems, ...invalidReasons.map((reason) => reasonToProblem({ stepName: step.name, reason }))]
+        if (step.valid || problems.length > 0) {
+            return problems
+        }
+        return [{ step: step.name, message: isNil(component) ? `invalid configuration: ${componentType} not found on this piece` : 'invalid configuration' }]
     }
     if (step.valid) {
         return []
