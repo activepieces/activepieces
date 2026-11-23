@@ -8,6 +8,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Gem, User } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 import {
   AdminDataTable,
@@ -15,6 +16,7 @@ import {
   AdminPageHeader,
   adminPageResources,
 } from '@/app/components/admin';
+import { dataTableFilterUtils } from '@/components/custom/data-table/data-table-filter-utils';
 import { UserRoundPlusIcon } from '@/components/icons/user-round-plus';
 import { Button } from '@/components/ui/button';
 import { internalErrorToast } from '@/components/ui/sonner';
@@ -37,7 +39,12 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { UserActions } from './actions/user-actions';
-import { createUsersTableColumns } from './columns';
+import {
+  createUsersTableColumns,
+  getUserRowStatus,
+  INVITED_USER_STATUS,
+  UserRowStatus,
+} from './columns';
 
 export type UserRowData =
   | {
@@ -92,6 +99,21 @@ export default function UsersPage() {
 
     return [...users, ...pendingInvitations];
   }, [usersData, invitationsData]);
+
+  const [searchParams] = useSearchParams();
+  const selectedStatuses = dataTableFilterUtils.getSelectedValues({
+    searchParams,
+    key: STATUS_FILTER_KEY,
+    allowedValues: STATUS_FILTER_VALUES,
+    defaultValues: DEFAULT_STATUS_FILTER,
+  });
+  const visibleRows =
+    selectedStatuses.length === 0
+      ? combinedData
+      : combinedData.filter((row) =>
+          selectedStatuses.includes(getUserRowStatus(row)),
+        );
+  const hiddenUsersCount = combinedData.length - visibleRows.length;
 
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: subscription } = billingQueries.usePlatformSubscription(
@@ -206,12 +228,33 @@ export default function UsersPage() {
       </AdminPageHeader>
       <InviteRewardHint />
       <AdminDataTable
-        emptyStateTextTitle={t('No users found')}
-        emptyStateTextDescription={t('Start inviting users to your project')}
+        emptyStateTextTitle={
+          hiddenUsersCount > 0
+            ? t('No users match this filter')
+            : t('No users found')
+        }
+        emptyStateTextDescription={
+          hiddenUsersCount > 0
+            ? t('usersHiddenByStatusFilter', { count: hiddenUsersCount })
+            : t('Start inviting users to your project')
+        }
         emptyStateIcon={<User />}
         columns={columns}
+        filters={[
+          {
+            type: 'select',
+            title: t('Status'),
+            accessorKey: STATUS_FILTER_KEY,
+            options: [
+              { label: t('Activated'), value: UserStatus.ACTIVE },
+              { label: t('Deactivated'), value: UserStatus.INACTIVE },
+              { label: t('Invited'), value: INVITED_USER_STATUS },
+            ],
+            defaultValues: DEFAULT_STATUS_FILTER,
+          },
+        ]}
         page={{
-          data: combinedData,
+          data: visibleRows,
           next: usersData?.next || null,
           previous: usersData?.previous || null,
         }}
@@ -241,3 +284,16 @@ export default function UsersPage() {
     </AdminPage>
   );
 }
+
+const STATUS_FILTER_KEY = 'status';
+
+const STATUS_FILTER_VALUES: UserRowStatus[] = [
+  UserStatus.ACTIVE,
+  UserStatus.INACTIVE,
+  INVITED_USER_STATUS,
+];
+
+const DEFAULT_STATUS_FILTER: UserRowStatus[] = [
+  UserStatus.ACTIVE,
+  INVITED_USER_STATUS,
+];
