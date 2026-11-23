@@ -5,7 +5,6 @@ import { createMCPClient } from '@ai-sdk/mcp'
 import { asSchema, jsonSchema, Tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
-import { workerSettings } from '../../../../config/worker-settings'
 import { agentWorkerTools } from './agent-worker-tools'
 import { cardTitleFields, plainJsonSchema, TaintState } from './tools/tool-primitives'
 
@@ -345,7 +344,7 @@ function withToolTimeouts({ mcpToolSet, brokenConnectors, taintState, getSelecte
                 }
                 const { data: toolResult, error } = await tryCatch(() => agentWorkerTools.withToolTimeout({
                     fn: (timeoutSignal) => originalExecute(args, options ? { ...options, abortSignal: timeoutSignal } : undefined),
-                    timeoutMs: ACTION_RUN_TOOL_NAMES.has(name) ? workerSettings.longRunningTimeoutMs() : agentWorkerTools.TOOL_EXECUTION_TIMEOUT_MS,
+                    timeoutMs: agentWorkerTools.TOOL_EXECUTION_TIMEOUT_MS,
                     toolName: name,
                 }))
                 if (error) {
@@ -392,9 +391,6 @@ export const agentMcpClient = {
     classifyMcpAuthError,
     redactMcpAuthSecrets,
 }
-
-const ACTION_RUN_TOOL_NAMES = new Set(['ap_run_code', 'ap_execute_action', 'ap_explore_data'])
-
 type AgentMcpToolsConnection = {
     clients: Awaited<ReturnType<typeof createMCPClient>>[]
     toolSet: ToolSet

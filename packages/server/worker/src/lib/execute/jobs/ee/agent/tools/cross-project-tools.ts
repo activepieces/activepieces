@@ -2,6 +2,7 @@ import { isObject, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { ActionPreviewEvent, agentToolClassification } from '@activepieces/shared'
 import { tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { z } from 'zod'
+import { workerSettings } from '../../../../../config/worker-settings'
 import { executeBatchAction, MAX_BATCH_SIZE, MAX_IDENTICAL_ACTION_FAILURES } from './configured-tools'
 import { AgentEventEmitter, cardTitleFields, extractUserFacingError, GateDecision, gateNoResponseMessage, isSuccessResult, stableStringify, TaintState, TOOL_EXECUTION_TIMEOUT_MS, truncateLargeResult, withToolTimeout } from './tool-primitives'
 
@@ -55,7 +56,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
     const executeWithTimeout = (toolName: string, toolInput: Record<string, unknown>) =>
         withToolTimeout({
             fn: () => executeTool(toolName, toolInput),
-            timeoutMs: TOOL_EXECUTION_TIMEOUT_MS,
+            timeoutMs: ACTION_RUN_TOOL_NAMES.has(toolName) ? workerSettings.longRunningTimeoutMs() : TOOL_EXECUTION_TIMEOUT_MS,
             toolName,
         })
 
@@ -282,3 +283,4 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
     }
 }
 
+const ACTION_RUN_TOOL_NAMES = new Set(['ap_run_code', 'ap_execute_action', 'ap_explore_data'])
