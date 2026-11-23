@@ -43,6 +43,7 @@ const ApNoteCanvasNode = (props: NodeProps & Omit<ApNoteNode, 'position'>) => {
   }
   return (
     <div
+      data-testid="canvas-note"
       className={cn('group note-node outline-none', {
         nowheel: isFocusWithin,
       })}

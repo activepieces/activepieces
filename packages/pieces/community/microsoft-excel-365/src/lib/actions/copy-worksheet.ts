@@ -75,7 +75,7 @@ export const copyWorksheetAction = createAction({
 
     const cellProps = copyMode === 'values' ? 'values' : 'formulas';
     const usedRange: UsedRange = await client
-      .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/usedRange`)
+      .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${encodeURIComponent(worksheetId)}/usedRange`)
       .select(`address,rowCount,columnCount,numberFormat,${cellProps}`)
       .get();
 

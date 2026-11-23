@@ -1,4 +1,4 @@
-import { ApId, BaseModelSchema, DateOrString, Nullable } from '@activepieces/core-utils'
+import { ApId, BaseModelSchema, DateOrString, formErrors, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { FederatedAuthnProviderConfig, FederatedAuthnProviderConfigWithoutSensitiveData } from '../../core/federated-authn'
 import { SsoDomainVerification } from './sso-domain-verification'
@@ -45,6 +45,10 @@ export enum UnconsumableFeatureId {
     TEAM_PROJECTS_LIMIT = 'teamProjectsLimit',
     USERS_LIMIT = 'usersLimit',
     ACTIVE_FLOWS_LIMIT = 'activeFlowsLimit',
+}
+
+export enum RewardFeatureId {
+    REWARDED_INVITES = 'rewarded_invites_count',
 }
 
 export enum FeatureFlagId {
@@ -157,7 +161,7 @@ export type PlatformPlanWithOnlyLimits = PlatformPlanLimits
 
 export const HEX_COLOR_PATTERN = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/
 
-export const ThemeHexColor = z.string().regex(HEX_COLOR_PATTERN, 'invalidHexColor')
+export const ThemeHexColor = z.string().regex(HEX_COLOR_PATTERN, formErrors.invalidHexColor)
 
 export const PlatformThemeColors = z.object({
     avatar: ThemeHexColor.optional(),
@@ -377,5 +381,6 @@ export const PlatformBillingInformation = z.object({
     includedSeats: Nullable(z.number()),
     additionalSeats: Nullable(z.number()),
     selfServeTrial: SelfServeTrialInfo,
+    rewardedInvitesLeft: Nullable(z.number()),
 })
 export type PlatformBillingInformation = z.infer<typeof PlatformBillingInformation>
