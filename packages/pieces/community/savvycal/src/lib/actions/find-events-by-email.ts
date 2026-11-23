@@ -1,14 +1,15 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { savvyCalPaginatedCall, flattenEvent, SavvyCalEvent } from '../common';
+import { savvyCalCollect, buildEventQuery, flattenEvent, SavvyCalEvent } from '../common';
 import { savvyCalAuth, getToken } from '../auth';
 
 export const findEventsByEmailAction = createAction({
   auth: savvyCalAuth,
   name: 'find_events_by_email',
+  classification: 'SEARCH',
   displayName: 'Find Events by Attendee Email',
   description: "Returns all events where the attendee's email matches the given address.",
   audience: 'both',
-  aiMetadata: { description: 'Finds all SavvyCal events that have a given email among their attendees. Use to look up a specific person\'s bookings when you only know their email; optionally narrow with a start-date window to limit the scan. Match is case-insensitive on the attendee email. Read-only and idempotent.', idempotent: true },
+  aiMetadata: { description: 'Finds all SavvyCal events, past and upcoming, that have a given email among their attendees, in any state. Use to look up a specific person\'s bookings when you only know their email; optionally narrow with a start-date window. Match is case-insensitive on the attendee email. Read-only and idempotent.', idempotent: true },
   props: {
     attendee_email: Property.ShortText({
       displayName: 'Attendee Email',
@@ -17,32 +18,37 @@ export const findEventsByEmailAction = createAction({
     }),
     start_after: Property.DateTime({
       displayName: 'Start After',
-      description: 'Only search events starting after this date. Use this to limit the search scope and improve performance.',
+      description: 'Only search events starting at or after this date. Leave empty to search all past and upcoming events.',
       required: false,
     }),
     start_before: Property.DateTime({
       displayName: 'Start Before',
-      description: 'Only search events starting before this date.',
+      description: 'Only search events starting at or before this date.',
       required: false,
     }),
   },
   async run(context) {
-    const token = getToken(context.auth);
     const { attendee_email, start_after, start_before } = context.propsValue;
+    const normalizedEmail = attendee_email.toLowerCase().trim();
 
-    const queryParams: Record<string, string> = {};
-    if (start_after) queryParams['start_after'] = start_after;
-    if (start_before) queryParams['start_before'] = start_before;
-
-    const events = await savvyCalPaginatedCall<SavvyCalEvent>({
-      token,
-      path: '/events',
-      queryParams,
+    const { queryParams, keep } = buildEventQuery({
+      period: 'all',
+      startAfter: start_after,
+      startBefore: start_before,
+      search: normalizedEmail,
+      includeEventsNotAttending: true,
     });
 
-    const normalizedEmail = attendee_email.toLowerCase().trim();
-    return events
-      .filter((e) => e.attendees?.some((a) => a.email?.toLowerCase() === normalizedEmail))
-      .map(flattenEvent);
+    const events = await savvyCalCollect<SavvyCalEvent>({
+      token: getToken(context.auth),
+      path: '/events',
+      queryParams,
+      keep: (event) => (keep ? keep(event) : true) && hasAttendeeEmail({ event, email: normalizedEmail }),
+    });
+    return events.map(flattenEvent);
   },
 });
+
+function hasAttendeeEmail({ event, email }: { event: SavvyCalEvent; email: string }): boolean {
+  return (event.attendees ?? []).some((attendee) => attendee.email?.toLowerCase() === email);
+}
