@@ -15,7 +15,14 @@ import { chatPanelUtils } from '@/features/workspace/lib/chat-panel-open';
 import { routeLocation } from '@/lib/route-location';
 import { routesThatRequireProjectId } from '@/lib/route-utils';
 
+const embedding = vi.hoisted(() => ({ isEmbedded: false }));
+
+vi.mock('@/components/providers/embed-provider', () => ({
+  useEmbedding: () => ({ embedState: embedding }),
+}));
+
 afterEach(() => {
+  embedding.isEmbedded = false;
   cleanup();
   vi.restoreAllMocks();
 });
@@ -81,6 +88,18 @@ describe('Markdown links', () => {
     expect(screen.getByTestId('location').textContent).toBe(
       '/projects/p1/tables/t1',
     );
+  });
+
+  it('shows an app page link as plain text when embedded', () => {
+    embedding.isEmbedded = true;
+    const openBeside = vi.spyOn(chatPanelUtils, 'openBeside');
+    renderChatMarkdown('[Leads table](/projects/p1/tables/t1)');
+
+    expect(screen.queryAllByRole('link')).toHaveLength(0);
+    fireEvent.click(screen.getByText('Leads table'));
+
+    expect(openBeside).not.toHaveBeenCalled();
+    expect(screen.getByTestId('location').textContent).toBe('/');
   });
 });
 

@@ -1,6 +1,7 @@
 import { createContext, useContext } from 'react';
 import { Link } from 'react-router-dom';
 
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { domUtils } from '@/lib/dom-utils';
 import { cn } from '@/lib/utils';
 
@@ -32,6 +33,11 @@ export function AppLink({
   children: React.ReactNode;
 }) {
   const handlers = useAppLinks();
+  const { embedState } = useEmbedding();
+  const text = bare
+    ? handlers?.label(route) ?? route.split(/[?#]/)[0]
+    : children;
+  if (handlers && embedState.isEmbedded) return <>{text}</>;
   return (
     <Link
       to={route}
@@ -48,7 +54,7 @@ export function AppLink({
         className,
       )}
     >
-      {bare ? handlers?.label(route) ?? route.split(/[?#]/)[0] : children}
+      {text}
     </Link>
   );
 }
