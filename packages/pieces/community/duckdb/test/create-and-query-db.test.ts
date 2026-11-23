@@ -292,6 +292,9 @@ describe('File Options', () => {
     expect(Object.keys(await build({ outputFormat: 'json' }, ctx))).toEqual(
       ['fileName', 'prettyPrint']
     );
+    expect(Object.keys(await build({ outputFormat: 'csv' }, ctx))).toEqual(
+      ['fileName']
+    );
   });
 });
 
@@ -317,5 +320,38 @@ describe('JSON Pretty Print', () => {
     expect(written[0].data.toString('utf-8')).toBe(
       JSON.stringify([{ id: '1' }], null, 2)
     );
+  });
+});
+
+describe('CSV output', () => {
+  it('csv writes a file with a header row and the rows', async () => {
+    const { result, written } = await runActionWithFiles({
+      tables: [table({ data: [{ id: 1, name: 'a' }, { id: 2, name: 'b' }] })],
+      query: 'SELECT id, name FROM t ORDER BY id',
+      outputFormat: 'csv',
+    });
+
+    expect(result).toBe('file://out');
+    expect(written[0].data.toString('utf-8')).toBe('id,name\n1,a\n2,b\n');
+  });
+
+  it('escapes commas, quotes and newlines', async () => {
+    const { written } = await runActionWithFiles({
+      tables: [table({ data: [{ v: 'a,"b"\nc' }] })],
+      query: 'SELECT v FROM t',
+      outputFormat: 'csv',
+    });
+
+    expect(written[0].data.toString('utf-8')).toBe('v\n"a,""b""\nc"\n');
+  });
+
+  it('still writes the header when the result has zero rows', async () => {
+    const { written } = await runActionWithFiles({
+      tables: [table({ data: [{ id: 1, name: 'a' }] })],
+      query: 'SELECT id, name FROM t WHERE id = 99',
+      outputFormat: 'csv',
+    });
+
+    expect(written[0].data.toString('utf-8')).toBe('id,name\n');
   });
 });

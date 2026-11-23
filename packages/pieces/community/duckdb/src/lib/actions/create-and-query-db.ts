@@ -9,6 +9,7 @@ import {
 import { DuckDBInstance } from '@duckdb/node-api';
 import { quotedIdentifier } from '@duckdb/node-api/lib/sql';
 import { parse as parseCsv } from 'csv-parse/sync';
+import { stringify as stringifyCsv } from 'csv-stringify/sync';
 
 export const createAndQueryDB = createAction({
   name: 'createAndQueryDB',
@@ -88,6 +89,7 @@ More information on data types and accepted values:
         options: [
           { label: 'Rows (default)', value: 'rows' },
           { label: 'JSON file', value: 'json' },
+          { label: 'CSV file', value: 'csv' },
         ],
       },
     }),
@@ -112,6 +114,15 @@ More information on data types and accepted values:
                 description: 'Indent the JSON so it is easier to read.',
                 required: false,
                 defaultValue: false,
+              }),
+            };
+          case 'csv':
+            return {
+              fileName: Property.ShortText({
+                displayName: 'File Name',
+                description: 'Name of the file to create.',
+                required: true,
+                defaultValue: 'results.csv',
               }),
             };
           default:
@@ -193,6 +204,21 @@ More information on data types and accepted values:
         return context.files.write({
           fileName,
           data: Buffer.from(JSON.stringify(results, null, indent)),
+        });
+      }
+      case 'csv': {
+        const fileName = formatOptions?.['fileName'];
+        if (typeof fileName !== 'string') {
+          throw new Error('File Name is required.');
+        }
+        return context.files.write({
+          fileName,
+          data: Buffer.from(
+            stringifyCsv(results, {
+              header: true,
+              columns: reader.columnNames(),
+            })
+          ),
         });
       }
       default:
