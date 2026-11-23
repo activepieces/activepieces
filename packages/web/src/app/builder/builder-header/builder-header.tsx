@@ -129,6 +129,7 @@ export const BuilderHeader = ({ isFlowLocked }: { isFlowLocked: boolean }) => {
                   className={cn('flex items-center gap-1 text-sm', {
                     'max-w-[500px]': !isEditingFlowName || readonly,
                   })}
+                  data-testid="builder-flow-name"
                 >
                   <EditableText
                     className="hover:cursor-text"
