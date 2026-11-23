@@ -75,6 +75,10 @@ export function ChatPanel() {
   const side = full ? 'left' : mode;
   const width = useDockWidth(dragWidth);
   const cardWidth = useCardWidth();
+  const overlay =
+    useShellHandle().shell === 'builder' &&
+    !full &&
+    chatLayoutUtils.overlaysPage({ cardWidth });
   const layoutKey = chatWidth;
   const committedLayout = useRef(layoutKey);
 
@@ -146,6 +150,8 @@ export function ChatPanel() {
           'relative flex shrink-0 flex-col overflow-hidden bg-gray-1 [view-transition-name:ap-chat]',
           side === 'right' && 'order-last',
           visible && !full && (side === 'left' ? 'border-r' : 'border-l'),
+          overlay && 'absolute inset-y-0 z-50 shadow-lg',
+          overlay && (side === 'left' ? 'left-0' : 'right-0'),
         )}
       >
         <ChatRouterBinding />
