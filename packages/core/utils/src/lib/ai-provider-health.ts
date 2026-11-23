@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { formatPieceError } from './friendly-piece-error'
+import { isObject } from './object-utils'
 
 export function toProviderOutcomeSignal(error: unknown): ProviderOutcomeSignal {
     const formatted = formatPieceError(error)
@@ -12,7 +13,7 @@ export function toProviderOutcomeSignal(error: unknown): ProviderOutcomeSignal {
 }
 
 function httpStatusInCode(error: unknown): number | undefined {
-    const code = typeof error === 'object' && error !== null && 'code' in error ? error.code : undefined
+    const code = isObject(error) ? error['code'] : undefined
     return typeof code === 'number' && code >= 100 && code <= 599 ? code : undefined
 }
 

@@ -190,6 +190,14 @@ describe('a managed credits chat turn', () => {
         expect(onModelOutcome).not.toHaveBeenCalled()
     })
 
+    it.each([500, 404])('answers on the next tier when the Fast tier model fails with %i before replying', async (statusCode) => {
+        const turn = await runTurn({ models: [managedModel({ modelId: '~z-ai/glm-flash-latest', model: failingModel({ statusCode }) }), managedModel({ modelId: 'z-ai/glm-5.3', model: answeringModel('from expert') })] })
+
+        expect(turn.streamError).toBeNull()
+        expect(turn.answeredBy.modelId).toBe('z-ai/glm-5.3')
+        expect(textOf(turn)).toBe('from expert')
+    })
+
     it('drops a failing first-step fast model and answers on the main model', async () => {
         const turn = await runTurn({
             models: [managedModel({ modelId: 'smart', model: answeringModel('from smart') })],
