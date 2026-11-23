@@ -61,13 +61,26 @@ export const test = base.extend<{ defaultPieceSet: { id: string }; privatePiece:
     for (const flowId of flowIds) {
       await e2eApi.deleteFlow({ request, session, flowId });
     }
-    for (const pieceId of pieceIds) {
+    const installedIds = pieceIds.length > 0 ? pieceIds : await findInstalledPieceIds({ request, session });
+    for (const pieceId of installedIds) {
       await deletePieceOnceUnused({ request, session, pieceId });
     }
   },
 });
 
 export { expect } from '@playwright/test';
+
+async function findInstalledPieceIds({ request, session }: { request: APIRequestContext; session: E2eSession }): Promise<string[]> {
+  const response = await request.get(`/api/v1/pieces/${encodeURIComponent(PRIVATE_PIECE_NAME)}`, {
+    headers: { Authorization: `Bearer ${session.token}` },
+    params: { projectId: session.projectId },
+  });
+  if (!response.ok()) {
+    return [];
+  }
+  const piece: InstalledPiece = await response.json();
+  return [piece.id];
+}
 
 async function deletePieceOnceUnused({ request, session, pieceId }: { request: APIRequestContext; session: E2eSession; pieceId: string }) {
   await expect(async () => {
