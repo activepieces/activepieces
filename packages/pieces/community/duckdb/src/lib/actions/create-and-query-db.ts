@@ -103,13 +103,13 @@ More information on data types and accepted values:
         switch (format) {
           case 'json':
             return {
-              fileName: Property.ShortText({
+              jsonFileName: Property.ShortText({
                 displayName: 'File Name',
                 description: 'Name of the file to create.',
                 required: true,
                 defaultValue: 'results.json',
               }),
-              prettyPrint: Property.Checkbox({
+              jsonPrettyPrint: Property.Checkbox({
                 displayName: 'Pretty Print',
                 description: 'Indent the JSON so it is easier to read.',
                 required: false,
@@ -118,13 +118,13 @@ More information on data types and accepted values:
             };
           case 'csv':
             return {
-              fileName: Property.ShortText({
+              csvFileName: Property.ShortText({
                 displayName: 'File Name',
                 description: 'Name of the file to create.',
                 required: true,
                 defaultValue: 'results.csv',
               }),
-              delimiter: Property.StaticDropdown({
+              csvDelimiter: Property.StaticDropdown({
                 displayName: 'Delimiter',
                 description: 'The character that separates columns.',
                 required: true,
@@ -208,22 +208,22 @@ More information on data types and accepted values:
     const { outputFormat, formatOptions } = context.propsValue;
     switch (outputFormat) {
       case 'json': {
-        const fileName = formatOptions?.['fileName'];
+        const fileName = formatOptions?.['jsonFileName'];
         if (typeof fileName !== 'string') {
           throw new Error('File Name is required.');
         }
-        const indent = formatOptions?.['prettyPrint'] === true ? 2 : undefined;
+        const indent = formatOptions?.['jsonPrettyPrint'] === true ? 2 : undefined;
         return context.files.write({
           fileName,
           data: Buffer.from(JSON.stringify(results, null, indent)),
         });
       }
       case 'csv': {
-        const fileName = formatOptions?.['fileName'];
+        const fileName = formatOptions?.['csvFileName'];
         if (typeof fileName !== 'string') {
           throw new Error('File Name is required.');
         }
-        const delimiter = formatOptions?.['delimiter'];
+        const delimiter = formatOptions?.['csvDelimiter'];
         return context.files.write({
           fileName,
           data: Buffer.from(

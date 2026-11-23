@@ -14,7 +14,7 @@ async function runActionWithFiles({
 }: { formatOptions?: Record<string, unknown> } & Record<string, unknown>) {
   const propsValue = {
     ...rest,
-    formatOptions: { fileName: 'out', ...formatOptions },
+    formatOptions: { jsonFileName: 'out', csvFileName: 'out', ...formatOptions },
   };
   const written: WrittenFile[] = [];
   const files = {
@@ -272,7 +272,7 @@ describe('File Options', () => {
     const { written } = await runActionWithFiles({
       ...props,
       outputFormat: 'json',
-      formatOptions: { fileName: 'out.json' },
+      formatOptions: { jsonFileName: 'out.json' },
     });
 
     expect(written[0].fileName).toBe('out.json');
@@ -290,10 +290,10 @@ describe('File Options', () => {
 
     expect(Object.keys(await build({ outputFormat: 'rows' }, ctx))).toEqual([]);
     expect(Object.keys(await build({ outputFormat: 'json' }, ctx))).toEqual(
-      ['fileName', 'prettyPrint']
+      ['jsonFileName', 'jsonPrettyPrint']
     );
     expect(Object.keys(await build({ outputFormat: 'csv' }, ctx))).toEqual(
-      ['fileName', 'delimiter']
+      ['csvFileName', 'csvDelimiter']
     );
   });
 });
@@ -314,7 +314,7 @@ describe('JSON Pretty Print', () => {
   it('indents the JSON when pretty print is on', async () => {
     const { written } = await runActionWithFiles({
       ...props,
-      formatOptions: { prettyPrint: true },
+      formatOptions: { jsonPrettyPrint: true },
     });
 
     expect(written[0].data.toString('utf-8')).toBe(
@@ -362,7 +362,7 @@ describe('CSV delimiter option', () => {
       tables: [table({ data: [{ id: 1, name: 'a' }] })],
       query: 'SELECT id, name FROM t',
       outputFormat: 'csv',
-      formatOptions: { delimiter: '\t' },
+      formatOptions: { csvDelimiter: '\t' },
     });
 
     expect(written[0].data.toString('utf-8')).toBe('id\tname\n1\ta\n');
