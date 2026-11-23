@@ -28,4 +28,14 @@ describe('Source', () => {
     expect(link.getAttribute('href')).toBe('https://example.com/page');
     expect(link.getAttribute('target')).toBe('_blank');
   });
+
+  it('renders only phrasing content inside a paragraph', () => {
+    const { container } = render(
+      <p>
+        <Source href="https://example.com/page" />
+      </p>,
+    );
+
+    expect(container.querySelector('p div')).toBeNull();
+  });
 });

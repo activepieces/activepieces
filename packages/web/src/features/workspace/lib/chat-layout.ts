@@ -71,6 +71,10 @@ function shownDockWidth({
   );
 }
 
+function overlaysPage({ cardWidth }: { cardWidth: number }): boolean {
+  return cardWidth - DOCK_MIN_WIDTH < PAGE_COMFORT_WIDTH;
+}
+
 function prefersReducedMotion(): boolean {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
@@ -132,6 +136,7 @@ const chatLayoutUtils = {
   dockWidthFor,
   cardInnerWidth,
   shownDockWidth,
+  overlaysPage,
   prefersReducedMotion,
   toastPlacementFor,
   motionCssVars,
