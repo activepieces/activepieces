@@ -105,6 +105,7 @@ test.describe('Users and project roles', { tag: ['@feature:users', '@surface'] }
 
   test('a failed users request shows the error state', async ({ page, listResponse }) => {
     const restore = await listResponse.fail({ resource: 'users' });
+    await listResponse.empty({ resource: 'user-invitations' });
     const usersPage = new PlatformUsersPage(page);
 
     await usersPage.visit();
