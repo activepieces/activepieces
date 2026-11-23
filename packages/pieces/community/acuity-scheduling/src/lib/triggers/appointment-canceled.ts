@@ -7,7 +7,7 @@ import {
 	QueryParams,
 } from '@activepieces/pieces-common';
 import { acuitySchedulingAuth } from '../auth';
-import { API_URL, getAppointmentDetails } from '../common';
+import { API_URL, getAppointmentDetails, parseWebhookPayload } from '../common';
 import { appointmentTypeIdDropdown, calendarIdDropdown } from '../common/props';
 
 const TRIGGER_KEY = 'trigger_appointment_canceled';
@@ -25,10 +25,12 @@ export const appointmentCanceledTrigger = createTrigger({
 	props: {
 		calendarId: calendarIdDropdown({
 			displayName: 'Calendar',
+			description: 'Leave empty to trigger for every calendar.',
 			required: false,
 		}),
 		appointmentTypeId: appointmentTypeIdDropdown({
 			displayName: 'Appointment Type',
+			description: 'Leave empty to trigger for every appointment type.',
 			required: false,
 		}),
 	},
@@ -75,7 +77,7 @@ export const appointmentCanceledTrigger = createTrigger({
 		if (calendarId) qs['calendarID'] = calendarId.toString();
 		if (appointmentTypeId) qs['appointmentTypeID'] = appointmentTypeId.toString();
 
-		const response = await httpClient.sendRequest<Array<Record<string, any>>>({
+		const response = await httpClient.sendRequest<Array<Record<string, unknown>>>({
 			method: HttpMethod.GET,
 			url: `${API_URL}/appointments`,
 			queryParams: qs,
@@ -90,23 +92,17 @@ export const appointmentCanceledTrigger = createTrigger({
 	async run(context) {
 		const { calendarId, appointmentTypeId } = context.propsValue;
 
-		const payload = context.payload.body as {
-			action: string;
-			id: number;
-			calendarID: number;
-			appointmentTypeID: number;
-		};
+		const payload = parseWebhookPayload(context.payload.body);
 
-		// Check for 'canceled' action
 		if (
-			payload.action === 'appointment.canceled' &&
+			(payload.action === 'appointment.canceled' || payload.action === 'canceled') &&
 			payload.id &&
-			(!calendarId || calendarId === payload.calendarID) &&
-			(!appointmentTypeId || appointmentTypeId === payload.appointmentTypeID)
+			(!calendarId || String(calendarId) === payload.calendarID) &&
+			(!appointmentTypeId || String(appointmentTypeId) === payload.appointmentTypeID)
 		) {
 			try {
 				const appointmentDetails = await getAppointmentDetails(
-					payload.id.toString(),
+					payload.id,
 					context.auth.access_token,
 				);
 				return [appointmentDetails];

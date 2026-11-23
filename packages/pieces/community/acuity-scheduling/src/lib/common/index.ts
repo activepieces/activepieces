@@ -68,7 +68,6 @@ export async function fetchAvailableTimes(
 	return response.body;
 }
 
-// Helper function to get full appointment details
 export async function getAppointmentDetails(appointmentId: string, accessToken: string) {
 	const request: HttpRequest = {
 		method: HttpMethod.GET,
@@ -103,7 +102,6 @@ export async function fetchAppointmentTypes(accessToken: string, includeDeleted 
 	>(request);
 
 	if (Array.isArray(response.body)) {
-		// Filter for active types unless includeDeleted is true, and map to dropdown options
 		return response.body
 			.filter((type) => includeDeleted || type.active === true || type.active === 'true')
 			.map((type) => ({ label: type.name, value: type.id }));
@@ -156,7 +154,6 @@ export async function fetchFormFields(accessToken: string) {
 }
 
 export async function fetchAddons(accessToken: string, appointmentTypeId?: number) {
-	// First, fetch all addons
 	const allAddonsRequest: HttpRequest = {
 		method: HttpMethod.GET,
 		url: `${API_URL}/appointment-addons`,
@@ -175,7 +172,6 @@ export async function fetchAddons(accessToken: string, appointmentTypeId?: numbe
 
 	let compatibleAddonIds: number[] | null = null;
 
-	// If appointmentTypeId is provided, fetch the specific appointment type to get its compatible addonIDs
 	if (appointmentTypeId) {
 		const appointmentTypeRequest: HttpRequest = {
 			method: HttpMethod.GET,
@@ -193,7 +189,6 @@ export async function fetchAddons(accessToken: string, appointmentTypeId?: numbe
 				compatibleAddonIds = appointmentTypeResponse.body.addonIDs;
 			}
 		} catch (e) {
-			// Log error or handle if type not found, but still proceed with all addons if necessary
 			console.warn(
 				`Could not fetch compatible addons for appointment type ${appointmentTypeId}, returning all addons. Error: ${e}`,
 			);
@@ -230,3 +225,33 @@ export async function fetchLabels(accessToken: string) {
 	}
 	return [];
 }
+
+export function parseWebhookPayload(body: unknown): WebhookPayload {
+	if (typeof body !== 'object' || body === null) {
+		return {};
+	}
+	const record: Record<string, unknown> = { ...body };
+	return {
+		action: toText(record['action']),
+		id: toText(record['id']),
+		calendarID: toText(record['calendarID']),
+		appointmentTypeID: toText(record['appointmentTypeID']),
+	};
+}
+
+function toText(value: unknown): string | undefined {
+	if (typeof value === 'number') {
+		return String(value);
+	}
+	if (typeof value === 'string') {
+		return value;
+	}
+	return undefined;
+}
+
+type WebhookPayload = {
+	action?: string;
+	id?: string;
+	calendarID?: string;
+	appointmentTypeID?: string;
+};
