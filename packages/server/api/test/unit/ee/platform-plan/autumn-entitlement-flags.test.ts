@@ -202,6 +202,7 @@ describe('mapAutumnFeaturesToPlatformPlan', () => {
             chatEnabled: false,
             workerGroupsEnabled: false,
             managePiecesEnabled: false,
+            customPiecesEnabled: false,
             manageTemplatesEnabled: false,
             customAppearanceEnabled: false,
             projectRolesEnabled: false,
@@ -212,6 +213,21 @@ describe('mapAutumnFeaturesToPlatformPlan', () => {
             scimEnabled: false,
             multipleEmailDomainsEnabled: false,
         })
+    })
+
+    it('projects customPiecesEnabled only when an attached plan grants it', () => {
+        const project = (featureIds: string[]) => autumnUtils.mapAutumnFeaturesToPlatformPlan({
+            planId: 'plus',
+            grantedFeatureIds: autumnUtils.toGrantedFeatureIds({
+                subscriptions: [subscription({ planId: 'plus', featureIds })],
+                purchases: [],
+            }),
+            balances: {},
+            scheduledUsersLimit: null,
+            activeSelfServeTrialAddOn: null,
+        })
+        expect(project([...PLUS_FLAGS, 'customPiecesEnabled']).customPiecesEnabled).toBe(true)
+        expect(project(PLUS_FLAGS).customPiecesEnabled).toBe(false)
     })
 
     it('never projects billingEnforced, which has no platform plan column', () => {

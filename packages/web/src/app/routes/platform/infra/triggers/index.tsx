@@ -188,7 +188,9 @@ export default function TriggerHealthPage() {
         />
       ),
       cell: ({ row }) => (
-        <div className="font-medium">{row.original.runs.toLocaleString()}</div>
+        <div data-testid="trigger-health-total-runs" className="font-medium">
+          {row.original.runs.toLocaleString()}
+        </div>
       ),
     },
     {

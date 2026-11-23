@@ -698,6 +698,12 @@ const offsetRouterChildSteps = ({
   );
 };
 
+const slotAttributesFromAddButtonData = (data: ApButtonData) => ({
+  'data-parent-step': data.parentStepName,
+  'data-step-location': data.stepLocationRelativeToParent,
+  'data-branch-index': 'branchIndex' in data ? data.branchIndex : undefined,
+});
+
 const createAddOperationFromAddButtonData = (data: ApButtonData) => {
   if (
     data.stepLocationRelativeToParent ===
@@ -802,6 +808,7 @@ export const flowCanvasUtils = {
   },
   createFocusStepInGraphParams,
   calculateGraphBoundingBox,
+  slotAttributesFromAddButtonData,
   createAddOperationFromAddButtonData,
   determineInitiallySelectedStep,
   doesSelectionRectangleExist,
