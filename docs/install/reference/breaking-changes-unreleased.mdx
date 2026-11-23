@@ -8,16 +8,17 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
-#### Tables MCP tools: smaller default results from `ap_find_records` and `ap_list_tables`
+#### MCP tools return smaller results by default: `ap_find_records`, `ap_list_tables`, `ap_get_piece_props`
 
-External MCP clients connected to a project's MCP server get less data by default from two Tables tools:
+External MCP clients connected to a project's MCP server get less data by default from three tools:
 
 - `ap_find_records` returns 10 records by default instead of 50, and says when more records match.
 - `ap_list_tables` lists at most 25 tables and shows each field as name and type only. Field ids, field externalIds and dropdown options are left out unless you pass `detailed: true`.
+- `ap_get_piece_props` no longer returns the project's connection list (`authHint.connections` is removed), and its text output is compact JSON.
 
 #### What you need to do
 
-If an MCP client or prompt relies on the old defaults, pass `limit` (up to 500) to `ap_find_records`, pass `detailed: true` to `ap_list_tables` to get field ids and externalIds, and pass `name` to `ap_list_tables` to find a table beyond the first 25.
+If an MCP client or prompt relies on the old defaults, pass `limit` (up to 500) to `ap_find_records`, pass `detailed: true` to `ap_list_tables` to get field ids and externalIds, and pass `name` to `ap_list_tables` to find a table beyond the first 25. To get a project's connections, call `ap_list_connections` instead of reading them from `ap_get_piece_props`.
 
 #### Google Sheets 0.21.0: row triggers fire for more changes, and Trigger Column must be a column letter
 

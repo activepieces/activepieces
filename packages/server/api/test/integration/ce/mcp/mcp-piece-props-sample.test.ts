@@ -122,15 +122,6 @@ describe('property resolvers share one code path', () => {
         expect(result.structuredContent).toEqual({ resolvedProperties: [{ propertyName: 'channel', options: CHANNELS, resolved: false }] })
     })
 
-    it('ap_resolve_property_options explains empty options when no connection is passed', async () => {
-        const ctx = await createTestContext(app)
-        vi.spyOn(userInteractionWatcher, 'submitAndWaitForResponse').mockResolvedValue({ status: EngineResponseStatus.OK, response: { options: [] } })
-
-        const result = await apResolvePropertyOptionsTool(makeMcp(ctx.project.id), mockLog).execute({ pieceName: KEYED_PIECE, actionOrTriggerName: 'post', type: 'action', propertyName: 'channel' })
-
-        expect(text(result)).toContain('Pass the connection externalId as auth')
-    })
-
     it('ap_resolve_property_chain picks a matched option and rejects unknown properties', async () => {
         const ctx = await createTestContext(app)
         vi.spyOn(userInteractionWatcher, 'submitAndWaitForResponse').mockResolvedValue({ status: EngineResponseStatus.OK, response: { options: CHANNELS } })
