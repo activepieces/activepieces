@@ -12,11 +12,6 @@ export class AddCustomPiecesEnabledToPlatformPlan1882000000000 implements Migrat
             ALTER TABLE "platform_plan"
             ADD COLUMN IF NOT EXISTS "customPiecesEnabled" boolean NOT NULL DEFAULT false
         `)
-        await queryRunner.query(`
-            UPDATE "platform_plan"
-            SET "customPiecesEnabled" = true
-            WHERE "plan" IS NULL OR "plan" NOT IN ('free', 'free_legacy', 'standard')
-        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
