@@ -124,6 +124,18 @@ More information on data types and accepted values:
                 required: true,
                 defaultValue: 'results.csv',
               }),
+              delimiter: Property.StaticDropdown({
+                displayName: 'Delimiter',
+                description: 'The character that separates columns.',
+                required: true,
+                defaultValue: ',',
+                options: {
+                  options: [
+                    { label: 'Comma', value: ',' },
+                    { label: 'Tab', value: '\t' },
+                  ],
+                },
+              }),
             };
           default:
             return {};
@@ -211,12 +223,14 @@ More information on data types and accepted values:
         if (typeof fileName !== 'string') {
           throw new Error('File Name is required.');
         }
+        const delimiter = formatOptions?.['delimiter'];
         return context.files.write({
           fileName,
           data: Buffer.from(
             stringifyCsv(results, {
               header: true,
               columns: reader.columnNames(),
+              delimiter,
             })
           ),
         });

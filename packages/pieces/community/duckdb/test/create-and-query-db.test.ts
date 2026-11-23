@@ -293,7 +293,7 @@ describe('File Options', () => {
       ['fileName', 'prettyPrint']
     );
     expect(Object.keys(await build({ outputFormat: 'csv' }, ctx))).toEqual(
-      ['fileName']
+      ['fileName', 'delimiter']
     );
   });
 });
@@ -353,5 +353,18 @@ describe('CSV output', () => {
     });
 
     expect(written[0].data.toString('utf-8')).toBe('id,name\n');
+  });
+});
+
+describe('CSV delimiter option', () => {
+  it('separates columns with a tab when selected', async () => {
+    const { written } = await runActionWithFiles({
+      tables: [table({ data: [{ id: 1, name: 'a' }] })],
+      query: 'SELECT id, name FROM t',
+      outputFormat: 'csv',
+      formatOptions: { delimiter: '\t' },
+    });
+
+    expect(written[0].data.toString('utf-8')).toBe('id\tname\n1\ta\n');
   });
 });
