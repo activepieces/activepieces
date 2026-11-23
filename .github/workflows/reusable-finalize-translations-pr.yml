@@ -58,9 +58,14 @@ jobs:
             git checkout -b $BRANCH_NAME origin/main
           fi
 
+      - name: Download the shards' translatable text by JSON path
+        uses: actions/download-artifact@v7
+        with:
+          pattern: translatable-text-by-json-path-shard-*
+          path: tools/translatable-text-by-json-path
+          merge-multiple: true
+
       - name: Merge latest main
-        env:
-          AP_WRITE_TRANSLATION_PATHS: 'true'
         run: |
           git fetch origin main
           if ! git merge --no-edit origin/main; then
@@ -115,6 +120,25 @@ jobs:
           BRANCH_NAME: ${{ inputs.branch_name }}
         run: git push origin --delete $BRANCH_NAME
 
+      - name: Fetch the previous night's translatable text by JSON path
+        env:
+          PREVIOUS_BRANCH: i18n/translatable-text-by-json-path
+        run: |
+          PREVIOUS_DIR="$RUNNER_TEMP/translatable-text-by-json-path-previous"
+          mkdir -p "$PREVIOUS_DIR"
+          FOUND=0
+          git ls-remote --exit-code --heads origin "refs/heads/$PREVIOUS_BRANCH" > /dev/null || FOUND=$?
+          if [ "$FOUND" -eq 2 ]; then
+            echo "No $PREVIOUS_BRANCH branch yet, so there is no previous copy and nothing is renamed tonight."
+          elif [ "$FOUND" -ne 0 ]; then
+            echo "::error::Could not check the $PREVIOUS_BRANCH branch."
+            exit "$FOUND"
+          else
+            git fetch --no-tags origin "+refs/heads/$PREVIOUS_BRANCH:refs/remotes/origin/$PREVIOUS_BRANCH"
+            git archive "refs/remotes/origin/$PREVIOUS_BRANCH" | tar -x -C "$PREVIOUS_DIR"
+            echo "Previous copy has $(find "$PREVIOUS_DIR" -name '*.json' | wc -l) pieces."
+          fi
+
       - name: Rename changed strings in Crowdin
         id: crowdin
         if: steps.ahead.outputs.changes == 'true'
@@ -123,7 +147,7 @@ jobs:
           CROWDIN_PROJECT_ID: ${{ vars.CROWDIN_PROJECT_ID }}
           CROWDIN_RENAME_DRY_RUN: ${{ vars.CROWDIN_RENAME_DRY_RUN }}
           CROWDIN_AUTO_APPROVERS: ${{ vars.CROWDIN_AUTO_APPROVERS }}
-        run: bun tools/scripts/i18n/crowdin-rename.ts --base origin/main --journal "$RUNNER_TEMP/crowdin-rename-journal.jsonl"
+        run: bun tools/scripts/i18n/crowdin-rename.ts --previous "$RUNNER_TEMP/translatable-text-by-json-path-previous" --current tools/translatable-text-by-json-path --journal "$RUNNER_TEMP/crowdin-rename-journal.jsonl"
 
       - name: Create Pull Request
         id: pr
@@ -175,6 +199,38 @@ jobs:
               repo: context.repo.repo,
               ref: `heads/${branchName}`
             }).catch((error) => core.warning(`Could not delete the branch: ${error.message}`));
+
+      - name: Save tonight's translatable text by JSON path for the next night
+        if: steps.pr.outputs.merged == 'true' || steps.ahead.outputs.changes == 'false'
+        env:
+          PREVIOUS_BRANCH: i18n/translatable-text-by-json-path
+        run: |
+          PREVIOUS_DIR="$RUNNER_TEMP/translatable-text-by-json-path-previous"
+          NEXT_DIR="$RUNNER_TEMP/translatable-text-by-json-path-next"
+          NEXT_INDEX="$RUNNER_TEMP/translatable-text-by-json-path-next.index"
+          rm -rf "$NEXT_DIR" "$NEXT_INDEX"
+          mkdir -p "$NEXT_DIR"
+          cp -R "$PREVIOUS_DIR/." "$NEXT_DIR/"
+          if [ -d tools/translatable-text-by-json-path ]; then
+            cp -R tools/translatable-text-by-json-path/. "$NEXT_DIR/"
+          fi
+          REPO_GIT_DIR="$(git rev-parse --absolute-git-dir)"
+          TREE=$(cd "$NEXT_DIR" && GIT_INDEX_FILE="$NEXT_INDEX" git --git-dir="$REPO_GIT_DIR" --work-tree=. add -A . && GIT_INDEX_FILE="$NEXT_INDEX" git --git-dir="$REPO_GIT_DIR" write-tree)
+          PARENT_REF="refs/remotes/origin/$PREVIOUS_BRANCH"
+          if git rev-parse --verify --quiet "$PARENT_REF" > /dev/null; then
+            if [ "$TREE" = "$(git rev-parse "$PARENT_REF^{tree}")" ]; then
+              echo "The previous copy is already up to date."
+              exit 0
+            fi
+            COMMIT=$(git commit-tree "$TREE" -p "$PARENT_REF" -m "Translatable text by JSON path after run ${{ github.run_id }}")
+          else
+            COMMIT=$(git commit-tree "$TREE" -m "Translatable text by JSON path after run ${{ github.run_id }}")
+          fi
+          if git push origin "$COMMIT:refs/heads/$PREVIOUS_BRANCH"; then
+            echo "Saved $(find "$NEXT_DIR" -name '*.json' | wc -l) pieces to $PREVIOUS_BRANCH."
+          else
+            echo "::warning::Could not push $PREVIOUS_BRANCH. The next night compares against an older copy, so strings renamed tonight show up as only the new English being in Crowdin and are skipped."
+          fi
 
       - name: Close the translations PR when it did not merge
         id: close

@@ -10,6 +10,7 @@
       "devDependencies": {
         "@commitlint/cli": "17.7.1",
         "@commitlint/config-conventional": "17.7.0",
+        "@crowdin/crowdin-api-client": "1.60.0",
         "@playwright/test": "1.64.1",
         "@types/node": "24.11.0",
         "@types/semver": "7.5.6",
@@ -13491,6 +13492,8 @@
     "@couchbase/couchbase-win32-x64-napi": ["@couchbase/couchbase-win32-x64-napi@4.6.0", "", { "os": "win32", "cpu": "x64" }, "sha512-T1zLkY3EugmBhWOOhn22hfs0gD/yBpFza0ReePTwxYU93cxKofx3Sh5+QQWebsrOablYJy7lt4o3oLtGqYwu8g=="],
 
     "@crawlee/types": ["@crawlee/types@3.16.0", "", { "dependencies": { "tslib": "^2.4.0" } }, "sha512-CcIM+JDVx4gzQzMPl+9RJiEeqdzTrx2RLPA7y4IMJSyfZm3J/VrEunielKA3NQrk095j9OuvS/rQL2y8mBV1qw=="],
+
+    "@crowdin/crowdin-api-client": ["@crowdin/crowdin-api-client@1.60.0", "", { "dependencies": { "axios": "1.21.0" } }, "sha512-YpNm99XhzjS6vaD6/uwAXYk3OD2cTTbYNOxKS+z7XMydAPpTcst4BadlcVAGEovHxwoqujq6yuEACDm98T0jNQ=="],
 
     "@cspotcode/source-map-support": ["@cspotcode/source-map-support@0.8.1", "", { "dependencies": { "@jridgewell/trace-mapping": "0.3.9" } }, "sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw=="],
 
