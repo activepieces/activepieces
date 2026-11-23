@@ -8,7 +8,8 @@ import { ChangelogHistory, JiraSearchResponse } from './types';
 const LOOKBACK_MS = 15 * 60 * 1000;
 const MAX_RESULTS = 1000;
 const MAX_PAGES = 10;
-const TIME_BUDGET_MS = 40_000;
+const SEARCH_BUDGET_MS = 30_000;
+const HISTORY_BUDGET_MS = 45_000;
 const CHANGELOG_PAGE_SIZE = 100;
 const MAX_LEDGER_ENTRIES = 2000;
 const TEST_FETCH_LIMIT = 50;
@@ -62,6 +63,7 @@ async function composeJql<Props extends JiraPollingProps>({
 	auth,
 	propsValue,
 	since,
+	eventsSince,
 	direction,
 	timeField,
 	extraScope,
@@ -69,6 +71,7 @@ async function composeJql<Props extends JiraPollingProps>({
 	auth: JiraAuth;
 	propsValue: Props;
 	since: string | null;
+	eventsSince: string | null;
 	direction: 'ASC' | 'DESC';
 	timeField: JiraTimeField;
 	extraScope?: JiraPollingConfig<Props>['extraScope'];
@@ -80,7 +83,7 @@ async function composeJql<Props extends JiraPollingProps>({
 			: `(${propsValue.sanitizeJql ? await sanitizeJqlQuery({ auth, jql: userJql }) : userJql})`;
 	const conditions = [
 		scope,
-		extraScope ? extraScope({ propsValue, since }) : null,
+		extraScope ? extraScope({ propsValue, since: eventsSince }) : null,
 		isNil(since) ? null : `${timeField} > '${since}'`,
 	].filter((condition): condition is string => !isNil(condition));
 	const orderBy = `ORDER BY ${timeField} ${direction}`;
@@ -96,6 +99,7 @@ async function fetchIssues({
 	fields,
 	expand,
 	reread,
+	deadline,
 }: {
 	auth: JiraAuth;
 	jql: string;
@@ -104,8 +108,8 @@ async function fetchIssues({
 	fields?: string[];
 	expand?: string[];
 	reread?: { timeField: JiraTimeField; upTo: number };
+	deadline?: number;
 }): Promise<{ issues: JiraSearchResponse['issues']; truncated: boolean }> {
-	const startedAt = Date.now();
 	const issues: JiraSearchResponse['issues'] = [];
 	let nextPageToken: string | undefined;
 	let countedPages = 0;
@@ -130,7 +134,7 @@ async function fetchIssues({
 		}
 		truncated =
 			!isNil(nextPageToken) &&
-			(countedPages >= maxPages || Date.now() - startedAt >= TIME_BUDGET_MS);
+			(countedPages >= maxPages || (!isNil(deadline) && Date.now() >= deadline));
 	} while (!isNil(nextPageToken) && !truncated);
 
 	return { issues, truncated };
@@ -153,43 +157,54 @@ function isRereadPage({
 async function withCompleteChangelogs({
 	auth,
 	issues,
+	timeField,
 	windowStart,
+	searchFrom,
+	deadline,
 }: {
 	auth: JiraAuth;
 	issues: JiraSearchResponse['issues'];
+	timeField: JiraTimeField;
 	windowStart: number;
-}): Promise<JiraSearchResponse['issues']> {
+	searchFrom: number;
+	deadline: number;
+}): Promise<{ issues: JiraSearchResponse['issues']; cut: boolean }> {
 	const completed: JiraSearchResponse['issues'] = [];
+	let passedSearchFrom = false;
 	for (const issue of issues) {
-		completed.push(await withCompleteChangelog({ auth, issue, windowStart }));
+		const epoch = issueEpoch({ issue, epochField: timeField });
+		const changelog = incompleteChangelog({ issue, windowStart });
+		if (epoch < searchFrom || isNil(changelog)) {
+			completed.push(issue);
+		} else if (passedSearchFrom && Date.now() >= deadline) {
+			return { issues: completed, cut: true };
+		} else {
+			const histories = await readRecentHistories({
+				auth,
+				issueId: issue.id,
+				total: changelog.total,
+				windowStart,
+			});
+			completed.push({ ...issue, changelog: { ...changelog, histories, maxResults: histories.length } });
+		}
+		passedSearchFrom = passedSearchFrom || epoch > searchFrom;
 	}
-	return completed;
+	return { issues: completed, cut: false };
 }
 
-async function withCompleteChangelog({
-	auth,
+function incompleteChangelog({
 	issue,
 	windowStart,
 }: {
-	auth: JiraAuth;
 	issue: JiraSearchResponse['issues'][number];
 	windowStart: number;
-}): Promise<JiraSearchResponse['issues'][number]> {
+}): (EmbeddedChangelog & { total: number }) | null {
 	const changelog: EmbeddedChangelog | undefined = issue?.changelog;
 	if (isNil(changelog) || isNil(changelog.total) || changelog.total <= changelog.histories.length) {
-		return issue;
+		return null;
 	}
 	const oldestEmbedded = Math.min(...changelog.histories.map((history) => Date.parse(history.created)));
-	if (oldestEmbedded <= windowStart) {
-		return issue;
-	}
-	const histories = await readRecentHistories({
-		auth,
-		issueId: issue.id,
-		total: changelog.total,
-		windowStart,
-	});
-	return { ...issue, changelog: { ...changelog, histories, maxResults: histories.length } };
+	return oldestEmbedded <= windowStart ? null : { ...changelog, total: changelog.total };
 }
 
 async function readRecentHistories({
@@ -250,7 +265,7 @@ function toItems<Props extends JiraPollingProps>({
 		.sort((first, second) => first.epochMilliSeconds - second.epochMilliSeconds);
 }
 
-function truncatedSearchFrom({
+function lastSearchedEpoch({
 	issues,
 	timeField,
 	searchFrom,
@@ -263,7 +278,7 @@ function truncatedSearchFrom({
 		const epoch = issueEpoch({ issue, epochField: timeField });
 		return Number.isFinite(epoch) ? Math.max(highest, epoch) : highest;
 	}, Number.NEGATIVE_INFINITY);
-	return Number.isFinite(highestEpoch) ? Math.max(searchFrom, highestEpoch - 1) : searchFrom;
+	return Number.isFinite(highestEpoch) ? Math.max(searchFrom, highestEpoch) : searchFrom;
 }
 
 function pruneState({
@@ -277,14 +292,14 @@ function pruneState({
 	windowStart: number;
 	searchFrom?: number;
 }): PollingState {
+	const draining = !isNil(searchFrom);
 	const insideWindow = entries
 		.filter(([, epoch]) => epoch > windowStart)
 		.sort((first, second) => first[1] - second[1]);
 	const overflow = Math.max(insideWindow.length - MAX_LEDGER_ENTRIES, 0);
-	const dropped = [
-		...entries.filter(([, epoch]) => epoch <= windowStart),
-		...insideWindow.slice(0, overflow),
-	];
+	const dropped = draining
+		? []
+		: [...entries.filter(([, epoch]) => epoch <= windowStart), ...insideWindow.slice(0, overflow)];
 
 	return {
 		windowStart,
@@ -326,17 +341,19 @@ export function createJiraPolling<Props extends JiraPollingProps = JiraPollingPr
 
 		async poll({ context }: { context: JiraPollingContext<Props> }): Promise<unknown[]> {
 			const { auth, propsValue, store } = context;
+			const startedAt = Date.now();
 			const now = await jiraNow({ auth });
 			const state = (await store.get<PollingState>(STATE_STORE_KEY)) ?? initialState(now);
 			const windowStart = Math.max(state.windowStart, state.floor);
 			const searchFrom = Math.max(state.searchFrom ?? windowStart, windowStart);
 
-			const { issues, truncated } = await fetchIssues({
+			const search = await fetchIssues({
 				auth,
 				jql: await composeJql({
 					auth,
 					propsValue,
 					since: toRelativeJqlDate({ sinceEpochMS: searchFrom, now }),
+					eventsSince: toRelativeJqlDate({ sinceEpochMS: windowStart, now }),
 					direction: 'ASC',
 					timeField,
 					extraScope: config.extraScope,
@@ -346,12 +363,18 @@ export function createJiraPolling<Props extends JiraPollingProps = JiraPollingPr
 				fields,
 				expand: config.expand,
 				reread: { timeField, upTo: searchFrom },
+				deadline: startedAt + SEARCH_BUDGET_MS,
 			});
-			const items = toItems({
-				issues: await withCompleteChangelogs({ auth, issues, windowStart }),
-				propsValue,
-				extractItems,
+			const { issues, cut } = await withCompleteChangelogs({
+				auth,
+				issues: search.issues,
+				timeField,
+				windowStart,
+				searchFrom,
+				deadline: startedAt + HISTORY_BUDGET_MS,
 			});
+			const truncated = search.truncated || cut;
+			const items = toItems({ issues, propsValue, extractItems });
 
 			const alreadyEmitted = new Set(state.entries.map(([key]) => key));
 			const freshItems = items.filter(
@@ -360,7 +383,7 @@ export function createJiraPolling<Props extends JiraPollingProps = JiraPollingPr
 
 			const nextWindowStart = truncated ? windowStart : Math.max(windowStart, now - LOOKBACK_MS);
 			const nextSearchFrom = truncated
-				? truncatedSearchFrom({ issues, timeField, searchFrom })
+				? lastSearchedEpoch({ issues, timeField, searchFrom })
 				: undefined;
 
 			await store.put(
@@ -387,6 +410,7 @@ export function createJiraPolling<Props extends JiraPollingProps = JiraPollingPr
 					auth,
 					propsValue,
 					since: null,
+					eventsSince: null,
 					direction: 'DESC',
 					timeField,
 					extraScope: config.extraScope,
