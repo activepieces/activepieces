@@ -11,6 +11,7 @@ export const newTask = createTrigger({
   aiMetadata: {
     description: 'Fires when a new task is created in Wrike, registered via a webhook on the TaskCreated event; can be scoped to a single folder so it only fires for tasks created there.',
   },
+  classification: 'READ',
   auth: wrikeAuth,
   type: TriggerStrategy.WEBHOOK,
   props: {

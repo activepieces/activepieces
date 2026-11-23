@@ -10,6 +10,7 @@ export const newFolder = createTrigger({
   aiMetadata: {
     description: 'Fires when a new folder or project is created in Wrike, registered via a webhook on the FolderCreated event; can be scoped to a single parent folder so it only fires for folders created underneath it.',
   },
+  classification: 'READ',
   auth: wrikeAuth,
   type: TriggerStrategy.WEBHOOK,
   props: {

@@ -2,6 +2,8 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { wrikeCommon } from './client';
 
+export const wrikeWebhook = { register, unregister, eventsOfType };
+
 async function register({
   auth,
   webhookUrl,
@@ -59,8 +61,6 @@ function eventsOfType({
       event.eventType === eventType
   );
 }
-
-export const wrikeWebhook = { register, unregister, eventsOfType };
 
 export type WrikeWebhookEvent = {
   eventType: string;
