@@ -191,6 +191,39 @@ describe('agentMcpClient.withToolTimeouts circuit breaker', () => {
     })
 })
 
+describe('agentMcpClient.withToolTimeouts deadlines', () => {
+    afterEach(() => {
+        vi.useRealTimers()
+    })
+
+    it.each(['ap_run_code', 'ap_execute_action', 'ap_explore_data'])('lets %s run until the action budget ends, past the 5 minute tool cap', async (toolName) => {
+        const settled = await settleTimeOf({ toolName, advanceMs: 10 * 60 * 1_000 })
+
+        expect(settled).toBe('pending')
+        expect(await settleTimeOf({ toolName, advanceMs: 12 * 60 * 1_000 + 1 })).toBe('timed out')
+    })
+
+    it('still stops any other tool at 5 minutes', async () => {
+        expect(await settleTimeOf({ toolName: 'ap_list_flows', advanceMs: 5 * 60 * 1_000 + 1 })).toBe('timed out')
+    })
+})
+
+async function settleTimeOf({ toolName, advanceMs }: { toolName: string, advanceMs: number }): Promise<'pending' | 'timed out'> {
+    vi.useFakeTimers()
+    const wrapped = agentMcpClient.withToolTimeouts({
+        mcpToolSet: { [toolName]: { execute: () => new Promise(() => undefined) } },
+        brokenConnectors: new Set<string>(),
+        taintState: { tainted: false },
+    }) as Record<string, { execute: (args: unknown) => Promise<unknown> }>
+    let state: 'pending' | 'timed out' = 'pending'
+    wrapped[toolName].execute({}).catch(() => {
+        state = 'timed out'
+    })
+    await vi.advanceTimersByTimeAsync(advanceMs)
+    vi.useRealTimers()
+    return state
+}
+
 function createTestLogger(): { log: FastifyBaseLogger, warnCalls: unknown[][] } {
     const warnCalls: unknown[][] = []
     const log: FastifyBaseLogger = {

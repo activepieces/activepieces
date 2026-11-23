@@ -35,6 +35,8 @@ vi.mock('../../src/lib/config/worker-settings', async () => {
             set: () => undefined,
             waitForSettings: () => Promise.resolve(settings),
             getSettings: () => settings,
+            flowTimeoutMs: () => 600_000,
+            longRunningTimeoutMs: () => 720_000,
         },
     }
 })
