@@ -1,5 +1,5 @@
 import { apId } from '@activepieces/core-utils'
-import { EngineResponseStatus, FlowActionType, flowStructureUtil, FlowTrigger, McpServerType, PackageType, PieceType, ProjectScopedMcpServer, StepLocationRelativeToParent } from '@activepieces/shared'
+import { EngineResponseStatus, FlowActionType, flowStructureUtil, FlowTrigger, McpServerType, Note, NoteColorVariant, PackageType, PieceType, ProjectScopedMcpServer, StepLocationRelativeToParent } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
@@ -312,6 +312,34 @@ describe('ap_apply_flow_operations', () => {
         const after = await draftTrigger({ flowId, projectId })
         expect(flowStructureUtil.getStep('step_1', after)?.displayName).toBe('My Code')
         expect(flowStructureUtil.getAllSteps(after).map(s => s.name)).toEqual(flowStructureUtil.getAllSteps(before).map(s => s.name))
+    })
+
+    it('keeps a teammate\'s note and its owner when a failed batch rolls back', async () => {
+        const { mcp, projectId, flowId } = await setupFlowWithCodeStep()
+        const draft = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId })
+        const teammateNote: Note = {
+            id: apId(),
+            content: 'Ask finance before changing this',
+            ownerId: apId(),
+            color: NoteColorVariant.YELLOW,
+            position: { x: 10, y: 20 },
+            size: { width: 200, height: 100 },
+            createdAt: '2024-01-01T00:00:00.000Z',
+            updatedAt: '2024-01-01T00:00:00.000Z',
+        }
+        await db.update('flow_version', draft.version.id, { notes: [teammateNote] })
+
+        const result = await apApplyFlowOperationsTool({ mcp }, mockLog).execute({
+            flowId,
+            operations: [
+                { type: 'update_step', stepName: 'step_1', displayName: 'Should Not Stick' },
+                { type: 'delete_step', stepName: 'step_does_not_exist' },
+            ],
+        })
+
+        expect(failureSchema.parse(result.structuredContent)).toMatchObject({ rolledBack: true })
+        const after = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId })
+        expect(after.version.notes).toEqual([teammateNote])
     })
 })
 

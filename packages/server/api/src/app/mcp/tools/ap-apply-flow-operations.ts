@@ -5,6 +5,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { flowVersionValidationUtil } from '../../flows/flow-version/flow-version-validator-util'
+import { flowVersionRepo } from '../../flows/flow-version/flow-version.service'
 import { projectService } from '../../project/project-service'
 import { apAddBranchTool } from './ap-add-branch'
 import { apAddStepTool } from './ap-add-step'
@@ -123,7 +124,7 @@ async function restoreDraft({ flow, projectId, platformId, userId, log }: {
     log: FastifyBaseLogger
 }): Promise<void> {
     const { version } = flow
-    await flowService(log).update({
+    const restored = await flowService(log).update({
         id: flow.id,
         projectId,
         platformId,
@@ -138,6 +139,9 @@ async function restoreDraft({ flow, projectId, platformId, userId, log }: {
             },
         },
     })
+    if (!isNil(version.notes) && version.notes.length > 0) {
+        await flowVersionRepo().update({ id: restored.version.id, flowId: flow.id }, { notes: version.notes })
+    }
     if (version.trigger.type === FlowTriggerType.PIECE && !isNil(version.trigger.settings.sampleData)) {
         await flowService(log).update({
             id: flow.id,

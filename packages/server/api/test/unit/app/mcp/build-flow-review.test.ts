@@ -1,5 +1,5 @@
 import { PropertyType } from '@activepieces/pieces-framework'
-import { PropertyExecutionType } from '@activepieces/shared'
+import { FlowActionType, FlowTrigger, FlowTriggerType, PropertyExecutionType } from '@activepieces/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const { getOrThrow, executePropertyResolution } = vi.hoisted(() => ({ getOrThrow: vi.fn(), executePropertyResolution: vi.fn() }))
@@ -70,3 +70,59 @@ describe('buildFlowReview.resolveDropdownLabels on a dynamic field', () => {
         expect(result.problems).toEqual([])
     })
 })
+
+describe('buildFlowReview.findProblems', () => {
+    beforeEach(() => {
+        getOrThrow.mockImplementation(async ({ name }: { name: string }) => {
+            if (name === MISSING_PIECE) {
+                throw new Error('piece not found')
+            }
+            return { actions: { send_email: { props: {} } }, triggers: { catch_webhook: { props: {} } } }
+        })
+    })
+
+    it('reports an invalid piece step whose action is not on the piece', async () => {
+        const problems = await buildFlowReview.findProblems({ trigger: flowWithAction({ actionName: 'does_not_exist', valid: false }), invalidReasons: new Map(), labelProblems: [], platformId: 'platform', log })
+
+        expect(problems).toEqual([{ step: 'step_1', message: 'invalid configuration: action not found on this piece' }])
+    })
+
+    it('reports an invalid piece step with no action selected', async () => {
+        const problems = await buildFlowReview.findProblems({ trigger: flowWithAction({ actionName: undefined, valid: false }), invalidReasons: new Map(), labelProblems: [], platformId: 'platform', log })
+
+        expect(problems).toEqual([{ step: 'step_1', message: 'invalid configuration: no action selected' }])
+    })
+
+    it('reports a plain invalid configuration when the piece metadata cannot be loaded', async () => {
+        const problems = await buildFlowReview.findProblems({ trigger: flowWithAction({ actionName: 'send_email', valid: false, pieceName: MISSING_PIECE }), invalidReasons: new Map(), labelProblems: [], platformId: 'platform', log })
+
+        expect(problems).toEqual([{ step: 'step_1', message: 'invalid configuration' }])
+    })
+
+    it('reports nothing for a valid piece step', async () => {
+        const problems = await buildFlowReview.findProblems({ trigger: flowWithAction({ actionName: 'send_email', valid: true }), invalidReasons: new Map(), labelProblems: [], platformId: 'platform', log })
+
+        expect(problems).toEqual([])
+    })
+})
+
+function flowWithAction({ actionName, valid, pieceName = '@activepieces/piece-gmail' }: { actionName: string | undefined, valid: boolean, pieceName?: string }): FlowTrigger {
+    return {
+        name: 'trigger',
+        valid: true,
+        displayName: 'Catch Webhook',
+        lastUpdatedDate: '2024-01-01T00:00:00Z',
+        type: FlowTriggerType.PIECE,
+        settings: { pieceName: '@activepieces/piece-webhook', pieceVersion: '~0.1.0', triggerName: 'catch_webhook', input: {}, propertySettings: {} },
+        nextAction: {
+            name: 'step_1',
+            valid,
+            displayName: 'Send Email',
+            lastUpdatedDate: '2024-01-01T00:00:00Z',
+            type: FlowActionType.PIECE,
+            settings: { pieceName, pieceVersion: '~0.1.0', actionName, input: {}, propertySettings: {} },
+        },
+    }
+}
+
+const MISSING_PIECE = '@activepieces/piece-missing'

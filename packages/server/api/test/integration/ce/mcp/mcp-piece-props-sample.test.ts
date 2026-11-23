@@ -2,14 +2,35 @@ import { apId } from '@activepieces/core-utils'
 import { EngineResponseStatus, McpServerType, PackageType, PieceType, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
+import { appConnectionService } from '../../../../src/app/app-connection/app-connection-service/app-connection-service'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { apGetPiecePropsTool } from '../../../../src/app/mcp/tools/ap-get-piece-props'
 import { apResolvePropertyChainTool } from '../../../../src/app/mcp/tools/ap-resolve-property-chain'
 import { apResolvePropertyOptionsTool } from '../../../../src/app/mcp/tools/ap-resolve-property-options'
 import { userInteractionWatcher } from '../../../../src/app/workers/user-interaction-watcher'
 import { db } from '../../../helpers/db'
-import { createMockPieceMetadata } from '../../../helpers/mocks'
+import { createMockConnection, createMockPieceMetadata } from '../../../helpers/mocks'
 import { createTestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
+
+const listSpy = vi.hoisted(() => vi.fn())
+
+vi.mock('../../../../src/app/app-connection/app-connection-service/app-connection-service', async (importOriginal) => {
+    const actual = await importOriginal<{ appConnectionService: typeof appConnectionService }>()
+    return {
+        ...actual,
+        appConnectionService: (log: FastifyBaseLogger) => {
+            const service = actual.appConnectionService(log)
+            return {
+                ...service,
+                list: (params: Parameters<typeof service.list>[0]) => {
+                    listSpy(params)
+                    return service.list(params)
+                },
+            }
+        },
+    }
+})
 
 let app: FastifyInstance
 let mockLog: FastifyBaseLogger
@@ -67,6 +88,26 @@ describe('ap_get_piece_props samples', () => {
         expect(text(result)).toContain('Sample payload')
         expect(text(result)).toContain('"name":"Ada"')
         expect(result.structuredContent).toMatchObject({ sampleOutput: expect.stringContaining('hello') })
+    })
+
+    it('looks up connections once for a batch and still rejects a connection of another piece', async () => {
+        const ctx = await createTestContext(app)
+        await databaseConnection().getRepository('app_connection').save([
+            createMockConnection({ platformId: ctx.platform.id, projectIds: [ctx.project.id], pieceName: KEYED_PIECE, externalId: 'chat-conn' }, ctx.user.id),
+            createMockConnection({ platformId: ctx.platform.id, projectIds: [ctx.project.id], pieceName: '@activepieces/piece-other', externalId: 'other-conn' }, ctx.user.id),
+        ])
+        listSpy.mockClear()
+        const item = { pieceName: KEYED_PIECE, actionOrTriggerName: 'new_message', type: 'trigger' }
+
+        const result = await apGetPiecePropsTool(makeMcp(ctx.project.id), mockLog).execute({
+            items: [{ ...item, auth: 'chat-conn' }, { ...item, auth: 'chat-conn' }, { ...item, auth: 'chat-conn' }, { ...item, auth: 'other-conn' }],
+        })
+
+        expect(listSpy).toHaveBeenCalledTimes(1)
+        expect(listSpy).toHaveBeenCalledWith(expect.objectContaining({ externalIds: ['chat-conn', 'other-conn'], pieceNames: undefined }))
+        expect(text(result).match(/does not belong/g)).toHaveLength(1)
+        expect(text(result)).toContain('Connection "other-conn" does not belong')
+        expect(text(result).match(/Sample payload/g)).toHaveLength(3)
     })
 })
 

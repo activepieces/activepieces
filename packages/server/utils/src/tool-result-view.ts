@@ -1,4 +1,4 @@
-import { isNil, isObject, spreadIfDefined, tryCatchSync } from '@activepieces/core-utils'
+import { isNil, isObject, spreadIfDefined, tryCatchSync, unique } from '@activepieces/core-utils'
 import { largeResultUtils } from './large-result-utils'
 
 function textOf(result: unknown): string | null {
@@ -73,14 +73,16 @@ function readJson({ payload, fileId, path, fields, offset, limit, search, budget
     }
     const where = isNil(path) ? 'the root' : `"${path}"`
     if (!Array.isArray(target)) {
-        return fitted({ header: `Value at ${where}:`, value: pick({ value: target, fields }), footer: '', budget })
+        return fitted({ header: `Value at ${where}:`, value: pick({ value: target, fields }), footer: missingFieldsNote({ values: [target], fields }), budget })
     }
     const needle = search?.toLowerCase()
     const matching = isNil(needle) ? target : target.filter((item) => (JSON.stringify(item) ?? '').toLowerCase().includes(needle))
-    const page = pageThatFits({ items: matching.slice(offset, offset + (limit ?? DEFAULT_ITEM_LIMIT)).map((item) => pick({ value: item, fields })), budget: budget - PAGE_FRAME_BYTES })
+    const items = matching.slice(offset, offset + (limit ?? DEFAULT_ITEM_LIMIT))
+    const page = pageThatFits({ items: items.map((item) => pick({ value: item, fields })), budget: budget - PAGE_FRAME_BYTES })
     const end = offset + page.length
     const header = `Items ${offset + 1}–${end} of ${matching.length}${isNil(search) ? '' : ` matching "${search}"`} at ${where}:`
-    return fitted({ header, value: page, footer: more({ fileId, path, fields, search, offset: end, total: matching.length, limit }), budget })
+    const footer = `${missingFieldsNote({ values: items.slice(0, page.length), fields })}${more({ fileId, path, fields, search, offset: end, total: matching.length, limit })}`
+    return fitted({ header, value: page, footer, budget })
 }
 
 function pageThatFits({ items, budget }: { items: unknown[], budget: number }): unknown[] {
@@ -115,11 +117,35 @@ function more({ fileId, path, fields, search, offset, total, limit }: { fileId: 
 }
 
 function valueAt({ value, path }: { value: unknown, path: string }): unknown {
-    return (path.match(PATH_TOKEN) ?? []).reduce<unknown>((current, token) => {
-        if (Array.isArray(current) && /^\d+$/.test(token)) return current[Number(token)]
-        if (isObject(current)) return current[token]
-        return undefined
-    }, value)
+    if (isObject(value) && Object.hasOwn(value, path)) {
+        return value[path]
+    }
+    const head = path.match(PATH_TOKEN)?.[0]
+    if (isNil(head)) {
+        return value
+    }
+    const rest = path.slice(path.indexOf(head) + head.length).replace(LEADING_SEPARATORS, '')
+    const child = childAt({ value, token: head })
+    return rest.length === 0 || child === undefined ? child : valueAt({ value: child, path: rest })
+}
+
+function childAt({ value, token }: { value: unknown, token: string }): unknown {
+    if (Array.isArray(value)) return /^\d+$/.test(token) ? value[Number(token)] : undefined
+    if (isObject(value)) return value[token]
+    return undefined
+}
+
+function missingFieldsNote({ values, fields }: { values: unknown[], fields?: string[] }): string {
+    const objects = values.filter(isObject)
+    if (isNil(fields) || fields.length === 0 || objects.length === 0) {
+        return ''
+    }
+    const missing = fields.filter((field) => objects.every((value) => valueAt({ value, path: field }) === undefined))
+    if (missing.length === 0) {
+        return ''
+    }
+    const keys = unique(objects.flatMap((value) => Object.keys(value))).slice(0, 40)
+    return `\n\nFields not found: ${missing.join(', ')}. Keys: ${keys.join(', ')}.`
 }
 
 function pick({ value, fields }: { value: unknown, fields?: string[] }): unknown {
@@ -160,6 +186,7 @@ function parseJson(text: string): unknown {
 }
 
 const PATH_TOKEN = /[^.[\]]+/g
+const LEADING_SEPARATORS = /^[.[\]]+/
 const DEFAULT_LINE_LIMIT = 200
 const DEFAULT_ITEM_LIMIT = 20
 const MAX_LINE_CHARS = 2_000

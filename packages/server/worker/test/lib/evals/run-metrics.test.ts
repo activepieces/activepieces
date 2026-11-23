@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest'
+import { jsonSchema, tool } from 'ai'
+import { describe, expect, it, vi } from 'vitest'
 import { runMetrics } from './run-metrics'
 
 describe('runMetrics.summarize', () => {
@@ -70,5 +71,27 @@ describe('runMetrics.summarize', () => {
 
         expect(metrics.wasted.fixRoundsAfterBuild).toBe(0)
         expect(metrics.firstBuildMs).toBeNull()
+    })
+})
+
+describe('runMetrics.createRecorder', () => {
+    it('counts the time of a tool that throws as a failed call and rethrows', async () => {
+        vi.spyOn(Date, 'now').mockReturnValueOnce(1_000).mockReturnValueOnce(1_000).mockReturnValueOnce(1_250).mockReturnValueOnce(1_300)
+        const recorder = runMetrics.createRecorder()
+        const failure = new Error('dev server down')
+        const tools = recorder.timeTools({
+            ap_build_flow: tool<Record<string, unknown>, unknown>({
+                inputSchema: jsonSchema<Record<string, unknown>>({ type: 'object' }),
+                execute: async () => {
+                    throw failure
+                },
+            }),
+        })
+
+        await expect(tools['ap_build_flow'].execute?.({}, { toolCallId: 't1', messages: [], context: {} })).rejects.toBe(failure)
+
+        const metrics = recorder.summarize({ toolCalls: [], rejectedToolCalls: 0 })
+        expect(metrics).toMatchObject({ totalMs: 300, toolMs: 250, firstBuildMs: null })
+        vi.restoreAllMocks()
     })
 })
