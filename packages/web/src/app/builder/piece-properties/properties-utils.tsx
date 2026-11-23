@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/core-utils';
+import { isNil, parseToJsonIfPossible } from '@activepieces/core-utils';
 import {
   PieceProperty,
   PiecePropertyMap,
@@ -158,7 +158,7 @@ export const selectGenericFormComponentForProperty = ({
           <FormControl>
             <Switch
               id={propertyName}
-              checked={field.value}
+              checked={parseToJsonIfPossible(field.value) === true}
               disabled={disabled}
               onCheckedChange={field.onChange}
             />

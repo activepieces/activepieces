@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 const acquiredBoxIds: number[] = []
 const runTimeouts: number[] = []
 const managerCalls = { release: 0, invalidate: 0 }
+let sandboxStartCount = 0
 let bootAdvanceMs = 0
 
 vi.mock('@activepieces/server-utils', async (importActual) => {
@@ -28,6 +29,7 @@ vi.mock('../../src/lib/sandbox-manager', () => ({
             acquiredBoxIds.push(boxId)
             return {
                 start: vi.fn(() => {
+                    sandboxStartCount++
                     if (bootAdvanceMs > 0) {
                         vi.setSystemTime(Date.now() + bootAdvanceMs)
                     }
@@ -81,6 +83,7 @@ describe('createSandboxRuntime', () => {
         runTimeouts.length = 0
         managerCalls.release = 0
         managerCalls.invalidate = 0
+        sandboxStartCount = 0
         bootAdvanceMs = 0
         vi.clearAllMocks()
         vi.useFakeTimers()
@@ -115,6 +118,26 @@ describe('createSandboxRuntime', () => {
         const error = await runtime.execute(buildExecuteParams(5)).catch((e: unknown) => e)
         expect(error).toBeInstanceOf(ActivepiecesError)
         expect((error as ActivepiecesError).error.code).toBe(ErrorCode.VALIDATION)
+    })
+
+    it('refuses to run after shutdown and boots no sandbox', async () => {
+        const runtime = createSandboxRuntime({ concurrency: 1, basePath: '/tmp', getSettings: () => ({} as never), log })
+        await runtime.shutdown(log)
+        const error = await runtime.execute(buildExecuteParams(0)).catch((e: unknown) => e)
+        expect(error).toBeInstanceOf(ActivepiecesError)
+        expect((error as ActivepiecesError).error.code).toBe(ErrorCode.SANDBOX_INTERNAL_ERROR)
+        expect(acquiredBoxIds).toEqual([])
+    })
+
+    it('does not start the sandbox when shutdown lands while provisioning', async () => {
+        const runtime = createSandboxRuntime({ concurrency: 1, basePath: '/tmp', getSettings: () => ({} as never), log })
+        const running = runtime.execute(buildExecuteParams(0)).catch((e: unknown) => e)
+        await runtime.shutdown(log)
+        const error = await running
+        expect((error as ActivepiecesError).error.code).toBe(ErrorCode.SANDBOX_INTERNAL_ERROR)
+        expect(sandboxStartCount).toBe(0)
+        expect(runTimeouts).toEqual([])
+        expect(managerCalls.invalidate).toBe(1)
     })
 
     it('defaults to a single box when concurrency is omitted', async () => {

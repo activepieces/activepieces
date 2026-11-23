@@ -206,15 +206,21 @@ export const newOrUpdatedRowTrigger = createTrigger({
 				`Trigger Column "${context.propsValue.trigger_column}" is not a column letter. Pick a column from the list, or enter a letter such as A or BC.`,
 			);
 		}
-		const { grid, readAt } = await rowRun.readRows({ auth: context.auth, spreadsheetId, sheetId });
-
-		await rowSnapshot.saveSnapshot({
-			store: context.store,
-			key: SNAPSHOT_STORE_KEY,
-			identity: { spreadsheetId, sheetId, triggerColumn },
-			rows: rowSnapshot.fingerprintRows({ rows: grid.raw, triggerColumnIndex }),
-			readAt,
-		});
+		const identity = { spreadsheetId, sheetId, triggerColumn };
+		await getWorkSheetName(context.auth, spreadsheetId, sheetId);
+		const keepSnapshot =
+			context.isRepublish === true &&
+			!isNil(await rowSnapshot.loadSnapshot({ store: context.store, key: SNAPSHOT_STORE_KEY, identity }));
+		if (!keepSnapshot) {
+			const { grid, readAt } = await rowRun.readRows({ auth: context.auth, spreadsheetId, sheetId });
+			await rowSnapshot.saveSnapshot({
+				store: context.store,
+				key: SNAPSHOT_STORE_KEY,
+				identity,
+				rows: rowSnapshot.fingerprintRows({ rows: grid.raw, triggerColumnIndex }),
+				readAt,
+			});
+		}
 		await context.store.delete(legacyStoreKey(sheetId));
 
 		await sheetChannel.openChannel({

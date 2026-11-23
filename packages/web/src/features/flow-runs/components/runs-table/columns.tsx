@@ -18,7 +18,7 @@ import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { TruncatedColumnTextValue } from '@/components/custom/data-table/truncated-column-text-value';
 import { FormattedDate } from '@/components/custom/formatted-date';
-import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
+import { StatusBadge } from '@/components/custom/status-badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -43,11 +43,6 @@ import {
 } from '@/features/flow-runs/components/timeline-bar';
 import { flowRunUtils } from '@/features/flow-runs/utils/flow-run-utils';
 import { formatUtils } from '@/lib/format-utils';
-
-type SelectedRow = {
-  id: string;
-  status: FlowRunStatus;
-};
 
 type RunsTableColumnsProps = {
   data: SeekPage<FlowRun> | undefined;
@@ -88,10 +83,9 @@ export const runsTableColumns = ({
             table.toggleAllPageRowsSelected(isChecked);
 
             if (isChecked) {
-              const currentPageRows = table.getRowModel().rows.map((row) => ({
-                id: row.original.id,
-                status: row.original.status,
-              }));
+              const currentPageRows = table
+                .getRowModel()
+                .rows.map((row) => toSelectedRow(row.original));
 
               setSelectedRows((prev) => {
                 const uniqueRows = new Map<string, SelectedRow>([
@@ -124,10 +118,7 @@ export const runsTableColumns = ({
                   onClick={() => {
                     const currentPageRows = table
                       .getRowModel()
-                      .rows.map((row) => ({
-                        id: row.original.id,
-                        status: row.original.status,
-                      }));
+                      .rows.map((row) => toSelectedRow(row.original));
                     setSelectedRows(currentPageRows);
                     setSelectedAll(false);
                     setExcludedRows(new Set());
@@ -140,10 +131,7 @@ export const runsTableColumns = ({
                   className="cursor-pointer"
                   onClick={() => {
                     if (data?.data) {
-                      const allRows = data.data.map((row) => ({
-                        id: row.id,
-                        status: row.status,
-                      }));
+                      const allRows = data.data.map(toSelectedRow);
                       setSelectedRows(allRows);
                       setSelectedAll(true);
                       setExcludedRows(new Set());
@@ -185,10 +173,7 @@ export const runsTableColumns = ({
                 if (isChecked) {
                   setSelectedRows((prev) => [
                     ...prev,
-                    {
-                      id: row.original.id,
-                      status: row.original.status,
-                    },
+                    toSelectedRow(row.original),
                   ]);
                 } else {
                   setSelectedRows((prev) =>
@@ -237,16 +222,15 @@ export const runsTableColumns = ({
     ),
     cell: ({ row }) => {
       const status = row.original.status;
-      const { variant, Icon } = flowRunUtils.getStatusIcon(status);
       return (
         <div className="text-left">
-          <StatusIconWithText
-            icon={Icon}
+          <StatusBadge
+            status={status}
+            icon={flowRunUtils.getStatusIcon(status)}
             text={
               flowRunUtils.getStatusLabelOverride(status) ??
               formatUtils.convertEnumToReadable(status)
             }
-            variant={variant}
           />
         </div>
       );
@@ -397,3 +381,19 @@ export const runsTableColumns = ({
     },
   },
 ];
+
+function toSelectedRow(run: FlowRun): SelectedRow {
+  return {
+    id: run.id,
+    status: run.status,
+    flowId: run.flowId,
+    flowVersionId: run.flowVersionId,
+  };
+}
+
+export type SelectedRow = {
+  id: string;
+  status: FlowRunStatus;
+  flowId: string;
+  flowVersionId: string;
+};

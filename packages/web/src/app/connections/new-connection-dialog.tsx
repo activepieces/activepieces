@@ -87,6 +87,8 @@ const NewConnectionDialog = React.memo(
             <div className="mb-4">
               <Input
                 placeholder={t('Search')}
+                aria-label={t('Search')}
+                data-testid="new-connection-search"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -100,8 +102,10 @@ const NewConnectionDialog = React.memo(
                 {!isLoading &&
                   filteredPieces &&
                   filteredPieces.map((piece, index) => (
-                    <div
+                    <button
+                      type="button"
                       key={index}
+                      data-testid="new-connection-piece"
                       onClick={() => clickPiece(piece.name)}
                       {...adminControl(AdminControl.CONNECTIONS_PIECE_OPEN)}
                       className="border p-2 h-[150px] w-[150px] flex flex-col items-center justify-center hover:bg-gray-4 hover:text-gray-12 cursor-pointer rounded-xl"
@@ -111,10 +115,10 @@ const NewConnectionDialog = React.memo(
                         src={piece.logoUrl}
                         alt=""
                       />
-                      <div className="mt-2 text-center">
+                      <span className="mt-2 text-center">
                         {piece.displayName}
-                      </div>
-                    </div>
+                      </span>
+                    </button>
                   ))}
               </div>
             </ScrollArea>

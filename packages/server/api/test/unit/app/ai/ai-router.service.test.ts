@@ -137,6 +137,20 @@ describe('aiRouterService runs the decision as a worker AI job', () => {
         expect(enqueue).not.toHaveBeenCalled()
     })
 
+    it('sends the model the step picked to the worker', async () => {
+        await service().choose({ ...REQUEST, model: 'cloudflare/clef' })
+        await service().start({ ...REQUEST, model: 'google/gemini-decision-1', waitpointId: 'wp-1' })
+
+        expect(enqueue.mock.calls[0][0]).toMatchObject({ modelId: 'cloudflare/clef' })
+        expect(enqueue.mock.calls[1][0]).toMatchObject({ modelId: 'google/gemini-decision-1' })
+    })
+
+    it('runs the default model when the step picked one that is not on the allowlist', async () => {
+        await service().choose({ ...REQUEST, model: 'openai/gpt-5' })
+
+        expect(enqueue.mock.calls[0][0]).toMatchObject({ modelId: 'typesafe/jev-1.13' })
+    })
+
     it('fails when the worker answered in a shape the engine cannot read', async () => {
         waitForAnswer.mockResolvedValue({ output: { chosen: 'Billing' } })
 

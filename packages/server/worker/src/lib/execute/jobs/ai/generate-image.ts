@@ -1,7 +1,7 @@
 import { ActivepiecesAiBilling, AIProviderName, isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { activepiecesAiCost, aiUtils, FlowStepMetadata } from '@activepieces/server-utils'
 import { AI_PROVIDER_CAPABILITIES, AiProviderCredentials, GenerateImageJobData, getEffectiveProviderAndModel, ResolveAiProviderResponse } from '@activepieces/shared'
-import { generateImage, generateText, ImageModel, ImagePart, LanguageModel } from 'ai'
+import { generateImage, generateText, ImageModel, ImageModelResponseMetadata, ImagePart, LanguageModel } from 'ai'
 import { JobContext } from '../../types'
 import { ResolvedAiFile } from './ai-files'
 
@@ -53,7 +53,7 @@ export async function getGeneratedImage({ credentials, providerConfigId, modelId
         if (model.kind !== 'image') {
             throw new Error(`Provider ${resolvedProvider} does not support image models`)
         }
-        const { image } = await generateImage({
+        const { image, responses } = await generateImage({
             model: model.model,
             abortSignal,
             ...spreadIfDefined('aspectRatio', aspectRatio),
@@ -63,7 +63,7 @@ export async function getGeneratedImage({ credentials, providerConfigId, modelId
             providerOptions: { [resolvedProvider]: { ...stripLegacyImageField(advancedOptions) } } as Parameters<typeof generateImage>[0]['providerOptions'],
         })
         const report = turnAlreadyCharged ? activepiecesAiCost.reportUsageOnly : activepiecesAiCost.reportFixedCredits
-        report({ billing, provider: credentials.provider, modelId, ...spreadIfDefined('providerConfigId', providerConfigId) })
+        report({ billing, provider: credentials.provider, modelId, ...spreadIfDefined('providerConfigId', providerConfigId), ...spreadIfDefined('observedCostUsd', observedImageCostOf({ provider: credentials.provider, responses })) })
         return image
     })
 }
@@ -84,7 +84,7 @@ function createImageCapableModel({ credentials, providerConfigId, modelId, flowS
     if (!AI_PROVIDER_CAPABILITIES[credentials.provider].supportsImageGeneration) {
         throw new Error(`Provider ${credentials.provider} does not support image models`)
     }
-    const imageModel = aiUtils.createModelForImages({ credentials, modelId, flowStep, ...spreadIfDefined('adminChosenImageModelId', adminChosenImageModelId) })
+    const imageModel = aiUtils.createModelForImages({ credentials, modelId, flowStep, platformId: billing.platformId, ...spreadIfDefined('providerConfigId', providerConfigId), ...spreadIfDefined('adminChosenImageModelId', adminChosenImageModelId) })
     if (!isNil(imageModel)) {
         return { kind: 'image', model: imageModel }
     }
@@ -145,6 +145,11 @@ function assertImageGenerationSuccess(result: Awaited<ReturnType<typeof generate
     if (isNil(result.files) || result.files.length === 0) {
         throw new Error('No image generated')
     }
+}
+
+function observedImageCostOf({ provider, responses }: { provider: AIProviderName, responses: ImageModelResponseMetadata[] }): number | undefined {
+    const costs = responses.map((response) => activepiecesAiCost.gatewayHeaderCostOf({ provider, headers: response.headers })).filter((cost) => !isNil(cost))
+    return costs.length === 0 ? undefined : costs.reduce((sum, cost) => sum + cost, 0)
 }
 
 function stripLegacyImageField(advancedOptions: Record<string, unknown> | undefined): Record<string, unknown> | undefined {

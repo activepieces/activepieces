@@ -1,4 +1,5 @@
 import { FlowId, formatPieceError, isNil, isObject, omit, ProjectId, tryCatch, tryCatchSync, tryParseFriendlyPieceError, UserId } from '@activepieces/core-utils'
+import { piecePropertiesUtils } from '@activepieces/pieces-framework'
 import { largeResultUtils, MAX_TOOL_RESULT_BYTES } from '@activepieces/server-utils'
 import { CodeAction, createKeyForFormInput, FlowActionType, FlowOperationType, FlowRun, FlowRunStatus, flowStructureUtil, FlowTriggerType, isFlowRunStateTerminal, McpToolResult, PieceAction, RunEnvironment, SampleDataFileType, Step, StepOutputStatus, UpdateActionRequest } from '@activepieces/shared'
 import dayjs from 'dayjs'
@@ -173,7 +174,7 @@ export async function executePieceActionRun({
 
     // Empty-able container props (OBJECT/ARRAY) like custom_api_call's required headers/queryParams
     // mean "none" when omitted — fill them so a first-shot call isn't bounced for an empty bag.
-    const coercedInput = mcpUtils.coerceEmptyContainerInputs({ props: action.props, input: resolvedInput })
+    const coercedInput = piecePropertiesUtils.coerceInput({ props: action.props, input: mcpUtils.coerceEmptyContainerInputs({ props: action.props, input: resolvedInput }) })
 
     const diagnosis = mcpUtils.diagnosePieceProps({
         props: action.props,
