@@ -54,7 +54,7 @@ export const rescheduleAppointmentAction = createAction({
 		}),
 		calendarID: calendarIdDropdown({
 			displayName: 'New Calendar',
-			description: 'Empty: the appointment stays on its calendar.',
+			description: 'Empty keeps its calendar; 0 lets Acuity pick one.',
 			required: false,
 		}),
 		adminReschedule: Property.Checkbox({
@@ -93,7 +93,11 @@ export const rescheduleAppointmentAction = createAction({
 			datetime: props.datetime,
 		};
 
-		if (props.calendarID) body['calendarID'] = props.calendarID;
+		if (props.calendarID === 0) {
+			body['calendarID'] = null;
+		} else if (props.calendarID) {
+			body['calendarID'] = props.calendarID;
+		}
 		if (props.timezone) {
 			body['timezone'] = props.timezone;
 		}
