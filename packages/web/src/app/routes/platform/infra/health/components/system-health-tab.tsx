@@ -14,16 +14,12 @@ import {
 import React from 'react';
 import semver from 'semver';
 
-import {
-  SettingsPanel,
-  SettingsRow,
-  StatusDot,
-  StatusTone,
-} from '@/app/components/admin';
+import { SettingsPanel, SettingsRow, StatusDot } from '@/app/components/admin';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { healthQueries } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { HealthCheckStatus } from '@/lib/statuses';
 
 import { DailyHealthStrip } from './daily-health-strip';
 
@@ -90,7 +86,9 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
       id: 'version',
       title: t('Version'),
       icon: <Package className="size-4" />,
-      status: isVersionUpToDate ? 'passed' : 'failed',
+      status: isVersionUpToDate
+        ? HealthCheckStatus.PASSED
+        : HealthCheckStatus.FAILED,
       link: 'https://github.com/activepieces/activepieces/releases',
       message: (
         <span className="flex flex-wrap items-center gap-x-2">
@@ -108,7 +106,9 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
       id: 'release-integrity',
       title: t('Release Integrity'),
       icon: <GitCompareArrows className="size-4" />,
-      status: releaseIntegrityOk ? 'passed' : 'failed',
+      status: releaseIntegrityOk
+        ? HealthCheckStatus.PASSED
+        : HealthCheckStatus.FAILED,
       link: 'https://www.activepieces.com/docs/install/configuration/overview',
       message: releaseIntegrityMessage,
     },
@@ -203,10 +203,10 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
   );
 }
 
-function toStatus(value: boolean | null | undefined): Status {
-  if (value === null) return 'na';
-  if (value === undefined) return 'loading';
-  return value ? 'passed' : 'failed';
+function toStatus(value: boolean | null | undefined): HealthCheckStatus {
+  if (value === null) return HealthCheckStatus.NOT_APPLICABLE;
+  if (value === undefined) return HealthCheckStatus.LOADING;
+  return value ? HealthCheckStatus.PASSED : HealthCheckStatus.FAILED;
 }
 
 function HealthCard({
@@ -241,8 +241,7 @@ function HealthCard({
 }
 
 function HealthRowItem({ row, loading }: { row: HealthRow; loading: boolean }) {
-  const status = loading ? 'loading' : row.status;
-  const config = STATUS_CONFIG[status];
+  const status = loading ? HealthCheckStatus.LOADING : row.status;
   return (
     <SettingsRow
       icon={row.icon}
@@ -265,28 +264,25 @@ function HealthRowItem({ row, loading }: { row: HealthRow; loading: boolean }) {
       }
       description={row.message}
     >
-      <StatusDot tone={config.tone} pulse={status === 'loading'}>
-        {config.label()}
+      <StatusDot status={status} pulse={status === HealthCheckStatus.LOADING}>
+        {STATUS_LABEL[status]()}
       </StatusDot>
     </SettingsRow>
   );
 }
 
-const STATUS_CONFIG: Record<Status, { label: () => string; tone: StatusTone }> =
-  {
-    loading: { label: () => t('Checking'), tone: 'neutral' },
-    passed: { label: () => t('Passed'), tone: 'success' },
-    failed: { label: () => t('Needs attention'), tone: 'danger' },
-    na: { label: () => t('Not applicable'), tone: 'neutral' },
-  };
-
-type Status = 'passed' | 'failed' | 'na' | 'loading';
+const STATUS_LABEL: Record<HealthCheckStatus, () => string> = {
+  [HealthCheckStatus.LOADING]: () => t('Checking'),
+  [HealthCheckStatus.PASSED]: () => t('Passed'),
+  [HealthCheckStatus.FAILED]: () => t('Needs attention'),
+  [HealthCheckStatus.NOT_APPLICABLE]: () => t('Not applicable'),
+};
 
 type HealthRow = {
   id: string;
   title: string;
   icon: React.ReactNode;
-  status: Status;
+  status: HealthCheckStatus;
   message: React.ReactNode;
   link?: string;
 };

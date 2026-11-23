@@ -140,5 +140,5 @@
   "New Email": "New Email",
   "Starts the flow when a new email arrives in a folder.": "Starts the flow when a new email arrives in a folder.",
   "Folder to watch for new emails.": "Folder to watch for new emails.",
-  "New emails in this folder start the flow. An email whose sent date is older than the last check is skipped. To act on only some, add a **Router** step after this trigger.": "New emails in this folder start the flow. An email whose sent date is older than the last check is skipped. To act on only some, add a **Router** step after this trigger."
+  "New emails in this folder start the flow, in the order they arrived. To act on only some, add a **Router** step after this trigger.": "New emails in this folder start the flow, in the order they arrived. To act on only some, add a **Router** step after this trigger."
 }
