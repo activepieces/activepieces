@@ -8,6 +8,15 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Backblaze 0.2.0: Upload File and Read File are no longer AI agent tools
+
+The Backblaze **Upload File** and **Read File** actions are now shown only in the flow builder; AI agents and MCP clients get the new **List Files**, **Get File Metadata**, **Read File**, **Upload File**, **Copy File** and **Delete File** tools instead. Their names and inputs are unchanged, so existing flows keep working.
+
+After you upgrade:
+
+- **Upload File** returns its `url` in path style (`https://s3.<region>.backblazeb2.com/<bucket>/<key>`), and returns `null` when no Backblaze endpoint or region is set.
+- The **New File** trigger's Folder Path matches only that folder (`docs` no longer matches `docs-old/...`, and `img` no longer matches `img123.png`). After the upgrade the trigger carries on from its last poll: files uploaded since then still fire, and existing files are not re-fired.
+
 #### Google Sheets 0.21.0: row triggers fire for more changes, and Trigger Column must be a column letter
 
 From Google Sheets 0.21.0, **New Row Added** and **New or Updated Row** also run the flow in three cases where they stayed silent before:
