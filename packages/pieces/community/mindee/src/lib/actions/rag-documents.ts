@@ -215,7 +215,8 @@ function readAnnotation(value: unknown): Record<string, unknown> | undefined {
   if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
     throw new Error('Annotation must be a JSON object such as {"fields": {...}}.');
   }
-  return Object.fromEntries(Object.entries(parsed));
+  const entries = Object.entries(parsed);
+  return entries.length === 0 ? undefined : Object.fromEntries(entries);
 }
 
 function parseJson(value: string): unknown {
