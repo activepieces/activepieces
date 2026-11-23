@@ -474,7 +474,6 @@ const runScript = (script) => new Promise((resolve, reject) => {
 
 /**
  * {"kind":"set","key":"step_1","value":{...}}  -> globalThis.step_1 = {...}
- * {"kind":"set","key":"step_1"}                -> delete globalThis.step_1
  * {"kind":"run","script":"step_1.a"}           -> reply success/failure
  * Runs are awaited one at a time, so failCurrentRun is the only run in flight.
  * Line splitting is hand-rolled: --no-remote rules out std's TextLineStream.
@@ -520,7 +519,8 @@ for await (const chunk of Deno.stdin.readable) {
             failCurrentRun = null;
         }
     }
-}`
+}
+Deno.exit(0);`
 
 function extractResult(stdout: string): { userOutput: string, resultJson: string | null } {
     if (!stdout.startsWith(MARKER_HEADER_PREFIX)) {
