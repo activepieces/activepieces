@@ -5,7 +5,7 @@
 #   ROUNDS                            default 3
 #   LIGHT_REQUESTS / HEAVY_REQUESTS   default 2000 / 500
 #   CONCURRENCY                       default 28 (the execution slots of the shared cell)
-#   IDLE_SECONDS                      default 30
+#   IDLE_SETTLE_SECONDS / IDLE_SECONDS default 30 / 60, the wait after the load, then the idle sample
 #   COMPOSE_ARGS                      default the CI stack (needs 18+ cores for its cpusets)
 set -euo pipefail
 
@@ -16,7 +16,8 @@ ROUNDS="${ROUNDS:-3}"
 LIGHT_REQUESTS="${LIGHT_REQUESTS:-2000}"
 HEAVY_REQUESTS="${HEAVY_REQUESTS:-500}"
 CONCURRENCY="${CONCURRENCY:-28}"
-IDLE_SECONDS="${IDLE_SECONDS:-30}"
+IDLE_SETTLE_SECONDS="${IDLE_SETTLE_SECONDS:-30}"
+IDLE_SECONDS="${IDLE_SECONDS:-60}"
 read -r -a COMPOSE_FILES <<< "${COMPOSE_ARGS:--f benchmark/docker-compose.yml -f benchmark/docker-compose.ci.yml}"
 
 HEAVY_BODY=$(node -e '
@@ -86,7 +87,10 @@ run_side() {
   export AP_API_KEY
   rm -f "$token_file" "$project_file"
 
-  sleep 10
+  run_load light "$LIGHT_FLOW_ID" "$LIGHT_REQUESTS" '{"test":true}' "$side" "$round"
+  run_load heavy "$HEAVY_FLOW_ID" "$HEAVY_REQUESTS" "$HEAVY_BODY" "$side" "$round"
+
+  sleep "$IDLE_SETTLE_SECONDS"
   local idle_flag
   idle_flag=$(mktemp)
   capture_stats "$OUT_DIR/idle-$side-$round.stats.jsonl" "$idle_flag" &
@@ -95,9 +99,6 @@ run_side() {
   rm -f "$idle_flag"
   wait "$idle_pid" || true
   node benchmark/aggregate-stats.mjs "$OUT_DIR/idle-$side-$round.stats.jsonl" > "$OUT_DIR/idle-$side-$round.json"
-
-  run_load light "$LIGHT_FLOW_ID" "$LIGHT_REQUESTS" '{"test":true}' "$side" "$round"
-  run_load heavy "$HEAVY_FLOW_ID" "$HEAVY_REQUESTS" "$HEAVY_BODY" "$side" "$round"
 
   compose down -v
   echo "::endgroup::"

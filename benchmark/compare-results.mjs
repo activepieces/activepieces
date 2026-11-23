@@ -81,7 +81,7 @@ function renderIdle({ idle }) {
         baseline: medianBy({ runs: idle, side: 'baseline', get: dim.get }),
         candidate: medianBy({ runs: idle, side: 'candidate', get: dim.get }),
     }))
-    return ['### Idle, before the load', '', ...renderTable(rows), '']
+    return ['### Idle, after the load', '', ...renderTable(rows), '']
 }
 
 function renderTable(rows) {
