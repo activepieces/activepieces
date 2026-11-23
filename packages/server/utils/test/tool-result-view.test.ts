@@ -98,17 +98,13 @@ describe('toolResultView', () => {
         expect(first).toContain('Lines 1–')
         expect(first).toContain('"path":"email.body"')
         expect(toolResultView.read({ stored: { email: { body } }, fileId: 'f1', path: 'email.body', offset: 15 })).toContain('END')
+        const lines = Array.from({ length: 50 }, (_, index) => `line ${index}`).join('\n')
+        expect(toolResultView.read({ stored: { body: lines }, fileId: 'f1', path: 'body', limit: 1 })).toContain('Lines 1–1 of 50')
     })
 
     it('keeps the text after an embedded JSON block readable', () => {
         const text = `✅ Schemas\n${JSON.stringify({ a: 1 })}\n---\nsecond schema here`
         expect(toolResultView.read({ stored: mcpEnvelope(text), fileId: 'f1', search: 'second schema' })).toContain('second schema here')
-    })
-
-    it('reads a string value with the requested line limit', () => {
-        const body = Array.from({ length: 50 }, (_, index) => `line ${index}`).join('\n')
-
-        expect(toolResultView.read({ stored: { body }, fileId: 'f1', path: 'body', limit: 1 })).toContain('Lines 1–1 of 50')
     })
 
     it('stays inside the read budget for a very wide object', () => {
