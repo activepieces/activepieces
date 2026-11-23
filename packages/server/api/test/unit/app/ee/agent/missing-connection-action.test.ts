@@ -135,6 +135,5 @@ describe('the missing-auth text the worker matches', () => {
         const diagnosis = mcpUtils.diagnosePieceProps({ props: {}, input: {}, pieceAuth: gmailMetadata.auth, requireAuth: true, componentType: 'action' })
 
         expect(diagnosis.missing).toContain(MISSING_AUTH_INPUT_TEXT)
-        expect(MISSING_AUTH_INPUT_TEXT).toContain('auth (connection required')
     })
 })

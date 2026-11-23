@@ -3,13 +3,12 @@ import { agentAiUtils, aiProviderSignal, aiTraceScrubber, ContentPartLike } from
 import { AgentPhase, AgentRunSource, agentToolClassification, agentToolPhases, agentToolSkills, AI_PROVIDER_ENTITY_TYPES, aiProviderUtils, apErrorOf, CHAT_CREDITS_PER_TOOL_CALL, chatBilling, ChatToolCall, LAZY_TOOL_NAME, PersistedAgentPart, SkillSurface, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
 import { APICallError, generateText, isLoopFinished, isStepCount, LanguageModel, LanguageModelUsage, ModelMessage, NoSuchToolError, RetryError, StepResultPerformance, StopCondition, streamText, ToolChoice, ToolExecutionOptions, ToolSet } from 'ai'
 import { buildSkillSurface, decodeReroutedInput } from './tools/skill-tools'
-import { isMissingConnectionResult } from './tools/tool-primitives'
+import { cardTitleFields, isMissingConnectionResult } from './tools/tool-primitives'
 
 const MAX_AUTO_CONTINUATIONS = 3
 const MAX_EMPTY_CONTINUATIONS = 2
 const MAX_STREAM_RETRIES = 1
 const MAX_IDENTICAL_TOOL_FAILURES = 2
-const CARD_TITLE_KEYS = ['title', 'activeTitle', 'doneTitle']
 const MAX_ERROR_CAUSE_DEPTH = 3
 const IN_LOOP_COMPACTION_THRESHOLD = 0.6
 const RUNAWAY_TURN_CONTEXT_MULTIPLE = 90
@@ -511,7 +510,7 @@ function withoutCardTitles({ toolName, input }: { toolName: string, input: unkno
 }
 
 function withoutTitleKeys(record: Record<string, unknown>): Record<string, unknown> {
-    return Object.fromEntries(Object.entries(record).filter(([key]) => !CARD_TITLE_KEYS.includes(key)))
+    return Object.fromEntries(Object.entries(record).filter(([key]) => !Object.hasOwn(cardTitleFields, key)))
 }
 
 export function jsonInputFrom(text: string): string | undefined {
