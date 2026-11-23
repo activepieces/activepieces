@@ -61,7 +61,8 @@ vi.mock('@/lib/api', () => ({
   api: {
     extractServerErrorMessage: (error: unknown, fallback: string) =>
       error instanceof Error ? error.message : fallback,
-    isApError: () => false,
+    isApError: (error: unknown, code: string) =>
+      error instanceof Error && error.message === code,
   },
 }));
 
@@ -252,6 +253,40 @@ describe('SSOPage', () => {
         domain: 'acme.com',
       }),
     );
+  });
+
+  it('lets the admin add a domain again after a refused add once the plan allows it', async () => {
+    setPlatform({
+      plan: { ssoEnabled: true, multipleEmailDomainsEnabled: true },
+    });
+    setDomains([pendingDomain]);
+    emailDomainApiMock.add.mockRejectedValue(new Error('FEATURE_DISABLED'));
+    refetchMock.mockImplementation(async () => {
+      setPlatform({});
+      return undefined;
+    });
+    await mount();
+
+    click(findButton('Add domain'));
+    const addDialog = screen.getByRole('dialog');
+    fireEvent.change(within(addDialog).getByRole('textbox'), {
+      target: { value: 'beta.com' },
+    });
+    await waitFor(() =>
+      expect(findButton('Continue', addDialog)?.disabled).toBe(false),
+    );
+    click(findButton('Continue', addDialog));
+    await waitFor(() => expect(refetchMock).toHaveBeenCalled());
+
+    setDomains([]);
+    click(menuItem('Cancel verification'));
+    click(findButton('Cancel verification', screen.getByRole('dialog')));
+    await waitFor(() => expect(screen.queryByText('acme.com')).toBeNull());
+
+    click(findButton('Add domain'));
+    expect(
+      within(screen.getByRole('dialog')).getByText('Add a domain'),
+    ).toBeDefined();
   });
 
   it('shows a domain being verified and continues verifying from its menu', async () => {

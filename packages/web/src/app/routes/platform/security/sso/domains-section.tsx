@@ -68,7 +68,6 @@ export const DomainsSection = ({ platform, refetch }: DomainsSectionProps) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogDomainId, setDialogDomainId] = useState<string | null>(null);
   const [lockedOpen, setLockedOpen] = useState(false);
-  const [lockedByServer, setLockedByServer] = useState(false);
   const verifiedCount =
     domains?.filter(
       (emailDomain) =>
@@ -77,8 +76,7 @@ export const DomainsSection = ({ platform, refetch }: DomainsSectionProps) => {
   const verifyLocked =
     !platform.plan.multipleEmailDomainsEnabled && verifiedCount > 0;
   const addLocked =
-    lockedByServer ||
-    (!platform.plan.multipleEmailDomainsEnabled && (domains?.length ?? 0) > 0);
+    !platform.plan.multipleEmailDomainsEnabled && (domains?.length ?? 0) > 0;
   const dialogDomain =
     domains?.find((emailDomain) => emailDomain.id === dialogDomainId) ?? null;
 
@@ -136,9 +134,9 @@ export const DomainsSection = ({ platform, refetch }: DomainsSectionProps) => {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         onAdded={(emailDomain) => setDialogDomainId(emailDomain.id)}
-        onLocked={() => {
-          setLockedByServer(true);
+        onLocked={async () => {
           setLockedOpen(true);
+          await refetch();
         }}
       />
     </AdminSection>
