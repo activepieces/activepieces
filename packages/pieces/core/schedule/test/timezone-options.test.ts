@@ -14,6 +14,11 @@ function labelOffsets(label: string) {
   return prefix?.[1].match(/[+-]\d\d:\d\d/g) ?? [];
 }
 
+function offsetMinutes(offset: string) {
+  const [hours, minutes] = offset.slice(1).split(':').map(Number);
+  return (offset.startsWith('-') ? -1 : 1) * (hours * 60 + minutes);
+}
+
 function wrongLabels(zones?: string[]) {
   return timezoneOptions
     .filter((option) => !zones || zones.includes(option.value))
@@ -49,9 +54,15 @@ describe('schedule timezone options', () => {
     expect(wrongLabels()).toEqual([]);
   });
 
+  it('shows the offset of temporary clock changes outside January and July', () => {
+    expect(timezoneOptions.find((o) => o.value === 'Africa/Casablanca')?.label).toBe(
+      '(GMT+00:00/+01:00) Africa, Casablanca',
+    );
+  });
+
   it('is sorted by offset', () => {
-    const lowest = timezoneOptions.map((o) => labelOffsets(o.label)[0]);
-    expect(lowest[0]).toBe('-11:00');
-    expect(lowest[lowest.length - 1]).toBe('+14:00');
+    const lowest = timezoneOptions.map((o) => offsetMinutes(labelOffsets(o.label)[0]));
+    const outOfOrder = lowest.filter((minutes, i) => i > 0 && minutes < lowest[i - 1]);
+    expect(outOfOrder).toEqual([]);
   });
 });

@@ -51,10 +51,9 @@ function offsetMinutes(offset: string) {
 
 function yearlyOffsets(timeZone: string) {
   const year = new Date().getUTCFullYear();
-  const offsets = [
-    utcOffset({ timeZone, date: new Date(Date.UTC(year, 0, 15, 12)) }),
-    utcOffset({ timeZone, date: new Date(Date.UTC(year, 6, 15, 12)) }),
-  ].sort((a, b) => offsetMinutes(a) - offsetMinutes(b));
+  const offsets = [...Array(12).keys()]
+    .map((month) => utcOffset({ timeZone, date: new Date(Date.UTC(year, month, 15, 12)) }))
+    .sort((a, b) => offsetMinutes(a) - offsetMinutes(b));
   return [...new Set(offsets)];
 }
 
