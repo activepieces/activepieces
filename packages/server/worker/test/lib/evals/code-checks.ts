@@ -72,7 +72,7 @@ function describeIssues(issues: ValidationIssue[]): string {
 
 async function realIssues({ mcp, flowId, issues, declined }: { mcp: McpTools, flowId: string, issues: ValidationIssue[], declined: Set<string> }): Promise<ValidationIssue[]> {
     if (issues.length === 0) {
-        return [{ message: 'ap_validate_flow reported it invalid' }]
+        return await declinedSteps.onlyMissesConnection({ mcp, flowId, stepName: TRIGGER_STEP, declined }) ? [] : [{ message: 'ap_validate_flow reported it invalid' }]
     }
     const checked = await Promise.all(issues.map(async (issue) => issue.category === STEP_VALIDITY && !isNil(issue.stepName) && await declinedSteps.onlyMissesConnection({ mcp, flowId, stepName: issue.stepName, declined }) ? [] : [issue]))
     return checked.flat()
@@ -163,6 +163,7 @@ const SIDE_EFFECT_TOOLS = [
     'ap_send_email',
     'ap_update_agent',
 ]
+const TRIGGER_STEP = 'trigger'
 const WRITE_TOOLS = new Set([...replay.workspaceWriteTools, ...SIDE_EFFECT_TOOLS])
 const NOT_RUN: CodeCheckResult = { verdict: 'pass', reason: 'No code checks: they run on live cases only' }
 
