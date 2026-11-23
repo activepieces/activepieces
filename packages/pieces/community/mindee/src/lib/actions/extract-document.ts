@@ -20,6 +20,10 @@ export const extractDocumentAction = createAction({
     ...productActionHelpers.builderProps('extraction'),
     ...mindeeProps.extractionOptionProps(),
   },
+  propertyGroups: [
+    { key: 'document', display: 'section', label: 'Document', icon: 'file', props: ['model_id', 'file', 'wait_info'] },
+    { key: 'options', display: 'section', label: 'Options', icon: 'sliders', props: ['rag', 'raw_text', 'confidence', 'text_context'] },
+  ],
   outputSchema: mindeeSchemas.inferenceSchema('extraction'),
   async run({ auth, propsValue }) {
     return productActionHelpers.runWithFile({ apiKey: auth.secret_text, product: 'extraction', props: propsValue });
