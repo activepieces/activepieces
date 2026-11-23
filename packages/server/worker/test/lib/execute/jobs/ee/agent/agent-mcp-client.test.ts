@@ -139,6 +139,18 @@ function makeAuthFailingTool(): { tool: { execute: () => Promise<unknown> }, cal
     }
 }
 
+function executeTool({ toolSet, name, args }: { toolSet: Record<string, unknown>, name: string, args: unknown }): Promise<unknown> {
+    const tool = toolSet[name]
+    if (!isExecutableTool(tool)) {
+        throw new Error(`tool ${name} has no execute function`)
+    }
+    return tool.execute(args)
+}
+
+function isExecutableTool(tool: unknown): tool is { execute: (args: unknown) => Promise<unknown> } {
+    return typeof tool === 'object' && tool !== null && 'execute' in tool && typeof tool.execute === 'function'
+}
+
 function reconnectText(result: unknown): string {
     const content = (result as { content?: Array<{ text?: string }> })?.content
     return content?.[0]?.text ?? ''
@@ -155,14 +167,14 @@ describe('agentMcpClient.withToolTimeouts circuit breaker', () => {
             mcpToolSet: { [ATTIO_TOOL]: listRecords.tool, [ATTIO_SEARCH]: searchRecords.tool },
             brokenConnectors,
             taintState,
-        }) as Record<string, { execute: (args: unknown) => Promise<unknown> }>
+        })
 
-        const first = await wrapped[ATTIO_TOOL].execute({})
+        const first = await executeTool({ toolSet: wrapped, name: ATTIO_TOOL, args: {} })
         expect(reconnectText(first)).toContain('authentication failed')
         expect(brokenConnectors.has(CONNECTOR_UUID)).toBe(true)
         expect(listRecords.calls()).toBe(1)
 
-        const second = await wrapped[ATTIO_SEARCH].execute({ query: 'acme' })
+        const second = await executeTool({ toolSet: wrapped, name: ATTIO_SEARCH, args: { query: 'acme' } })
         expect(reconnectText(second)).toContain('already known to be broken')
         expect(searchRecords.calls()).toBe(0)
         expect(taintState.tainted).toBe(true)
@@ -177,15 +189,15 @@ describe('agentMcpClient.withToolTimeouts circuit breaker', () => {
             mcpToolSet: { [ATTIO_TOOL]: listRecords.tool },
             brokenConnectors,
             taintState,
-        }) as Record<string, { execute: (args: unknown) => Promise<unknown> }>
+        })
 
-        const blocked = await wrapped[ATTIO_TOOL].execute({})
+        const blocked = await executeTool({ toolSet: wrapped, name: ATTIO_TOOL, args: {} })
         expect(reconnectText(blocked)).toContain('already known to be broken')
         expect(listRecords.calls()).toBe(0)
         expect(taintState.tainted).toBe(false)
 
         brokenConnectors.delete(CONNECTOR_UUID)
-        await wrapped[ATTIO_TOOL].execute({})
+        await executeTool({ toolSet: wrapped, name: ATTIO_TOOL, args: {} })
         expect(listRecords.calls()).toBe(1)
         expect(taintState.tainted).toBe(true)
     })
@@ -198,9 +210,9 @@ describe('agentMcpClient.withToolTimeouts large results', () => {
             mcpToolSet: { [ATTIO_TOOL]: { execute: async () => result } },
             brokenConnectors: new Set<string>(),
             taintState: { tainted: false },
-        }) as Record<string, { execute: (args: unknown) => Promise<unknown> }>
+        })
 
-        expect(await wrapped[ATTIO_TOOL].execute({})).toBe(result)
+        expect(await executeTool({ toolSet: wrapped, name: ATTIO_TOOL, args: {} })).toBe(result)
     })
 })
 
