@@ -7,6 +7,12 @@ const base = createCustomApiCallAction({
   auth: mindeeAuth,
   baseUrl: () => `${MINDEE_V2_BASE_URL}/v2`,
   authMapping: async () => ({}),
+  props: {
+    url: {
+      description: `Full URL, or a path relative to ${MINDEE_V2_BASE_URL}/v2`,
+      placeholder: '/search/models',
+    },
+  },
 });
 
 export const mindeeCustomApiCall = createAction({
