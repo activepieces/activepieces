@@ -1,4 +1,4 @@
-import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory, createPiece } from '@activepieces/pieces-framework';
 import {
 	addBlockedTimeAction,
 	createAppointmentAction,
@@ -8,7 +8,6 @@ import {
 	rescheduleAppointmentAction,
 	updateClientAction,
 } from './lib/actions';
-import { PieceCategory } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { API_URL } from './lib/common';
 import { appointmentCanceledTrigger, appointmentScheduledTrigger } from './lib/triggers';
@@ -19,7 +18,7 @@ export const acuityScheduling = createPiece({
 	logoUrl: 'https://cdn.activepieces.com/pieces/acuity-scheduling.png',
 	auth: acuitySchedulingAuth,
 	categories: [PieceCategory.PRODUCTIVITY, PieceCategory.SALES_AND_CRM],
-	minimumSupportedRelease: '0.36.1',
+	minimumSupportedRelease: '0.88.2',
 	authors: ['onyedikachi-david', 'kishanprmr'],
 	actions: [
 		addBlockedTimeAction,
@@ -32,6 +31,12 @@ export const acuityScheduling = createPiece({
 		createCustomApiCallAction({
 			auth: acuitySchedulingAuth,
 			baseUrl: () => API_URL,
+			props: {
+				url: {
+					description: `Full URL, or a path relative to ${API_URL}`,
+					placeholder: '/appointments',
+				},
+			},
 			authMapping: async (auth) => {
 				return {
 					Authorization: `Bearer ${auth.access_token}`,
