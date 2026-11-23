@@ -1,8 +1,7 @@
 {
   "Access Apify tools for web scraping, data extraction, and automation.": "Access Apify tools for web scraping, data extraction, and automation.",
-  "API Key": "API 密钥",
-  "Find your API key on Apify in the settings, API & Integrations section.": "Find your API key on Apify in the settings, API & Integrations section.",
-  "Enter API key authentication details": "Enter API key authentication details",
+  "API token": "API 令牌",
+  "Find your API token in [Apify Console](https://console.apify.com/settings/integrations?utm_source=activepieces&utm_medium=integrations) under **Settings** > **API & Integrations**.": "Find your API token in [Apify Console](https://console.apify.com/settings/integrations?utm_source=activepieces&utm_medium=integrations) under **Settings** > **API & Integrations**.",
   "Get Dataset Items": "Get Dataset Items",
   "Run Actor": "Run Actor",
   "Run Task": "Run Task",

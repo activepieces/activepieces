@@ -1,8 +1,7 @@
 {
   "Access Apify tools for web scraping, data extraction, and automation.": "Webスクレイピング、データ抽出、自動化のためのApifyツールにアクセスします。",
-  "API Key": "API キー",
-  "Find your API key on Apify in the settings, API & Integrations section.": "APIキーは、設定、API & 連携のセクションにあります。",
-  "Enter API key authentication details": "API キー認証の詳細を入力してください",
+  "API token": "API トークン",
+  "Find your API token in [Apify Console](https://console.apify.com/settings/integrations?utm_source=activepieces&utm_medium=integrations) under **Settings** > **API & Integrations**.": "APIトークンは、[Apify Console](https://console.apify.com/settings/integrations?utm_source=activepieces&utm_medium=integrations) の **Settings** > **API & Integrations** にあります。",
   "Get Dataset Items": "データセットアイテムを取得する",
   "Run Actor": "アクターを実行",
   "Run Task": "タスクを実行",
