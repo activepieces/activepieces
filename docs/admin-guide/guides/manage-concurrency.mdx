@@ -6,7 +6,11 @@ icon: 'gauge'
 
 ## Overview
 
-Concurrency limits control how many flow runs can execute simultaneously within a project. When a project reaches its limit, new runs are queued and retried automatically with exponential backoff until a slot becomes available.
+Concurrency limits control how many flow runs can execute simultaneously within a project. When a project reaches its limit, new runs are queued and retried automatically with exponential backoff until a slot becomes available. Only published runs count; test runs from the builder are not limited.
+
+<Note>
+On a self-hosted instance, the limits apply only when `AP_PROJECT_RATE_LIMITER_ENABLED` is `true`. The default is `false`, and the limit field stays disabled or hidden until you set it.
+</Note>
 
 This is useful to:
 
@@ -16,6 +20,8 @@ This is useful to:
 
 ## Setting a Per-Project Limit
 
+Only a platform admin can set the limit.
+
 1. Navigate to **Project Settings > General**.
 2. Find the **Max Concurrent Jobs** field.
 3. Enter the desired limit, or leave it empty to use the platform default.
@@ -23,7 +29,9 @@ This is useful to:
 
 ![Project Settings — Max Concurrent Jobs](/resources/screenshots/manage-concurrency.png)
 
-When the field is empty, the project uses the default concurrency limit from your platform plan.
+If your plan includes worker groups, the field is not in Project Settings. Set the limit in **Platform Admin > Workers > Worker groups** instead: click the **Concurrency limit** of the project. A flow that has its own worker group is not limited by the project limit.
+
+When the field is empty, the project uses the default limit. On Cloud, the default comes from your platform plan, and a project limit cannot go above it. On a self-hosted instance, the default is `AP_DEFAULT_CONCURRENT_JOBS_LIMIT` (`5` unless you change it). With worker groups, the default is also capped by the capacity of the worker group that runs the project.
 
 ## What Happens When the Limit Is Reached
 
