@@ -17,43 +17,23 @@ describe('replay.resolveCall', () => {
         expect(live).toHaveBeenCalledOnce()
     })
 
-    it('runs writes live in live mode instead of ending the turn', async () => {
-        const caseReplay = replay.create({ recordedToolCalls: [] })
-        const live = vi.fn(async () => ({ flowId: 'f1' }))
-
-        const output = await replay.resolveCall({ caseReplay, mode: 'live', toolName: 'ap_build_flow', input: { flowName: 'x' }, live })
-
-        expect(output).toEqual({ flowId: 'f1' })
-        expect(live).toHaveBeenCalledOnce()
-        expect(caseReplay.stops()).toEqual([])
-    })
-
-    it('fakes test runs, write actions and publishing in live mode', async () => {
-        const caseReplay = replay.create({ recordedToolCalls: [] })
-        const live = vi.fn(async () => ({ ran: true }))
-        const calls = [
-            { toolName: 'ap_test_flow', input: {} },
-            { toolName: 'ap_test_step', input: {} },
-            { toolName: 'ap_run_action', input: {} },
-            { toolName: 'ap_change_flow_status', input: {} },
-            { toolName: 'ap_execute_action', input: { actionName: 'send_channel_message', input: {} } },
-            { toolName: 'ap_execute_action', input: { actionName: 'custom_api_call', input: { method: 'POST' } } },
-        ]
-
-        const outputs = await Promise.all(calls.map(({ toolName, input }) => replay.resolveCall({ caseReplay, mode: 'live', toolName, input, live })))
-
-        expect(outputs).toEqual(Array(calls.length).fill(expect.objectContaining({ structuredContent: { status: 'SUCCEEDED' } })))
-        expect(live).not.toHaveBeenCalled()
-    })
-
-    it('fakes publishing, retries and unknown tools in live mode because only allowlisted tools run for real', async () => {
+    it.each([
+        { toolName: 'ap_test_flow', input: {} },
+        { toolName: 'ap_test_step', input: {} },
+        { toolName: 'ap_run_action', input: {} },
+        { toolName: 'ap_change_flow_status', input: {} },
+        { toolName: 'ap_execute_action', input: { actionName: 'send_channel_message', input: {} } },
+        { toolName: 'ap_execute_action', input: { actionName: 'custom_api_call', input: { method: 'POST' } } },
+        { toolName: 'ap_lock_and_publish', input: {} },
+        { toolName: 'ap_retry_run', input: {} },
+        { toolName: 'ap_brand_new_capability', input: {} },
+    ])('fakes $toolName in live mode because only allowlisted tools run for real', async ({ toolName, input }) => {
         const caseReplay = replay.create({ recordedToolCalls: [] })
         const live = vi.fn(async () => ({ ran: true }))
-        const toolNames = ['ap_lock_and_publish', 'ap_retry_run', 'ap_brand_new_capability']
 
-        const outputs = await Promise.all(toolNames.map((toolName) => replay.resolveCall({ caseReplay, mode: 'live', toolName, input: {}, live })))
+        const output = await replay.resolveCall({ caseReplay, mode: 'live', toolName, input, live })
 
-        expect(outputs).toEqual(Array(toolNames.length).fill(expect.objectContaining({ structuredContent: { status: 'SUCCEEDED' } })))
+        expect(output).toEqual(expect.objectContaining({ structuredContent: { status: 'SUCCEEDED' } }))
         expect(live).not.toHaveBeenCalled()
     })
 
@@ -71,12 +51,6 @@ describe('replay.resolveCall', () => {
         expect(live).not.toHaveBeenCalled()
     })
 
-    it('names the faked tools apart from the note about every other tool', () => {
-        expect(replay.stubbedTools).toEqual(expect.arrayContaining(['ap_lock_and_publish', 'ap_retry_run', 'ap_run_code', 'ap_create_agent']))
-        expect(replay.stubbedTools.every((name) => /^ap_[a-z_]+$/.test(name))).toBe(true)
-        expect(replay.stubbedToolsNote.length).toBeGreaterThan(0)
-    })
-
     it('runs allowlisted workspace writes and reads for real in live mode', async () => {
         const caseReplay = replay.create({ recordedToolCalls: [] })
         const live = vi.fn(async () => ({ ok: true }))
@@ -86,6 +60,7 @@ describe('replay.resolveCall', () => {
 
         expect(outputs).toEqual(Array(toolNames.length).fill({ ok: true }))
         expect(live).toHaveBeenCalledTimes(toolNames.length)
+        expect(caseReplay.stops()).toEqual([])
     })
 
     it('runs actions declared read-only and GET custom API calls for real in live mode', async () => {

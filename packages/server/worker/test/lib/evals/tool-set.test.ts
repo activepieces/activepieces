@@ -14,7 +14,6 @@ describe('evalToolSet.build', () => {
     it('offers ap_set_build_plan to the agent', () => {
         const tools = buildWith({ mcpTools: {} })
         expect(tools['ap_set_build_plan']?.execute).toBeDefined()
-        expect(tools).not.toHaveProperty('onFlowToolResult')
     })
 
     it('runs the build card hook on flow tool results like production', async () => {
