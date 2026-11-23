@@ -2,8 +2,29 @@ import { ApFile } from '@activepieces/pieces-framework';
 import { describe, expect, it } from 'vitest';
 import { createAndQueryDB } from '../src/lib/actions/create-and-query-db';
 
+type WrittenFile = { fileName: string; data: Buffer };
+
 function runAction(propsValue: Record<string, unknown>) {
   return createAndQueryDB.run({ propsValue } as never);
+}
+
+async function runActionWithFiles({
+  formatOptions,
+  ...rest
+}: { formatOptions?: Record<string, unknown> } & Record<string, unknown>) {
+  const propsValue = {
+    ...rest,
+    formatOptions: { fileName: 'out', ...formatOptions },
+  };
+  const written: WrittenFile[] = [];
+  const files = {
+    write: async (file: WrittenFile) => {
+      written.push(file);
+      return `file://${file.fileName}`;
+    },
+  };
+  const result = await createAndQueryDB.run({ propsValue, files } as never);
+  return { result, written };
 }
 
 function table(overrides: Record<string, unknown>) {
@@ -211,5 +232,65 @@ describe('Schema autodetection (schema left at its default {})', () => {
     });
 
     expect(rows).toEqual([{ id: '1', name: 'a' }]);
+  });
+});
+
+describe('Output Format', () => {
+  const props = {
+    tables: [table({ data: [{ id: 1, name: 'a' }] })],
+    query: 'SELECT name FROM t',
+  };
+
+  it('returns rows inline and writes no file by default', async () => {
+    const { result, written } = await runActionWithFiles(props);
+
+    expect(result).toEqual([{ name: 'a' }]);
+    expect(written).toHaveLength(0);
+  });
+
+  it('json writes a file containing the rows and returns the file reference', async () => {
+    const { result, written } = await runActionWithFiles({
+      ...props,
+      outputFormat: 'json',
+    });
+
+    expect(result).toBe('file://out');
+    expect(written).toHaveLength(1);
+    expect(JSON.parse(written[0].data.toString('utf-8'))).toEqual([
+      { name: 'a' },
+    ]);
+  });
+});
+
+describe('File Options', () => {
+  const props = {
+    tables: [table({ data: [{ id: 1 }] })],
+    query: 'SELECT id FROM t',
+  };
+
+  it('writes the file under the chosen file name', async () => {
+    const { written } = await runActionWithFiles({
+      ...props,
+      outputFormat: 'json',
+      formatOptions: { fileName: 'out.json' },
+    });
+
+    expect(written[0].fileName).toBe('out.json');
+  });
+
+  it('throws when a file format is chosen without a file name', async () => {
+    await expect(
+      runAction({ ...props, outputFormat: 'json' })
+    ).rejects.toThrow('File Name is required.');
+  });
+
+  it('exposes only the options for the chosen format', async () => {
+    const build = createAndQueryDB.props.formatOptions.props;
+    const ctx = {} as never;
+
+    expect(Object.keys(await build({ outputFormat: 'rows' }, ctx))).toEqual([]);
+    expect(Object.keys(await build({ outputFormat: 'json' }, ctx))).toEqual(
+      ['fileName']
+    );
   });
 });

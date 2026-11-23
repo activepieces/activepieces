@@ -1,4 +1,10 @@
-import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
+import {
+  ApFile,
+  createAction,
+  InputPropertyMap,
+  PieceAuth,
+  Property,
+} from '@activepieces/pieces-framework';
 
 import { DuckDBInstance } from '@duckdb/node-api';
 import { quotedIdentifier } from '@duckdb/node-api/lib/sql';
@@ -72,6 +78,41 @@ More information on data types and accepted values:
       description: 'Arguments to be used in the query',
       required: false,
     }),
+    outputFormat: Property.StaticDropdown({
+      displayName: 'Output Format',
+      description:
+        'Return the rows inline, or write them to a file and return the file instead (useful for large results).',
+      required: false,
+      defaultValue: 'rows',
+      options: {
+        options: [
+          { label: 'Rows (default)', value: 'rows' },
+          { label: 'JSON file', value: 'json' },
+        ],
+      },
+    }),
+    formatOptions: Property.DynamicProperties({
+      displayName: 'File Options',
+      required: false,
+      auth: PieceAuth.None(),
+      refreshers: ['outputFormat'],
+      props: async (propsValue): Promise<InputPropertyMap> => {
+        const format = propsValue['outputFormat'];
+        switch (format) {
+          case 'json':
+            return {
+              fileName: Property.ShortText({
+                displayName: 'File Name',
+                description: 'Name of the file to create.',
+                required: true,
+                defaultValue: 'results.json',
+              }),
+            };
+          default:
+            return {};
+        }
+      },
+    }),
   },
   async run(context) {
     const instance = await DuckDBInstance.create(':memory:');
@@ -135,7 +176,21 @@ More information on data types and accepted values:
 
     connection.closeSync();
 
-    return results;
+    const { outputFormat, formatOptions } = context.propsValue;
+    switch (outputFormat) {
+      case 'json': {
+        const fileName = formatOptions?.['fileName'];
+        if (typeof fileName !== 'string') {
+          throw new Error('File Name is required.');
+        }
+        return context.files.write({
+          fileName,
+          data: Buffer.from(JSON.stringify(results)),
+        });
+      }
+      default:
+        return results;
+    }
   },
 });
 
