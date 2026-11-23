@@ -8,6 +8,18 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Acuity Scheduling 0.3.0: trigger filters now match, and Reschedule keeps the calendar when none is picked
+
+From Acuity Scheduling 0.3.0:
+
+- **New Appointment** and **Appointment Canceled** with a **Calendar** or **Appointment Type** filter now run the flow for matching appointments. Before, a set filter never matched, so these flows never ran.
+- **Reschedule Appointment** with an empty **New Calendar** keeps the appointment on its current calendar. Before, a cleared calendar was sent as empty and Acuity could move the appointment to another available calendar.
+- **Create Appointment** now applies the chosen **Label**. Before, the label was sent under a field name Acuity ignores.
+
+#### What you need to do
+
+If a flow uses one of the two triggers with a filter and was left on, expect it to start running for matching appointments; turn it off if you do not want those runs. No change is needed for Reschedule Appointment or Create Appointment.
+
 #### Google Sheets 0.21.0: row triggers fire for more changes, and Trigger Column must be a column letter
 
 From Google Sheets 0.21.0, **New Row Added** and **New or Updated Row** also run the flow in three cases where they stayed silent before:
