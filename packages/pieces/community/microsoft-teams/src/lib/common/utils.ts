@@ -1,3 +1,5 @@
+import type { ChatMessage } from './types';
+
 function buildMessageBody({
   content,
   contentType,
@@ -56,6 +58,10 @@ function toMention({ item, index }: { item: unknown; index: number }): { userId:
   return { userId: item.userId, displayName: item.displayName };
 }
 
-export const microsoftTeamsUtils = { buildMessageBody };
+function isPostedMessage(message: ChatMessage): boolean {
+  return message.messageType === 'message' && !message.deletedDateTime;
+}
+
+export const microsoftTeamsUtils = { buildMessageBody, isPostedMessage };
 
 const CONTENT_TYPES = ['text', 'html'] as const;
