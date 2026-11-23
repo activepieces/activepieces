@@ -99,9 +99,14 @@ async function problemsOfStep({ step, invalidReasons, platformId, log }: {
     if (step.type === FlowActionType.PIECE || step.type === FlowTriggerType.PIECE) {
         const componentName = step.type === FlowActionType.PIECE ? step.settings.actionName : step.settings.triggerName
         const componentType = step.type === FlowActionType.PIECE ? 'action' : 'trigger'
-        const component = isNil(componentName) ? undefined : await findComponent({ pieceName: step.settings.pieceName, pieceVersion: step.settings.pieceVersion, componentName, componentType, platformId, log })
+        const piece = isNil(componentName) ? undefined : await findPiece({ pieceName: step.settings.pieceName, pieceVersion: step.settings.pieceVersion, platformId, log })
+        const component = isNil(piece) || isNil(componentName) ? undefined : componentOf({ piece, componentName, componentType })
         const fieldProblems = isNil(component) ? [] : pieceFieldProblems({ stepName: step.name, props: component.props, input: step.settings.input ?? {} })
-        return [...fieldProblems, ...invalidReasons.map((reason) => reasonToProblem({ stepName: step.name, reason }))]
+        const problems = [...fieldProblems, ...invalidReasons.map((reason) => reasonToProblem({ stepName: step.name, reason }))]
+        if (step.valid || problems.length > 0) {
+            return problems
+        }
+        return [{ step: step.name, message: invalidPieceStepMessage({ componentName, componentType, pieceFound: !isNil(piece), componentFound: !isNil(component) }) }]
     }
     if (step.valid) {
         return []
@@ -153,11 +158,44 @@ async function findComponent({ pieceName, pieceVersion, componentName, component
     platformId: string
     log: FastifyBaseLogger
 }): Promise<{ props: PiecePropertyMap } | undefined> {
-    const { data: piece } = await tryCatch(() => pieceMetadataService(log).getOrThrow({ platformId, name: pieceName, version: pieceVersion }))
+    const piece = await findPiece({ pieceName, pieceVersion, platformId, log })
     if (isNil(piece)) {
         return undefined
     }
+    return componentOf({ piece, componentName, componentType })
+}
+
+async function findPiece({ pieceName, pieceVersion, platformId, log }: {
+    pieceName: string
+    pieceVersion: string
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<PieceComponents | undefined> {
+    const { data: piece } = await tryCatch(() => pieceMetadataService(log).getOrThrow({ platformId, name: pieceName, version: pieceVersion }))
+    return piece ?? undefined
+}
+
+function componentOf({ piece, componentName, componentType }: {
+    piece: PieceComponents
+    componentName: string
+    componentType: 'action' | 'trigger'
+}): { props: PiecePropertyMap } | undefined {
     return componentType === 'action' ? piece.actions[componentName] : piece.triggers[componentName]
+}
+
+function invalidPieceStepMessage({ componentName, componentType, pieceFound, componentFound }: {
+    componentName: string | undefined
+    componentType: 'action' | 'trigger'
+    pieceFound: boolean
+    componentFound: boolean
+}): string {
+    if (isNil(componentName)) {
+        return `invalid configuration: no ${componentType} selected`
+    }
+    if (pieceFound && !componentFound) {
+        return `invalid configuration: ${componentType} not found on this piece`
+    }
+    return 'invalid configuration'
 }
 
 async function optionsFor({ prop, field, pieceName, pieceVersion, componentName, input, projectId, platformId, log }: {
@@ -287,6 +325,11 @@ const REASON_PATTERN = /^(\S+) (is missing|has an invalid value)$/
 type PieceProperty = PiecePropertyMap[string]
 
 type DropdownOption = { label: string, value: unknown }
+
+type PieceComponents = {
+    actions: Record<string, { props: PiecePropertyMap }>
+    triggers: Record<string, { props: PiecePropertyMap }>
+}
 
 type LabelResolution = {
     input: Record<string, unknown>

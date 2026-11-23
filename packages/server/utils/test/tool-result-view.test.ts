@@ -23,6 +23,22 @@ describe('toolResultView', () => {
         expect(toolResultView.read({ stored: { records }, fileId: 'f1', path: 'records[3].properties.email' })).toContain('lead3@acme.co')
     })
 
+    it('reads a literal dotted key before splitting the path', () => {
+        const text = toolResultView.read({ stored: { 'customer.email': 'ada@acme.co', customer: { email: 'nested@acme.co' } }, fileId: 'f1', fields: ['customer.email'] })
+
+        expect(text).toContain('"customer.email":"ada@acme.co"')
+        expect(text).not.toContain('nested@acme.co')
+        expect(toolResultView.read({ stored: { rows: [{ 'a.b': 1 }] }, fileId: 'f1', path: 'rows[0].a.b' })).toContain('1')
+    })
+
+    it('reports requested fields that resolve to nothing', () => {
+        const text = toolResultView.read({ stored: { records }, fileId: 'f1', path: 'records', fields: ['id', 'emial'], limit: 2 })
+
+        expect(text).toContain('{"id":"r0"}')
+        expect(text).toContain('Fields not found: emial. Keys: id, name, properties.')
+        expect(toolResultView.read({ stored: { id: 'x' }, fileId: 'f1', fields: ['id', 'nope'] })).toContain('Fields not found: nope. Keys: id.')
+    })
+
     it('names the top-level keys when the path is wrong', () => {
         expect(toolResultView.read({ stored: { records }, fileId: 'f1', path: 'rows' })).toContain('Top-level keys: records')
     })

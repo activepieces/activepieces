@@ -1,4 +1,4 @@
-import { isNil, isObject, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { isNil, isObject, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { PiecePropertyMap } from '@activepieces/pieces-framework'
 import { toolResultView } from '@activepieces/server-utils'
 import { EngineResponse, EngineResponseStatus, FlowVersion, McpToolDefinition, ProjectScopedMcpServer, SampleDataFileType, WorkerJobType } from '@activepieces/shared'
@@ -12,10 +12,11 @@ import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { mcpUtils, PropertyResolutionResult, PropSummary } from './mcp-utils'
 import { pieceExpertise } from './piece-expertise'
 
-async function describeComponent({ mcp, request, platformId, log }: {
+async function describeComponent({ mcp, request, platformId, connectionPieces, log }: {
     mcp: ProjectScopedMcpServer
     request: ComponentRequest
     platformId: string
+    connectionPieces: ConnectionPieces | null
     log: FastifyBaseLogger
 }): Promise<ComponentDescription> {
     const { pieceName, actionOrTriggerName, type, auth, flowId, input: providedInput } = request
@@ -34,7 +35,7 @@ async function describeComponent({ mcp, request, platformId, log }: {
 
     const hasRealProject = mcpUtils.isProjectScoped(mcp)
     if (hasRealProject && requiresAuth && auth) {
-        const authOwnership = await validateAuthOwnership({ auth, pieceName: normalized, projectId: mcp.projectId, platformId, log })
+        const authOwnership = validateAuthOwnership({ auth, pieceName: normalized, connectionPieces })
         if (authOwnership) {
             return authOwnership
         }
@@ -163,8 +164,10 @@ export const apGetPiecePropsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
             try {
                 const parsed = getPiecePropsInput.parse(args)
                 const platformId = await mcpUtils.resolvePlatformId({ mcp, log })
+                const requests = !isNil(parsed.items) && parsed.items.length > 0 ? parsed.items : [parsed]
+                const connectionPieces = await loadConnectionPieces({ mcp, auths: requests.map((request) => request.auth), platformId, log })
                 if (!isNil(parsed.items) && parsed.items.length > 0) {
-                    const results = await Promise.all(parsed.items.map((item) => describeComponent({ mcp, request: item, platformId, log })))
+                    const results = await Promise.all(parsed.items.map((item) => describeComponent({ mcp, request: item, platformId, connectionPieces, log })))
                     return {
                         content: [{ type: 'text', text: results.map(resultText).join('\n\n---\n\n') }],
                         structuredContent: { results: results.map((result) => result.structuredContent ?? { error: resultText(result) }) },
@@ -174,7 +177,7 @@ export const apGetPiecePropsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                 if (!single.success) {
                     return { content: [{ type: 'text', text: '❌ Pass pieceName, actionOrTriggerName and type for one action, or a list of them as items.' }] }
                 }
-                return await describeComponent({ mcp, request: single.data, platformId, log })
+                return await describeComponent({ mcp, request: single.data, platformId, connectionPieces, log })
             }
             catch (err) {
                 return mcpUtils.mcpToolError('Failed to get piece props', err)
@@ -240,39 +243,51 @@ async function resolvePropertyOptions({ props, componentProps, pieceName, pieceV
     await mcpUtils.resolveTransitively({ props, componentProps, auth, providedInput, resolveOne })
 }
 
-async function validateAuthOwnership({ auth, pieceName, projectId, platformId, log }: {
-    auth: string
-    pieceName: string
-    projectId: string
+async function loadConnectionPieces({ mcp, auths, platformId, log }: {
+    mcp: ProjectScopedMcpServer
+    auths: Array<string | undefined>
     platformId: string
     log: FastifyBaseLogger
-}): Promise<{ content: [{ type: 'text', text: string }] } | null> {
-    try {
-        const connections = await appConnectionService(log).list({
-            projectId,
-            platformId,
-            pieceNames: [pieceName],
-            cursorRequest: null,
-            scope: undefined,
-            displayName: undefined,
-            status: undefined,
-            limit: 1,
-            externalIds: [auth],
-        })
-        const match = connections.data[0]
-        if (!match) {
-            return {
-                content: [{
-                    type: 'text',
-                    text: `⚠️ Connection "${auth}" does not belong to piece "${pieceName}". Use ap_list_connections to find the correct connection for this piece.`,
-                }],
-            }
-        }
+}): Promise<ConnectionPieces | null> {
+    const externalIds = unique(auths.filter((auth): auth is string => !isNil(auth) && auth.length > 0))
+    if (!mcpUtils.isProjectScoped(mcp) || externalIds.length === 0) {
+        return null
     }
-    catch {
-        // If lookup fails, proceed anyway — don't block the user
+    const { data: connections, error } = await tryCatch(() => appConnectionService(log).list({
+        projectId: mcp.projectId,
+        platformId,
+        pieceNames: undefined,
+        cursorRequest: null,
+        scope: undefined,
+        displayName: undefined,
+        status: undefined,
+        limit: CONNECTION_LOOKUP_LIMIT,
+        externalIds,
+    }))
+    if (error) {
+        log.warn({ project: { id: mcp.projectId }, error }, '[apGetPiecePropsTool] connection ownership lookup failed')
+        return null
     }
-    return null
+    return new Map(externalIds.map((externalId): [string, string[]] => [
+        externalId,
+        connections.data.filter((connection) => connection.externalId === externalId).map((connection) => connection.pieceName),
+    ]))
+}
+
+function validateAuthOwnership({ auth, pieceName, connectionPieces }: {
+    auth: string
+    pieceName: string
+    connectionPieces: ConnectionPieces | null
+}): { content: [{ type: 'text', text: string }] } | null {
+    if (isNil(connectionPieces) || connectionPieces.get(auth)?.includes(pieceName)) {
+        return null
+    }
+    return {
+        content: [{
+            type: 'text',
+            text: `⚠️ Connection "${auth}" does not belong to piece "${pieceName}". Use ap_list_connections to find the correct connection for this piece.`,
+        }],
+    }
 }
 
 const { withTimeout } = mcpUtils
@@ -298,6 +313,8 @@ const MAX_SAMPLE_CHARS = 1500
 
 const MAX_TEXT_OPTIONS = 25
 
+const CONNECTION_LOOKUP_LIMIT = 100
+
 type ResolvePropertyOptionsParams = {
     props: PropSummary[]
     componentProps: PiecePropertyMap
@@ -313,6 +330,8 @@ type ResolvePropertyOptionsParams = {
 }
 
 type ComponentRequest = z.infer<typeof componentRequest>
+
+type ConnectionPieces = Map<string, string[]>
 
 type ComponentDescription = {
     content: Array<{ type: 'text', text: string }>
