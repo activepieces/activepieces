@@ -210,12 +210,14 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                 const rawResult = await executeWithTimeout('ap_execute_action', toolInput)
                 const rawSuccess = isSuccessResult(rawResult)
                 progressGuard.recordConnectionResult({ pieceName: toolInput.pieceName, result: rawResult })
-                progressGuard.recordActionRunResult({
-                    pieceName: toolInput.pieceName,
-                    actionName: toolInput.actionName,
-                    input: toolInput.input,
-                    success: rawSuccess,
-                })
+                if (rawSuccess || !isMissingConnectionResult(rawResult)) {
+                    progressGuard.recordActionRunResult({
+                        pieceName: toolInput.pieceName,
+                        actionName: toolInput.actionName,
+                        input: toolInput.input,
+                        success: rawSuccess,
+                    })
+                }
                 const result = truncateLargeResult(rawResult)
                 const resultObj = isObject(rawResult) ? rawResult as Record<string, unknown> : {}
                 const meta = isObject(resultObj['_meta']) ? resultObj['_meta'] as Record<string, unknown> : undefined

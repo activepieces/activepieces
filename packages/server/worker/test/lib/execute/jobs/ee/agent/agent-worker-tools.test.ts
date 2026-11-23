@@ -718,6 +718,21 @@ describe('agentWorkerTools', () => {
             expect(executeTool).toHaveBeenCalledTimes(3)
         })
 
+        it('lets an identical ap_execute_action retry through once the account is connected', async () => {
+            const { eventEmitter } = makeMockEventEmitter()
+            const executeTool = vi.fn().mockResolvedValue({ success: false, missingConnection: true, error: '❌ No Gmail account is selected in this conversation.' })
+            const progressGuard = agentWorkerTools.createProgressGuard()
+            const tools = agentWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ outcome: 'approved' }), guides: {}, taintState: { tainted: false }, actionRequiresAuth: everyActionNeedsAuth, progressGuard })
+            const call = { pieceName: '@activepieces/piece-gmail', actionName: 'gmail_send_email', input: { to: 'a@b.c' } }
+
+            await tools.ap_execute_action.execute(call, { ...callOptions, toolCallId: 'i1' })
+            await tools.ap_execute_action.execute(call, { ...callOptions, toolCallId: 'i2' })
+            progressGuard.connectionPicked({ pieceName: 'gmail' })
+            await tools.ap_execute_action.execute(call, { ...callOptions, toolCallId: 'i3' })
+
+            expect(executeTool).toHaveBeenCalledTimes(3)
+        })
+
         it('lets a call that brings its own auth through after the piece breaker trips', async () => {
             const { eventEmitter } = makeMockEventEmitter()
             const executeTool = vi.fn().mockResolvedValue({ success: false, missingConnection: true, error: '❌ No Gmail account is selected in this conversation.' })
