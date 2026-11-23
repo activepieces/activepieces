@@ -128,6 +128,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
     const toolCalls: AgentTurnToolCall[] = []
     let toolCallOrder = 0
     let currentAttemptMessages: ModelMessage[] = []
+    let currentAttemptToolCalls: ChatToolCall[] = []
     let streamError: Error | null = null
 
     let llmMessages = messages
@@ -249,11 +250,12 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
                 log.warn({ tool: { name: toolCall.toolName, durationMs: toolExecutionMs }, error: toolOutput.error }, 'Tool call failed')
             }
         },
-        onStepEnd: ({ content, response, usage: stepUsage }) => {
+        onStepEnd: ({ content, response, toolResults, usage: stepUsage }) => {
             totalInputTokens += stepUsage.inputTokens ?? 0
             totalOutputTokens += stepUsage.outputTokens ?? 0
             uiParts.push(...agentAiUtils.buildStepParts({ content: content as ContentPartLike[] }))
             currentAttemptMessages = [...currentAttemptMessages, ...agentAiUtils.collectStepMessages([{ response }])]
+            currentAttemptToolCalls = [...currentAttemptToolCalls, ...completedToolCalls([{ toolResults }])]
             const responseMessages = [...accumulatedResponseMessages, ...currentAttemptMessages]
             onProgress({ uiParts: [...uiParts], responseMessages })
             log.debug({ partCount: uiParts.length, phase: phaseState.phase }, 'Chat step finished')
@@ -268,6 +270,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
         log.debug({ phase: phaseState.phase, continuations, emptyContinuations, streamRetries }, 'Chat turn loop iteration')
         const uiPartsCountBefore = uiParts.length
         currentAttemptMessages = []
+        currentAttemptToolCalls = []
         const result = runStreamAttempt(llmMessages)
         const drained = await drainStream(result)
         const producedVisibleOutput = uiParts.length > uiPartsCountBefore
@@ -297,6 +300,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
                 fast = undefined
                 accumulatedResponseMessages.push(...currentAttemptMessages)
                 llmMessages = [...llmMessages, ...currentAttemptMessages]
+                earlierAttemptToolCalls = [...earlierAttemptToolCalls, ...currentAttemptToolCalls]
                 streamError = null
                 streamRetries = 0
                 continue

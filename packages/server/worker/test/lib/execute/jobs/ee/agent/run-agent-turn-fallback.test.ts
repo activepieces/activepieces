@@ -198,6 +198,14 @@ describe('a managed credits chat turn', () => {
         expect(textOf(turn)).toBe('from expert')
     })
 
+    it('still counts the paid tool calls of a model that failed when the next model checks credits', async () => {
+        const creditsLeft = vi.fn(async (_pendingCredits: number) => 10)
+
+        await runTurn({ models: [managedModel({ modelId: 'smart', model: stepsOf([searchingModel(), midStreamErrorModel(OPENROUTER_502)]) }), managedModel({ modelId: 'fast', model: stepsOf([searchingModel(), answeringModel('from fast')]) })], creditsLeft })
+
+        expect(creditsLeft).toHaveBeenLastCalledWith(2)
+    })
+
     it('drops a failing first-step fast model and answers on the main model', async () => {
         const turn = await runTurn({
             models: [managedModel({ modelId: 'smart', model: answeringModel('from smart') })],
@@ -223,12 +231,13 @@ describe('what counts as content sent in the step that failed', () => {
     })
 })
 
-async function runTurn({ models, fastModel, search, onStepModel, onModelOutcome }: {
+async function runTurn({ models, fastModel, search, onStepModel, onModelOutcome, creditsLeft }: {
     models: [TurnModel, ...TurnModel[]]
     fastModel?: TurnModel
     search?: () => Promise<unknown>
     onStepModel?: (turnModel: TurnModel) => void
     onModelOutcome?: (outcome: unknown) => void
+    creditsLeft?: (pendingCredits: number) => Promise<number | null>
 }): ReturnType<typeof runAgentTurn> {
     return runAgentTurn({
         models,
@@ -246,6 +255,7 @@ async function runTurn({ models, fastModel, search, onStepModel, onModelOutcome 
         sinks: { drainStream: drainLikeTheWorker },
         ...(onStepModel ? { onStepModel } : {}),
         ...(onModelOutcome ? { onModelOutcome } : {}),
+        ...(creditsLeft ? { creditsLeft } : {}),
     })
 }
 
@@ -327,6 +337,13 @@ function searchingModel(): MockLanguageModelV3 {
                 { type: 'finish' as const, finishReason: 'tool-calls' as const, usage: USAGE },
             ]),
         }),
+    })
+}
+
+function stepsOf(models: MockLanguageModelV3[]): MockLanguageModelV3 {
+    let calls = 0
+    return new MockLanguageModelV3({
+        doStream: async (options) => models[Math.min(calls++, models.length - 1)].doStream(options),
     })
 }
 
