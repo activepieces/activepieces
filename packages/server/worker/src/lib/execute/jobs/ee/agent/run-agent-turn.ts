@@ -68,7 +68,7 @@ export function drainOf({ state }: { state: StepContentState }): StreamDrain {
     return { lastStepSentContent: state.sentWhenFailed ?? state.sentInStep }
 }
 
-export async function runAgentTurn({ models, fastModel, systemPrompt, messages, tools, allToolNames, tier, phaseState, abortSignal, log, sinks, stopWhen, stepCeiling, creditsLeft, priorToolCalls, onModelOutcome, onStepModel, skills }: RunAgentTurnParams): Promise<AgentTurnResult> {
+export async function runAgentTurn({ models, fastModel, systemPrompt, messages, tools, allToolNames, phaseState, abortSignal, log, sinks, stopWhen, stepCeiling, creditsLeft, priorToolCalls, onModelOutcome, onStepModel, skills }: RunAgentTurnParams): Promise<AgentTurnResult> {
     const drainStream = sinks?.drainStream ?? ((result: ReturnType<typeof streamText>) => result.consumeStream())
     const onProgress = sinks?.onProgress ?? (() => {})
     const baseStopCondition = stopWhen ?? isLoopFinished()
@@ -84,7 +84,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
         if (error) {
             log.warn({ error }, 'Credit check failed mid-turn, letting the turn continue')
         }
-        creditsExhausted = !isNil(left) && left < 0
+        creditsExhausted = !isNil(left) && left <= 0
         paidToolsAffordable = isNil(left) || left >= CHAT_CREDITS_PER_TOOL_CALL
         return creditsExhausted
     }
@@ -103,6 +103,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
         tools,
         surface: skills.surface,
         guides: skills.guides,
+        preloadedSkills: skills.preloaded,
         onSkillLoaded: (skill) => {
             if (skill.entersBuildPhase) {
                 phaseState.phase = 'build'
@@ -193,7 +194,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
                 activeTools,
                 ...spreadIfDefined('toolChoice', toolChoice),
                 maxOutputTokens: thinkingOff ? stepBudget.maxOutputTokensWithoutThinking : stepBudget.maxOutputTokens,
-                providerOptions: agentAiUtils.buildProviderOptions({ provider: stepModel.provider, tier: { id: tier.id, thinkingBudget: stepBudget.thinkingBudget }, modelId: stepModel.modelId, disableThinking: thinkingOff }),
+                providerOptions: agentAiUtils.buildProviderOptions({ provider: stepModel.provider, thinkingBudget: stepBudget.thinkingBudget, modelId: stepModel.modelId, disableThinking: thinkingOff }),
                 ...stepContext,
             }
         },
@@ -518,7 +519,7 @@ export function classifyAgentRunError({ error, provider }: { error: unknown, pro
         const rejectedWithReason = USER_FACING_ERROR_CODES.has(apError?.code ?? '')
         return missingUserConfig || rejectedWithReason ? 'user' : 'internal'
     }
-    const rejectedByCustomGateway = apiError.statusCode === 400 && provider === AIProviderName.CUSTOM
+    const rejectedByCustomGateway = apiError.statusCode === 400 && (provider === AIProviderName.CUSTOM || provider === AIProviderName.LITELLM)
     if (rejectedByCustomGateway) {
         return 'user'
     }
@@ -669,7 +670,7 @@ export type RunAgentTurnParams = {
     priorToolCalls?: ChatToolCall[]
     onModelOutcome?: (outcome: { turnModel: TurnModel, signal: ProviderOutcomeSignal }) => void
     onStepModel?: (turnModel: TurnModel) => void
-    skills?: { surface: SkillSurface, guides: Record<string, string> }
+    skills?: { surface: SkillSurface, guides: Record<string, string>, preloaded?: string[] }
 }
 
 export type AgentTurnResult = {

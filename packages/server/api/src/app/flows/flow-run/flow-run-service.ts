@@ -24,6 +24,7 @@ import { sampleDataService } from '../step-run/sample-data.service'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
 import { runsMetadataQueue } from './flow-runs-queue'
+import { streamStepProgressUtils } from './stream-step-progress'
 
 const CANCELLABLE_STATUSES: FlowRunStatus[] = [FlowRunStatus.PAUSED, FlowRunStatus.QUEUED]
 const RETRYABLE_FROM_FAILED_STEP_STATUSES: FlowRunStatus[] = [...FAILED_STATES, FlowRunStatus.QUEUED, FlowRunStatus.RUNNING]
@@ -73,7 +74,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             .andWhere({ parentWaitpointId: params.parentWaitpointId ?? IsNull() })
 
         if (!isNil(params.parentWaitpointId)) {
-            query = query.andWhere({ dispatchIndex: Not(IsNull()) })
+            query = query.andWhere({ dispatchIndex: params.dispatchIndex ?? Not(IsNull()) })
         }
 
         if (!params.includeArchived) {
@@ -255,14 +256,15 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             createdBefore,
             excludeFlowRunIds,
         })
-        const cancelParentFlowRuns = await Promise.allSettled(flowRuns.map(flowRun => cancelSingleRun(log, flowRun, platformId)))
+        const limit = pLimit(10)
+        const cancelParentFlowRuns = await Promise.allSettled(flowRuns.map(flowRun => limit(() => cancelSingleRun(log, flowRun, platformId))))
         const childFlows = await getAllChildRuns(flowRuns.map(flowRun => flowRun.id))
         log.info({
             flowRunsCount: flowRuns.length,
             childFlowCount: childFlows.length,
         }, 'Found cancellable descendant flows')
 
-        const canceChildlPromises = await Promise.allSettled(childFlows.map(flowRun => cancelSingleRun(log, flowRun, platformId)))
+        const canceChildlPromises = await Promise.allSettled(childFlows.map(flowRun => limit(() => cancelSingleRun(log, flowRun, platformId))))
         if (cancelParentFlowRuns.some(r => r.status === 'rejected')) {
             throw cancelParentFlowRuns.find(r => r.status === 'rejected')!.reason
         }
@@ -415,7 +417,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             httpRequestId: undefined,
             platformId: await projectService(log).getPlatformId(projectId),
             executeTrigger: false,
-            streamStepProgress: StreamStepProgress.WEBSOCKET,
+            streamStepProgress: streamStepProgressUtils.forRun({ flowRun, flowVersion }),
             sampleData: !isNil(stepNameToTest) ? await sampleDataService(log).getSampleDataForFlow({
                 projectId,
                 flowVersion,
@@ -427,6 +429,13 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
     async startManualTrigger({ projectId, flowVersionId, triggeredBy }: StartManualTriggerParams): Promise<FlowRun> {
         const flowVersion = await flowVersionService(log).getOneOrThrow(flowVersionId)
         await flowService(log).getOneOrThrow({ id: flowVersion.flowId, projectId })
+        if (!streamStepProgressUtils.hasManualTrigger({ flowVersion })) {
+            const message = `Flow version ${flowVersionId} is not started by a manual trigger, so it cannot be run manually.`
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message },
+            }, message)
+        }
         const triggerPayload = {}
         const platformId = await projectService(log).getPlatformId(projectId)
 
@@ -467,7 +476,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             httpRequestId: undefined,
             platformId,
             executeTrigger: false,
-            streamStepProgress: StreamStepProgress.WEBSOCKET,
+            streamStepProgress: streamStepProgressUtils.forRun({ flowRun, flowVersion }),
             sampleData: undefined,
         }, log)
     },
@@ -881,6 +890,7 @@ type ListParams = {
     includeArchived?: boolean
     environment?: RunEnvironment
     parentWaitpointId?: ApId
+    dispatchIndex?: number
 }
 
 type GetOneParams = {

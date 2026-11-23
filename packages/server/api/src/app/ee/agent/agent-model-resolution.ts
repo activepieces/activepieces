@@ -38,6 +38,14 @@ function manualTextModelCatalog({ config }: { config?: AiProviderCredentials['co
     return config.models.filter((model) => model.modelType === AIProviderModelType.TEXT).map((model) => model.modelId)
 }
 
+function catalogModelMatchingTier({ config, selectedModel, surface }: { config?: AiProviderCredentials['config'], selectedModel: string | null, surface: ModelTierSurface }): string | undefined {
+    const nativeModelId = nativeModelIdFor({ tier: resolveTier({ tierId: selectedModel, surface }) })
+    if (isNil(nativeModelId) || isNil(config) || !('models' in config) || isNil(config.models)) {
+        return undefined
+    }
+    return config.models.find((model) => model.modelType === AIProviderModelType.TEXT && (model.metadata?.realModelId?.includes(nativeModelId) ?? false))?.modelId
+}
+
 function pickAllowedModel({ provider, selectedModel, candidates, modelScope, modelIds }: { provider: AIProviderName, selectedModel: string | null, candidates: string[], modelScope?: AiProviderModelScope, modelIds?: string[] }): string {
     const allowed = modelScope === 'selected' && !isNil(modelIds)
         ? candidates.filter((candidate) => modelIds.includes(candidate))
@@ -115,7 +123,8 @@ function resolvePinnedModelId({ provider, modelName, config, modelScope, modelId
 function resolveModelIdForProvider({ provider, selectedModel, surface, config, modelScope, modelIds }: { provider: AIProviderName, selectedModel: string | null, surface: ModelTierSurface, config?: AiProviderCredentials['config'], modelScope?: AiProviderModelScope, modelIds?: string[] }): string {
     const catalog = manualTextModelCatalog({ config })
     if (!isNil(catalog)) {
-        return pickAllowedModel({ provider, selectedModel, candidates: catalog, modelScope, modelIds })
+        const preferred = !isNil(selectedModel) && catalog.includes(selectedModel) ? selectedModel : catalogModelMatchingTier({ config, selectedModel, surface })
+        return pickAllowedModel({ provider, selectedModel: preferred ?? null, candidates: catalog, modelScope, modelIds })
     }
     const tier = resolveTier({ tierId: selectedModel, surface })
     if (provider === AIProviderName.ACTIVEPIECES || provider === AIProviderName.OPENROUTER) {

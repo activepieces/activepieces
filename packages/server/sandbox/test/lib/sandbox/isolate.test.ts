@@ -148,8 +148,23 @@ describe('isolateProcess', () => {
                 '--dir=/usr/src/node_modules/',
                 '--dir=proc=proc:fs',
                 '--dir=/dev=/dev:dev',
-                `--dir=/box=/var/local/lib/isolate/${boxId}/box:rw`,
+                `--dir=/box=/var/local/lib/isolate/${boxId}/box:rw:noexec`,
             ])
+        })
+
+        it('never mounts a directory that is both writable and executable', async () => {
+            await callCreate({
+                mounts: [
+                    { hostPath: '/host/cache/codes/fv', sandboxPath: '/root/codes/fv', optional: true },
+                    { hostPath: '/host/cache/codes/fv/.deno-cache', sandboxPath: '/root/codes/fv/.deno-cache', rw: true },
+                ],
+            })
+            const args: string[] = spawnMock.mock.calls[0][1]
+            const writableDirs = args.filter((arg) => arg.startsWith('--dir=') && arg.split(':').includes('rw'))
+            expect(writableDirs).toHaveLength(2)
+            for (const dir of writableDirs) {
+                expect(dir.split(':')).toContain('noexec')
+            }
         })
 
         it('raises the open-file limit off isolate\'s default of 64', async () => {
@@ -188,7 +203,7 @@ describe('isolateProcess', () => {
             expect(args).toContain('--dir=/root/custom_pieces=/host/custom:maybe')
         })
 
-        it('appends :rw suffix on writable mounts, taking precedence over optional', async () => {
+        it('mounts writable mounts as :rw:noexec, taking precedence over optional', async () => {
             const mounts: SandboxMount[] = [
                 { hostPath: '/host/codes/fv-1/.deno-cache', sandboxPath: '/root/codes/fv-1/.deno-cache', rw: true },
                 { hostPath: '/host/codes/fv-2/.deno-cache', sandboxPath: '/root/codes/fv-2/.deno-cache', rw: true, optional: true },
@@ -196,8 +211,8 @@ describe('isolateProcess', () => {
             await callCreate({ mounts })
 
             const args: string[] = spawnMock.mock.calls[0][1]
-            expect(args).toContain('--dir=/root/codes/fv-1/.deno-cache=/host/codes/fv-1/.deno-cache:rw')
-            expect(args).toContain('--dir=/root/codes/fv-2/.deno-cache=/host/codes/fv-2/.deno-cache:rw')
+            expect(args).toContain('--dir=/root/codes/fv-1/.deno-cache=/host/codes/fv-1/.deno-cache:rw:noexec')
+            expect(args).toContain('--dir=/root/codes/fv-2/.deno-cache=/host/codes/fv-2/.deno-cache:rw:noexec')
         })
 
         it('emits exactly one --dir per mount, no duplicates', async () => {

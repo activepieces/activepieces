@@ -335,6 +335,7 @@ async function spawnDeno({ entry, dataFile, permissions, cwd, memoryLimitMb, all
         env: {
             PATH: process.env['PATH'] ?? '',
             ...env,
+            TMPDIR: os.tmpdir(),
             DENO_DIR: resolvedDenoDir,
         },
         stdio: ['pipe', 'pipe', 'pipe'],

@@ -53,7 +53,7 @@ export function ConnectionSelectWithSwitchConfirmation({
   const { capture } = useTelemetry();
   const projectId = authenticationSession.getProjectId()!;
   const { data: pieceConnections } = appConnectionsQueries.useAppConnections({
-    request: { pieceName: piece.name, projectId, limit: 1000 },
+    request: { pieceName: [piece.name], projectId, limit: 1000 },
     pieceAuth: piece.auth,
     extraKeys: [piece.name, projectId],
     staleTime: 0,

@@ -19,12 +19,14 @@ export function QueueTab({ live, isLoading }: QueueTabProps) {
         <StatCard
           icon={<Activity />}
           label={t('Running')}
+          valueTestId="health-queue-running"
           info={t('Jobs currently executing on workers')}
           value={isLoading ? '—' : formatUtils.formatNumber(live?.running ?? 0)}
         />
         <StatCard
           icon={<Loader2 />}
           label={t('Queued')}
+          valueTestId="health-queue-queued"
           info={t('Jobs waiting in the queue')}
           value={isLoading ? '—' : formatUtils.formatNumber(live?.queued ?? 0)}
         />

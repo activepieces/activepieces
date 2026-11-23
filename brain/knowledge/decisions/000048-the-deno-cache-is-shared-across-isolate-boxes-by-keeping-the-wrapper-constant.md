@@ -24,7 +24,7 @@ So right now in summary it's like this:
 
 1. SANDBOX_PROCESS / SANDBOX_CODE_AND_PROCESS with re-usable sandbox: Cache dir lives in os.tmpdir() "/box" and gets deleted immediatly , so every code step is cold ( if we are sure that this mode is trusted we can skip deletion , confirm with mo ) . this is not the default , AP_REUSE_SANDBOX unset = false for isolate modes
 
-2. SANDBOX_PROCESS / SANDBOX_CODE_AND_PROCESS with re-usable sandbox set to false ( production ): Cache dir is per flow version ( /root/codes/flowVersionId/.deno-cache ) mounted :rw and saved between runs ( big win 200ms -> 90ms when warm , verified on all 5 boxes of the preview )
+2. SANDBOX_PROCESS / SANDBOX_CODE_AND_PROCESS with re-usable sandbox set to false ( production ): Cache dir is per flow version ( /root/codes/flowVersionId/.deno-cache ) mounted :rw:noexec and saved between runs ( big win 200ms -> 90ms when warm , verified on all 5 boxes of the preview )
 
 3. UNSANDBOXED / SANDBOX_CODE_ONLY ( engine forked on the host , no isolate ): same per flow version cache dir , reached directly on the host fs , kept between runs regardless of the re-usable flag . no mount needed
 

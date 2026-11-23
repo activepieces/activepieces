@@ -1,4 +1,4 @@
-import { deno } from '@activepieces/core-utils'
+import { deno, tryParseFriendlyPieceError } from '@activepieces/core-utils'
 import { BranchOperator, FlowAction, FlowRunStatus, LoopStepOutput, RouterExecutionType } from '@activepieces/shared'
 import {  FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
@@ -117,6 +117,17 @@ describe('flow with looping', () => {
         expect(loopOut.output?.iterations.length).toBe(1)
         expect(loopOut.output?.index).toBe(1)
         expect(loopOut.output?.item).toBe(4)
+    })
+
+    it('should fail the step when items are not a list', async () => {
+        const result = await flowExecutor.execute({
+            action: buildSimpleLoopAction({ name: 'loop', loopItems: '{{ 5 }}' }),
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants(),
+        })
+
+        expect(result.verdict.status).toBe(FlowRunStatus.FAILED)
+        expect(tryParseFriendlyPieceError(result.steps.loop.errorMessage)?.message).toBe('The items you have selected must be a list.')
     })
 
     it('should skip loop', async () => {

@@ -21,8 +21,8 @@ export const httpOauth2Auth = PieceAuth.OAuth2({
     }),
     scopes: Property.ShortText({
       displayName: 'Scopes',
-      required: true,
-      description: 'Separate scopes with spaces.',
+      required: false,
+      description: 'Separate scopes with spaces. Leave empty if your provider does not use scopes; no scope is sent then.',
     }),
   },
 });
@@ -30,7 +30,7 @@ export const httpOauth2Auth = PieceAuth.OAuth2({
 export const httpOauth2ClientCredentials = createPiece({
   displayName: "HTTP (OAuth2)",
   auth: httpOauth2Auth,
-  minimumSupportedRelease: '0.88.2',
+  minimumSupportedRelease: '0.94.0',
   logoUrl: "https://cdn.activepieces.com/pieces/new-core/http.svg",
   authors: [
     'mhshiba'

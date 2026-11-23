@@ -1,9 +1,9 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { publicationId } from '../common/props';
 import { beehiivAuth } from '../common/auth';
-import { beehiivApiCall, WebhookPayload } from '../common/client';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/pieces-framework';
+import { apiKeyOf, beehiivClient, pathFor } from '../common/client';
+import { beehiivWebhook } from '../common/webhook';
+import { beehiivOutputSchemas } from '../common/output-schemas';
 
 const TRIGGER_KEY = 'new-post-sent-trigger';
 
@@ -12,43 +12,52 @@ export const newPostSentTrigger = createTrigger({
 	name: 'beehiiv_new_post_sent',
 	classification: 'READ',
 	displayName: 'New Post Sent',
-	description: 'Triggers when a new post is sent.',
+	description: 'Triggers when a post is sent or published in the selected publication. Requires a paid beehiiv plan (Lite allows 3 webhooks in total).',
 	aiMetadata: {
-		description: 'Fires when a post is sent (published/delivered) in the selected beehiiv publication, emitting the post with its title, slug, audience, status, and URLs.',
+		description: 'Fires once per post when beehiiv sends or publishes it (post.sent event) in the selected publication, emitting the post with its title, slug, audience, status and URLs. Retried deliveries of the same event are ignored.',
 	},
 	props: {
 		publicationId: publicationId,
 	},
+	outputSchema: beehiivOutputSchemas.postPayload,
 	type: TriggerStrategy.WEBHOOK,
 	async onEnable(context) {
-		const { publicationId } = context.propsValue;
-		const response = await beehiivApiCall<{ data: { id: string } }>({
-			apiKey: context.auth.secret_text,
-			method: HttpMethod.POST,
-			resourceUri: `/publications/${publicationId}/webhooks`,
-			body: {
-				url: context.webhookUrl,
-				event_types: ['post.sent'],
-			},
+		await beehiivWebhook.enable({
+			auth: context.auth,
+			publicationId: context.propsValue.publicationId,
+			webhookUrl: context.webhookUrl,
+			eventTypes: ['post.sent'],
+			description: 'Activepieces trigger: New Post Sent',
+			store: context.store,
+			storeKey: TRIGGER_KEY,
 		});
-
-		await context.store.put<string>(TRIGGER_KEY, response.data.id);
 	},
 	async onDisable(context) {
-		const { publicationId } = context.propsValue;
-
-		const webhookId = await context.store.get<string>(TRIGGER_KEY);
-		if (!isNil(webhookId)) {
-			await beehiivApiCall({
-				apiKey: context.auth.secret_text,
-				method: HttpMethod.DELETE,
-				resourceUri: `/publications/${publicationId}/webhooks/${webhookId}`,
-			});
-		}
+		await beehiivWebhook.disable({
+			auth: context.auth,
+			publicationId: context.propsValue.publicationId,
+			store: context.store,
+			storeKey: TRIGGER_KEY,
+		});
+	},
+	async test(context) {
+		const page = await beehiivClient.listPage<Record<string, unknown>>({
+			apiKey: apiKeyOf(context.auth),
+			path: `${pathFor(['publications', context.propsValue.publicationId])}/posts`,
+			operation: 'list posts',
+			query: { status: 'confirmed', order_by: 'publish_date', direction: 'desc' },
+			page: 1,
+			limit: 5,
+		});
+		return page.items;
 	},
 	async run(context) {
-		const payload = context.payload.body as WebhookPayload;
-		return [payload.data];
+		return beehiivWebhook.eventsFrom({
+			body: context.payload.body,
+			headers: context.payload.headers,
+			store: context.store,
+			storeKey: TRIGGER_KEY,
+		});
 	},
 	sampleData: {
 		audience: 'free',

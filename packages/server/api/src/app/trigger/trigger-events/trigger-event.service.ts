@@ -84,7 +84,7 @@ export const triggerEventService = (log: FastifyBaseLogger) => ({
                     flowId: flow.id,
                 })
 
-                for (const output of engineResponse.response.output) {
+                for (const output of [...engineResponse.response.output].reverse()) {
                     await this.saveEvent({
                         projectId,
                         flowId: flow.id,

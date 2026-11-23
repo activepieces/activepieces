@@ -13,7 +13,7 @@ A code step with `useDeno: true` runs as a one-shot `deno run` child of the engi
 | Deno permissions | tmp read/write, net, env, sys | none | tmp read/write, net, env, sys | none |
 | Propagated env | `AP_SANDBOX_PROPAGATED_ENV_VARS` names | nothing | `AP_SANDBOX_PROPAGATED_ENV_VARS` names | nothing |
 | tmp | host `/tmp` | host `/tmp` | `/box` (the per-box scratch mount) | `/box` |
-| Warm `DENO_DIR` | always, `<codes>/<fv>/.deno-cache` | always, same path | only with `AP_REUSE_SANDBOX=false`, via a `:rw` mount | same as `SANDBOX_PROCESS` |
+| Warm `DENO_DIR` | always, `<codes>/<fv>/.deno-cache` | always, same path | only with `AP_REUSE_SANDBOX=false`, via a `:rw:noexec` mount | same as `SANDBOX_PROCESS` |
 | Legacy `useDeno: false` | node child process, host privileges | `isolated-vm` v8 isolate | node child process, box privileges | `isolated-vm` v8 isolate |
 
 **Permission set** — `code-sandbox.ts` maps the mode to a `DenoPermission[]`; `deno.run` turns it into `--allow-*` flags. Every mode also gets `--allow-read` on the step directory and on the inputs file, `--no-remote`, `--no-config`, `--no-lock`, `--node-modules-dir=manual` and a V8 heap cap of 128 MB. `ALL` collapses to `-A` and is never used by the engine.
@@ -32,7 +32,7 @@ A code step with `useDeno: true` runs as a one-shot `deno run` child of the engi
 | --- | --- | --- |
 | Engine lifetime | kept across jobs while it stays ready | shut down after every `release` |
 | Code mount (isolate modes) | the whole `/root/codes` tree, read-only, spanning every flow version on the host | `/root/codes/<flowVersionId>` only |
-| `.deno-cache` mount | none, so `AP_DENO_CACHE_MOUNTED` is unset and every deno run is cold in an isolate | `:rw` mount of `<codes>/<fv>/.deno-cache` plus `AP_DENO_CACHE_MOUNTED=true` |
+| `.deno-cache` mount | none, so `AP_DENO_CACHE_MOUNTED` is unset and every deno run is cold in an isolate | `:rw:noexec` mount of `<codes>/<fv>/.deno-cache` plus `AP_DENO_CACHE_MOUNTED=true` |
 
 In the forked modes the flag only affects engine lifetime: the warm cache is reached by host path either way. In the isolate modes a reusable engine cannot get the cache mount because its code mount is not scoped to one flow version, and a writable cache under a tree shared by every flow would let one flow's step poison another's. Running an isolate mode with `AP_REUSE_SANDBOX=true` therefore trades the per-job engine boot for a cold deno run on every step.
 
@@ -49,4 +49,4 @@ Not reusable does not mean a new identity each time. Box ids come from a fixed p
 
 - `packages/server/engine/src/lib/core/code` — `initCodeSandbox` picks the sandbox per mode and `useDeno`; `denoCodeSandbox` builds the program and the warm `DENO_DIR`
 - `packages/core/utils/src/lib/deno.ts` — `deno.run`, the permission flags, the stdin wrapper and the result marker
-- `packages/server/sandbox/src/lib` — `createSandboxForJob` picks isolate vs fork per mode; `sandbox.ts` adds the `.deno-cache` `:rw` mount and `AP_DENO_CACHE_MOUNTED`
+- `packages/server/sandbox/src/lib` — `createSandboxForJob` picks isolate vs fork per mode; `sandbox.ts` adds the `.deno-cache` `:rw:noexec` mount and `AP_DENO_CACHE_MOUNTED`

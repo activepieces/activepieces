@@ -17,6 +17,7 @@ import { InterceptorVerdict, JobInterceptor } from './job-interceptor'
 import { callerWaitingForResponse } from './job-queue'
 import { jobReclaimCount } from './job-reclaim-count'
 import { createQueueDispatcher, QueueDispatcher } from './queue-dispatcher'
+import { workerShutdownTracker } from './worker-shutdown-tracker'
 
 const DRAIN_DELAY_SECONDS = 15
 const LOCK_DURATION_MS = 120_000
@@ -271,13 +272,25 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
     },
 
     async poll(queueName: string = QueueName.WORKER_JOBS, socket?: Pick<Socket, 'id' | 'connected'>): Promise<ConsumeJobRequest | null> {
+        if (workerShutdownTracker.isShuttingDown(socket?.id)) {
+            return null
+        }
         const worker = await ensureBullMQWorker(queueName, log)
         const dispatcher = ensureDispatcher(queueName, worker, log)
         const job = await dispatcher.poll(socket)
-        if (!isNil(job) && !isNil(socket)) {
-            jobAssignmentTracker.record({ connectionId: socket.id, jobId: job.jobId, token: job.token, queueName: job.queueName })
+        if (isNil(job) || isNil(socket)) {
+            return job
         }
+        if (workerShutdownTracker.isShuttingDown(socket.id)) {
+            await returnJobToQueue({ jobId: job.jobId, token: job.token, queueName: job.queueName, log, isDisconnectReclaim: false })
+            return null
+        }
+        jobAssignmentTracker.record({ connectionId: socket.id, jobId: job.jobId, token: job.token, queueName: job.queueName })
         return job
+    },
+
+    markWorkerShuttingDown(connectionId: string): void {
+        workerShutdownTracker.markShuttingDown(connectionId)
     },
 
     async releaseConnectionJobs(connectionId: string): Promise<void> {
