@@ -6720,7 +6720,7 @@
     },
     "packages/pieces/community/okta": {
       "name": "@activepieces/piece-okta",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6729,6 +6729,7 @@
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "5.0.5",
       },
     },
     "packages/pieces/community/omni-co": {
