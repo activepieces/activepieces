@@ -180,16 +180,7 @@ export const searchRagDocumentsAction = createAction({
     model_id: ragModelDropdown(),
     filename: Property.ShortText({ displayName: 'File Name Contains', placeholder: 'invoice', required: false }),
     page: Property.Number({ displayName: 'Page', description: 'Page number, starting at 1.', required: false, defaultValue: 1 }),
-    per_page: Property.Number({
-      displayName: 'Per Page',
-      description: 'Between 1 and 100.',
-      required: false,
-      defaultValue: 50,
-      display: 'stepper',
-      min: 1,
-      max: 100,
-      step: 1,
-    }),
+    per_page: Property.Number({ displayName: 'Per Page', description: 'Between 1 and 100.', required: false, defaultValue: 50 }),
   },
   outputSchema: mindeeSchemas.ragSearch,
   async run({ auth, propsValue }) {
