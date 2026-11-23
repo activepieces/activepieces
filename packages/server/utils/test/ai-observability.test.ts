@@ -28,6 +28,7 @@ describe('aiObservability', () => {
             distinctId: 'user-1',
             sessionId: 'conversation-1',
             groups: JSON.stringify({ platform: 'platform-1', project: 'project-1' }),
+            functionId: 'agent-turn',
         })
     })
 
@@ -43,6 +44,7 @@ describe('aiObservability', () => {
             distinctId: 'user-1',
             sessionId: 'conversation-1',
             groups: JSON.stringify({ platform: 'platform-1' }),
+            functionId: 'agent-compaction',
         })
     })
 
@@ -74,6 +76,7 @@ describe('aiObservability', () => {
             runSource: 'CHAT',
             tierId: 'smart',
             tierModel: 'model-1',
+            functionId: 'web-search',
         })
     })
 })
