@@ -44,8 +44,9 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
             const getStepView = createMemoizedStepViewGetter(executionState)
             const ownsScriptSession = isNil(providedScriptSession)
             const scriptSession = providedScriptSession ?? scriptEvaluator.initSession({ flowVersionDir })
-            try {
-                const resolveOptions = {
+            const startedTokens: Promise<unknown>[] = []
+            const resolveToken = ({ token, censoredInput }: { token: string, censoredInput: boolean }): Promise<unknown> => {
+                const resolving = resolveInputAsync({
                     engineToken,
                     projectId,
                     apiUrl,
@@ -53,29 +54,27 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
                     scriptSession,
                     stepNames,
                     pieceName,
-                }
+                    input: token,
+                    censoredInput,
+                    contextVersion,
+                })
+                startedTokens.push(resolving)
+                return resolving
+            }
+            try {
                 const resolvedInput = await applyFunctionToValues<T>(
                     unresolvedInput,
-                    (token) => resolveInputAsync({
-                        ...resolveOptions,
-                        input: token,
-                        censoredInput: false,
-                        contextVersion,
-                    }))
+                    (token) => resolveToken({ token, censoredInput: false }))
                 const censoredInput = await applyFunctionToValues<T>(
                     unresolvedInput,
-                    (token) => resolveInputAsync({
-                        ...resolveOptions,
-                        input: token,
-                        censoredInput: true,
-                        contextVersion,
-                    }))
+                    (token) => resolveToken({ token, censoredInput: true }))
                 return {
                     resolvedInput,
                     censoredInput,
                 }
             }
             finally {
+                await Promise.allSettled(startedTokens)
                 if (ownsScriptSession) {
                     await scriptSession.dispose()
                 }
@@ -273,12 +272,18 @@ async function preResolveFormulaVars({ expression, resolveOptions }: {
         return `{{${key}}}`
     })
 
-    const vars: Record<string, unknown> = {}
-    await Promise.all(
+    const settled = await Promise.allSettled(
         Array.from(variableNameToKey.entries()).map(async ([variableName, key]) => {
-            vars[key] = await resolveSingleToken({ variableName, ...resolveOptions })
+            return { key, value: await resolveSingleToken({ variableName, ...resolveOptions }) }
         }),
     )
+    const vars: Record<string, unknown> = {}
+    for (const outcome of settled) {
+        if (outcome.status === 'rejected') {
+            throw outcome.reason
+        }
+        vars[outcome.value.key] = outcome.value.value
+    }
 
     return { expression: rewritten, vars }
 }
