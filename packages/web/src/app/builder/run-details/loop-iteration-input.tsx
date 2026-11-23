@@ -15,6 +15,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { statusColors } from '@/lib/status-colors';
 import { cn } from '@/lib/utils';
 
 import { useBuilderStateContext } from '../builder-hooks';
@@ -54,6 +55,10 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
     return stepOutput.output.iterations.map(getIterationStatus);
   }, [stepOutput]);
   const totalIterations = iterationStatuses.length;
+  const displayedIndex = Math.min(
+    currentIndex,
+    Math.max(totalIterations - 1, 0),
+  );
 
   function onChange(value: string) {
     const parsedValue = Math.max(
@@ -73,7 +78,7 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
         <LoopIterationInputButton
           onChange={onChange}
           isIncreasing={true}
-          currentIndex={currentIndex}
+          currentIndex={displayedIndex}
         />
         <Tooltip>
           <TooltipTrigger>
@@ -85,7 +90,7 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
                   : 'border border-gray-6'
               }`}
               type="number"
-              value={currentIndex + 1}
+              value={displayedIndex + 1}
               min={1}
               max={totalIterations}
               onClick={(e) => {
@@ -108,14 +113,14 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
           <TooltipContent side="left">
             {t(
               'Show child steps output on round ({iteration}/{totalIterations})',
-              { iteration: currentIndex + 1, totalIterations },
+              { iteration: displayedIndex + 1, totalIterations },
             )}
           </TooltipContent>
         </Tooltip>
         <LoopIterationInputButton
           onChange={onChange}
           isIncreasing={false}
-          currentIndex={currentIndex}
+          currentIndex={displayedIndex}
         />
         {totalIterations > 1 && (
           <div className="mt-1 flex max-h-[120px] w-9 flex-wrap content-start justify-center gap-0.5 overflow-y-auto">
@@ -133,7 +138,7 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
                     className={cn(
                       'size-2.5 shrink-0 rounded-full border border-gray-1 transition-transform hover:scale-125',
                       getIterationDotClassName(status),
-                      index === currentIndex &&
+                      index === displayedIndex &&
                         'ring-1 ring-accent-9 ring-offset-1',
                     )}
                   />
@@ -174,16 +179,10 @@ function getIterationStatus(
 }
 
 function getIterationDotClassName(status: StepOutputStatus): string {
-  switch (status) {
-    case StepOutputStatus.FAILED:
-      return 'bg-danger-10';
-    case StepOutputStatus.RUNNING:
-      return 'bg-accent-10 animate-pulse';
-    case StepOutputStatus.PAUSED:
-      return 'bg-warning-10';
-    default:
-      return 'bg-success-10';
-  }
+  return cn(
+    statusColors.of(status).dot,
+    status === StepOutputStatus.RUNNING && 'animate-pulse',
+  );
 }
 
 function getIterationStatusLabel(status: StepOutputStatus): string {

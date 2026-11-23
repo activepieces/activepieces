@@ -469,6 +469,25 @@ describe('Property Validation', () => {
             expect(processedInput.staticDropdown).toBe('a')
             expect(processedInput.requiredDropdown).toBeNull()
         })
+
+        it('should turn a value saved as text into the option it names', async () => {
+            const options = { options: [{ label: '9 am', value: 9 }, { label: '11 am', value: 11 }] }
+            const props = {
+                hour: Property.StaticDropdown({ displayName: 'Hour', required: true, options }),
+                hours: Property.StaticMultiSelectDropdown({ displayName: 'Hours', required: true, options }),
+                unknown: Property.StaticDropdown({ displayName: 'Unknown', required: true, options }),
+            }
+
+            const { processedInput } = await propsProcessor.applyProcessorsAndValidators(
+                { hour: '11', hours: ['9', 11], unknown: '25' },
+                props,
+                PieceAuth.None(),
+                false,
+                {},
+            )
+
+            expect(processedInput).toEqual({ hour: 11, hours: [9, 11], unknown: '25' })
+        })
     })
 
     describe('type validation', () => {

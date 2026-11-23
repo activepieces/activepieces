@@ -36,7 +36,7 @@ import {
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { FormattedDate } from '@/components/custom/formatted-date';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
-import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
+import { StatusBadge } from '@/components/custom/status-badge';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { PlusIcon } from '@/components/icons/plus';
 import { ReplaceIcon } from '@/components/icons/replace';
@@ -238,14 +238,12 @@ function AppConnectionsPage() {
         ),
         cell: ({ row }) => {
           const status = row.original.status;
-          const { variant, icon: Icon } =
-            appConnectionUtils.getStatusIcon(status);
           return (
             <div className="text-left">
-              <StatusIconWithText
-                icon={Icon}
+              <StatusBadge
+                status={status}
+                icon={appConnectionUtils.getStatusIcon(status)}
                 text={formatUtils.convertEnumToHumanReadable(status)}
-                variant={variant}
               />
             </div>
           );

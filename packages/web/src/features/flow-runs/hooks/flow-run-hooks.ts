@@ -13,28 +13,34 @@ import {
   FlowRetryStrategy,
   FlowRun,
   FlowRunWithRetryError,
+  FlowVersionState,
   isFlowRunStateTerminal,
   PopulatedFlow,
 } from '@activepieces/shared';
 import {
+  hashKey,
   InfiniteData,
   QueryKey,
   useInfiniteQuery,
   useMutation,
+  useQueries,
   useQuery,
+  useQueryClient,
 } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { toast } from 'sonner';
 
 import { getDefaultRange } from '@/components/custom/date-time-picker-range';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { billingDialogHooks } from '@/features/billing';
 import { flowsApi } from '@/features/flows/api/flows-api';
+import { flowHooks } from '@/features/flows/hooks/flow-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { flowRunsApi } from '../api/flow-runs-api';
+import { flowRunUtils } from '../utils/flow-run-utils';
 
 export const flowRunKeys = {
   detail: (runId: string) => ['flow-run', runId] as const,
@@ -44,11 +50,15 @@ export const flowRunKeys = {
     ['batch-child', barrierId, dispatchIndex] as const,
 };
 
+const RUN_POLL_INTERVAL_MS = 7000;
+
+const MAX_BATCH_VERSION_LOOKUPS = 10;
+
 const STATUS_CATEGORIES = [
   {
     label: 'Succeeded',
     statuses: [FlowRunStatus.SUCCEEDED],
-    color: 'var(--success-9)',
+    className: 'text-success-9',
   },
   {
     label: 'Failed',
@@ -60,27 +70,27 @@ const STATUS_CATEGORIES = [
       FlowRunStatus.QUOTA_EXCEEDED,
       FlowRunStatus.LOG_SIZE_EXCEEDED,
     ],
-    color: 'var(--danger-9)',
+    className: 'text-danger-9',
   },
   {
     label: 'Running',
     statuses: [FlowRunStatus.RUNNING],
-    color: 'var(--accent-9)',
+    className: 'text-accent-9',
   },
   {
     label: 'Queued',
     statuses: [FlowRunStatus.QUEUED],
-    color: 'var(--gray-9)',
+    className: 'text-gray-9',
   },
   {
     label: 'Paused',
     statuses: [FlowRunStatus.PAUSED],
-    color: 'var(--warning-9)',
+    className: 'text-warning-9',
   },
   {
     label: 'Canceled',
     statuses: [FlowRunStatus.CANCELED],
-    color: 'var(--gray-9)',
+    className: 'text-gray-9',
   },
 ] as const;
 
@@ -88,12 +98,42 @@ function groupByCategory(data: FlowRunCountByStatus[]) {
   const statusToCount = new Map(data.map((d) => [d.status, d.count]));
   return STATUS_CATEGORIES.map((cat) => ({
     label: cat.label,
-    color: cat.color,
+    className: cat.className,
     count: cat.statuses.reduce(
       (sum, s) => sum + (statusToCount.get(s) ?? 0),
       0,
     ),
   })).filter((cat) => cat.count > 0);
+}
+
+function useDataUpdateCountWhen({
+  condition,
+  queryKey,
+}: {
+  condition: boolean;
+  queryKey: QueryKey;
+}) {
+  const queryClient = useQueryClient();
+  const queryHash = hashKey(queryKey);
+  const countRef = useRef<number | null>(null);
+  useEffect(() => {
+    countRef.current = condition
+      ? queryClient.getQueryCache().get(queryHash)?.state.dataUpdateCount ?? 0
+      : null;
+  }, [condition, queryClient, queryHash]);
+  return countRef;
+}
+
+function hasFetchedSince({
+  query,
+  countRef,
+}: {
+  query: { state: { dataUpdateCount: number } };
+  countRef: { current: number | null };
+}): boolean {
+  return (
+    !isNil(countRef.current) && query.state.dataUpdateCount > countRef.current
+  );
 }
 
 export const DEFAULT_DATE_PRESET = '7days' as const;
@@ -111,27 +151,34 @@ export const flowRunQueries = {
           ignoreInternalError: false,
         })
           ? false
-          : 7000,
+          : RUN_POLL_INTERVAL_MS,
     }),
   useBatchChildren: ({
     barrierId,
     limit,
     statuses,
     enabled,
+    allBatchesTerminal,
   }: {
     barrierId: string | null;
     limit: number;
     statuses: FlowRunStatus[] | undefined;
     enabled: boolean;
-  }) =>
-    useInfiniteQuery<
+    allBatchesTerminal: boolean;
+  }) => {
+    const queryKey = flowRunKeys.batchChildren(barrierId ?? '', statuses);
+    const countWhenAllTerminal = useDataUpdateCountWhen({
+      condition: allBatchesTerminal,
+      queryKey,
+    });
+    return useInfiniteQuery<
       SeekPage<FlowRun>,
       Error,
       InfiniteData<SeekPage<FlowRun>>,
       QueryKey,
       string | undefined
     >({
-      queryKey: flowRunKeys.batchChildren(barrierId ?? '', statuses),
+      queryKey,
       getNextPageParam: (lastPage) => lastPage.next,
       initialPageParam: undefined,
       queryFn: ({ pageParam }) =>
@@ -144,19 +191,30 @@ export const flowRunQueries = {
           cursor: pageParam,
         }),
       enabled: enabled && !isNil(barrierId),
-      refetchInterval: 7000,
-    }),
+      refetchInterval: (query) =>
+        hasFetchedSince({ query, countRef: countWhenAllTerminal })
+          ? false
+          : RUN_POLL_INTERVAL_MS,
+    });
+  },
   useBatchChildByIndex: ({
     barrierId,
     dispatchIndex,
     enabled,
+    hasBatchSummary,
   }: {
     barrierId: string | null;
     dispatchIndex: number;
     enabled: boolean;
-  }) =>
-    useQuery({
-      queryKey: flowRunKeys.batchChild(barrierId ?? '', dispatchIndex),
+    hasBatchSummary: boolean;
+  }) => {
+    const queryKey = flowRunKeys.batchChild(barrierId ?? '', dispatchIndex);
+    const countWhenSummaryArrived = useDataUpdateCountWhen({
+      condition: hasBatchSummary,
+      queryKey,
+    });
+    return useQuery({
+      queryKey,
       queryFn: () =>
         flowRunsApi.list({
           projectId: authenticationSession.getProjectId()!,
@@ -166,8 +224,21 @@ export const flowRunQueries = {
           limit: 1,
         }),
       enabled: enabled && !isNil(barrierId),
-      refetchInterval: 7000,
-    }),
+      refetchInterval: (query) => {
+        if (!hasFetchedSince({ query, countRef: countWhenSummaryArrived })) {
+          return RUN_POLL_INTERVAL_MS;
+        }
+        const child = query.state.data?.data[0];
+        return isNil(child) ||
+          isFlowRunStateTerminal({
+            status: child.status,
+            ignoreInternalError: false,
+          })
+          ? false
+          : RUN_POLL_INTERVAL_MS;
+      },
+    });
+  },
   useRunStats: () => {
     const projectId = authenticationSession.getProjectId()!;
 
@@ -191,6 +262,43 @@ export const flowRunQueries = {
     );
 
     return { categories, total, isLoading, dataUpdatedAt, refetch };
+  },
+  useMayProcessInBatches: ({
+    runs,
+    includesUnlistedRuns,
+    enabled,
+  }: {
+    runs: { flowId: string; flowVersionId: string }[];
+    includesUnlistedRuns: boolean;
+    enabled: boolean;
+  }): boolean => {
+    const oneRunPerVersion = Array.from(
+      new Map(runs.map((run) => [run.flowVersionId, run])).values(),
+    );
+    const versionsToFetch = oneRunPerVersion.slice(
+      0,
+      MAX_BATCH_VERSION_LOOKUPS,
+    );
+    const versionQueries = useQueries({
+      queries: versionsToFetch.map(({ flowId, flowVersionId }) => ({
+        queryKey: flowHooks.createFlowQueryKeys({
+          flowId,
+          versionId: flowVersionId,
+        }),
+        queryFn: () => flowsApi.get(flowId, { versionId: flowVersionId }),
+        staleTime: (query: { state: { data?: PopulatedFlow } }) =>
+          query.state.data?.version.state === FlowVersionState.LOCKED
+            ? Infinity
+            : 0,
+        enabled,
+      })),
+    });
+    return flowRunUtils.mayProcessInBatches({
+      versions: versionQueries.map((query) => query.data?.version),
+      includesUnlistedRuns:
+        includesUnlistedRuns ||
+        oneRunPerVersion.length > MAX_BATCH_VERSION_LOOKUPS,
+    });
   },
 };
 

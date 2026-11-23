@@ -6,7 +6,7 @@ import {
 } from '@activepieces/shared';
 import { useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
-import { ArrowRight, CircleHelp, Info, Magnet } from 'lucide-react';
+import { ArrowRight, Info, Magnet } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -21,6 +21,7 @@ import {
 } from '@/features/flow-runs/components/timeline-bar';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { formatUtils } from '@/lib/format-utils';
+import { statusColors } from '@/lib/status-colors';
 import { cn } from '@/lib/utils';
 
 import { EditFlowOrViewDraftButton } from '../../builder-header/flow-status/view-draft-or-edit-flow-button';
@@ -80,9 +81,6 @@ function getStatusText({
 
 const RunInfoWidget = () => {
   const run = useBuilderStateContext((state) => state.run);
-  const { variant, Icon } = run
-    ? flowRunUtils.getStatusIcon(run.status)
-    : { variant: 'default' as const, Icon: CircleHelp };
   const { data: timeoutSeconds } = flagsHooks.useFlag<number>(
     ApFlagId.FLOW_RUN_TIME_SECONDS,
   );
@@ -95,6 +93,7 @@ const RunInfoWidget = () => {
   if (!run) {
     return null;
   }
+  const Icon = flowRunUtils.getStatusIcon(run.status);
   const isRunTerminal = isFlowRunStateTerminal({
     status: run.status,
     ignoreInternalError: false,
@@ -102,8 +101,8 @@ const RunInfoWidget = () => {
   return (
     <LargeWidgetWrapper
       containerClassName={cn(
-        flowRunUtils.getStatusContainerClassName({ variant }),
-        'bg-gray-1 border border-gray-6',
+        'text-xs leading-tight rounded-md bg-gray-1 border border-gray-6',
+        statusColors.of(run.status).text,
       )}
       key={run.id + run.status}
     >
