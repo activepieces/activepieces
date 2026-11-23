@@ -25,6 +25,7 @@ import { sheetChannel } from './sheet-channel';
 const ALL_COLUMNS = 'all_columns';
 const CHANNEL_STORE_KEY = 'google-sheets-new-or-updated-row';
 const SNAPSHOT_STORE_KEY = 'google-sheets-new-or-updated-row-snapshot';
+const DELIVERED_STORE_KEY = 'google-sheets-new-or-updated-row-delivered';
 
 function triggerColumnOf(value: string | undefined | null): string {
 	if (isNil(value) || value.trim() === '' || value === ALL_COLUMNS) {
@@ -93,7 +94,7 @@ async function findChangedRows({
 	previous: LoadedSnapshot | null;
 	current: ReturnType<typeof rowSnapshot.fingerprintRows>;
 	displayValues: SheetCellValue[][];
-}): Promise<{ indexes: number[]; legacy: boolean; unchanged: boolean; loaded: LoadedSnapshot | null; base: string }> {
+}): Promise<{ indexes: number[]; legacy: boolean; unchanged: boolean; loaded: LoadedSnapshot | null; previousByIndex: Map<number, string> }> {
 	if (!isNil(previous)) {
 		const anyColumn = identity.triggerColumn === ALL_COLUMNS;
 		const { changes } = rowSnapshot.diffRows({ previous: previous.rows, current });
@@ -102,7 +103,11 @@ async function findChangedRows({
 			legacy: false,
 			unchanged: rowSnapshot.sameRows({ previous: previous.rows, current }),
 			loaded: previous,
-			base: previous.comparedWriteId,
+			previousByIndex: new Map(
+				changes.flatMap((change): [number, string][] =>
+					isNil(change.previous) ? [] : [[change.index, change.previous.full]],
+				),
+			),
 		};
 	}
 	const legacyHashes = await store.get<unknown>(legacyStoreKey(identity.sheetId));
@@ -116,11 +121,11 @@ async function findChangedRows({
 			legacy: true,
 			unchanged: false,
 			loaded: null,
-			base: 'legacy',
+			previousByIndex: new Map(),
 		};
 	}
 	console.info('[google-sheets] new_or_updated_row: no row snapshot for these settings, taking a new baseline.');
-	return { indexes: [], legacy: false, unchanged: false, loaded: null, base: 'baseline' };
+	return { indexes: [], legacy: false, unchanged: false, loaded: null, previousByIndex: new Map() };
 }
 
 export const newOrUpdatedRowTrigger = createTrigger({
@@ -285,7 +290,12 @@ export const newOrUpdatedRowTrigger = createTrigger({
 			await context.store.delete(legacyStoreKey(sheetId));
 		}
 
-		return rowRun.withDedupeKeys({ events, base: changed.base });
+		return rowRun.deliverOnce({
+			store: context.store,
+			storeKey: DELIVERED_STORE_KEY,
+			events,
+			previousByIndex: changed.previousByIndex,
+		});
 	},
 
 	async test(context) {

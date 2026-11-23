@@ -16,6 +16,7 @@ import { sheetChannel } from './sheet-channel';
 
 const CHANNEL_STORE_KEY = 'googlesheets_new_row_added';
 const SNAPSHOT_STORE_KEY = 'googlesheets_new_row_added_snapshot';
+const DELIVERED_STORE_KEY = 'googlesheets_new_row_added_delivered';
 const NO_TRIGGER_COLUMN = 'first_cell';
 
 function legacyStoreKey(sheetId: number): string {
@@ -32,7 +33,7 @@ async function findAddedRows({
 	identity: SnapshotIdentity;
 	previous: LoadedSnapshot | null;
 	current: RowFingerprint[];
-}): Promise<{ indexes: number[]; legacy: boolean; unchanged: boolean; loaded: LoadedSnapshot | null; base: string }> {
+}): Promise<{ indexes: number[]; legacy: boolean; unchanged: boolean; loaded: LoadedSnapshot | null; previousByIndex: Map<number, string> }> {
 	if (!isNil(previous)) {
 		const { changes, lastKnownIndex } = rowSnapshot.diffRows({
 			previous: previous.rows,
@@ -51,7 +52,11 @@ async function findAddedRows({
 			legacy: false,
 			unchanged: rowSnapshot.sameRows({ previous: previous.rows, current }),
 			loaded: previous,
-			base: previous.comparedWriteId,
+			previousByIndex: new Map(
+				changes.flatMap((change): [number, string][] =>
+					isNil(change.previous) ? [] : [[change.index, change.previous.full]],
+				),
+			),
 		};
 	}
 	const legacyRowCount = await store.get<unknown>(legacyStoreKey(identity.sheetId));
@@ -63,11 +68,11 @@ async function findAddedRows({
 			legacy: true,
 			unchanged: false,
 			loaded: null,
-			base: `legacy-${legacyRowCount}`,
+			previousByIndex: new Map(),
 		};
 	}
 	console.info('[google-sheets] new_row_added: no row snapshot for these settings, taking a new baseline.');
-	return { indexes: [], legacy: false, unchanged: false, loaded: null, base: 'baseline' };
+	return { indexes: [], legacy: false, unchanged: false, loaded: null, previousByIndex: new Map() };
 }
 
 export const newRowAddedTrigger = createTrigger({
@@ -162,7 +167,12 @@ export const newRowAddedTrigger = createTrigger({
 			await context.store.delete(legacyStoreKey(sheetId));
 		}
 
-		return rowRun.withDedupeKeys({ events, base: added.base });
+		return rowRun.deliverOnce({
+			store: context.store,
+			storeKey: DELIVERED_STORE_KEY,
+			events,
+			previousByIndex: added.previousByIndex,
+		});
 	},
 	async onRenew(context) {
 		const { spreadsheetId } = sheetIdentity(context.propsValue);

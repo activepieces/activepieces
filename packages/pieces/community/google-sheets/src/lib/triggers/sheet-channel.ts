@@ -1,5 +1,6 @@
 import { isNil, Store, tryCatch } from '@activepieces/pieces-framework';
 import { GoogleSheetsAuthValue } from '../common/common';
+import { nanoid } from 'nanoid';
 import { createFileNotification, deleteFileNotification, WebhookInformation } from './helpers';
 
 async function stopChannel({
@@ -41,8 +42,11 @@ async function openChannel({
 	includeTeamDrives: boolean | undefined;
 }): Promise<void> {
 	const previous = await store.get<WebhookInformation>(storeKey);
-	const created = await createFileNotification(auth, spreadsheetId, webhookUrl, includeTeamDrives);
+	const channelId = nanoid();
+	await store.put<string>(pendingChannelKey(storeKey), channelId);
+	const created = await createFileNotification(auth, spreadsheetId, webhookUrl, includeTeamDrives, channelId);
 	const saved = await tryCatch(() => store.put<WebhookInformation>(storeKey, created.data));
+	await store.delete(pendingChannelKey(storeKey));
 	if (saved.error) {
 		await stopChannel({ auth, channel: created.data, reason: 'after saving it failed' });
 		throw saved.error;
@@ -72,10 +76,15 @@ async function closeChannel({
 	await stopChannel({ auth, channel, reason: 'on disable' });
 	await store.delete(storeKey);
 	await store.delete(previousChannelKey(storeKey));
+	await store.delete(pendingChannelKey(storeKey));
 }
 
 function previousChannelKey(storeKey: string): string {
 	return `${storeKey}_previous`;
+}
+
+function pendingChannelKey(storeKey: string): string {
+	return `${storeKey}_pending`;
 }
 
 function isLive(channel: WebhookInformation): boolean {
@@ -101,6 +110,10 @@ async function isForeignNotification({
 	}
 	const channel = await store.get<WebhookInformation>(storeKey);
 	if (isNil(channel) || isNil(channel.id) || channel.id === channelId) {
+		return false;
+	}
+	const pending = await store.get<string>(pendingChannelKey(storeKey));
+	if (pending === channelId) {
 		return false;
 	}
 	const previous = await store.get<WebhookInformation>(previousChannelKey(storeKey));

@@ -48,18 +48,62 @@ function labelRows({ display, indexes }: { display: string[][]; indexes: number[
 	return indexes.flatMap((index) => mapRowsToColumnLabels([display[index] ?? []], index, headerCount));
 }
 
-function withDedupeKeys({ events, base }: { events: RowEvent[]; base: string }) {
-	return events.map((event) => ({
+async function deliverOnce({
+	store,
+	storeKey,
+	events,
+	previousByIndex,
+}: {
+	store: Store;
+	storeKey: string;
+	events: RowEvent[];
+	previousByIndex: Map<number, string>;
+}) {
+	const keyed = events.map((event) => ({
 		...event,
-		[DEDUPE_KEY_PROPERTY]: hashObject({ base, row: event.row, values: event.values }),
+		[DEDUPE_KEY_PROPERTY]: hashObject({
+			row: event.row,
+			values: event.values,
+			previous: previousByIndex.get(event.row - 1) ?? NO_PREVIOUS_ROW,
+		}),
 	}));
+	if (keyed.length === 0) {
+		return keyed;
+	}
+	const now = Date.now();
+	const stored = await store.get<unknown>(storeKey);
+	const recent = Object.entries(isDeliveredMap(stored) ? stored : {}).filter(
+		([, deliveredAt]) => now - deliveredAt < DELIVERED_MEMORY_MS,
+	);
+	const seen = new Set(recent.map(([key]) => key));
+	const fresh = keyed.filter((event) => !seen.has(event[DEDUPE_KEY_PROPERTY]));
+	if (fresh.length > 0) {
+		const kept = [...recent, ...fresh.map((event): [string, number] => [event[DEDUPE_KEY_PROPERTY], now])].slice(
+			-MAX_DELIVERED_KEYS,
+		);
+		await store.put(storeKey, Object.fromEntries(kept));
+	}
+	return fresh;
+}
+
+function isDeliveredMap(value: unknown): value is Record<string, number> {
+	return (
+		typeof value === 'object' &&
+		value !== null &&
+		!Array.isArray(value) &&
+		Object.values(value).every((entry) => typeof entry === 'number')
+	);
 }
 
 export const rowRun = {
 	shouldHandleNotification,
 	readRows,
 	labelRows,
-	withDedupeKeys,
+	deliverOnce,
 };
+
+const DELIVERED_MEMORY_MS = 10 * 60 * 1000;
+const MAX_DELIVERED_KEYS = 2000;
+const NO_PREVIOUS_ROW = 'none';
 
 export type RowEvent = { row: number; values: Record<string, string> };

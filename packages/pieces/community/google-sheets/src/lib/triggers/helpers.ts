@@ -76,13 +76,12 @@ export async function createFileNotification(
 	fileId: string,
 	url: string,
 	includeTeamDrives?: boolean,
+	channelId: string = nanoid(),
 ): Promise<{ data: drive_v3.Schema$Channel }> {
 	const authClient = await createGoogleClient(auth);
 
 	const drive = googleDrive({ version: 'v3', auth: authClient });
 
-	// create unique UUID for channel
-	const channelId = nanoid();
 	return await drive.files.watch({
 		fileId: fileId,
 		supportsAllDrives: includeTeamDrives,

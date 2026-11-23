@@ -295,8 +295,38 @@ describe('New or Updated Row behaviour', () => {
 			gate.release();
 			const first = await pending;
 			expect(other).toEqual(['2:1001|Ann|refunded', '3:1002|Bob|shipped']);
-			expect(first.map((event) => event.split('|')[0])).toContain('2:1001');
+			expect(first).toEqual([]);
 			expect(await fire({ store })).toEqual([]);
+		});
+
+		it('a run that loaded an older snapshot does not deliver a row a later run already delivered', async () => {
+			const { store } = memoryStore();
+			await trigger.onEnable(ctx({ store }));
+			const gate = holdRead();
+			const pending = fire({ store });
+			await heldRead();
+			tab().rows = rowsWith({ status: { 1: 'refunded' } });
+			expect(await fire({ store })).toEqual(['2:1001|Ann|refunded']);
+			tab().rows = rowsWith({ status: { 1: 'refunded', 2: 'shipped' } });
+			expect(await fire({ store })).toEqual(['3:1002|Bob|shipped']);
+			gate.release();
+			expect(await pending).toEqual([]);
+		});
+
+		it('a stale read that reaches Google last does not make the next notification deliver a row again', async () => {
+			const { store } = memoryStore();
+			await trigger.onEnable(ctx({ store }));
+			tab().rows = rowsWith({ status: { 1: 'refunded' } });
+			const gate = holdRead();
+			const pending = fire({ store });
+			await heldRead();
+			expect(await fire({ store })).toEqual(['2:1001|Ann|refunded']);
+			tab().rows = rowsWith({ status: { 1: 'refunded', 2: 'shipped' } });
+			gate.release();
+			const late = await pending;
+			const next = await fire({ store });
+			expect([...late, ...next].filter((event) => event.startsWith('3:'))).toEqual(['3:1002|Bob|shipped']);
+			expect([...late, ...next].filter((event) => event.startsWith('2:'))).toEqual([]);
 		});
 
 		it('two saves during its read neither re-baseline it nor let it overwrite the newer snapshot', async () => {
@@ -313,7 +343,7 @@ describe('New or Updated Row behaviour', () => {
 			await fire({ store });
 			gate.release();
 			const first = await pending;
-			expect(first.map((event) => event.split('|')[0])).toContain('2:1001');
+			expect(first).toEqual([]);
 			expect(warn.mock.calls.some(([message]) => String(message).includes('new baseline'))).toBe(false);
 			expect(await fire({ store })).toEqual([]);
 		});

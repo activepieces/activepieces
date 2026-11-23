@@ -12,7 +12,7 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 From Google Sheets 0.21.0, **New Row Added** and **New or Updated Row** also run the flow in three cases where they stayed silent before:
 
-- A cell changed back to an earlier value within 30 seconds. Before, the second change was dropped as a duplicate of the first.
+- A cell changed back to an earlier value within 30 seconds. Before, the second change was dropped as a duplicate of the first. The one exception: a change identical to one already delivered in the last 10 minutes (same row, same old and new values, for example a cell flipped `open` → `closed` → `open` → `closed`, or a row deleted and appended again unchanged) runs the flow only once.
 - Rows changed while the trigger renews its Google watch channel (every 12 hours). Before, that change was lost.
 - Notifications where Google reports a content change together with another change type, for example `content, permissions`. Before, these were ignored.
 

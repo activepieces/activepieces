@@ -121,7 +121,7 @@ export function installFakeGoogle(): void {
 		const before = fakeGoogle.beforeNextWatch;
 		if (before) {
 			fakeGoogle.beforeNextWatch = undefined;
-			before();
+			await before();
 		}
 		if (fakeGoogle.failNextWatch) {
 			fakeGoogle.failNextWatch = false;

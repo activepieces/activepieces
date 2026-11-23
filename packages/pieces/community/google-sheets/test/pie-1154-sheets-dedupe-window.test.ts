@@ -14,7 +14,7 @@ afterEach(() => {
 });
 
 describe('PIE-1154 New or Updated Row inside the 30 s dedupe window', () => {
-	it('every change seen by a separate notification starts a run, including a return to an already-delivered value', async () => {
+	it('every change starts one run; repeating an identical change within 10 minutes does not run again', async () => {
 		const { store } = memoryStore();
 		const dedupe = dedupeWindow({ windowMs: 30_000 });
 		await changedRow.onEnable(rowContext({ store }));
@@ -22,11 +22,15 @@ describe('PIE-1154 New or Updated Row inside the 30 s dedupe window', () => {
 		for (const status of ['closed', 'open', 'closed']) {
 			fakeGoogle.tabs[0].rows[1] = cells({ values: ['T-1', status] });
 			const out = await changedRow.run(rowContext({ store }));
-			expect(rowEvents({ value: out }).map((event) => event.row)).toEqual([2]);
 			started.push(...dedupe.filter({ output: out }));
 			dedupe.advance({ ms: 5_000 });
 		}
-		expect(rowEvents({ value: started }).map((event) => event.values.B)).toEqual(['closed', 'open', 'closed']);
+		expect(rowEvents({ value: started }).map((event) => event.values.B)).toEqual(['closed', 'open']);
+		vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 11 * 60 * 1000);
+		fakeGoogle.tabs[0].rows[1] = cells({ values: ['T-1', 'open'] });
+		await changedRow.run(rowContext({ store }));
+		fakeGoogle.tabs[0].rows[1] = cells({ values: ['T-1', 'closed'] });
+		expect(rowEvents({ value: await changedRow.run(rowContext({ store })) }).map((event) => event.values.B)).toEqual(['closed']);
 	});
 
 	it('two notifications racing on the same baseline still start one run', async () => {
@@ -42,7 +46,7 @@ describe('PIE-1154 New or Updated Row inside the 30 s dedupe window', () => {
 		expect(rowEvents({ value: started }).map((event) => event.row)).toEqual([2]);
 	});
 
-	it('New Row Added: a row deleted and appended again with the same values within 30 s fires again', async () => {
+	it('New Row Added: a row deleted and appended again with the same values within 10 minutes does not fire again', async () => {
 		const { store } = memoryStore();
 		const dedupe = dedupeWindow({ windowMs: 30_000 });
 		await newRow.onEnable(rowContext({ store }));
@@ -52,6 +56,6 @@ describe('PIE-1154 New or Updated Row inside the 30 s dedupe window', () => {
 		expect(dedupe.filter({ output: await newRow.run(rowContext({ store })) })).toEqual([]);
 		fakeGoogle.tabs[0].rows.push(cells({ values: ['T-2', 'open'] }));
 		const again = dedupe.filter({ output: await newRow.run(rowContext({ store })) });
-		expect([...first, ...again].length).toBe(2);
+		expect([...first, ...again].length).toBe(1);
 	});
 });
