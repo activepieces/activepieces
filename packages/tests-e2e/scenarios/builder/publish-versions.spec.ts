@@ -72,6 +72,20 @@ test.describe('Publish and versions', { tag: ['@feature:publish'] }, () => {
     await new BuilderPage(page).expectSyncWebhookResponse({ url: `${webhookUrl}/sync?value=v1`, expected: { version: 'v2' } });
   });
 
+  test('the version history scrolls to the first version', async ({ page, request, session, seed }) => {
+    const { flowId } = await seed.flow({ template: webhookEcho, publish: true });
+    for (const version of [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]) {
+      await publishVersions.publishResponseBody({ request, session, flowId, body: `{"version": "v${version}"}` });
+    }
+    const versionsPage = new VersionsPage(page);
+
+    await versionsPage.visitFlow(flowId);
+    await versionsPage.openVersions();
+    await versionsPage.scrollVersionsDownFrom(12);
+
+    await expect(versionsPage.versionCard(1)).toBeInViewport({ ratio: 1 });
+  });
+
   test('a publish that the trigger refuses shows the reason', async ({ page, request, session, seed }) => {
     const { flowId } = await seed.flow({ template: scheduleBadCron, publish: false });
     const versionsPage = new VersionsPage(page);
