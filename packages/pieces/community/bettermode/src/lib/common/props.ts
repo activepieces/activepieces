@@ -6,12 +6,12 @@ import { bettermodeOps } from './operations';
 export const memberSpacesDropdown = Property.Dropdown({
   auth: bettermodeAuth,
   displayName: 'Space',
-  description: 'The space to post in. Lists the spaces the connected member has joined.',
+  description: 'Lists the spaces the connected member has joined.',
   required: true,
   refreshers: [],
   options: async ({ auth }) => {
     if (!auth) {
-      return { options: [], disabled: true, placeholder: 'Please authenticate first' };
+      return { options: [], disabled: true, placeholder: 'Please connect your account first' };
     }
     try {
       const session = await getSession(auth.props);
@@ -35,7 +35,11 @@ export const memberSpacesDropdown = Property.Dropdown({
         }
         after = page.next_cursor;
       }
-      return { options: options.flat(), disabled: false };
+      const flattened = options.flat();
+      if (flattened.length === 0) {
+        return { options: [], disabled: false, placeholder: 'No spaces found. Join a space first.' };
+      }
+      return { options: flattened, disabled: false };
     } catch (error) {
       return {
         options: [],
@@ -49,21 +53,21 @@ export const memberSpacesDropdown = Property.Dropdown({
 export const badgesDropdown = Property.Dropdown({
   auth: bettermodeAuth,
   displayName: 'Badge',
-  description: 'The badge to assign or revoke',
   required: true,
   refreshers: [],
   options: async ({ auth }) => {
     if (!auth) {
-      return { options: [], disabled: true, placeholder: 'Please authenticate first' };
+      return { options: [], disabled: true, placeholder: 'Please connect your account first' };
     }
     try {
       const badges = await bettermodeOps.listBadges({ auth: auth.props });
-      return {
-        options: badges.flatMap((badge) =>
-          badge.id === null ? [] : [{ label: badge.name ?? badge.id, value: badge.id }]
-        ),
-        disabled: false,
-      };
+      const badgeOptions = badges.flatMap((badge) =>
+        badge.id === null ? [] : [{ label: badge.name ?? badge.id, value: badge.id }]
+      );
+      if (badgeOptions.length === 0) {
+        return { options: [], disabled: false, placeholder: 'No badges found. Create one in Bettermode first.' };
+      }
+      return { options: badgeOptions, disabled: false };
     } catch (error) {
       return {
         options: [],

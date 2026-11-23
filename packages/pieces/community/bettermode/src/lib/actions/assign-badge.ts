@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { bindTokenStore } from '../common/client';
 import { bettermodeAuth } from '../auth';
 import { bettermodeInput } from '../common/input';
@@ -18,10 +18,15 @@ export const assignBadgeAction = createAction({
     idempotent: false,
   },
   props: {
+    adminNote: Property.MarkDown({
+      value: 'This action needs a connection that uses a Bettermode admin account.',
+      variant: MarkdownVariant.INFO,
+    }),
     badgeId: badgesDropdown,
     email: Property.ShortText({
       displayName: 'Email',
-      description: 'The exact email of the member. The connected account must be an admin to look members up by email.',
+      description: "The member's exact email address.",
+      placeholder: 'member@example.com',
       required: true,
     }),
   },
