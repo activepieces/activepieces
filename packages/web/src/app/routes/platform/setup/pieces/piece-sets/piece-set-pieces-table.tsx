@@ -233,6 +233,8 @@ export const PieceSetPiecesTable = ({ pieceSet }: PieceSetPiecesTableProps) => {
               <div className="flex items-center justify-end">
                 <Switch
                   {...adminControl(AdminControl.PIECE_SETS_PIECE_TOGGLE)}
+                  data-testid="piece-set-piece-toggle"
+                  aria-label={row.original.displayName}
                   checked={included}
                   onCheckedChange={() => togglePiece(row.original.name)}
                 />

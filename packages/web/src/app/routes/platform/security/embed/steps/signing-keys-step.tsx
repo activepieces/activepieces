@@ -38,6 +38,7 @@ export const SigningKeysStep = ({
         <NewSigningKeyDialog onCreate={refetch}>
           <Button
             {...adminControl(AdminControl.EMBEDDING_SIGNING_KEY_NEW_OPEN)}
+            data-testid="embedding-signing-key-new"
           >
             {t('New Signing Key')}
           </Button>
@@ -100,7 +101,12 @@ const SigningKeysList = ({
         >
           <DropdownMenu modal={true}>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon-sm" aria-label={t('Actions')}>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={t('Actions')}
+                data-testid="embedding-signing-key-actions"
+              >
                 <MoreHorizontal />
               </Button>
             </DropdownMenuTrigger>

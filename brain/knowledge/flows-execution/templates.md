@@ -20,6 +20,7 @@ Templates are a library of reusable flow (and table) blueprints users can browse
 
 ### Gotchas
 - **Custom templates require the `manageTemplatesEnabled` plan flag** (off by default in CE). When disabled, custom listing is skipped silently — returns empty array, no error.
+- **The flag gates the list, not the create.** `POST /v1/templates` with `type: CUSTOM` checks only that the caller owns the platform, so a template created without the flag is stored and never listed. With the flag on, the project gallery (`/templates`, reached from **Start from Template**) and the embed browse dialog ask for `type=CUSTOM` only: the official library disappears and the list makes no call to Cloud.
 - OFFICIAL and SHARED templates cannot be updated or deleted via API; ownership is double-checked (`template.platformId === principal.platform.id`).
 - Flow version migration (`migrateFlowVersionTemplateList`) runs as a `preValidation` hook on create/update to handle schema evolution in stored flows.
 - An update only replaces a template's workflow when it carries a non-empty `flows`. The update `preValidation` turns an absent `flows` into `[]`, so `templateService.update` treats an empty list as "keep what's stored": it validates and prepares flows (against the template's own platform) only when some are sent, then hands those prepared `flows` and `pieces` to `platformTemplateService.update` for CUSTOM. Before GIT-1834 the CUSTOM branch got the raw request instead, so a details-only edit wrote `flows: []` over the export, skipped validation, and took `pieces` from the first flow only.
@@ -42,5 +43,6 @@ Entry point: `templateController`, registered in `template.module.ts` under the 
 - `packages/web/src/features/templates/components/` — browse dialog, use-template import dialog, share dialog, explore card
 - `packages/web/src/features/templates/hooks/` — templates data hooks
 - `packages/web/src/app/routes/templates/` — public-facing template gallery page
+- `packages/web/src/app/routes/platform/setup/templates/` — the platform admin page (`PlatformTemplatesPage`) with the create and edit dialogs
 
 Paths verified 2026-07-17.

@@ -12,7 +12,7 @@ import {
   Search,
   Wrench,
 } from 'lucide-react';
-import { useId, useState } from 'react';
+import { ReactNode, useId, useState } from 'react';
 
 import { adminSurface } from '@/app/components/admin';
 import { DataTableSelectPopover } from '@/components/custom/data-table/data-table-select-popover';
@@ -50,6 +50,7 @@ export function KeyModelList({
   tiersByModel,
   selection,
   isLoading,
+  action,
   onChange,
 }: KeyModelListProps) {
   const switchId = useId();
@@ -130,6 +131,7 @@ export function KeyModelList({
               )
             }
           />
+          {action}
         </div>
       </div>
 
@@ -204,7 +206,7 @@ export function KeyModelList({
         <span className="hidden md:block">{t('Can')}</span>
       </div>
 
-      <div className="flex flex-col">
+      <div className="flex flex-col" data-testid="ai-provider-model-list">
         {isLoading &&
           [0, 1, 2].map((row) => (
             <div
@@ -424,5 +426,6 @@ type KeyModelListProps = {
   tiersByModel: Map<string, string[]>;
   selection: KeyModelSelection;
   isLoading: boolean;
+  action?: ReactNode;
   onChange: (selection: KeyModelSelection) => void;
 };

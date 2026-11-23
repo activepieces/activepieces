@@ -5,6 +5,7 @@ import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
 import { BasicTracerProvider, BatchSpanProcessor } from '@opentelemetry/sdk-trace-base'
 import { Telemetry } from 'ai'
 import { aiTraceScrubber } from './ai-trace-scrubber'
+import { apVersionUtil } from './ap-version'
 import { wideEvent } from './wide-event'
 
 let tracing: { processor: BatchSpanProcessor, integration: Telemetry } | undefined
@@ -37,7 +38,7 @@ function reset(): void {
 }
 
 function runtimeContextOf({ billing }: { billing?: ActivepiecesAiBilling }): AiTraceContext {
-    const ids = isNil(billing) ? idsFromWideEvent() : idsFromBilling({ billing })
+    const ids = { ...runLabelsFromWideEvent(), ...(isNil(billing) ? idsFromWideEvent() : idsFromBilling({ billing })) }
     const groups = {
         ...(isNil(ids.platformId) ? {} : { platform: ids.platformId }),
         ...(isNil(ids.projectId) ? {} : { project: ids.projectId }),
@@ -46,6 +47,9 @@ function runtimeContextOf({ billing }: { billing?: ActivepiecesAiBilling }): AiT
         ...(isNil(ids.userId) ? {} : { distinctId: ids.userId }),
         ...(isNil(ids.conversationId) ? {} : { sessionId: ids.conversationId }),
         ...(Object.keys(groups).length === 0 ? {} : { groups: JSON.stringify(groups) }),
+        ...(isNil(ids.runSource) ? {} : { runSource: ids.runSource }),
+        ...(isNil(ids.tierId) ? {} : { tierId: ids.tierId }),
+        ...(isNil(ids.tierModel) ? {} : { tierModel: ids.tierModel }),
     }
 }
 
@@ -62,30 +66,48 @@ function idsFromBilling({ billing }: { billing: ActivepiecesAiBilling }): TraceI
 function idsFromWideEvent(): TraceIds {
     const context = wideEvent.current()?.getContext() ?? {}
     return {
-        userId: idOf(context['user']),
-        conversationId: idOf(context['conversation']),
-        platformId: idOf(context['platform']),
-        projectId: idOf(context['project']),
+        userId: fieldOf({ group: context['user'], key: 'id' }),
+        conversationId: fieldOf({ group: context['conversation'], key: 'id' }),
+        platformId: fieldOf({ group: context['platform'], key: 'id' }),
+        projectId: fieldOf({ group: context['project'], key: 'id' }),
     }
 }
 
-function idOf(group: unknown): string | undefined {
-    return isObject(group) && typeof group['id'] === 'string' ? group['id'] : undefined
+function runLabelsFromWideEvent(): TraceIds {
+    const agentRun = wideEvent.current()?.getContext()['agentRun']
+    return {
+        runSource: fieldOf({ group: agentRun, key: 'source' }),
+        tierId: fieldOf({ group: agentRun, key: 'tierId' }),
+        tierModel: fieldOf({ group: agentRun, key: 'tierModel' }),
+    }
+}
+
+function fieldOf({ group, key }: { group: unknown, key: string }): string | undefined {
+    const value = isObject(group) ? group[key] : undefined
+    return typeof value === 'string' ? value : undefined
 }
 
 function enrichSpan({ runtimeContext }: { runtimeContext: Record<string, unknown> | undefined }): Attributes {
-    const distinctId = runtimeContext?.['distinctId']
-    const sessionId = runtimeContext?.['sessionId']
-    const groups = runtimeContext?.['groups']
+    const contextAttributes = Object.entries(SPAN_ATTRIBUTE_BY_CONTEXT_KEY).flatMap(([contextKey, attribute]) => {
+        const value = runtimeContext?.[contextKey]
+        return typeof value === 'string' ? [[attribute, value]] : []
+    })
     return {
         '$lib': POSTHOG_AI_LIB,
-        ...(typeof distinctId === 'string' ? { 'posthog.distinct_id': distinctId } : {}),
-        ...(typeof sessionId === 'string' ? { '$ai_session_id': sessionId } : {}),
-        ...(typeof groups === 'string' ? { '$groups': groups } : {}),
+        'activepiecesVersion': apVersionUtil.getCurrentRelease(),
+        ...Object.fromEntries(contextAttributes),
     }
 }
 
 const POSTHOG_AI_LIB = 'activepieces-ai'
+const SPAN_ATTRIBUTE_BY_CONTEXT_KEY: Record<keyof AiTraceContext, string> = {
+    distinctId: 'posthog.distinct_id',
+    sessionId: '$ai_session_id',
+    groups: '$groups',
+    runSource: 'ai_run_source',
+    tierId: 'ai_tier_id',
+    tierModel: 'ai_tier_model',
+}
 
 export const aiObservability = {
     init,
@@ -97,12 +119,15 @@ export const aiObservability = {
 
 export const POSTHOG_PROJECT_TOKEN = 'phc_7F92HoXJPeGnTKmYv0eOw62FurPMRW9Aqr0TPrDzvHh'
 export const POSTHOG_HOST = 'https://us.i.posthog.com'
-export const AI_TRACE_RUNTIME_CONTEXT = { distinctId: true, sessionId: true, groups: true }
+export const AI_TRACE_RUNTIME_CONTEXT = { distinctId: true, sessionId: true, groups: true, runSource: true, tierId: true, tierModel: true }
 
 export type AiTraceContext = {
     distinctId?: string
     sessionId?: string
     groups?: string
+    runSource?: string
+    tierId?: string
+    tierModel?: string
 }
 
 type TraceIds = {
@@ -110,4 +135,7 @@ type TraceIds = {
     conversationId?: string
     platformId?: string
     projectId?: string
+    runSource?: string
+    tierId?: string
+    tierModel?: string
 }

@@ -58,6 +58,7 @@ export function RunsTab({ report, isLoading, isError, onRetry }: RunsTabProps) {
           <StatCard
             icon={<ListChecks />}
             label={t('Jobs done')}
+            valueTestId="health-runs-jobs-done"
             info={t('Completed jobs (success + failure) in the period')}
             value={
               isLoading
@@ -73,6 +74,7 @@ export function RunsTab({ report, isLoading, isError, onRetry }: RunsTabProps) {
           <StatCard
             icon={<CheckCircle2 />}
             label={t('Success rate')}
+            valueTestId="health-runs-success-rate"
             info={t('Share of completed jobs that succeeded')}
             value={
               isLoading ? '—' : `${(summary?.successRate ?? 0).toFixed(1)}%`

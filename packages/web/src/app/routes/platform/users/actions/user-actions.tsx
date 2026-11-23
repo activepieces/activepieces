@@ -47,7 +47,12 @@ export const UserActions = ({
     <div className="flex justify-end">
       <DropdownMenu modal={true} open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon-sm">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={t('Actions')}
+            data-testid="platform-user-actions"
+          >
             <MoreVertical className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>

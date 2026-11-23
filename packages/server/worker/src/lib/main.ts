@@ -29,11 +29,18 @@ async function main(): Promise<void> {
     const containerType = system.get(WorkerSystemProp.CONTAINER_TYPE) ?? 'WORKER_AND_APP'
     await worker.start({ apiUrl: getApiUrl(), socketUrl: getSocketUrl(), workerToken, withHealthServer: containerType === 'WORKER' })
 
+    let shuttingDown = false
     const shutdown = async () => {
+        if (shuttingDown) {
+            return
+        }
+        shuttingDown = true
+        const forceExitAfterMs = worker.forceExitAfterMs()
+        logger.info({ forceExitAfterMs }, 'Stopping worker')
         const timeout = setTimeout(() => {
-            logger.warn('Graceful shutdown timed out, forcing exit')
+            logger.warn({ forceExitAfterMs }, 'Graceful shutdown timed out, forcing exit')
             process.exit(1)
-        }, 30_000)
+        }, forceExitAfterMs)
         await worker.stop()
         await aiObservability.flush()
         clearTimeout(timeout)
