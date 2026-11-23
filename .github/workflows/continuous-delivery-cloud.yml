@@ -24,6 +24,10 @@ on:
         description: 'Deploy even when a pending migration is marked breaking'
         type: boolean
         default: false
+      skip_e2e_and_benchmark:
+        description: 'Emergency only. Skip the E2E matrix and the benchmark. The upgrade test and the approval still run.'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -251,7 +255,7 @@ jobs:
 
   e2e-matrix:
     needs: [cut, build-pick]
-    if: always() && needs.cut.result == 'success' && needs.cut.outputs.skip != 'true' && (needs.build-pick.result == 'success' || needs.build-pick.result == 'skipped')
+    if: always() && !inputs.skip_e2e_and_benchmark && needs.cut.result == 'success' && needs.cut.outputs.skip != 'true' && (needs.build-pick.result == 'success' || needs.build-pick.result == 'skipped')
     uses: ./.github/workflows/e2e-matrix.yml
     with:
       image: ghcr.io/activepieces/activepieces-cloud:${{ needs.cut.outputs.image_tag }}
@@ -271,7 +275,7 @@ jobs:
   # Report only: the approver reads the numbers in this job's summary; a slower candidate does not block.
   benchmark:
     needs: [cut, build-pick]
-    if: always() && needs.cut.result == 'success' && needs.cut.outputs.skip != 'true' && (needs.build-pick.result == 'success' || needs.build-pick.result == 'skipped')
+    if: always() && !inputs.skip_e2e_and_benchmark && needs.cut.result == 'success' && needs.cut.outputs.skip != 'true' && (needs.build-pick.result == 'success' || needs.build-pick.result == 'skipped')
     uses: ./.github/workflows/benchmark-compare.yml
     with:
       baseline_image: ghcr.io/activepieces/activepieces-cloud:${{ needs.cut.outputs.cloud_image_tag }}
@@ -297,6 +301,7 @@ jobs:
           UPGRADE_RESULT: ${{ needs.upgrade-test.result }}
           SWAPPED: ${{ needs.upgrade-test.outputs.swapped }}
           BENCHMARK_RESULT: ${{ needs.benchmark.result }}
+          SKIP_E2E_AND_BENCHMARK: ${{ inputs.skip_e2e_and_benchmark }}
         run: |
           post() {
             STATE=failure
@@ -305,7 +310,11 @@ jobs:
             echo "- \`$1\`: $3" >> "$GITHUB_STEP_SUMMARY"
             if [ "$STATE" != success ]; then echo "::error::$1 failed on $SHA: $3"; fi
           }
-          post e2e-matrix "$E2E_RESULT" "E2E matrix $E2E_RESULT"
+          if [ "$SKIP_E2E_AND_BENCHMARK" = true ]; then
+            echo "- \`e2e-matrix\`: skipped by \`skip_e2e_and_benchmark\`, no status posted" >> "$GITHUB_STEP_SUMMARY"
+          else
+            post e2e-matrix "$E2E_RESULT" "E2E matrix $E2E_RESULT"
+          fi
           if [ "$UPGRADE_RESULT" = success ]; then
             post upgrade-test "$UPGRADE_RESULT" "Upgrade from $FROM_TAG passed"
           elif [ "$SWAPPED" = true ]; then
@@ -351,7 +360,7 @@ jobs:
   # It waits for the benchmark so the numbers are there, but does not read its result.
   approve:
     needs: [cut, e2e-matrix, upgrade-test, tickets, benchmark]
-    if: ${{ !cancelled() && needs.cut.outputs.skip != 'true' && needs.e2e-matrix.result == 'success' && needs.upgrade-test.result == 'success' && needs.tickets.result == 'success' }}
+    if: ${{ !cancelled() && needs.cut.outputs.skip != 'true' && (inputs.skip_e2e_and_benchmark || needs.e2e-matrix.result == 'success') && needs.upgrade-test.result == 'success' && needs.tickets.result == 'success' }}
     runs-on: ubuntu-latest
     environment:
       name: production
