@@ -170,6 +170,20 @@ describe('a platform tier chat turn', () => {
         expect(onModelOutcome).toHaveBeenCalledWith(expect.objectContaining({ turnModel: expect.objectContaining({ modelId: 'main' }), signal: expect.objectContaining({ statusCode: 503 }) }))
     })
 
+    it('drops a fast model the provider cannot route and answers on the main model, even when no turn model runs on a tier key', async () => {
+        const fast = failingModel({ statusCode: 404 })
+
+        const turn = await runTurn({
+            models: [{ model: answeringModel('from main'), provider: AIProviderName.ACTIVEPIECES, modelId: 'z-ai/glm-5.3', thinkingBudget: 0 }],
+            fastModel: { model: fast, provider: AIProviderName.ACTIVEPIECES, modelId: '~z-ai/glm-flash-latest', thinkingBudget: 0 },
+        })
+
+        expect(turn.streamError).toBeNull()
+        expect(turn.answeredBy.modelId).toBe('z-ai/glm-5.3')
+        expect(textOf(turn)).toBe('from main')
+        expect(fast.doStreamCalls).toHaveLength(1)
+    })
+
     it('leaves a single specific model on today\'s path, with no fallback', async () => {
         const turn = await runTurn({ models: [{ model: failingModel({ statusCode: 503 }), provider: AIProviderName.OPENAI, modelId: 'only', thinkingBudget: 0 }] })
 
