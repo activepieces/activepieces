@@ -10,6 +10,7 @@ const base = createCustomApiCallAction({
   auth: alaiAuth,
   baseUrl: () => `${API_ROOT}/v1`,
   authMapping: async (auth) => alaiClient.authHeaders(auth.props.apiKey),
+  props: { url: { description: `Full URL, or a path relative to ${API_ROOT}/v1`, placeholder: '/presentations' } },
 });
 
 export const alaiCustomApiCall = createAction({
