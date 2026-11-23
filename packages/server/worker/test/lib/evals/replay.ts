@@ -1,4 +1,4 @@
-import { isNil, isObject } from '@activepieces/core-utils'
+import { isNil, isObject, tryCatch } from '@activepieces/core-utils'
 import { agentToolClassification, AppConnectionStatus, FlowRunStatus } from '@activepieces/shared'
 import { asSchema, ToolSet } from 'ai'
 import { agentWorkerTools } from '../../../src/lib/execute/jobs/ee/agent/agent-worker-tools'
@@ -49,9 +49,9 @@ function create({ recordedToolCalls, faults = [] }: { recordedToolCalls: Recorde
     }
 }
 
-async function resolveCall({ caseReplay, mode, toolName, input, live }: { caseReplay: Replay, mode: ReplayMode, toolName: string, input: unknown, live: (() => Promise<unknown>) | undefined }): Promise<unknown> {
+async function resolveCall({ caseReplay, mode, toolName, input, live, declaredReadOnly }: { caseReplay: Replay, mode: ReplayMode, toolName: string, input: unknown, live: (() => Promise<unknown>) | undefined, declaredReadOnly?: DeclaredReadOnlyLookup }): Promise<unknown> {
     if (mode === 'live') {
-        return resolveLiveCall({ caseReplay, toolName, input, live })
+        return resolveLiveCall({ caseReplay, toolName, input, live, declaredReadOnly })
     }
     if (isLive(toolName) && !isNil(live)) {
         return live()
@@ -74,12 +74,12 @@ async function resolveCall({ caseReplay, mode, toolName, input, live }: { caseRe
     return output
 }
 
-async function resolveLiveCall({ caseReplay, toolName, input, live }: { caseReplay: Replay, toolName: string, input: unknown, live: (() => Promise<unknown>) | undefined }): Promise<unknown> {
+async function resolveLiveCall({ caseReplay, toolName, input, live, declaredReadOnly }: { caseReplay: Replay, toolName: string, input: unknown, live: (() => Promise<unknown>) | undefined, declaredReadOnly: DeclaredReadOnlyLookup | undefined }): Promise<unknown> {
     const injected = caseReplay.fault(toolName)
     if (!isNil(injected)) {
         return { content: [{ type: 'text', text: injected }], isError: true }
     }
-    if (isStubbed({ toolName, input })) {
+    if (await isStubbed({ toolName, input, declaredReadOnly })) {
         return stubbedResult({ toolName, input })
     }
     if (isNil(live)) {
@@ -88,13 +88,35 @@ async function resolveLiveCall({ caseReplay, toolName, input, live }: { caseRepl
     return live()
 }
 
-function isStubbed({ toolName, input }: { toolName: string, input: unknown }): boolean {
+async function isStubbed({ toolName, input, declaredReadOnly }: { toolName: string, input: unknown, declaredReadOnly: DeclaredReadOnlyLookup | undefined }): Promise<boolean> {
     if (toolName !== EXECUTE_ACTION_TOOL) {
         return !runsLive(toolName)
     }
     const actionName = isObject(input) && typeof input['actionName'] === 'string' ? input['actionName'] : ''
     const actionInput = isObject(input) && isObject(input['input']) ? input['input'] : undefined
-    return agentToolClassification.requiresActionPreview({ actionName, input: actionInput })
+    if (actionName === CUSTOM_API_CALL_ACTION) {
+        return agentToolClassification.requiresActionPreview({ actionName, input: actionInput })
+    }
+    const pieceName = isObject(input) && typeof input['pieceName'] === 'string' ? input['pieceName'] : ''
+    if (isNil(declaredReadOnly) || pieceName === '' || actionName === '') {
+        return true
+    }
+    const { data: declared, error } = await tryCatch(() => declaredReadOnly({ pieceName, actionName }))
+    return !isNil(error) || declared !== true
+}
+
+function cachedReadOnlyLookup(lookup: DeclaredReadOnlyLookup): DeclaredReadOnlyLookup {
+    const answers = new Map<string, Promise<unknown>>()
+    return ({ pieceName, actionName }) => {
+        const key = `${agentWorkerTools.normalizePieceName(pieceName.trim())}:${actionName}`
+        const cached = answers.get(key)
+        if (!isNil(cached)) {
+            return cached
+        }
+        const answer = lookup({ pieceName, actionName })
+        answers.set(key, answer)
+        return answer
+    }
 }
 
 function stubbedResult({ toolName, input }: { toolName: string, input: unknown }): unknown {
@@ -247,6 +269,7 @@ const LIVE_TOOLS = new Set([
     'ap_web_search',
 ])
 const EXECUTE_ACTION_TOOL = 'ap_execute_action'
+const CUSTOM_API_CALL_ACTION = 'custom_api_call'
 const STUBBED_AGENT_ID = 'evalStubbedAgent'
 const STUBBED_AGENT_NAME = 'Eval agent'
 const STUBBED_AGENT_URL = 'https://eval.invalid/agents'
@@ -318,6 +341,7 @@ const STUBBED_TOOLS_NOTE = 'any other tool that is not a read or a flow, table o
 export const replay = {
     create,
     resolveCall,
+    cachedReadOnlyLookup,
     isRead,
     isLive,
     endsTurn,
@@ -327,6 +351,8 @@ export const replay = {
     stubbedToolsNote: STUBBED_TOOLS_NOTE,
     workspaceWriteTools: WORKSPACE_WRITE_TOOLS,
 }
+
+export type DeclaredReadOnlyLookup = (params: { pieceName: string, actionName: string }) => Promise<unknown>
 
 export type StaleRecording = {
     toolName: string

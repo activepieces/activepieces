@@ -9,7 +9,7 @@ import { agentToolPolicy } from '../../../src/lib/execute/jobs/ee/agent/agent-to
 import { agentWorkerTools, GateDecision } from '../../../src/lib/execute/jobs/ee/agent/agent-worker-tools'
 import { devServer } from './dev-server'
 import { EVAL_PROJECT, PromptProject } from './prompts'
-import { replay, Replay, ReplayMode } from './replay'
+import { DeclaredReadOnlyLookup, replay, Replay, ReplayMode } from './replay'
 import { ProjectConnection, ScriptedUser } from './scripted-user'
 
 async function connectMcp(): Promise<McpTools> {
@@ -38,12 +38,14 @@ async function connect({ conversationId, projectId, projectName, ...mcpCredentia
 function build({ mcp, caseReplay, auth, mode, user, onNote = ignoreNote }: { mcp: McpTools, caseReplay: Replay, auth: Record<string, unknown>, mode: ReplayMode, user: ScriptedUser | null, onNote?: (note: string) => void }): ToolSet {
     const taintState = agentWorkerTools.createTaintState({ carried: false })
     const eventEmitter = agentWorkerTools.createEventEmitter({ sendEvent: async () => {}, userId: EVAL_USER_ID, conversationId: mcp.conversationId })
+    const declaredReadOnly = replay.cachedReadOnlyLookup(({ pieceName, actionName }) => executeOnDevServer({ toolName: ACTION_READ_ONLY_TOOL, toolInput: { pieceName, actionName }, conversationId: mcp.conversationId }))
     const executeTool = async (toolName: string, toolInput: Record<string, unknown>): Promise<unknown> => replay.resolveCall({
         caseReplay,
         mode,
         toolName,
         input: toolInput,
         live: () => executeOnDevServer({ toolName, toolInput, conversationId: mcp.conversationId }),
+        declaredReadOnly,
     })
     const approve = async (): Promise<GateDecision> => ({ outcome: 'approved' })
     const dismissCard = async (): Promise<GateDecision> => ({ outcome: 'declined' })
@@ -58,7 +60,7 @@ function build({ mcp, caseReplay, auth, mode, user, onNote = ignoreNote }: { mcp
     const project = projectOf({ mcp, mode })
     const buildPlanTools = agentWorkerTools.createBuildPlanTools({ eventEmitter, getProjectId: () => project.id })
     const mcpTools = agentMcpClient.withToolTimeouts({
-        mcpToolSet: replayed({ tools: mcp.toolSet, caseReplay, mode }),
+        mcpToolSet: replayed({ tools: mcp.toolSet, caseReplay, mode, declaredReadOnly }),
         brokenConnectors: new Set(),
         taintState,
     })
@@ -107,7 +109,7 @@ function projectOf({ mcp, mode }: { mcp: McpTools, mode: ReplayMode }): PromptPr
     return mode === 'live' ? { id: mcp.projectId, displayName: mcp.projectName, type: EVAL_PROJECT.type } : EVAL_PROJECT
 }
 
-function replayed({ tools, caseReplay, mode }: { tools: ToolSet, caseReplay: Replay, mode: ReplayMode }): ToolSet {
+function replayed({ tools, caseReplay, mode, declaredReadOnly }: { tools: ToolSet, caseReplay: Replay, mode: ReplayMode, declaredReadOnly?: DeclaredReadOnlyLookup }): ToolSet {
     return Object.fromEntries(Object.entries(tools).map(([toolName, tool]) => {
         const liveExecute = tool.execute
         return [toolName, {
@@ -118,6 +120,7 @@ function replayed({ tools, caseReplay, mode }: { tools: ToolSet, caseReplay: Rep
                 toolName,
                 input,
                 live: isNil(liveExecute) ? undefined : async () => liveExecute(input, options),
+                declaredReadOnly,
             }),
         }]
     }))
@@ -182,6 +185,7 @@ const EVAL_USER_ID = 'eval-user'
 const ExecuteToolResponse = z.object({ result: z.unknown() })
 const LIST_CONNECTIONS_TOOL = 'ap_list_connections'
 const STORE_SELECTED_CONNECTION_TOOL = '__store_selected_connection'
+const ACTION_READ_ONLY_TOOL = '__action_read_only'
 const ListConnectionsOutput = z.object({ structuredContent: z.object({ connections: z.array(ProjectConnection) }) })
 
 const silentLog = Fastify({ logger: false }).log

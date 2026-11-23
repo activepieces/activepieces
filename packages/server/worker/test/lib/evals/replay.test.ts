@@ -88,17 +88,54 @@ describe('replay.resolveCall', () => {
         expect(live).toHaveBeenCalledTimes(toolNames.length)
     })
 
-    it('runs read-only actions for real in live mode', async () => {
+    it('runs actions declared read-only and GET custom API calls for real in live mode', async () => {
         const caseReplay = replay.create({ recordedToolCalls: [] })
         const live = vi.fn(async () => ({ channels: [{ id: 'C1', name: 'general' }] }))
+        const declaredReadOnly = vi.fn(async () => true)
         const calls = [
-            { actionName: 'slack_find_channel', input: {} },
-            { actionName: 'custom_api_call', input: { method: 'GET' } },
+            { pieceName: '@activepieces/piece-slack', actionName: 'slack_find_channel', input: {} },
+            { pieceName: '@activepieces/piece-slack', actionName: 'custom_api_call', input: { method: 'GET' } },
         ]
 
-        const outputs = await Promise.all(calls.map((input) => replay.resolveCall({ caseReplay, mode: 'live', toolName: 'ap_execute_action', input, live })))
+        const outputs = await Promise.all(calls.map((input) => replay.resolveCall({ caseReplay, mode: 'live', toolName: 'ap_execute_action', input, live, declaredReadOnly })))
 
         expect(outputs).toEqual([{ channels: [{ id: 'C1', name: 'general' }] }, { channels: [{ id: 'C1', name: 'general' }] }])
+        expect(live).toHaveBeenCalledTimes(2)
+        expect(declaredReadOnly).toHaveBeenCalledTimes(1)
+        expect(declaredReadOnly).toHaveBeenCalledWith({ pieceName: '@activepieces/piece-slack', actionName: 'slack_find_channel' })
+    })
+
+    it('stubs an action in live mode unless the piece declares it read-only', async () => {
+        const caseReplay = replay.create({ recordedToolCalls: [] })
+        const live = vi.fn(async () => ({ ok: true }))
+        const lookups = [
+            async () => false,
+            async () => null,
+            async () => undefined,
+            async () => {
+                throw new Error('dev server down')
+            },
+        ]
+        const input = { pieceName: '@activepieces/piece-slack', actionName: 'slack_mark_conversation_read', input: {} }
+
+        const outputs = await Promise.all(lookups.map((declaredReadOnly) => replay.resolveCall({ caseReplay, mode: 'live', toolName: 'ap_execute_action', input, live, declaredReadOnly })))
+        const withoutLookup = await replay.resolveCall({ caseReplay, mode: 'live', toolName: 'ap_execute_action', input: { ...input, actionName: 'slack_find_channel' }, live })
+
+        expect([...outputs, withoutLookup].every((output) => JSON.stringify(output).includes('Finished successfully.'))).toBe(true)
+        expect(live).not.toHaveBeenCalled()
+    })
+
+    it('asks the piece once per action across a run', async () => {
+        const caseReplay = replay.create({ recordedToolCalls: [] })
+        const live = vi.fn(async () => ({ ok: true }))
+        const lookup = vi.fn(async () => true)
+        const declaredReadOnly = replay.cachedReadOnlyLookup(lookup)
+        const input = { pieceName: 'slack', actionName: 'find_channel', input: {} }
+
+        await replay.resolveCall({ caseReplay, mode: 'live', toolName: 'ap_execute_action', input, live, declaredReadOnly })
+        await replay.resolveCall({ caseReplay, mode: 'live', toolName: 'ap_execute_action', input: { ...input, pieceName: '@activepieces/piece-slack' }, live, declaredReadOnly })
+
+        expect(lookup).toHaveBeenCalledTimes(1)
         expect(live).toHaveBeenCalledTimes(2)
     })
 
