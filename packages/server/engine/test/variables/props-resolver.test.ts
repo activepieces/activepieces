@@ -1034,6 +1034,36 @@ describe('Array Flatter Processor', () => {
 })
 
 describe('Props resolver with a provided script session', () => {
+    it('starts every resolve without the step views of the previous one', async () => {
+        const scriptSession = scriptEvaluator.initSession()
+        const resolver = createPropsResolver({
+            projectId: 'PROJECT_ID',
+            engineToken: 'WORKER_TOKEN',
+            apiUrl: 'http://127.0.0.1:3000',
+            contextVersion: LATEST_CONTEXT_VERSION,
+            stepNames: ['trigger', 'step_1'],
+            scriptSession,
+        })
+        const withStep = await FlowExecutorContext.empty().upsertStep('step_1', GenericStepOutput.create({
+            type: FlowActionType.PIECE,
+            status: StepOutputStatus.SUCCEEDED,
+            input: {},
+            output: { price: 21 },
+        }))
+        try {
+            const ran = await resolver.resolve({ unresolvedInput: '{{ step_1.output.price * 2 }}', executionState: withStep })
+            const skipped = await resolver.resolve({ unresolvedInput: '{{ step_1.output.price * 2 }}', executionState: FlowExecutorContext.empty() })
+            const absent = await resolver.resolve({ unresolvedInput: '{{ typeof step_1 }}', executionState: FlowExecutorContext.empty() })
+
+            expect(ran.resolvedInput).toBe(42)
+            expect(skipped.resolvedInput).toBe('')
+            expect(absent.resolvedInput).toBe('undefined')
+        }
+        finally {
+            await scriptSession.dispose()
+        }
+    })
+
     it('reuses the session across resolves, refreshes a changed step view and leaves disposal to the owner', async () => {
         const createSession = vi.spyOn(deno, 'createSession')
         const scriptSession = scriptEvaluator.initSession()

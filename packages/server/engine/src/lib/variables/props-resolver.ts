@@ -79,6 +79,9 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
                 if (ownsScriptSession) {
                     await scriptSession.dispose()
                 }
+                else {
+                    await scriptSession.reset()
+                }
             }
         },
     }
@@ -159,7 +162,7 @@ async function evalWithScript({ variableName, getStepView, scriptSession, stepNa
     for (const stepName of extractReferencedStepNames(variableName, stepNames)) {
         const view = await getStepView(stepName)
         if (view !== undefined) {
-            await session.setGlobal(stepName, view, false)
+            await session.setGlobal(stepName, view)
         }
     }
     return scriptEvaluator.evaluate({ script: variableName, scriptSession })

@@ -14,6 +14,7 @@ import { createSharedScriptSession } from '../../../src/lib/core/code/shared-scr
 const buildSession = (): ScriptSession => ({
     run: vi.fn(),
     setGlobal: vi.fn(),
+    reset: vi.fn(),
     dispose: vi.fn(),
 })
 
@@ -54,8 +55,30 @@ describe('createSharedScriptSession', () => {
         const pending = shared.get()
         await shared.dispose()
         await expect(pending).rejects.toThrow('spawn failed')
-        await expect(shared.get()).rejects.toThrow('spawn failed')
+        await expect(shared.get()).rejects.toThrow('The script session was used after its operation ended')
 
         expect(createScriptSessionMock).toHaveBeenCalledTimes(1)
+    })
+
+    it('never creates a session once disposed, even if it was never used', async () => {
+        const shared = createSharedScriptSession(buildParams)
+
+        await shared.dispose()
+
+        await expect(shared.get()).rejects.toThrow('The script session was used after its operation ended')
+        expect(createScriptSessionMock).not.toHaveBeenCalled()
+    })
+
+    it('resets the live session, and does nothing when no session was created', async () => {
+        const session = buildSession()
+        createScriptSessionMock.mockResolvedValue(session)
+        const shared = createSharedScriptSession(buildParams)
+
+        await shared.reset()
+        expect(createScriptSessionMock).not.toHaveBeenCalled()
+
+        await shared.get()
+        await shared.reset()
+        expect(session.reset).toHaveBeenCalledTimes(1)
     })
 })

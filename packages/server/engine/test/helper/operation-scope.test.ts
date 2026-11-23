@@ -1,4 +1,4 @@
-import { EngineOperation, EngineOperationType, EngineResponseStatus } from '@activepieces/shared'
+import { EngineOperationType, EngineResponseStatus, ExecuteExtractPieceMetadataOperation, PackageType, PieceType } from '@activepieces/shared'
 import { operationScope } from '../../src/lib/helper/operation-scope'
 import { execute } from '../../src/lib/operations'
 
@@ -20,7 +20,16 @@ describe('operationScope', () => {
         const disposable = { dispose: vi.fn().mockResolvedValue(undefined) }
         operationScope.track(disposable)
 
-        const response = await execute('UNSUPPORTED' as EngineOperationType, {} as EngineOperation)
+        const missingPiece: ExecuteExtractPieceMetadataOperation = {
+            packageType: PackageType.REGISTRY,
+            pieceType: PieceType.OFFICIAL,
+            pieceName: '@activepieces/piece-that-does-not-exist',
+            pieceVersion: '0.0.1',
+            platformId: 'platformId',
+            timeoutInSeconds: 10,
+        }
+
+        const response = await execute(EngineOperationType.EXTRACT_PIECE_METADATA, missingPiece)
 
         expect(response.status).toBe(EngineResponseStatus.INTERNAL_ERROR)
         expect(disposable.dispose).toHaveBeenCalledTimes(1)

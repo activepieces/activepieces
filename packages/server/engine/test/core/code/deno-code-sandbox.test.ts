@@ -557,6 +557,28 @@ describe('denoCodeSandbox permission boundary', () => {
             }
         })
 
+        it('reset clears the step views that were set, and they can be set again', async () => {
+            const session = await denoCodeSandbox.createScriptSession({
+                scriptContext: { base: 1 },
+                functions: { double: (n: number) => n * 2 },
+            })
+            try {
+                await session.setGlobal('step_1', { out: 5 })
+                expect(await session.run('step_1.out + base')).toBe(6)
+
+                await session.reset()
+
+                expect(await session.run('typeof step_1')).toBe('undefined')
+                expect(await session.run('double(base)')).toBe(2)
+
+                await session.setGlobal('step_1', { out: 7 })
+                expect(await session.run('step_1.out')).toBe(7)
+            }
+            finally {
+                session.dispose()
+            }
+        })
+
         it('rejects runs after dispose', async () => {
             const session = await denoCodeSandbox.createScriptSession({
                 scriptContext: {},

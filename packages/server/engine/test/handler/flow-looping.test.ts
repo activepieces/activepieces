@@ -1,16 +1,46 @@
 import { deno } from '@activepieces/core-utils'
-import { FlowAction, FlowRunStatus, LoopStepOutput } from '@activepieces/shared'
+import { BranchOperator, FlowAction, FlowRunStatus, LoopStepOutput, RouterExecutionType } from '@activepieces/shared'
 import {  FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
-import { operationScope } from '../../src/lib/helper/operation-scope'
-import { buildCodeAction, buildSimpleLoopAction, generateMockEngineConstants } from './test-helper'
+import { buildCodeAction, buildPieceAction, buildRouterWithOneCondition, buildSimpleLoopAction, generateMockEngineConstants } from './test-helper'
 
 
 describe('flow with looping', () => {
 
-    afterEach(async () => {
+    afterEach(() => {
         vi.restoreAllMocks()
-        await operationScope.disposeAll()
+    })
+
+    it('does not show a step skipped in this iteration the output it had in an earlier one', async () => {
+        const readAfterRouter = buildPieceAction({
+            name: 'data_mapper_1',
+            pieceName: '@activepieces/piece-data-mapper',
+            actionName: 'advanced_mapping',
+            input: { mapping: { seen: '{{ data_mapper.output.total * 2 }}' } },
+        })
+        const routerOnOddItems: FlowAction = {
+            ...buildRouterWithOneCondition({
+                children: [buildPieceAction({
+                    name: 'data_mapper',
+                    pieceName: '@activepieces/piece-data-mapper',
+                    actionName: 'advanced_mapping',
+                    input: { mapping: { total: '{{ loop.output.item * 100 }}' } },
+                })],
+                conditions: [{ operator: BranchOperator.TEXT_EXACTLY_MATCHES, firstValue: '{{ loop.output.item % 2 }}', secondValue: '1', caseSensitive: false }],
+                executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
+            }),
+            nextAction: readAfterRouter,
+        }
+
+        const result = await flowExecutor.execute({
+            action: buildSimpleLoopAction({ name: 'loop', loopItems: '{{ [1,2,3,4] }}', firstLoopAction: routerOnOddItems }),
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants({ stepNames: ['loop', 'router', 'data_mapper', 'data_mapper_1'] }),
+        })
+
+        const loopOut = result.steps.loop as LoopStepOutput
+        const seen = loopOut.output?.iterations.map((iteration) => iteration.data_mapper_1.output)
+        expect(seen).toEqual([{ seen: 200 }, { seen: '' }, { seen: 600 }, { seen: '' }])
     })
 
     it('evaluates expressions on the loop item per iteration through one script session', async () => {
