@@ -235,7 +235,9 @@ describe('an agent on a platform tier', () => {
 
     it('runs the tools of an agent called as a tool on its own tier, and records them under its name', async () => {
         const { ctx, tier, keyId } = await tierOnKey({ servesOwnProject: true })
-        const callerTier = await createTier({ ctx, entries: [{ configId: keyId, modelId: TIER_MODEL }] })
+        const callerTierResponse = await ctx.post('/v1/platform-model-tiers', { name: 'Quick', emoji: '⚡', description: null, entries: [{ configId: keyId, modelId: TIER_MODEL }] })
+        expect(callerTierResponse.statusCode).toBe(StatusCodes.OK)
+        const callerTier = callerTierResponse.json()
         const called = await createAgent({ ctx, draft: { modelTierId: tier.id } })
         await db.update('agent', called.id, { published: called.draft })
         const caller = await createAgent({ ctx, draft: { modelTierId: callerTier.id } })
