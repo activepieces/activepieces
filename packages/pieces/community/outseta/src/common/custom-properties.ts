@@ -1,4 +1,9 @@
-import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
+import {
+  DynamicPropsValue,
+  isNil,
+  Property,
+  tryCatch,
+} from '@activepieces/pieces-framework';
 import { OutsetaClient } from './client';
 import { outsetaAuth } from '../auth';
 
@@ -19,19 +24,14 @@ export function customPropertiesProp(entityType: CustomPropertyEntity) {
         apiSecret: a.props.apiSecret,
       });
 
-      let res: { items?: Definition[]; Items?: Definition[] } | null;
-      try {
-        res = await client.get<{ items?: Definition[]; Items?: Definition[] }>(
-          `/api/v1/attributes/${entityType}/definitions?limit=100`
-        );
-      } catch {
-        return {};
-      }
-      const definitions: Definition[] = res?.items ?? res?.Items ?? [];
+      const { data: definitions, error } = await tryCatch(() =>
+        fetchDefinitions({ client, entityType })
+      );
+      if (error) return {};
 
       const props: DynamicPropsValue = {};
       for (const def of definitions) {
-        if (def.Hidden) continue;
+        if (def.Hidden || isNil(def.SystemName)) continue;
         const sysName = def.SystemName;
         const label = def.Label ?? sysName;
         const description = parseControlParams(def.ControlParams).HintText;
@@ -85,6 +85,22 @@ export function mergeCustomProperties<T extends Record<string, unknown>>(
   return entity;
 }
 
+async function names({ client, entityType }: DefinitionsParams): Promise<string[]> {
+  const definitions = await fetchDefinitions({ client, entityType });
+  return definitions
+    .map((definition) => definition.SystemName)
+    .filter((name): name is string => !isNil(name) && name !== '');
+}
+
+async function fetchDefinitions({
+  client,
+  entityType,
+}: DefinitionsParams): Promise<Definition[]> {
+  return client.getAllPages<Definition>(
+    `/api/v1/attributes/${entityType}/definitions`
+  );
+}
+
 function parseControlParams(raw: string | null | undefined): ControlParams {
   if (!raw) return {};
   try {
@@ -96,8 +112,13 @@ function parseControlParams(raw: string | null | undefined): ControlParams {
 
 type AuthShape = { props: { domain: string; apiKey: string; apiSecret: string } };
 
+type DefinitionsParams = {
+  client: OutsetaClient;
+  entityType: CustomPropertyEntity;
+};
+
 type Definition = {
-  SystemName: string;
+  SystemName: string | null;
   Label?: string;
   ControlType: 'Text' | 'Date' | 'Select' | 'CheckboxList' | string;
   ControlParams?: string | null;
@@ -109,5 +130,7 @@ type ControlParams = {
   Options?: string[];
   Pattern?: string;
 };
+
+export const outsetaCustomProperties = { names };
 
 export type CustomPropertyEntity = 'Account' | 'Person' | 'Deal';
