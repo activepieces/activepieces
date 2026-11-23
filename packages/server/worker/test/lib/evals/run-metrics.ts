@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/core-utils'
+import { isNil, tryCatch } from '@activepieces/core-utils'
 import { agentToolSkills } from '@activepieces/shared'
 import { LanguageModelV4Usage } from '@ai-sdk/provider'
 import { ToolExecutionOptions, ToolSet } from 'ai'
@@ -22,9 +22,12 @@ function createRecorder(): MetricsRecorder {
                 ...tool,
                 execute: async (input: unknown, options: ToolExecutionOptions<unknown>) => {
                     const callStartedAt = Date.now()
-                    const output = await execute(input, options)
+                    const { data: output, error } = await tryCatch(async () => execute(input, options))
                     const finishedAt = Date.now()
-                    toolTimings.push({ toolName: agentToolSkills.effectiveToolCall({ toolName, input }).toolName, durationMs: finishedAt - callStartedAt, finishedAtMs: finishedAt - startedAt, succeeded: agentWorkerTools.isSuccessResult(output) })
+                    toolTimings.push({ toolName: agentToolSkills.effectiveToolCall({ toolName, input }).toolName, durationMs: finishedAt - callStartedAt, finishedAtMs: finishedAt - startedAt, succeeded: isNil(error) && agentWorkerTools.isSuccessResult(output) })
+                    if (!isNil(error)) {
+                        throw error
+                    }
                     return output
                 },
             }]
