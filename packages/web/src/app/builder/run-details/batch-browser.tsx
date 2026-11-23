@@ -9,6 +9,7 @@ import {
   CardListItemSkeleton,
 } from '@/components/custom/card-list';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import { StatusBadge } from '@/components/custom/status-badge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,7 +23,6 @@ import { useBuilderStateContext } from '../builder-hooks';
 import {
   BATCH_PAGE_SIZE,
   BatchHeaderState,
-  BatchStatusBadge,
   BatchStepRunOutput,
   FAILED_BATCH_STATUSES,
   batchUtils,
@@ -470,7 +470,7 @@ const BatchRow = ({
       <span className="w-[52px] shrink-0 text-right text-xs text-gray-11">
         {runDuration(run) ?? '—'}
       </span>
-      <StatusBadge badge={badge} />
+      <StatusBadge status={badge.status} icon={badge.Icon} text={badge.label} />
     </button>
   );
 };
@@ -513,7 +513,11 @@ const BatchDetail = ({
   return (
     <div className="flex flex-col gap-2 rounded-lg border p-3">
       <div className="flex items-center gap-2">
-        <StatusBadge badge={badge} />
+        <StatusBadge
+          status={badge.status}
+          icon={badge.Icon}
+          text={badge.label}
+        />
         <span className="text-sm font-semibold">
           {t('Batch {number}', {
             number: formatUtils.formatNumber(dispatchIndex + 1),
@@ -551,13 +555,6 @@ const BatchDetail = ({
     </div>
   );
 };
-
-const StatusBadge = ({ badge }: { badge: BatchStatusBadge }) => (
-  <Badge variant={badge.variant} className="shrink-0">
-    <badge.Icon />
-    {badge.label}
-  </Badge>
-);
 
 function progressGradient({
   total,

@@ -2,11 +2,12 @@ import { ApId, PlatformId, ProjectId } from '@activepieces/core-utils'
 
 export const getAiProviderConfirmKey = (providerId: string): string => `ai_provider:confirm-downgrade:${providerId}`
 export const getManagedAiProviderKeyLockKey = (platformId: PlatformId): string => `ai_provider_managed_key_${platformId}`
+export const getAiProviderUpdateLockKey = (providerId: string): string => `ai_provider_update_${providerId}`
 export const getPlatformPlanNameKey = (platformId: PlatformId): string => `platform_plan:plan:${platformId}`
 export const getCreditsBalanceKey = (platformId: PlatformId): string => `platform_plan:credits:${platformId}`
 export const getAppSumoAiCreditsBalanceKey = (platformId: PlatformId): string => `platform_plan:appsumo-ai-credits:${platformId}`
 export const getBillingEnforcedKey = (platformId: PlatformId): string => `platform_plan:billing-enforced:${platformId}`
-export const getBillingOverviewKey = (platformId: PlatformId): string => `platform_plan:billing-overview:v3:${platformId}`
+export const getBillingOverviewKey = (platformId: PlatformId): string => `platform_plan:billing-overview:v4:${platformId}`
 export const getEntitlementsForceRefreshKey = (platformId: PlatformId): string => `platform_plan:entitlements-force-refresh:${platformId}`
 export const getEntitlementsRefreshKey = (platformId: PlatformId): string => `platform_plan:entitlements-refresh:${platformId}`
 export const getCustomerStateRefreshKey = (platformId: PlatformId): string => `platform_plan:customer-state-refresh:${platformId}`

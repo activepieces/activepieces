@@ -49,6 +49,22 @@ describe('resolveModelIdForProvider', () => {
         expect(agentModelResolution.resolveModelIdForProvider({ provider: AIProviderName.VERTEX, selectedModel: 'gemini-2.5-flash', surface: 'flow', config })).toBe('gemini-2.5-flash')
     })
 
+    it('picks the listed model whose real model is the tier native model, not the first listed one', () => {
+        const config = {
+            baseUrl: 'https://litellm.example.com',
+            apiKeyHeader: 'Authorization',
+            models: [
+                { modelId: 'prod-smart', modelName: 'prod-smart', modelType: AIProviderModelType.TEXT, metadata: { realModelId: 'gpt-5.4' } },
+                { modelId: 'ap-fast', modelName: 'ap-fast', modelType: AIProviderModelType.TEXT, metadata: { realModelId: 'claude-haiku-4-5-20251001' } },
+            ],
+        }
+
+        expect(agentModelResolution.resolveModelIdForProvider({ provider: AIProviderName.LITELLM, selectedModel: 'fast', surface: 'chat', config })).toBe('ap-fast')
+        expect(agentModelResolution.resolveModelIdForProvider({ provider: AIProviderName.LITELLM, selectedModel: 'prod-smart', surface: 'chat', config })).toBe('prod-smart')
+        expect(agentModelResolution.resolveModelIdForProvider({ provider: AIProviderName.LITELLM, selectedModel: 'smart', surface: 'chat', config })).toBe('prod-smart')
+        expect(agentModelResolution.resolveModelIdForProvider({ provider: AIProviderName.LITELLM, selectedModel: 'fast', surface: 'chat', config, modelScope: 'selected', modelIds: ['prod-smart'] })).toBe('prod-smart')
+    })
+
     it('honours the key model allow-list over the curated default', () => {
         const scoped = { modelScope: 'selected' as const, modelIds: ['gemini-2.5-flash'] }
 

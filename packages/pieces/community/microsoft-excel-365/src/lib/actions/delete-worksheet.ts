@@ -28,7 +28,7 @@ export const deleteWorksheetAction = createAction({
     const drivePath = getDrivePath(storageSource, siteId as string, documentId as string);
 
     const client = createMSGraphClient(auth['access_token'], cloud);
-    await client.api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}`).delete();
+    await client.api(`${drivePath}/items/${workbookId}/workbook/worksheets/${encodeURIComponent(worksheetId)}`).delete();
     return { success: true };
   },
 });
