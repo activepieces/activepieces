@@ -606,7 +606,7 @@ describe('Project API', () => {
     })
 
     describe('Delete Project endpoint', () => {
-        it('Soft deletes project by id', async () => {
+        it('Deletes project by id', async () => {
             // arrange
             const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup()
 
@@ -633,8 +633,8 @@ describe('Project API', () => {
 
             // assert
             expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
-            const deletedProject = await databaseConnection().getRepository('project').findOne({ where: { id: mockProjectToDelete.id }, withDeleted: true })
-            expect(deletedProject!.deleted).not.toBeNull()
+            const deletedProject = await databaseConnection().getRepository('project').findOneBy({ id: mockProjectToDelete.id })
+            expect(deletedProject).toBeNull()
         })
 
         it('Succeeds if project has enabled flows', async () => {

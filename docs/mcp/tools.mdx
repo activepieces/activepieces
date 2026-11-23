@@ -6,7 +6,7 @@ description: "Complete catalog of all MCP tools available in Activepieces"
 
 ## Discovery
 
-These tools are always available (locked) and read-only. They help AI agents understand what's in the project before making changes.
+These tools are always available (locked) and read-only. The one exception is `ap_set_project_context`, which changes the selected project. They help AI agents understand what's in the project before making changes.
 
 ### ap_list_flows
 
@@ -50,11 +50,14 @@ Read the full untruncated settings of any step, including the trigger: piece inp
 
 ### ap_validate_flow
 
-Validate a flow for structural issues without publishing. Checks step validity, template references, and empty branches.
+Validate a flow for structural issues without publishing. Checks step validity, template references, and empty branches. Pass `folderName` instead to validate every flow in a folder and the links between them: Call Flow targets and inputs, and the tables and fields that Tables steps and table triggers use.
 
 | Input | Type | Required | Description |
 |-------|------|----------|-------------|
-| `flowId` | string | Yes | The flow ID |
+| `flowId` | string | No | The flow ID |
+| `folderName` | string | No | A folder that holds a solution of several flows and tables |
+
+Pass exactly one of `flowId` or `folderName`.
 
 ### ap_research_pieces
 
@@ -66,10 +69,14 @@ Research available pieces. Use `pieceNames` for bulk exact lookup (always return
 | `searchQuery` | string | No | Filter pieces by name |
 | `includeActions` | boolean | No | Include action details (only applies to searchQuery mode) |
 | `includeTriggers` | boolean | No | Include trigger details (only applies to searchQuery mode) |
+| `categories` | string[] | No | Filter by piece category, e.g. `SALES_AND_CRM` (only applies to searchQuery mode) |
+| `suggestionType` | string | No | `ACTION`, `TRIGGER`, or `ACTION_AND_TRIGGER`: also return the matching actions, triggers, or both (only applies to searchQuery mode) |
+| `locale` | string | No | Locale for piece metadata (only applies to searchQuery mode) |
+| `forIntent` | string | No | What you are trying to do. Each piece also returns `recommendedActions` ranked by AI guidance (only applies to pieceNames mode) |
 
 ### ap_search_actions
 
-Find piece actions by describing the task in natural language (e.g. *"send a message to a Slack channel"*). Returns the most relevant actions ranked by semantic similarity, or an empty list when nothing in the catalog matches — the tool does not force a match. Each result includes the piece name, action name, a one-line description, whether the action needs a connection, and a `connected` flag indicating whether the project already has a connection for that piece.
+Find piece actions by describing the task in natural language (e.g. *"send a message to a Slack channel"*). Returns the most relevant actions ranked by semantic similarity, or an empty list when nothing in the catalog matches — the tool does not force a match. Each result includes the piece name, action name, a one-line description, whether the action needs a connection, and a `connected` flag indicating whether the project already has a connection for that piece. When no embedding model is configured, or the embedding call fails, the tool falls back to a keyword search and the response has `"mode": "keyword"`.
 
 Available when [tool search](/mcp/tool-search) is enabled on the instance.
 
@@ -118,7 +125,7 @@ Resolve dropdown options for a single piece property. Returns available choices 
 | `actionOrTriggerName` | string | Yes | Action or trigger name (e.g., `send_channel_message`) |
 | `type` | string | Yes | `action` or `trigger` |
 | `propertyName` | string | Yes | The exact property name to resolve (e.g., `channel`) |
-| `auth` | string | Yes | Connection externalId — required to fetch options from the user's account |
+| `auth` | string | No | Connection externalId. Required for pieces that fetch options from the user's account; omit for pieces with no auth |
 | `input` | object | No | Values for parent properties that this field depends on (refreshers) |
 | `searchValue` | string | No | Search term to filter results for large dropdown lists (e.g., "sales" to find sales-related channels) |
 
@@ -149,7 +156,7 @@ Validate a step configuration before applying it. Returns field-level errors wit
 
 | Input | Type | Required | Description |
 |-------|------|----------|-------------|
-| `stepType` | string | Yes | `PIECE_ACTION`, `PIECE_TRIGGER`, `CODE`, `LOOP_ON_ITEMS`, or `ROUTER` |
+| `stepType` | string | Yes | `PIECE_ACTION`, `PIECE_TRIGGER`, `CODE`, `LOOP_ON_ITEMS`, `PROCESS_IN_BATCHES`, or `ROUTER` |
 | `pieceName` | string | No | For PIECE types: piece name (short names like `slack` accepted) |
 | `actionName` | string | No | For PIECE_ACTION: action name |
 | `triggerName` | string | No | For PIECE_TRIGGER: trigger name |
@@ -176,7 +183,7 @@ List configured AI providers and their available models. Use this to discover va
 
 | Input | Type | Required | Description |
 |-------|------|----------|-------------|
-| `provider` | string | No | Filter by provider (`openai`, `anthropic`, `google`, `azure`, `openrouter`, `activepieces`, `cloudflare-gateway`, `custom`) |
+| `provider` | string | No | Filter by provider (`openai`, `openrouter`, `anthropic`, `azure`, `google`, `activepieces`, `cloudflare-gateway`, `custom`, `bedrock`, `vertex`, `mistral`, `xai`, `deepseek`, `zai`, `qwen`, `minimax`, `moonshot`, `meta`, `nvidia`, `cohere`) |
 
 ### ap_list_tables
 
@@ -214,6 +221,7 @@ List recent flow runs with optional filters.
 |-------|------|----------|-------------|
 | `flowId` | string | No | Filter by flow |
 | `status` | string | No | Filter by status (SUCCEEDED, FAILED, RUNNING, etc.) |
+| `environment` | string | No | `PRODUCTION` or `TESTING`. Defaults to `PRODUCTION` when no `flowId` is given. |
 | `limit` | number | No | Max runs (default 10, max 50) |
 
 ### ap_get_run
@@ -235,7 +243,9 @@ Get step-by-step instructions for setting up connections or AI providers. Return
 
 ### ap_set_project_context
 
-Set or clear the active project context. All tools require a project context to operate. Call with a `projectId` to select a project, or without to clear the selection. Always returns the list of available projects.
+Set or clear the active project context. All tools except `ap_research_pieces`, `ap_search_actions`, `ap_search_triggers`, and `ap_get_piece_props` require a project context to operate. Call with a `projectId` to select a project, or without to clear the selection. Always returns the list of available projects.
+
+Available only on the platform MCP server (`/mcp/platform`).
 
 | Input | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -253,7 +263,16 @@ Create a new empty flow.
 
 | Input | Type | Required | Description |
 |-------|------|----------|-------------|
-| `flowName` | string | Yes | Display name for the flow |
+| `flowName` | string | Yes | Display name for the flow (max 255 characters) |
+| `folderName` | string | No | Name of an existing folder to put the flow in. Create it first with `ap_create_folder`. |
+
+### ap_create_folder
+
+Create a folder to hold one solution's flows and tables, or get the existing folder with that name (matched case-insensitively). Pass the same `folderName` to `ap_create_flow`, `ap_build_flow`, and `ap_create_table`.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `folderName` | string | Yes | The folder name (1-255 characters) |
 
 ### ap_duplicate_flow
 
@@ -291,7 +310,7 @@ Pass exactly one of `folderName` or `uncategorized`.
 
 ### ap_change_flow_status
 
-Enable or disable a flow.
+Enable or disable a published flow.
 
 | Input | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -308,7 +327,7 @@ Permanently delete a flow and all its versions. This cannot be undone.
 
 ### ap_lock_and_publish
 
-Publish the current draft of a flow. Validates all steps are configured.
+Publish the current draft of a flow and enable it. Validates that all steps that are not skipped are configured.
 
 | Input | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -322,7 +341,7 @@ Add, configure, and remove steps in a flow.
 
 ### ap_build_flow
 
-Create a complete flow in one call — trigger plus any number of steps. Steps are added sequentially (trigger → step_1 → step_2 → ...). All steps are validated on creation. Use granular tools (`ap_add_step`, `ap_update_step`) to modify existing flows or add nested structures (loop contents, router branches).
+Create a complete flow in one call — trigger plus any number of steps. Steps are added sequentially by default (trigger → step_1 → step_2 → ...); a step can also go inside a loop (see below). All steps are validated on creation. Use granular tools (`ap_add_step`, `ap_update_step`) to modify existing flows or add router branches.
 
 Returns the flow ID, a direct `flowUrl` link to the flow in the editor, step count, and validation status.
 
@@ -331,12 +350,17 @@ Returns the flow ID, a direct `flowUrl` link to the flow in the editor, step cou
 | `flowName` | string | Yes | Name for the new flow |
 | `trigger` | object | Yes | `{pieceName, triggerName, input?, auth?}` |
 | `steps` | array | Yes | Array of step specs, each with `type`, `displayName`, and type-specific fields |
+| `folderName` | string | No | Name of an existing folder to put the flow in. Create it first with `ap_create_folder`. |
 
 **Step types in the array:**
 - **PIECE**: `pieceName`, `actionName`, `input`, `auth`, `continueOnFailure`, `retryOnFailure`
-- **CODE**: `sourceCode`, `input`, `continueOnFailure`, `retryOnFailure`
+- **CODE**: `sourceCode`, `packageJson`, `input`, `continueOnFailure`, `retryOnFailure`
 - **LOOP_ON_ITEMS**: `loopItems`
-- **ROUTER**: creates a router with Branch 1 + Otherwise
+- **PROCESS_IN_BATCHES**: `loopItems`, `batchSize` (default 10), `continueOnFailure`. It splits the list into batches and runs its body once per batch.
+
+ROUTER steps are not supported here. Add the router afterwards with `ap_add_step`, then configure its branches with `ap_add_branch`.
+
+Every step also accepts `parentStepName` and `stepLocationRelativeToParent` (`AFTER`, `INSIDE_LOOP`, `INSIDE_BATCH`, or `INSIDE_BRANCH`; default `AFTER`). To nest a step inside a loop, set `parentStepName` to the loop step and `stepLocationRelativeToParent` to `INSIDE_LOOP`. To nest a step inside the body of a batch, set `parentStepName` to the `PROCESS_IN_BATCHES` step and `stepLocationRelativeToParent` to `INSIDE_BATCH`.
 
 ### ap_update_trigger
 
@@ -359,8 +383,8 @@ Add a new step to a flow. Optionally configure it in the same call by providing 
 |-------|------|----------|-------------|
 | `flowId` | string | Yes | The flow ID |
 | `parentStepName` | string | Yes | Step to insert after/into |
-| `stepLocationRelativeToParent` | string | Yes | `AFTER`, `INSIDE_LOOP`, or `INSIDE_BRANCH` |
-| `stepType` | string | Yes | `CODE`, `PIECE`, `LOOP_ON_ITEMS`, or `ROUTER` |
+| `stepLocationRelativeToParent` | string | Yes | `AFTER`, `INSIDE_LOOP`, `INSIDE_BATCH`, `INSIDE_BRANCH`, `INSIDE_ON_SUCCESS_BRANCH`, or `INSIDE_ON_FAILURE_BRANCH`. The last two need `continueOnFailure` on the parent step. |
+| `stepType` | string | Yes | `CODE`, `PIECE`, `LOOP_ON_ITEMS`, `PROCESS_IN_BATCHES`, or `ROUTER` |
 | `displayName` | string | Yes | Step display name |
 | `pieceName` | string | No | For PIECE steps |
 | `actionName` | string | No | For PIECE steps |
@@ -369,8 +393,9 @@ Add a new step to a flow. Optionally configure it in the same call by providing 
 | `auth` | string | No | Connection externalId |
 | `sourceCode` | string | No | For CODE steps: JavaScript/TypeScript source |
 | `packageJson` | string | No | For CODE steps: npm dependencies |
-| `loopItems` | string | No | For LOOP steps: items expression |
-| `continueOnFailure` | boolean | No | For CODE/PIECE steps: continue flow if this step fails (default: false) |
+| `loopItems` | string | No | For LOOP_ON_ITEMS and PROCESS_IN_BATCHES steps: items expression |
+| `batchSize` | number | No | For PROCESS_IN_BATCHES steps: items in each batch (default: 10) |
+| `continueOnFailure` | boolean | No | For CODE/PIECE/PROCESS_IN_BATCHES steps: continue flow if this step fails (default: false) |
 | `retryOnFailure` | boolean | No | For CODE/PIECE steps: retry this step on failure (default: false) |
 
 ### ap_update_step
@@ -385,6 +410,7 @@ Update an existing step's settings. Auto-fills default values for optional prope
 | `input` | object | No | Step configuration |
 | `auth` | string | No | Connection externalId |
 | `actionName` | string | No | For PIECE steps |
+| `pieceVersion` | string | No | For PIECE steps: `latest` or an exact version (e.g. `1.2.3`). Inputs that the new version does not have are dropped. |
 | `loopItems` | string | No | For LOOP steps |
 | `sourceCode` | string | No | For CODE steps: JavaScript/TypeScript source code |
 | `packageJson` | string | No | For CODE steps: npm dependencies as JSON string |
@@ -470,7 +496,7 @@ Add, update, or delete canvas notes on a flow.
 | `operation` | string | Yes | `ADD`, `UPDATE`, or `DELETE` |
 | `noteId` | string | No | Required for UPDATE/DELETE |
 | `content` | string | No | Note text (required for ADD) |
-| `color` | string | No | Note color |
+| `color` | string | No | `orange`, `red`, `green`, `blue`, `purple`, or `yellow` (default `yellow`) |
 | `position` | object | No | `{x, y}` canvas position |
 | `size` | object | No | `{width, height}` note dimensions (default 200x200) |
 
@@ -488,8 +514,9 @@ Create a new table with an initial set of fields.
 |-------|------|----------|-------------|
 | `name` | string | Yes | Table name |
 | `fields` | array | Yes | Fields: `{name, type, options?}` |
+| `folderName` | string | No | Name of an existing folder to put the table in. Create it first with `ap_create_folder`. |
 
-**Field types:** `TEXT`, `NUMBER`, `DATE`, `STATIC_DROPDOWN` (requires `options` array)
+**Field types:** `TEXT`, `NUMBER`, `DATE`, `DATETIME`, `STATIC_DROPDOWN` (requires `options` array)
 
 ### ap_delete_table
 
@@ -538,6 +565,7 @@ Permanently delete one or more records.
 
 | Input | Type | Required | Description |
 |-------|------|----------|-------------|
+| `tableId` | string | Yes | The table ID |
 | `recordIds` | array | Yes | Record IDs to delete |
 | `displayName` | string | No | Short approval prompt shown to the user |
 

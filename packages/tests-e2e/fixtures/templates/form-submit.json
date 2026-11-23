@@ -1,0 +1,40 @@
+{
+  "name": "Form submit",
+  "flows": [
+    {
+      "displayName": "Form submit",
+      "schemaVersion": null,
+      "notes": null,
+      "trigger": {
+        "name": "trigger",
+        "type": "PIECE_TRIGGER",
+        "valid": true,
+        "displayName": "Web Form",
+        "settings": {
+          "pieceName": "@activepieces/piece-forms",
+          "pieceVersion": "0.5.1",
+          "triggerName": "form_submission",
+          "input": {
+            "waitForResponse": false,
+            "inputs": [
+              {
+                "displayName": "Full Name",
+                "type": "text",
+                "description": "",
+                "required": true
+              },
+              {
+                "displayName": "Attachment",
+                "type": "file",
+                "description": "",
+                "required": false
+              }
+            ]
+          },
+          "propertySettings": {}
+        },
+        "lastUpdatedDate": "2026-11-18T00:00:00.000Z"
+      }
+    }
+  ]
+}

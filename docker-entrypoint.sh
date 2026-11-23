@@ -43,7 +43,16 @@ case "$AP_CONTAINER_TYPE" in
         node --enable-source-maps "$WORKER_SCRIPT" &
         worker_pid=$!
 
-        trap 'kill "$app_pid" "$worker_pid" 2>/dev/null' TERM INT
+        # Stop the worker first and keep the app up until it exits: the worker finishes its
+        # running flows and reports them to the app before the app goes down.
+        stop_worker_then_app() {
+            kill -TERM "$worker_pid" 2>/dev/null
+            wait "$worker_pid" 2>/dev/null
+            kill -TERM "$app_pid" 2>/dev/null
+            wait "$app_pid" 2>/dev/null
+            exit 0
+        }
+        trap stop_worker_then_app TERM INT
 
         while kill -0 "$app_pid" 2>/dev/null && kill -0 "$worker_pid" 2>/dev/null; do
             sleep 1

@@ -12,7 +12,7 @@ icon: "cards"
 <Snippet file="replace-oauth2-apps.mdx" />
 
 <Info>
-   "connectionName" is the externalId of the connection (you can get it by hovering the connection name in the connections table).  <br />
+   "connectionName" is the externalId of the connection (to find it, hover the piece icon of the connection in the connections table: the tooltip shows the External ID).  <br />
    We kept the same parameter name for backward compatibility, anyone upgrading their instance from < 0.35.1, will not face issues in that regard.
 </Info>
 
@@ -40,7 +40,7 @@ icon: "cards"
         | Parameter Name | Required | Type   | Description                                 |
         | -------------- | -------- | ------ | ------------------------------------------- |
         | pieceName      | ✅      | string | The name of the piece you want to create a connection for.
-        | connectionName | ❌      | string | The external Id of the connection (you can get it by hovering the connection name in the connections table), when provided the connection created/upserted will use this as the external Id and display name.
+        | connectionName | ❌      | string | The external Id of the connection. When provided, the connection uses it as its external Id and display name, and the dialog does not ask for a name. If the project already has a connection with this external Id, saving the dialog replaces its value. `connectionName` may hold only letters, digits and `_ - @ + .`.
         | newWindow      | ❌      | \{ width?: number, height?: number, top?: number, left?: number \} | If set the connection dialog will be opened in a new window instead of an iframe taking the full page.
 
         **Connect Result**
@@ -58,6 +58,7 @@ icon: "cards"
         <Info>
         `name` is the externalId of the connection.
         `connection` is undefined if the user closes the dialog and doesn't create a connection.
+        The promise rejects if the dialog cannot load the piece, for example when `pieceName` is wrong.
         </Info>
 
        

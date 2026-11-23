@@ -3,6 +3,8 @@ title: "Global Connections"
 icon: "globe"
 ---
 
+<Snippet file="enterprise-feature.mdx" />
+
 Global Connections enable platform admins to create and manage connections to external apps that can be shared across multiple projects.
 
 Instead of every project or user creating a separate connection to the same account, an organization can create one connection and make it available to the projects that need it.
@@ -17,16 +19,16 @@ For each connection, you can see:
 
 - **Name**: The app or integration connected
 - **Status**: Whether the connection is currently active
-- **Connected At**: When the connection was created
+- **Connected At**: When the connection was last updated
 - **Projects**: How many projects have access to the connection
 
 You can also search for connections and filter them by status.
 
 ### **Create a Global Connection**
 
-You can create a new global connection using either 
+Depending on the app, you can create a new global connection using one of these methods:
 
-- **OAuth2**: Quickly connect using a preconfigured OAuth2 app. No setup required.
+- **OAuth2 (Recommended)**: Quickly connect using a preconfigured OAuth2 app. No setup required.
 - **Custom OAuth2 App (Advanced)**: Connect using your own OAuth2 credentials for more flexibility and control.
 
 - **Service Account (Advanced):** Connect using service account credentials for secure, non-user-based access to an external application.
@@ -39,15 +41,15 @@ You can create a new global connection using either 
 
 **Step 3**: Select the app you want to connect.
 
-**Step 4**: Select which projects the connection should be available for
+**Step 4**: In **Available for Projects**, select which projects the connection should be available for
 
-**Step 5**: Select if you want that connection to be included by default in new projects 
+**Step 5**: Select **Include by default in new projects** if you want the **Create Project** dialog to pre-select this connection
 
-**Step 6**: Select the permissions you want that connection to have
+**Step 6**: If the app shows **Permissions**, select the permissions you want that connection to have
 
-**Step 7**: Click Connect and follow the authentication instructions
+**Step 7**: Click **Connect** and follow the authentication instructions
 
-**Step 8:** Click Save
+**Step 8:** Click **Save**
 
 <video src="https://cdn.activepieces.com/videos/docs/Create-Global-Connection-With-Oauth-2.mp4" controls />
 
@@ -61,14 +63,20 @@ You can create a new global connection using either 
 
 **Step 4**: Click **Try another method**
 
-**Step 5:** Select **Custom OAuth2 App (Advanced)** or **Service Account (Advanced)** depending on what you want
+**Step 5:** Select **Custom OAuth2 App (Advanced)** or **Service Account (Advanced)** depending on what you want, then click **Next**
 
 You can search for Global Connections by typing the name of the connection in the search bar
 
 You can also filter them by **Status**: Active, Error, or Missing.
 
+### **Edit or Delete a Global Connection**
+
+- **Edit**: Click the pencil icon on the row to change the name, the projects in **Available for Projects**, or **Include by default in new projects**.
+- **Reconnect**: Click the plug icon (**Reconnect**) on the row to authenticate the connection again.
+- **Delete**: Select one or more rows, then click **Delete**. Project members cannot delete a global connection from their project.
+
 ### **Global Connections vs Connections**
 
-A **Connection** is one account connected to Activepieces, such as a user's Gmail or Slack account. It is available only in the project where it was created. The Connections page in Platform Admin gives admins a central place to view and filter connections from all projects across the platform.
+A **Connection** is one account connected to Activepieces, such as a user's Gmail or Slack account. It is available only in the project where it was created. The Connections page in Platform Admin gives admins a central place to view and filter connections from all projects across the platform. That page also lists global connections, marked **Global** in the **Scope** column.
 
 A **Global Connection** is a shared connection that a platform admin can make available to multiple projects in the platform. Use it when different projects need to use the same account without creating a separate connection for each project.

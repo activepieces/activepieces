@@ -256,14 +256,15 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             createdBefore,
             excludeFlowRunIds,
         })
-        const cancelParentFlowRuns = await Promise.allSettled(flowRuns.map(flowRun => cancelSingleRun(log, flowRun, platformId)))
+        const limit = pLimit(10)
+        const cancelParentFlowRuns = await Promise.allSettled(flowRuns.map(flowRun => limit(() => cancelSingleRun(log, flowRun, platformId))))
         const childFlows = await getAllChildRuns(flowRuns.map(flowRun => flowRun.id))
         log.info({
             flowRunsCount: flowRuns.length,
             childFlowCount: childFlows.length,
         }, 'Found cancellable descendant flows')
 
-        const canceChildlPromises = await Promise.allSettled(childFlows.map(flowRun => cancelSingleRun(log, flowRun, platformId)))
+        const canceChildlPromises = await Promise.allSettled(childFlows.map(flowRun => limit(() => cancelSingleRun(log, flowRun, platformId))))
         if (cancelParentFlowRuns.some(r => r.status === 'rejected')) {
             throw cancelParentFlowRuns.find(r => r.status === 'rejected')!.reason
         }

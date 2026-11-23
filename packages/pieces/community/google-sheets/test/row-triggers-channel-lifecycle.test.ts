@@ -36,6 +36,20 @@ afterEach(() => {
 });
 
 describe.each(cases)('$name channel lifecycle', ({ trigger, channelKey }) => {
+	it('handles the new channel sync that arrives before renew has saved the channel', async () => {
+		const { store } = memoryStore();
+		await trigger.onEnable(ctx({ store }));
+		fakeGoogle.tabs[0].rows.push(cells({ values: ['Bob'] }));
+		let syncOutput: unknown;
+		fakeGoogle.beforeNextWatch = async () => {
+			const id = await store.get<string>(`${channelKey}_pending`);
+			syncOutput = await trigger.run(ctx({ store, headers: { 'x-goog-resource-state': 'sync', 'x-goog-channel-id': id ?? '' } }));
+		};
+		await trigger.onRenew(ctx({ store }));
+		expect(rowEvents({ value: syncOutput }).map((event) => event.row)).toEqual([3]);
+		expect(await store.get(`${channelKey}_pending`)).toBeNull();
+	});
+
 	it('renew stores the new channel and then stops the old one', async () => {
 		const { store } = memoryStore();
 		await trigger.onEnable(ctx({ store }));

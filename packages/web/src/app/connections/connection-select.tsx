@@ -53,6 +53,7 @@ import {
   useIsPlatformAdmin,
 } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
+import { statusColors } from '@/lib/status-colors';
 import { cn } from '@/lib/utils';
 
 export function ConnectionSelect({
@@ -352,23 +353,24 @@ function getConnectionStatusDisplay(status: AppConnectionStatus): {
   iconClassName: string;
   label: string;
 } {
+  const iconClassName = statusColors.of(status).text;
   switch (status) {
     case AppConnectionStatus.ACTIVE:
       return {
         Icon: Check,
-        iconClassName: 'text-success-11',
+        iconClassName,
         label: t('Connected'),
       };
     case AppConnectionStatus.ERROR:
       return {
         Icon: X,
-        iconClassName: 'text-danger-11',
+        iconClassName,
         label: t('Error'),
       };
     case AppConnectionStatus.MISSING:
       return {
         Icon: Unplug,
-        iconClassName: 'text-gray-11',
+        iconClassName,
         label: t('Missing'),
       };
   }
