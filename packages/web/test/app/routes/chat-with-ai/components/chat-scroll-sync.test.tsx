@@ -6,6 +6,7 @@ import { useRef } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  ExposeScrollToBottom,
   KeepBottomOnFooterGrowth,
   MatchScrollGutter,
 } from '@/app/routes/chat-with-ai/components/chat-scroll-sync';
@@ -108,6 +109,18 @@ describe('chat scroll sync', () => {
     });
     resizeAll();
     expect(mocks.scrollToBottom).not.toHaveBeenCalled();
+  });
+
+  it('exposes scroll to bottom so a send can jump there after scrolling up', () => {
+    mocks.isAtBottom = false;
+    const scrollToBottomRef = { current: null as (() => void) | null };
+    const { unmount } = render(
+      <ExposeScrollToBottom scrollToBottomRef={scrollToBottomRef} />,
+    );
+    scrollToBottomRef.current?.();
+    expect(mocks.scrollToBottom).toHaveBeenCalledWith('instant');
+    unmount();
+    expect(scrollToBottomRef.current).toBeNull();
   });
 
   it('gives the footer the transcript scrollbar gutter', () => {
