@@ -1,4 +1,4 @@
-import { Property } from '@activepieces/pieces-framework';
+import { MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { mindeeFiles } from '../common/file';
 import { InferenceOptions, mindeeInference, MindeeProduct } from '../common/inference';
 import { mindeeProps } from '../common/props';
@@ -11,7 +11,11 @@ function builderProps(product: MindeeProduct) {
       description: 'The document to process (PDF, JPEG, PNG, WEBP, TIFF or HEIC).',
       required: true,
     }),
-    alias: mindeeProps.aliasProp(),
+    wait_info: Property.MarkDown({
+      value: 'If Mindee needs more than 4 minutes, the step fails with a job ID. Use Get Job Status, then Get Result, to collect it.',
+      variant: MarkdownVariant.INFO,
+    }),
+    alias: mindeeProps.aliasProp({ advanced: true }),
   };
 }
 
@@ -27,7 +31,7 @@ function aiProps(product: MindeeProduct) {
       description: 'Public https:// URL of the document. Mindee downloads it directly.',
       required: true,
     }),
-    alias: mindeeProps.aliasProp(),
+    alias: mindeeProps.aliasProp({ advanced: false }),
   };
 }
 
