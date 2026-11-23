@@ -1,4 +1,4 @@
-import { RefObject, useEffect, useRef } from 'react';
+import { MutableRefObject, RefObject, useEffect, useRef } from 'react';
 import { useStickToBottomContext } from 'use-stick-to-bottom';
 
 export function MatchScrollGutter({
@@ -51,6 +51,23 @@ export function KeepBottomOnFooterGrowth({
     observer.observe(footer);
     return () => observer.disconnect();
   }, [footerRef, scrollToBottom]);
+  return null;
+}
+
+export function ExposeScrollToBottom({
+  scrollToBottomRef,
+}: {
+  scrollToBottomRef: MutableRefObject<(() => void) | null>;
+}) {
+  const { scrollToBottom } = useStickToBottomContext();
+  useEffect(() => {
+    scrollToBottomRef.current = () => {
+      Promise.resolve(scrollToBottom('instant')).catch(() => undefined);
+    };
+    return () => {
+      scrollToBottomRef.current = null;
+    };
+  }, [scrollToBottomRef, scrollToBottom]);
   return null;
 }
 
