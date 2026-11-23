@@ -7,7 +7,8 @@ Use predefined connections to allow users to access your piece in the embedded a
 
 The high-level steps are:
 - Create a global connection for a project using the API in the platform admin. Only platform admins can edit or delete global connections.
-- (Optional) Hide the connections dropdown in the piece settings.
+- The embedded user sees the global connection, with a globe icon, in the connection dropdown of each step of that piece, and can select it.
+- (Optional) Hide the connections dropdown in the piece settings, and let the piece read the connection by its name.
 
 ### Prerequisites
 
@@ -51,14 +52,14 @@ await createGlobalConnection({
   apiKey,
   instanceUrl,
   pieceName,
-  props,
+  props: connectionProps,
   pieceAuthType
 });
 
 ```
 Implementation:
 
-```js
+```ts
 async function getOrCreateProject({
     projectExternalId,
     apiKey,
@@ -171,18 +172,15 @@ async function createGlobalConnection({
     <Step title="Fetch the connection">
         Here is example how you can fetch the connection value based on naming convention, make sure this naming convention is followed when creating a global connection.
 
-```js
+```ts
 import {
    ConnectionsManager,
+   createTrigger,
+   isNil,
+   PiecePropValueSchema,
    Property,
    TriggerStrategy
 } from "@activepieces/pieces-framework";
-import {
-   createTrigger
-} from "@activepieces/pieces-framework";
-import {
-   isNil
-} from "@activepieces/shared";
 // Add this import from the index.ts file, where it contains the definition of the auth object.
 import { auth } from '../..';
 

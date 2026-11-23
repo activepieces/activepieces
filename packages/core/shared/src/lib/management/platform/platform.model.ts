@@ -1,4 +1,4 @@
-import { ApId, BaseModelSchema, DateOrString, Nullable } from '@activepieces/core-utils'
+import { ApId, BaseModelSchema, DateOrString, formErrors, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { FederatedAuthnProviderConfig, FederatedAuthnProviderConfigWithoutSensitiveData } from '../../core/federated-authn'
 import { SsoDomainVerification } from './sso-domain-verification'
@@ -163,7 +163,7 @@ export type PlatformPlanWithOnlyLimits = PlatformPlanLimits
 
 export const HEX_COLOR_PATTERN = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/
 
-export const ThemeHexColor = z.string().regex(HEX_COLOR_PATTERN, 'invalidHexColor')
+export const ThemeHexColor = z.string().regex(HEX_COLOR_PATTERN, formErrors.invalidHexColor)
 
 export const PlatformThemeColors = z.object({
     avatar: ThemeHexColor.optional(),
