@@ -19,7 +19,7 @@ export const newPostTrigger = createTrigger({
   props: {
     space_ids: Property.Array({
       displayName: 'Space IDs',
-      description: 'Only watch these spaces. Leave empty for all spaces the connected member can see.',
+      description: 'Copy IDs from space_id in a test run. Leave empty for all spaces.',
       required: false,
     }),
   },

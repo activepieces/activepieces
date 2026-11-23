@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, MarkdownVariant, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { bindTokenStore } from '../common/client';
 import { bettermodeAuth } from '../auth';
 import { bettermodePolling, Checkpoint } from '../common/polling';
@@ -15,7 +15,12 @@ export const newMemberTrigger = createTrigger({
   aiMetadata: {
     description: 'Fires once per newly joined community member, checked on a schedule, oldest first. Emails are only included for admin connections.',
   },
-  props: {},
+  props: {
+    adminNote: Property.MarkDown({
+      value: 'Member emails are included only when the connection uses an admin account.',
+      variant: MarkdownVariant.INFO,
+    }),
+  },
   type: TriggerStrategy.POLLING,
   sampleData: SAMPLE_MEMBER,
   outputSchema: bettermodeSchemas.member,
