@@ -1438,6 +1438,9 @@
       "@activepieces/piece-timelines-ai": [
         "packages/pieces/community/timelines-ai/src/index.ts"
       ],
+      "@activepieces/piece-tinko": [
+        "packages/pieces/community/tinko/src/index.ts"
+      ],
       "@activepieces/piece-todoist": [
         "packages/pieces/community/todoist/src/index.ts"
       ],

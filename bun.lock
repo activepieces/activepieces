@@ -9469,6 +9469,19 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/tinko": {
+      "name": "@activepieces/piece-tinko",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/tiny-talk-ai": {
       "name": "@activepieces/piece-tiny-talk-ai",
       "version": "0.1.8",
@@ -12972,6 +12985,8 @@
     "@activepieces/piece-time-ops": ["@activepieces/piece-time-ops@workspace:packages/pieces/community/time-ops"],
 
     "@activepieces/piece-timelines-ai": ["@activepieces/piece-timelines-ai@workspace:packages/pieces/community/timelines-ai"],
+
+    "@activepieces/piece-tinko": ["@activepieces/piece-tinko@workspace:packages/pieces/community/tinko"],
 
     "@activepieces/piece-tiny-talk-ai": ["@activepieces/piece-tiny-talk-ai@workspace:packages/pieces/community/tiny-talk-ai"],
 
