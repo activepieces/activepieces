@@ -14,8 +14,6 @@ const LOCKED_PAGES = [
 ];
 
 test.describe('Plan gates', { tag: ['@feature:plan-gates', '@surface'] }, () => {
-  test.skip(process.env.AP_EDITION === 'ee', 'The EE config runs scenarios/ce too, and its license plan turns these flags on');
-
   for (const gate of LOCKED_PAGES) {
     test(`a plan without ${gate.flag} shows the upgrade state`, async ({ page }) => {
       const planGatesPage = new PlanGatesPage(page);
