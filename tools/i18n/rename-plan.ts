@@ -1,5 +1,5 @@
 import { SourceStringsModel, StringTranslationsModel } from '@crowdin/crowdin-api-client'
-import { MAX_KEY_LENGTH_FOR_CORWDIN } from '../../../packages/core/piece-types/src/lib/piece'
+import { MAX_KEY_LENGTH_FOR_CORWDIN } from '../../packages/core/piece-types/src/lib/piece'
 import { TranslatableTextByJsonPath } from './translatable-text-by-json-path'
 
 function classifyEdit({ oldEnglish, newEnglish }: EnglishTextPair): EditKind {
