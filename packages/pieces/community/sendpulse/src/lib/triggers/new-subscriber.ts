@@ -1,12 +1,33 @@
-import {
-  createTrigger,
-  TriggerStrategy,
-  WebhookResponse,
-} from '@activepieces/pieces-framework';
+import { createTrigger, OutputSchema, TriggerStrategy } from '@activepieces/pieces-framework';
 import { sendpulseAuth } from '../common/auth';
-import { sendpulseApiCall } from '../common/client';
+import { createWebhook, deleteWebhook, epochToIso, parseMailingListId, readWebhookEvents, readWebhookEmail } from '../common/client';
 import { mailingListDropdown } from '../common/props';
-import { HttpMethod } from '@activepieces/pieces-common';
+
+const WEBHOOK_ACTION = 'new_emails';
+
+const sampleData = {
+  id: 'subscriber@example.com_1496827625',
+  email: 'subscriber@example.com',
+  mailingListId: '123456',
+  source: 'subscription form',
+  variables: {
+    name: 'John Doe',
+  },
+  addedAt: '2017-06-07T09:27:05.000Z',
+  timestamp: '1496827625',
+};
+
+const outputSchema: OutputSchema = {
+  fields: [
+    { key: 'id', label: 'Event ID' },
+    { key: 'email', label: 'Email', format: 'email' },
+    { key: 'mailingListId', label: 'Mailing List ID' },
+    { key: 'source', label: 'Source' },
+    { key: 'variables', label: 'Variables' },
+    { key: 'addedAt', label: 'Added At', format: 'datetime' },
+    { key: 'timestamp', label: 'Unix Timestamp' },
+  ],
+};
 
 export const newSubscriberTrigger = createTrigger({
   auth: sendpulseAuth,
@@ -21,115 +42,44 @@ export const newSubscriberTrigger = createTrigger({
   props: {
     mailingListId: mailingListDropdown,
   },
-
+  outputSchema,
   async onEnable(context) {
-    const { mailingListId } = context.propsValue;
-    
-    try {
-      const webhookResponse = await sendpulseApiCall<{
-        success: boolean;
-        data: Array<{ id: number; action: string; url: string }>;
-      }>({
-        method: HttpMethod.POST,
-        auth: context.auth.props,
-        resourceUri: '/v2/email-service/webhook',
-        body: {
-          url: context.webhookUrl,
-          actions: ['new_emails'],
-        },
-      });
-
-      if (webhookResponse.success && webhookResponse.data?.length > 0) {
-        const webhook = webhookResponse.data.find(w => w.action === 'new_emails');
-        if (webhook) {
-          await context.store.put('webhook_id', webhook.id);
-          await context.store.put('mailing_list_id', mailingListId);
-        }
-      } else {
-        throw new Error('Failed to create webhook');
-      }
-    } catch (error: any) {
-      throw new Error(`Failed to enable new subscriber trigger: ${error.message}`);
-    }
+    parseMailingListId(context.propsValue.mailingListId);
+    const webhookId = await createWebhook({ auth: context.auth.props, url: context.webhookUrl, action: WEBHOOK_ACTION });
+    await context.store.put('webhook_id', webhookId);
   },
 
   async onDisable(context) {
-    try {
-      const webhookId = await context.store.get('webhook_id');
-      
-      if (webhookId) {
-        await sendpulseApiCall({
-          method: HttpMethod.DELETE,
-          auth: context.auth.props,
-          resourceUri: `/v2/email-service/webhook/${webhookId}`,
-        });
-        
-        await context.store.delete('webhook_id');
-        await context.store.delete('mailing_list_id');
-      }
-    } catch (error) {
-      console.warn('Failed to delete webhook during disable:', error);
+    const webhookId = await context.store.get<string | number>('webhook_id');
+    if (webhookId !== null && webhookId !== undefined) {
+      await deleteWebhook({ auth: context.auth.props, webhookId: String(webhookId) });
     }
+    await context.store.delete('webhook_id');
+    await context.store.delete('mailing_list_id');
   },
 
   async run(context) {
-    const storedListId = await context.store.get('mailing_list_id');
-    
-    interface NewSubscriberPayload {
-      timestamp: string;
-      variables: any[];
-      email: string;
-      source: string;
-      book_id: string;
-      event: string;
-    }
-
-    const payload = context.payload.body as NewSubscriberPayload | NewSubscriberPayload[];
-    
-    const payloads = Array.isArray(payload) ? payload : [payload];
-    
-    const results = [];
-    
-    for (const item of payloads) {
-      if (item.event === 'new_emails' && item.book_id === storedListId) {
-        results.push({
-          id: `${item.email}_${item.timestamp}`,
-          email: item.email,
-          mailingListId: item.book_id,
-          source: item.source,
-          variables: item.variables || {},
-          addedAt: new Date(parseInt(item.timestamp) * 1000).toISOString(),
-          timestamp: item.timestamp,
-        });
-      }
-    }
-
-    return results;
+    const listId = parseMailingListId(context.propsValue.mailingListId);
+    return readWebhookEvents(context.payload.body)
+      .filter((item) => item['event'] === WEBHOOK_ACTION && String(item['book_id']) === listId)
+      .map((item) => {
+        const email = readWebhookEmail(item);
+        const timestamp = item['timestamp'] === undefined || item['timestamp'] === null ? '' : String(item['timestamp']);
+        return {
+          id: `${email}_${timestamp}`,
+          email,
+          mailingListId: String(item['book_id']),
+          source: item['source'] ?? null,
+          variables: item['variables'] ?? {},
+          addedAt: epochToIso(item['timestamp']),
+          timestamp,
+        };
+      });
   },
 
   async test() {
-    return [
-      {
-        id: 'demo@example.com_1496827625',
-        email: 'demo@example.com',
-        mailingListId: '123456',
-        source: 'address book',
-        variables: {},
-        addedAt: new Date().toISOString(),
-        timestamp: '1496827625',
-      },
-    ];
+    return [sampleData];
   },
 
-  sampleData: {
-    id: 'subscriber@example.com_1496827625',
-    email: 'subscriber@example.com',
-    mailingListId: '123456',
-    source: 'subscription form',
-    variables: {
-      name: 'John Doe',
-    },
-    addedAt: '2023-06-01T12:00:00.000Z',
-    timestamp: '1496827625',
-  },
+  sampleData,
 });

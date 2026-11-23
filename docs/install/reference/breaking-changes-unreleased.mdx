@@ -8,6 +8,22 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### SendPulse 0.3.0: Change Variable for Subscriber is no longer an AI agent tool, and partial updates now fail the step
+
+**Change Variable for Subscriber** is now shown only in the flow builder. AI agents and MCP clients use **Update Subscriber**, which sets one or more variables and the phone number in one call.
+
+After you upgrade:
+
+- **Update Subscriber** fails the step when either the phone update or the variables update fails, and the error says which part was already applied. Before, the step succeeded with `hasFailures: true`.
+- The **Updated Subscriber** trigger reads up to 5,000 contacts in the list instead of only the first 100, and fails the poll on a SendPulse error instead of returning nothing. Lists with more than 5,000 contacts now fail with an error that names the limit, because the trigger's saved state must fit in the 512 KB trigger storage.
+- The piece needs Activepieces 0.88.2 or later.
+
+#### What you need to do
+
+- Agents that used Change Variable for Subscriber as a tool: use Update Subscriber.
+- Flows that read `hasFailures` from Update Subscriber to handle a partial failure: handle the failed step instead, for example with the step's error handling settings.
+- Updated Subscriber on lists with more than 5,000 contacts: split the list, or use the New Subscriber trigger.
+
 #### Fireflies.ai 0.2.0: three find actions are no longer AI agent tools, and Upload Audio returns a smaller output
 
 **Find Meeting by ID**, **Find Recent Meeting** and **Find Meeting by Call Details** are now shown only in the flow builder. AI agents and MCP clients get **Get Meeting**, **Get Meeting Summary** and **Find Meetings** instead.

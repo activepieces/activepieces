@@ -1,8 +1,33 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { sendpulseApiCall } from '../common/client';
+import { createAction, OutputSchema, Property } from '@activepieces/pieces-framework';
+import { isRecord, normalizeEmail, parseMailingListId, sendpulseApiCall } from '../common/client';
 import { sendpulseAuth } from '../common/auth';
 import { mailingListDropdown } from '../common/props';
+
+function collectEmails(values: unknown[]): string[] {
+  const invalid = values.filter((value) => {
+    try {
+      normalizeEmail(value);
+      return false;
+    } catch {
+      return true;
+    }
+  });
+  if (invalid.length > 0) {
+    throw new Error(`Invalid email format(s): ${invalid.map((value) => String(value)).join(', ')}`);
+  }
+  return [...new Set(values.map((value) => normalizeEmail(value)))];
+}
+
+const outputSchema: OutputSchema = {
+  fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
+    { key: 'message', label: 'Message' },
+    { key: 'mailingListId', label: 'Mailing List ID' },
+    { key: 'unsubscribed', label: 'Unsubscribed Emails' },
+    { key: 'count', label: 'Count', format: 'number' },
+  ],
+};
 
 export const unsubscribeUserAction = createAction({
   auth: sendpulseAuth,
@@ -11,7 +36,7 @@ export const unsubscribeUserAction = createAction({
   displayName: 'Unsubscribe User',
   description: 'Remove subscribers from mailing list',
   audience: 'both',
-  aiMetadata: { description: 'Unsubscribes one or more email addresses (up to 100 per call) from a single specified SendPulse mailing list, leaving them in other lists. Use to opt contacts out of one list rather than purge them account-wide. Idempotent — repeating leaves the same contacts unsubscribed from that list.', idempotent: true },
+  aiMetadata: { description: 'Removes one or more email addresses (up to 100 per call) from a single specified SendPulse mailing list, leaving them in other lists. Use to take contacts off one list rather than purge them account-wide. Idempotent — repeating leaves the same contacts off that list.', idempotent: true },
   props: {
     mailingListId: mailingListDropdown,
     emails: Property.Array({
@@ -20,48 +45,36 @@ export const unsubscribeUserAction = createAction({
       required: true,
     }),
   },
-
+  outputSchema,
   async run(context) {
-    const { mailingListId, emails } = context.propsValue;
+    const { mailingListId } = context.propsValue;
+    const listId = parseMailingListId(mailingListId);
+    const emails = collectEmails(context.propsValue.emails ?? []);
 
     if (emails.length === 0) {
       throw new Error('At least one email address is required');
     }
-
     if (emails.length > 100) {
       throw new Error('Maximum 100 email addresses allowed per request');
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const invalidEmails = emails.filter(email => !emailRegex.test(email as string));
-    
-    if (invalidEmails.length > 0) {
-      throw new Error(`Invalid email format(s): ${invalidEmails.join(', ')}`);
+    const result = await sendpulseApiCall<unknown>({
+      method: HttpMethod.DELETE,
+      auth: context.auth.props,
+      resourceUri: `/addressbooks/${listId}/emails`,
+      operation: 'unsubscribe subscribers',
+      body: { emails },
+    });
+
+    if (!isRecord(result) || result['result'] !== true) {
+      throw new Error(`SendPulse unsubscribe failed: unexpected response ${JSON.stringify(result)}`);
     }
-
-    const body = { emails };
-
-    try {
-      const result = await sendpulseApiCall<{ result: boolean }>({
-        method: HttpMethod.DELETE,
-        auth: context.auth.props,
-        resourceUri: `/addressbooks/${mailingListId}/emails`,
-        body,
-      });
-
-      if (result.result) {
-        return {
-          success: true,
-          message: `${emails.length} subscriber(s) unsubscribed successfully`,
-          unsubscribed: emails,
-          mailingListId,
-          count: emails.length,
-        };
-      } else {
-        throw new Error('Unsubscription failed - API returned failure');
-      }
-    } catch (error: any) {
-      throw new Error(`Failed to unsubscribe users: ${error.message || 'Unknown error'}`);
-    }
+    return {
+      success: true,
+      message: `${emails.length} subscriber(s) unsubscribed successfully`,
+      unsubscribed: emails,
+      mailingListId,
+      count: emails.length,
+    };
   },
 });

@@ -1,10 +1,7 @@
-import {
-  createCustomApiCallAction,
-  HttpMethod,
-} from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
 import { sendpulseAuth } from './lib/common/auth';
-import { sendpulseApiCall } from './lib/common/client';
+import { getAccessToken, SENDPULSE_BASE_URL } from './lib/common/client';
 import { newSubscriberTrigger } from './lib/triggers/new-subscriber';
 import { newUnsubscriberTrigger } from './lib/triggers/new-unsubscriber';
 import { updatedSubscriberTrigger } from './lib/triggers/updated-subscriber';
@@ -13,11 +10,16 @@ import { changeVariableForSubscriberAction } from './lib/actions/change-variable
 import { deleteContactAction } from './lib/actions/delete-contact';
 import { unsubscribeUserAction } from './lib/actions/unsubscribe-user';
 import { updateSubscriberAction } from './lib/actions/update-subscriber';
+import { listMailingListsAction } from './lib/actions/list-mailing-lists';
+import { listMailingListContactsAction } from './lib/actions/list-mailing-list-contacts';
+import { getContactAction } from './lib/actions/get-contact';
+import { listMailingListVariablesAction } from './lib/actions/list-mailing-list-variables';
+import { listSendersAction } from './lib/actions/list-senders';
 
 export const sendpulse = createPiece({
   displayName: 'SendPulse',
   auth: sendpulseAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/sendpulse.png',
   authors: ['aryel780', 'onyedikachi-david'],
   actions: [
@@ -26,24 +28,18 @@ export const sendpulse = createPiece({
     deleteContactAction,
     unsubscribeUserAction,
     updateSubscriberAction,
+    listMailingListsAction,
+    listMailingListContactsAction,
+    getContactAction,
+    listMailingListVariablesAction,
+    listSendersAction,
     createCustomApiCallAction({
       auth: sendpulseAuth,
-      baseUrl: () => 'https://api.sendpulse.com',
+      baseUrl: () => SENDPULSE_BASE_URL,
       authMapping: async (auth) => {
-        const typedAuth = auth.props;
-        const token = await sendpulseApiCall<{ access_token: string }>({
-          method: HttpMethod.POST,
-          auth: typedAuth,
-          resourceUri: '/oauth/access_token',
-          body: {
-            grant_type: 'client_credentials',
-            client_id: typedAuth.clientId,
-            client_secret: typedAuth.clientSecret,
-          },
-        });
-
+        const token = await getAccessToken({ auth: auth.props, useCache: true });
         return {
-          Authorization: `Bearer ${token.access_token}`,
+          Authorization: `Bearer ${token}`,
         };
       },
     }),
@@ -51,8 +47,6 @@ export const sendpulse = createPiece({
   triggers: [
     newSubscriberTrigger,
     newUnsubscriberTrigger,
-    updatedSubscriberTrigger
+    updatedSubscriberTrigger,
   ],
 });
-
-    
