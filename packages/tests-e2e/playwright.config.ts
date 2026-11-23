@@ -18,7 +18,7 @@ const editionConfigs = {
     testIgnore: ['**/ee/**', '**/cloud/**'],
   },
   ee: {
-    testIgnore: ['**/cloud/**'],
+    testIgnore: ['**/ce/**', '**/cloud/**'],
   },
   cloud: {
     testIgnore: ['**/ce/**', '**/ee/**'],
