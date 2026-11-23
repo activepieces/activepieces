@@ -4,8 +4,15 @@ export function retryFetch(input: string | URL, init?: RequestInit): Promise<Res
     return fetchRetry(global.fetch, RETRY_OPTIONS)(input, init)
 }
 
+function backoffDelay(attempt: number): number {
+    return Math.min(BASE_DELAY_MS * 2 ** attempt, MAX_DELAY_MS)
+}
+
+const BASE_DELAY_MS = 1000
+const MAX_DELAY_MS = 10000
+
 const RETRY_OPTIONS = {
-    retries: 3,
-    retryDelay: 3000,
+    retries: 7,
+    retryDelay: backoffDelay,
     retryOn: [408, 429, 500, 502, 503, 504],
 }
