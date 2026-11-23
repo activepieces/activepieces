@@ -359,8 +359,8 @@ jobs:
   # The one approval. A newer candidate cancels an older one that still waits here.
   # It waits for the benchmark so the numbers are there, but does not read its result.
   approve:
-    needs: [cut, e2e-matrix, upgrade-test, tickets, benchmark]
-    if: ${{ !cancelled() && needs.cut.outputs.skip != 'true' && (inputs.skip_tests || (needs.e2e-matrix.result == 'success' && needs.upgrade-test.result == 'success')) && needs.tickets.result == 'success' }}
+    needs: [cut, build-pick, e2e-matrix, upgrade-test, tickets, benchmark]
+    if: ${{ !cancelled() && needs.cut.outputs.skip != 'true' && (needs.build-pick.result == 'success' || needs.build-pick.result == 'skipped') && (inputs.skip_tests || (needs.e2e-matrix.result == 'success' && needs.upgrade-test.result == 'success')) && needs.tickets.result == 'success' }}
     runs-on: ubuntu-latest
     environment:
       name: production
