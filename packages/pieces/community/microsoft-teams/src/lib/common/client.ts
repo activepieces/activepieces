@@ -37,11 +37,12 @@ async function withRetry<T>(requestFn: () => Promise<T>): Promise<T> {
       const error: MicrosoftTeamsGraphError = typeof e === 'object' && e !== null ? e : {};
       const status = extractStatusCode({ error });
       const code = error.body?.error?.code ?? error.error?.code ?? error.code;
-      if (attempt < MAX_RETRIES && shouldRetry({ statusCode: status, code })) {
-        const retryAfterMs = parseRetryAfterMs({ error });
-        await delay({ ms: Math.min(retryAfterMs ?? delayMs, MAX_DELAY_MS) });
+      const retryAfterMs = parseRetryAfterMs({ error });
+      const canWaitRequestedTime = retryAfterMs === null || retryAfterMs <= MAX_DELAY_MS;
+      if (attempt < MAX_RETRIES && canWaitRequestedTime && shouldRetry({ statusCode: status, code })) {
+        await delay({ ms: retryAfterMs ?? delayMs });
         attempt++;
-        if (!retryAfterMs) {
+        if (retryAfterMs === null) {
           delayMs = Math.min(delayMs * 2, MAX_DELAY_MS);
         }
         continue;
