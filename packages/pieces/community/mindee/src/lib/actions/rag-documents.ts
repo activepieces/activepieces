@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { mindeeAuth } from '../auth';
 import { mindeeApi } from '../common/api';
 import { mindeeFiles } from '../common/file';
@@ -67,7 +67,12 @@ export const getRagDocumentAction = createAction({
     idempotent: true,
   },
   props: {
-    document_id: Property.ShortText({ displayName: 'RAG Document ID', required: true }),
+    document_id: Property.ShortText({
+      displayName: 'RAG Document ID',
+      description: 'From Search RAG Documents or Upload RAG Document.',
+      placeholder: '0b9f7c1e-3d2a-4f6b-9c8e-1a2b3c4d5e6f',
+      required: true,
+    }),
   },
   outputSchema: mindeeSchemas.ragDocument,
   async run({ auth, propsValue }) {
@@ -87,8 +92,21 @@ export const updateRagDocumentAction = createAction({
       'Update a Mindee RAG document: set status to Active (used in matching; Mindee requires at least one annotation field with "selected": true) or Draft (ignored), and/or replace its annotation ({"fields": {"<field>": {"value": ..., "selected": true}}}). Setting the same values again has the same effect, so it is safe to retry.',
     idempotent: true,
   },
+  propertyGroups: [
+    { key: 'document', display: 'section', label: 'Document to Update', icon: 'file', props: ['document_id'] },
+    { key: 'changes', display: 'section', label: 'Changes', icon: 'sliders', props: ['changes_info', 'status', 'annotation'] },
+  ],
   props: {
-    document_id: Property.ShortText({ displayName: 'RAG Document ID', required: true }),
+    document_id: Property.ShortText({
+      displayName: 'RAG Document ID',
+      description: 'From Search RAG Documents or Upload RAG Document.',
+      placeholder: '0b9f7c1e-3d2a-4f6b-9c8e-1a2b3c4d5e6f',
+      required: true,
+    }),
+    changes_info: Property.MarkDown({
+      value: 'Fields left empty keep their current value. Set at least one.',
+      variant: MarkdownVariant.INFO,
+    }),
     status: Property.StaticDropdown<string, false>({
       displayName: 'Status',
       description: 'Active documents are used for matching; Draft documents are ignored.',
@@ -103,7 +121,7 @@ export const updateRagDocumentAction = createAction({
     }),
     annotation: Property.Json({
       displayName: 'Annotation',
-      description: 'Optional. Replaces the field annotation of the document.',
+      description: 'Replaces the annotation, shaped like {"fields": {...}}.',
       required: false,
     }),
   },
@@ -130,7 +148,12 @@ export const deleteRagDocumentAction = createAction({
     idempotent: false,
   },
   props: {
-    document_id: Property.ShortText({ displayName: 'RAG Document ID', required: true }),
+    document_id: Property.ShortText({
+      displayName: 'RAG Document ID',
+      description: 'From Search RAG Documents. Deletion cannot be undone.',
+      placeholder: '0b9f7c1e-3d2a-4f6b-9c8e-1a2b3c4d5e6f',
+      required: true,
+    }),
   },
   outputSchema: mindeeSchemas.ragDeleted,
   async run({ auth, propsValue }) {
@@ -149,11 +172,24 @@ export const searchRagDocumentsAction = createAction({
     description: 'List the RAG documents of one Mindee extraction model (model_id required), optionally filtered by file name, with paging. Read-only, safe to retry.',
     idempotent: true,
   },
+  propertyGroups: [
+    { key: 'search', display: 'section', label: 'Search', icon: 'filter', props: ['model_id', 'filename'] },
+    { key: 'paging', display: 'section', label: 'Paging', icon: 'sliders', props: ['page', 'per_page'] },
+  ],
   props: {
     model_id: ragModelDropdown(),
-    filename: Property.ShortText({ displayName: 'File Name Contains', required: false }),
+    filename: Property.ShortText({ displayName: 'File Name Contains', placeholder: 'invoice', required: false }),
     page: Property.Number({ displayName: 'Page', description: 'Page number, starting at 1.', required: false, defaultValue: 1 }),
-    per_page: Property.Number({ displayName: 'Per Page', description: 'Between 1 and 100.', required: false, defaultValue: 50 }),
+    per_page: Property.Number({
+      displayName: 'Per Page',
+      description: 'Between 1 and 100.',
+      required: false,
+      defaultValue: 50,
+      display: 'stepper',
+      min: 1,
+      max: 100,
+      step: 1,
+    }),
   },
   outputSchema: mindeeSchemas.ragSearch,
   async run({ auth, propsValue }) {
