@@ -23,7 +23,7 @@ Manages user identity, platform membership, roles, and session security. A `User
 ### Endpoints
 Both controllers are registered in every edition; the web gates the Users page.
 - `GET /v1/users/:id` (any user or API key of the same platform), `POST /v1/users/me` (profile picture only), `DELETE /v1/users/me/profile-picture`.
-- `GET /v1/users` (list), `POST /v1/users/:id` (role, status, externalId), `DELETE /v1/users/:id` via `platform-user-controller.ts`. Update and delete need a platform admin. List needs only a non-embed user with invite permission in at least one project, because the invite dialog suggests people from it.
+- `GET /v1/users` (list), `POST /v1/users/:id` (role, status, externalId), `DELETE /v1/users/:id` via `platform-user-controller.ts`. Update and delete need a platform admin.
 
 ### Gotchas
 - **Deactivation takes effect on the next request.** Sign-in answers 403 `USER_IS_INACTIVE`, and an open session answers 403 `SESSION_EXPIRED`, because `assertUserSession` reads the user on each request. Reactivation runs `checkUsersExceededLimit` first, so it fails when the plan has no free seat.

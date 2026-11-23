@@ -114,7 +114,7 @@ test.describe('Users and project roles', { tag: ['@feature:users', '@surface'] }
     await usersPage.expectRetrySucceeds();
   });
 
-  test('a user who is not a platform admin cannot read the users API: the server refuses', async ({ request, session, viewer }) => {
+  test('a viewer cannot list platform users', async ({ request, session, viewer }) => {
     const ownFlows = `/api/v1/flows?projectId=${viewer.session.projectId}&limit=1`;
     const users = '/api/v1/users?limit=1';
 
