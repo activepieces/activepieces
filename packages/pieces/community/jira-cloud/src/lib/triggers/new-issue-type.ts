@@ -54,16 +54,22 @@ export const newIssueType = createTrigger({
   async run(context) {
     const { projectId } = context.propsValue;
 
+    const existingIds = await context.store.get<string>('issueTypeIds');
+
     const issueTypes = await getIssueTypes({
       auth: context.auth,
       projectId: projectId as string,
     });
 
+    if (isNil(existingIds)) {
+      await context.store.put('issueTypeIds', JSON.stringify((issueTypes ?? []).map((it) => it.id)));
+      return [];
+    }
+
     if (isNil(issueTypes) || issueTypes.length === 0) {
       return [];
     }
 
-    const existingIds = (await context.store.get<string>('issueTypeIds')) ?? '[]';
     const parsedExistingIds = JSON.parse(existingIds) as string[];
 
     const newIssueTypes = issueTypes.filter(
@@ -94,6 +100,8 @@ export const newIssueType = createTrigger({
       return [];
     }
 
-    return issueTypes;
+    return [...issueTypes].sort((first, second) => Number(second.id) - Number(first.id)).slice(0, TEST_ITEMS_LIMIT);
   },
 });
+
+const TEST_ITEMS_LIMIT = 5;
