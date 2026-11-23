@@ -265,6 +265,7 @@ async function loadConnectionPieces({ mcp, auths, platformId, log }: {
         externalIds,
     }))
     if (error) {
+        log.warn({ project: { id: mcp.projectId }, error }, '[apGetPiecePropsTool] connection ownership lookup failed')
         return null
     }
     return new Map(externalIds.map((externalId): [string, string[]] => [
