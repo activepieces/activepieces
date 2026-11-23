@@ -91,62 +91,62 @@ export const newEventTrigger = createTrigger({
           hook.channel?.config?.uri === context.webhookUrl
       );
 
-      let hookId: string;
-
-      if (existingHook) {
-        hookId = existingHook.id;
-      } else {
-        const eventHookPayload = {
-          name: hookName,
-          events: {
-            type: 'EVENT_TYPE',
-            items:
-              eventTypes.length > 0
-                ? eventTypes
-                : [
-                    'user.lifecycle.create',
-                    'user.lifecycle.activate',
-                    'user.lifecycle.deactivate',
-                    'user.lifecycle.suspend',
-                    'user.lifecycle.unsuspend',
-                    'user.lifecycle.update',
-                    'user.lifecycle.delete',
-                    'group.user_membership.add',
-                    'group.user_membership.remove',
-                    'group.lifecycle.create',
-                    'group.lifecycle.update',
-                    'group.lifecycle.delete',
-                    'user.session.start',
-                    'user.session.end',
-                    'user.authentication.auth_failed',
-                  ],
+      const eventHookPayload = {
+        name: hookName,
+        events: {
+          type: 'EVENT_TYPE',
+          items:
+            eventTypes.length > 0
+              ? eventTypes
+              : [
+                  'user.lifecycle.create',
+                  'user.lifecycle.activate',
+                  'user.lifecycle.deactivate',
+                  'user.lifecycle.suspend',
+                  'user.lifecycle.unsuspend',
+                  'user.lifecycle.update',
+                  'user.lifecycle.delete',
+                  'group.user_membership.add',
+                  'group.user_membership.remove',
+                  'group.lifecycle.create',
+                  'group.lifecycle.update',
+                  'group.lifecycle.delete',
+                  'user.session.start',
+                  'user.session.end',
+                  'user.authentication.auth_failed',
+                ],
+        },
+        channel: {
+          type: 'HTTP',
+          version: '1.0.0',
+          config: {
+            uri: context.webhookUrl,
+            method: 'POST',
           },
-          channel: {
-            type: 'HTTP',
-            version: '1.0.0',
-            config: {
-              uri: context.webhookUrl,
-              method: 'POST',
-            },
-          },
-        };
+        },
+      };
 
-        const response = await makeOktaRequest(
-          context.auth,
-          '/eventHooks',
-          HttpMethod.POST,
-          eventHookPayload
-        );
-
-        if (!response.body?.id) {
-          throw new Error(
-            'Failed to create event hook: ' + JSON.stringify(response.body)
+      const saved = existingHook
+        ? await makeOktaRequest(
+            context.auth,
+            `/eventHooks/${existingHook.id}`,
+            HttpMethod.PUT,
+            eventHookPayload
+          )
+        : await makeOktaRequest(
+            context.auth,
+            '/eventHooks',
+            HttpMethod.POST,
+            eventHookPayload
           );
-        }
 
-        hookId = response.body.id;
-        console.log(`Created new event hook: ${hookId}`);
+      const hookId: string | undefined = saved.body?.id;
+      if (!hookId) {
+        throw new Error(
+          'Failed to save event hook: ' + JSON.stringify(saved.body)
+        );
       }
+      await context.store.put('hookId', hookId);
 
       const response = await makeOktaRequest(
         context.auth,
@@ -200,7 +200,6 @@ export const newEventTrigger = createTrigger({
 
   async run(context) {
     const payload: any = context.payload.body;
-    console.log("firstfdsdfsdf",JSON.stringify(payload))
     const configuredEventTypes = context.propsValue.eventTypes || [];
 
     if (!payload.data?.events || !Array.isArray(payload.data.events)) {
