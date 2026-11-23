@@ -293,6 +293,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
 		return rowRun.deliverOnce({
 			store: context.store,
 			storeKey: DELIVERED_STORE_KEY,
+			identity,
 			events,
 			previousByIndex: changed.previousByIndex,
 		});

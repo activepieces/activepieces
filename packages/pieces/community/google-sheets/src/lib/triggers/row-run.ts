@@ -1,4 +1,4 @@
-import { DEDUPE_KEY_PROPERTY, Store } from '@activepieces/pieces-framework';
+import { DEDUPE_KEY_PROPERTY, Store, tryCatch } from '@activepieces/pieces-framework';
 import { GoogleSheetsAuthValue } from '../common/common';
 import {
 	getWorkSheetName,
@@ -9,7 +9,7 @@ import {
 	readSheetGrid,
 	SheetGrid,
 } from './helpers';
-import { rowSnapshot } from './row-snapshot';
+import { rowSnapshot, SnapshotIdentity } from './row-snapshot';
 import { sheetChannel } from './sheet-channel';
 
 async function shouldHandleNotification({
@@ -51,17 +51,22 @@ function labelRows({ display, indexes }: { display: string[][]; indexes: number[
 async function deliverOnce({
 	store,
 	storeKey,
+	identity,
 	events,
 	previousByIndex,
 }: {
 	store: Store;
 	storeKey: string;
+	identity: SnapshotIdentity;
 	events: RowEvent[];
 	previousByIndex: Map<number, string>;
 }) {
 	const keyed = events.map((event) => ({
 		...event,
 		[DEDUPE_KEY_PROPERTY]: hashObject({
+			spreadsheetId: identity.spreadsheetId,
+			sheetId: identity.sheetId,
+			triggerColumn: identity.triggerColumn,
 			row: event.row,
 			values: event.values,
 			previous: previousByIndex.get(event.row - 1) ?? NO_PREVIOUS_ROW,
@@ -71,8 +76,12 @@ async function deliverOnce({
 		return keyed;
 	}
 	const now = Date.now();
-	const stored = await store.get<unknown>(storeKey);
-	const recent = Object.entries(isDeliveredMap(stored) ? stored : {}).filter(
+	const stored = await tryCatch(() => store.get<unknown>(storeKey));
+	if (stored.error) {
+		console.warn('[google-sheets] could not read recently delivered rows; relying on the 30 s dedupe window.', stored.error);
+		return keyed;
+	}
+	const recent = Object.entries(isDeliveredMap(stored.data) ? stored.data : {}).filter(
 		([, deliveredAt]) => now - deliveredAt < DELIVERED_MEMORY_MS,
 	);
 	const seen = new Set(recent.map(([key]) => key));
@@ -81,7 +90,10 @@ async function deliverOnce({
 		const kept = [...recent, ...fresh.map((event): [string, number] => [event[DEDUPE_KEY_PROPERTY], now])].slice(
 			-MAX_DELIVERED_KEYS,
 		);
-		await store.put(storeKey, Object.fromEntries(kept));
+		const saved = await tryCatch(() => store.put(storeKey, Object.fromEntries(kept)));
+		if (saved.error) {
+			console.warn('[google-sheets] could not remember delivered rows; a later overlapping run may deliver them again.', saved.error);
+		}
 	}
 	return fresh;
 }

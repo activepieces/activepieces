@@ -170,6 +170,7 @@ export const newRowAddedTrigger = createTrigger({
 		return rowRun.deliverOnce({
 			store: context.store,
 			storeKey: DELIVERED_STORE_KEY,
+			identity,
 			events,
 			previousByIndex: added.previousByIndex,
 		});

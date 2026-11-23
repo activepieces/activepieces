@@ -130,3 +130,25 @@ describe('Trigger Column upgrade', () => {
 });
 
 type RunName = 'old' | 'new';
+
+describe('delivered-row memory', () => {
+	it.each([{ trigger: newRow }, { trigger: changedRow }])('a failing memory store still delivers the row', async ({ trigger }) => {
+		vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+		const { store, failPuts } = memoryStore();
+		await trigger.onEnable(rowContext({ store }));
+		fakeGoogle.tabs[0].rows.push(cells({ values: ['b@x.com', 'open'] }));
+		failPuts.matching = /delivered$/;
+		expect(await fire({ trigger, store })).toEqual(['3:b@x.com']);
+	});
+
+	it('an identical row on another worksheet after switching sheets still fires', async () => {
+		const { store } = memoryStore();
+		fakeGoogle.tabs.push({ sheetId: 8, title: 'Other', rows: [cells({ values: ['Email', 'Status'] }), cells({ values: ['a@x.com', 'open'] })] });
+		await newRow.onEnable(rowContext({ store }));
+		fakeGoogle.tabs[0].rows.push(cells({ values: ['b@x.com', 'open'] }));
+		expect(rowEvents({ value: await newRow.run(rowContext({ store })) }).map((event) => event.row)).toEqual([3]);
+		await newRow.onEnable(rowContext({ store, sheetId: 8 }));
+		fakeGoogle.tabs[1].rows.push(cells({ values: ['b@x.com', 'open'] }));
+		expect(rowEvents({ value: await newRow.run(rowContext({ store, sheetId: 8 })) }).map((event) => event.row)).toEqual([3]);
+	});
+});
