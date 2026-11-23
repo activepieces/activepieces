@@ -6,7 +6,7 @@ export const pdfToHtmlAction = createAction({
   auth: pdfcrowdAuth,
   name: 'pdf_to_html',
   displayName: 'Convert PDF to HTML',
-  description: 'Convert a PDF to a single HTML file with images, styles and fonts embedded.',
+  description: 'Convert a PDF to one HTML file with images and fonts inside.',
   audience: 'both',
   classification: 'READ',
   aiMetadata: {
@@ -15,16 +15,25 @@ export const pdfToHtmlAction = createAction({
     idempotent: false,
   },
   outputSchema: conversionOutputSchema,
+  propertyGroups: [
+    { key: 'pdf', display: 'section', label: 'PDF', icon: 'file', props: ['pdf', 'pages'] },
+  ],
   props: {
-    pdf: Property.File({ displayName: 'PDF File', required: true }),
+    pdf: Property.File({
+      displayName: 'PDF File',
+      description: 'The PDF to convert. Upload it or map a file from an earlier step.',
+      required: true,
+    }),
     pages: Property.ShortText({
       displayName: 'Pages',
-      description: 'Pages to convert, e.g. 1 or 2-4 or 1,3. Leave empty for all pages.',
+      description: 'Pages to convert. Empty: all pages.',
+      placeholder: '1-3,5',
       required: false,
     }),
     filename: Property.ShortText({
       displayName: 'File Name',
-      description: 'Name of the HTML file. Defaults to document.html.',
+      description: 'Name of the HTML file. Empty: document.html.',
+      placeholder: 'document.html',
       required: false,
     }),
   },

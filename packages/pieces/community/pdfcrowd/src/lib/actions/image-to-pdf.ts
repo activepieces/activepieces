@@ -15,11 +15,20 @@ export const imageToPdfAction = createAction({
     idempotent: false,
   },
   outputSchema: conversionOutputSchema,
+  propertyGroups: [
+    { key: 'image', display: 'section', label: 'Image', icon: 'file', props: ['image', 'fit'] },
+    { key: 'page', display: 'section', label: 'Page', icon: 'sliders', props: ['page_size', 'orientation', 'margin'] },
+  ],
   props: {
-    image: Property.File({ displayName: 'Image File', required: true }),
+    image: Property.File({
+      displayName: 'Image File',
+      description: 'The image to convert. Upload it or map a file from an earlier step.',
+      required: true,
+    }),
     page_size: Property.StaticDropdown({
       displayName: 'Page Size',
-      description: 'Leave empty for the Pdfcrowd default.',
+      description: "Empty: Pdfcrowd's default size.",
+      width: 'half',
       required: false,
       options: {
         options: ['A3', 'A4', 'A5', 'Letter'].map((v) => ({ label: v, value: v })),
@@ -27,6 +36,7 @@ export const imageToPdfAction = createAction({
     }),
     orientation: Property.StaticDropdown({
       displayName: 'Orientation',
+      width: 'half',
       required: false,
       options: {
         options: [
@@ -36,7 +46,8 @@ export const imageToPdfAction = createAction({
       },
     }),
     fit: Property.StaticDropdown({
-      displayName: 'Fit',
+      displayName: 'Image Fit',
+      description: 'How the image fills the page.',
       required: false,
       options: {
         options: [
@@ -48,12 +59,14 @@ export const imageToPdfAction = createAction({
     }),
     margin: Property.ShortText({
       displayName: 'Margin',
-      description: 'Margin on all four sides with a unit, e.g. 10mm or 0.5in.',
+      description: 'Used on all four sides, with a unit: mm, cm, in, px or pt.',
+      placeholder: '10mm',
       required: false,
     }),
     filename: Property.ShortText({
       displayName: 'File Name',
-      description: 'Name of the PDF. Defaults to image.pdf.',
+      description: 'Name of the PDF file. Empty: image.pdf.',
+      placeholder: 'image.pdf',
       required: false,
     }),
   },

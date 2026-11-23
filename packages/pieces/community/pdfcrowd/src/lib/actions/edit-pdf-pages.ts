@@ -15,27 +15,38 @@ export const editPdfPagesAction = createAction({
     idempotent: false,
   },
   outputSchema: conversionOutputSchema,
+  propertyGroups: [
+    { key: 'pdf', display: 'section', label: 'PDF', icon: 'file', props: ['pdf'] },
+    { key: 'pages', display: 'section', label: 'Page Selection', icon: 'filter', props: ['mode', 'pages'] },
+  ],
   props: {
-    pdf: Property.File({ displayName: 'PDF File', required: true }),
+    pdf: Property.File({
+      displayName: 'PDF File',
+      description: 'The PDF to edit. Upload it or map a file from an earlier step.',
+      required: true,
+    }),
     mode: Property.StaticDropdown({
-      displayName: 'Mode',
+      displayName: 'Keep or Remove',
       required: true,
       defaultValue: 'extract',
+      display: 'cards',
       options: {
         options: [
-          { label: 'Keep only these pages', value: 'extract' },
-          { label: 'Remove these pages', value: 'delete' },
+          { label: 'Keep', value: 'extract', description: 'Drop the rest', icon: 'filter' },
+          { label: 'Remove', value: 'delete', description: 'Keep the rest', icon: 'trash' },
         ],
       },
     }),
     pages: Property.ShortText({
       displayName: 'Pages',
-      description: 'Comma-separated pages or ranges, e.g. 1,3-5 or 2- (to the end).',
+      description: 'Pages to keep or remove. Use 2- for page 2 to the end.',
+      placeholder: '1,3-5',
       required: true,
     }),
     filename: Property.ShortText({
       displayName: 'File Name',
-      description: 'Name of the new PDF. Defaults to pages.pdf.',
+      description: 'Name of the PDF file. Empty: pages.pdf.',
+      placeholder: 'pages.pdf',
       required: false,
     }),
   },
