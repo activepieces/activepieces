@@ -1,6 +1,5 @@
-import { tool } from 'ai'
+import { jsonSchema, tool } from 'ai'
 import { describe, expect, it, vi } from 'vitest'
-import { z } from 'zod'
 import { runMetrics } from './run-metrics'
 
 describe('runMetrics.summarize', () => {
@@ -81,8 +80,8 @@ describe('runMetrics.createRecorder', () => {
         const recorder = runMetrics.createRecorder()
         const failure = new Error('dev server down')
         const tools = recorder.timeTools({
-            ap_build_flow: tool({
-                inputSchema: z.object({}),
+            ap_build_flow: tool<Record<string, unknown>, unknown>({
+                inputSchema: jsonSchema<Record<string, unknown>>({ type: 'object' }),
                 execute: async () => {
                     throw failure
                 },
