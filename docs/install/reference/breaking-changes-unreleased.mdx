@@ -8,6 +8,10 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Amazon SNS 0.2.0: Send Message no longer returns the raw AWS response
+
+**Send Message** now returns `message_id`, `sequence_number` and `topic_arn`. The previous `MessageId` and `SequenceNumber` keys are still returned with the same values, so steps that use them keep working. The AWS SDK's internal `$metadata` field (HTTP status code, request ID, retry counts) is no longer included; remap any later step that used it.
+
 #### Google Sheets 0.21.0: row triggers fire for more changes, and Trigger Column must be a column letter
 
 From Google Sheets 0.21.0, **New Row Added** and **New or Updated Row** also run the flow in three cases where they stayed silent before:
