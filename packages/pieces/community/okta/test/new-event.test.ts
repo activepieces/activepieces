@@ -21,11 +21,14 @@ function memoryStore() {
   };
 }
 
-function stubOkta({ existingHooks }: { existingHooks: unknown[] }) {
+function stubOkta({ existingHooks, verifyFails = false }: { existingHooks: unknown[]; verifyFails?: boolean }) {
   const calls: { method: string; path: string; body: unknown }[] = [];
   vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (request) => {
     const path = new URL(request.url).pathname.replace('/api/v1', '');
     calls.push({ method: request.method, path, body: request.body });
+    if (verifyFails && path.endsWith('/lifecycle/verify')) {
+      throw new Error('verification failed');
+    }
     const body =
       request.method === 'GET'
         ? existingHooks
@@ -81,5 +84,22 @@ describe('new_event trigger', () => {
     calls.length = 0;
     await newEventTrigger.onDisable(hookContext({ store, eventTypes: ['group.lifecycle.create'] }));
     expect(calls.map((c) => `${c.method} ${c.path}`)).toContain('DELETE /eventHooks/hook-old');
+  });
+
+  test('a hook whose verification fails is removed before onEnable rejects', async () => {
+    const store = memoryStore();
+    const calls = stubOkta({ existingHooks: [], verifyFails: true });
+
+    await expect(
+      newEventTrigger.onEnable(hookContext({ store, eventTypes: ['user.lifecycle.create'] }))
+    ).rejects.toThrow('verification failed');
+    expect(calls.map((c) => `${c.method} ${c.path}`)).toEqual([
+      'GET /eventHooks',
+      'POST /eventHooks',
+      'POST /eventHooks/hook-new/lifecycle/verify',
+      'POST /eventHooks/hook-new/lifecycle/deactivate',
+      'DELETE /eventHooks/hook-new',
+    ]);
+    expect(store.data.has('hookId')).toBe(false);
   });
 });
