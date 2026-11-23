@@ -15,6 +15,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { statusColors } from '@/lib/status-colors';
 import { cn } from '@/lib/utils';
 
 import { useBuilderStateContext } from '../builder-hooks';
@@ -178,16 +179,10 @@ function getIterationStatus(
 }
 
 function getIterationDotClassName(status: StepOutputStatus): string {
-  switch (status) {
-    case StepOutputStatus.FAILED:
-      return 'bg-danger-10';
-    case StepOutputStatus.RUNNING:
-      return 'bg-accent-10 animate-pulse';
-    case StepOutputStatus.PAUSED:
-      return 'bg-warning-10';
-    default:
-      return 'bg-success-10';
-  }
+  return cn(
+    statusColors.of(status).dot,
+    status === StepOutputStatus.RUNNING && 'animate-pulse',
+  );
 }
 
 function getIterationStatusLabel(status: StepOutputStatus): string {

@@ -6,7 +6,7 @@ icon: ⚡
 
 An **action run** executes a *single* piece action or code step directly, outside any flow — the unit of work behind MCP's `ap_run_action` and the chat `ap_execute_action` / `ap_run_code` tools. It replaces the old "temporary flow" hack: create a throwaway flow → graft one step → `flowRunService.test()` → poll `flow_run` for ≤120s → dig the step out of `run.steps` → best-effort delete the flow.
 
-At this stage action runs are **execution only — nothing is persisted**. The caller gets the outcome in-process. Durable storage (an `action_run` table separate from [Flow Runs](./flow-runs.md), its endpoints, and an "Action runs" UI tab) lands separately.
+An action run writes **no `flow_run` and no `action_run` row**; the caller gets the outcome in-process. The only record of an MCP `ap_run_action` call is the `mcp_activity` row and `MCP_CALL_PAYLOAD` file that the MCP activity recorder writes, see [MCP Server](../ai-intelligence/mcp-server.md). There is no `action_run` table, endpoint or "Action runs" tab.
 
 ### How it works
 - **Dispatch**: `actionRunService(log).run({ projectId, platformId, step })` resolves the piece package, then submits `WorkerJobType.EXECUTE_ACTION` via `userInteractionWatcher.submitAndWaitForResponse` — **synchronous request/response**, the same mechanism as property resolution and auth validation. No polling, no queued flow job, **no retry**. See decision [Action runs dispatch as synchronous user-interaction jobs](../decisions/000014-action-runs-dispatch-as-synchronous-user-interaction-jobs.md).

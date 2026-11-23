@@ -223,7 +223,10 @@ const InstallPieceDialog = ({
                     }}
                     defaultValue={PackageType.REGISTRY}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger
+                      id="packageType"
+                      data-testid="install-piece-package-type"
+                    >
                       <SelectValue defaultValue={PackageType.REGISTRY} />
                     </SelectTrigger>
                     <SelectContent>
@@ -302,6 +305,7 @@ const InstallPieceDialog = ({
                     <Input
                       {...fieldProps}
                       id="pieceArchive"
+                      data-testid="install-piece-archive"
                       type="file"
                       onChange={(event) => {
                         const file = event.target.files?.[0];

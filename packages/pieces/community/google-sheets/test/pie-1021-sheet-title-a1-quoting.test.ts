@@ -50,18 +50,23 @@ function resolveA1(range: string): string[][] {
 }
 
 vi.mock(h.sheetsPath, () => ({
-    sheets: () => ({
-        spreadsheets: {
-            get: async () => ({ data: { sheets: h.tabs.map((t, index) => ({ properties: { sheetId: t.sheetId, title: t.title, index } })) } }),
-            values: {
-                get: async ({ range }: { range: string }) => {
-                    h.ranges.push(range)
-                    const values = resolveA1(range)
-                    return { data: values.length ? { range, values } : { range } }
+    sheets: () => {
+        const valuesGet = async ({ range }: { range: string }) => {
+            h.ranges.push(range)
+            const values = resolveA1(range)
+            return { data: values.length ? { range, values } : { range } }
+        }
+        return {
+            spreadsheets: {
+                get: async (params: unknown) => {
+                    const grid = await import('./support/grid-data')
+                    if (grid.isGridRequest({ params })) return grid.gridViaValues({ params, valuesGet })
+                    return { data: { sheets: h.tabs.map((t, index) => ({ properties: { sheetId: t.sheetId, title: t.title, index } })) } }
                 },
+                values: { get: valuesGet },
             },
-        },
-    }),
+        }
+    },
 }))
 vi.mock(h.drivePath, () => ({
     drive: () => ({

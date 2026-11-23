@@ -29,7 +29,7 @@ export function McpFlows({ mcpServer }: McpFlowsProps) {
             key={flow.id}
             className="flex items-center justify-between px-4 py-3"
           >
-            <span className="text-sm font-medium">
+            <span className="text-sm font-medium" data-testid="mcp-flow-name">
               {flow.version.displayName}
             </span>
             <Badge

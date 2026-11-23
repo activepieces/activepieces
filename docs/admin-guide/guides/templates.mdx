@@ -6,20 +6,43 @@ icon:
   library: "fontawesome"
 ---
 
-Templates enable you to convert your most common automation into reusable resources. You can share that with people so they don’t have to build the same thing repeatedly.
+<Snippet file="enterprise-feature.mdx" />
 
-### **How to Create a Template**
+Templates turn your most common automations into flows that every project on your platform can start from, so people don't build the same thing repeatedly.
 
-**Step 1**: Export the flow you want to convert to a template
+When your plan includes templates, **Start from Template** in a project shows your platform's templates instead of the Activepieces template library.
 
-**Step 2**: Navigate to your platform admin
+### **Create a Template**
 
-**Step 3**: Click Template on the left side bar
+**Step 1**: Export the flow you want to turn into a template: in **Automations**, open the menu of the flow and click **Export**. You get a `.json` file.
 
-**Step 4**: Click on New template
+**Step 2**: Go to **Platform Admin → Catalogue → Templates**.
 
-**Step 5**: Add the Template Name, Summary , Description and Blog URL or Setup Guide URL
+**Step 3**: Click **New Template**.
 
-**Step 6**: Add the template file
+**Step 4**: Enter a **Name**. The name is required.
+
+**Step 5**: Optionally add a **Summary**, a **Description** and a **Blog URL**. The **Setup guide** button on the template page opens the Blog URL.
+
+**Step 6**: In **Template**, select the `.json` file you exported. A template holds one flow: if the file has more than one flow, only the first one is used.
+
+**Step 7**: Click **Save**. The template shows in the table.
 
 ![Creating Templates](https://cdn.activepieces.com/assets/creating-templates.png "Creating Templates")
+
+### **Use a Template in a Project**
+
+**Step 1**: In **Automations**, click **Create New → Start from Template**.
+
+**Step 2**: Search for the template and open it.
+
+**Step 3**: Click **Use Template**, select the project and the folder, and click **Confirm**.
+
+The new flow opens in the builder as a draft.
+
+### **Edit or Delete a Template**
+
+- **Edit**: click the pencil icon on the row of the template. You can change the details, and select a new `.json` file to replace the flow. Without a new file, the template keeps its flow.
+- **Delete**: select the rows of the templates and click **Delete**.
+
+Flows that were already created from a template don't change when you edit or delete the template.

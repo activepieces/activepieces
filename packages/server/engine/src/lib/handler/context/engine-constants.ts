@@ -1,3 +1,4 @@
+import path from 'node:path'
 import { ensureTrailingSlash, isNil, PlatformId, ProjectId } from '@activepieces/core-utils'
 import { ContextVersion } from '@activepieces/pieces-framework'
 import { BaseEngineOperation, BeginExecuteFlowOperation, DEFAULT_MCP_DATA, EngineGenericError, ExecutePropsOptions, ExecuteTriggerOperation, ExecutionState, ExecutionType, flowStructureUtil, FlowTrigger, FlowVersionState, Project, ResumeExecuteFlowOperation, ResumePayload, RunEnvironment, StreamStepProgress, TriggerHookType } from '@activepieces/shared'
@@ -175,6 +176,7 @@ export class EngineConstants {
             contextVersion,
             stepNames: this.stepNames,
             pieceName,
+            flowVersionDir: path.resolve(this.baseCodeDirectory, this.flowVersionId),
         })
     }
     private async getProject(): Promise<Project> {

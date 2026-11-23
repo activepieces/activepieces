@@ -7,15 +7,23 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AxiosError } from 'axios';
 import { t } from 'i18next';
-import { ChevronDown, Eye, EyeOff } from 'lucide-react';
+import {
+  BookOpen,
+  ChevronDown,
+  CircleAlert,
+  Eye,
+  EyeOff,
+  Info,
+} from 'lucide-react';
 import { useState } from 'react';
-import { ControllerRenderProps, useForm } from 'react-hook-form';
+import { ControllerRenderProps, FieldErrors, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { adminLayout } from '@/app/components/admin';
 import { DictionaryInput } from '@/components/custom/dictionary-input';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { SearchableSelect } from '@/components/custom/searchable-select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   Collapsible,
@@ -33,7 +41,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -49,6 +56,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { AiProviderInfo, SUPPORTED_AI_PROVIDERS } from '@/features/agents';
 import { aiProviderMutations } from '@/features/platform-admin';
 import { AdminControl, adminControl } from '@/lib/admin-control';
@@ -105,10 +117,15 @@ function ConnectProviderForm({
     mode: 'onChange',
     defaultValues: defaultValuesOf({ editing, defaultProvider }),
   });
+  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   const provider = form.watch('provider');
   const info = providerInfoOf({ provider });
   const fields = providerCredentials.fieldsOf({ provider });
+  const mainFields = fields.filter((field) => !field.advanced);
+  const advancedFields = fields.filter((field) => field.advanced);
+  const providerLocked = editing !== undefined || defaultProvider !== undefined;
+  const serverError = form.formState.errors.root?.serverError?.message;
 
   const { mutate: connect, isPending: connecting } =
     aiProviderMutations.useUpsertAiProvider({
@@ -118,13 +135,25 @@ function ConnectProviderForm({
         error: AxiosError<{ message?: string; params?: { message: string } }>,
       ) => {
         const data = error.response?.data;
-        form.setError('root.serverError', {
-          type: 'manual',
-          message:
-            data?.params?.message ??
-            data?.message ??
-            t('The provider rejected these credentials.'),
+        const message =
+          data?.params?.message ??
+          data?.message ??
+          t('The provider rejected these credentials.');
+        form.setError('root.serverError', { type: 'manual', message });
+        const fieldKey = providerCredentials.fieldOfServerError({
+          provider,
+          message,
         });
+        if (fieldKey === undefined) {
+          return;
+        }
+        form.setError(`credentials.${fieldKey}`, {
+          type: 'manual',
+          message: t('Check this field'),
+        });
+        if (advancedFields.some((field) => field.key === fieldKey)) {
+          setAdvancedOpen(true);
+        }
       },
     });
 
@@ -140,15 +169,24 @@ function ConnectProviderForm({
     connect(request);
   };
 
+  const handleInvalid = (errors: FieldErrors<ConnectFormValues>) => {
+    const failedKeys = Object.keys(errors.credentials ?? {});
+    if (advancedFields.some((field) => failedKeys.includes(field.key))) {
+      setAdvancedOpen(true);
+    }
+  };
+
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit(handleSubmit)}
+        onSubmit={form.handleSubmit(handleSubmit, handleInvalid)}
+        onChange={() => form.clearErrors('root.serverError')}
         className="flex flex-col gap-4"
       >
         <DialogHeader>
-          <DialogTitle>
-            {editing ? t('Replace credentials') : t('Connect a provider')}
+          <DialogTitle className="flex items-center gap-2">
+            {providerLocked && info && <ProviderLogo info={info} size="sm" />}
+            {titleOf({ editing, providerLocked, name: info?.name })}
           </DialogTitle>
           <DialogDescription>
             {editing
@@ -159,73 +197,128 @@ function ConnectProviderForm({
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea viewPortClassName="max-h-[60vh] p-px">
+        <ScrollArea viewPortClassName="max-h-[65vh] p-px pr-4">
           <div className="flex flex-col gap-4">
-            <FormField
-              control={form.control}
-              name="provider"
-              render={({ field }) => (
-                <FormItem className="flex flex-col gap-1.5">
-                  <FormLabel showRequiredIndicator>{t('Provider')}</FormLabel>
-                  <FormControl>
-                    <SearchableSelect
-                      value={field.value}
-                      options={SUPPORTED_AI_PROVIDERS.map((candidate) => ({
-                        value: candidate.provider,
-                        label: candidate.name,
-                      }))}
-                      placeholder={t('Search providers')}
-                      disabled={editing !== undefined}
-                      valuesRendering={(value) => (
-                        <ProviderOption provider={value} />
+            {info && <SetupHelp key={info.provider} info={info} />}
+            <div className="flex flex-col gap-4">
+              {!providerLocked && (
+                <FormField
+                  control={form.control}
+                  name="provider"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col gap-1.5">
+                      <FormLabel showRequiredIndicator>
+                        {t('Provider')}
+                      </FormLabel>
+                      <FormControl>
+                        <SearchableSelect
+                          value={field.value}
+                          options={SUPPORTED_AI_PROVIDERS.map((candidate) => ({
+                            value: candidate.provider,
+                            label: candidate.name,
+                          }))}
+                          placeholder={t('Search providers')}
+                          valuesRendering={(value) => (
+                            <ProviderOption provider={value} />
+                          )}
+                          onChange={(next) => {
+                            if (next === null || next === field.value) {
+                              return;
+                            }
+                            field.onChange(next);
+                            form.setValue(
+                              'credentials',
+                              emptyCredentialsOf(next),
+                            );
+                            form.setValue('headers', {});
+                            form.setValue('name', defaultNameOf(next));
+                            form.clearErrors();
+                            setAdvancedOpen(false);
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col gap-1.5">
+                    <FieldLabel
+                      label={t('Name')}
+                      help={t(
+                        'How this key shows up in the list, for example the team or budget it belongs to.',
                       )}
-                      onChange={(next) => {
-                        if (next === null || next === field.value) {
-                          return;
-                        }
-                        field.onChange(next);
-                        form.setValue('credentials', emptyCredentialsOf(next));
-                        form.setValue('headers', {});
-                        form.setValue('name', defaultNameOf(next));
-                      }}
                     />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {info && <SetupInstructions info={info} />}
-
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem className="flex flex-col gap-1.5">
-                  <FormLabel showRequiredIndicator>{t('Name')}</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder={t('e.g. Marketing')} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {fields.map((credentialField) => (
-              <CredentialFieldInput
-                key={credentialField.key}
-                form={form}
-                field={credentialField}
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder={t('e.g. Marketing')}
+                        data-testid="ai-provider-name"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            ))}
 
-            {form.formState.errors.root?.serverError && (
-              <FormMessage>
-                {form.formState.errors.root.serverError.message}
-              </FormMessage>
-            )}
+              {mainFields.map((credentialField) => (
+                <CredentialFieldInput
+                  key={credentialField.key}
+                  form={form}
+                  field={credentialField}
+                />
+              ))}
+
+              {advancedFields.length > 0 && (
+                <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
+                  <CollapsibleTrigger asChild>
+                    <button
+                      type="button"
+                      data-testid="ai-provider-advanced-toggle"
+                      className="flex w-full items-center gap-1.5 pt-2 text-sm font-medium text-gray-11 transition-colors hover:text-gray-12"
+                    >
+                      <ChevronDown
+                        className={cn(
+                          'size-4 transition-transform duration-200',
+                          advancedOpen && 'rotate-180',
+                        )}
+                      />
+                      {t('Advanced ({count})', {
+                        count: advancedFields.length,
+                      })}
+                      <span className="ml-2 h-px grow bg-gray-6" />
+                    </button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className={COLLAPSE_ANIMATION}>
+                    <div className="flex flex-col gap-4 pt-4">
+                      {advancedFields.map((credentialField) => (
+                        <CredentialFieldInput
+                          key={credentialField.key}
+                          form={form}
+                          field={credentialField}
+                        />
+                      ))}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              )}
+            </div>
           </div>
         </ScrollArea>
+
+        {serverError && (
+          <Alert variant="destructive" data-testid="ai-provider-connect-error">
+            <CircleAlert />
+            <AlertDescription className="break-words">
+              {serverError}
+            </AlertDescription>
+          </Alert>
+        )}
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onCancel}>
@@ -235,6 +328,7 @@ function ConnectProviderForm({
             type="submit"
             loading={connecting}
             disabled={connecting}
+            data-testid="ai-provider-connect-submit"
             {...adminControl(
               editing
                 ? AdminControl.AI_PROVIDER_KEY_CREDENTIALS_SUBMIT
@@ -263,10 +357,13 @@ function CredentialFieldInput({
         name="headers"
         render={({ field: formField }) => (
           <FormItem className="flex flex-col gap-1.5">
-            <FormLabel>{field.label}</FormLabel>
+            <FieldLabel label={field.label} help={field.help} optional />
             <DictionaryInput
               values={formField.value}
-              onChange={formField.onChange}
+              onChange={(change) => {
+                form.clearErrors('root.serverError');
+                formField.onChange(change);
+              }}
               keyPlaceholder={t('Header name')}
               valuePlaceholder={t('Header value')}
             />
@@ -282,9 +379,11 @@ function CredentialFieldInput({
       name={`credentials.${field.key}`}
       render={({ field: formField }) => (
         <FormItem className="flex flex-col gap-1.5">
-          <FormLabel showRequiredIndicator={!field.optional}>
-            {field.label}
-          </FormLabel>
+          <FieldLabel
+            label={field.label}
+            help={field.help}
+            optional={field.optional}
+          />
           {field.options ? (
             <Select value={formField.value} onValueChange={formField.onChange}>
               <FormControl>
@@ -310,16 +409,19 @@ function CredentialFieldInput({
               />
             </FormControl>
           ) : field.secret ? (
-            <SecretInput field={formField} placeholder={field.placeholder} />
+            <SecretInput
+              field={formField}
+              placeholder={field.placeholder}
+              testId={`ai-provider-field-${field.key}`}
+            />
           ) : (
             <FormControl>
-              <Input {...formField} placeholder={field.placeholder} />
+              <Input
+                {...formField}
+                placeholder={field.placeholder}
+                data-testid={`ai-provider-field-${field.key}`}
+              />
             </FormControl>
-          )}
-          {field.description && (
-            <FormDescription className="text-xs">
-              {field.description}
-            </FormDescription>
           )}
           <FormMessage />
         </FormItem>
@@ -328,12 +430,42 @@ function CredentialFieldInput({
   );
 }
 
+function FieldLabel({
+  label,
+  help,
+  optional,
+}: {
+  label: string;
+  help: string;
+  optional?: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <FormLabel showRequiredIndicator={!optional}>{label}</FormLabel>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            aria-label={t('About {label}', { label })}
+            className="text-gray-11 transition-colors hover:text-gray-12"
+          >
+            <Info className="size-3.5" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent className="max-w-xs">{help}</TooltipContent>
+      </Tooltip>
+    </div>
+  );
+}
+
 function SecretInput({
   field,
   placeholder,
+  testId,
 }: {
   field: ControllerRenderProps<ConnectFormValues, `credentials.${string}`>;
   placeholder?: string;
+  testId: string;
 }) {
   const [visible, setVisible] = useState(false);
   return (
@@ -343,6 +475,7 @@ function SecretInput({
           {...field}
           type={visible ? 'text' : 'password'}
           placeholder={placeholder}
+          data-testid={testId}
           className="pr-9"
         />
       </FormControl>
@@ -351,6 +484,7 @@ function SecretInput({
         variant="ghost"
         size="icon-xs"
         tabIndex={-1}
+        aria-label={visible ? t('Hide value') : t('Show value')}
         onClick={() => setVisible(!visible)}
         className="absolute right-1 top-1/2 -translate-y-1/2 text-gray-11 hover:text-gray-12"
       >
@@ -375,26 +509,60 @@ function ProviderOption({ provider }: { provider: unknown }) {
   );
 }
 
-function SetupInstructions({ info }: { info: AiProviderInfo }) {
+function SetupHelp({ info }: { info: AiProviderInfo }) {
   const [open, setOpen] = useState(false);
   return (
-    <Collapsible open={open} onOpenChange={setOpen}>
+    <Collapsible
+      open={open}
+      onOpenChange={setOpen}
+      className="rounded-lg border border-gray-6 bg-gray-2"
+    >
       <CollapsibleTrigger asChild>
         <button
           type="button"
-          className="flex w-full items-center gap-1.5 text-sm text-gray-11 transition-colors hover:text-gray-12"
+          data-testid="ai-provider-setup-help-toggle"
+          className="flex w-full items-center gap-2 px-3 py-2.5 text-sm font-medium text-gray-12"
         >
+          <BookOpen className="size-4 shrink-0 text-gray-11" />
+          <span className="grow text-left">
+            {t('How to connect {name}', { name: info.name })}
+          </span>
           <ChevronDown
-            className={cn('size-4 transition-transform', open && 'rotate-180')}
+            className={cn(
+              'size-4 shrink-0 text-gray-11 transition-transform duration-200',
+              open && 'rotate-180',
+            )}
           />
-          {t('How to get {name} credentials', { name: info.name })}
         </button>
       </CollapsibleTrigger>
-      <CollapsibleContent className="pt-2">
-        <ApMarkdown markdown={info.markdown()} variant={MarkdownVariant.INFO} />
+      <CollapsibleContent className={COLLAPSE_ANIMATION}>
+        <div className="border-t border-gray-6 px-3 py-3 text-sm text-gray-11">
+          <ApMarkdown
+            markdown={info.markdown()}
+            variant={MarkdownVariant.BORDERLESS}
+          />
+        </div>
       </CollapsibleContent>
     </Collapsible>
   );
+}
+
+function titleOf({
+  editing,
+  providerLocked,
+  name,
+}: {
+  editing?: AIProviderWithoutSensitiveData;
+  providerLocked: boolean;
+  name?: string;
+}): string {
+  if (editing) {
+    return t('Replace credentials');
+  }
+  if (providerLocked && name) {
+    return t('Connect {name}', { name });
+  }
+  return t('Connect a provider');
 }
 
 function defaultValuesOf({
@@ -444,7 +612,7 @@ function emptyCredentialsOf(provider: AIProviderName): Record<string, string> {
     providerCredentials
       .fieldsOf({ provider })
       .filter((field) => field.type !== 'dictionary')
-      .map((field) => [field.key, '']),
+      .map((field) => [field.key, field.defaultValue ?? '']),
   );
 }
 
@@ -481,6 +649,9 @@ function connectFormSchema() {
         });
     });
 }
+
+const COLLAPSE_ANIMATION =
+  'overflow-hidden data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up';
 
 type ConnectFormValues = z.infer<ReturnType<typeof connectFormSchema>>;
 
