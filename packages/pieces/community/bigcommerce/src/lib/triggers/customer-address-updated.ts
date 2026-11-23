@@ -1,9 +1,11 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { bigcommerceAuth } from '../common/auth';
-import { bigCommerceApiService } from '../common/requests';
+import { dedupeWebhookEvent, disableWebhook, enableWebhook } from '../common/shared-runs';
+import { customerAddressEventOutputSchema } from '../common/schemas';
 
 const TRIGGER_NAME = 'customer address updated';
 const CACHE_KEY = `${TRIGGER_NAME}-trigger-store-key`;
+const SEEN_KEY = `${TRIGGER_NAME}-seen-event-hashes`;
 const TRIGGER_SCOPE = 'store/customer/address/updated';
 
 export const customerAddressUpdated = createTrigger({
@@ -11,10 +13,10 @@ export const customerAddressUpdated = createTrigger({
   name: 'customerAddressUpdated',
   classification: 'READ',
   displayName: 'Customer Address Updated',
-  description: 'Triggers when a new customer address is updated',
+  description: 'Triggers when an existing customer address is updated. Data ID is the address ID; the customer ID is in Data > Address > Customer ID. Repeated deliveries of the same event within 15 minutes are ignored. BigCommerce may deactivate the webhook after repeated failed deliveries; turn the flow off and on again to re-register it.',
   aiMetadata: {
     description:
-      'Fires when an existing customer address is updated in the BigCommerce store. The event identifies the affected customer.',
+      'Fires when a customer address is updated in the BigCommerce store. data.id is the ADDRESS id, not the customer id; the customer id is data.address.customer_id. BigCommerce sends only these ids, not the full address; use Search Customer Address (AI) with that customer id to read it. Repeated deliveries of the same event (same hash) within 15 minutes are ignored.',
   },
   props: {},
   sampleData:{
@@ -25,37 +27,35 @@ export const customerAddressUpdated = createTrigger({
     scope: 'store/customer/address/updated',
     data: {
       type: 'customer',
-      id: 2,
+      id: 60,
+      address: {
+        customer_id: 2,
+      },
     },
   },
+  outputSchema: customerAddressEventOutputSchema,
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    const webhook = await bigCommerceApiService.createWebhook({
+    await enableWebhook({
       auth: context.auth.props,
-      payload: {
-        scope: TRIGGER_SCOPE,
-        destination: context.webhookUrl,
-        is_active: true,
-      },
+      scope: TRIGGER_SCOPE,
+      webhookUrl: context.webhookUrl,
+      store: context.store,
+      cacheKey: CACHE_KEY,
     });
-
-    await context.store.put(CACHE_KEY, webhook.data.id);
   },
   async onDisable(context) {
-    const webhookId = (await context.store.get(CACHE_KEY)) as string;
-
-    if (webhookId) {
-      await bigCommerceApiService
-        .deleteWebhook({
-          auth: context.auth.props,
-          webhookId,
-        })
-        .then(async () => {
-          await context.store.delete(CACHE_KEY);
-        });
-    }
+    await disableWebhook({
+      auth: context.auth.props,
+      store: context.store,
+      cacheKey: CACHE_KEY,
+    });
   },
   async run(context) {
-    return [context.payload.body];
+    return await dedupeWebhookEvent({
+      store: context.store,
+      storeKey: SEEN_KEY,
+      body: context.payload.body,
+    });
   },
 });

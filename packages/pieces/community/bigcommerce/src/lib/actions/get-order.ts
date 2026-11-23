@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { bigcommerceAuth } from '../common/auth';
 import { bigCommerceApiService } from '../common/requests';
+import { orderOutputSchema } from '../common/schemas';
 
 export const getOrder = createAction({
   auth: bigcommerceAuth,
@@ -14,6 +15,7 @@ export const getOrder = createAction({
       'Retrieves the full details of a single BigCommerce order by its orderId. Use when you already have an order id (e.g. from an order trigger or List Orders) and need its data. Idempotent read-only lookup with no side effects.',
     idempotent: true,
   },
+  outputSchema: orderOutputSchema,
   props: {
     orderId: Property.ShortText({
       displayName: 'Order ID',

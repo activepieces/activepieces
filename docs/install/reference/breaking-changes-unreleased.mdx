@@ -8,6 +8,9 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### BigCommerce 0.3.0: four actions are no longer available to AI agents
+Create Blog Post, Create Customer Address, Search Customer Address and Find or Create Customer's Address are now shown only in the flow builder. AI agents and MCP clients get new AI versions instead: Create Blog Post (AI), Create Customer Address (AI), Search Customer Address (AI) and Find or Create Customer Address (AI). They take customer IDs as text (comma-separated for several), dates as ISO 8601, tags as a comma-separated string, and Is Published as `yes`/`no`. Point agents and MCP tool configurations at the new actions; flows built in the builder keep working unchanged.
+
 #### Fireflies.ai 0.2.0: three find actions are no longer AI agent tools, and Upload Audio returns a smaller output
 
 **Find Meeting by ID**, **Find Recent Meeting** and **Find Meeting by Call Details** are now shown only in the flow builder. AI agents and MCP clients get **Get Meeting**, **Get Meeting Summary** and **Find Meetings** instead.

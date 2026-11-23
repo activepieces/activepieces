@@ -1,7 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { bigcommerceAuth } from '../common/auth';
 import { customerDropdown } from '../common/props';
-import { bigCommerceApiService } from '../common/requests';
+import { findOrCreateAddressOutputSchema } from '../common/schemas';
+import { parsePositiveIntId, runFindOrCreateCustomerAddress } from '../common/shared-runs';
 
 export const findOrCreateCustomersAddress = createAction({
   auth: bigcommerceAuth,
@@ -9,94 +10,76 @@ export const findOrCreateCustomersAddress = createAction({
   classification: 'WRITE',
   displayName: 'Find or Create Customer’s Address',
   description: 'Finds or creates a customer’s address',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
-      'For a given customer_id, looks up that customer’s addresses and returns the one matching the supplied address line 1, city, and postal code if it exists, otherwise creates a new address from the supplied details. Use instead of Create Customer Address when the address may already be on file, to avoid duplicates. Idempotent: repeated calls reuse the matching address rather than appending duplicates.',
+      'For a customer picked from a dropdown, returns the address matching address line 1, city and postal code, or creates it. Agents should use Find or Create Customer Address (AI). Idempotent: repeated calls reuse the matching address.',
     idempotent: true,
   },
+  outputSchema: findOrCreateAddressOutputSchema,
   props: {
     customer_id: customerDropdown({
       required: true,
     }),
     first_name: Property.ShortText({
       displayName: 'First Name',
+      description: 'First name of the person at this address',
+      placeholder: 'Jane',
       required: true,
     }),
     last_name: Property.ShortText({
       displayName: 'Last Name',
+      description: 'Last name of the person at this address',
+      placeholder: 'Doe',
       required: true,
     }),
     address1: Property.ShortText({
       displayName: 'Address Line 1',
+      description: 'Street address',
+      placeholder: '123 Main Street',
       required: true,
-    }),
-    address2: Property.ShortText({
-      displayName: 'Address Line 2',
-      required: false,
     }),
     city: Property.ShortText({
       displayName: 'City',
+      description: 'City or town',
+      placeholder: 'Austin',
       required: true,
     }),
     state_or_province: Property.ShortText({
       displayName: 'State/Province',
+      description: 'Full state or province name',
+      placeholder: 'Texas',
       required: true,
     }),
     postal_code: Property.ShortText({
       displayName: 'Postal Code',
+      description: 'ZIP or postal code',
+      placeholder: '78701',
       required: true,
     }),
     country_code: Property.ShortText({
       displayName: 'Country Code',
-      description: 'ISO 3166-1 alpha-2 country code',
+      description: 'Two-letter ISO 3166-1 alpha-2 country code',
+      placeholder: 'US',
       required: true,
+    }),
+    address2: Property.ShortText({
+      displayName: 'Address Line 2',
+      description: 'Apartment, suite or unit (optional)',
+      required: false,
     }),
     phone: Property.ShortText({
       displayName: 'Phone',
+      description: 'Phone number for this address (optional)',
       required: false,
     }),
   },
   async run(context) {
-    const params = new URLSearchParams();
-    params.append('customer_id:in', context.propsValue.customer_id as string);
-
-    const response = await bigCommerceApiService.fetchCustomerAddresses({
+    const { customer_id, ...address } = context.propsValue;
+    return await runFindOrCreateCustomerAddress({
       auth: context.auth.props,
-      queryString: params.toString(),
+      customerId: parsePositiveIntId({ value: customer_id, field: 'Customer' }),
+      address,
     });
-
-    if (response.data && response.data.length > 0) {
-      const existingAddress = response.data.find(
-        (addr: any) =>
-          addr.address1 === context.propsValue.address1 &&
-          addr.city === context.propsValue.city &&
-          addr.postal_code === context.propsValue.postal_code
-      );
-
-      if (existingAddress) {
-        return { found: true, data: existingAddress };
-      }
-    }
-
-    const newAddress = await bigCommerceApiService.createCustomerAddress({
-      auth: context.auth.props,
-      payload: [
-        {
-          customer_id: context.propsValue.customer_id,
-          first_name: context.propsValue.first_name,
-          last_name: context.propsValue.last_name,
-          address1: context.propsValue.address1,
-          address2: context.propsValue.address2,
-          city: context.propsValue.city,
-          state_or_province: context.propsValue.state_or_province,
-          postal_code: context.propsValue.postal_code,
-          country_code: context.propsValue.country_code,
-          phone: context.propsValue.phone,
-        },
-      ],
-    });
-
-    return { found: false, data: newAddress.data };
   },
 });

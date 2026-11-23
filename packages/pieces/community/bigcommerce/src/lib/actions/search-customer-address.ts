@@ -1,43 +1,42 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { bigCommerceApiService } from '../common/requests';
 import { bigcommerceAuth } from '../common/auth';
-import { multiCustomerDropdown } from '../common/props';
+import { multiCustomerDropdown, pagingProps } from '../common/props';
+import { addressListOutputSchema } from '../common/schemas';
+import { parsePositiveIntId, runSearchCustomerAddresses } from '../common/shared-runs';
 
 export const searchCustomerAddress = createAction({
   auth: bigcommerceAuth,
   name: 'searchCustomerAddress',
   classification: 'SEARCH',
   displayName: 'Search Customer Address',
-  description: 'Searches for a customer’s address',
-  audience: 'both',
+  description: 'Searches for customer addresses',
+  audience: 'human',
   aiMetadata: {
     description:
-      'Searches customer addresses in a BigCommerce store, optionally filtered by one or more customer ids and/or a name. With no filters it returns all addresses; supplying filters narrows to matches. Use to look up addresses belonging to specific customers. Idempotent read-only query with no side effects.',
+      'Searches customer addresses in a BigCommerce store, filtered by customers picked from a dropdown and/or a name. Agents should use Search Customer Address (AI). Read-only.',
     idempotent: true,
   },
+  outputSchema: addressListOutputSchema,
   props: {
     customer_ids: multiCustomerDropdown({
       required: false,
     }),
     name: Property.ShortText({
       displayName: 'Name',
-      description: 'Customer name to search for',
+      description: 'Name on the address to search for (exact match)',
       required: false,
     }),
+    ...pagingProps,
   },
   async run(context) {
-    const params = new URLSearchParams();
-    if (context.propsValue.customer_ids)
-      params.append(
-        'customer_ids:in',
-        (context.propsValue.customer_ids as string[]).join(',')
-      );
-    if (context.propsValue.name)
-      params.append('name:in', `${context.propsValue.name}`);
-
-    return await bigCommerceApiService.fetchCustomerAddresses({
+    const { customer_ids, name, limit, page } = context.propsValue;
+    const ids = Array.isArray(customer_ids) ? customer_ids : [];
+    return await runSearchCustomerAddresses({
       auth: context.auth.props,
-      queryString: params.toString(),
+      customerIds: ids.map((id) => parsePositiveIntId({ value: id, field: 'Customers' })),
+      name,
+      limit,
+      page,
     });
   },
 });

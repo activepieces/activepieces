@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { bigcommerceAuth } from '../common/auth';
 import { bigCommerceApiService } from '../common/requests';
+import { createdCustomerListOutputSchema } from '../common/schemas';
 
 export const createCustomer = createAction({
   auth: bigcommerceAuth,
@@ -14,6 +15,7 @@ export const createCustomer = createAction({
       'Creates a new customer record in a BigCommerce store from an email plus first/last name (company, phone, and notes optional). Use to register a shopper or contact. Not idempotent: each call adds a new customer, and BigCommerce rejects a duplicate email rather than returning the existing one, so call Search Customer or Find or Create Customer first if the customer may already exist.',
     idempotent: false,
   },
+  outputSchema: createdCustomerListOutputSchema,
   props: {
     email: Property.ShortText({
       displayName: 'Email',

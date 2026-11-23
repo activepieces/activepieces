@@ -1,6 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { bigcommerceAuth } from '../common/auth';
+import { pagingProps } from '../common/props';
 import { bigCommerceApiService } from '../common/requests';
+import { productListOutputSchema } from '../common/schemas';
+import { validatePaging } from '../common/shared-runs';
 
 export const searchProduct = createAction({
   auth: bigcommerceAuth,
@@ -11,9 +14,10 @@ export const searchProduct = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Searches the BigCommerce product catalog by name, SKU, type, brand, weight, and/or price. With no filters it returns all products; supplying any filter narrows to matches. Use to find a product or its id, or to check whether one exists before creating it. Idempotent read-only query with no side effects.',
+      'Searches the BigCommerce product catalog by exact name, SKU, type (physical or digital), brand id, weight and/or price. A value of 0 for weight or price is a real filter. With no filters it returns all products. Returns { data, meta.pagination }; limit (1-250, default 50) and page (from 1) control paging. Use to find a product id or check whether one exists before creating it. Read-only.',
     idempotent: true,
   },
+  outputSchema: productListOutputSchema,
   props: {
     name: Property.ShortText({
       displayName: 'Product Name',
@@ -37,7 +41,7 @@ export const searchProduct = createAction({
     }),
     brand_id: Property.ShortText({
       displayName: 'Brand ID',
-      description: 'Brand ID to search for',
+      description: 'Brand ID to search for. Use List Brands to find it.',
       required: false,
     }),
     weight: Property.Number({
@@ -48,23 +52,14 @@ export const searchProduct = createAction({
       displayName: 'Price',
       required: false,
     }),
+    ...pagingProps,
   },
   async run(context) {
-    const params = new URLSearchParams();
-    if (context.propsValue.name) params.append('name', context.propsValue.name);
-    if (context.propsValue.sku) params.append('sku', context.propsValue.sku);
-    if (context.propsValue.brand_id)
-      params.append('brand_id', context.propsValue.brand_id);
-    if (context.propsValue.type)
-      params.append('type', context.propsValue.type);
-    if (context.propsValue.price)
-      params.append('price', String(context.propsValue.price));
-    if (context.propsValue.weight)
-      params.append('weight', String(context.propsValue.weight));
-
+    const { name, sku, type, brand_id, weight, price, limit, page } = context.propsValue;
+    const paging = validatePaging({ limit, page });
     return await bigCommerceApiService.fetchProducts({
       auth: context.auth.props,
-      queryString: params.toString(),
+      query: { name, sku, brand_id, type, price, weight, ...paging },
     });
   },
 });

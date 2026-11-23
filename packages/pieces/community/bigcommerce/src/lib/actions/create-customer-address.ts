@@ -1,7 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { bigcommerceAuth } from '../common/auth';
 import { customerDropdown } from '../common/props';
-import { bigCommerceApiService } from '../common/requests';
+import { createdAddressListOutputSchema } from '../common/schemas';
+import { parsePositiveIntId, runCreateCustomerAddress } from '../common/shared-runs';
 
 export const createCustomerAddress = createAction({
   auth: bigcommerceAuth,
@@ -9,71 +10,76 @@ export const createCustomerAddress = createAction({
   classification: 'WRITE',
   displayName: 'Create Customer Address',
   description: "Creates a customer's address",
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
-      'Adds a new address to an existing BigCommerce customer, identified by customer_id (selected from a dropdown of store customers). Requires name, address line 1, city, state/province, postal code, and an ISO 3166-1 alpha-2 country code. Use to attach a shipping or billing address to a customer. Not idempotent: each call appends a new address even if an identical one exists, so use Find or Create Customer’s Address to avoid duplicates.',
+      'Adds a new address to an existing BigCommerce customer selected from a dropdown. Agents should use Create Customer Address (AI). Not idempotent: each call appends a new address even if an identical one exists.',
     idempotent: false,
   },
+  outputSchema: createdAddressListOutputSchema,
   props: {
     customer_id: customerDropdown({
-      required: true
+      required: true,
     }),
     first_name: Property.ShortText({
       displayName: 'First Name',
+      description: 'First name of the person at this address',
+      placeholder: 'Jane',
       required: true,
     }),
     last_name: Property.ShortText({
       displayName: 'Last Name',
+      description: 'Last name of the person at this address',
+      placeholder: 'Doe',
       required: true,
     }),
     address1: Property.ShortText({
       displayName: 'Address Line 1',
+      description: 'Street address',
+      placeholder: '123 Main Street',
       required: true,
-    }),
-    address2: Property.ShortText({
-      displayName: 'Address Line 2',
-      required: false,
     }),
     city: Property.ShortText({
       displayName: 'City',
+      description: 'City or town',
+      placeholder: 'Austin',
       required: true,
     }),
     state_or_province: Property.ShortText({
       displayName: 'State/Province',
+      description: 'Full state or province name',
+      placeholder: 'Texas',
       required: true,
     }),
     postal_code: Property.ShortText({
       displayName: 'Postal Code',
+      description: 'ZIP or postal code',
+      placeholder: '78701',
       required: true,
     }),
     country_code: Property.ShortText({
       displayName: 'Country Code',
-      description: 'ISO 3166-1 alpha-2 country code',
+      description: 'Two-letter ISO 3166-1 alpha-2 country code',
+      placeholder: 'US',
       required: true,
+    }),
+    address2: Property.ShortText({
+      displayName: 'Address Line 2',
+      description: 'Apartment, suite or unit (optional)',
+      required: false,
     }),
     phone: Property.ShortText({
       displayName: 'Phone',
+      description: 'Phone number for this address (optional)',
       required: false,
     }),
   },
   async run(context) {
-    return await bigCommerceApiService.createCustomerAddress({
+    const { customer_id, ...address } = context.propsValue;
+    return await runCreateCustomerAddress({
       auth: context.auth.props,
-      payload: [
-        {
-          customer_id: context.propsValue.customer_id,
-          first_name: context.propsValue.first_name,
-          last_name: context.propsValue.last_name,
-          address1: context.propsValue.address1,
-          address2: context.propsValue.address2,
-          city: context.propsValue.city,
-          state_or_province: context.propsValue.state_or_province,
-          postal_code: context.propsValue.postal_code,
-          country_code: context.propsValue.country_code,
-          phone: context.propsValue.phone,
-        },
-      ],
+      customerId: parsePositiveIntId({ value: customer_id, field: 'Customer' }),
+      address,
     });
   },
 });

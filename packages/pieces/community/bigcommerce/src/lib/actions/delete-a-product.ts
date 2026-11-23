@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { bigcommerceAuth } from '../common/auth';
 import { bigCommerceApiService } from '../common/requests';
+import { deleteProductOutputSchema } from '../common/schemas';
 
 export const deleteAProduct = createAction({
   auth: bigcommerceAuth,
@@ -11,9 +12,10 @@ export const deleteAProduct = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Permanently deletes a catalog product from a BigCommerce store by its productId. Use to remove an item from the store. This is destructive and cannot be undone. Effectively idempotent: deleting an already-removed product has no further effect, though the call may error if the id no longer exists.',
+      'Permanently deletes a catalog product from a BigCommerce store by its productId. Use to remove an item from the store. This is destructive and cannot be undone. Returns { deleted: true, id } on success. Idempotent: deleting an id that no longer exists also succeeds (BigCommerce returns 204).',
     idempotent: true,
   },
+  outputSchema: deleteProductOutputSchema,
   props: {
     productId: Property.ShortText({
       displayName: 'Product ID',
@@ -22,9 +24,11 @@ export const deleteAProduct = createAction({
     }),
   },
   async run(context) {
-    return await bigCommerceApiService.deleteProduct({
+    const productId = context.propsValue.productId.trim();
+    await bigCommerceApiService.deleteProduct({
       auth: context.auth.props,
-      productId: context.propsValue.productId,
+      productId,
     });
+    return { deleted: true, id: productId };
   },
 });
