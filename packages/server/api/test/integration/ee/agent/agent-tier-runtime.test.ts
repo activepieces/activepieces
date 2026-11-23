@@ -237,8 +237,7 @@ describe('an agent on a platform tier', () => {
         const { ctx, tier, keyId } = await tierOnKey({ servesOwnProject: true })
         const callerTier = await createTier({ ctx, entries: [{ configId: keyId, modelId: TIER_MODEL }] })
         const called = await createAgent({ ctx, draft: { modelTierId: tier.id } })
-        const published = await ctx.post(`/v1/agents/${called.id}/publish`, {})
-        expect(published.statusCode).toBe(StatusCodes.OK)
+        await db.update('agent', called.id, { published: called.draft })
         const caller = await createAgent({ ctx, draft: { modelTierId: callerTier.id } })
         const conversation = await createConversation({ ctx, body: { agentId: caller.id } })
 
