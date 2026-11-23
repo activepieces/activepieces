@@ -32,11 +32,11 @@ export const test = base.extend<{ defaultPieceSet: { id: string }; privatePiece:
     await use({
       name: PRIVATE_PIECE_NAME,
       version: '0.0.1',
-      displayName: 'E2E Private Echo',
+      displayName: 'E2E Custom Echo',
       archive: {
-        name: 'e2e-piece-private-echo-0.0.1.tgz',
+        name: 'e2e-custom-echo-0.0.1.tgz',
         mimeType: 'application/gzip',
-        buffer: readFileSync(path.join(__dirname, 'pieces', 'e2e-piece-private-echo-0.0.1.tgz')),
+        buffer: readFileSync(path.join(__dirname, 'pieces', 'e2e-custom-echo-0.0.1.tgz')),
       },
       trackInstalled: async () => {
         const piece = await e2eApi.callApi<InstalledPiece>({
@@ -75,7 +75,7 @@ async function deletePieceOnceUnused({ request, session, pieceId }: { request: A
   }, 'A flow that uses the private piece is still being deleted').toPass({ timeout: PIECE_DELETE_TIMEOUT_MS });
 }
 
-const PRIVATE_PIECE_NAME = '@e2e/piece-private-echo';
+const PRIVATE_PIECE_NAME = 'e2e-custom-echo';
 const PIECE_DELETE_TIMEOUT_MS = 60_000;
 
 type PieceSet = {

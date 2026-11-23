@@ -23,14 +23,12 @@
           "name": "step_1",
           "type": "PIECE",
           "valid": true,
-          "displayName": "Echo",
+          "displayName": "Echo Message",
           "settings": {
-            "pieceName": "@e2e/piece-private-echo",
+            "pieceName": "e2e-custom-echo",
             "pieceVersion": "0.0.1",
             "actionName": "echo",
-            "input": {
-              "text": "{{trigger['output']['queryParams']['value']}}"
-            },
+            "input": {},
             "propertySettings": {},
             "errorHandlingOptions": {
               "continueOnFailure": {
@@ -56,7 +54,7 @@
                 "fields": {
                   "status": 200,
                   "headers": {},
-                  "body": "{\"echo\": \"{{step_1['output']['echo']}}\"}"
+                  "body": "{\"message\": \"{{step_1['output']['message']}}\", \"value\": \"{{trigger['output']['queryParams']['value']}}\"}"
                 }
               },
               "propertySettings": {},

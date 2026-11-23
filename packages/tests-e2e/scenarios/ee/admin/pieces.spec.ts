@@ -50,7 +50,7 @@ test.describe('Pieces and piece sets', { tag: ['@feature:pieces', '@surface'] },
     const value = randomInt(1, 1_000_000);
     await new BuilderPage(page).expectSyncWebhookResponse({
       url: `${webhookUrl}/sync?value=${value}`,
-      expected: { echo: String(value) },
+      expected: { message: 'custom-piece-works', value: String(value) },
     });
   });
 
