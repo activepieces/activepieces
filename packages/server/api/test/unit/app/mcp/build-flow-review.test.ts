@@ -15,16 +15,13 @@ vi.mock('../../../../src/app/pieces/metadata/piece-metadata-service', () => ({
 }))
 
 describe('buildFlowReview.findProblems', () => {
-    it('reports an invalid piece step whose action is not on the piece', async () => {
-        const problems = await buildFlowReview.findProblems({ trigger: flowWithAction({ actionName: 'does_not_exist', valid: false }), invalidReasons: new Map(), labelProblems: [], platformId: 'platform', log: LOG })
+    it.each([
+        { title: 'whose action is not on the piece', actionName: 'does_not_exist', message: 'invalid configuration: action not found on this piece' },
+        { title: 'with no action selected', actionName: undefined, message: 'invalid configuration: no action selected' },
+    ])('reports an invalid piece step $title', async ({ actionName, message }) => {
+        const problems = await buildFlowReview.findProblems({ trigger: flowWithAction({ actionName, valid: false }), invalidReasons: new Map(), labelProblems: [], platformId: 'platform', log: LOG })
 
-        expect(problems).toEqual([{ step: 'step_1', message: 'invalid configuration: action not found on this piece' }])
-    })
-
-    it('reports an invalid piece step with no action selected', async () => {
-        const problems = await buildFlowReview.findProblems({ trigger: flowWithAction({ actionName: undefined, valid: false }), invalidReasons: new Map(), labelProblems: [], platformId: 'platform', log: LOG })
-
-        expect(problems).toEqual([{ step: 'step_1', message: 'invalid configuration: no action selected' }])
+        expect(problems).toEqual([{ step: 'step_1', message }])
     })
 
     it('reports a plain invalid configuration when the piece metadata cannot be loaded', async () => {
