@@ -40,7 +40,7 @@ test.describe('Embedded connections and MCP', { tag: ['@feature:embed-conn', '@s
     await expect(embedPage.mcpFlowToolNames()).toHaveText(tools.map((projectTool) => projectTool.name));
   });
 
-  test('a predefined connection fills the connection of a step', async ({ embed, embedConnections }) => {
+  test('a step offers the predefined connection and stores it', async ({ embed, embedConnections }) => {
     const token = embed.signToken({ signingKey: await embed.createSigningKey() });
     const embedded = await embed.exchange({ token });
     const predefined = await embedConnections.seedPredefinedConnection({ projectId: embedded.projectId });
