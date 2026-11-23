@@ -18,7 +18,7 @@ async function run({ checks, outcome, mcp, declinedPieces = [] }: { checks: Code
 function declaredProblems({ checks, outcome }: { checks: CodeChecks, outcome: CheckedOutcome }): string[] {
     const calls = succeededCalls(outcome)
     const cards = new Set([...outcome.cardsShown, ...calls.flatMap((call) => call.toolName.startsWith(CARD_PREFIX) ? [call.toolName] : [])])
-    const writes = unique(calls.filter((call) => landed(call) || rollbackFailed(call)).flatMap(writesOf))
+    const writes = unique([...calls.filter(landed), ...effectiveCalls(outcome).filter(rollbackFailed)].flatMap(writesOf))
     const deletes = unique(calls.filter(landed).flatMap(deletesOf))
     return [
         checks.noQuestionCards === true && cards.has(QUESTIONS_CARD) ? `showed a questions card (${QUESTIONS_CARD}), the case expects none` : null,
@@ -29,9 +29,11 @@ function declaredProblems({ checks, outcome }: { checks: CodeChecks, outcome: Ch
 }
 
 function succeededCalls(outcome: CheckedOutcome): TurnToolCall[] {
-    return outcome.toolCalls
-        .filter((call) => !call.errored)
-        .map((call) => ({ ...call, ...agentToolSkills.effectiveToolCall({ toolName: call.toolName, input: call.input }) }))
+    return effectiveCalls(outcome).filter((call) => !call.errored)
+}
+
+function effectiveCalls(outcome: CheckedOutcome): TurnToolCall[] {
+    return outcome.toolCalls.map((call) => ({ ...call, ...agentToolSkills.effectiveToolCall({ toolName: call.toolName, input: call.input }) }))
 }
 
 function landed(call: TurnToolCall): boolean {
@@ -50,7 +52,7 @@ async function invalidFlows({ mcp, flowIds, declined }: { mcp: McpTools, flowIds
         }
         const { failed, text, structured } = evalToolSet.readResult(data)
         if (structured['valid'] === false) {
-            const issues = await realIssues({ mcp, flowId, issues: issuesOf(structured), declined })
+            const issues = await realIssues({ mcp, flowId, issues: issuesOf(structured), invalidSteps: structured['invalidSteps'], declined })
             return issues.length === 0 ? [] : [`flow ${flowId} is not valid: ${describeIssues(issues)}`]
         }
         return structured['valid'] === true && !failed ? [] : [`could not validate flow ${flowId}: ${text}`]
@@ -70,9 +72,9 @@ function describeIssues(issues: ValidationIssue[]): string {
     return issues.slice(0, MAX_ISSUES).map((issue) => `${isNil(issue.stepName) ? '' : `${issue.stepName}: `}${issue.message}`).join('; ')
 }
 
-async function realIssues({ mcp, flowId, issues, declined }: { mcp: McpTools, flowId: string, issues: ValidationIssue[], declined: Set<string> }): Promise<ValidationIssue[]> {
+async function realIssues({ mcp, flowId, issues, invalidSteps, declined }: { mcp: McpTools, flowId: string, issues: ValidationIssue[], invalidSteps: unknown, declined: Set<string> }): Promise<ValidationIssue[]> {
     if (issues.length === 0) {
-        return await declinedSteps.onlyMissesConnection({ mcp, flowId, stepName: TRIGGER_STEP, declined }) ? [] : [{ message: 'ap_validate_flow reported it invalid' }]
+        return invalidSteps === 1 && await declinedSteps.onlyMissesConnection({ mcp, flowId, stepName: TRIGGER_STEP, declined }) ? [] : [{ message: 'ap_validate_flow reported it invalid' }]
     }
     const checked = await Promise.all(issues.map(async (issue) => issue.category === STEP_VALIDITY && !isNil(issue.stepName) && await declinedSteps.onlyMissesConnection({ mcp, flowId, stepName: issue.stepName, declined }) ? [] : [issue]))
     return checked.flat()

@@ -61,9 +61,10 @@ describe('evalCodeChecks write and delete rules', () => {
             call({ toolName: 'ap_update_step', output: { content: [{ type: 'text', text: 'step not found' }], isError: true } }),
             call({ toolName: 'ap_execute_action', input: { pieceName: 'slack', actionName: 'send_message' }, output: { content: [{ type: 'text', text: '❌ channel_not_found' }] } }),
         ]
-        const halfApplied = call({ toolName: 'ap_apply_flow_operations', output: { content: [{ type: 'text', text: '❌ operation 2 failed' }], structuredContent: { rolledBack: false } } })
+        const halfApplied = call({ toolName: 'ap_apply_flow_operations', errored: true, output: { content: [{ type: 'text', text: '❌ operation 2 failed' }], structuredContent: { rolledBack: false }, isError: true } })
+        const rolledBack = call({ toolName: 'ap_apply_flow_operations', errored: true, output: { content: [{ type: 'text', text: '❌ operation 2 failed' }], structuredContent: { rolledBack: true }, isError: true } })
 
-        expect(evalCodeChecks.declaredProblems({ checks: { noWrites: true }, outcome: outcomeOf({ calls: failedWrites }) })).toEqual([])
+        expect(evalCodeChecks.declaredProblems({ checks: { noWrites: true }, outcome: outcomeOf({ calls: [...failedWrites, rolledBack] }) })).toEqual([])
         expect(evalCodeChecks.declaredProblems({ checks: { noWrites: true }, outcome: outcomeOf({ calls: [...failedWrites, halfApplied] }) })).toEqual(['changed data, the case expects no writes: ap_apply_flow_operations'])
     })
 
@@ -195,6 +196,19 @@ describe('evalCodeChecks.run', () => {
 
         expect(declined.verdict).toBe('pass')
         expect(notDeclined).toEqual({ verdict: 'fail', reason: 'flow flow-1 is not valid: ap_validate_flow reported it invalid' })
+    })
+
+    it('fails a flow with an unconnected declined trigger when another step is invalid too', async () => {
+        const mcp = mcpWith({
+            ap_validate_flow: async () => ({ content: [{ type: 'text', text: '❌ 2 invalid steps' }], structuredContent: { valid: false, issues: [], validSteps: 0, invalidSteps: 2 } }),
+            ap_read_step_settings: async () => ({ structuredContent: { type: 'PIECE_TRIGGER', settings: { pieceName: '@activepieces/piece-hubspot', triggerName: 'new_contact', input: {} } } }),
+            ap_get_piece_props: async () => ({ structuredContent: { props: [] } }),
+            ap_validate_step_config: async () => ({ structuredContent: { valid: true, errors: [] } }),
+        })
+
+        const result = await evalCodeChecks.run({ checks: {}, outcome: outcomeOf({ calls: [call({ toolName: 'ap_update_trigger', input: { flowId: 'flow-1' } })] }), mcp, declinedPieces: ['@activepieces/piece-hubspot'] })
+
+        expect(result).toEqual({ verdict: 'fail', reason: 'flow flow-1 is not valid: ap_validate_flow reported it invalid' })
     })
 
     it('skips flow validation with skipFlowValidates', async () => {
