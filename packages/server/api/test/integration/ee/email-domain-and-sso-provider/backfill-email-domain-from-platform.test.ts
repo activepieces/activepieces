@@ -1,6 +1,6 @@
 import { EmailDomain, SsoDomainVerification, SsoDomainVerificationRecordType, SsoDomainVerificationStatus } from '@activepieces/shared'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { BackfillEmailDomainFromPlatform1883000000000 } from '../../../../src/app/database/migration/postgres/1883000000000-BackfillEmailDomainFromPlatform'
+import { BackfillEmailDomainFromPlatform1884000000000 } from '../../../../src/app/database/migration/postgres/1884000000000-BackfillEmailDomainFromPlatform'
 import { mockAndSaveBasicSetup } from '../../../helpers/mocks'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
@@ -49,7 +49,7 @@ describe('BackfillEmailDomainFromPlatform migration', () => {
 async function runMigration(): Promise<void> {
     const queryRunner = databaseConnection().createQueryRunner()
     await queryRunner.connect()
-    await new BackfillEmailDomainFromPlatform1883000000000().up(queryRunner)
+    await new BackfillEmailDomainFromPlatform1884000000000().up(queryRunner)
     await queryRunner.release()
 }
 

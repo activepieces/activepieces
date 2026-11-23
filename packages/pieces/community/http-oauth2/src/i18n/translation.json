@@ -4,7 +4,7 @@
   "Scopes": "Scopes",
   "Where you sign in to approve access.": "Where you sign in to approve access.",
   "Where the access token is requested.": "Where the access token is requested.",
-  "Separate scopes with spaces.": "Separate scopes with spaces.",
+  "Separate scopes with spaces. Leave empty if your provider does not use scopes; no scope is sent then.": "Separate scopes with spaces. Leave empty if your provider does not use scopes; no scope is sent then.",
   "Copy the authorize URL, token URL and scopes from the provider's API docs. When you sign in through the provider, add the Redirect URL to its app settings.": "Copy the authorize URL, token URL and scopes from the provider's API docs. When you sign in through the provider, add the Redirect URL to its app settings.",
   "Send an OAuth2 Request": "Send an OAuth2 Request",
   "Call any URL with the OAuth2 token from your connection.": "Call any URL with the OAuth2 token from your connection.",

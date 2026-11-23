@@ -8,18 +8,8 @@ import {
 } from '@/app/components/global-search/static-pages';
 
 describe('global search Tiers page', () => {
-  it('shows to platform admins on cloud', () => {
-    expect(
-      staticPageUtils.isVisible({
-        page: tiersPage(),
-        isPlatformAdmin: true,
-        edition: ApEdition.CLOUD,
-      }),
-    ).toBe(true);
-  });
-
-  it.each([ApEdition.ENTERPRISE, ApEdition.COMMUNITY, null])(
-    'stays hidden on %s',
+  it.each([ApEdition.CLOUD, ApEdition.ENTERPRISE])(
+    'shows to platform admins on %s',
     (edition) => {
       expect(
         staticPageUtils.isVisible({
@@ -27,9 +17,19 @@ describe('global search Tiers page', () => {
           isPlatformAdmin: true,
           edition,
         }),
-      ).toBe(false);
+      ).toBe(true);
     },
   );
+
+  it('stays hidden on community', () => {
+    expect(
+      staticPageUtils.isVisible({
+        page: tiersPage(),
+        isPlatformAdmin: true,
+        edition: ApEdition.COMMUNITY,
+      }),
+    ).toBe(false);
+  });
 
   it('stays hidden from non-admins on cloud', () => {
     expect(

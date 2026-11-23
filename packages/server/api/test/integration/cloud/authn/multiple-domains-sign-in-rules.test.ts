@@ -65,7 +65,7 @@ describe('Every sign-in method on every verified domain', () => {
 
         { config: 'email off, Google on, no SAML', email: false, google: true, saml: false, person: 'first', expected: { password: NOT_ALLOWED, code: NOT_ALLOWED, google: OK, saml: NOT_ALLOWED } },
         { config: 'email off, Google on, no SAML', email: false, google: true, saml: false, person: 'second', expected: { password: NOT_ALLOWED, code: NOT_ALLOWED, google: OK, saml: NOT_ALLOWED } },
-        { config: 'email off, Google on, no SAML', email: false, google: true, saml: false, person: 'pending', expected: { password: EMAIL_OFF, code: EMAIL_OFF, google: OK, saml: DOMAIN_NOT_ALLOWED } },
+        { config: 'email off, Google on, no SAML', email: false, google: true, saml: false, person: 'pending', expected: { password: OK, code: OK, google: OK, saml: DOMAIN_NOT_ALLOWED } },
 
         { config: 'email on, Google off, no SAML', email: true, google: false, saml: false, person: 'first', expected: { password: OK, code: OK, google: NOT_ALLOWED, saml: NOT_ALLOWED } },
         { config: 'email on, Google off, no SAML', email: true, google: false, saml: false, person: 'second', expected: { password: OK, code: OK, google: NOT_ALLOWED, saml: NOT_ALLOWED } },
@@ -73,7 +73,7 @@ describe('Every sign-in method on every verified domain', () => {
 
         { config: 'email off, Google off, SAML on', email: false, google: false, saml: true, person: 'first', expected: { password: NOT_ALLOWED, code: NOT_ALLOWED, google: NOT_ALLOWED, saml: OK } },
         { config: 'email off, Google off, SAML on', email: false, google: false, saml: true, person: 'second', expected: { password: NOT_ALLOWED, code: NOT_ALLOWED, google: NOT_ALLOWED, saml: OK } },
-        { config: 'email off, Google off, SAML on', email: false, google: false, saml: true, person: 'pending', expected: { password: EMAIL_OFF, code: EMAIL_OFF, google: OK, saml: DOMAIN_NOT_ALLOWED } },
+        { config: 'email off, Google off, SAML on', email: false, google: false, saml: true, person: 'pending', expected: { password: OK, code: OK, google: OK, saml: DOMAIN_NOT_ALLOWED } },
 
         { config: 'email on, Google on, SAML on', email: true, google: true, saml: true, person: 'first', expected: { password: OK, code: OK, google: OK, saml: OK } },
         { config: 'email on, Google on, SAML on', email: true, google: true, saml: true, person: 'second', expected: { password: OK, code: OK, google: OK, saml: OK } },
@@ -182,7 +182,7 @@ describe('Adding, verifying and removing a domain changes who is governed', () =
         expect(await tryPassword(setup.members.second)).toBe(NOT_ALLOWED)
         const verify = await asOwner(setup).post(`/api/v1/email-domains/${setup.domainIds.pending}/verify`)
         expect(verify.statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
-        expect(await tryPassword(setup.members.pending)).toBe(EMAIL_OFF)
+        expect(await tryPassword(setup.members.pending)).toBe(OK)
     })
 
     it('stops governing every domain when the plan loses single sign-on', async () => {
@@ -377,7 +377,6 @@ const TXT_VALUE = 'activepieces-verify=test'
 const SAML = { idpMetadata: '<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata"></md:EntityDescriptor>', idpCertificate: 'test-cert' }
 const OK = 'OK'
 const NOT_ALLOWED = 'SIGN_IN_METHOD_NOT_ALLOWED'
-const EMAIL_OFF = 'EMAIL_AUTH_DISABLED'
 const DOMAIN_NOT_ALLOWED = 'DOMAIN_NOT_ALLOWED'
 
 type MemberKey = 'first' | 'second' | 'pending'

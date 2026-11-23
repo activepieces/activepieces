@@ -6,6 +6,7 @@ import { EntityManager, In, Not } from 'typeorm'
 import { z } from 'zod'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { transaction } from '../../../core/db/transaction'
+import { isUniqueViolation } from '../../../core/db/unique-violation'
 import { platformSideEffects } from '../../../platform/platform-side-effects'
 import { platformService } from '../../../platform/platform.service'
 import { platformPlanService } from '../../platform/platform-plan/platform-plan.service'
@@ -45,33 +46,42 @@ export const emailDomainService = (log: FastifyBaseLogger) => ({
             return emailDomain
         }
         const multipleDomainsAllowed = await hasMultipleDomainsFlag({ platformId, log })
-        await platformService(log).runWithPlatformSettingsLock({
+        const verifiedByThisCall = await platformService(log).runWithPlatformSettingsLock({
             platformId,
-            fn: () => writeDomains({
-                log,
-                platformId,
-                userId,
-                ip,
-                removeSaml: false,
-                write: async (entityManager) => {
-                    const updated = await emailDomainRepo(entityManager)
-                        .createQueryBuilder()
-                        .update()
-                        .set({ verificationStatus: SsoDomainVerificationStatus.VERIFIED })
-                        .where({ id, platformId, verificationStatus: SsoDomainVerificationStatus.PENDING_VERIFICATION })
-                        .returning(['id'])
-                        .execute()
-                    if (!updated.raw?.length) {
-                        throwDomainChangedDuringVerification()
-                    }
-                    const otherVerifiedCount = await emailDomainRepo(entityManager).countBy({ platformId, id: Not(id), verificationStatus: SsoDomainVerificationStatus.VERIFIED })
-                    if (otherVerifiedCount > 0 && !multipleDomainsAllowed) {
-                        throwMultipleDomainsDisabled()
-                    }
-                },
-            }),
+            fn: async () => {
+                const current = await emailDomainRepo().findOneBy({ id, platformId })
+                if (current?.verificationStatus === SsoDomainVerificationStatus.VERIFIED) {
+                    return false
+                }
+                await writeDomains({
+                    log,
+                    platformId,
+                    userId,
+                    ip,
+                    removeSaml: false,
+                    write: async (entityManager) => {
+                        const updated = await emailDomainRepo(entityManager)
+                            .createQueryBuilder()
+                            .update()
+                            .set({ verificationStatus: SsoDomainVerificationStatus.VERIFIED })
+                            .where({ id, platformId, verificationStatus: SsoDomainVerificationStatus.PENDING_VERIFICATION })
+                            .returning(['id'])
+                            .execute()
+                        if (!updated.raw?.length) {
+                            throwDomainChangedDuringVerification()
+                        }
+                        const otherVerifiedCount = await emailDomainRepo(entityManager).countBy({ platformId, id: Not(id), verificationStatus: SsoDomainVerificationStatus.VERIFIED })
+                        if (otherVerifiedCount > 0 && !multipleDomainsAllowed) {
+                            throwMultipleDomainsDisabled()
+                        }
+                    },
+                })
+                return true
+            },
         })
-        logDomainEvent({ log, platformId, userId, ip, action: ApplicationEventName.SSO_DOMAIN_VERIFIED, domain: emailDomain.domain })
+        if (verifiedByThisCall) {
+            logDomainEvent({ log, platformId, userId, ip, action: ApplicationEventName.SSO_DOMAIN_VERIFIED, domain: emailDomain.domain })
+        }
         return emailDomainRepo().findOneByOrFail({ id })
     },
     async remove({ platformId, id, userId, ip }: DomainParams): Promise<void> {
@@ -167,7 +177,7 @@ async function replaceDomainUnderLock({ log, platformId, removedId, addedDomain,
 }
 
 async function writeDomains({ log, platformId, userId, ip, removeSaml, removedEmailDomain, write }: WriteDomainsParams): Promise<void> {
-    await platformService(log).update({
+    const { error } = await tryCatch(() => platformService(log).update({
         id: platformId,
         userId,
         ip,
@@ -177,7 +187,13 @@ async function writeDomains({ log, platformId, userId, ip, removeSaml, removedEm
             await write(entityManager)
             await refreshPlatformColumns({ entityManager, platformIds: [platformId] })
         },
-    })
+    }))
+    if (isUniqueViolation(error)) {
+        throwDomainInUse()
+    }
+    if (!isNil(error)) {
+        throw error
+    }
 }
 
 async function refreshPlatformColumns({ entityManager, platformIds }: RefreshPlatformColumnsParams): Promise<void> {
@@ -225,12 +241,7 @@ async function assertDomainIsFree({ entityManager, platformId, domain }: AssertD
     }
     const claimedByAnotherPlatform = await emailDomainRepo(entityManager).existsBy({ domain, platformId: Not(platformId) })
     if (claimedByAnotherPlatform) {
-        throw new ActivepiecesError({
-            code: ErrorCode.VALIDATION,
-            params: {
-                message: 'This SSO domain is already in use',
-            },
-        })
+        throwDomainInUse()
     }
 }
 
@@ -272,6 +283,15 @@ function throwMultipleDomainsDisabled(): never {
         code: ErrorCode.FEATURE_DISABLED,
         params: {
             message: 'Multiple email domains are not enabled for this platform',
+        },
+    })
+}
+
+function throwDomainInUse(): never {
+    throw new ActivepiecesError({
+        code: ErrorCode.VALIDATION,
+        params: {
+            message: 'This SSO domain is already in use',
         },
     })
 }

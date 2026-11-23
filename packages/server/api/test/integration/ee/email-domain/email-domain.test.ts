@@ -70,6 +70,18 @@ describe('Email domains API', () => {
             expect(await findDomains(ctx.platform.id)).toHaveLength(0)
         })
 
+        it('says the domain is in use when another platform claims it in the old column at the same moment', async () => {
+            const other = await createTestContext(app, { plan: { ssoEnabled: true } })
+            await databaseConnection().getRepository<PlatformSsoRow>('platform').update({ id: other.platform.id }, { ssoDomain: 'raced.example.com' })
+            const ctx = await createTestContext(app, { plan: { ssoEnabled: true } })
+
+            const response = await ctx.post(EMAIL_DOMAINS, { domain: 'raced.example.com' })
+
+            expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+            expect(response.json().params.message).toBe('This SSO domain is already in use')
+            expect(await findDomains(ctx.platform.id)).toHaveLength(0)
+        })
+
         it('refuses the same domain twice on one platform', async () => {
             const ctx = await createTestContext(app, {
                 plan: { ssoEnabled: true, multipleEmailDomainsEnabled: true },
@@ -162,7 +174,21 @@ describe('Email domains API', () => {
             expect((await findDomains(ctx.platform.id)).map((emailDomain) => emailDomain.domain)).toEqual(['kept-while-racing.example.com'])
         })
 
-        it('verifies a domain once when two verifications run at the same time', async () => {
+        it('says the domain is in use when another platform verifies it at the same moment', async () => {
+            const other = await createTestContext(app, { plan: { ssoEnabled: true } })
+            const ctx = await createTestContext(app, { plan: { ssoEnabled: true } })
+            const pending = await saveDomain({ platformId: ctx.platform.id, domain: 'raced-verify.example.com', status: SsoDomainVerificationStatus.PENDING_VERIFICATION })
+            await saveDomain({ platformId: other.platform.id, domain: 'raced-verify.example.com', status: SsoDomainVerificationStatus.VERIFIED })
+            vi.mocked(resolveTxt).mockResolvedValue([[TXT_VALUE]])
+
+            const response = await ctx.post(`${EMAIL_DOMAINS}/${pending.id}/verify`, {})
+
+            expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+            expect(response.json().params.message).toBe('This SSO domain is already in use')
+            expect((await findDomains(ctx.platform.id))[0].verificationStatus).toBe(SsoDomainVerificationStatus.PENDING_VERIFICATION)
+        })
+
+        it('answers both of two verifications that run at the same time with the verified domain', async () => {
             const ctx = await createTestContext(app, { plan: { ssoEnabled: true, multipleEmailDomainsEnabled: true } })
             const twice = await saveDomain({ platformId: ctx.platform.id, domain: 'verified-twice.example.com', status: SsoDomainVerificationStatus.PENDING_VERIFICATION })
             mockTxtLookupReleasedAfter({ calls: 2 })
@@ -172,7 +198,8 @@ describe('Email domains API', () => {
                 ctx.post(`${EMAIL_DOMAINS}/${twice.id}/verify`, {}),
             ])
 
-            expect(responses.map((response) => response.statusCode).sort()).toEqual([StatusCodes.OK, StatusCodes.CONFLICT])
+            expect(responses.map((response) => response.statusCode)).toEqual([StatusCodes.OK, StatusCodes.OK])
+            expect(responses.map((response) => response.json().verificationStatus)).toEqual([SsoDomainVerificationStatus.VERIFIED, SsoDomainVerificationStatus.VERIFIED])
         })
     })
 

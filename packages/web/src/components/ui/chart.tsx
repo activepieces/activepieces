@@ -10,6 +10,7 @@ export type ChartConfig = {
   [k in string]: {
     label?: React.ReactNode;
     icon?: React.ComponentType;
+    className?: string;
   } & (
     | { color?: string; theme?: never }
     | { color?: never; theme: Record<keyof typeof THEMES, string> }
@@ -210,6 +211,7 @@ function ChartTooltipContent({
                                 indicator === 'dashed',
                               'my-0.5': nestLabel && indicator === 'dashed',
                             },
+                            itemConfig?.className,
                           )}
                           style={
                             {
