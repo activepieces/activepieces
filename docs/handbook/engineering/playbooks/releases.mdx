@@ -31,7 +31,7 @@ All changes flow through a staging environment before reaching production. There
 
   To ship all of `main` at once instead, leave `hotfix_prs` empty: the gate takes the tip of `main`, or the commit named in `sha`. Staging must have deployed that commit, so start the gate after its staging deploy is green.
 
-In an emergency, run the gate with `skip_e2e_and_benchmark`: it skips the E2E matrix and the benchmark, and keeps the upgrade test, the approval and the migration check. If Cloud is down and that is still too slow, use `emergency-cloud-deploy.yml`. To go back to an earlier image, use `continuous-delivery-rollback.yml`.
+In an emergency, run the gate with `skip_tests`: it skips the E2E matrix, the upgrade test and the benchmark, and keeps the approval and the migration check. If Cloud is down and that is still too slow, use `emergency-cloud-deploy.yml`. To go back to an earlier image, use `continuous-delivery-rollback.yml`.
 
 ## Self-Hosted Release
 
@@ -56,7 +56,7 @@ To run any workflow manually, go to the repo's **Actions** tab, select the workf
 
 | Trigger | What happens |
 |---|---|
-| **Manual dispatch** | Picks the tip of `main`, or the `main` commit named in `sha`. The run stops unless that commit's `deploy-staging-app` and `deploy-staging-workers` checks passed. `skip_migration_check` lets a breaking migration through. `skip_e2e_and_benchmark` (emergency only) skips the E2E matrix and the benchmark. |
+| **Manual dispatch** | Picks the tip of `main`, or the `main` commit named in `sha`. The run stops unless that commit's `deploy-staging-app` and `deploy-staging-workers` checks passed. `skip_migration_check` lets a breaking migration through. `skip_tests` (emergency only) skips the E2E matrix, the upgrade test and the benchmark. |
 
 The gate has no schedule yet. A daily run (Sunday to Thursday, 8 AM UTC) comes back when the E2E suite covers more of the product; a scheduled run picks the newest `main` commit whose staging deploy checks passed, not the tip, and the `cut` job already stops it when every Cloud host runs the candidate.
 

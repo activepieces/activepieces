@@ -45,7 +45,7 @@ Self-hosted releases use `release-self-hosted.yml`. See [Releases](/handbook/eng
 ## Overrides
 
 - **Hotfix**: Merge the fix into `main`, then run `continuous-delivery-cloud.yml` by hand with `hotfix_prs`. Cloud gets only those PRs on top of what it runs, after the same checks and approval. The rest of `main` waits for the next full gate run.
-- **Emergency**: Run the gate with `skip_e2e_and_benchmark` to skip the E2E matrix and the benchmark. The upgrade test and the approval still run. If that is too slow, use `emergency-cloud-deploy.yml` to deploy directly to production, bypassing staging entirely. Use sparingly.
+- **Emergency**: Run the gate with `skip_tests` to skip the E2E matrix, the upgrade test and the benchmark. The approval and the migration check still run. If that is too slow, use `emergency-cloud-deploy.yml` to deploy directly to production, bypassing staging entirely. Use sparingly.
 
 ## FAQ
 
