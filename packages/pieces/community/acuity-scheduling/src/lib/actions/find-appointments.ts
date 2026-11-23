@@ -1,4 +1,4 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { MarkdownVariant, Property, createAction } from '@activepieces/pieces-framework';
 import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { acuitySchedulingAuth } from '../auth';
 import { API_URL } from '../common';
@@ -8,87 +8,119 @@ export const findAppointmentAction = createAction({
 	auth: acuitySchedulingAuth,
 	name: 'find_appointment',
 	classification: 'SEARCH',
-	displayName: 'Find Appointment(s)',
-	description: 'Find appointments based on various criteria, including client information.',
+	displayName: 'Find Appointments',
+	description: 'Search appointments by client, date and calendar.',
 	audience: 'both',
 	aiMetadata: {
 		description:
 			"Searches Acuity appointments and returns matches with a found flag. Filter by client name/email/phone, date range, calendar, appointment type, and status (scheduled, canceled, or all); providing no filters fetches all appointments up to the result limit rather than a targeted match. Use to look up existing appointments or resolve an appointment ID. Read-only and idempotent.",
 		idempotent: true,
 	},
+	propertyGroups: [
+		{
+			key: 'client',
+			display: 'section',
+			label: 'Client',
+			icon: 'user',
+			props: ['filtersInfo', 'firstName', 'lastName', 'email', 'phone'],
+		},
+		{
+			key: 'dates',
+			display: 'section',
+			label: 'Date Range',
+			icon: 'calendar',
+			props: ['minDate', 'maxDate'],
+		},
+		{
+			key: 'filters',
+			display: 'section',
+			label: 'Filters',
+			icon: 'filter',
+			props: ['calendarID', 'appointmentTypeID', 'status'],
+		},
+		{
+			key: 'results',
+			display: 'section',
+			label: 'Results',
+			icon: 'sliders',
+			props: ['maxResults', 'direction'],
+		},
+	],
 	props: {
-		// Client Info Filters
+		filtersInfo: Property.MarkDown({
+			value: 'Leave a filter empty to ignore it.',
+			variant: MarkdownVariant.INFO,
+		}),
 		firstName: Property.ShortText({
-			displayName: 'Client First Name',
-			description: 'Filter appointments by client first name.',
+			displayName: 'First Name',
+			placeholder: 'Jane',
+			width: 'half',
 			required: false,
 		}),
 		lastName: Property.ShortText({
-			displayName: 'Client Last Name',
-			description: 'Filter appointments by client last name.',
+			displayName: 'Last Name',
+			placeholder: 'Doe',
+			width: 'half',
 			required: false,
 		}),
 		email: Property.ShortText({
-			displayName: 'Client Email',
-			description: 'Filter appointments by client e-mail address.',
+			displayName: 'Email',
+			placeholder: 'jane@example.com',
+			width: 'half',
 			required: false,
 		}),
 		phone: Property.ShortText({
-			displayName: 'Client Phone',
-			description:
-				"Filter appointments by client phone number. URL encode '+' if using country codes (e.g., %2B1234567890).",
+			displayName: 'Phone',
+			description: 'Include the country code.',
+			placeholder: '+15551234567',
+			width: 'half',
 			required: false,
 		}),
-		// Date Filters
 		minDate: Property.DateTime({
-			displayName: 'Min Date',
-			description: 'Only get appointments on or after this date.',
+			displayName: 'From Date',
+			width: 'half',
 			required: false,
 		}),
 		maxDate: Property.DateTime({
-			displayName: 'Max Date',
-			description: 'Only get appointments on or before this date.',
+			displayName: 'To Date',
+			width: 'half',
 			required: false,
 		}),
-		// Other Filters
 		calendarID: calendarIdDropdown({
-			displayName: 'Calendar ID',
-			description: 'Show only appointments on the calendar with this ID.',
+			displayName: 'Calendar',
 			required: false,
 		}),
 		appointmentTypeID: appointmentTypeIdDropdown({
 			displayName: 'Appointment Type',
-			description: 'Show only appointments of this type.',
 			required: false,
 		}),
 		status: Property.StaticDropdown({
-			displayName: 'Appointment Status',
-			description: 'Filter by appointment status.',
+			displayName: 'Status',
 			required: false,
 			defaultValue: 'scheduled',
 			options: {
 				options: [
 					{ label: 'Scheduled', value: 'scheduled' },
 					{ label: 'Canceled', value: 'canceled' },
-					{ label: 'All (Scheduled & Canceled)', value: 'all' },
+					{ label: 'Scheduled and Canceled', value: 'all' },
 				],
 			},
 		}),
-		// Result Control
 		maxResults: Property.Number({
 			displayName: 'Max Results',
-			description: 'Maximum number of results to return (default 100).',
+			description: 'Empty: 100.',
+			width: 'half',
 			required: false,
 		}),
 		direction: Property.StaticDropdown({
-			displayName: 'Sort Direction',
-			description: 'Sort direction for the results.',
+			displayName: 'Sort Order',
 			required: false,
 			defaultValue: 'DESC',
+			width: 'half',
 			options: {
 				options: [
-					{ label: 'Descending (DESC)', value: 'DESC' },
-					{ label: 'Ascending (ASC)', value: 'ASC' },
+					{ label: 'Newest First', value: 'DESC' },
+					{ label: 'Oldest First', value: 'ASC' },
 				],
 			},
 		}),
@@ -103,7 +135,6 @@ export const findAppointmentAction = createAction({
 		if (props.email) queryParams['email'] = props.email;
 		if (props.phone) queryParams['phone'] = props.phone;
 
-		// Dates are expected in YYYY-MM-DD by Acuity from examples, Property.DateTime returns ISO string
 		if (props.minDate) queryParams['minDate'] = props.minDate.split('T')[0];
 		if (props.maxDate) queryParams['maxDate'] = props.maxDate.split('T')[0];
 
@@ -115,27 +146,12 @@ export const findAppointmentAction = createAction({
 			queryParams['canceled'] = 'true';
 		} else if (props.status === 'all') {
 			queryParams['showall'] = 'true';
-		} // 'scheduled' is default, no param needed
+		}
 
 		if (props.maxResults) queryParams['max'] = props.maxResults.toString();
 		if (props.direction) queryParams['direction'] = props.direction;
 
-		// Ensure at least one client identifier or a broad filter like calendarID/appointmentTypeID is used to avoid fetching all appointments if not intended.
-		// This is a soft validation suggestion for the user, not a hard error.
-		if (
-			!props.firstName &&
-			!props.lastName &&
-			!props.email &&
-			!props.phone &&
-			!props.calendarID &&
-			!props.appointmentTypeID
-		) {
-			console.warn(
-				"Acuity Scheduling 'Find Appointments': No specific client or calendar/type filters provided. This might return a large number of appointments up to the maximum limit.",
-			);
-		}
-
-		const response = await httpClient.sendRequest<Array<Record<string, any>>>({
+		const response = await httpClient.sendRequest<Array<Record<string, unknown>>>({
 			method: HttpMethod.GET,
 			url: `${API_URL}/appointments`,
 			queryParams,

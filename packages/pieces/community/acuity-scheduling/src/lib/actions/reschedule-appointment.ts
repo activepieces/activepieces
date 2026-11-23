@@ -16,45 +16,66 @@ export const rescheduleAppointmentAction = createAction({
 			'Moves an existing Acuity appointment (by numeric appointment ID) to a new datetime and timezone, optionally onto a different calendar. Admin reschedule bypasses availability checks. Use to change the time of an already-booked appointment rather than creating a new one. Treated as non-idempotent — repeating may resend rescheduling notifications and revalidate availability.',
 		idempotent: false,
 	},
+	propertyGroups: [
+		{
+			key: 'appointment',
+			display: 'section',
+			label: 'Appointment',
+			icon: 'calendar',
+			props: ['id'],
+		},
+		{
+			key: 'newTime',
+			display: 'section',
+			label: 'New Time',
+			icon: 'calendar',
+			props: ['datetime', 'timezone', 'calendarID'],
+		},
+	],
 	props: {
 		id: Property.Number({
 			displayName: 'Appointment ID',
-			description: 'The ID of the appointment to reschedule.',
-			required: true,
-		}),
-		appointmentTypeID: appointmentTypeIdDropdown({
-			displayName: 'Appointment Type',
-			description: 'Select the type of appointment (used for finding new available slots).',
+			description: 'From a trigger or the Find Appointments step.',
 			required: true,
 		}),
 		datetime: Property.DateTime({
-			displayName: 'DateTime',
-			description: 'New Date and time of the appointment.',
+			displayName: 'Date and Time',
+			description: 'When the appointment should now start.',
+			width: 'half',
 			required: true,
 		}),
 		timezone: Property.ShortText({
 			displayName: 'Timezone',
-			description: "Client's timezone (e.g., America/New_York).",
+			description: "The client's time zone.",
+			placeholder: 'America/New_York',
+			width: 'half',
 			required: true,
 			defaultValue: 'UTC',
 		}),
 		calendarID: calendarIdDropdown({
-			displayName: 'New Calendar ID',
-			description:
-				'Numeric ID of the new calendar to reschedule to. If blank, stays on current calendar. Submit 0 to auto-assign.',
+			displayName: 'New Calendar',
+			description: 'Empty: the appointment stays on its calendar.',
 			required: false,
 		}),
 		adminReschedule: Property.Checkbox({
 			displayName: 'Reschedule as Admin',
-			description: 'Set to true to reschedule as an admin. Disables availability validations.',
+			description: 'Move it even if the new slot is not open.',
+			advanced: true,
 			required: false,
 			defaultValue: false,
 		}),
 		noEmail: Property.Checkbox({
-			displayName: 'Suppress Rescheduling Email/SMS',
-			description: 'If true, rescheduling emails or SMS will not be sent.',
+			displayName: 'Skip Reschedule Message',
+			description: "Don't send the client the reschedule email or SMS.",
+			advanced: true,
 			required: false,
 			defaultValue: false,
+		}),
+		appointmentTypeID: appointmentTypeIdDropdown({
+			displayName: 'Appointment Type',
+			description: 'Not sent to Acuity; the appointment keeps its type.',
+			required: false,
+			advanced: true,
 		}),
 	},
 	async run(context) {
@@ -72,10 +93,7 @@ export const rescheduleAppointmentAction = createAction({
 			datetime: props.datetime,
 		};
 
-		if (props.calendarID !== undefined) {
-			// Allow 0 for auto-assign
-			body['calendarID'] = props.calendarID === 0 ? null : props.calendarID;
-		}
+		if (props.calendarID) body['calendarID'] = props.calendarID;
 		if (props.timezone) {
 			body['timezone'] = props.timezone;
 		}

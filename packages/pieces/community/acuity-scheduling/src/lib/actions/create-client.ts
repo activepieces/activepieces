@@ -15,30 +15,43 @@ export const createClientAction = createAction({
 			'Creates a new client record in Acuity from a first and last name, with optional phone, email, and notes. Use to add a contact to the client list before or independent of booking. Not idempotent — repeating creates duplicate client records since there is no dedupe on identity.',
 		idempotent: false,
 	},
+	propertyGroups: [
+		{
+			key: 'client',
+			display: 'section',
+			label: 'Client',
+			icon: 'user',
+			props: ['firstName', 'lastName', 'email', 'phone', 'notes'],
+		},
+	],
 	props: {
 		firstName: Property.ShortText({
 			displayName: 'First Name',
-			description: "Client's first name.",
+			placeholder: 'Jane',
+			width: 'half',
 			required: true,
 		}),
 		lastName: Property.ShortText({
 			displayName: 'Last Name',
-			description: "Client's last name.",
+			placeholder: 'Doe',
+			width: 'half',
 			required: true,
 		}),
 		phone: Property.ShortText({
 			displayName: 'Phone',
-			description: "Client's phone number.",
+			placeholder: '+15551234567',
+			width: 'half',
 			required: false,
 		}),
 		email: Property.ShortText({
 			displayName: 'Email',
-			description: "Client's email address.",
+			placeholder: 'jane@example.com',
+			width: 'half',
 			required: false,
 		}),
 		notes: Property.LongText({
 			displayName: 'Notes',
-			description: 'Notes about the client.',
+			description: 'Private notes about the client.',
 			required: false,
 		}),
 	},
