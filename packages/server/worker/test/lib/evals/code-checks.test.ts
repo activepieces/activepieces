@@ -56,6 +56,17 @@ describe('evalCodeChecks write and delete rules', () => {
         expect(evalCodeChecks.declaredProblems({ checks: { cardShown: 'ap_show_questions' }, outcome: outcomeOf({ calls: errored }) })).toEqual(['never showed ap_show_questions'])
     })
 
+    it('does not count a write that failed, but counts a batch whose rollback failed', () => {
+        const failedWrites = [
+            call({ toolName: 'ap_update_step', output: { content: [{ type: 'text', text: 'step not found' }], isError: true } }),
+            call({ toolName: 'ap_execute_action', input: { pieceName: 'slack', actionName: 'send_message' }, output: { content: [{ type: 'text', text: '❌ channel_not_found' }] } }),
+        ]
+        const halfApplied = call({ toolName: 'ap_apply_flow_operations', output: { content: [{ type: 'text', text: '❌ operation 2 failed' }], structuredContent: { rolledBack: false } } })
+
+        expect(evalCodeChecks.declaredProblems({ checks: { noWrites: true }, outcome: outcomeOf({ calls: failedWrites }) })).toEqual([])
+        expect(evalCodeChecks.declaredProblems({ checks: { noWrites: true }, outcome: outcomeOf({ calls: [...failedWrites, halfApplied] }) })).toEqual(['changed data, the case expects no writes: ap_apply_flow_operations'])
+    })
+
     it('does not count a delete whose result starts with ❌, and still validates a flow it failed to delete', async () => {
         const failedDelete = call({ toolName: 'ap_delete_flow', input: { flowId: 'flow-1' }, output: { content: [{ type: 'text', text: '❌ Flow not found' }] } })
         const validated: unknown[] = []

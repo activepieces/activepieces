@@ -18,7 +18,7 @@ async function run({ checks, outcome, mcp, declinedPieces = [] }: { checks: Code
 function declaredProblems({ checks, outcome }: { checks: CodeChecks, outcome: CheckedOutcome }): string[] {
     const calls = succeededCalls(outcome)
     const cards = new Set([...outcome.cardsShown, ...calls.flatMap((call) => call.toolName.startsWith(CARD_PREFIX) ? [call.toolName] : [])])
-    const writes = unique(calls.flatMap(writesOf))
+    const writes = unique(calls.filter((call) => landed(call) || rollbackFailed(call)).flatMap(writesOf))
     const deletes = unique(calls.filter(landed).flatMap(deletesOf))
     return [
         checks.noQuestionCards === true && cards.has(QUESTIONS_CARD) ? `showed a questions card (${QUESTIONS_CARD}), the case expects none` : null,
@@ -36,6 +36,10 @@ function succeededCalls(outcome: CheckedOutcome): TurnToolCall[] {
 
 function landed(call: TurnToolCall): boolean {
     return !evalToolSet.readResult(call.output).failed
+}
+
+function rollbackFailed(call: TurnToolCall): boolean {
+    return evalToolSet.readResult(call.output).structured['rolledBack'] === false
 }
 
 async function invalidFlows({ mcp, flowIds, declined }: { mcp: McpTools, flowIds: string[], declined: Set<string> }): Promise<string[]> {
