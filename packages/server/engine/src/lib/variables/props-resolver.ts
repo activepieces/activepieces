@@ -162,7 +162,7 @@ async function evalWithScript({ variableName, getStepView, scriptSession, stepNa
     for (const stepName of extractReferencedStepNames(variableName, stepNames)) {
         const view = await getStepView(stepName)
         if (view !== undefined) {
-            await session.setGlobal(stepName, view)
+            await session.setGlobal(stepName, view, false)
         }
     }
     return scriptEvaluator.evaluate({ script: variableName, scriptSession })
