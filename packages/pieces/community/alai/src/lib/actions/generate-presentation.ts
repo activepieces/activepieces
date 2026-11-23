@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { alaiAuth } from '../common/auth';
 import { alaiClient } from '../common/client';
 import { alaiOutputSchemas } from '../common/output-schemas';
@@ -35,6 +35,13 @@ export const generatePresentation = createAction({
       'Starts a new Alai presentation generated from input text. Uses Alai AI credits (more slides cost more); Alai allows 5 generations at once per user. By default returns at once with generation_id and status "pending"; set waitForCompletion to wait (max 480 s) and get presentation_id and link/pdf/ppt URLs. Theme, vibe and image IDs come from List Themes, List Vibes and Upload Images. Tone, content mode and text density are added to the instructions sent to Alai. Not idempotent: each call creates another presentation.',
     idempotent: false,
   },
+  propertyGroups: [
+    { key: 'content', display: 'section', label: 'Content', icon: 'text', props: ['inputText', 'additionalInstructions', 'title'] },
+    { key: 'style', display: 'section', label: 'Style', icon: 'sliders', props: ['slideRange', 'tone', 'contentMode', 'amountMode', 'language', 'variantsPerSlide'] },
+    { key: 'theme', display: 'section', label: 'Theme', icon: 'type', props: ['themeId', 'vibeId'] },
+    { key: 'images', display: 'section', label: 'Images', icon: 'paperclip', props: ['imageIds', 'includeAiImages', 'includeWebImages', 'imageStyle', 'imageStyleInstructions'] },
+    { key: 'output', display: 'section', label: 'Output', icon: 'send', props: ['exportFormats', 'info', 'waitForCompletion'] },
+  ],
   props: {
     inputText: Property.LongText({
       displayName: 'Input Text',
@@ -49,13 +56,14 @@ export const generatePresentation = createAction({
     title: Property.ShortText({
       displayName: 'Title',
       description: 'Presentation title. If empty, Alai uses its default title.',
+      placeholder: 'Q3 Sales Review',
       required: false,
     }),
     slideRange: Property.StaticDropdown({
       displayName: 'Slide Range',
-      description: 'Target number of slides. "auto" decides from the input length.',
+      description: 'Target number of slides. Auto decides from the input length.',
       required: false,
-      options: { options: SLIDE_RANGES.map((value) => ({ label: value, value })) },
+      options: { options: SLIDE_RANGES.map((value) => ({ label: value === 'auto' ? 'Auto' : value, value })) },
     }),
     tone: Property.StaticDropdown({
       displayName: 'Tone',
@@ -93,7 +101,7 @@ export const generatePresentation = createAction({
     }),
     variantsPerSlide: Property.Number({
       displayName: 'Variants per Slide',
-      description: 'Design options per slide (1-4). More use more credits.',
+      description: 'Design options per slide, 1 to 4. More use more credits.',
       required: false,
     }),
     imageIds: Property.Array({
@@ -115,7 +123,7 @@ export const generatePresentation = createAction({
     }),
     imageStyle: Property.StaticDropdown({
       displayName: 'Image Style',
-      description: 'Style of AI images. "custom" needs Image Style Instructions.',
+      description: 'Style of AI images. Custom needs Image Style Instructions.',
       required: false,
       options: {
         options: IMAGE_STYLES.map((value) => ({ label: value === 'three_d' ? '3D' : titleCase(value.toUpperCase()), value })),
@@ -123,24 +131,29 @@ export const generatePresentation = createAction({
     }),
     imageStyleInstructions: Property.LongText({
       displayName: 'Image Style Instructions',
-      description: 'Describe the image look. Required when Image Style is "custom".',
+      description: 'Describe the image look. Required when Image Style is Custom.',
       required: false,
     }),
     exportFormats: Property.StaticMultiSelectDropdown({
       displayName: 'Export Formats',
-      description: 'Formats to produce when the deck is ready. Default: link.',
+      description: 'Formats to produce when the deck is ready. Default: Link.',
       required: false,
       options: { options: exportFormatOptions },
     }),
+    info: Property.MarkDown({
+      value: 'Alai builds the deck in the background and uses AI credits. Without waiting, pass the returned generation ID to **Get Generation** later.',
+      variant: MarkdownVariant.INFO,
+    }),
     waitForCompletion: Property.Checkbox({
       displayName: 'Wait for Completion',
-      description: 'Wait until Alai finishes. If off, use "Get Generation" with the returned ID later.',
+      description: 'Wait until Alai finishes; the step fails after Max Wait Time.',
       required: false,
       defaultValue: false,
     }),
     maxWaitTime: Property.Number({
-      displayName: 'Max Wait Time (seconds)',
-      description: 'How long to wait when waiting is on. Default 300, capped at 480.',
+      displayName: 'Max Wait Time',
+      description: 'Seconds to wait when waiting is on. Default 300, max 480.',
+      advanced: true,
       required: false,
       defaultValue: 300,
     }),
