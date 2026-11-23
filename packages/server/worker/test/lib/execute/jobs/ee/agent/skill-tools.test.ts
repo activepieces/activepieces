@@ -125,14 +125,6 @@ describe('paid tools', () => {
         expect(fullPlaybook).toContain('### ap_web_search')
     })
 
-    it('shows a record field in the playbook as an object that takes keys', async () => {
-        const tools = { ...stubTools(CHAT_TOOL_NAMES), ap_web_search: tool({ description: 'Search.', inputSchema: z.object({ options: z.record(z.string(), z.unknown()).describe('Options') }), execute: vi.fn() }) }
-        const surface = buildSkillSurface({ tools, surface: 'CHAT', guides: {}, onSkillLoaded: vi.fn(), canAffordPaidTool: () => true })
-        const playbook = String(await surface.tools['ap_load_skill']?.execute?.({ skills: ['web_and_media'] }, CALL_OPTIONS))
-        expect(playbook).toContain('"options":{"type":"object","description":"Options"}')
-        expect(playbook).not.toContain('additionalProperties')
-        expect(playbook).not.toContain('propertyNames')
-    })
 })
 
 describe('ap_lazy_tool', () => {
@@ -354,11 +346,6 @@ describe('ap_lazy_tool input schema', () => {
         expect(schema).toMatchObject({ type: 'object', properties: { tool: { type: 'string' }, input: { type: 'object' } } })
     })
 
-    it('advertises input as an object that takes keys', async () => {
-        const schema = await asSchema(chatSurface().tools[LAZY_TOOL_NAME]?.inputSchema).jsonSchema
-        expect(JSON.stringify(schema)).not.toContain('propertyNames')
-        expect(JSON.stringify(schema)).not.toContain('additionalProperties')
-    })
 })
 
 describe('unwrapLazyToolChunk', () => {
@@ -417,6 +404,17 @@ describe('ap_get_tool_schema', () => {
         expect(result).toMatchObject({ inputSchema: { properties: { fields: { type: 'object', description: 'Fields' }, rows: { items: { properties: { cells: { type: 'object' } } } } } } })
         expect(JSON.stringify(result)).not.toContain('additionalProperties')
         expect(JSON.stringify(result)).not.toContain('propertyNames')
+
+        const tools = { ...stubTools(CHAT_TOOL_NAMES), ap_web_search: tool({ description: 'Search.', inputSchema: z.object({ options: z.record(z.string(), z.unknown()).describe('Options') }), execute: vi.fn() }) }
+        const surface = buildSkillSurface({ tools, surface: 'CHAT', guides: {}, onSkillLoaded: vi.fn(), canAffordPaidTool: () => true })
+        const playbook = String(await surface.tools['ap_load_skill']?.execute?.({ skills: ['web_and_media'] }, CALL_OPTIONS))
+        expect(playbook).toContain('"options":{"type":"object","description":"Options"}')
+        expect(playbook).not.toContain('additionalProperties')
+        expect(playbook).not.toContain('propertyNames')
+
+        const lazySchema = JSON.stringify(await asSchema(chatSurface().tools[LAZY_TOOL_NAME]?.inputSchema).jsonSchema)
+        expect(lazySchema).not.toContain('propertyNames')
+        expect(lazySchema).not.toContain('additionalProperties')
     })
 })
 

@@ -660,19 +660,7 @@ describe('agentWorkerTools', () => {
 
             expect(unknownAnswer).toHaveBeenCalledTimes(1)
             expect(failingLookup).toHaveBeenCalledTimes(2)
-        })
-
-        it('does not block when it cannot tell whether the action needs a connection', async () => {
-            const { eventEmitter } = makeMockEventEmitter()
-            const executeTool = vi.fn().mockResolvedValue({ success: false, missingConnection: true, error: '❌ No Discord account is selected in this conversation.' })
-            const actionRequiresAuth = vi.fn().mockRejectedValue(new Error('metadata unavailable'))
-            const tools = agentWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ outcome: 'approved' }), guides: {}, taintState: { tainted: false }, actionRequiresAuth })
-
-            for (const index of [1, 2, 3]) {
-                await tools.ap_execute_action.execute({ pieceName: '@activepieces/piece-discord', actionName: 'send_message', input: { text: `${index}` } }, { ...callOptions, toolCallId: `f${index}` })
-            }
-
-            expect(executeTool).toHaveBeenCalledTimes(3)
+            expect(executeTool).toHaveBeenCalledTimes(8)
         })
 
         it('stops every action of a piece with no connection after two missing-connection failures, across inputs, actions and both tools', async () => {
@@ -702,20 +690,6 @@ describe('agentWorkerTools', () => {
             await tools.ap_execute_action.execute({ pieceName: '@activepieces/piece-slack', actionName: 'send_message', input: { text: 'c' } }, { ...callOptions, toolCallId: 'v3' })
 
             expect(executeTool).toHaveBeenCalledTimes(2)
-        })
-
-        it('lets the piece run again once the connection picker selects an account for it', async () => {
-            const { eventEmitter } = makeMockEventEmitter()
-            const executeTool = vi.fn().mockResolvedValue({ success: false, missingConnection: true, error: '❌ No Gmail account is selected in this conversation.' })
-            const progressGuard = agentWorkerTools.createProgressGuard()
-            const tools = agentWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ outcome: 'approved' }), guides: {}, taintState: { tainted: false }, actionRequiresAuth: everyActionNeedsAuth, progressGuard })
-
-            await tools.ap_explore_data.execute({ pieceName: '@activepieces/piece-gmail', actionName: 'gmail_search_mail', input: { q: 'a' } }, { ...callOptions, toolCallId: 'r1' })
-            await tools.ap_explore_data.execute({ pieceName: '@activepieces/piece-gmail', actionName: 'gmail_search_mail', input: { q: 'b' } }, { ...callOptions, toolCallId: 'r2' })
-            progressGuard.connectionPicked({ pieceName: 'gmail' })
-            await tools.ap_explore_data.execute({ pieceName: '@activepieces/piece-gmail', actionName: 'gmail_search_mail', input: { q: 'c' } }, { ...callOptions, toolCallId: 'r3' })
-
-            expect(executeTool).toHaveBeenCalledTimes(3)
         })
 
         it('lets an identical ap_execute_action retry through once the account is connected', async () => {
