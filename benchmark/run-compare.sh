@@ -105,6 +105,8 @@ run_side() {
   echo "::endgroup::"
 }
 
+compose down -v
+
 for round in $(seq 1 "$ROUNDS"); do
   if [ $((round % 2)) -eq 1 ]; then
     run_side baseline "$BASELINE_IMAGE" "$round"
