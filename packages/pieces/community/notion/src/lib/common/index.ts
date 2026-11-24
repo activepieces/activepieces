@@ -346,12 +346,7 @@ export const notionCommon = {
 
 export async function getPages(
   auth: NotionAuthValue,
-  search?: {
-    editedAfter?: Date;
-    createdAfter?: Date;
-  },
   sort?: {
-    property: string;
     direction: 'ascending' | 'descending';
   }
 ): Promise<any[]> {
@@ -360,49 +355,12 @@ export async function getPages(
     notionVersion: '2022-02-22',
   });
 
-  let filter: any = {
-    property: 'object',
-    value: 'page',
-  };
-  if (search?.editedAfter)
-    filter = {
-      and: [
-        {
-          property: 'object',
-          value: 'page',
-        },
-        {
-          timestamp: 'last_edited_time',
-          last_edited_time: {
-            after: search.editedAfter,
-          },
-        },
-      ],
-    };
-  if (search?.createdAfter)
-    filter = {
-      and: [
-        {
-          property: 'object',
-          value: 'page',
-        },
-        {
-          timestamp: 'created_time',
-          created_time: {
-            after: search.createdAfter,
-          },
-        },
-      ],
-    };
-
-  const sortObj: any = {
-    direction: sort?.direction ?? 'descending',
-    timestamp: sort?.property ?? 'last_edited_time',
-  };
-
   const pages = await notion.search({
-    filter: filter,
-    sort: sortObj,
+    filter: { property: 'object', value: 'page' },
+    sort: {
+      direction: sort?.direction ?? 'descending',
+      timestamp: 'last_edited_time',
+    },
   });
   return pages.results as any[];
 }
