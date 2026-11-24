@@ -5,6 +5,7 @@
 import { SsoDomainVerificationStatus } from '@activepieces/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -287,6 +288,25 @@ describe('SSOPage', () => {
     expect(
       within(screen.getByRole('dialog')).getByText('Add a domain'),
     ).toBeDefined();
+  });
+
+  it('shows the domain another admin added and the upsell when an add is refused', async () => {
+    await mount();
+    setDomains([pendingDomain]);
+    emailDomainApiMock.add.mockRejectedValue(new Error('FEATURE_DISABLED'));
+
+    click(findButton('Add domain'));
+    const addDialog = screen.getByRole('dialog');
+    fireEvent.change(within(addDialog).getByRole('textbox'), {
+      target: { value: 'beta.com' },
+    });
+    await waitFor(() =>
+      expect(findButton('Continue', addDialog)?.disabled).toBe(false),
+    );
+    click(findButton('Continue', addDialog));
+
+    expect(await screen.findByText('acme.com')).toBeDefined();
+    expect(await screen.findByText('Unlock multiple domains')).toBeDefined();
   });
 
   it('shows a domain being verified and continues verifying from its menu', async () => {
@@ -1345,6 +1365,26 @@ describe('SamlSetupPage', () => {
     expect(screen.queryByLabelText('Domain')).toBeNull();
   });
 
+  it('keeps the typed SAML values when a later refresh of the domains fails', async () => {
+    setDomains([verifiedDomain]);
+    const client = await mountSetupPage();
+    fireEvent.change(screen.getByLabelText('IDP Metadata'), {
+      target: { value: '<xml />' },
+    });
+
+    emailDomainApiMock.list.mockRejectedValue(new Error('Request failed'));
+    await act(async () => {
+      await client.refetchQueries({ queryKey: ['email-domains'] });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(client.getQueryState(['email-domains'])?.status).toBe('error');
+    expect(screen.queryByText('Trouble loading domains')).toBeNull();
+    expect(
+      screen.getByLabelText<HTMLTextAreaElement>('IDP Metadata').value,
+    ).toBe('<xml />');
+  });
+
   it('says the SAML values are saved instead of looking empty', async () => {
     setDomains([verifiedDomain]);
     setPlatform({
@@ -1429,6 +1469,7 @@ async function mountSetupPage() {
     </MemoryRouter>,
   );
   await waitFor(() => expect(client.isFetching()).toBe(0));
+  return client;
 }
 
 function newQueryClient() {

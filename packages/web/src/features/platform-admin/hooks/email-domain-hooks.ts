@@ -49,8 +49,11 @@ export const emailDomainMutations = {
         await queryClient.invalidateQueries({ queryKey: emailDomainKeys.all });
         onAdded(emailDomain);
       },
-      onError: (error) => {
+      onError: async (error) => {
         if (api.isApError(error, ErrorCode.FEATURE_DISABLED)) {
+          await queryClient.invalidateQueries({
+            queryKey: emailDomainKeys.all,
+          });
           onLocked();
         }
       },
@@ -85,8 +88,11 @@ export const emailDomainMutations = {
           t('TXT record not found yet — DNS can take a few minutes.'),
         );
       },
-      onError: (error) => {
+      onError: async (error) => {
         if (api.isApError(error, ErrorCode.FEATURE_DISABLED)) {
+          await queryClient.invalidateQueries({
+            queryKey: emailDomainKeys.all,
+          });
           onLocked();
           return;
         }

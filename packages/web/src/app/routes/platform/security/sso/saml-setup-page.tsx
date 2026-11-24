@@ -62,7 +62,7 @@ export const SamlSetupPage = () => {
   if (isLoading) {
     return null;
   }
-  if (isError) {
+  if (isError && !domains) {
     return (
       <DataFetchErrorState entity={t('domains')} onRetry={() => refetch()} />
     );
