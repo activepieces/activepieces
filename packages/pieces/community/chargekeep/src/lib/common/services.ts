@@ -58,8 +58,8 @@ function productBody(input: ProductInput): Record<string, unknown> {
   const code = text(input.code);
   if (!name) throw new Error('Product Name is required.');
   if (!code) throw new Error('SKU (product code) is required.');
-  const price = finiteNumber({ value: type === 'Subscription' ? input.fee ?? input.price : input.price, label: type === 'Subscription' ? 'Subscription fee' : 'Price' });
-  if (price === undefined) throw new Error(type === 'Subscription' ? 'Subscription fee is required for Subscription products.' : 'Price is required.');
+  const price = finiteNumber({ value: type === 'Subscription' ? input.fee ?? input.price : input.price, label: type === 'Subscription' ? 'Subscription Fee' : 'Price' });
+  if (price === undefined) throw new Error(type === 'Subscription' ? 'Subscription Fee is required for Subscription products.' : 'Price is required.');
   const priceOption =
     type === 'Subscription'
       ? {
@@ -67,11 +67,11 @@ function productBody(input: ProductInput): Record<string, unknown> {
           frequency: text(input.frequency) ?? 'Monthly',
           fee: price,
           signupFee: finiteNumber({ value: input.signupFee, label: 'Signup Fee' }),
-          cycles: finiteNumber({ value: input.cycles, label: 'No of cycles' }),
+          cycles: finiteNumber({ value: input.cycles, label: 'Billing Cycles' }),
           trialDayCount: finiteNumber({ value: input.trialDayCount, label: 'Trial Days' }),
-          customPeriodCount: finiteNumber({ value: input.customPeriodCount, label: 'Custom No of Period' }),
+          customPeriodCount: finiteNumber({ value: input.customPeriodCount, label: 'Custom Period Count' }),
           customPeriodType: text(input.frequency) === 'Custom' ? text(input.customPeriodType) : undefined,
-          gracePeriodDayCount: finiteNumber({ value: input.gracePeriodDayCount, label: 'Grace Period Count' }),
+          gracePeriodDayCount: finiteNumber({ value: input.gracePeriodDayCount, label: 'Grace Period Days' }),
         }
       : { type: 'OneTime', unit: text(input.unit) ?? 'Unit', fee: price };
   return compact({
@@ -134,7 +134,7 @@ function invoiceBody(input: InvoiceInput): Record<string, unknown> {
   const contactXref = text(input.contactXref);
   if (contactId === undefined && contactXref === undefined) throw new Error('Provide a Contact ID or an External Contact ID (XREF).');
   const number = text(input.number);
-  if (!number) throw new Error('Invoice No. is required.');
+  if (!number) throw new Error('Invoice Number is required.');
   const status = text(input.status) ?? 'Draft';
   if (!INVOICE_STATUSES.includes(status)) throw new Error(`Status must be one of ${INVOICE_STATUSES.join(', ')}.`);
   if (input.lines.length === 0) throw new Error('Add at least one invoice line.');
@@ -159,7 +159,7 @@ function invoiceBody(input: InvoiceInput): Record<string, unknown> {
     amount !== undefined && amount !== 0
       ? [
           {
-            date: isoDate({ value: input.payment?.date, label: 'Transaction Date' }) ?? new Date().toISOString(),
+            date: isoDate({ value: input.payment?.date, label: 'Payment Date' }) ?? new Date().toISOString(),
             description: text(input.payment?.description),
             amount,
             gatewayName: text(input.payment?.gatewayName),
@@ -179,7 +179,7 @@ function invoiceBody(input: InvoiceInput): Record<string, unknown> {
     contactXref,
     status,
     number,
-    date: isoDate({ value: input.date, label: 'Date of the Invoice' }) ?? new Date().toISOString(),
+    date: isoDate({ value: input.date, label: 'Invoice Date' }) ?? new Date().toISOString(),
     dueDate,
     currencyId: text(input.currencyId) ?? 'USD',
     grandTotal,
@@ -221,7 +221,7 @@ async function updateSubscription({ auth, input }: { auth: unknown; input: { con
   const productCode = text(input.productCode);
   if (!productCode) throw new Error('Product Code is required.');
   const paymentPeriodType = text(input.paymentPeriodType) ?? 'Monthly';
-  if (!PAYMENT_PERIODS.includes(paymentPeriodType)) throw new Error(`Payment Period Type must be one of ${PAYMENT_PERIODS.join(', ')}.`);
+  if (!PAYMENT_PERIODS.includes(paymentPeriodType)) throw new Error(`Billing Period must be one of ${PAYMENT_PERIODS.join(', ')}.`);
   const body = compact({
     contactId,
     contactXref,
