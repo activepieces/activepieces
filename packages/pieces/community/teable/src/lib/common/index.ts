@@ -1,9 +1,4 @@
-import {
-  DynamicPropsValue,
-  MarkdownVariant,
-  Property,
-  tryCatch,
-} from '@activepieces/pieces-framework';
+import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { TeableAuth, TeableAuthValue } from '../auth';
 import { teableClient, TeableField } from './client';
 import { TeableComputedFieldTypes, TeableFieldType, TEABLE_MAX_PAGE_SIZE } from './constants';
@@ -92,17 +87,7 @@ async function loadRecordFieldProps({
   if (!auth || !tableId) {
     return {};
   }
-  const { data: fields, error } = await tryCatch(() =>
-    teableClient.listFields({ auth, tableId: String(tableId) }),
-  );
-  if (error) {
-    return {
-      load_error: Property.MarkDown({
-        value: "Could not load this table's fields. Check the connection and pick the table again.",
-        variant: MarkdownVariant.WARNING,
-      }),
-    };
-  }
+  const fields = await teableClient.listFields({ auth, tableId: String(tableId) });
   const props: DynamicPropsValue = {};
   for (const field of fields) {
     if (isRecordWritableField(field)) {
