@@ -1,44 +1,38 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { azureAdAuth } from '../auth';
-import { callGraphApi, flattenUser } from '../common';
+import { clampLimit, fetchAllGraphPages, flattenedUserFields, flattenUser } from '../common';
+
+const MAX_PAGES = 50;
 
 export const listEnabledUsersAction = createAction({
     auth: azureAdAuth,
     name: 'list_enabled_users',
     classification: 'SEARCH',
     displayName: 'List Enabled Users',
-    description: 'Lists all enabled users in the directory, following nextLink for pagination.',
-    audience: 'both',
-    aiMetadata: {
-        description:
-            'Lists every enabled user in the directory, automatically following pagination until all pages are fetched. Read-only and idempotent, but can be slow and return very large results in big tenants — use Get Enabled Users when a single bounded page is enough.',
-        idempotent: true,
+    description: `Lists all enabled users, every page (up to ${MAX_PAGES} pages).`,
+    audience: 'human',
+    outputSchema: {
+        itemLabel: '{displayName}',
+        fields: [{ key: 'users', label: 'Users', value: '', listItems: flattenedUserFields }],
     },
     props: {
         pageSize: Property.Number({
             displayName: 'Page Size',
-            description: 'Number of users per page (1–999). Default 100.',
+            description: 'Users per request. Default 100, max 999.',
             required: false,
             defaultValue: 100,
+            advanced: true,
         }),
     },
     async run(context) {
-        const token = context.auth.access_token;
-        const pageSize = Math.min(999, Math.max(1, context.propsValue.pageSize ?? 100));
-        const all: Record<string, unknown>[] = [];
-        type Page = { value?: Record<string, unknown>[]; '@odata.nextLink'?: string };
-        // https://learn.microsoft.com/en-us/graph/api/user-list?view=graph-rest-1.0&tabs=http
-        let url: string | null = `https://graph.microsoft.com/v1.0/users?$filter=accountEnabled eq true&$top=${pageSize}`;
-        while (url) {
-            const result: Page = await callGraphApi<Page>(token, {
-                method: HttpMethod.GET,
-                url,
-            });
-            const list = result.value ?? [];
-            all.push(...list.map((u: Record<string, unknown>) => flattenUser(u)));
-            url = result['@odata.nextLink'] ?? null;
-        }
-        return all;
+        const pageSize = clampLimit({ value: context.propsValue.pageSize, max: 999, fallback: 100 });
+        const users = await fetchAllGraphPages<Record<string, unknown>>({
+            accessToken: context.auth.access_token,
+            url: '/users',
+            query: { $filter: 'accountEnabled eq true', $top: String(pageSize) },
+            maxPages: MAX_PAGES,
+            tooManyMessage: `More than ${MAX_PAGES} pages of ${pageSize} enabled users exist. Raise Page Size (max 999) or use Get Enabled Users / Custom API Call to page manually.`,
+        });
+        return users.map((u) => flattenUser(u));
     },
 });

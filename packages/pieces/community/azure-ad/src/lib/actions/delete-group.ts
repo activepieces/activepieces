@@ -8,12 +8,19 @@ export const deleteGroupAction = createAction({
     name: 'delete_group',
     classification: 'DESTRUCTIVE',
     displayName: 'Delete Group',
-    description: 'Deletes an Azure AD group by ID.',
+    description: 'Deletes a group from Microsoft Entra ID.',
     audience: 'both',
     aiMetadata: {
         description:
-            'Permanently deletes an Azure AD group by its object ID, removing its memberships with it. Destructive and not idempotent — a repeat call fails with 404 once the group is gone, so confirm the target with Get Group by ID before deleting.',
+            'Permanently deletes a Microsoft Entra ID group by its object ID, removing its memberships with it. Destructive and not idempotent — a repeat call fails with 404 once the group is gone, so confirm the target with Get Group by ID before deleting.',
         idempotent: false,
+    },
+    outputSchema: {
+        fields: [
+            { key: 'success', label: 'Success', format: 'boolean' },
+            { key: 'message', label: 'Message' },
+            { key: 'id', label: 'Deleted Group ID' },
+        ],
     },
     props: {
         groupId: groupDropdown,
@@ -21,11 +28,10 @@ export const deleteGroupAction = createAction({
     async run(context) {
         const token = context.auth.access_token;
         const { groupId } = context.propsValue;
-        // https://learn.microsoft.com/en-us/graph/api/group-delete?view=graph-rest-1.0&tabs=http
         await callGraphApi(token, {
             method: HttpMethod.DELETE,
-            url: `https://graph.microsoft.com/v1.0/groups/${groupId}`,
+            url: `https://graph.microsoft.com/v1.0/groups/${encodeURIComponent(String(groupId))}`,
         });
-        return { success: true, message: 'Group deleted.' };
+        return { success: true, message: 'Group deleted.', id: groupId };
     },
 });

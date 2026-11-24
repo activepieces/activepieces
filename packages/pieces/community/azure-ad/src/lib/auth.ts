@@ -86,18 +86,46 @@ export const azureAdAuth = PieceAuth.OAuth2({
   scope: ['{permissions}'],
   validate: async ({ auth }) => {
     try {
-      // https://learn.microsoft.com/en-us/graph/api/user-get?view=graph-rest-1.0&tabs=http
       await httpClient.sendRequest({
         method: HttpMethod.GET,
-        url: 'https://graph.microsoft.com/v1.0/me',
-        headers: { Authorization: `Bearer ${auth.access_token}` },
+        url: 'https://graph.microsoft.com/v1.0/me?$select=id',
+        headers: { Authorization: `Bearer ${auth.access_token}`, Accept: 'application/json' },
+        timeout: 30000,
       });
       return { valid: true };
-    } catch {
-      return {
-        valid: false,
-        error: 'Invalid or expired token. Please reconnect.',
-      };
+    } catch (error) {
+      return { valid: false, error: describeValidationError(error) };
     }
   },
 });
+
+function describeValidationError(error: unknown): string {
+  const response = typeof error === 'object' && error !== null && 'response' in error ? error.response : undefined;
+  const status = typeof response === 'object' && response !== null && 'status' in response && typeof response.status === 'number' ? response.status : undefined;
+  if (status === undefined) {
+    const reason = error instanceof Error ? error.message : String(error);
+    return `Could not reach Microsoft Graph to validate the connection: ${reason}. Try again later.`;
+  }
+  const body = typeof response === 'object' && response !== null && 'body' in response ? response.body : undefined;
+  const vendor = graphMessage(body);
+  const detail = vendor ? ` Microsoft Graph said: ${vendor}` : '';
+  if (status === 401) {
+    return `The access token was rejected (401). Reconnect and sign in again.${detail}`;
+  }
+  if (status === 403) {
+    return `The signed-in account is not allowed to read its own profile (403). Check that the app registration grants User.Read.All with admin consent.${detail}`;
+  }
+  if (status === 429 || status >= 500) {
+    return `Microsoft Graph is unavailable or throttling requests (${status}); the token may be fine. Try again in a few minutes.${detail}`;
+  }
+  return `Microsoft Graph returned ${status} while validating the connection.${detail}`;
+}
+
+function graphMessage(body: unknown): string | undefined {
+  if (typeof body !== 'object' || body === null || !('error' in body)) return undefined;
+  const err = body.error;
+  if (typeof err !== 'object' || err === null) return undefined;
+  const code = 'code' in err && typeof err.code === 'string' ? err.code : undefined;
+  const message = 'message' in err && typeof err.message === 'string' ? err.message : undefined;
+  return [code, message].filter(Boolean).join(': ') || undefined;
+}

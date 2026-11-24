@@ -1,16 +1,20 @@
-import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import {
-    AppConnectionValueForAuthProperty,
-    TriggerStrategy,
-    createTrigger,
-} from '@activepieces/pieces-framework';
-import dayjs from 'dayjs';
+import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { azureAdAuth } from '../auth';
-import { fetchGraphDeltaChanges } from '../common';
+import {
+    disableNewObjectTrigger,
+    enableNewObjectTrigger,
+    listRecentObjects,
+    NewObjectTriggerConfig,
+    pollNewObjects,
+} from '../common';
 
-const STORE_KEY = '_delta_link_new_user';
-const USER_SELECT =
-    'id,displayName,userPrincipalName,mail,givenName,surname,jobTitle,mobilePhone,accountEnabled,createdDateTime';
+const CONFIG: NewObjectTriggerConfig = {
+    stateKey: '_new_user_state',
+    legacyDeltaKey: '_delta_link_new_user',
+    deltaPath: '/users/delta',
+    objectPath: '/users',
+    select: 'id,displayName,userPrincipalName,mail,givenName,surname,jobTitle,mobilePhone,accountEnabled,createdDateTime',
+};
 
 export const newUserTrigger = createTrigger({
     auth: azureAdAuth,
@@ -19,10 +23,24 @@ export const newUserTrigger = createTrigger({
     displayName: 'New User',
     description: 'Triggers when a new user is created in Microsoft Entra ID.',
     aiMetadata: {
-        description: 'Fires when a new user account is created in the Microsoft Entra ID (Azure AD) directory, detected by polling the Microsoft Graph users delta endpoint. Each event represents one newly created user with profile fields such as display name, user principal name, mail, job title, and creation timestamp; updates to existing users do not re-fire it.',
+        description: 'Fires once for each user account created in Microsoft Entra ID after the trigger was enabled, detected by polling the Microsoft Graph users delta query. Each event is one user with id, displayName, userPrincipalName, mail, givenName, surname, jobTitle, mobilePhone, accountEnabled and createdDateTime. Updates to existing users do not fire it; a user that reaches the directory late (up to 24 hours) still fires once.',
     },
     type: TriggerStrategy.POLLING,
     props: {},
+    outputSchema: {
+        fields: [
+            { key: 'id', label: 'User ID' },
+            { key: 'displayName', label: 'Display Name' },
+            { key: 'userPrincipalName', label: 'User Principal Name', format: 'email' },
+            { key: 'mail', label: 'Mail', format: 'email' },
+            { key: 'givenName', label: 'Given Name' },
+            { key: 'surname', label: 'Surname' },
+            { key: 'jobTitle', label: 'Job Title' },
+            { key: 'mobilePhone', label: 'Mobile Phone' },
+            { key: 'accountEnabled', label: 'Account Enabled', format: 'boolean' },
+            { key: 'createdDateTime', label: 'Created At', format: 'datetime' },
+        ],
+    },
     sampleData: {
         id: '12345678-aaaa-bbbb-cccc-1234567890ab',
         displayName: 'Ada Lovelace',
@@ -36,52 +54,23 @@ export const newUserTrigger = createTrigger({
         createdDateTime: '2026-04-22T10:15:30Z',
     },
     async onEnable(context) {
-        await pollingHelper.onEnable(polling, context);
+        await enableNewObjectTrigger({
+            accessToken: context.auth.access_token,
+            store: context.store,
+            config: CONFIG,
+            isRepublish: context.isRepublish === true,
+        });
     },
     async onDisable(context) {
         if (context.isRepublish) {
             return;
         }
-        await pollingHelper.onDisable(polling, context);
-        await context.store.delete(STORE_KEY);
+        await disableNewObjectTrigger({ store: context.store, config: CONFIG });
     },
     async test(context) {
-        return await pollingHelper.test(polling, context);
+        return listRecentObjects({ accessToken: context.auth.access_token, config: CONFIG });
     },
     async run(context) {
-        return await pollingHelper.poll(polling, context);
+        return pollNewObjects({ accessToken: context.auth.access_token, store: context.store, config: CONFIG });
     },
 });
-
-const polling: Polling<
-    AppConnectionValueForAuthProperty<typeof azureAdAuth>,
-    Record<string, never>
-> = {
-    strategy: DedupeStrategy.TIMEBASED,
-    // /users/delta avoids the advanced-query restrictions on $filter + createdDateTime,
-    // while TIMEBASED dedup on createdDateTime ensures updates to an already-emitted user
-    // don't re-fire this trigger (updated users keep their original createdDateTime).
-    // https://learn.microsoft.com/en-us/graph/delta-query-users
-    async items({ auth, store }) {
-        const users = await fetchGraphDeltaChanges<GraphUser>({
-            accessToken: auth.access_token,
-            store,
-            storeKey: STORE_KEY,
-            deltaPath: '/users/delta',
-            select: USER_SELECT,
-        });
-        return users
-            .filter((u) => u.createdDateTime)
-            .map((user) => ({
-                epochMilliSeconds: dayjs(user.createdDateTime).valueOf(),
-                data: user,
-            }));
-    },
-};
-
-type GraphUser = {
-    id: string;
-    createdDateTime?: string;
-    '@removed'?: unknown;
-    [key: string]: unknown;
-};

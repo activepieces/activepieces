@@ -1,88 +1,77 @@
-import {
-  DedupeStrategy,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
-import {
-  AppConnectionValueForAuthProperty,
-  TriggerStrategy,
-  createTrigger,
-} from '@activepieces/pieces-framework';
-import dayjs from 'dayjs';
+import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { azureAdAuth } from '../auth';
-import { fetchGraphDeltaChanges } from '../common';
+import {
+    disableNewObjectTrigger,
+    enableNewObjectTrigger,
+    listRecentObjects,
+    NewObjectTriggerConfig,
+    pollNewObjects,
+} from '../common';
 
-const STORE_KEY = '_delta_link_new_group';
-const GROUP_SELECT =
-  'id,displayName,description,mail,mailNickname,visibility,groupTypes,securityEnabled,mailEnabled,createdDateTime';
+const CONFIG: NewObjectTriggerConfig = {
+    stateKey: '_new_group_state',
+    legacyDeltaKey: '_delta_link_new_group',
+    deltaPath: '/groups/delta',
+    objectPath: '/groups',
+    select: 'id,displayName,description,mail,mailNickname,visibility,groupTypes,securityEnabled,mailEnabled,createdDateTime',
+    arrayKeys: ['groupTypes'],
+};
 
 export const newGroupTrigger = createTrigger({
-  auth: azureAdAuth,
-  name: 'new_group',
-  classification: 'READ',
-  displayName: 'New Group',
-  description: 'Triggers when a new group is created in Microsoft Entra ID.',
-  aiMetadata: {
-    description: 'Fires when a new group (security or Microsoft 365) is created in the Microsoft Entra ID (Azure AD) directory, detected by polling the Microsoft Graph groups delta endpoint. Each event represents one newly created group with its display name, mail settings, visibility, and creation timestamp; updates to existing groups do not re-fire it.',
-  },
-  type: TriggerStrategy.POLLING,
-  props: {},
-  sampleData: {
-    displayName: 'testGroup6',
-    mailNickname: 'team-theta4',
-    visibility: null,
-    securityEnabled: true,
-    mailEnabled: false,
-    createdDateTime: '2026-04-22T08:29:29Z',
-    id: '2ff8f722-0191-4c16-a378-a8fb4efec110',
-  },
-  async onEnable(context) {
-    await pollingHelper.onEnable(polling, context);
-  },
-  async onDisable(context) {
-    if (context.isRepublish) {
-      return;
-    }
-    await pollingHelper.onDisable(polling, context);
-    await context.store.delete(STORE_KEY);
-  },
-  async test(context) {
-    return await pollingHelper.test(polling, context);
-  },
-  async run(context) {
-    return await pollingHelper.poll(polling, context);
-  },
+    auth: azureAdAuth,
+    name: 'new_group',
+    classification: 'READ',
+    displayName: 'New Group',
+    description: 'Triggers when a new group is created in Microsoft Entra ID.',
+    aiMetadata: {
+        description: 'Fires once for each group (security or Microsoft 365) created in Microsoft Entra ID after the trigger was enabled, detected by polling the Microsoft Graph groups delta query. Each event is one group with id, displayName, description, mail, mailNickname, visibility, groupTypes, securityEnabled, mailEnabled and createdDateTime. Updates to existing groups do not fire it; a group that reaches the directory late (up to 24 hours) still fires once.',
+    },
+    type: TriggerStrategy.POLLING,
+    props: {},
+    outputSchema: {
+        fields: [
+            { key: 'id', label: 'Group ID' },
+            { key: 'displayName', label: 'Display Name' },
+            { key: 'description', label: 'Description' },
+            { key: 'mail', label: 'Mail', format: 'email' },
+            { key: 'mailNickname', label: 'Mail Nickname' },
+            { key: 'visibility', label: 'Visibility' },
+            { key: 'groupTypes', label: 'Group Types' },
+            { key: 'securityEnabled', label: 'Security Enabled', format: 'boolean' },
+            { key: 'mailEnabled', label: 'Mail Enabled', format: 'boolean' },
+            { key: 'createdDateTime', label: 'Created At', format: 'datetime' },
+        ],
+    },
+    sampleData: {
+        id: '2ff8f722-0191-4c16-a378-a8fb4efec110',
+        displayName: 'testGroup6',
+        description: null,
+        mail: null,
+        mailNickname: 'team-theta4',
+        visibility: null,
+        groupTypes: [],
+        securityEnabled: true,
+        mailEnabled: false,
+        createdDateTime: '2026-04-22T08:29:29Z',
+    },
+    async onEnable(context) {
+        await enableNewObjectTrigger({
+            accessToken: context.auth.access_token,
+            store: context.store,
+            config: CONFIG,
+            isRepublish: context.isRepublish === true,
+        });
+    },
+    async onDisable(context) {
+        if (context.isRepublish) {
+            return;
+        }
+        await disableNewObjectTrigger({ store: context.store, config: CONFIG });
+    },
+    async test(context) {
+        return listRecentObjects({ accessToken: context.auth.access_token, config: CONFIG });
+    },
+    async run(context) {
+        return pollNewObjects({ accessToken: context.auth.access_token, store: context.store, config: CONFIG });
+    },
 });
-
-const polling: Polling<
-  AppConnectionValueForAuthProperty<typeof azureAdAuth>,
-  Record<string, never>
-> = {
-  strategy: DedupeStrategy.TIMEBASED,
-  // /groups/delta avoids the advanced-query restrictions on $filter + createdDateTime,
-  // while TIMEBASED dedup on createdDateTime ensures updates to an already-emitted group
-  // don't re-fire this trigger (updated groups keep their original createdDateTime).
-  // https://learn.microsoft.com/en-us/graph/delta-query-groups
-  async items({ auth, store }) {
-    const groups = await fetchGraphDeltaChanges<GraphGroup>({
-      accessToken: auth.access_token,
-      store,
-      storeKey: STORE_KEY,
-      deltaPath: '/groups/delta',
-      select: GROUP_SELECT,
-    });
-    return groups
-      .filter((g) => g.createdDateTime)
-      .map((group) => ({
-        epochMilliSeconds: dayjs(group.createdDateTime).valueOf(),
-        data: group,
-      }));
-  },
-};
-
-type GraphGroup = {
-  id: string;
-  createdDateTime?: string;
-  '@removed'?: unknown;
-  [key: string]: unknown;
-};
