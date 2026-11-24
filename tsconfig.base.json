@@ -521,6 +521,9 @@
       "@activepieces/piece-fireflies-ai": [
         "packages/pieces/community/fireflies-ai/src/index.ts"
       ],
+      "@activepieces/piece-firsttouch": [
+        "packages/pieces/community/firsttouch/src/index.ts"
+      ],
       "@activepieces/piece-fliqr-ai": [
         "packages/pieces/community/fliqr-ai/src/index.ts"
       ],
