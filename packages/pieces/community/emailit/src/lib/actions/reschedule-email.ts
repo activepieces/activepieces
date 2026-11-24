@@ -19,9 +19,12 @@ export const rescheduleEmailAction = createAction({
     idempotent: true,
   },
   outputSchema: emailitSchemas.rescheduled,
+  propertyGroups: [
+    { key: 'schedule', display: 'section', label: 'Schedule', icon: 'calendar', props: ['email_id', 'scheduled_at'] },
+  ],
   props: {
-    email_id: emailitProps.emailId({ description: 'ID of the scheduled email. For a send to several recipients, each recipient has its own ID.' }),
-    scheduled_at: Property.DateTime({ displayName: 'New Send Time', description: 'ISO 8601 with time zone; at least 3 minutes from now.', required: true }),
+    email_id: emailitProps.emailId({ description: 'Each recipient of a send has its own ID.' }),
+    scheduled_at: Property.DateTime({ displayName: 'New Send Time', description: 'At least 3 minutes from now.', required: true }),
   },
   async run({ auth, propsValue }) {
     const scheduledAt = emailitValues.dateTime(propsValue.scheduled_at);

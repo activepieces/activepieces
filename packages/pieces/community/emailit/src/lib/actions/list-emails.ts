@@ -1,5 +1,5 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { emailitAuth } from '../auth';
 import { emailitClient } from '../common/client';
 import { emailitSchemas } from '../common/output-schemas';
@@ -10,7 +10,7 @@ export const listEmailsAction = createAction({
   auth: emailitAuth,
   name: 'list_emails',
   displayName: 'Find Emails',
-  description: 'Search sent or received emails, newest first (last 14 days unless you set dates).',
+  description: 'Search sent or received emails, newest first.',
   audience: 'both',
   classification: 'SEARCH',
   aiMetadata: {
@@ -19,27 +19,33 @@ export const listEmailsAction = createAction({
     idempotent: true,
   },
   outputSchema: emailitSchemas.emailList,
+  propertyGroups: [
+    { key: 'filters', display: 'section', label: 'Filters', icon: 'filter', props: ['type', 'to', 'status', 'search'] },
+    { key: 'dates', display: 'section', label: 'Date Range', icon: 'calendar', props: ['dates_note', 'date_from', 'date_to'] },
+  ],
   props: {
     type: Property.StaticDropdown<'outbound' | 'inbound'>({
       displayName: 'Direction',
       required: false,
       defaultValue: 'outbound',
-      options: { disabled: false, options: [{ label: 'Sent (outbound)', value: 'outbound' }, { label: 'Received (inbound)', value: 'inbound' }] },
+      options: { disabled: false, options: [{ label: 'Sent', value: 'outbound' }, { label: 'Received', value: 'inbound' }] },
     }),
-    to: Property.ShortText({ displayName: 'Recipient', description: 'Exact recipient address.', required: false }),
+    to: Property.ShortText({ displayName: 'Recipient', description: 'Exact recipient address.', placeholder: 'ada@example.com', required: false }),
     status: Property.StaticDropdown({
       displayName: 'Status',
+      description: 'Only emails in this status.',
       required: false,
       options: {
         disabled: false,
-        options: ['accepted', 'scheduled', 'delivered', 'loaded', 'clicked', 'attempted', 'bounced', 'failed', 'rejected', 'suppressed', 'received', 'complained', 'canceled', 'held'].map((value) => ({ label: value, value })),
+        options: ['accepted', 'scheduled', 'delivered', 'loaded', 'clicked', 'attempted', 'bounced', 'failed', 'rejected', 'suppressed', 'received', 'complained', 'canceled', 'held'].map((value) => ({ label: statusLabel(value), value })),
       },
     }),
-    search: Property.ShortText({ displayName: 'Search', description: 'Matches recipient, sender or subject.', required: false }),
-    date_from: Property.ShortText({ displayName: 'From Date', description: 'YYYY-MM-DD (UTC). Defaults to 14 days ago.', required: false }),
-    date_to: Property.ShortText({ displayName: 'To Date', description: 'YYYY-MM-DD (UTC).', required: false }),
+    search: Property.ShortText({ displayName: 'Search', description: 'Matches recipient, sender or subject.', placeholder: 'invoice', required: false }),
+    dates_note: Property.MarkDown({ value: 'Without dates, only the last 14 days are searched.', variant: MarkdownVariant.INFO }),
+    date_from: Property.ShortText({ displayName: 'From Date', description: 'UTC date.', placeholder: '2026-10-01', width: 'half', required: false }),
+    date_to: Property.ShortText({ displayName: 'To Date', description: 'UTC date.', placeholder: '2026-10-31', width: 'half', required: false }),
     limit: emailitProps.limit(),
-    page: emailitProps.page(),
+    page: { ...emailitProps.page(), advanced: true },
   },
   async run({ auth, propsValue }) {
     const page = emailitClient.page(propsValue.page);
@@ -62,6 +68,10 @@ export const listEmailsAction = createAction({
     return { items, count: items.length, page, hasMore, totalRecords };
   },
 });
+
+function statusLabel(value: string): string {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
 
 function day({ value, label }: { value: unknown; label: string }): string | undefined {
   const text = emailitValues.optionalText(value);

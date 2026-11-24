@@ -19,14 +19,25 @@ export const forwardEmailAction = createAction({
     idempotent: false,
   },
   outputSchema: emailitSchemas.forwarded,
+  propertyGroups: [
+    { key: 'email', display: 'section', label: 'Email', icon: 'inbox', props: ['email_id', 'to'] },
+    { key: 'header', display: 'section', label: 'Forward Header', icon: 'reply', props: ['include_headers', 'comment'] },
+    { key: 'overrides', display: 'section', label: 'Overrides', icon: 'sliders', props: ['from', 'subject'] },
+  ],
   props: {
-    email_id: emailitProps.emailId({ description: 'ID of the outgoing email to forward.' }),
+    email_id: emailitProps.emailId({ description: 'The sent email to forward.' }),
     to: emailitProps.recipientList({ displayName: 'To', description: 'New recipients, up to 50.', required: true }),
-    include_headers: Property.Checkbox({ displayName: 'Add Forwarded-Message Header', description: 'Adds the original sender, date and subject above the content, with your note.', required: false, defaultValue: false }),
-    comment: Property.LongText({ displayName: 'Note', description: 'Plain-text note above the forwarded message (only with the header option).', required: false }),
-    from: Property.ShortText({ displayName: 'Sender', description: 'Optional. Defaults to the original sender.', required: false }),
-    subject: Property.ShortText({ displayName: 'Subject', description: 'Optional. Defaults to the original subject.', required: false }),
-    idempotency_key: emailitProps.idempotencyKey(),
+    include_headers: Property.Checkbox({ displayName: 'Add Forward Header', description: 'Shows the original sender, date and subject on top.', required: false, defaultValue: false }),
+    comment: Property.LongText({ displayName: 'Note', description: 'Plain text above the message. Needs Add Forward Header.', required: false }),
+    from: Property.ShortText({ displayName: 'Sender', description: 'Empty: the original sender.', placeholder: 'support@acme.com', width: 'half', required: false }),
+    subject: Property.ShortText({ displayName: 'Subject', description: 'Empty: the original subject.', width: 'half', required: false }),
+    idempotency_key: {
+      ...emailitProps.idempotencyKey(),
+      displayName: 'Deduplication Key',
+      description: 'Reruns with the same key within 24 hours do not send again.',
+      placeholder: 'order-1042',
+      advanced: true,
+    },
   },
   async run({ auth, propsValue }) {
     const body = emailitValues.compact({

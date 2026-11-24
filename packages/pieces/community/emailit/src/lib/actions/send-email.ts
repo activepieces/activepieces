@@ -17,62 +17,78 @@ export const sendEmailAction = createAction({
     idempotent: false,
   },
   outputSchema: emailitSchemas.sendEmailLegacy,
+  propertyGroups: [
+    { key: 'recipients', display: 'section', label: 'Recipients', icon: 'users', props: ['to', 'cc', 'bcc', 'reply_to'] },
+    { key: 'sender', display: 'section', label: 'Sender', icon: 'user', props: ['from_name', 'from_email'] },
+    { key: 'message', display: 'section', label: 'Message', icon: 'text', props: ['subject', 'content_type', 'content', 'plain_text'] },
+    { key: 'template', display: 'section', label: 'Template', icon: 'file', props: ['template', 'variables'] },
+    { key: 'attachments', display: 'section', label: 'Attachments', icon: 'paperclip', props: ['attachments', 'attachment_file'] },
+    { key: 'delivery', display: 'section', label: 'Delivery', icon: 'calendar', props: ['scheduled_at', 'tracking'] },
+  ],
   props: {
     to: emailitProps.recipientList({
       displayName: 'To',
-      description: 'Recipient email addresses, e.g. ada@example.com or Ada Lovelace <ada@example.com>. Up to 50 here, and up to 50 each in CC and BCC.',
+      description: 'Up to 50. An address or Name <address>.',
       required: true,
     }),
     from_name: Property.ShortText({
       displayName: 'Sender Name',
-      description: 'Name recipients will see in their inbox, e.g. "Acme Support". If left blank, only the email address is shown.',
+      description: 'Shown in the inbox. Empty shows only the address.',
+      placeholder: 'Acme Support',
+      width: 'half',
       required: false,
     }),
     from_email: Property.ShortText({
       displayName: 'Sender Email',
-      description: 'Email address to send from. It must be on a verified sending domain of your Emailit workspace.',
+      description: 'Must be on a verified sending domain.',
+      placeholder: 'support@acme.com',
+      width: 'half',
       required: true,
     }),
-    cc: emailitProps.recipientList({ displayName: 'CC', description: 'Send a visible copy to these addresses. Up to 50.', required: false }),
-    bcc: emailitProps.recipientList({ displayName: 'BCC', description: "Send a hidden copy to these addresses. Other recipients won't see them. Up to 50.", required: false }),
+    cc: emailitProps.recipientList({ displayName: 'CC', description: 'Visible copies, up to 50.', required: false }),
+    bcc: emailitProps.recipientList({ displayName: 'BCC', description: 'Hidden copies, up to 50.', required: false }),
     reply_to: Property.ShortText({
       displayName: 'Reply-To',
-      description: 'Where replies go. Defaults to the sender email if left blank. Separate several addresses with commas.',
+      description: 'Where replies go. Empty: the sender. Separate several with commas.',
+      placeholder: 'help@acme.com',
       required: false,
     }),
     subject: Property.ShortText({
       displayName: 'Subject',
-      description: "The subject line shown in the recipient's inbox. Required unless you send a template.",
+      description: 'Required unless you use a template.',
+      placeholder: 'Your order has shipped',
       required: false,
     }),
     content_type: Property.StaticDropdown<'text' | 'html'>({
-      displayName: 'Content Type',
+      displayName: 'Body Type',
       required: true,
       defaultValue: 'html',
+      display: 'cards',
       options: {
         disabled: false,
         options: [
-          { label: 'Plain Text', value: 'text' },
-          { label: 'HTML', value: 'html' },
+          { label: 'Plain text', value: 'text', description: 'Simple', icon: 'text' },
+          { label: 'HTML', value: 'html', description: 'Rich + styled', icon: 'code' },
         ],
       },
     }),
     content: Property.LongText({
       displayName: 'Email Body',
-      description: 'The message body. Use Plain Text for simple messages or HTML for rich formatting. Required unless you send a template.',
+      description: 'Required unless you use a template.',
       required: false,
     }),
     plain_text: Property.LongText({
       displayName: 'Plain-Text Version',
-      description: 'Optional, for HTML emails: a plain-text version sent alongside the HTML. Recommended for deliverability.',
+      description: 'Sent with an HTML body. Ignored for plain text.',
       required: false,
     }),
     headers: Property.Object({
       displayName: 'Custom Headers',
-      description: 'Add custom email headers as key-value pairs, e.g. X-Campaign-ID: welcome. Line breaks are not allowed.',
+      description: 'Extra email headers, e.g. X-Campaign-ID: welcome.',
+      advanced: true,
       required: false,
     }),
-    ...emailitProps.sendingProps(),
+    ...sendingFields(),
   },
   async run({ auth, propsValue }) {
     const isText = propsValue.content_type === 'text';
@@ -101,3 +117,18 @@ export const sendEmailAction = createAction({
     });
   },
 });
+
+function sendingFields() {
+  const sending = emailitProps.sendingProps();
+  return {
+    ...sending,
+    meta: { ...sending.meta, advanced: true },
+    idempotency_key: {
+      ...sending.idempotency_key,
+      displayName: 'Deduplication Key',
+      description: 'Reruns with the same key within 24 hours do not send again.',
+      placeholder: 'order-1042',
+      advanced: true,
+    },
+  };
+}
