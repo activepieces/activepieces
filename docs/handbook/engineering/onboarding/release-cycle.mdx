@@ -12,7 +12,7 @@ Merge to main ──→ Deploy to staging
                           │
                           Sunday to Thursday, 8 AM UTC: the Cloud gate picks the newest commit staging deployed
                           │
-                          E2E matrix + upgrade test on the staging image
+                          E2E matrix + upgrade test + benchmark (report only) on the staging image
                           │
                           One approval ──→ canary ──→ whole Cloud fleet
 ```
@@ -27,7 +27,7 @@ Each merge to `main` builds a `version.sha.beta` image and deploys it to staging
 
 ### Cloud gate — Sunday to Thursday
 
-`continuous-delivery-cloud.yml` runs Sunday to Thursday at 8 AM UTC and takes the newest `main` commit that staging deployed. When Cloud already runs that commit, the run stops with no approval. A run started by hand takes the tip of `main`, and stops if staging has not deployed it. It runs the E2E matrix (four configurations) and the upgrade test from the last self-hosted release on the image staging built. The run summary lists the tickets in the candidate. One approval in the `production` environment deploys the image to the canary and then to the fleet.
+`continuous-delivery-cloud.yml` runs Sunday to Thursday at 8 AM UTC and takes the newest `main` commit that staging deployed. When Cloud already runs that commit, the run stops with no approval. A run started by hand takes the tip of `main`, and stops if staging has not deployed it. It runs the E2E matrix (four configurations) and the upgrade test from the last self-hosted release on the image staging built. It also benchmarks that image against the image Cloud runs; the numbers are in the run summary and do not block the approval. The run summary lists the tickets in the candidate. One approval in the `production` environment deploys the image to the canary and then to the fleet.
 
 **Why**: Cloud gets the exact image that staging runs and the matrix tested. The gate runs every working day, so each deploy carries about one day of `main`.
 
@@ -46,7 +46,7 @@ Self-hosted releases use `release-self-hosted.yml`. See [Releases](/handbook/eng
 ## Overrides
 
 - **Hotfix**: Merge the fix into `main`, then run `continuous-delivery-cloud.yml` by hand with `hotfix_prs`. Cloud gets only those PRs on top of what it runs, after the same checks and approval. The rest of `main` waits for the next full gate run.
-- **Emergency**: Use `emergency-cloud-deploy.yml` to deploy directly to production, bypassing staging entirely. Use sparingly.
+- **Emergency**: Run the gate with `skip_tests` to skip the E2E matrix, the upgrade test and the benchmark. The approval still runs. If that is too slow, use `emergency-cloud-deploy.yml` to deploy directly to production, bypassing staging entirely. Use sparingly.
 
 ## FAQ
 

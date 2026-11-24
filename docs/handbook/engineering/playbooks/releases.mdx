@@ -31,7 +31,7 @@ All changes flow through a staging environment before reaching production. There
 
   To ship all of `main` at once instead, leave `hotfix_prs` empty: the gate takes the tip of `main`, or the commit named in `sha`. Staging must have deployed that commit, so start the gate after its staging deploy is green.
 
-If Cloud is down and the gate is too slow, use `emergency-cloud-deploy.yml`. To go back to an earlier image, use `continuous-delivery-rollback.yml`.
+In an emergency, run the gate with `skip_tests`: it skips the E2E matrix, the upgrade test and the benchmark, and keeps the approval. If Cloud is down and that is still too slow, use `emergency-cloud-deploy.yml`. To go back to an earlier image, use `continuous-delivery-rollback.yml`.
 
 ## Self-Hosted Release
 
@@ -57,14 +57,14 @@ To run any workflow manually, go to the repo's **Actions** tab, select the workf
 | Trigger | What happens |
 |---|---|
 | **Schedule** (Sunday to Thursday, 8 AM UTC) | Picks the newest of the last 30 `main` commits whose `deploy-staging-app` and `deploy-staging-workers` checks passed, not the tip. The run stops with no approval when every Cloud host, canary included, already runs that commit. |
-| **Manual dispatch** | Picks the tip of `main`, or the `main` commit named in `sha`. The run stops unless that commit's `deploy-staging-app` and `deploy-staging-workers` checks passed. |
+| **Manual dispatch** | Picks the tip of `main`, or the `main` commit named in `sha`. The run stops unless that commit's `deploy-staging-app` and `deploy-staging-workers` checks passed. `skip_tests` (emergency only) skips the E2E matrix, the upgrade test and the benchmark. |
 
 Then, for the candidate:
 
-1. `e2e-matrix.yml` and `upgrade-test.yml` run on the candidate's `version.sha.beta` image. Nothing is built again.
+1. `e2e-matrix.yml`, `upgrade-test.yml` and `benchmark-compare.yml` run on the candidate's `version.sha.beta` image. Nothing is built again. The benchmark runs the image Cloud runs and the candidate in turns on one runner, on a light and a heavy flow, and its job summary shows the median change of each metric. It is report only.
 2. The `report` job posts the `e2e-matrix` and `upgrade-test` commit statuses on the candidate SHA. A red upgrade test says whether the candidate broke or the setup failed before the upgrade.
 3. The run summary lists the tickets between the commit Cloud runs and the candidate, and every migration the candidate adds: its track (blocking at boot, or background after boot), whether it rolls back, and its PR.
-4. The `approve` job waits for approval in the `production` GitHub Environment. It starts only when every check passed. The gate does not fall back to an older commit: when the matrix is red, fix `main`, or name an older commit in `sha`. A newer candidate cancels an older one that still waits.
+4. The `approve` job waits for approval in the `production` GitHub Environment. It starts when the benchmark has finished and every other check passed; the benchmark result does not block it. The gate does not fall back to an older commit: when the matrix is red, fix `main`, or name an older commit in `sha`. A newer candidate cancels an older one that still waits.
 5. Under the `promote-production` lock, the `deploy` job reads the Cloud version again and refuses to deploy when the canary and the fleet run different images, or when Cloud changed after the cut. It does not check that the candidate contains every hotfix Cloud runs. Then the canary, whose app applies every pending migration at boot, the fleet, and the Linear "Cloud" release. No step stops on a breaking migration: the approval is the consent.
 
 If the gate refuses because the canary and the fleet differ (for example after `emergency-cloud-deploy.yml`, which deploys only the fleet), deploy the fleet's tag to the canary from `mrsk/prod`: `kamal deploy --version <tag> --config-file=config/app-canary.yml --skip-push`, then the same with `config/worker-canary.yml`.
