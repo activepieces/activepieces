@@ -19,10 +19,11 @@ export const listAudiencesAction = createAction({
     idempotent: true,
   },
   outputSchema: emailitSchemas.audienceList,
+  propertyGroups: [{ key: 'filters', display: 'section', label: 'Filters', icon: 'filter', props: ['search', 'limit'] }],
   props: {
-    search: Property.ShortText({ displayName: 'Search', description: 'Part of the audience name.', required: false }),
+    search: Property.ShortText({ displayName: 'Search', description: 'Part of the audience name.', placeholder: 'Newsletter', required: false }),
     limit: emailitProps.limit(),
-    page: emailitProps.page(),
+    page: { ...emailitProps.page(), advanced: true },
   },
   async run({ auth, propsValue }) {
     const page = emailitClient.page(propsValue.page);

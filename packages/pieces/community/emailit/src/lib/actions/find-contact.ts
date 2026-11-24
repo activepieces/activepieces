@@ -19,7 +19,7 @@ export const findContactAction = createAction({
   },
   outputSchema: emailitSchemas.contactLookup,
   props: {
-    contact: Property.ShortText({ displayName: 'Email or Contact ID', required: true }),
+    contact: Property.ShortText({ displayName: 'Email or Contact ID', placeholder: 'ada@example.com', required: true }),
   },
   async run({ auth, propsValue }) {
     const key = emailitValues.requiredText({ value: propsValue.contact, label: 'Email or Contact ID' });

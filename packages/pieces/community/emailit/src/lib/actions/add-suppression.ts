@@ -18,17 +18,18 @@ export const addSuppressionAction = createAction({
     idempotent: true,
   },
   outputSchema: emailitSchemas.suppression,
+  propertyGroups: [{ key: 'suppression', display: 'section', label: 'Suppression', icon: 'sliders', props: ['email', 'type', 'reason', 'keep_until'] }],
   props: {
-    email: Property.ShortText({ displayName: 'Email', required: true }),
+    email: Property.ShortText({ displayName: 'Email', placeholder: 'ada@example.com', required: true }),
     type: Property.StaticDropdown<'recipient' | 'bounce' | 'complaint' | 'unsubscribe'>({
-      displayName: 'Type',
-      description: 'Only "recipient" blocks API and SMTP sends; campaigns skip every type.',
+      displayName: 'Suppression Type',
+      description: 'Only Recipient blocks API and SMTP sends. Campaigns skip all types.',
       required: false,
       defaultValue: 'recipient',
-      options: { disabled: false, options: [{ label: 'recipient', value: 'recipient' }, { label: 'bounce', value: 'bounce' }, { label: 'complaint', value: 'complaint' }, { label: 'unsubscribe', value: 'unsubscribe' }] },
+      options: { disabled: false, options: [{ label: 'Recipient', value: 'recipient' }, { label: 'Bounce', value: 'bounce' }, { label: 'Complaint', value: 'complaint' }, { label: 'Unsubscribe', value: 'unsubscribe' }] },
     }),
-    reason: Property.ShortText({ displayName: 'Reason', description: 'Free-text note, e.g. "Asked to stop receiving invoices".', required: false }),
-    keep_until: Property.DateTime({ displayName: 'Keep Until', description: 'Optional expiry. Leave empty for a permanent suppression.', required: false }),
+    reason: Property.ShortText({ displayName: 'Reason', description: 'A note for your team.', placeholder: 'Asked to stop receiving invoices', required: false }),
+    keep_until: Property.DateTime({ displayName: 'Keep Until', description: 'Leave empty to suppress for good.', required: false }),
   },
   async run({ auth, propsValue }) {
     const body = emailitValues.compact({

@@ -19,10 +19,11 @@ export const listDomainsAction = createAction({
     idempotent: true,
   },
   outputSchema: emailitSchemas.domainList,
+  propertyGroups: [{ key: 'filters', display: 'section', label: 'Filters', icon: 'filter', props: ['search', 'limit'] }],
   props: {
-    search: Property.ShortText({ displayName: 'Search', description: 'Part of the domain name.', required: false }),
+    search: Property.ShortText({ displayName: 'Search', description: 'Part of the domain name.', placeholder: 'acme.com', required: false }),
     limit: emailitProps.limit(),
-    page: emailitProps.page(),
+    page: { ...emailitProps.page(), advanced: true },
   },
   async run({ auth, propsValue }) {
     const page = emailitClient.page(propsValue.page);
