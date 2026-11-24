@@ -3,7 +3,7 @@ import { createAction } from '@activepieces/pieces-framework';
 import { cognitoFormsAuth } from '../auth';
 import { cognitoRequest } from '../common/client';
 import { formPath } from '../common/entries';
-import { formIdText, readSchemaFields } from '../common/props';
+import { formIdInput, readSchemaFields } from '../common/props';
 import { formSchemaOutputSchema } from '../output-schemas';
 
 export const getFormSchemaAction = createAction({
@@ -19,7 +19,7 @@ export const getFormSchemaAction = createAction({
   },
   outputSchema: formSchemaOutputSchema,
   props: {
-    form_id: formIdText,
+    form_id: formIdInput,
   },
   async run(context) {
     const { form_id } = context.propsValue;

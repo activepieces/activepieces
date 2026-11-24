@@ -3,7 +3,7 @@ import { cognitoFormsAuth } from '../auth';
 import { encodeSegment } from '../common/client';
 import { entryPath } from '../common/entries';
 import { fetchCognitoFile } from '../common/files';
-import { entryIdText, formIdText } from '../common/props';
+import { entryIdInput, formIdInput } from '../common/props';
 import { fileOutputSchema } from '../output-schemas';
 
 export const getEntryDocumentAction = createAction({
@@ -19,8 +19,8 @@ export const getEntryDocumentAction = createAction({
   },
   outputSchema: fileOutputSchema,
   props: {
-    form_id: formIdText,
-    entry_id: entryIdText('The entry number (for example 12) or the full entry ID (for example 5-12).'),
+    form_id: formIdInput,
+    entry_id: entryIdInput,
     template_number: Property.Number({
       displayName: 'Template Number',
       description: 'The document template number (the first template is 1).',

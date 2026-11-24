@@ -46,6 +46,20 @@ export const entryIdText = (description: string) =>
     required: true,
   });
 
+export const formIdInput = Property.ShortText({
+  displayName: 'Form ID',
+  description: 'The form ID or internal name, as returned by "List Forms".',
+  required: true,
+  placeholder: 'ContactUs',
+});
+
+export const entryIdInput = Property.ShortText({
+  displayName: 'Entry ID',
+  description: 'Entry number or full entry ID, often mapped from a trigger.',
+  required: true,
+  placeholder: '12 or 5-12',
+});
+
 export const entryFieldsJson = (description: string) =>
   Property.Json({
     displayName: 'Fields',
@@ -102,7 +116,7 @@ export function buildFieldProps({ schema, forUpdate = false }: { schema: unknown
         props[field.name] = forUpdate
           ? Property.StaticDropdown({
               displayName,
-              description: description || 'Leave empty to keep the current value.',
+              description,
               required: false,
               options: {
                 disabled: false,
@@ -121,7 +135,7 @@ export function buildFieldProps({ schema, forUpdate = false }: { schema: unknown
       default:
         props[field.name] = Property.Json({
           displayName,
-          description: `${description ? `${description} ` : ''}Enter this field as JSON (for example a name, address, choice list or table rows).`,
+          description: `${description ? `${description} ` : ''}Enter as JSON, e.g. a name, address or table rows.`,
           required: false,
         });
         break;
