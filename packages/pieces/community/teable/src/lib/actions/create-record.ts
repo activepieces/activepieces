@@ -16,6 +16,22 @@ export const createRecordAction = createAction({
       'Adds one new row to a Teable table. Each call appends another record, so a retry makes a duplicate.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'table',
+      display: 'section',
+      label: 'Table',
+      icon: 'inbox',
+      props: ['base_id', 'table_id'],
+    },
+    {
+      key: 'values',
+      display: 'section',
+      label: 'Values',
+      icon: 'text',
+      props: ['fields'],
+    },
+  ],
   props: {
     base_id: TeableCommon.base_id,
     table_id: TeableCommon.table_id,

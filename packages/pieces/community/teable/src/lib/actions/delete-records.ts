@@ -18,12 +18,28 @@ export const deleteRecordsAction = createAction({
       'Permanently removes up to 1000 records from a Teable table in one call, by their record IDs. Refuses an empty ID list. Deleting the same IDs again still succeeds, so a retry is safe.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'table',
+      display: 'section',
+      label: 'Table',
+      icon: 'inbox',
+      props: ['base_id', 'table_id'],
+    },
+    {
+      key: 'delete',
+      display: 'section',
+      label: 'Records to Delete',
+      icon: 'trash',
+      props: ['recordIds'],
+    },
+  ],
   props: {
     base_id: TeableCommon.base_id,
     table_id: TeableCommon.table_id,
     recordIds: Property.Array({
       displayName: 'Record IDs',
-      description: 'The IDs of the records to delete.',
+      description: 'IDs of the records to delete, up to 1000.',
       required: true,
     }),
   },

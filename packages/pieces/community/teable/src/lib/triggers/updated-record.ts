@@ -1,6 +1,8 @@
 import {
   AppConnectionValueForAuthProperty,
   createTrigger,
+  MarkdownVariant,
+  Property,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
@@ -157,16 +159,29 @@ export const updatedRecordTrigger = createTrigger({
   name: 'teable_updated_record',
   classification: 'READ',
   displayName: 'Updated Record',
-  description:
-    'Triggers when a record is created or modified. The table must have a "Last modified time" field that shows the time.',
+  description: 'Triggers when a record is created or changed.',
   aiMetadata: {
     description:
       'Fires when a record in the selected Teable table is created or modified. The table must contain a field of type "Last modified time" whose time format is 24 hour or 12 hour (with no time shown, which is the Teable default, it sorts by date only); enabling the trigger, or a later poll, fails with instructions when no such field exists. A record modified again later fires again. Large backlogs are delivered across successive polls without loss; only in the extreme case of more than 25,000 records sharing one identical "Last modified time" value can records beyond that bound be skipped. Delivery is at-least-once: after a platform error during a poll, the next poll may deliver some records again rather than lose them.',
   },
   props: {
+    setup_help: Property.MarkDown({
+      value:
+        'The table needs a Last modified time field that shows the time. New records fire this trigger too.',
+      variant: MarkdownVariant.INFO,
+    }),
     base_id: TeableCommon.base_id,
     table_id: TeableCommon.table_id,
   },
+  propertyGroups: [
+    {
+      key: 'table',
+      display: 'section',
+      label: 'Table',
+      icon: 'inbox',
+      props: ['setup_help', 'base_id', 'table_id'],
+    },
+  ],
   sampleData: {
     id: 'recql6P1Rc5fWQAlCbp',
     fields: {

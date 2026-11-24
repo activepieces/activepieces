@@ -1,8 +1,8 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { MarkdownVariant, Property, createAction } from '@activepieces/pieces-framework';
 import { TeableAuth } from '../auth';
 import { TeableCommon } from '../common';
 import { teableClient } from '../common/client';
-import { TeableCreatableFieldTypes } from '../common/constants';
+import { TeableCreatableFieldTypeOptions } from '../common/constants';
 import { teableOutputSchemas } from '../output-schemas';
 
 export const createFieldAction = createAction({
@@ -10,7 +10,7 @@ export const createFieldAction = createAction({
   name: 'teable_create_field',
   classification: 'WRITE',
   displayName: 'Create Field',
-  description: 'Adds a new field (column) to a table.',
+  description: 'Adds a new field to a table.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -22,27 +22,59 @@ export const createFieldAction = createAction({
     table_id: TeableCommon.table_id,
     name: Property.ShortText({
       displayName: 'Name',
-      description: 'The name of the new field. Must be unique within the table.',
+      description: 'Must be unique in the table.',
+      placeholder: 'Status',
       required: true,
+      width: 'half',
     }),
     type: Property.StaticDropdown({
       displayName: 'Type',
+      description: 'The kind of data the field holds.',
       required: true,
+      width: 'half',
       options: {
-        options: TeableCreatableFieldTypes.map((type) => ({ label: type, value: type })),
+        options: TeableCreatableFieldTypeOptions,
       },
     }),
     description: Property.LongText({
       displayName: 'Description',
+      description: 'Help text shown with the field in Teable.',
       required: false,
+    }),
+    options_help: Property.MarkDown({
+      value:
+        'Only some types need options, e.g. Single select `{"choices": [{"name": "Open"}]}` or Formula `{"expression": "1 + 1"}`.',
+      variant: MarkdownVariant.INFO,
     }),
     options: Property.Json({
       displayName: 'Options',
-      description:
-        'Type-specific options as JSON. See the Teable field documentation.',
+      description: 'Settings for the chosen type, as JSON.',
       required: false,
     }),
   },
+  propertyGroups: [
+    {
+      key: 'table',
+      display: 'section',
+      label: 'Table',
+      icon: 'inbox',
+      props: ['base_id', 'table_id'],
+    },
+    {
+      key: 'field',
+      display: 'section',
+      label: 'Field',
+      icon: 'tag',
+      props: ['name', 'type', 'description'],
+    },
+    {
+      key: 'settings',
+      display: 'section',
+      label: 'Options',
+      icon: 'sliders',
+      props: ['options_help', 'options'],
+    },
+  ],
   outputSchema: teableOutputSchemas.createField,
   async run(context) {
     const { table_id, name, type, description, options } = context.propsValue;

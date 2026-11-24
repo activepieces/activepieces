@@ -16,6 +16,15 @@ export const deleteRecordAction = createAction({
       'Permanently removes one record from a Teable table by its record ID. Deleting the same ID again still succeeds and the record stays gone, so a retry is safe.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'record',
+      display: 'section',
+      label: 'Record',
+      icon: 'inbox',
+      props: ['base_id', 'table_id', 'record_id'],
+    },
+  ],
   props: {
     base_id: TeableCommon.base_id,
     table_id: TeableCommon.table_id,

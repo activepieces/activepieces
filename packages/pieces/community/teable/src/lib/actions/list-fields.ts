@@ -20,6 +20,15 @@ export const listFieldsAction = createAction({
     base_id: TeableCommon.base_id,
     table_id: TeableCommon.table_id,
   },
+  propertyGroups: [
+    {
+      key: 'table',
+      display: 'section',
+      label: 'Table',
+      icon: 'inbox',
+      props: ['base_id', 'table_id'],
+    },
+  ],
   outputSchema: teableOutputSchemas.listFields,
   async run(context) {
     return teableClient.listFields({ auth: context.auth, tableId: context.propsValue.table_id });

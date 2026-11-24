@@ -17,17 +17,35 @@ export const createTableAction = createAction({
     idempotent: false,
   },
   props: {
-    base_id: TeableCommon.base_id,
+    base_id: TeableCommon.base_id_full,
     name: Property.ShortText({
       displayName: 'Name',
       description: 'The name of the new table.',
+      placeholder: 'Projects',
       required: true,
     }),
     description: Property.LongText({
       displayName: 'Description',
+      description: 'Shown under the table name in Teable.',
       required: false,
     }),
   },
+  propertyGroups: [
+    {
+      key: 'base',
+      display: 'section',
+      label: 'Base',
+      icon: 'inbox',
+      props: ['base_id'],
+    },
+    {
+      key: 'table',
+      display: 'section',
+      label: 'New Table',
+      icon: 'text',
+      props: ['name', 'description'],
+    },
+  ],
   outputSchema: teableOutputSchemas.createTable,
   async run(context) {
     const { base_id, name, description } = context.propsValue;

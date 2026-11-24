@@ -1,4 +1,4 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { MarkdownVariant, Property, createAction } from '@activepieces/pieces-framework';
 import { TeableAuth } from '../auth';
 import { TeableCommon } from '../common';
 import { teableClient } from '../common/client';
@@ -43,9 +43,30 @@ export const createRecordsAction = createAction({
       'Adds up to 1000 new rows to a Teable table in one call. Records is a JSON array of objects keyed by field name. Each call appends all records again, so a retry makes duplicates.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'table',
+      display: 'section',
+      label: 'Table',
+      icon: 'inbox',
+      props: ['base_id', 'table_id'],
+    },
+    {
+      key: 'records',
+      display: 'section',
+      label: 'Records',
+      icon: 'code',
+      props: ['records_help', 'records'],
+    },
+  ],
   props: {
     base_id: TeableCommon.base_id,
     table_id: TeableCommon.table_id,
+    records_help: Property.MarkDown({
+      value:
+        'Up to 1000 records, each keyed by field name, e.g. `[{"Name": "Jane"}, {"Name": "Joe"}]`.',
+      variant: MarkdownVariant.INFO,
+    }),
     records: Property.Json({
       displayName: 'Records',
       description:
