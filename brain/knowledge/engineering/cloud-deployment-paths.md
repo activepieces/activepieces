@@ -4,7 +4,7 @@ icon: 🚀
 
 # Cloud Deployment Paths
 
-How code reaches `cloud.activepieces.com`. `continuous-delivery-cloud.yml` is the **Cloud gate** (ENG-1021): `cut` → `e2e-matrix` + `upgrade-test` → `report` + `tickets` → `approve` → `deploy` (canary, fleet) → `linear-release`. It runs by hand only; the Sunday-to-Thursday 08:00 UTC schedule returns once E2E coverage is broader.
+How code reaches `cloud.activepieces.com`. `continuous-delivery-cloud.yml` is the **Cloud gate** (ENG-1021): `cut` → `e2e-matrix` + `upgrade-test` → `report` + `tickets` → `approve` → `deploy` (canary, fleet) → `linear-release`. It runs Sunday to Thursday at 08:00 UTC (ENG-1100), and by hand.
 
 ## The normal path
 A manual `cut` takes the tip of `main`, or the `sha` it names, and stops when that commit's `deploy-staging-app` and `deploy-staging-workers` check runs have not passed. A scheduled `cut` takes the newest `main` commit whose two check runs passed, and stops when the fleet already runs it. Every later job uses the `version.sha.beta` image that staging built from that commit; nothing is built again. The `approve` job holds the only approval (`production` environment). `cut` also lists every migration the candidate adds, for the approver. The `deploy` job then deploys the canary and the fleet, a few minutes apart.
