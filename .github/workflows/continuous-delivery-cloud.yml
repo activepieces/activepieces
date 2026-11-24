@@ -7,7 +7,7 @@ name: Continuous Delivery — Cloud
 # and sends it through the same checks, approval and deploy.
 on:
   schedule:
-    - cron: '0 8 * * 0-4'
+    - cron: '0 8 * * 0-3'
   workflow_dispatch:
     inputs:
       sha:

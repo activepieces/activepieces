@@ -4,7 +4,7 @@ icon: 🚀
 
 # Cloud Deployment Paths
 
-How code reaches `cloud.activepieces.com`. `continuous-delivery-cloud.yml` is the **Cloud gate** (ENG-1021): `cut` → `e2e-matrix` + `upgrade-test` + `benchmark` → `report` + `tickets` → `approve` → `deploy` (canary, fleet) → `linear-release`. It runs Sunday to Thursday at 08:00 UTC (ENG-1100), and by hand.
+How code reaches `cloud.activepieces.com`. `continuous-delivery-cloud.yml` is the **Cloud gate** (ENG-1021): `cut` → `e2e-matrix` + `upgrade-test` + `benchmark` → `report` + `tickets` → `approve` → `deploy` (canary, fleet) → `linear-release`. It runs Sunday to Wednesday at 08:00 UTC (ENG-1100), and by hand.
 
 ## The normal path
 A manual `cut` takes the tip of `main`, or the `sha` it names, and stops when that commit's `deploy-staging-app` and `deploy-staging-workers` check runs have not passed. A scheduled `cut` takes the newest `main` commit whose two check runs passed, and stops when the fleet already runs it. Every later job uses the `version.sha.beta` image that staging built from that commit; nothing is built again. The `benchmark` job (ENG-1576) runs the image Cloud runs and the candidate in turns on one runner and writes the median change to its summary; it is report only. In an emergency, a manual run with `skip_tests` skips the E2E matrix, the upgrade test and the benchmark; the approval still runs, and `report` posts no `e2e-matrix` or `upgrade-test` status. The `approve` job holds the only approval (`production` environment). `cut` also lists every migration the candidate adds, for the approver. The `deploy` job then deploys the canary and the fleet, a few minutes apart.
