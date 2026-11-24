@@ -30,6 +30,7 @@ process.stdout.write(JSON.stringify({ items }))
 ')
 
 mkdir -p "$OUT_DIR"
+rm -f "$OUT_DIR"/{light,heavy,idle}-{baseline,candidate}-*
 
 compose() {
   docker compose "${COMPOSE_FILES[@]}" "$@"
@@ -38,7 +39,7 @@ compose() {
 capture_stats() {
   local file=$1 flag=$2
   : > "$file"
-  while [ -f "$flag" ]; do
+  while [ -f "$flag" ] && kill -0 "$$" 2>/dev/null; do
     docker stats --no-stream --format '{{json .}}' >> "$file" 2>/dev/null || true
     sleep 2
   done
@@ -57,7 +58,7 @@ run_load() {
     --project-id "$PROJECT_ID" \
     --flow-id "$flow_id" \
     --body "$body" \
-    --json > "$OUT_DIR/$flow-$side-$round.report.json"
+    --json > "$OUT_DIR/$flow-$side-$round.report.json" || [ $? -eq 1 ]
   rm -f "$flag"
   wait "$stats_pid" || true
   node benchmark/aggregate-stats.mjs "$stats" > "$OUT_DIR/$flow-$side-$round.stats.json"

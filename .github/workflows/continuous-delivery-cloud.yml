@@ -318,7 +318,6 @@ jobs:
     with:
       baseline_image: ghcr.io/activepieces/activepieces-cloud:${{ needs.cut.outputs.cloud_image_tag }}
       candidate_image: ghcr.io/activepieces/activepieces-cloud:${{ needs.cut.outputs.image_tag }}
-      ref: ${{ needs.cut.outputs.sha }}
     secrets: inherit
 
   # Posts each check's result on the candidate SHA, and names the check that failed.
@@ -349,7 +348,7 @@ jobs:
             if [ "$STATE" != success ]; then echo "::error::$1 failed on $SHA: $3"; fi
           }
           if [ "$SKIP_TESTS" = true ]; then
-            echo "- \`e2e-matrix\` and \`upgrade-test\`: skipped by \`skip_tests\`, no status posted" >> "$GITHUB_STEP_SUMMARY"
+            echo "- \`e2e-matrix\`, \`upgrade-test\` and \`benchmark\`: skipped by \`skip_tests\`, no status posted" >> "$GITHUB_STEP_SUMMARY"
           else
             post e2e-matrix "$E2E_RESULT" "E2E matrix $E2E_RESULT"
             if [ "$UPGRADE_RESULT" = success ]; then
@@ -359,8 +358,8 @@ jobs:
             else
               post upgrade-test "$UPGRADE_RESULT" "Setup failed before the upgrade from $FROM_TAG, not the candidate"
             fi
+            echo "- \`benchmark\`: $BENCHMARK_RESULT (report only, the numbers are in the benchmark job summary)" >> "$GITHUB_STEP_SUMMARY"
           fi
-          echo "- \`benchmark\`: $BENCHMARK_RESULT (report only, the numbers are in the benchmark job summary)" >> "$GITHUB_STEP_SUMMARY"
 
   # Lists the tickets between the commit Cloud runs and the candidate, so the approver sees them.
   # Uses the path filter of the Linear release below. Never blocks the gate.

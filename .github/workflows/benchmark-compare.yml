@@ -13,10 +13,6 @@ on:
         description: 'Image under test'
         type: string
         required: true
-      ref:
-        description: 'Commit to take the benchmark scripts from. Empty uses the commit that triggered the run.'
-        type: string
-        default: ''
   workflow_dispatch:
     inputs:
       baseline_image:
@@ -67,8 +63,6 @@ jobs:
       OUT_DIR: /tmp/bench-compare
     steps:
       - uses: actions/checkout@v5
-        with:
-          ref: ${{ inputs.ref }}
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -112,7 +106,6 @@ jobs:
         run: bash benchmark/run-compare.sh
 
       - name: Compare
-        if: '!cancelled()'
         env:
           BASELINE_IMAGE: ${{ steps.images.outputs.baseline }}
           CANDIDATE_IMAGE: ${{ steps.images.outputs.candidate }}

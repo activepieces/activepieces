@@ -19,7 +19,7 @@ function renderComparison({ dir, baselineImage, candidateImage }) {
     return [
         '## Benchmark: candidate against baseline',
         '',
-        'Report only. This check does not block the approval.',
+        'Report only. This check does not block the approval. The noise between two runs of one image is not measured yet, so a change here can be noise.',
         '',
         `- Baseline: \`${baselineImage ?? 'baseline'}\``,
         `- Candidate: \`${candidateImage ?? 'candidate'}\``,
