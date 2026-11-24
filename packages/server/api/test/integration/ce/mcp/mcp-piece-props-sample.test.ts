@@ -4,6 +4,7 @@ import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { appConnectionService } from '../../../../src/app/app-connection/app-connection-service/app-connection-service'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { encryptUtils } from '../../../../src/app/helper/encryption'
 import { apGetPiecePropsTool } from '../../../../src/app/mcp/tools/ap-get-piece-props'
 import { db } from '../../../helpers/db'
 import { createMockConnection, createMockPieceMetadata } from '../../../helpers/mocks'
@@ -89,10 +90,11 @@ describe('ap_get_piece_props samples', () => {
 
     it('looks up connections once for a batch and still rejects a connection of another piece', async () => {
         const ctx = await createTestContext(app)
-        await databaseConnection().getRepository('app_connection').save([
+        const connections = [
             createMockConnection({ platformId: ctx.platform.id, projectIds: [ctx.project.id], pieceName: KEYED_PIECE, externalId: 'chat-conn' }, ctx.user.id),
             createMockConnection({ platformId: ctx.platform.id, projectIds: [ctx.project.id], pieceName: '@activepieces/piece-other', externalId: 'other-conn' }, ctx.user.id),
-        ])
+        ]
+        await databaseConnection().getRepository('app_connection').save(await Promise.all(connections.map(async (connection) => ({ ...connection, value: await encryptUtils.encryptObject(connection.value) }))))
         listSpy.mockClear()
         const item = { pieceName: KEYED_PIECE, actionOrTriggerName: 'new_message', type: 'trigger' }
 
