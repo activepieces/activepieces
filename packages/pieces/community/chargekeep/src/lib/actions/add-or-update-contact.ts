@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { chargekeepAuth } from '../auth';
 import { chargekeepClient } from '../common/client';
 import { chargekeepServices } from '../common/services';
@@ -14,33 +14,108 @@ export const addOrUpdateContact = createAction({
   aiMetadata: { description: 'Imports a contact (Lead, Client, or Partner) into the ChargeKeep/Sperse CRM, creating it or updating an existing record. When Match Existing is enabled it upserts by matching on email and full name (or the supplied Contact ID); otherwise it always creates a new record. Use to add or sync a person; requires at least one of First Name, Last Name, Company Name or an email. Repeating with the same identifying input upserts the same contact rather than duplicating.', idempotent: true },
   auth: chargekeepAuth,
   outputSchema: chargekeepOutputSchemas.importedContact,
+  propertyGroups: [
+    {
+      key: 'record',
+      display: 'section',
+      label: 'Contact',
+      icon: 'user',
+      props: ['importType', 'identity_info', 'matchExisting', 'contactId'],
+    },
+    {
+      key: 'name',
+      display: 'section',
+      label: 'Name',
+      icon: 'type',
+      props: ['fullName', 'namePrefix', 'nameSuffix', 'firstName', 'lastName', 'middleName', 'nickName'],
+    },
+    {
+      key: 'personal',
+      display: 'section',
+      label: 'Personal Details',
+      icon: 'user',
+      props: ['gender', 'dob', 'ssn', 'bankCode'],
+    },
+    {
+      key: 'work',
+      display: 'section',
+      label: 'Work',
+      icon: 'users',
+      props: ['companyName', 'jobTitle', 'industry'],
+    },
+    {
+      key: 'reach',
+      display: 'section',
+      label: 'Email, Phone and Links',
+      icon: 'send',
+      props: ['email1', 'email2', 'workEmail1', 'mobilePhone', 'homePhone', 'workPhone1', 'webSiteUrl', 'linkedInUrl', 'photoUrl'],
+    },
+    {
+      key: 'address',
+      display: 'section',
+      label: 'Address',
+      icon: 'location',
+      props: ['street', 'addressLine2', 'city', 'zip', 'stateName', 'stateId', 'countryName', 'countryId'],
+    },
+    {
+      key: 'profile',
+      display: 'section',
+      label: 'Profile',
+      icon: 'text',
+      props: ['experience', 'profileSummary', 'notes'],
+    },
+    {
+      key: 'follow_up',
+      display: 'section',
+      label: 'Follow-Up',
+      icon: 'calendar',
+      props: ['followUpDate', 'assignedUser', 'leadDealAmount'],
+    },
+    {
+      key: 'marketing',
+      display: 'section',
+      label: 'Marketing',
+      icon: 'tag',
+      props: ['leadSource', 'channelId', 'affiliateCode', 'refererURL', 'entryUrl'],
+    },
+  ],
   props: {
     importType: Property.StaticDropdown({
       displayName: 'Contact Type',
       required: true,
       defaultValue: 'Lead',
+      display: 'cards',
       options: {
         disabled: false,
         options: [
           {
             label: 'Lead',
             value: 'Lead',
+            description: 'Potential buyer',
+            icon: 'user',
           },
           {
             label: 'Client',
             value: 'Client',
+            description: 'Paying customer',
+            icon: 'users',
           },
           {
             label: 'Partner',
             value: 'Partner',
+            description: 'Works with you',
+            icon: 'tag',
           },
         ],
       },
     }),
+    identity_info: Property.MarkDown({
+      value: 'Give at least a name, a company or an email, or a Contact ID. Empty fields are not sent, so an update keeps what ChargeKeep already has.',
+      variant: MarkdownVariant.INFO,
+    }),
     matchExisting: Property.StaticDropdown({
       displayName: 'Match Existing Contact',
-      description:
-        'If "Yes", will try to find an existing record using Email and Full Name and update it.',
+      description: 'Yes updates the contact with the same email and name.',
       required: false,
       defaultValue: true,
       options: {
@@ -59,47 +134,50 @@ export const addOrUpdateContact = createAction({
     }),
     contactId: Property.Number({
       displayName: 'Contact ID',
-      description: 'ChargeKeep contact ID of an existing contact to update. Leave empty to match by email and name, or to create a new contact.',
+      description: 'ChargeKeep ID of the contact to update. Empty: match or create.',
       required: false,
     }),
     fullName: Property.ShortText({
       displayName: 'Full Name',
-      description: "The contact's full name. Used to fill First Name and Last Name when both are empty.",
+      description: 'Fills First and Last Name when both are empty.',
       required: false,
     }),
     namePrefix: Property.ShortText({
       displayName: 'Prefix',
-      description: 'The title used to address the contact.',
+      placeholder: 'Dr.',
       required: false,
-    }),
-    firstName: Property.ShortText({
-      displayName: 'First Name',
-      description: 'Required if Last Name, Company Name and email fields are empty.',
-      required: false,
-    }),
-    middleName: Property.ShortText({
-      displayName: 'Middle Name',
-      description: "The contact's middle name.",
-      required: false,
-    }),
-    lastName: Property.ShortText({
-      displayName: 'Last Name',
-      description: 'Required if First Name, Company Name and email fields are empty.',
-      required: false,
-    }),
-    nickName: Property.ShortText({
-      displayName: 'Nick Name',
-      description: "The contact's nick name.",
-      required: false,
+      width: 'half',
     }),
     nameSuffix: Property.ShortText({
       displayName: 'Suffix',
-      description: 'Additional information about the contact e.g PhD.',
+      placeholder: 'PhD',
       required: false,
+      width: 'half',
+    }),
+    firstName: Property.ShortText({
+      displayName: 'First Name',
+      required: false,
+      width: 'half',
+    }),
+    lastName: Property.ShortText({
+      displayName: 'Last Name',
+      required: false,
+      width: 'half',
+    }),
+    middleName: Property.ShortText({
+      displayName: 'Middle Name',
+      required: false,
+      width: 'half',
+    }),
+    nickName: Property.ShortText({
+      displayName: 'Nickname',
+      required: false,
+      width: 'half',
     }),
     gender: Property.StaticDropdown({
       displayName: 'Gender',
       required: false,
+      width: 'half',
       options: {
         disabled: false,
         options: [
@@ -116,179 +194,172 @@ export const addOrUpdateContact = createAction({
     }),
     dob: Property.ShortText({
       displayName: 'Date of Birth',
-      description: 'Valid date format YYYY-MM-DD or MM-DD-YYYY.',
+      placeholder: '1990-06-25',
       required: false,
-    }),
-    bankCode: Property.ShortText({
-      displayName: 'Bank Code',
-      description: "The contact's 4-letter personality code.",
-      required: false,
+      width: 'half',
     }),
     ssn: Property.ShortText({
       displayName: 'SSN',
       description: "The contact's social security number.",
       required: false,
+      width: 'half',
+    }),
+    bankCode: Property.ShortText({
+      displayName: 'Bank Code',
+      description: "The contact's 4-letter personality code.",
+      required: false,
+      width: 'half',
     }),
     companyName: Property.ShortText({
       displayName: 'Company Name',
-      description:
-        "Name of the contact's company. Required if First Name, Last Name and email fields are empty.",
       required: false,
     }),
     jobTitle: Property.ShortText({
       displayName: 'Job Title',
-      description: "The contact's job title.",
       required: false,
+      width: 'half',
     }),
     industry: Property.ShortText({
       displayName: 'Industry',
-      description: "The company's industry.",
+      required: false,
+      width: 'half',
+    }),
+    email1: Property.LongText({
+      displayName: 'Personal Email',
+      required: false,
+    }),
+    email2: Property.LongText({
+      displayName: 'Alternative Personal Email',
       required: false,
     }),
     workEmail1: Property.LongText({
       displayName: 'Work Email',
-      description: "The contact's work email.",
-      required: false,
-    }),
-    email1: Property.LongText({
-      displayName: 'Personal Email',
-      description: "The contact's personal email.",
-      required: false,
-    }),
-    email2: Property.LongText({
-      displayName: 'Other email',
-      description: "The contact's additional email.",
-      required: false,
-    }),
-    workPhone1: Property.ShortText({
-      displayName: 'Work Phone',
-      description: "The contact's work/primary phone number.",
-      required: false,
-    }),
-    homePhone: Property.ShortText({
-      displayName: 'Home Phone',
-      description: "The contact's home phone number.",
       required: false,
     }),
     mobilePhone: Property.ShortText({
       displayName: 'Mobile Phone',
-      description: "The contact's mobile phone number.",
+      required: false,
+      width: 'half',
+    }),
+    homePhone: Property.ShortText({
+      displayName: 'Home Phone',
+      required: false,
+      width: 'half',
+    }),
+    workPhone1: Property.ShortText({
+      displayName: 'Work Phone',
       required: false,
     }),
     webSiteUrl: Property.ShortText({
       displayName: 'Website',
-      description: "The contact's company website URL.",
       required: false,
     }),
     linkedInUrl: Property.ShortText({
       displayName: 'LinkedIn',
-      description: "The contact's LinkedIn profile id.",
+      description: "Link to the contact's LinkedIn profile.",
       required: false,
     }),
     photoUrl: Property.ShortText({
       displayName: 'Photo URL',
-      description: "The contact's person photo URL.",
       required: false,
     }),
     street: Property.ShortText({
       displayName: 'Street',
-      description:
-        "The contact's full street address (can include apartment or unit number).",
+      description: 'Can include an apartment or unit number.',
       required: false,
     }),
     addressLine2: Property.ShortText({
-      displayName: 'Address 2',
+      displayName: 'Address Line 2',
       required: false,
     }),
     city: Property.ShortText({
       displayName: 'City',
-      description: "The contact's city of residence.",
       required: false,
+      width: 'half',
+    }),
+    zip: Property.ShortText({
+      displayName: 'ZIP Code',
+      required: false,
+      width: 'half',
     }),
     stateName: Property.ShortText({
       displayName: 'State Name',
-      description: "The contact's state of residence.",
       required: false,
+      width: 'half',
     }),
     stateId: Property.ShortText({
       displayName: 'State Code',
-      description: "The contact's state code.",
+      description: 'Two-letter state code.',
+      placeholder: 'CA',
       required: false,
-    }),
-    zip: Property.ShortText({
-      displayName: 'Zip Code',
-      description: "The contact's zip/postal code.",
-      required: false,
+      width: 'half',
     }),
     countryName: Property.ShortText({
       displayName: 'Country Name',
-      description: "The contact's country of residence.",
       required: false,
+      width: 'half',
     }),
     countryId: Property.ShortText({
       displayName: 'Country Code',
-      description: "The contact's country code.",
+      description: 'Two-letter country code.',
+      placeholder: 'US',
       required: false,
+      width: 'half',
     }),
     experience: Property.LongText({
-      displayName: 'Content',
-      description: "The contact's professional experience.",
+      displayName: 'Experience',
+      description: "The contact's work history or professional background.",
       required: false,
     }),
     profileSummary: Property.LongText({
       displayName: 'Profile Summary',
-      description: "The contact's profile summary.",
       required: false,
     }),
     notes: Property.LongText({
-      displayName: 'notes',
-      description: 'Additional notes about the contact',
+      displayName: 'Notes',
       required: false,
     }),
     followUpDate: Property.ShortText({
-      displayName: 'Follow Up Date',
-      description:
-        'Valid date format YYYY-MM-DD HH:MM:SS. If date is defined then new Follow Up Task will be created for this contact',
+      displayName: 'Follow-Up Date',
+      description: 'Creates a follow-up task for this date.',
+      placeholder: '2026-06-25 14:30:00',
       required: false,
     }),
     assignedUser: Property.ShortText({
       displayName: 'Assigned User',
-      description:
-        'Preferably, Sperse User Email should be passed as it is unique within Sperse account but User Name can be also passed',
+      description: 'Email or username of the ChargeKeep user who owns this contact.',
       required: false,
     }),
     leadDealAmount: Property.Number({
       displayName: 'Deal Amount',
-      description: 'Estimated deal/opportunity amount.',
+      description: 'Estimated value of the deal.',
       required: false,
     }),
     leadSource: Property.ShortText({
       displayName: 'Source Code',
-      description:
-        'The first known source the contact used to find your website. You can set this automatically and update manually later.',
+      description: 'Where the contact first found you, such as google or newsletter.',
       required: false,
+      width: 'half',
     }),
     channelId: Property.ShortText({
       displayName: 'Channel Code',
-      description: 'The channel/medium the contact used to find your website.',
+      description: 'How the contact reached you, such as email or paid search.',
       required: false,
+      width: 'half',
     }),
     affiliateCode: Property.ShortText({
       displayName: 'Affiliate Code',
-      description:
-        'The affiliate/referer partner through which the contact signed up.',
+      description: 'Code of the affiliate partner who referred the contact.',
       required: false,
     }),
     refererURL: Property.ShortText({
-      displayName: 'Referer URL',
-      description:
-        'The webpage where the contact clicked a link that sent them to your website.',
+      displayName: 'Referrer URL',
+      description: 'The page whose link brought the contact to your website.',
       required: false,
     }),
     entryUrl: Property.ShortText({
       displayName: 'Entry URL',
-      description:
-        'The first page of visit through which the contact visited your website.',
+      description: 'The first page the contact visited on your website.',
       required: false,
     }),
   },
