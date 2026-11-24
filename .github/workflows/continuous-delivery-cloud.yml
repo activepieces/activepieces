@@ -16,16 +16,8 @@ on:
         description: 'Comma-separated PR numbers already merged into main. Deploys only these on top of what Cloud runs.'
         type: string
         default: ''
-      allow_migrations:
-        description: 'Let a hotfix PR that changes a migration through'
-        type: boolean
-        default: false
-      skip_migration_check:
-        description: 'Deploy even when a pending migration is marked breaking'
-        type: boolean
-        default: false
       skip_tests:
-        description: 'Emergency only. Skip the E2E matrix, the upgrade test and the benchmark. The approval and the migration check still run.'
+        description: 'Emergency only. Skip the E2E matrix, the upgrade test and the benchmark. The approval still runs.'
         type: boolean
         default: false
 
@@ -161,7 +153,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           HOTFIX_PRS: ${{ inputs.hotfix_prs }}
           INPUT_SHA: ${{ inputs.sha }}
-          ALLOW_MIGRATIONS: ${{ inputs.allow_migrations }}
           CLOUD_SHA: ${{ steps.cloud.outputs.sha }}
         run: |
           if [ -n "$INPUT_SHA" ]; then
@@ -178,11 +169,6 @@ jobs:
             fi
             if git log --format=%s "$CLOUD_SHA" | grep -qE "\(#$PR\)$"; then
               echo "::error::#$PR is already on Cloud"
-              exit 1
-            fi
-            MIGRATIONS=$(git diff --name-only "$MERGE^" "$MERGE" -- packages/server/api/src/app/database/migration/ packages/server/api/src/app/ee/database/migrations/)
-            if [ -n "$MIGRATIONS" ] && [ "$ALLOW_MIGRATIONS" != true ]; then
-              echo "::error::#$PR changes a migration ($MIGRATIONS). It may need schema changes Cloud does not have yet. Set allow_migrations to pick it anyway."
               exit 1
             fi
             COMMITS="$COMMITS$MERGE"$'\n'
@@ -221,6 +207,58 @@ jobs:
             | grep -E '^[0-9]+\.[0-9]+\.[0-9]+(-hotfix\.[0-9]+)?$' | sort -V | tail -1)
           echo "tag=$FROM_TAG" >> "$GITHUB_OUTPUT"
           echo "Upgrade test from \`$FROM_TAG\`" >> "$GITHUB_STEP_SUMMARY"
+
+      # Lists the migrations the candidate adds over the commit Cloud runs, so the approver sees them before
+      # the canary applies them. deploy fails if Cloud moves after the cut, so that commit is what the database ran.
+      - name: List the migrations the deploy applies
+        if: steps.pick.outputs.skip != 'true'
+        env:
+          SHA: ${{ steps.pick.outputs.sha || steps.hotfix.outputs.sha }}
+          CLOUD_SHA: ${{ steps.cloud.outputs.sha }}
+        run: |
+          FILES=$(git diff --diff-filter=A --name-only "$CLOUD_SHA" "$SHA" -- \
+              packages/server/api/src/app/database/migration/ packages/server/api/src/app/ee/database/migrations/ \
+            | { grep -E '/[0-9]{13}-[^/]+\.ts$' || true; } \
+            | while read -r FILE; do echo "$(basename "$FILE") $FILE"; done | sort | cut -d' ' -f2)
+          ROWS=""
+          BLOCKING=0
+          BACKGROUND=0
+          BREAKING=0
+          for FILE in $FILES; do
+            NAME=$(basename "$FILE" .ts | cut -d- -f2-)
+            if [[ "$FILE" == */background/* ]]; then
+              TRACK="Background, after boot"
+              ROLLBACK="Forward-only"
+              BACKGROUND=$((BACKGROUND + 1))
+            else
+              TRACK="Blocking, at boot"
+              ROLLBACK="Yes"
+              BLOCKING=$((BLOCKING + 1))
+              if git show "$SHA:$FILE" | grep -qE '^\s*([a-z]+ )*breaking\s*=\s*true\b'; then
+                ROLLBACK="**No, breaking**"
+                BREAKING=$((BREAKING + 1))
+              fi
+            fi
+            PR=$(git log -1 --diff-filter=A --format=%s "$SHA" -- "$FILE" | { grep -oE '\(#[0-9]+\)$' || true; } | tr -d '(#)')
+            ROWS="$ROWS| [\`$NAME\`]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/$SHA/$FILE) | $TRACK | $ROLLBACK | ${PR:+[#$PR]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/pull/$PR)} |"$'\n'
+          done
+          {
+            echo "## Migrations"
+            if [ -z "$FILES" ]; then
+              echo "The candidate adds no migration."
+            else
+              echo "The canary applies $((BLOCKING + BACKGROUND)) new migration(s) after the approval: $BLOCKING blocking, $BACKGROUND background."
+              if [ "$BREAKING" -gt 0 ]; then
+                echo
+                echo "> [!WARNING]"
+                echo "> $BREAKING migration(s) cannot roll back. After this deploy, a rollback to the image Cloud runs now needs \`force\`."
+              fi
+              echo
+              echo "| Migration | Track | Rolls back | PR |"
+              echo "|---|---|---|---|"
+              printf '%s' "$ROWS"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
   # Staging never built a hotfix combination, so the gate builds it. The .pick tag never replaces a .beta image.
   build-pick:
@@ -371,9 +409,10 @@ jobs:
     steps:
       - run: echo "Approved ${{ needs.cut.outputs.image_tag }}"
 
-  # One job holds the production lock from the migration check through the fleet deploy, because
+  # One job holds the production lock from the Cloud re-read through the fleet deploy, because
   # GitHub keeps only one pending job per group: a lock per job lets a later run slip between the
   # canary and the fleet. The group matches continuous-delivery-rollback.yml.
+  # The canary app applies every pending migration on the shared database at boot; cut listed them for the approver.
   deploy:
     needs: [cut, approve]
     if: ${{ !cancelled() && needs.approve.result == 'success' }}
@@ -382,29 +421,6 @@ jobs:
       group: promote-production
       cancel-in-progress: false
     steps:
-      - uses: actions/checkout@v5
-        with:
-          ref: ${{ needs.cut.outputs.sha }}
-          fetch-depth: 0
-
-      - uses: actions/setup-node@v6
-        if: inputs.skip_migration_check != true
-        with:
-          node-version: 24
-
-      - uses: oven-sh/setup-bun@v2
-        if: inputs.skip_migration_check != true
-        with:
-          bun-version: latest
-
-      - name: Install dependencies
-        if: inputs.skip_migration_check != true
-        run: bun install --frozen-lockfile
-
-      - name: Build shared and server-utils packages
-        if: inputs.skip_migration_check != true
-        run: bunx turbo run build --filter=@activepieces/shared --filter=@activepieces/server-utils
-
       - name: Configure SSH
         run: |
           mkdir -p ~/.ssh/
@@ -447,34 +463,6 @@ jobs:
             echo "::error::Cloud moved from $CUT_CLOUD_SHA to $CLOUD_SHA after this run picked $SHA. Start a new run."
             exit 1
           fi
-
-      # The canary app runs migrations on the shared database at boot, so a pending migration marked
-      # breaking stops the deploy here, before any host changes. An unreadable manifest fails the job.
-      - name: Get current canary manifest
-        id: current-manifest
-        if: inputs.skip_migration_check != true
-        run: |
-          MANIFEST=$(ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal app exec \
-            --reuse \
-            --config-file=config/app-canary.yml -- \
-            cat /usr/src/app/packages/server/api/dist/src/migration-manifest.json; exit"' \
-            2>/dev/null | tr -d '\r' | { grep '^\[' || true; } | head -1)
-          if ! echo "$MANIFEST" | jq -e 'type == "array" and length > 0' > /dev/null 2>&1; then
-            echo "::error::Could not read the migration manifest of the running canary"
-            exit 1
-          fi
-          echo "json=$MANIFEST" >> $GITHUB_OUTPUT
-
-      - name: Check for breaking migrations
-        id: check
-        if: inputs.skip_migration_check != true
-        run: bunx tsx tools/scripts/check-manifest-migrations.ts '${{ steps.current-manifest.outputs.json }}'
-
-      - name: Fail on breaking migrations
-        if: steps.check.outputs.has_breaking == 'true'
-        run: |
-          echo "::error::Breaking migrations pending on ${{ needs.cut.outputs.sha }}: ${{ steps.check.outputs.breaking_names }}"
-          exit 1
 
       - name: Deploy canary app
         run: |
