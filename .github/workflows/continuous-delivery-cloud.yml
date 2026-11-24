@@ -16,6 +16,10 @@ on:
         description: 'Comma-separated PR numbers already merged into main. Deploys only these on top of what Cloud runs.'
         type: string
         default: ''
+      skip_tests:
+        description: 'Emergency only. Skip the E2E matrix, the upgrade test and the benchmark. The approval still runs.'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -30,6 +34,7 @@ jobs:
       image_tag: ${{ steps.pick.outputs.image_tag || steps.hotfix.outputs.image_tag }}
       from_tag: ${{ steps.from.outputs.tag }}
       cloud_sha: ${{ steps.cloud.outputs.sha }}
+      cloud_image_tag: ${{ steps.cloud.outputs.image_tag }}
       skip: ${{ steps.pick.outputs.skip }}
     steps:
       # The App token can push a pick branch whose commits change workflow files; GITHUB_TOKEN cannot.
@@ -66,13 +71,15 @@ jobs:
       - name: Read the commit Cloud runs
         id: cloud
         run: |
-          CLOUD_SHA=$(ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal app version --config-file=config/app.yml 2>&1; exit"' \
-            | tr -d '\r' | { grep -oE '^[0-9]+\.[0-9]+\.[0-9]+\.[a-f0-9]{40}\.(beta|pick)$' || true; } | head -1 | cut -d. -f4)
+          CLOUD_TAG=$(ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal app version --config-file=config/app.yml 2>&1; exit"' \
+            | tr -d '\r' | { grep -oE '^[0-9]+\.[0-9]+\.[0-9]+\.[a-f0-9]{40}\.(beta|pick)$' || true; } | head -1)
+          CLOUD_SHA=$(echo "$CLOUD_TAG" | cut -d. -f4)
           if [ -z "$CLOUD_SHA" ]; then
             echo "::error::Could not read the version the Cloud fleet runs"
             exit 1
           fi
           echo "sha=$CLOUD_SHA" >> "$GITHUB_OUTPUT"
+          echo "image_tag=$CLOUD_TAG" >> "$GITHUB_OUTPUT"
           echo "Cloud runs \`$CLOUD_SHA\`" >> "$GITHUB_STEP_SUMMARY"
 
       # A scheduled run stops when every app and worker host, canary included, already runs the candidate,
@@ -286,7 +293,7 @@ jobs:
 
   e2e-matrix:
     needs: [cut, build-pick]
-    if: always() && needs.cut.result == 'success' && needs.cut.outputs.skip != 'true' && (needs.build-pick.result == 'success' || needs.build-pick.result == 'skipped')
+    if: always() && !inputs.skip_tests && needs.cut.result == 'success' && needs.cut.outputs.skip != 'true' && (needs.build-pick.result == 'success' || needs.build-pick.result == 'skipped')
     uses: ./.github/workflows/e2e-matrix.yml
     with:
       image: ghcr.io/activepieces/activepieces-cloud:${{ needs.cut.outputs.image_tag }}
@@ -295,7 +302,7 @@ jobs:
 
   upgrade-test:
     needs: [cut, build-pick]
-    if: always() && needs.cut.result == 'success' && needs.cut.outputs.skip != 'true' && (needs.build-pick.result == 'success' || needs.build-pick.result == 'skipped')
+    if: always() && !inputs.skip_tests && needs.cut.result == 'success' && needs.cut.outputs.skip != 'true' && (needs.build-pick.result == 'success' || needs.build-pick.result == 'skipped')
     uses: ./.github/workflows/upgrade-test.yml
     with:
       image: ghcr.io/activepieces/activepieces-cloud:${{ needs.cut.outputs.image_tag }}
@@ -303,9 +310,19 @@ jobs:
       from_tag: ${{ needs.cut.outputs.from_tag }}
     secrets: inherit
 
+  # Report only: the approver reads the numbers in this job's summary; a slower candidate does not block.
+  benchmark:
+    needs: [cut, build-pick]
+    if: always() && !inputs.skip_tests && needs.cut.result == 'success' && needs.cut.outputs.skip != 'true' && (needs.build-pick.result == 'success' || needs.build-pick.result == 'skipped')
+    uses: ./.github/workflows/benchmark-compare.yml
+    with:
+      baseline_image: ghcr.io/activepieces/activepieces-cloud:${{ needs.cut.outputs.cloud_image_tag }}
+      candidate_image: ghcr.io/activepieces/activepieces-cloud:${{ needs.cut.outputs.image_tag }}
+    secrets: inherit
+
   # Posts each check's result on the candidate SHA, and names the check that failed.
   report:
-    needs: [cut, e2e-matrix, upgrade-test]
+    needs: [cut, e2e-matrix, upgrade-test, benchmark]
     if: always() && needs.cut.result == 'success' && needs.cut.outputs.skip != 'true'
     runs-on: ubuntu-latest
     permissions:
@@ -320,6 +337,8 @@ jobs:
           E2E_RESULT: ${{ needs.e2e-matrix.result }}
           UPGRADE_RESULT: ${{ needs.upgrade-test.result }}
           SWAPPED: ${{ needs.upgrade-test.outputs.swapped }}
+          BENCHMARK_RESULT: ${{ needs.benchmark.result }}
+          SKIP_TESTS: ${{ inputs.skip_tests }}
         run: |
           post() {
             STATE=failure
@@ -328,13 +347,18 @@ jobs:
             echo "- \`$1\`: $3" >> "$GITHUB_STEP_SUMMARY"
             if [ "$STATE" != success ]; then echo "::error::$1 failed on $SHA: $3"; fi
           }
-          post e2e-matrix "$E2E_RESULT" "E2E matrix $E2E_RESULT"
-          if [ "$UPGRADE_RESULT" = success ]; then
-            post upgrade-test "$UPGRADE_RESULT" "Upgrade from $FROM_TAG passed"
-          elif [ "$SWAPPED" = true ]; then
-            post upgrade-test "$UPGRADE_RESULT" "The candidate broke after the upgrade from $FROM_TAG"
+          if [ "$SKIP_TESTS" = true ]; then
+            echo "- \`e2e-matrix\`, \`upgrade-test\` and \`benchmark\`: skipped by \`skip_tests\`, no status posted" >> "$GITHUB_STEP_SUMMARY"
           else
-            post upgrade-test "$UPGRADE_RESULT" "Setup failed before the upgrade from $FROM_TAG, not the candidate"
+            post e2e-matrix "$E2E_RESULT" "E2E matrix $E2E_RESULT"
+            if [ "$UPGRADE_RESULT" = success ]; then
+              post upgrade-test "$UPGRADE_RESULT" "Upgrade from $FROM_TAG passed"
+            elif [ "$SWAPPED" = true ]; then
+              post upgrade-test "$UPGRADE_RESULT" "The candidate broke after the upgrade from $FROM_TAG"
+            else
+              post upgrade-test "$UPGRADE_RESULT" "Setup failed before the upgrade from $FROM_TAG, not the candidate"
+            fi
+            echo "- \`benchmark\`: $BENCHMARK_RESULT (report only, the numbers are in the benchmark job summary)" >> "$GITHUB_STEP_SUMMARY"
           fi
 
   # Lists the tickets between the commit Cloud runs and the candidate, so the approver sees them.
@@ -370,9 +394,10 @@ jobs:
           done
 
   # The one approval. A newer candidate cancels an older one that still waits here.
+  # It waits for the benchmark so the numbers are there, but does not read its result.
   approve:
-    needs: [cut, e2e-matrix, upgrade-test, tickets]
-    if: ${{ !cancelled() && needs.cut.outputs.skip != 'true' && needs.e2e-matrix.result == 'success' && needs.upgrade-test.result == 'success' && needs.tickets.result == 'success' }}
+    needs: [cut, build-pick, e2e-matrix, upgrade-test, tickets, benchmark]
+    if: ${{ !cancelled() && needs.cut.outputs.skip != 'true' && (needs.build-pick.result == 'success' || needs.build-pick.result == 'skipped') && (inputs.skip_tests || (needs.e2e-matrix.result == 'success' && needs.upgrade-test.result == 'success')) && needs.tickets.result == 'success' }}
     runs-on: ubuntu-latest
     environment:
       name: production
