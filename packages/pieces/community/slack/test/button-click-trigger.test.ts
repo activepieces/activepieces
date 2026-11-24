@@ -86,11 +86,12 @@ describe('slack parseAndReply block_actions routing', () => {
 });
 
 describe('new button click trigger run', () => {
+  function runWithBody({ body, propsValue = {} }: { body: unknown; propsValue?: Record<string, unknown> }) {
+    return newButtonClickTrigger.run({ propsValue, payload: { ...interactionRequest({}), body } } as never);
+  }
+
   function run({ interaction, propsValue = {} }: { interaction: Record<string, unknown>; propsValue?: Record<string, unknown> }) {
-    return newButtonClickTrigger.run({
-      propsValue,
-      payload: interactionRequest(interaction),
-    } as never);
+    return runWithBody({ body: interactionRequest(interaction).body, propsValue });
   }
 
   it('returns the payload without the verification token', async () => {
@@ -152,10 +153,10 @@ describe('new button click trigger run', () => {
 
   it('ignores a malformed body', async () => {
     expect(
-      await newButtonClickTrigger.run({ propsValue: {}, payload: { body: 'nope' } } as never),
+      await runWithBody({ body: 'nope' }),
     ).toEqual([]);
     expect(
-      await newButtonClickTrigger.run({ propsValue: {}, payload: { body: { payload: '{not json' } } } as never),
+      await runWithBody({ body: { payload: '{not json' } }),
     ).toEqual([]);
   });
 
