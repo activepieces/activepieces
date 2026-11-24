@@ -36,6 +36,7 @@ import {
   useCancelSubscriptionGuard,
   billingDialogHooks,
 } from '@/features/billing';
+import { InviteRewardBillingLink } from '@/features/members';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
@@ -44,10 +45,7 @@ import { UsageTab } from './usage-tab';
 
 export function BillingPlanTab() {
   return (
-    <BillingPageShell
-      lockTitle={t('Unlock Billing & Usage')}
-      errorMessage={t('Failed to load billing information')}
-    >
+    <BillingPageShell lockTitle={t('Unlock Billing & Usage')}>
       {({ platform, info }) => (
         <AdminPage>
           <AdminPageHeader
@@ -67,10 +65,7 @@ export function BillingPlanTab() {
 
 export function BillingUsageTab() {
   return (
-    <BillingPageShell
-      lockTitle={t('Unlock Billing & Usage')}
-      errorMessage={t('Failed to load billing information')}
-    >
+    <BillingPageShell lockTitle={t('Unlock Billing & Usage')}>
       {({ platform, info }) => <UsageTab platform={platform} info={info} />}
     </BillingPageShell>
   );
@@ -192,7 +187,11 @@ function PlanTab({ platform, info }: PlanTabProps) {
               </div>
             }
           >
-            <CreditsCard info={info} className={adminSurface.card} />
+            <CreditsCard
+              info={info}
+              className={adminSurface.card}
+              footerExtra={<InviteRewardBillingLink />}
+            />
             {isPaid &&
               isNil(info.trialEndsAt) &&
               !isNil(displayedCreditsFeature) && (

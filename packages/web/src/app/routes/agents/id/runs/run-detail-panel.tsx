@@ -20,7 +20,7 @@ import { useState } from 'react';
 
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { JsonViewer } from '@/components/custom/json-viewer';
-import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
+import { StatusBadge } from '@/components/custom/status-badge';
 import {
   Collapsible,
   CollapsibleContent,
@@ -106,14 +106,13 @@ export const RunDetailPanel = ({ runId, onClose }: RunDetailPanelProps) => {
 };
 
 const MetaStrip = ({ run }: { run: AgentRunListItem }) => {
-  const look = agentRunUtils.getStatusIcon(run.status);
   const durationMs = agentRunUtils.getDurationMs(run);
   return (
     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-11">
-      <StatusIconWithText
-        icon={look.Icon}
+      <StatusBadge
+        status={run.status}
+        icon={agentRunUtils.getStatusIcon(run.status)}
         text={agentRunUtils.getStatusLabel(run.status)}
-        variant={look.variant}
       />
       {!isNil(durationMs) && (
         <>

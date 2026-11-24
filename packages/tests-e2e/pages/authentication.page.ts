@@ -21,6 +21,22 @@ export class AuthenticationPage extends BasePage {
     await this.page.getByTestId('sign-in-button').click();
   }
 
+  async signInStatus(params: { email: string; password: string }): Promise<number> {
+    const answered = this.page.waitForResponse(
+      (response) => response.request().method() === 'POST' && new URL(response.url()).pathname === SIGN_IN_PATH,
+    );
+    await this.signIn(params);
+    return (await answered).status();
+  }
+
+  signInError() {
+    return this.page.getByTestId('sign-in-error');
+  }
+
+  async storedToken(): Promise<string | null> {
+    return this.page.evaluate(() => localStorage.getItem('token'));
+  }
+
   async waitForSignedIn() {
     await this.page.waitForURL(
       (url) => !ONBOARDING_PATHS.some((path) => url.pathname.startsWith(path)),
@@ -146,3 +162,4 @@ export class AuthenticationPage extends BasePage {
 }
 
 const ONBOARDING_PATHS = ['/sign-in', '/sign-up', '/create-platform'];
+const SIGN_IN_PATH = '/api/v1/authentication/sign-in';

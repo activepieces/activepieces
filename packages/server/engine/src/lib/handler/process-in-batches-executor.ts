@@ -203,7 +203,7 @@ function emptySummary({ totalItems, batchSize }: EmptySummaryParams): BatchStepS
 }
 
 function userError({ name, message }: UserErrorParams): ExecutionError {
-    return new ExecutionError(name, JSON.stringify({ message }), ExecutionErrorType.USER)
+    return new ExecutionError(name, message, ExecutionErrorType.USER)
 }
 
 async function succeed({ action, executionState, stepOutput, output, stepStartTime }: SucceedParams): Promise<FlowExecutorContext> {
