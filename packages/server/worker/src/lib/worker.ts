@@ -50,6 +50,8 @@ const MACHINE_INFO_TIMEOUT_MS = 15_000
 const POLL_LIVENESS_TIMEOUT_MS = 600_000
 const POLL_WATCHDOG_INTERVAL_MS = 30_000
 const RPC_TIMEOUT_MS = 60_000
+const LONG_RUNNING_RPC_MARGIN_MS = 120_000
+const FALLBACK_FLOW_TIMEOUT_SECONDS = 600
 const BEGIN_SHUTDOWN_RPC: keyof WorkerToApiContract = 'beginShutdown'
 
 let pollLoopLiveness: PollLoopLiveness[] = []
@@ -168,7 +170,7 @@ export const worker = {
     },
 
     forceExitAfterMs(): number {
-        return shutdownBudget.forceExitMs({ flowTimeoutMs: workerSettings.flowTimeoutMs() })
+        return shutdownBudget.forceExitMs({ flowTimeoutMs: flowTimeoutMs() })
     },
 }
 
@@ -327,7 +329,7 @@ async function pollAndExecute(apiClient: WorkerToApiContract, runtime: Runtime, 
 }
 
 async function drainInFlightJobs(): Promise<void> {
-    const drainMs = shutdownBudget.drainMs({ flowTimeoutMs: workerSettings.flowTimeoutMs() })
+    const drainMs = shutdownBudget.drainMs({ flowTimeoutMs: flowTimeoutMs() })
     if (inFlightJobs > 0) {
         logger.info({ inFlightJobs, drainMs }, 'Waiting for in-flight jobs before stopping')
     }
@@ -356,6 +358,11 @@ function abortInFlightRuntime(): void {
     })
 }
 
+function flowTimeoutMs(): number {
+    const { data: settings } = tryCatchSync(() => workerSettings.getSettings())
+    return (settings?.FLOW_TIMEOUT_SECONDS ?? FALLBACK_FLOW_TIMEOUT_SECONDS) * 1000
+}
+
 function rpcTimeoutMsFor(method: string): number {
     if (method === BEGIN_SHUTDOWN_RPC) {
         return shutdownBudget.BEGIN_SHUTDOWN_TIMEOUT_MS
@@ -367,7 +374,7 @@ function rpcTimeoutMsFor(method: string): number {
     if (isNil(settings)) {
         logger.warn({ rpc: { method } }, 'Worker settings have not arrived, timing a long-running RPC by the default flow timeout')
     }
-    return workerSettings.longRunningTimeoutMs()
+    return flowTimeoutMs() + LONG_RUNNING_RPC_MARGIN_MS
 }
 
 async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest, runtime: Runtime, workerIndex: number): Promise<JobResult> {
@@ -657,7 +664,7 @@ async function sweepCodeCache(): Promise<void> {
     const { error } = await tryCatch(() => codeCacheEviction.sweep({
         basePath: sandboxConfig.getCacheBasePath(),
         log: logger,
-        activeWindowMs: Math.max(ACTION_RUN_CACHE_ACTIVE_WINDOW_MS, workerSettings.flowTimeoutMs()),
+        activeWindowMs: Math.max(ACTION_RUN_CACHE_ACTIVE_WINDOW_MS, flowTimeoutMs()),
     }))
     if (error) {
         logger.warn({ error }, 'Code cache sweep failed')

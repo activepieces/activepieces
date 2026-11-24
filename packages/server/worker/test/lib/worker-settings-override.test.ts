@@ -17,7 +17,6 @@ vi.mock('../../src/lib/config/worker-settings', () => ({
         set: (...args: unknown[]) => mockWorkerSettingsSet(...args),
         waitForSettings: vi.fn().mockResolvedValue({ PUBLIC_URL: 'http://localhost:3000' }),
         getSettings: vi.fn().mockReturnValue({ PUBLIC_URL: 'http://localhost:3000' }),
-        flowTimeoutMs: () => 600_000,
     },
 }))
 

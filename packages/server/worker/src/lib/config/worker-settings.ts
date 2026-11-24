@@ -21,15 +21,4 @@ export const workerSettings = {
     waitForSettings(): Promise<WorkerSettingsResponse> {
         return settingsReady.then(() => settings!)
     },
-
-    flowTimeoutMs(): number {
-        return (settings?.FLOW_TIMEOUT_SECONDS ?? FALLBACK_FLOW_TIMEOUT_SECONDS) * 1000
-    },
-
-    longRunningTimeoutMs(): number {
-        return workerSettings.flowTimeoutMs() + LONG_RUNNING_MARGIN_MS
-    },
 }
-
-const LONG_RUNNING_MARGIN_MS = 120_000
-const FALLBACK_FLOW_TIMEOUT_SECONDS = 600
