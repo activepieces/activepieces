@@ -149,5 +149,16 @@
   "PATCH": "PATCH",
   "PUT": "弹出",
   "DELETE": "删除",
-  "HEAD": "黑色"
+  "HEAD": "黑色",
+  "Message": "Message",
+  "Settings": "设置",
+  "Search in": "Search in",
+  "History": "History",
+  "Script": "Script",
+  "Speaker": "Speaker",
+  "Video": "Video",
+  "Output": "产出",
+  "Content": "Content",
+  "Request": "Request",
+  "Data to send": "Data to send"
 }

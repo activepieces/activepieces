@@ -1,16 +1,19 @@
-// action to return invoices from InvoiceNinja with filtering by invoice status and client id
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { invoiceninjaAuth } from '../..';
+import { invoiceninjaAuth } from '../common/auth';
+import { invoiceNinjaClient } from '../common/client';
+import { invoiceNinjaOutputSchemas } from '../common/output-schemas';
+import { invoiceNinjaProps } from '../common/props';
+
+const MAX_RESULTS = 9999;
+
 export const getInvoices = createAction({
   auth: invoiceninjaAuth,
   name: 'getinvoices_task',
   classification: 'SEARCH',
   displayName: 'Get Invoices',
-  description: 'Gets data for invoices.',
-  audience: 'both',
-  aiMetadata: { description: 'Retrieves invoices from Invoice Ninja filtered by status (unpaid, paid, overdue, or all) and optionally by client id, capped by a max-results limit. Use to list or report on invoices; omitting the client id returns invoices across all clients. Read-only and idempotent.', idempotent: true },
-
+  description: 'Gets invoices by payment status, optionally for one client. Returns false when none match.',
+  audience: 'human',
+  outputSchema: invoiceNinjaOutputSchemas.legacyInvoices,
   props: {
     invoiceStatus: Property.StaticDropdown({
       displayName: 'Invoice Status',
@@ -18,114 +21,62 @@ export const getInvoices = createAction({
       required: true,
       options: {
         options: [
-          {
-            label: 'Unpaid Invoices',
-            value: 'unpaid',
-          },
-          {
-            label: 'Paid Invoices',
-            value: 'paid',
-          },
-          {
-            label: 'Overdue Invoices',
-            value: 'overdue',
-          },
-          {
-            label: 'All Invoices',
-            value: 'all',
-          },
+          { label: 'Unpaid Invoices', value: 'unpaid' },
+          { label: 'Paid Invoices', value: 'paid' },
+          { label: 'Overdue Invoices', value: 'overdue' },
+          { label: 'All Invoices', value: 'all' },
         ],
       },
     }),
-    clientID: Property.LongText({
-      displayName: 'Client ID',
-      description: 'Filter by Client ID, default is all clients.',
-      required: false,
-    }),
+    clientID: invoiceNinjaProps.clientDropdown({ required: false, displayName: 'Client' }),
     numberOfResults: Property.Number({
       displayName: 'Max Results',
-      description: 'Maximum number of results to return. 9999 is default.',
+      description: `Maximum number of invoices to return (1-${MAX_RESULTS}). Default ${MAX_RESULTS}.`,
       required: false,
     }),
   },
-
-  async run(context) {
-    const INapiToken = context.auth.props.access_token;
-
-    const headers = {
-      'X-Api-Token': INapiToken,
-    };
-
-    const queryParams = new URLSearchParams();
-    queryParams.append(
-      'client_status',
-      context.propsValue.invoiceStatus || 'unpaid'
-    );
-    // only include client_id in the query parameters if it has been specified
-    if (
-      context.propsValue.clientID?.valueOf != null ||
-      context.propsValue.clientID != undefined
-    ) {
-      queryParams.append('client_id', context.propsValue.clientID || '');
+  async run({ auth, propsValue }) {
+    const limit = invoiceNinjaClient.optionalInt({ value: propsValue.numberOfResults, label: 'Max Results', min: 1, max: MAX_RESULTS }) ?? MAX_RESULTS;
+    const clientId = invoiceNinjaClient.optionalId({ value: propsValue.clientID, label: 'Client' });
+    const collected: unknown[] = [];
+    let page = 1;
+    let hasMore = true;
+    while (hasMore && collected.length < limit) {
+      const result = await invoiceNinjaClient.listPage({
+        auth: auth.props,
+        entity: 'invoices',
+        query: { client_status: propsValue.invoiceStatus || 'unpaid', client_id: clientId, is_deleted: 'false' },
+        page,
+        perPage: 100,
+      });
+      collected.push(...result.items);
+      hasMore = result.hasMore && result.items.length > 0;
+      page += 1;
     }
-    queryParams.append('is_deleted', 'false'); // only return invoices that are not deleted
-    queryParams.append(
-      'per_page',
-      context.propsValue.numberOfResults?.toString() || '9999'
-    ); // otherwise it only returns 20 per page hopefully
-
-    // Remove trailing slash from base_url
-    const baseUrl = context.auth.props.base_url.replace(/\/$/, '');
-    const url = `${baseUrl}/api/v1/invoices/?${queryParams.toString()}`;
-    // console.log("INVOICENINJA: " + url);
-    const httprequestdata = {
-      method: HttpMethod.GET,
-      url,
-      headers,
-    };
-
-    try {
-      const response = await httpClient.sendRequest(httprequestdata);
-      const my = [];
-      // Process the response here (status 2xx).
-      if (response.body.meta.pagination.total > 0) {
-        // Each invoice that is found will have lots of information, lets remove the guff
-        // changed from .total to .count because we're only interested in those in the first page of results which
-        // is what we set the per_page to to correspond to the number of records we wanted
-        const NumberOfInvoices = response.body.meta.pagination.count;
-
-        for (let i = 0; i < NumberOfInvoices; i++) {
-          my.push({
-            invoice: {
-              clientid: response.body.data[i].client_id,
-              invoiceno: response.body.data[i].number,
-              ponumber: response.body.data[i].po_number,
-              invdate: response.body.data[i].date,
-              duedate: response.body.data[i].due_date,
-              punote: response.body.data[i].public_notes,
-              prnote: response.body.data[i].private_notes,
-              reminder1: response.body.data[i].reminder1_sent,
-              reminder2: response.body.data[i].reminder2_sent,
-              reminder3: response.body.data[i].reminder3_sent,
-              lastreminder: response.body.data[i].reminder_last_sent,
-              firstsku: response.body.data[i].line_items[0].product_key,
-              firstitem: response.body.data[i].line_items[0].notes,
-              amount: response.body.data[i].amount,
-              balance: response.body.data[i].balance,
-              paid: response.body.data[i].paid_to_date,
-            },
-          });
-          // console.log("INVOICENINJA: (" + i.toString() + ") " + response.body.data[i].amount);
-        }
-        return my;
-      } else {
-        return false;
-      } // this is still returned so if it is false we'll return notfound or similar
-    } catch (error) {
-      // Handle the error when the request fails (status other than 2xx).
-      // console.log((error as Error).message);
-      return (error as Error).message;
-      //       return "There was a problem getting information from your Invoice Ninja";
-    }
+    const invoices = collected.slice(0, limit).filter(invoiceNinjaClient.isRecord);
+    if (invoices.length === 0) return false;
+    return invoices.map((invoice) => {
+      const first = invoiceNinjaClient.arrayOf(invoice['line_items']).find(invoiceNinjaClient.isRecord);
+      return {
+        invoice: {
+          clientid: invoice['client_id'],
+          invoiceno: invoice['number'],
+          ponumber: invoice['po_number'],
+          invdate: invoice['date'],
+          duedate: invoice['due_date'],
+          punote: invoice['public_notes'],
+          prnote: invoice['private_notes'],
+          reminder1: invoice['reminder1_sent'],
+          reminder2: invoice['reminder2_sent'],
+          reminder3: invoice['reminder3_sent'],
+          lastreminder: invoice['reminder_last_sent'],
+          firstsku: first ? first['product_key'] : null,
+          firstitem: first ? first['notes'] : null,
+          amount: invoice['amount'],
+          balance: invoice['balance'],
+          paid: invoice['paid_to_date'],
+        },
+      };
+    });
   },
 });

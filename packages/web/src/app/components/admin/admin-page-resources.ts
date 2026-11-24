@@ -2,6 +2,7 @@ import { t } from 'i18next';
 
 import { AdminControl } from '@/lib/admin-control';
 
+import { adminDocs } from './admin-docs';
 import { AdminResource } from './admin-resources';
 
 const docs = ({
@@ -15,11 +16,9 @@ const docs = ({
 }): AdminResource => ({
   kind: 'doc',
   label,
-  url: `${DOCS_BASE_URL}/${path}`,
+  url: adminDocs.url(path),
   control,
 });
-
-const DOCS_BASE_URL = 'https://www.activepieces.com/docs';
 
 export const adminPageResources = {
   projects: [
@@ -62,6 +61,18 @@ export const adminPageResources = {
     docs({
       label: () => t('AI capabilities guide'),
       path: 'admin-guide/guides/ai-capabilities',
+    }),
+  ],
+  aiTiers: [
+    docs({
+      label: () => t('AI tiers guide'),
+      path: 'admin-guide/guides/ai-tiers',
+    }),
+  ],
+  aiUsage: [
+    docs({
+      label: () => t('AI usage guide'),
+      path: 'admin-guide/guides/ai-usage',
     }),
   ],
   pieces: [
@@ -123,6 +134,16 @@ export const adminPageResources = {
     docs({
       label: () => t('Workers guide'),
       path: 'admin-guide/guides/workers',
+    }),
+  ],
+  workerGroups: [
+    docs({
+      label: () => t('Worker groups guide'),
+      path: 'install/configure-operate/worker-groups',
+    }),
+    docs({
+      label: () => t('Start a worker'),
+      path: 'install/configure-operate/separate-workers',
     }),
   ],
   health: [

@@ -64,6 +64,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Note": "New Note",
   "New Screen": "New Screen",
   "Triggered when a new note is created on a screen": "Triggered when a new note is created on a screen",

@@ -1,4 +1,5 @@
 export { flowsApi } from './api/flows-api';
+export { sampleDataApi } from './api/sample-data-api';
 export { triggerEventsApi } from './api/trigger-events-api';
 export { triggerRunHooks } from './api/trigger-run-api';
 export { ChangeOwnerDialog } from './components/change-owner-dialog';

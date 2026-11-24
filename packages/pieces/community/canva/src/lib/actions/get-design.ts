@@ -1,101 +1,38 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-} from '@activepieces/pieces-common';
-import { canvaAuth } from '../../index';
-import { canvaCommon, CanvaDesignResponse, fetchUserDesigns } from '../common';
+import { createAction } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { canvaAuth, canvaProps, CanvaDesignResponse } from '../common';
+import { canvaClient } from '../common/client';
+import { canvaOutputSchemas } from '../common/output-schemas';
 
 export const getDesign = createAction({
   auth: canvaAuth,
   name: 'get_design',
   classification: 'READ',
   displayName: 'Get Design',
-  description: 'Get the metadata for one of your designs, including owner information, URLs for editing and viewing, and thumbnail information.',
-  audience: 'both',
+  description: 'Get the details of a design, including owner, edit and view links, and thumbnail.',
+  audience: 'human',
   aiMetadata: {
-    description:
-      'Fetches metadata for a single Canva design by design ID, including owner, edit/view URLs, and thumbnail. Pick this when you already know the design ID; use Find Design first if you only have a title or keywords. Read-only and idempotent; fails with 404 if the design does not exist or is inaccessible.',
+    description: 'Gets one Canva design by ID. Human step; agents use canva_get_design. Read-only.',
     idempotent: true,
   },
+  outputSchema: canvaOutputSchemas.designResult,
   props: {
-    designId: Property.Dropdown({
-      displayName: 'Design',
-      description: 'Select the design to retrieve metadata for',
-      required: true,
-      refreshers: [],
-      auth:canvaAuth,
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Please authenticate with Canva first',
-            options: [],
-          };
-        }
-        
-        try {
-          const designs = await fetchUserDesigns(auth);
-          return {
-            disabled: false,
-            options: designs,
-          };
-        } catch (error) {
-          console.error('Error fetching designs:', error);
-          return {
-            disabled: true,
-            placeholder: 'Error loading designs',
-            options: [],
-          };
-        }
-      },
-    }),
+    designId: canvaProps.designDropdown({ displayName: 'Design', description: 'The design to look up. Type to search.' }),
   },
   async run(context) {
-    const { designId } = context.propsValue;
-    
-    if (!designId || designId.trim().length === 0) {
-      throw new Error('Design ID is required');
+    const designId = context.propsValue.designId.trim();
+    if (!designId) {
+      throw new Error('Design is required.');
     }
-
-    try {
-      const response = await httpClient.sendRequest<CanvaDesignResponse>({
-        method: HttpMethod.GET,
-        url: `${canvaCommon.baseUrl}/designs/${designId.trim()}`,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: context.auth.access_token,
-        },
-      });
-
-      return {
-        success: true,
-        design: response.body.design,
-        message: `Design "${response.body.design.title || response.body.design.id}" retrieved successfully`,
-      };
-    } catch (error: any) {
-      if (error.response?.status === 429) {
-        throw new Error('Rate limit exceeded. Please wait before making another request (100 requests per minute limit).');
-      }
-      
-      if (error.response?.status === 401) {
-        throw new Error('Authentication failed. Please check your Canva connection.');
-      }
-      
-      if (error.response?.status === 403) {
-        throw new Error('Access forbidden. Make sure your integration has the required scope: design:meta:read');
-      }
-      
-      if (error.response?.status === 404) {
-        throw new Error(`Design with ID "${designId}" was not found or you don't have access to it.`);
-      }
-      
-      if (error.response?.data?.message) {
-        throw new Error(`Canva API error: ${error.response.data.message}`);
-      }
-      
-      throw new Error(`Failed to retrieve design: ${error.message || 'Unknown error'}`);
-    }
+    const response = await canvaClient.request<CanvaDesignResponse>({
+      token: context.auth.access_token,
+      method: HttpMethod.GET,
+      path: `/designs/${encodeURIComponent(designId)}`,
+    });
+    return {
+      success: true,
+      design: response.design,
+      message: `Design "${response.design.title || response.design.id}" retrieved successfully`,
+    };
   },
-}); 
+});

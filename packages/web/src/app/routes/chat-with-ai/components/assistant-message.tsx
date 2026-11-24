@@ -3,6 +3,7 @@ import { Brain, ChevronDown, Volume2, VolumeOff } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { memo, useMemo, useState } from 'react';
 
+import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Markdown } from '@/components/prompt-kit/markdown';
 import {
@@ -41,10 +42,10 @@ import { ThinkingBlock } from './activity-accordion';
 import { BatchProgressCard } from './batch-progress-card';
 import { CardSkeleton } from './card-skeletons';
 import { ConnectionPickerCard } from './connection-picker-card';
-import { CopyIconButton } from './copy-icon-button';
 import { FeedbackButtons } from './feedback-buttons';
 import { FlowBuildCard } from './flow-build-card';
 import { GeneratedImageCard } from './generated-image-card';
+import { LiveReasoning } from './live-reasoning';
 import { McpReconnectCard, McpReconnectData } from './mcp-reconnect-card';
 import { DocumentPreview } from './previews/document-preview';
 import { markdownPreviewComponents } from './previews/markdown-preview-components';
@@ -184,7 +185,13 @@ export const AssistantMessage = memo(function AssistantMessage({
             {hasContent && !isStreaming && (
               <>
                 <MessageAction tooltip={t('Copy')}>
-                  <CopyIconButton textToCopy={fullText} className="h-6 w-6" />
+                  <CopyButton
+                    value={fullText}
+                    variant="ghost"
+                    size="icon-xs"
+                    withoutTooltip
+                    className="h-6 w-6"
+                  />
                 </MessageAction>
                 {isTtsSupported && (
                   <MessageAction
@@ -280,9 +287,7 @@ function MessageBlocks({
               !hasSkeletonAfter &&
               !hasBuildAfter;
             const lastStep =
-              block.steps.length > 0
-                ? block.steps[block.steps.length - 1]
-                : null;
+              block.steps.findLast((step) => step.kind !== 'reasoning') ?? null;
             // Collapsed view = ONLY the last segment: the last thought and the
             // tools after it. Earlier segments live in the expanded accordion.
             // The thought lives in the first tool's `description`, so derive the
@@ -301,8 +306,11 @@ function MessageBlocks({
               lastThinkingStatus ??
               lastSegmentToolSteps[0]?.part.toolCallId ??
               'segment';
+            const isLive = isMessageStreaming && !isAccordionOpen;
+            const showLiveReasoning =
+              isLive && block.trailingReasoningText.length > 0;
             const showLiveGroup =
-              isMessageStreaming && !isAccordionOpen && Boolean(lastStep);
+              isLive && Boolean(lastStep) && !showLiveReasoning;
             return (
               <div
                 key={`thinking-${i}`}
@@ -310,7 +318,6 @@ function MessageBlocks({
               >
                 <ThinkingBlock
                   thinkingSteps={block.steps}
-                  reasoningText={block.reasoningText}
                   isStreaming={isMessageStreaming}
                   thinkingDurationMs={
                     i === lastThinkingIdx
@@ -348,6 +355,14 @@ function MessageBlocks({
                         lastThinkingStatus={lastThinkingStatus}
                       />
                     </motion.div>
+                  )}
+                </AnimatePresence>
+                <AnimatePresence initial={false}>
+                  {showLiveReasoning && (
+                    <LiveReasoning
+                      key="live-reasoning"
+                      text={block.trailingReasoningText}
+                    />
                   )}
                 </AnimatePresence>
               </div>

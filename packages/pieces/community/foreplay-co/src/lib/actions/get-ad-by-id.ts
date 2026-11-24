@@ -1,47 +1,33 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { foreplayCoApiCall } from '../common';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { getAdById as getAdByIdProperties } from '../properties';
-import { getAdByIdSchema } from '../schemas';
-import { foreplayCoAuth } from '../..';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { foreplayCoAuth } from '../auth';
+import { foreplayClient } from '../common/client';
+import { foreplayMappers } from '../common/mappers';
+import { foreplayOutputSchemas } from '../common/output-schemas';
+import { foreplayProps } from '../common/props';
 
-export const getAdById = createAction({
+const getAdById = createAction({
+  auth: foreplayCoAuth,
   name: 'getAdById',
   classification: 'READ',
   displayName: 'Get Ad by ID',
-  description: 'Get detailed information about a specific ad by its ID.',
-  audience: 'both',
-  aiMetadata: { description: 'Fetch the full details of one Foreplay ad by its ad ID. Use when you already have a specific ad ID (e.g. from a search or a trigger) and need its complete metadata. Requires the exact ad ID; read-only, so repeating the call is safe.', idempotent: true },
-  props: getAdByIdProperties(),
-  auth: foreplayCoAuth,
+  description: 'Get detailed information about a specific ad by its public ad library ID. Costs 1 Foreplay credit.',
+  audience: 'human',
+  aiMetadata: {
+    description: 'Fetch one Foreplay ad by its public ad library ID (the ad_id field of ads returned by other Foreplay steps, not the internal id) and return the raw ad object. Costs 1 credit.',
+    idempotent: true,
+  },
+  outputSchema: foreplayOutputSchemas.rawAd,
+  props: {
+    ad_id: Property.ShortText({ displayName: 'Public Ad ID', description: 'The public ad library ID: the ad_id field of ads returned by other Foreplay steps (not the internal id field).', required: true }),
+  },
   async run({ auth, propsValue }) {
-    // Validate props using Zod schema
-    const validation = getAdByIdSchema.safeParse(propsValue);
-    if (!validation.success) {
-      throw new Error(`Validation failed: ${validation.error.message}`);
-    }
-
-    const adId = propsValue.ad_id;
-
-    const response = await foreplayCoApiCall({
-      apiKey: auth,
-      method: HttpMethod.GET,
-      resourceUri: `/api/ad/${adId}`,
-    });
-
-    const responseBody = response.body;
-
-    // Check if the response is successful
-    if (responseBody.metadata && responseBody.metadata.success === true) {
-      // Return just the ad data for clean automation workflows
-      return responseBody.data;
-    } else {
-      // Handle error responses by throwing an error
-      const errorMessage =
-        responseBody.error ||
-        responseBody.metadata?.message ||
-        'Failed to retrieve ad';
-      throw new Error(`Foreplay.co API Error: ${errorMessage}`);
-    }
+    const id = foreplayProps.foreplayId({ value: propsValue.ad_id, label: 'Public Ad ID' });
+    const response = await foreplayClient.request({ auth, path: `/api/ad/${foreplayClient.pathId(id)}` });
+    const data = foreplayMappers.dataOf(response.body);
+    const item = Array.isArray(data) ? data[0] : data;
+    if (item === null || item === undefined || typeof item !== 'object') throw new Error(foreplayMappers.notFoundMessage);
+    return item;
   },
 });
+
+export { getAdById };

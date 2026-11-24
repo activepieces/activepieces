@@ -6,7 +6,7 @@ const CODE_RUNNER_SCRIPT = `
 process.once('message', async function(msg) {
     let settled = false
 
-    ${sandboxError.payloadSource}
+    ${sandboxError.payloadSourceFor({})}
 
     process.on('unhandledRejection', (reason) => {
         if (settled) return
@@ -108,7 +108,7 @@ export const noOpCodeSandbox: CodeSandbox = {
     },
 
     async createScriptSession({ scriptContext, functions }) {
-        const newContext: Record<string, unknown> = {
+        let newContext: Record<string, unknown> = {
             ...scriptContext,
             ...functions,
         }
@@ -127,6 +127,12 @@ export const noOpCodeSandbox: CodeSandbox = {
                     return
                 }
                 newContext[key] = value
+            },
+            reset: async () => {
+                newContext = {
+                    ...scriptContext,
+                    ...functions,
+                }
             },
             dispose: () => {
                 disposed = true

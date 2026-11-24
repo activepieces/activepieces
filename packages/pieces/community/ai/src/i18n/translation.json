@@ -12,7 +12,6 @@
   "Sort text into one of your categories to branch the flow.": "Sort text into one of your categories to branch the flow.",
   "Pull names, amounts and other fields from text, images or PDFs.": "Pull names, amounts and other fields from text, images or PDFs.",
   "Let an agent use tools and work step by step until the task is done.": "Let an agent use tools and work step by step until the task is done.",
-  "Provider": "Provider",
   "Model": "Model",
   "Prompt": "Prompt",
   "Conversation Key": "Conversation Key",
@@ -21,6 +20,7 @@
   "Web Search": "Web Search",
   "Web Search Options": "Web Search Options",
   "Text": "Text",
+  "Provider": "Provider",
   "Input Images": "Input Images",
   "Advanced Options": "Advanced Options",
   "Categories": "Categories",
@@ -32,6 +32,7 @@
   "Agent Tools": "Agent Tools",
   "Max Steps": "Max Steps",
   "Structured Output": "Structured Output",
+  "A tier your admin set up, or a specific model.": "A tier your admin set up, or a specific model.",
   "Same key in this flow continues the chat. Empty starts fresh.": "Same key in this flow continues the chat. Empty starts fresh.",
   "From 0 to 100. Lower is focused, higher is creative.": "From 0 to 100. Lower is focused, higher is creative.",
   "Longest reply allowed, in tokens. Raise it if a long reply fails or stops short.": "Longest reply allowed, in tokens. Raise it if a long reply fails or stops short.",
@@ -47,5 +48,9 @@
   "Leave empty when the step runs a saved agent: the model comes from the agent.": "Leave empty when the step runs a saved agent: the model comes from the agent.",
   "Maximum number of steps before the agent stops.": "Maximum number of steps before the agent stops.",
   "Simple": "Simple",
-  "Advanced": "Advanced"
+  "Advanced": "Advanced",
+  "Request": "Request",
+  "Image": "Image",
+  "Extract from": "Extract from",
+  "Data to extract": "Data to extract"
 }

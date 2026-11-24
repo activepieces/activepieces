@@ -83,6 +83,7 @@ function buildMinimalHandlers(): WorkerToApiContract {
         getPiece: vi.fn(),
         getPieceArchive: vi.fn(),
         extendLock: vi.fn(),
+        beginShutdown: vi.fn(),
         recordTriggerRun: vi.fn(),
         disableFlow: vi.fn(),
     }
@@ -202,6 +203,15 @@ describe('worker settings override', () => {
     }, 10_000)
 
     it('no local AP_SANDBOX_MEMORY_LIMIT keeps server-provided limit', async () => {
+        const serverSettings = buildWorkerSettingsResponse({ SANDBOX_MEMORY_LIMIT: '524288' })
+        await connectAndWaitForSettings(serverSettings)
+
+        const stored = mockWorkerSettingsSet.mock.calls[0][0] as WorkerSettingsResponse
+        expect(stored.SANDBOX_MEMORY_LIMIT).toBe('524288')
+    }, 10_000)
+
+    it('empty local AP_SANDBOX_MEMORY_LIMIT keeps server-provided limit', async () => {
+        process.env.AP_SANDBOX_MEMORY_LIMIT = ''
         const serverSettings = buildWorkerSettingsResponse({ SANDBOX_MEMORY_LIMIT: '524288' })
         await connectAndWaitForSettings(serverSettings)
 

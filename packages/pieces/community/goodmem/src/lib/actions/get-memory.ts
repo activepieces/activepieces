@@ -1,7 +1,8 @@
+import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { goodmemAuth } from '../../index';
-import { getBaseUrl, getCommonHeaders, extractAuthFromContext } from '../common';
+import { extractAuthFromContext, goodmemOutputSchemas } from '../common';
+import { goodmemApi, goodmemBuilders } from '../common/client';
 
 export const getMemory = createAction({
   auth: goodmemAuth,
@@ -10,7 +11,8 @@ export const getMemory = createAction({
   displayName: 'Get Memory',
   description: 'Fetch a specific memory record by its ID, including metadata, processing status, and optionally the original content.',
   audience: 'both',
-  aiMetadata: { description: 'Looks up a single GoodMem memory by its ID and returns its metadata and processing status, optionally including the original document content. Use it when you already have a memory ID (e.g. from Create Memory or a retrieval result) and need its full details. Read-only and idempotent.', idempotent: true },
+  aiMetadata: { description: 'Looks up a single GoodMem memory by its ID and returns its metadata and processing status, optionally including the original document content. Use it when you already have a memory ID (from Store Memory, List Memories or a retrieval result) and need its full details. Fails if the memory does not exist. Read-only and idempotent.', idempotent: true },
+  outputSchema: goodmemOutputSchemas.getMemory,
   props: {
     memoryId: Property.ShortText({
       displayName: 'Memory ID',
@@ -26,26 +28,14 @@ export const getMemory = createAction({
   },
   async run(context) {
     const { memoryId, includeContent } = context.propsValue;
-    const { baseUrl: rawBaseUrl, apiKey } = extractAuthFromContext(context.auth);
-    const baseUrl = getBaseUrl(rawBaseUrl);
-
-    try {
-      const response = await httpClient.sendRequest({
-        method: HttpMethod.GET,
-        url: `${baseUrl}/v1/memories/${memoryId}?includeContent=${includeContent ?? false}`,
-        headers: getCommonHeaders(apiKey),
-      });
-
-      return {
-        success: true,
-        memory: response.body,
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        error: error.message || 'Failed to get memory',
-        details: error.response?.body || error,
-      };
-    }
+    const auth = extractAuthFromContext(context.auth);
+    const memory = await goodmemApi.request({
+      auth,
+      method: HttpMethod.GET,
+      path: goodmemApi.memoryPath(goodmemBuilders.requireText({ value: memoryId, label: 'Memory ID' })),
+      action: 'get memory',
+      query: { includeContent: includeContent === false ? 'false' : 'true' },
+    });
+    return { success: true, memory };
   },
 });

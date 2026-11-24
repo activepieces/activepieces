@@ -1,16 +1,5 @@
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
-import { 
-  Letta,
-  AuthenticationError,
-  PermissionDeniedError,
-  APIConnectionError,
-  APIConnectionTimeoutError,
-  LettaError,
-} from '@letta-ai/letta-client';
-import type {
-  ClientOptions,
-  AgentListParams,
-} from './types';
+import { lettaApi } from './client';
 
 const markdown = `
 To authenticate with Letta:
@@ -45,56 +34,26 @@ export const lettaAuth = PieceAuth.CustomAuth({
     }
 
     try {
-      const clientConfig: ClientOptions = {};
+      const client = await lettaApi.getLettaClient({ auth: { apiKey, baseUrl } });
       if (apiKey) {
-        clientConfig.apiKey = apiKey;
-      }
-      if (baseUrl) {
-        clientConfig.baseURL = baseUrl;
-      }
-
-      const client = new Letta(clientConfig);
-
-      if (apiKey) {
-        const listParams: AgentListParams = { limit: 1 };
-        await client.agents.list(listParams);
+        await client.agents.list({ limit: 1 });
       } else {
         await client.health();
       }
-
-      return {
-        valid: true,
-      };
+      return { valid: true };
     } catch (error: unknown) {
-      if (error instanceof AuthenticationError) {
-        return {
-          valid: false,
-          error: 'Invalid API key. Please check your credentials.',
-        };
+      const status = error instanceof Error ? Reflect.get(error, 'status') : undefined;
+      if (status === 401) {
+        return { valid: false, error: 'Invalid API key. Please check your credentials.' };
       }
-      if (error instanceof PermissionDeniedError) {
-        return {
-          valid: false,
-          error: 'Permission denied. Please check your API key permissions.',
-        };
+      if (status === 403) {
+        return { valid: false, error: 'Permission denied. Please check your API key permissions.' };
       }
-      if (error instanceof APIConnectionError || error instanceof APIConnectionTimeoutError) {
-        return {
-          valid: false,
-          error: 'Connection failed. Please check your base URL and ensure the server is running.',
-        };
-      }
-      if (error instanceof LettaError) {
-        return {
-          valid: false,
-          error: `Authentication failed: ${error instanceof Error ? error.message : 'Unknown error'}. Please verify your credentials.`,
-        };
+      if (error instanceof Error && (error.constructor.name === 'APIConnectionError' || error.constructor.name === 'APIConnectionTimeoutError')) {
+        return { valid: false, error: 'Connection failed. Please check your base URL and ensure the server is running.' };
       }
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      return {
-        valid: false,
-        error: `Authentication failed: ${errorMessage}. Please verify your credentials.`,
-      };
+      return { valid: false, error: `Authentication failed: ${errorMessage}. Please verify your credentials.` };
     }
   },
 });

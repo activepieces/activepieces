@@ -1,12 +1,8 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { getGraphBaseUrl } from './lib/common/microsoft-cloud';
-import {
-  createPiece,
-  OAuth2PropertyValue,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/pieces-framework';
+import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
 import { createChannelAction } from './lib/actions/create-channel';
 import { createChatAndSendMessageAction } from './lib/actions/create-chat-and-send-message';
+import { microsoftTeamsAiActions } from './lib/actions/ai';
 import { createPrivateChannelAction } from './lib/actions/create-private-channel';
 import { deleteChatMessageAction } from './lib/actions/delete-chat-message';
 import { findChannelAction } from './lib/actions/find-channel';
@@ -21,6 +17,7 @@ import { requestApprovalDirectMessage } from './lib/actions/request-approval-dir
 import { sendChannelMessageAction } from './lib/actions/send-channel-message';
 import { sendChatMessageAction } from './lib/actions/send-chat-message';
 import { microsoftTeamsAuth } from './lib/auth';
+import { microsoftTeamsClient } from './lib/common/client';
 import { newChannelTrigger } from './lib/triggers/new-channel';
 import { newChannelMessageTrigger } from './lib/triggers/new-channel-message';
 import { newChatTrigger } from './lib/triggers/new-chat';
@@ -29,7 +26,7 @@ import { newChatMessageTrigger } from './lib/triggers/new-chat-message';
 export const microsoftTeams = createPiece({
   displayName: 'Microsoft Teams',
   auth: microsoftTeamsAuth,
-  minimumSupportedRelease: '0.87.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-teams.png',
   categories: [
     PieceCategory.BUSINESS_INTELLIGENCE,
@@ -52,14 +49,12 @@ export const microsoftTeams = createPiece({
     getMeetingRecordingAction,
     requestApprovalInChannel,
     requestApprovalDirectMessage,
+    ...microsoftTeamsAiActions,
     createCustomApiCallAction({
       auth: microsoftTeamsAuth,
-      baseUrl: (auth) => {
-        const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
-        return getGraphBaseUrl(cloud) + '/v1.0/teams';
-      },
+      baseUrl: (auth) => (auth ? microsoftTeamsClient.baseUrl({ auth }) : ''),
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+        Authorization: `Bearer ${auth.access_token}`,
       }),
     }),
   ],

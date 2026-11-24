@@ -49,7 +49,7 @@ export const oauth2Util = (log: FastifyBaseLogger) => ({
     },
     isUserError: (e: unknown): boolean => {
         if (isAxiosError(e)) {
-            const error = e.response?.data.error
+            const error = e.response?.data?.error
             switch (error) {
                 case 'invalid_grant':
                     return true
@@ -140,7 +140,7 @@ export const oauth2Util = (log: FastifyBaseLogger) => ({
             authProps: pieceAuth.props,
         })
         const authUrl = resolveValueFromProps(templateProps, pieceAuth.authUrl)
-        const scope = resolveValueFromProps(templateProps, selectedScopes.join(' '))
+        const scope = resolveValueFromProps(templateProps, selectedScopes.join(' ')).trim()
 
         const queryParams: Record<string, string> = {
             response_type: 'code',

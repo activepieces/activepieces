@@ -1,60 +1,42 @@
 import {
 	createTrigger,
 	TriggerStrategy,
-	PiecePropValueSchema,
 	AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
-import {
-	DedupeStrategy,
-	HttpMethod,
-	Polling,
-	pollingHelper,
-	QueryParams,
-} from '@activepieces/pieces-common';
+import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
 import { pdfmonkeyAuth } from '../common/auth';
-import { makeRequest } from '../common/client';
+import { pdfmonkeyOperations } from '../common/operations';
+import { pdfmonkeySchemas } from '../common/output-schemas';
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof pdfmonkeyAuth>, Record<string, never>> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	items: async ({ auth, lastFetchEpochMS }) => {
-		let page = 1;
-		let hasMore = true;
 		const isTest = lastFetchEpochMS === 0;
-
-		const documents = [];
-
-		do {
-			const qs: QueryParams = {
-				'page[number]': page.toString(),
-				'q[status]': 'success',
-			};
-
-			if (!isTest) qs['q[updated_since]'] = lastFetchEpochMS.toString();
-
-			const response = await makeRequest<{
-				document_cards: Array<{ id: string; created_at: string }>;
-				meta: { total_pages: number; current_page: number };
-			}>(auth, HttpMethod.GET, '/document_cards', qs);
-
-			const items = response.document_cards ?? [];
-
-			documents.push(...items);
-
-			if (isTest) break;
-
-			page++;
-			hasMore = response.meta.current_page < response.meta.total_pages;
-		} while (hasMore);
-
-		return documents.map((doc) => {
-			return {
-				epochMilliSeconds: dayjs(doc.created_at).valueOf(),
-				data: doc,
-			};
-		});
+		const query: Record<string, string | undefined> = {
+			'q[status]': 'success',
+			'q[updated_since]': isTest ? undefined : String(Math.floor(lastFetchEpochMS / 1000)),
+		};
+		const documents = isTest
+			? (await pdfmonkeyOperations.listDocuments({ auth, status: 'success' })).documents.slice(0, 5)
+			: await listSincePoll({ auth, query });
+		return documents.map((document) => ({
+			epochMilliSeconds: dayjs(String(document['updated_at'] ?? document['created_at'])).valueOf(),
+			data: document,
+		}));
 	},
 };
+
+async function listSincePoll({ auth, query }: { auth: unknown; query: Record<string, string | undefined> }) {
+	const { items, truncated } = await pdfmonkeyOperations.listAllDocumentCards({ auth, query, maxPages: MAX_POLL_PAGES });
+	if (truncated) {
+		throw new Error(`More than ${MAX_POLL_PAGES * PAGE_SIZE} documents finished since the last check. The trigger stopped without moving its checkpoint so no document is skipped; it retries on the next poll.`);
+	}
+	return items;
+}
+
+const MAX_POLL_PAGES = 400;
+const PAGE_SIZE = 24;
 
 export const documentGeneratedTrigger = createTrigger({
 	auth: pdfmonkeyAuth,
@@ -65,35 +47,33 @@ export const documentGeneratedTrigger = createTrigger({
 	aiMetadata: {
 		description: 'Fires when a PDFMonkey document finishes generating with a success status. Each event represents one completed document, carrying its download URL, filename, template, and metadata. Polls for documents updated since the last check.',
 	},
+	outputSchema: pdfmonkeySchemas.document,
 	props: {},
 	sampleData: {
-		id: '11475e57-0334-4ad5-8896-9462a2243957',
-		app_id: 'c2b67b84-4aac-49ea-bed8-69a15d7a65d3',
-		created_at: '2022-04-07T11:01:38.201+02:00',
-		document_template_id: '96611e9e-ab03-4ac3-8551-1b485210c892',
-		document_template_identifier: 'My Awesome Template',
-		download_url:
-			'https://pdfmonkey.s3.eu-west-1.amazonaws.com/production/backend/document/11475e57-0334-4ad5-8896-9462a2243957/my-test-document.pdf?...',
-		failure_cause: null,
-		filename: 'my-test-document.pdf',
-		meta: '{ "_filename":"my-test-document.pdf" }',
-		public_share_link:
-			'https://files.pdfmonkey.io/share/5CEA8C37-D130-4C19-9E11-72BE2293C82B/my-test-document.pdf',
+		id: '472b1c2e-6a4b-4f04-ad78-0aa040fd9f09',
+		app_id: '9dd42e52-2c1f-4fde-adf1-50c12afb612e',
+		created_at: '2026-10-15T13:54:20.177+02:00',
+		updated_at: '2026-10-15T13:54:22.021+02:00',
+		document_template_id: '07fdc6bb-8eff-4d1a-9cc6-9083775905df',
+		document_template_identifier: 'Invoice',
 		status: 'success',
-		updated_at: '2022-04-03T11:12:56.023+02:00',
+		output_type: 'pdf',
+		filename: 'Invoice INV-42.pdf',
+		meta: '{"ref":"INV-42","_filename":"Invoice INV-42.pdf"}',
+		download_url: 'https://pdfmonkey-store.s3.eu-west-3.amazonaws.com/production/backend/document/472b1c2e-6a4b-4f04-ad78-0aa040fd9f09/Invoice%20INV-42.pdf?X-Amz-Expires=3600',
+		preview_url: 'https://preview.pdfmonkey.io/pdf/web/viewer.html?file=https%3A%2F%2Fpreview.pdfmonkey.io%2Fdocument-render%2F472b1c2e-6a4b-4f04-ad78-0aa040fd9f09',
+		public_share_link: null,
+		failure_cause: null,
 	},
 	type: TriggerStrategy.POLLING,
 	async test(context) {
 		return await pollingHelper.test(polling, context);
 	},
 	async onEnable(context) {
-		const { store, auth, propsValue } = context;
-		await pollingHelper.onEnable(polling, { store, auth, propsValue });
+		await pollingHelper.onEnable(polling, context);
 	},
-
 	async onDisable(context) {
-		const { store, auth, propsValue } = context;
-		await pollingHelper.onDisable(polling, { store, auth, propsValue });
+		await pollingHelper.onDisable(polling, context);
 	},
 
 	async run(context) {

@@ -20,13 +20,30 @@ export const addWatcherToIssueAction = createAction({
 	},
 	outputSchema: legacyAddWatcherOutputSchema,
 	props: {
-		issueId: issueIdOrKeyProp('Issue ID or Key', true),
+		issueId: issueIdOrKeyProp('Issue', true),
 		userId: getUsersDropdown({
 			displayName: 'User',
+			description: 'Gets notified about changes to the issue.',
 			refreshers: [],
 			required: true,
 		}),
 	},
+	propertyGroups: [
+		{
+			key: 'issue',
+			display: 'section',
+			label: 'Issue',
+			icon: 'inbox',
+			props: ['issueId'],
+		},
+		{
+			key: 'watcher',
+			display: 'section',
+			label: 'Watcher',
+			icon: 'users',
+			props: ['userId'],
+		},
+	],
 	async run(context) {
 		const { issueId, userId } = context.propsValue;
 		if (isNil(issueId)) {

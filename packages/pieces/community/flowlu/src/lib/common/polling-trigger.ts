@@ -1,4 +1,4 @@
-import { Store } from '@activepieces/pieces-framework';
+import { isNil, Store } from '@activepieces/pieces-framework';
 import { makeClient } from '.';
 import { FormValue } from './client';
 import { flowluPolling, PollSource } from './polling';
@@ -16,9 +16,18 @@ export function flowluPollingHooks({
         client: makeClient(context.auth),
         source,
       });
+      if (
+        context.isRepublish &&
+        !isNil(await context.store.get(flowluPolling.storeKey))
+      ) {
+        return;
+      }
       await context.store.put(flowluPolling.storeKey, checkpoint);
     },
     async onDisable(context: HookContext): Promise<void> {
+      if (context.isRepublish) {
+        return;
+      }
       await context.store.delete(flowluPolling.storeKey);
     },
     async test(context: HookContext): Promise<unknown[]> {
@@ -54,4 +63,5 @@ type HookContext = {
   auth: Parameters<typeof makeClient>[0];
   propsValue: Record<string, unknown>;
   store: Store;
+  isRepublish?: boolean;
 };

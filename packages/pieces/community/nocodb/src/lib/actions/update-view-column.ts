@@ -26,9 +26,18 @@ export const updateViewColumnAction = createAction({
 			description: 'The view-scoped column ID from List View Columns, not the table column ID.',
 			required: true,
 		}),
-		show: Property.Checkbox({
+		show: Property.StaticDropdown<string, false>({
 			displayName: 'Show',
+			description: 'Whether the column is visible in the view. Leave empty or pick Leave unchanged to keep the current setting.',
 			required: false,
+			options: {
+				disabled: false,
+				options: [
+					{ label: 'Yes', value: 'yes' },
+					{ label: 'No', value: 'no' },
+					{ label: 'Leave unchanged', value: 'unchanged' },
+				],
+			},
 		}),
 		order: Property.Number({
 			displayName: 'Order',
@@ -36,8 +45,16 @@ export const updateViewColumnAction = createAction({
 		}),
 	},
 	async run(context) {
-		const { viewId, columnId, show, order } = context.propsValue;
+		const { viewId, columnId, order } = context.propsValue;
+		const show = showValue(context.propsValue.show);
 		const client = makeClient(context.auth);
 		return await client.updateViewColumn(viewId, columnId, { show, order });
 	},
 });
+
+function showValue(value: unknown): boolean | undefined {
+	const normalized = typeof value === 'string' ? value.trim().toLowerCase() : value;
+	if (normalized === true || normalized === 'yes' || normalized === 'true') return true;
+	if (normalized === false || normalized === 'no' || normalized === 'false') return false;
+	return undefined;
+}

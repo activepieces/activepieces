@@ -37,7 +37,7 @@ export const newBlogPost = createTrigger({
     });
   },
   async onDisable(context) {
-    await totalcmsPolling.disable({ store: context.store });
+    await totalcmsPolling.disable({ store: context.store, isRepublish: context.isRepublish });
   },
   async run(context) {
     const posts = await totalcmsPolling.poll({

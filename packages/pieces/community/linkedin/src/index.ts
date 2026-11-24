@@ -60,6 +60,15 @@ export const linkedin = createPiece({
           Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
         };
       },
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${linkedinCommon.baseUrl}`,
+          placeholder: '/v2/userinfo',
+        },
+        headers: {
+          description: `Calls to /rest/ need LinkedIn-Version: ${linkedinCommon.linkedinHeaders['LinkedIn-Version']} and X-Restli-Protocol-Version: 2.0.0. Authorization comes from your connection.`,
+        },
+      },
     }),
   ],
   triggers: [],

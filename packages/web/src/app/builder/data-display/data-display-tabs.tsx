@@ -1,7 +1,7 @@
 import { t } from 'i18next';
-import { Copy, Download } from 'lucide-react';
-import { toast } from 'sonner';
+import { Download } from 'lucide-react';
 
+import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { JsonViewer } from '@/components/custom/json-viewer';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,16 +29,6 @@ const DataDisplayTabs = ({
 }: DataDisplayTabsProps) => {
   const canActOnData = copyableData !== undefined && copyableData !== null;
 
-  const handleCopy = () => {
-    if (!canActOnData) return;
-    navigator.clipboard.writeText(
-      typeof copyableData === 'string'
-        ? copyableData
-        : JSON.stringify(copyableData, null, 2),
-    );
-    toast.success(t('Copied to clipboard'), { duration: 1000 });
-  };
-
   const handleDownload = () => {
     if (!canActOnData) return;
     const isPlainString = typeof copyableData === 'string';
@@ -62,21 +52,12 @@ const DataDisplayTabs = ({
         <TooltipProvider>
           <div className="sticky top-0 z-10 flex justify-end pointer-events-none">
             <div className="flex items-center gap-0.5 bg-gray-1/90 backdrop-blur-sm rounded-md border border-gray-6 shadow-sm pointer-events-auto opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    onClick={handleCopy}
-                    aria-label={t('Copy to clipboard')}
-                  >
-                    <Copy className="size-3.5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  {t('Copy to clipboard')}
-                </TooltipContent>
-              </Tooltip>
+              <CopyButton
+                value={copyableData}
+                variant="ghost"
+                size="icon-xs"
+                tooltipSide="bottom"
+              />
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button

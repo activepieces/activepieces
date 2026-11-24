@@ -231,7 +231,7 @@ function TierRow({
       <ItemMedia variant="icon">
         <Icon className="size-4 text-gray-11" />
       </ItemMedia>
-      <ItemContent>
+      <ItemContent className="max-sm:basis-[calc(100%-3.5rem)]">
         <ItemTitle>
           {copy.label}
           {tier.locked && (
@@ -249,15 +249,18 @@ function TierRow({
             />
           )}
         </ItemTitle>
-        <ItemDescription>{copy.description}</ItemDescription>
+        <ItemDescription className="max-sm:line-clamp-none">
+          {copy.description}
+        </ItemDescription>
       </ItemContent>
-      <ItemActions className="gap-4">
+      <ItemActions className="gap-4 max-sm:w-full max-sm:justify-between max-sm:pl-12">
         <Button
           variant="ghost"
           size="sm"
           className={cn('text-gray-11', someOff && 'text-gray-12')}
           onClick={onOpenTools}
           {...adminControl(AdminControl.MCP_TIER_TOOLS_OPEN)}
+          data-testid={`mcp-tool-tier-${tier.id}-tools`}
           aria-label={t('{tier}: {status}', {
             tier: copy.label,
             status: countLabel,
@@ -270,6 +273,7 @@ function TierRow({
           {!tier.locked && (
             <Switch
               {...adminControl(AdminControl.MCP_TIER_TOGGLE)}
+              data-testid={`mcp-tool-tier-${tier.id}`}
               checked={editable.length > 0 && editableOn === editable.length}
               indeterminate={isPartial}
               disabled={readOnly || offForPlatform}

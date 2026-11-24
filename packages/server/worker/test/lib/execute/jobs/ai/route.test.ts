@@ -1,5 +1,5 @@
 import { AIProviderName } from '@activepieces/core-utils'
-import { AiRouterMatchMode, AiStepAction, ResolveAiProviderResponse, RouteJobData } from '@activepieces/shared'
+import { aiRouterModels, AiRouterMatchMode, AiStepAction, ResolveAiProviderResponse, RouteJobData } from '@activepieces/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const { post, reportFixedCredits, reportProviderCost } = vi.hoisted(() => ({
@@ -110,6 +110,7 @@ describe('routeStep asks OpenRouter\'s decisions endpoint', () => {
         expect(reportProviderCost).toHaveBeenCalledWith({
             billing: BILLING,
             provider: AIProviderName.ACTIVEPIECES,
+            providerConfigId: 'config-1',
             modelId: 'typesafe/jev-1.13',
             costUsd: 0.00002,
             inputTokens: 476,
@@ -119,12 +120,22 @@ describe('routeStep asks OpenRouter\'s decisions endpoint', () => {
         expect(reportFixedCredits).not.toHaveBeenCalled()
     })
 
+    it.each(aiRouterModels.all.map((model) => model.id))('routes on %s and bills the cost OpenRouter reports for it', async (modelId) => {
+        post.mockResolvedValue({ data: { id: 'gen-4', answers: { route: { type: 'choice', choice: 'Sales', confidence: 0.8, probabilities: { Billing: 0.2, Sales: 0.8 } } }, usage: { input_tokens: 120, output_tokens: 0, cost: 0.00001 } } })
+
+        const answer = await routeStep({ data: routeJob({ modelId }), resolved: MANAGED, billing: BILLING })
+
+        expect(sentBody()).toMatchObject({ model: modelId })
+        expect(answer).toEqual({ matched: ['Sales'], probabilities: { Billing: 0.2, Sales: 0.8 } })
+        expect(reportProviderCost).toHaveBeenCalledWith(expect.objectContaining({ modelId, costUsd: 0.00001 }))
+    })
+
     it('bills one fixed credit when the call ran on the platform\'s own OpenRouter key', async () => {
         post.mockResolvedValue({ data: { id: 'gen-3', answers: { route: { choice: 'Sales' } }, usage: { cost: 0.00002 } } })
 
         await routeStep({ data: routeJob({ provider: AIProviderName.OPENROUTER }), resolved: OWN_KEY, billing: BILLING })
 
-        expect(reportFixedCredits).toHaveBeenCalledWith({ billing: BILLING, provider: AIProviderName.OPENROUTER, modelId: 'typesafe/jev-1.13', generationId: 'gen-3' })
+        expect(reportFixedCredits).toHaveBeenCalledWith({ billing: BILLING, provider: AIProviderName.OPENROUTER, providerConfigId: 'config-2', modelId: 'typesafe/jev-1.13', generationId: 'gen-3', inputTokens: undefined, outputTokens: undefined, observedCostUsd: 0.00002 })
         expect(reportProviderCost).not.toHaveBeenCalled()
     })
 

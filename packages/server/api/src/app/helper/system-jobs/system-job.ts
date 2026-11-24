@@ -1,5 +1,5 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
-import { apDayjs, apDayjsDuration, createLogger, wideEvent } from '@activepieces/server-utils'
+import { apDayjs, apDayjsDuration, wideEvent } from '@activepieces/server-utils'
 import { DelayedError, Job, JobsOptions, JobState, Queue, Worker } from 'bullmq'
 import { Dayjs } from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -8,6 +8,7 @@ import { jobFailureLogger } from '../../workers/job-queue/job-failure-logger'
 import { exceptionHandler } from '../exception-handler'
 import { SystemJobData, SystemJobName, SystemJobSchedule, UpsertJobResult } from './common'
 import { systemJobHandlers } from './job-handlers'
+import { systemJobFailurePager } from './system-job-failure-pager'
 
 const FIFTEEN_MINUTES = apDayjsDuration(15, 'minute').asMilliseconds()
 const ONE_MONTH = apDayjsDuration(1, 'month').asSeconds()
@@ -60,20 +61,12 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
                     throw new DelayedError()
                 }
                 log.debug({ jobName: job.name }, '[systemJob#worker] Executing job')
-                const jobLogger = createLogger({
-                    event: 'system-job.execute',
-                    job: { id: job.id, type: job.name },
-                })
-                return wideEvent.run({
-                    logger: jobLogger,
-                    fn: () => processSystemJob(job)
-                        .then(() => wideEvent.set({ outcome: 'success' }))
-                        .catch((error: unknown) => {
-                            wideEvent.error(error)
-                            wideEvent.set({ outcome: 'failed' })
-                            throw error
-                        })
-                        .finally(() => jobLogger.emit()),
+                return wideEvent.runJob({
+                    fields: {
+                        event: 'system-job.execute',
+                        job: { id: job.id, type: job.name },
+                    },
+                    fn: () => processSystemJob(job),
                 })
             },
             {
@@ -87,8 +80,7 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
 
         systemJobWorker.on('failed', (job, err) => {
             const attemptsUsed = job?.attemptsMade ?? 0
-            const maxAttempts = job?.opts?.attempts ?? 1
-            if (attemptsUsed >= maxAttempts) {
+            if (systemJobFailurePager.gaveUp({ attemptsMade: attemptsUsed, attempts: job?.opts?.attempts, error: err })) {
                 jobFailureLogger.logJobFailed({
                     queueName: SYSTEM_JOB_QUEUE,
                     jobId: job?.id,
@@ -97,6 +89,13 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
                     log,
                 })
                 exceptionHandler.handle(err, log)
+                systemJobFailurePager.pageOnFinalFailure({
+                    jobName: job?.name ?? 'unknown',
+                    jobId: job?.id,
+                    attemptsMade: attemptsUsed,
+                    error: err,
+                    log,
+                })
             }
         })
 

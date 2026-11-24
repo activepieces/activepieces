@@ -76,10 +76,16 @@ export const bulkBounceThresholdExceeded = createTrigger({
   type: TriggerStrategy.POLLING,
 
   async onEnable(context) {
+    if (context.isRepublish) {
+      return;
+    }
     await context.store.delete(LAST_ALERT_STORE_KEY);
   },
 
   async onDisable(context) {
+    if (context.isRepublish) {
+      return;
+    }
     await context.store.delete(LAST_ALERT_STORE_KEY);
   },
 

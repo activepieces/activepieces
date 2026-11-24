@@ -198,6 +198,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Record": "New Record",
   "New or Updated Record": "New or Updated Record",
   "Triggers when a new record is added to the selected table.": "Triggers when a new record is added to the selected table.",

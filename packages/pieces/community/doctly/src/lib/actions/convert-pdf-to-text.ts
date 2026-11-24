@@ -1,22 +1,20 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { doctlyAuth } from '../common/auth';
+import { HttpMethod } from '@activepieces/pieces-common';
 import FormData from 'form-data';
-import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { BASE_URL } from '../common/constants';
-import { CreateDocumentResponse, GetDocumentResponse } from '../common/types';
+import { doctlyAuth } from '../auth';
+import { doctlyClient } from '../common/client';
+import { doctlyApi } from '../common/api';
+import { DoctlyCreateDocumentResponse } from '../common/types';
+import { convertPdfToTextOutputSchema } from '../output-schemas';
 
 export const convertPdfToTextAction = createAction({
 	name: 'convert-pdf-to-text',
+	outputSchema: convertPdfToTextOutputSchema,
 	classification: 'READ',
 	auth: doctlyAuth,
 	displayName: 'Convert PDF to Text',
 	description: 'Converts PDF document to text file with markdown formatting.',
-	audience: 'both',
-	aiMetadata: {
-		description:
-			'Uploads a PDF file to Doctly AI and converts it to markdown-formatted text, returning the extracted text. The action submits the document, then blocks while polling Doctly until the conversion completes (up to a 5-minute timeout), so a single call can take a while. Requires a PDF file as input. Each call creates a new conversion job on Doctly, so it is not idempotent.',
-		idempotent: false,
-	},
+	audience: 'human',
 	props: {
 		file: Property.File({
 			displayName: 'Document File',
@@ -29,46 +27,31 @@ export const convertPdfToTextAction = createAction({
 		const formData = new FormData();
 		formData.append('file', file.data, { filename: file.filename });
 
-		const response = await httpClient.sendRequest<CreateDocumentResponse>({
+		const created = await doctlyClient.request<DoctlyCreateDocumentResponse>({
+			auth: context.auth,
 			method: HttpMethod.POST,
-			url: BASE_URL + '/documents/',
-			authentication: {
-				type: AuthenticationType.BEARER_TOKEN,
-				token: context.auth.secret_text,
-			},
+			path: '/documents/',
 			headers: {
 				...formData.getHeaders(),
 			},
 			body: formData,
 		});
 
-		const docId = response.body.id;
-		let status = response.body.status;
+		const docId = created.id;
+		let status = created.status;
 		const timeoutAt = Date.now() + 5 * 60 * 1000;
 
 		while (!['COMPLETED', 'FAILED'].includes(status) && Date.now() < timeoutAt) {
 			await new Promise((resolve) => setTimeout(resolve, 5000));
 
-			const pollResponse = await httpClient.sendRequest<GetDocumentResponse>({
-				method: HttpMethod.GET,
-				url: BASE_URL + `/documents/${docId}`,
-				authentication: {
-					type: AuthenticationType.BEARER_TOKEN,
-					token: context.auth.secret_text,
-				},
-			});
+			const document = await doctlyApi.getDocument({ auth: context.auth, documentId: docId });
 
-			status = pollResponse.body.status;
+			status = document.status;
 
 			if (status === 'COMPLETED') {
-				const mdResponse = await httpClient.sendRequest({
-					method: HttpMethod.GET,
-					url: pollResponse.body.output_file_url,
-				});
+				const markdownText = await doctlyClient.download<string>({ url: document.output_file_url });
 
-				const markdownText = mdResponse.body as unknown as string;
-
-				return { markdownText, ...pollResponse.body };
+				return { markdownText, ...document };
 			}
 			if (status === 'FAILED') throw new Error('Document processing failed.');
 		}

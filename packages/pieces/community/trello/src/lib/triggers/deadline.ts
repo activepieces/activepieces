@@ -46,32 +46,40 @@ export const deadlineTrigger = createTrigger({
     name: 'deadline',
     classification: 'READ',
     displayName: 'Card Deadline',
-    description: 'Triggers at a specified time before a card deadline.',
+    description: "Fires a set time before each card's due date.",
     outputSchema: deadlineTriggerOutputSchema,
     aiMetadata: {
         description: 'Fires for each card whose due date falls within a configured lead time (e.g. 24 hours) ahead of now, scoped to a board or an optional list. Represents an approaching, not-yet-completed card deadline; polls periodically and skips cards already marked due-complete.',
     },
     type: TriggerStrategy.POLLING,
+    propertyGroups: [
+        { key: 'watch', display: 'section', label: 'Where to Watch', icon: 'inbox', props: ['board_id', 'list_id_opt'] },
+        { key: 'timing', display: 'section', label: 'Timing', icon: 'calendar', props: ['time_before_due', 'time_unit'] },
+    ],
     props: {
         board_id: trelloCommon.board_id,
         list_id_opt: trelloCommon.list_id_opt,
-        time_unit: Property.StaticDropdown({
-            displayName: 'Time unit',
-            description: 'Select unit for time before due',
+        time_before_due: Property.Number({
+            displayName: 'Time Before Due',
+            description: 'How long before the due date to fire.',
             required: true,
+            display: 'stepper',
+            min: 1,
+            max: 999,
+            step: 1,
+            defaultValue: 24,
+        }),
+        time_unit: Property.StaticDropdown({
+            displayName: 'Time Unit',
+            required: true,
+            display: 'cards',
             options: {
             options: [
-                { label: 'Minutes', value: 'minutes' },
-                { label: 'Hours', value: 'hours' },
+                { label: 'Minutes', value: 'minutes', icon: 'calendar' },
+                { label: 'Hours', value: 'hours', icon: 'calendar' },
             ],
             },
             defaultValue: 'hours',
-        }),
-        time_before_due: Property.Number({
-            displayName: 'Time before due',
-            description: 'How long before the due date the trigger should run (use with time unit)',
-            required: true,
-            defaultValue: 24,
         }),
     },
     async onEnable(context) {

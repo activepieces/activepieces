@@ -1,7 +1,6 @@
 import {
   AppConnectionValueForAuthProperty,
   createTrigger,
-  OAuth2PropertyValue,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import {
@@ -11,19 +10,19 @@ import {
 } from '@activepieces/pieces-common';
 import { createGoogleClient, googleContactsAuth } from '../auth';
 import { newOrUpdatedContactOutputSchema } from '../output-schemas';
-import { people as googlePeople } from '@googleapis/people';
+import { people as googlePeople, people_v1 } from '@googleapis/people';
 import dayjs from 'dayjs';
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof googleContactsAuth>, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ store, auth }) => {
+  items: async ({ auth, lastFetchEpochMS }) => {
     const contactsClient = googlePeople({ version: 'v1', auth: createGoogleClient(auth) });
 
-    let nextPageToken;
-    const contactItems: Array<{ data: any; epochMilliSeconds: number }> = [];
+    let nextPageToken: string | undefined;
+    let contactItems: ContactItem[] = [];
 
     do {
-      const response: any = await contactsClient.people.connections.list({
+      const response = await contactsClient.people.connections.list({
         resourceName: 'people/me',
         pageToken: nextPageToken,
         pageSize: 100,
@@ -61,18 +60,19 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof googleContactsAu
         ].join(),
       });
 
-      for (const contact of response.data.connections || []) {
-        if (contact.metadata?.deleted !== true) {
-          contactItems.push({
-            data: contact,
-            epochMilliSeconds: dayjs(
-              contact.metadata?.sources?.[0].updateTime
-            ).valueOf(),
-          });
-        }
-      }
+      const pageItems = (response.data.connections ?? [])
+        .filter((contact) => contact.metadata?.deleted !== true)
+        .flatMap((contact) => toContactItems(contact));
+      contactItems = [...contactItems, ...pageItems];
 
-      nextPageToken = response.data.nextPageToken;
+      const lastPageItem = pageItems[pageItems.length - 1];
+      const reachedSeenContacts =
+        lastFetchEpochMS > 0 &&
+        lastPageItem !== undefined &&
+        lastPageItem.epochMilliSeconds < lastFetchEpochMS;
+      nextPageToken = reachedSeenContacts
+        ? undefined
+        : response.data.nextPageToken ?? undefined;
     } while (nextPageToken);
 
     return contactItems;
@@ -83,8 +83,8 @@ export const googleContactNewOrUpdatedContact = createTrigger({
   auth: googleContactsAuth,
   name: 'new_or_updated_contact',
   classification: 'READ',
-  displayName: 'New Or Updated Contact',
-  description: 'Triggers when there is a new or updated contact',
+  displayName: 'New or Updated Contact',
+  description: 'Runs when a contact is added or edited in Google Contacts.',
   aiMetadata: {
     description: 'Fires when a contact in the authenticated Google Contacts account is newly created or has been modified since the last poll. Each event represents one person record with its current fields; deleted contacts are excluded.',
   },
@@ -151,33 +151,48 @@ export const googleContactNewOrUpdatedContact = createTrigger({
 
   type: TriggerStrategy.POLLING,
   async onEnable(ctx) {
-    return await pollingHelper.onEnable(polling, {
-      store: ctx.store,
-      auth: ctx.auth,
-      propsValue: {},
-    });
+    return await pollingHelper.onEnable(polling, ctx);
   },
   async onDisable(ctx) {
-    return await pollingHelper.onEnable(polling, {
-      store: ctx.store,
-      auth: ctx.auth,
-      propsValue: {},
-    });
+    return await pollingHelper.onDisable(polling, ctx);
   },
   async run(ctx) {
-    return await pollingHelper.poll(polling, {
-      store: ctx.store,
-      auth: ctx.auth,
-      propsValue: {},
-      files: ctx.files,
-    });
+    return await pollingHelper.poll(polling, ctx);
   },
   test: async (ctx) => {
-    return await pollingHelper.test(polling, {
-      store: ctx.store,
-      auth: ctx.auth,
-      propsValue: {},
-      files: ctx.files,
-    });
+    return await pollingHelper.test(polling, ctx);
   },
 });
+
+function toContactItems(contact: people_v1.Schema$Person): ContactItem[] {
+  const epochMilliSeconds = contactUpdateTime(contact);
+  return epochMilliSeconds === undefined ? [] : [{ data: contact, epochMilliSeconds }];
+}
+
+function contactUpdateTime(contact: people_v1.Schema$Person): number | undefined {
+  const sources = contact.metadata?.sources ?? [];
+  const contactSourceTimes = sourceUpdateTimes(
+    sources.filter((source) => source.type === 'CONTACT')
+  );
+  if (contactSourceTimes.length > 0) {
+    return Math.max(...contactSourceTimes);
+  }
+  const otherSourceTimes = sourceUpdateTimes(
+    sources.filter((source) => source.type !== 'CONTACT')
+  );
+  return otherSourceTimes.length > 0 ? Math.max(...otherSourceTimes) : undefined;
+}
+
+function sourceUpdateTimes(sources: people_v1.Schema$Source[]): number[] {
+  return sources
+    .map((source) => source.updateTime)
+    .filter((updateTime): updateTime is string => typeof updateTime === 'string' && updateTime.length > 0)
+    .map((updateTime) => dayjs(updateTime))
+    .filter((time) => time.isValid())
+    .map((time) => time.valueOf());
+}
+
+type ContactItem = {
+  data: people_v1.Schema$Person;
+  epochMilliSeconds: number;
+};

@@ -8,21 +8,22 @@ export const upsertByExternalId = createAction({
   auth: salesforceAuth,
   name: 'upsert_by_external_id',
   classification: 'WRITE',
-  displayName: 'Batch Upsert (Advanced)',
-  description: 'Batch upsert a record by external id',
+  displayName: 'Batch Upsert',
+  description: 'Creates or updates up to 200 records, matched on an external ID.',
   audience: 'human',
   aiMetadata: { description: 'Insert-or-update a small batch of records via the composite API, matching on a stable external-ID field and accepting JSON input. Idempotent on the external ID — rerunning with the same data updates rather than duplicates. Use Bulk Upsert for large CSV loads.', idempotent: true },
   outputSchema: upsertByExternalIdOutputSchema,
   props: {
     object: salesforcesCommon.object,
     external_field: Property.ShortText({
-      displayName: 'External Field',
-      description: 'Select the External Field',
+      displayName: 'External ID Field',
+      description: 'API name of the external ID field to match records on.',
+      placeholder: 'External_Id__c',
       required: true,
     }),
     records: Property.Json({
       displayName: 'Records',
-      description: 'Select the Records',
+      description: 'JSON with a records array. Each record needs attributes with its type.',
       required: true,
       defaultValue: {
         records: [],

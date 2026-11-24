@@ -18,6 +18,15 @@ export const getCompanyAction = createAction({
 	audience: 'both',
 	aiMetadata: { description: 'Fetches a single company by its HubSpot company ID, returning default and any requested additional properties. Use when you already have the company ID; use Find Company to look one up by domain or another property first. Read-only and idempotent.', idempotent: true },
 	outputSchema: crmObjectOutputSchema,
+	propertyGroups: [
+		{
+			key: 'target',
+			display: 'section',
+			label: 'Company',
+			icon: 'tag',
+			props: ['companyId'],
+		},
+	],
 	props: {
 		companyId: Property.ShortText({
 			displayName: 'Company ID',

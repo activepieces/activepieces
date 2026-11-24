@@ -1,111 +1,43 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { foreplayCoApiCall } from '../common';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { findAds as findAdsProperties } from '../properties';
-import { findAdsSchema } from '../schemas';
-import { foreplayCoAuth } from '../..';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { foreplayCoAuth } from '../auth';
+import { foreplayClient } from '../common/client';
+import { foreplayMappers } from '../common/mappers';
+import { foreplayOutputSchemas } from '../common/output-schemas';
+import { foreplayProps } from '../common/props';
 
-export const findAds = createAction({
+const findAds = createAction({
   auth: foreplayCoAuth,
   name: 'findAds',
   classification: 'SEARCH',
   displayName: 'Find Ads',
-  description:
-    'Search and filter ads by text, dates, platforms, and categories.',
-  audience: 'both',
-  aiMetadata: { description: 'Search the Foreplay ad discovery library across all advertisers, optionally filtered by free-text query, date range, platform, display format, niche, market, language, and live-only status, with cursor pagination. With no query or filters it returns the broad feed; supply filters to narrow to matching ads. Use for cross-advertiser ad research rather than pulling ads for one known page. Read-only, so repeating the call is safe.', idempotent: true },
-  props: findAdsProperties(),
+  description: 'Search and filter ads by text, dates, platforms, and categories. Costs 1 Foreplay credit per ad returned.',
+  audience: 'human',
+  aiMetadata: {
+    description: 'Search the Foreplay ad library across all advertisers by free text and filters (dates, platform, format, niche, market, language, live status) with cursor pagination. Returns raw Foreplay ad objects. Costs 1 credit per ad returned.',
+    idempotent: true,
+  },
+  outputSchema: foreplayOutputSchemas.rawAds,
+  props: {
+    query: Property.ShortText({ displayName: 'Search Query', description: 'Words in the ad name or copy. Leave empty to use filters only.', required: false }),
+    ...foreplayProps.humanAdFilterProps(),
+    order: foreplayProps.sortOrderProp(),
+    cursor: Property.ShortText({ displayName: 'Cursor', description: 'Cursor from the previous response, for the next page.', required: false }),
+    limit: Property.Number({ displayName: 'Limit', description: 'Ads per request (1 to 250). 1 credit per ad returned.', required: false, defaultValue: 10 }),
+  },
   async run({ auth, propsValue }) {
-    // Validate props using Zod schema
-    const validation = findAdsSchema.safeParse(propsValue);
-    if (!validation.success) {
-      throw new Error(`Validation failed: ${validation.error.message}`);
-    }
-
-    const values = propsValue;
-
-    // Build query parameters properly handling arrays for API
-    const queryParams = new URLSearchParams();
-
-    // Add optional parameters if provided
-    if (values['query']) {
-      queryParams.append('query', String(values['query']));
-    }
-    if (values['start_date']) {
-      queryParams.append('start_date', String(values['start_date']));
-    }
-    if (values['end_date']) {
-      queryParams.append('end_date', String(values['end_date']));
-    }
-    if (values['order']) {
-      queryParams.append('order', String(values['order']));
-    }
-    if (values['live']) {
-      queryParams.append('live', String(values['live']));
-    }
-
-    // Handle array parameters - repeat parameter name for each value
-    if (values['display_format'] && values['display_format'].length > 0) {
-      values['display_format'].forEach((format: unknown) => {
-        queryParams.append('display_format', String(format));
-      });
-    }
-    if (
-      values['publisher_platform'] &&
-      values['publisher_platform'].length > 0
-    ) {
-      values['publisher_platform'].forEach((platform: unknown) => {
-        queryParams.append('publisher_platform', String(platform));
-      });
-    }
-    if (values['niches'] && values['niches'].length > 0) {
-      values['niches'].forEach((niche: unknown) => {
-        queryParams.append('niches', String(niche));
-      });
-    }
-    if (values['market_target'] && values['market_target'].length > 0) {
-      values['market_target'].forEach((target: unknown) => {
-        queryParams.append('market_target', String(target));
-      });
-    }
-    if (values['languages'] && values['languages'].length > 0) {
-      values['languages'].forEach((language: unknown) => {
-        queryParams.append('languages', String(language));
-      });
-    }
-
-    if (values['cursor']) {
-      queryParams.append('cursor', String(values['cursor']));
-    }
-    if (values['limit']) {
-      queryParams.append('limit', String(values['limit']));
-    }
-
-    // Build the full URL with query parameters manually to handle arrays properly
-    const queryString = queryParams.toString();
-    const fullUrl = queryString
-      ? `/api/discovery/ads?${queryString}`
-      : '/api/discovery/ads';
-
-    const response = await foreplayCoApiCall({
-      apiKey: auth,
-      method: HttpMethod.GET,
-      resourceUri: fullUrl,
+    const response = await foreplayClient.request({
+      auth,
+      path: '/api/discovery/ads',
+      query: {
+        query: foreplayProps.optionalText(propsValue.query),
+        ...foreplayProps.adFilterQuery(foreplayProps.humanAdFilterInput(propsValue)),
+        order: foreplayProps.enumValue({ value: propsValue.order, label: 'Order', allowed: foreplayProps.SORT_ORDERS }),
+        cursor: foreplayProps.optionalText(propsValue.cursor),
+        limit: foreplayProps.parseInteger({ value: propsValue.limit, label: 'Limit', min: 1, max: 250 }),
+      },
     });
-
-    const responseBody = response.body;
-
-    // Check if the response is successful
-    if (responseBody.metadata && responseBody.metadata.success === true) {
-      // Return just the ads data for clean automation workflows
-      return responseBody.data;
-    } else {
-      // Handle error responses by throwing an error
-      const errorMessage =
-        responseBody.error ||
-        responseBody.metadata?.message ||
-        'Failed to find ads';
-      throw new Error(`Foreplay.co API Error: ${errorMessage}`);
-    }
+    return foreplayMappers.listOf(response.body);
   },
 });
+
+export { findAds };

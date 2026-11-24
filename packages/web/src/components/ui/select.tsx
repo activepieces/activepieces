@@ -144,6 +144,7 @@ function SelectAction({
   return (
     <div
       data-slot="select-action"
+      role="button"
       className={cn(
         'relative flex w-full cursor-pointer select-none items-center rounded-md py-1.5 pl-2 pr-8 text-sm outline-hidden hover:bg-gray-4 hover:text-gray-12',
         className,

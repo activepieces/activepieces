@@ -145,24 +145,24 @@ describe('collectStepMessages', () => {
 })
 
 describe('buildStepParts — tool call status', () => {
-    it('bills a call that ran, even one that then threw, and never one the SDK refused to run', () => {
+    it('saves a call that threw as an error with its message, and one the SDK refused to run as an error', () => {
         const content = [
             { type: 'tool-call', toolCallId: 'ran', toolName: 'ap_web_search', input: { query: 'a' } },
             { type: 'tool-result', toolCallId: 'ran', toolName: 'ap_web_search', output: { type: 'json', value: { answer: 'ok' } } },
             { type: 'tool-call', toolCallId: 'threw', toolName: 'mcp__crm__create_record', input: { name: 'b' } },
-            { type: 'tool-error', toolCallId: 'threw', toolName: 'mcp__crm__create_record' },
+            { type: 'tool-error', toolCallId: 'threw', toolName: 'mcp__crm__create_record', error: new Error('MCP tool timed out') },
             { type: 'tool-call', toolCallId: 'refused', toolName: 'ap_web_search', input: { query: 'c' }, invalid: true },
             { type: 'tool-error', toolCallId: 'refused', toolName: 'ap_web_search' },
             { type: 'tool-call', toolCallId: 'unanswered', toolName: 'ap_web_search', input: { query: 'd' } },
         ]
 
-        const statuses = agentAiUtils.buildStepParts({ content }).flatMap((part) => part.type === PersistedAgentPartType.TOOL_CALL ? [[part.toolCallId, part.status]] : [])
+        const statuses = agentAiUtils.buildStepParts({ content }).flatMap((part) => part.type === PersistedAgentPartType.TOOL_CALL ? [[part.toolCallId, part.status, part.errorText]] : [])
 
         expect(statuses).toEqual([
-            ['ran', PersistedToolCallStatus.COMPLETED],
-            ['threw', PersistedToolCallStatus.COMPLETED],
-            ['refused', PersistedToolCallStatus.ERROR],
-            ['unanswered', PersistedToolCallStatus.ERROR],
+            ['ran', PersistedToolCallStatus.COMPLETED, undefined],
+            ['threw', PersistedToolCallStatus.ERROR, 'MCP tool timed out'],
+            ['refused', PersistedToolCallStatus.ERROR, undefined],
+            ['unanswered', PersistedToolCallStatus.ERROR, undefined],
         ])
     })
 })
@@ -446,12 +446,12 @@ describe('buildLargeResultPreview', () => {
 })
 
 describe('buildProviderOptions', () => {
-    const TIER = { id: 'fast', thinkingBudget: 5_000 }
+    const THINKING_BUDGET = 5_000
     const REASONING_OPTIONAL = 'anthropic/claude-haiku-4.5'
     const REASONING_NATIVE = 'google/gemini-3.8-flash'
 
     const reasoningFor = ({ provider, modelId, disableThinking }: { provider: AIProviderName, modelId: string, disableThinking: boolean }) =>
-        agentAiUtils.buildProviderOptions({ provider, tier: TIER, modelId, disableThinking }).openrouter?.reasoning
+        agentAiUtils.buildProviderOptions({ provider, thinkingBudget: THINKING_BUDGET, modelId, disableThinking }).openrouter?.reasoning
 
     for (const provider of [AIProviderName.ACTIVEPIECES, AIProviderName.OPENROUTER]) {
         it(`switches reasoning off on ${provider} for a model documented to allow it`, () => {
@@ -466,7 +466,7 @@ describe('buildProviderOptions', () => {
         })
 
         it(`spends the tier's thinking budget on ${provider} when thinking is on`, () => {
-            expect(reasoningFor({ provider, modelId: REASONING_NATIVE, disableThinking: false })).toEqual({ max_tokens: TIER.thinkingBudget })
+            expect(reasoningFor({ provider, modelId: REASONING_NATIVE, disableThinking: false })).toEqual({ max_tokens: THINKING_BUDGET })
         })
     }
 
@@ -477,41 +477,41 @@ describe('buildProviderOptions', () => {
     })
 
     it('turns thinking off on Anthropic, where disabling it is legal', () => {
-        const options = agentAiUtils.buildProviderOptions({ provider: AIProviderName.ANTHROPIC, tier: TIER, modelId: REASONING_OPTIONAL, disableThinking: true })
+        const options = agentAiUtils.buildProviderOptions({ provider: AIProviderName.ANTHROPIC, thinkingBudget: THINKING_BUDGET, modelId: REASONING_OPTIONAL, disableThinking: true })
         expect(options.anthropic?.thinking).toEqual({ type: 'disabled' })
     })
 
     it('turns thinking off on Bedrock, where disabling it is legal', () => {
-        const options = agentAiUtils.buildProviderOptions({ provider: AIProviderName.BEDROCK, tier: TIER, modelId: REASONING_OPTIONAL, disableThinking: true })
+        const options = agentAiUtils.buildProviderOptions({ provider: AIProviderName.BEDROCK, thinkingBudget: THINKING_BUDGET, modelId: REASONING_OPTIONAL, disableThinking: true })
         expect(options.anthropic?.thinking).toEqual({ type: 'disabled' })
     })
 
     for (const provider of [AIProviderName.ANTHROPIC, AIProviderName.BEDROCK]) {
         for (const modelId of ['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-opus-4-8', 'claude-opus-4-7', 'claude-haiku-5-5', 'claude-mythos-5-1', 'anthropic.claude-opus-5-5', 'claude-fable-5-1']) {
             it(`keeps ${modelId} on ${provider} thinking at low effort instead of sending disabled`, () => {
-                const options = agentAiUtils.buildProviderOptions({ provider, tier: TIER, modelId, disableThinking: true })
+                const options = agentAiUtils.buildProviderOptions({ provider, thinkingBudget: THINKING_BUDGET, modelId, disableThinking: true })
                 expect(options.anthropic).toEqual({ thinking: { type: 'adaptive' }, effort: 'low' })
             })
 
             it(`never sends a thinking budget to ${modelId} on ${provider}`, () => {
-                const options = agentAiUtils.buildProviderOptions({ provider, tier: TIER, modelId, disableThinking: false })
+                const options = agentAiUtils.buildProviderOptions({ provider, thinkingBudget: THINKING_BUDGET, modelId, disableThinking: false })
                 expect(options.anthropic).toEqual({ thinking: { type: 'adaptive' } })
             })
         }
     }
 
     it('still spends the tier budget on an Anthropic model that takes one', () => {
-        const options = agentAiUtils.buildProviderOptions({ provider: AIProviderName.ANTHROPIC, tier: TIER, modelId: 'claude-sonnet-4-6', disableThinking: false })
-        expect(options.anthropic?.thinking).toEqual({ type: 'enabled', budgetTokens: TIER.thinkingBudget })
+        const options = agentAiUtils.buildProviderOptions({ provider: AIProviderName.ANTHROPIC, thinkingBudget: THINKING_BUDGET, modelId: 'claude-sonnet-4-6', disableThinking: false })
+        expect(options.anthropic?.thinking).toEqual({ type: 'enabled', budgetTokens: THINKING_BUDGET })
     })
 
     it('leaves the ephemeral prompt cache in place beside the reasoning directive', () => {
-        const options = agentAiUtils.buildProviderOptions({ provider: AIProviderName.ACTIVEPIECES, tier: TIER, modelId: REASONING_OPTIONAL, disableThinking: true })
+        const options = agentAiUtils.buildProviderOptions({ provider: AIProviderName.ACTIVEPIECES, thinkingBudget: THINKING_BUDGET, modelId: REASONING_OPTIONAL, disableThinking: true })
         expect(options.openrouter?.cache_control).toEqual({ type: 'ephemeral' })
     })
 
     it('sends nothing for a provider that does not take a reasoning directive', () => {
-        expect(agentAiUtils.buildProviderOptions({ provider: AIProviderName.GOOGLE, tier: TIER, modelId: 'gemini-2.5-flash', disableThinking: true })).toEqual({})
+        expect(agentAiUtils.buildProviderOptions({ provider: AIProviderName.GOOGLE, thinkingBudget: THINKING_BUDGET, modelId: 'gemini-2.5-flash', disableThinking: true })).toEqual({})
     })
 })
 
@@ -598,6 +598,21 @@ describe('agentAiUtils.affordableOutputTokens', () => {
             modelIds: ['eu.some.brand-new-model-v9:0'],
             thinkingBudget: SMART_TIER_THINKING,
         })).resolves.toBe(42_000)
+    })
+
+    it('caps a Cohere model the catalog has never heard of at the smallest Cohere output limit', async () => {
+        vi.spyOn(modelCatalog, 'load').mockResolvedValue(catalogOf({ 'command-a-03-2025': 8_000 }))
+
+        await expect(agentAiUtils.affordableOutputTokens({
+            provider: AIProviderName.COHERE,
+            modelIds: ['command-a-03-2025'],
+            thinkingBudget: SMART_TIER_THINKING,
+        })).resolves.toBe(8_000)
+        await expect(agentAiUtils.affordableOutputTokens({
+            provider: AIProviderName.COHERE,
+            modelIds: ['command-z-brand-new'],
+            thinkingBudget: SMART_TIER_THINKING,
+        })).resolves.toBe(4_000)
     })
 
     it('does not shrink a turn because the catalog was unreachable', async () => {

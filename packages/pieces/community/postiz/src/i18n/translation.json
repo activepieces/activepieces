@@ -71,6 +71,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Published Post": "New Published Post",
   "Triggers when a post is published in Postiz": "Triggers when a post is published in Postiz"
 }

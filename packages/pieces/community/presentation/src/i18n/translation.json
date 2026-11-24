@@ -145,6 +145,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Presentation": "New Presentation",
   "Triggers when a new presentation is created in Presenton.": "Triggers when a new presentation is created in Presenton."
 }

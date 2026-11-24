@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { queryMetabaseApi } from '../common';
 import { metabaseAuth } from '../..';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { getDashboardQuestionsOutputSchema } from '../output-schemas';
 
 interface MetabaseParam {
   id: string;
@@ -33,6 +34,7 @@ interface DashboardResult {
 
 export const getDashboardQuestions = createAction({
   name: 'getDashboardQuestions',
+  outputSchema: getDashboardQuestionsOutputSchema,
   classification: 'READ',
   auth: metabaseAuth,
   requireAuth: true,

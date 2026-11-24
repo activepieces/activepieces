@@ -21,7 +21,7 @@ Attach a document or a table and the agent looks the answer up instead of guessi
 Both live in the **Knowledge Base** section of the agent editor, below Agent Tools. Add one with **Add File Source** or **Add Table Source**.
 
 <Note>
-Two things have to be in place or the section does not appear at all. Your Postgres needs the `pgvector` extension, which Activepieces installs on startup when the database offers it — Cloud and the standard self-hosted images are covered, but a managed Postgres without `pgvector` hides knowledge entirely. And the agent's model provider has to support embeddings: OpenAI, Google, Azure, and OpenRouter do.
+Two things have to be in place or the section does not appear at all. Your Postgres needs the `pgvector` extension, which Activepieces installs on startup when the database offers it — Cloud and the standard self-hosted images are covered, but a managed Postgres without `pgvector` hides knowledge entirely. And the platform needs a way to create embeddings. An admin sets this up in **AI Center** → **Capabilities** → [Embeddings](/admin-guide/guides/ai-capabilities). If it isn't set up, Activepieces uses the chat key when its provider supports embeddings (OpenAI, Google, Azure, and OpenRouter do), and otherwise AI credits.
 </Note>
 
 ## Which one

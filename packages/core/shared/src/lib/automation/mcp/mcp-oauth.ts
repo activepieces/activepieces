@@ -2,7 +2,7 @@ import { ApId, BaseModelSchema, OptionalArrayFromQuery } from '@activepieces/cor
 import { z } from 'zod'
 import { UserWithMetaInformation } from '../../core/user/user'
 
-export const McpOAuthClientKey = z.enum(['claude', 'claude-code', 'chatgpt', 'cursor', 'vscode', 'codex', 'gemini-cli', 'opencode', 'windsurf', 'unknown'])
+export const McpOAuthClientKey = z.enum(['claude', 'claude-code', 'chatgpt', 'cursor', 'vscode', 'codex', 'gemini-cli', 'opencode', 'windsurf', 'copilot-cli', 'goose', 'cline', 'antigravity', 'zed', 'unknown'])
 
 export type McpOAuthClientKey = z.infer<typeof McpOAuthClientKey>
 

@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: superseded by 000054-code-cache-eviction-is-cross-process-lock-serialized-not-convergent
 ---
 
 # Action-run code caches live in their own directory, namespaced per platform, and swept on a TTL

@@ -1,5 +1,8 @@
 import { AgentRunSource, FlowOperationType, FlowStatus } from '@activepieces/core-execution'
 import { apId, PlatformId, ProjectId } from '@activepieces/core-utils'
+import { UserIdentityProvider } from '../../core/authentication/user-identity'
+import { PlatformRole } from '../../core/user/index'
+import { InvitationType } from '../../management/invitations'
 import {
     AgentActionExecutedEvent,
     AgentActionKind,
@@ -8,7 +11,9 @@ import {
     ApplicationEvent,
     ApplicationEventName,
     AuditLogRetentionUpdatedEvent,
+    AuthenticationDomainEvent,
     AuthenticationEvent,
+    AuthenticationSettingEvent,
     ConnectionEvent,
     FlowActivatedEvent,
     FlowApprovalEvent,
@@ -21,11 +26,17 @@ import {
     FlowRunEvent,
     FlowUpdatedEvent,
     FolderEvent,
+    OfficialPieceAddedEvent,
+    OfficialPieceEventData,
+    OfficialPieceMinorVersionAddedEvent,
+    OfficialPiecePatchVersionAddedEvent,
     ProjectReleaseEvent,
     ProjectReplacedEvent,
     ProjectRoleEvent,
     SigningKeyEvent,
     SignUpEvent,
+    UserInvitationEvent,
+    UserSignedInEvent,
     VariableEvent,
 } from './index'
 
@@ -53,6 +64,23 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
         projectDisplayName: project.displayName,
     }
     const flow = { id: apId(), externalId: apId(), created: isoNow, updated: isoNow }
+    const pieceEnvelope = {
+        id: apId(),
+        created: isoNow,
+        updated: isoNow,
+        platformId,
+    }
+    const piece: OfficialPieceEventData['piece'] = {
+        name: '@activepieces/piece-gmail',
+        displayName: 'Gmail',
+        version: '0.9.0',
+        previousVersion: '0.8.3',
+        changeType: 'minor',
+        pieceType: 'OFFICIAL',
+        minimumSupportedRelease: '0.88.2',
+        maximumSupportedRelease: null,
+        deprecated: false,
+    }
     const flowVersion = {
         id: apId(),
         displayName: 'Sample flow',
@@ -261,7 +289,14 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
             }
             return mock
         }
-        case ApplicationEventName.USER_SIGNED_IN:
+        case ApplicationEventName.USER_SIGNED_IN: {
+            const mock: UserSignedInEvent = {
+                ...baseEnvelope,
+                action: ApplicationEventName.USER_SIGNED_IN,
+                data: { user, method: UserIdentityProvider.EMAIL },
+            }
+            return mock
+        }
         case ApplicationEventName.USER_PASSWORD_RESET:
         case ApplicationEventName.USER_EMAIL_VERIFIED: {
             const mock: AuthenticationEvent = {
@@ -275,7 +310,7 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
             const mock: SignUpEvent = {
                 ...baseEnvelope,
                 action: ApplicationEventName.USER_SIGNED_UP,
-                data: { source: 'credentials', user },
+                data: { source: 'credentials', method: UserIdentityProvider.EMAIL, user },
             }
             return mock
         }
@@ -302,6 +337,55 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
                     previousRetentionDays: 365,
                     retentionDays: 90,
                     instanceLimitDays: null,
+                },
+            }
+            return mock
+        }
+        case ApplicationEventName.EMAIL_SIGN_IN_ENABLED:
+        case ApplicationEventName.EMAIL_SIGN_IN_DISABLED:
+        case ApplicationEventName.GOOGLE_SIGN_IN_ENABLED:
+        case ApplicationEventName.GOOGLE_SIGN_IN_DISABLED:
+        case ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_ENABLED:
+        case ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_DISABLED:
+        case ApplicationEventName.SAML_CONNECTED:
+        case ApplicationEventName.SAML_CONNECTION_REPLACED:
+        case ApplicationEventName.SSO_DISABLED: {
+            const mock: AuthenticationSettingEvent = {
+                ...baseEnvelope,
+                action: event,
+                data: {},
+            }
+            return mock
+        }
+        case ApplicationEventName.ALLOWED_DOMAIN_ADDED:
+        case ApplicationEventName.ALLOWED_DOMAIN_REMOVED:
+        case ApplicationEventName.SSO_DOMAIN_ADDED:
+        case ApplicationEventName.SSO_DOMAIN_VERIFIED:
+        case ApplicationEventName.SSO_DOMAIN_VERIFICATION_CANCELLED:
+        case ApplicationEventName.SSO_DOMAIN_REMOVED:
+        case ApplicationEventName.SSO_DOMAIN_EXPIRED: {
+            const mock: AuthenticationDomainEvent = {
+                ...baseEnvelope,
+                action: event,
+                data: { domain: 'acme.com' },
+            }
+            return mock
+        }
+        case ApplicationEventName.USER_INVITATION_SENT:
+        case ApplicationEventName.USER_INVITATION_ACCEPTED:
+        case ApplicationEventName.USER_INVITATION_DELETED: {
+            const mock: UserInvitationEvent = {
+                ...baseEnvelope,
+                action: event,
+                data: {
+                    invitation: {
+                        id: apId(),
+                        email: 'sam@acme.com',
+                        type: InvitationType.PLATFORM,
+                        platformRole: PlatformRole.MEMBER,
+                        projectId: null,
+                    },
+                    projectRole: null,
                 },
             }
             return mock
@@ -384,6 +468,30 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
                     flowDisplayName: flowVersion.displayName,
                     rejectionReason: event === ApplicationEventName.FLOW_APPROVAL_REJECTED ? 'Needs stricter validation' : null,
                 },
+            }
+            return mock
+        }
+        case ApplicationEventName.OFFICIAL_PIECE_ADDED: {
+            const mock: OfficialPieceAddedEvent = {
+                ...pieceEnvelope,
+                action: ApplicationEventName.OFFICIAL_PIECE_ADDED,
+                data: { piece: { ...piece, previousVersion: null, changeType: 'new' } },
+            }
+            return mock
+        }
+        case ApplicationEventName.OFFICIAL_PIECE_MINOR_VERSION_ADDED: {
+            const mock: OfficialPieceMinorVersionAddedEvent = {
+                ...pieceEnvelope,
+                action: ApplicationEventName.OFFICIAL_PIECE_MINOR_VERSION_ADDED,
+                data: { piece },
+            }
+            return mock
+        }
+        case ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED: {
+            const mock: OfficialPiecePatchVersionAddedEvent = {
+                ...pieceEnvelope,
+                action: ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED,
+                data: { piece: { ...piece, version: '0.9.1', previousVersion: '0.9.0', changeType: 'patch' } },
             }
             return mock
         }

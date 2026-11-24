@@ -12,11 +12,11 @@ export async function calltidycalapi<T extends HttpMessageBody>(
   method: HttpMethod,
   apiUrl: string,
   accessToken: AppConnectionValueForAuthProperty<typeof tidyCalAuth>,
-  body: any | undefined
+  body: HttpMessageBody | undefined
 ): Promise<HttpResponse<T>> {
   return await httpClient.sendRequest<T>({
     method: method,
-    url: `https://tidycal.com/api/${apiUrl}`,
+    url: `${TIDYCAL_API_BASE_URL}/${apiUrl}`,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
       token: accessToken.secret_text,
@@ -24,3 +24,5 @@ export async function calltidycalapi<T extends HttpMessageBody>(
     body: body,
   });
 }
+
+export const TIDYCAL_API_BASE_URL = 'https://tidycal.com/api';

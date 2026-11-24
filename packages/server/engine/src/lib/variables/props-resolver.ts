@@ -31,7 +31,7 @@ async function replaceTokensAsync(
 }
 
 
-export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVersion, stepNames, pieceName }: PropsResolverParams) => {
+export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVersion, stepNames, pieceName, flowVersionDir, scriptSession: providedScriptSession }: PropsResolverParams) => {
     return {
         resolve: async <T = unknown>(params: ResolveInputParams): Promise<ResolveResult<T>> => {
             const { unresolvedInput, executionState } = params
@@ -42,7 +42,8 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
                 }
             }
             const getStepView = createMemoizedStepViewGetter(executionState)
-            const scriptSession = scriptEvaluator.initSession()
+            const ownsScriptSession = isNil(providedScriptSession)
+            const scriptSession = providedScriptSession ?? scriptEvaluator.initSession({ flowVersionDir })
             try {
                 const resolveOptions = {
                     engineToken,
@@ -75,7 +76,12 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
                 }
             }
             finally {
-                await scriptSession.dispose()
+                if (ownsScriptSession) {
+                    await scriptSession.dispose()
+                }
+                else {
+                    await scriptSession.reset()
+                }
             }
         },
     }
@@ -156,7 +162,7 @@ async function evalWithScript({ variableName, getStepView, scriptSession, stepNa
     for (const stepName of extractReferencedStepNames(variableName, stepNames)) {
         const view = await getStepView(stepName)
         if (view !== undefined) {
-            await session.setGlobal(stepName, view)
+            await session.setGlobal(stepName, view, false)
         }
     }
     return scriptEvaluator.evaluate({ script: variableName, scriptSession })
@@ -330,4 +336,6 @@ type PropsResolverParams = {
     contextVersion: ContextVersion | undefined
     stepNames: string[]
     pieceName?: string
+    flowVersionDir?: string
+    scriptSession?: SharedScriptSession
 }

@@ -110,7 +110,7 @@ export const OpenTelemetryConnection = ({
                 </FormDescription>
               </div>
               <RadioGroup
-                className="flex gap-6"
+                className="flex flex-wrap gap-x-6 gap-y-2"
                 value={field.value}
                 onValueChange={(value) => {
                   const encoding = OTLP_FORMATS.find(

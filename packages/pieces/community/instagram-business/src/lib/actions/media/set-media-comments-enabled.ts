@@ -17,12 +17,34 @@ export const setMediaCommentsEnabled = createAction({
       'Turns commenting on or off for one Instagram post belonging to the connected account. Disabling hides the existing comments from public view and blocks new ones, and re-enabling restores them. Idempotent, since setting the same state twice leaves the post unchanged.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'account',
+      display: 'section',
+      label: 'Account',
+      icon: 'user',
+      props: ['page'],
+    },
+    {
+      key: 'media',
+      display: 'section',
+      label: 'Post',
+      icon: 'file',
+      props: ['media_id', 'enabled'],
+    },
+  ],
   props: {
     page: instagramCommon.page,
-    media_id: Property.ShortText({ displayName: 'Media ID', required: true }),
-    enabled: Property.Checkbox({
-      displayName: 'Comments Enabled',
+    media_id: Property.ShortText({
+      displayName: 'Media ID',
+      description: 'The id from List Media or a publish step.',
+      placeholder: '17895695668004550',
       required: true,
+    }),
+    enabled: Property.Checkbox({
+      displayName: 'Allow Comments',
+      description: 'On lets people comment, off turns comments off.',
+      required: false,
       defaultValue: true,
     }),
   },
@@ -33,7 +55,7 @@ export const setMediaCommentsEnabled = createAction({
       method: HttpMethod.POST,
       resourceUri: `/${propsValue.media_id}`,
       accessToken: page.accessToken,
-      body: { comment_enabled: propsValue.enabled },
+      body: { comment_enabled: propsValue.enabled ?? true },
     });
 
     return { success: result.success ?? true, id: propsValue.media_id };

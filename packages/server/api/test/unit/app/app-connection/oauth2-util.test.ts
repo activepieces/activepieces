@@ -1,5 +1,6 @@
 import { PropertyType } from '@activepieces/pieces-framework'
 import { OAuth2GrantType } from '@activepieces/shared'
+import { AxiosError, AxiosHeaders } from 'axios'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 
 const mockGetOrThrow = vi.fn()
@@ -16,6 +17,17 @@ import { oauth2Util } from '../../../../src/app/app-connection/app-connection-se
 
 const util = oauth2Util({} as never)
 const nowSeconds = Math.round(Date.now() / 1000)
+
+function tokenEndpointError(data: unknown): AxiosError {
+    const config = { headers: new AxiosHeaders() }
+    return new AxiosError('stream has been aborted', AxiosError.ERR_BAD_RESPONSE, config, {}, {
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config,
+        data,
+    })
+}
 
 function connectionWith({ claimedAt, expiresIn }: { claimedAt: number | string, expiresIn?: number | string }): never {
     return {
@@ -105,6 +117,25 @@ describe('oauth2Util.formatOAuth2Response', () => {
     })
 })
 
+describe('oauth2Util.isUserError', () => {
+    it('treats a token-endpoint reply with no body as a non-user error instead of throwing', () => {
+        expect(util.isUserError(tokenEndpointError(undefined))).toBe(false)
+        expect(util.isUserError(tokenEndpointError(null))).toBe(false)
+    })
+
+    it('recognises invalid_grant as a user error', () => {
+        expect(util.isUserError(tokenEndpointError({ error: 'invalid_grant' }))).toBe(true)
+    })
+
+    it('treats other OAuth2 error codes as non-user errors', () => {
+        expect(util.isUserError(tokenEndpointError({ error: 'invalid_client' }))).toBe(false)
+    })
+
+    it('treats an axios error with no response as a non-user error', () => {
+        expect(util.isUserError(new AxiosError('socket hang up', AxiosError.ECONNABORTED))).toBe(false)
+    })
+})
+
 describe('oauth2Util.buildAuthorizationUrl', () => {
     it('omits scope from the authorize url rather than sending the literal placeholder when an optional scope prop is not provided', async () => {
         mockGetOrThrow.mockResolvedValue({
@@ -126,6 +157,32 @@ describe('oauth2Util.buildAuthorizationUrl', () => {
             clientId: 'client-id',
             redirectUrl: 'https://redirect',
             props: {},
+        } as never)
+
+        const url = new URL(result.authorizationUrl)
+        expect(url.searchParams.has('scope')).toBe(false)
+    })
+
+    it('omits scope from the authorize url when the optional scope prop is only whitespace', async () => {
+        mockGetOrThrow.mockResolvedValue({
+            auth: {
+                type: PropertyType.OAUTH2,
+                authUrl: 'https://as.example.com/authorize',
+                tokenUrl: 'https://as.example.com/token',
+                scope: ['{scopes}'],
+                props: {
+                    scopes: { required: false, displayName: 'Scopes' },
+                },
+            },
+        })
+        mockResolveString.mockResolvedValue('client-id')
+
+        const result = await util.buildAuthorizationUrl({
+            platformId: 'platform',
+            pieceName: 'piece',
+            clientId: 'client-id',
+            redirectUrl: 'https://redirect',
+            props: { scopes: '   ' },
         } as never)
 
         const url = new URL(result.authorizationUrl)

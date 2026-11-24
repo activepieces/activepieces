@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/pieces-common",
-  "version": "0.15.1",
+  "version": "0.15.2",
   "type": "commonjs",
   "sideEffects": false,
   "main": "./dist/src/index.js",
@@ -14,10 +14,10 @@
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/core-utils": "workspace:*",
     "form-data": "4.0.6",
-    "zod": "4.3.6"
+    "zod": "4.3.6",
+    "tslib": "2.6.2"
   },
   "devDependencies": {
-    "tslib": "2.6.2",
-    "vitest": "3.2.6"
+    "vitest": "5.0.5"
   }
 }

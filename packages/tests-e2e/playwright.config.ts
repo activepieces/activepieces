@@ -1,6 +1,7 @@
 import { defineConfig, devices, PlaywrightTestConfig } from '@playwright/test';
 import dotenv from 'dotenv';
 import path from 'path';
+import { STORAGE_STATE } from './fixtures/api';
 
 // Load environment variables from the .env.e2e file (local dev)
 // In CI, use inherited environment variables instead
@@ -9,21 +10,44 @@ if (!process.env.CI) {
 }
 
 const AP_EDITION = process.env.AP_EDITION || 'ce';
+const LOCAL_URL = 'http://localhost:4200';
+const E2E_INSTANCE_URL = process.env.E2E_INSTANCE_URL || undefined;
 
 const editionConfigs = {
   ce: {
-    testDir: './scenarios/ce',
+    testIgnore: ['**/ee/**', '**/cloud/**'],
   },
   ee: {
-    testDir: './scenarios/ee',
+    testIgnore: ['**/ce/**', '**/cloud/**'],
+  },
+  cloud: {
+    testIgnore: ['**/ce/**', '**/ee/**'],
   },
 };
 
 const editionConfig = editionConfigs[AP_EDITION as keyof typeof editionConfigs];
 
+const QUARANTINE = /@quarantine/;
+const PLATFORM_STATE = /@platform-state/;
+const PARALLEL_PROJECT = `@activepieces/${AP_EDITION}`;
+const SKIPPED = [
+  ...(process.env.CI ? [QUARANTINE] : []),
+  ...(process.env.E2E_GREP_INVERT ? [new RegExp(process.env.E2E_GREP_INVERT, 'i')] : []),
+];
+
+const browser = {
+  ...devices['Desktop Chrome'],
+  headless: true,
+  ...(E2E_INSTANCE_URL && {
+    channel: 'chromium',
+    launchOptions: { args: [`--unsafely-treat-insecure-origin-as-secure=${E2E_INSTANCE_URL}`] },
+  }),
+};
+
 const config: PlaywrightTestConfig = {
-  testDir: editionConfig.testDir,
+  testDir: './scenarios',
   testMatch: '**/*.spec.ts',
+  testIgnore: editionConfig.testIgnore,
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -39,7 +63,9 @@ const config: PlaywrightTestConfig = {
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: 'http://localhost:4200',
+    baseURL: E2E_INSTANCE_URL ?? LOCAL_URL,
+
+    storageState: STORAGE_STATE,
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
@@ -48,25 +74,29 @@ const config: PlaywrightTestConfig = {
     headless: true,
   },
 
-  /* Configure projects for major browsers */
   projects: [
     {
-      name: `@activepieces/${AP_EDITION}`,
-      use: {
-        ...devices['Desktop Chrome'],
-        headless: true,
-      },
-      testDir: editionConfig.testDir,
+      name: PARALLEL_PROJECT,
+      grepInvert: [...SKIPPED, PLATFORM_STATE],
+      use: browser,
+    },
+    {
+      name: 'platform-state',
+      grep: PLATFORM_STATE,
+      grepInvert: SKIPPED,
+      workers: 1,
+      dependencies: [PARALLEL_PROJECT],
+      use: browser,
     },
   ],
 
-  /* Run your local dev server before starting the tests */
-  webServer: {
+  /* Run your local dev server before starting the tests, unless they target a deployed instance */
+  webServer: E2E_INSTANCE_URL ? undefined : {
     command: process.env.CI
       ? 'npm run dev'
       : 'export $(cat packages/tests-e2e/.env.e2e | xargs) && npm run dev',
     cwd: path.resolve(__dirname, '../..'),
-    url: 'http://localhost:4200/api/v1/flags',
+    url: `${LOCAL_URL}/api/v1/flags`,
     reuseExistingServer: !process.env.CI,
     timeout: 300000,
     stdout: 'pipe',

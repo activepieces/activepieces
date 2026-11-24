@@ -24,6 +24,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Session Event": "Session Event",
   "Triggered when a session event occurs in LiveSession": "Triggered when a session event occurs in LiveSession",
   "Website ID": "Website ID",

@@ -14,7 +14,7 @@ export const gmailForwardMessageAction = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Forwards an existing email to one or more new recipients, quoting the original sender, subject, and body beneath an optional added note. Requires the Gmail message ID of the email to forward (obtain from Search Email or Get Message). Performs two calls: it fetches the original message, then sends the forwarded copy. Not idempotent: each call sends a new forwarded message.',
+      'Forwards an existing email to one or more new recipients, quoting the original sender, subject, and body beneath an optional added note. Attachments on the original email are forwarded too. Requires the Gmail message ID of the email to forward (obtain from Search Email or Get Message). Performs two calls: it fetches the original message, then sends the forwarded copy. Not idempotent: each call sends a new forwarded message.',
     idempotent: false,
   },
   props: {

@@ -1,22 +1,31 @@
-﻿import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { ninjapipeAuth } from '../../';
-import { ninjapipeApiCall, getAuth, ninjapipeCommon } from '../common';
+import { createAction } from '@activepieces/pieces-framework';
+import { ninjapipeAuth } from '../auth';
+import { ninjapipeClient } from '../common/client';
+import { ninjapipeProps } from '../common/props';
+import { ninjapipeSchemas } from '../output-schemas';
 
 export const deleteProduct = createAction({
   auth: ninjapipeAuth,
   name: 'delete_product',
   classification: 'DESTRUCTIVE',
   displayName: 'Delete Product',
-  description: 'Deletes a product by ID.',
+  description: 'Permanently deletes a product.',
   audience: 'both',
-  aiMetadata: { description: 'Permanently deletes a product identified by Product ID. Pick this to remove a product from the catalog; the change is destructive and cannot be undone. Re-running after deletion typically fails since the ID no longer exists.', idempotent: false },
+  aiMetadata: {
+    description: 'Permanently delete one NinjaPipe product by ID (productId; get it from a list or search step). Cannot be undone. A second call fails with 404 because the product is gone.',
+    idempotent: false,
+  },
+  outputSchema: ninjapipeSchemas.deleted,
   props: {
-    productId: ninjapipeCommon.productDropdownRequired,
+    productId: ninjapipeProps.productRequired(),
   },
   async run(context) {
-    const auth = getAuth(context);
-    await ninjapipeApiCall<Record<string, unknown>>({ auth, method: HttpMethod.DELETE, path: `/products/${encodeURIComponent(String(context.propsValue.productId))}` });
-    return { success: true, deleted_id: context.propsValue.productId };
+    const id = ninjapipeClient.pathId({ value: context.propsValue.productId, field: 'Product' });
+    return ninjapipeClient.deleteRecord({
+      auth: ninjapipeClient.readAuth(context.auth),
+      path: `/products/${id}`,
+      id: decodeURIComponent(id),
+      operation: 'delete product',
+    });
   },
 });

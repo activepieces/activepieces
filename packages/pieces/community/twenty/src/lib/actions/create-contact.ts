@@ -1,15 +1,16 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { twentyAuth } from '../auth';
-import { twentyRequest } from '../common';
+import { twentyApi } from '../common/api';
+import { createContactOutputSchema } from '../output-schemas';
 
-export const createContact = createAction({
+export const createContactAction = createAction({
   auth: twentyAuth,
   name: 'create_contact',
+  outputSchema: createContactOutputSchema,
   classification: 'WRITE',
   displayName: 'Create Contact',
   description: 'Creates a new person record in your Twenty CRM workspace.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Creates a new person (contact) in Twenty CRM. Use when adding a known individual to the CRM; first name is required, last name and primary email are optional. Not idempotent: each call inserts a new record with no de-duplication, so repeated calls create duplicate people.', idempotent: false },
   props: {
     firstName: Property.ShortText({
@@ -28,17 +29,11 @@ export const createContact = createAction({
   async run(context) {
     const { firstName, lastName, email } = context.propsValue;
 
-    return await twentyRequest(
-      context.auth,
-      HttpMethod.POST,
-      '/rest/people',
-      {
-        name: {
-          firstName,
-          lastName,
-        },
-        emails: email ? { primaryEmail: email } : undefined,
-      },
-    );
+    return await twentyApi.createPerson({
+      auth: context.auth,
+      firstName,
+      lastName,
+      email,
+    });
   },
 });

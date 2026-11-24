@@ -1,21 +1,23 @@
-import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { WebhookHandshakeStrategy } from '@activepieces/pieces-framework';
-import { pandadocAuth } from '../common';
+import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
+import { pandadocAuth } from '../common/auth';
+import { pandadocSchemas } from '../common/schemas';
+import { pandadocWebhook } from '../common/webhook';
+import { pandadocSampleEvent } from './sample-data';
 
 export const documentStateChanged = createTrigger({
+  auth: pandadocAuth,
   name: 'documentStateChanged',
   classification: 'READ',
   displayName: 'Document State Changed',
   description: 'Triggers when a document status changes.',
   aiMetadata: {
-    description: 'Fires whenever a PandaDoc document changes status (e.g. draft, sent, viewed, completed, paid, voided, declined), optionally filtered to specific target statuses. Represents a transition in a document lifecycle.',
+    description:
+      'Fires whenever a PandaDoc document changes status (for example draft, sent, viewed, completed, paid, voided or declined), optionally only for selected target statuses. Delivers the document with its new status, recipients, fields and metadata.',
   },
-  auth: pandadocAuth,
   props: {
     filter_status: Property.StaticMultiSelectDropdown({
       displayName: 'Filter by Status',
-      description: 'Only trigger for specific status changes (leave empty for all)',
+      description: 'Only trigger when the document moves into one of these statuses (leave empty for all).',
       required: false,
       options: {
         options: [
@@ -37,80 +39,33 @@ export const documentStateChanged = createTrigger({
       },
     }),
   },
-  sampleData: {
-    event_type: 'document_state_changed',
-    data: {
-      id: 'sample_document_id',
-      name: 'Sample Contract',
-      status: 'document.sent',
-      previous_status: 'document.draft',
-      date_modified: '2024-01-15T10:30:00Z',
-      date_sent: '2024-01-15T10:30:00Z',
-      recipients: [
-        {
-          id: 'recipient_id',
-          email: 'client@example.com',
-          has_completed: false,
-          role: 'Client'
-        }
-      ]
-    }
-  },
+  sampleData: { ...pandadocSampleEvent, status: 'document.sent', date_completed: null },
+  outputSchema: pandadocSchemas['webhookEvent'],
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    const webhookSubscription = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: 'https://api.pandadoc.com/public/v1/webhook-subscriptions',
-      headers: {
-        Authorization: `API-Key ${(context.auth.secret_text)}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        name: `Activepieces Document State Changed`,
-        url: context.webhookUrl,
-        active: true,
-        triggers: ['document_state_changed'],
-        payload: ['fields', 'products', 'tokens', 'metadata', 'pricing'],
-      }),
+    await pandadocWebhook.subscribe({
+      apiKey: context.auth.secret_text,
+      webhookUrl: context.webhookUrl,
+      name: 'Document State Changed',
+      events: EVENTS,
+      store: context.store,
+      storeKey: STORE_KEY,
     });
-
-    await context.store?.put('webhook_id', webhookSubscription.body.uuid);
   },
   async onDisable(context) {
-    const webhookId = await context.store?.get('webhook_id');
-    if (webhookId) {
-      try {
-        await httpClient.sendRequest({
-          method: HttpMethod.DELETE,
-          url: `https://api.pandadoc.com/public/v1/webhook-subscriptions/${webhookId}`,
-          headers: {
-            Authorization: `API-Key ${(context.auth.secret_text)}`,
-          },
-        });
-      } catch (error) {
-        console.log('Error cleaning up webhook:', error);
-      }
-    }
+    await pandadocWebhook.unsubscribe({ apiKey: context.auth.secret_text, store: context.store, storeKey: STORE_KEY });
   },
   async run(context) {
-    const payload = context.payload.body as any;
-
-    if (payload.event_type === 'document_state_changed') {
-      const documentData = payload.data;
-      const currentStatus = documentData?.status;
-
-      if (context.propsValue.filter_status && context.propsValue.filter_status.length > 0) {
-        if (!context.propsValue.filter_status.includes(currentStatus)) {
-          return [];
-        }
-      }
-
-      return [documentData];
-    }
-
-    return [];
-  },
-  handshakeConfiguration: {
-    strategy: WebhookHandshakeStrategy.NONE,
+    const statuses = context.propsValue.filter_status ?? [];
+    return pandadocWebhook.receive({
+      payload: context.payload,
+      store: context.store,
+      storeKey: STORE_KEY,
+      events: EVENTS,
+      select: (items) => items.filter((item) => statuses.length === 0 || (item.status !== null && statuses.includes(item.status))),
+    });
   },
 });
+
+const EVENTS = ['document_state_changed'];
+const STORE_KEY = 'pandadoc_document_state_changed_webhook';

@@ -32,6 +32,7 @@ export const aiToolConfigService = (log: FastifyBaseLogger) => ({
         const encryptedAuth = await encryptUtils.encryptObject(request.auth ?? {})
         await saveUnderPlatformLock({
             platformId,
+            capability: request.capability,
             choice: request.provider === AiToolProvider.AI_PROVIDER ? request.config : null,
             write: (manager) => aiToolConfigRepo(manager).save({
                 id: existing?.id ?? apId(),
@@ -65,6 +66,7 @@ export const aiToolConfigService = (log: FastifyBaseLogger) => ({
         const encryptedAuth = !isNil(request.auth) ? await encryptUtils.encryptObject(request.auth) : undefined
         await saveUnderPlatformLock({
             platformId,
+            capability: config.capability,
             choice: provider === AiToolProvider.AI_PROVIDER ? request.config ?? config.config : null,
             write: (manager) => aiToolConfigRepo(manager).update(id, {
                 ...spreadIfDefined('provider', request.provider),
@@ -114,14 +116,14 @@ export const aiToolConfigService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function saveUnderPlatformLock({ platformId, choice, write }: { platformId: PlatformId, choice: AiToolProviderConfig | null | undefined, write: (manager: EntityManager) => Promise<unknown> }): Promise<void> {
+async function saveUnderPlatformLock({ platformId, capability, choice, write }: { platformId: PlatformId, capability: AiToolCapability, choice: AiToolProviderConfig | null | undefined, write: (manager: EntityManager) => Promise<unknown> }): Promise<void> {
     await transaction(async (manager) => {
         await platformModelTierService.lockPlatform({ manager, platformId })
         const parsed = AiProviderToolConfig.safeParse(choice)
         if (parsed.success) {
             const key = await manager.getRepository(AIProviderEntity).findOneBy({ platformId, id: parsed.data.aiProviderId })
             const modelId = parsed.data.modelId
-            const dropsModel = !isNil(key) && !isNil(modelId) && !aiKeyScope.keyOffersModel({ key, modelId })
+            const dropsModel = capability !== AiToolCapability.EMBEDDINGS && !isNil(key) && !isNil(modelId) && !aiKeyScope.keyOffersModel({ key, modelId })
             if (isNil(key) || key.projectScope !== 'all' || dropsModel) {
                 throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'This AI provider cannot be used for this capability' } })
             }
@@ -151,7 +153,8 @@ async function providerCovers({ platformId, capability, aiProvider, modelId, log
         return aiUtils.supportsWebSearch(aiProvider.provider)
     }
     if (capability === AiToolCapability.EMBEDDINGS) {
-        return AI_PROVIDER_CAPABILITIES[aiProvider.provider].supportsEmbedding
+        const embeddingModels = AI_PROVIDER_CAPABILITIES[aiProvider.provider].embeddingModels
+        return embeddingModels.length > 0 && (isNil(modelId) || embeddingModels.includes(modelId))
     }
     if (capability !== AiToolCapability.IMAGE_GENERATION || isNil(modelId)) {
         return false

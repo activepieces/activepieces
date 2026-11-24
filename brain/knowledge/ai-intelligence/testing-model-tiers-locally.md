@@ -13,3 +13,5 @@ How to see the published tier file drive chat, agents and the pickers on a dev b
 6. To see a re-point, change a `modelId` in the file, restart the backend (the catalog cache is in-process, 15 minutes) and reload the page (the web refetches every 15 minutes). Same label, new model in the log.
 
 The Activepieces provider must be enabled for chat under Platform, AI, which needs `AP_EDITION=cloud` and `AP_OPENROUTER_PROVISION_KEY` on the dev box.
+
+**Changed a curated model list (`core-piece-types`)?** Rebuild it with `npx turbo run build --filter=@activepieces/core-piece-types`, then restart the backend, or touch any file under `packages/server/api/src`. The running API keeps the old build in memory, while the web already has the new list, so the picker sorts with old data but stars with new data.

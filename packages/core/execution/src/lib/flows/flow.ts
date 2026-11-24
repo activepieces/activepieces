@@ -57,6 +57,7 @@ export const Flow = z.object({
     timeSavedPerRun: Nullable(z.number()),
     templateId: Nullable(z.string()),
     createdBy: Nullable(FlowCreator),
+    workerGroupId: Nullable(z.string()),
 })
 
 export type Flow = z.infer<typeof Flow>

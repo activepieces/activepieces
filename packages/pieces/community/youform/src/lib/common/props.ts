@@ -1,42 +1,50 @@
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-} from '@activepieces/pieces-common';
-import { Property } from '@activepieces/pieces-framework';
-import { BASE_URL } from './constants';
-import { ListFormsResponse } from './types';
-import { youformAuth } from './auth';
+import { DropdownState, Property } from '@activepieces/pieces-framework';
+import { youformAuth } from '../auth';
+import { youformApi } from './api';
 
-export const formIdDropdown = Property.Dropdown({
-  auth: youformAuth,
-  displayName: 'Form',
-  refreshers: [],
-  required: true,
-  options: async ({ auth }) => {
-    if (!auth) {
+function formId<R extends boolean>({
+  required,
+  displayName = 'Form',
+  description,
+}: PropParams<R>) {
+  return Property.Dropdown({
+    auth: youformAuth,
+    displayName,
+    description,
+    refreshers: [],
+    required,
+    options: async ({ auth }) => {
+      if (!auth) {
+        return disabledOptions({
+          placeholder: 'Please connect your account first.',
+        });
+      }
+
+      const response = await youformApi.listForms({ auth });
+
       return {
-        placeholder: 'Please connect your account first.',
-        options: [],
         disabled: false,
+        options: response.data.data.map((form) => ({
+          label: form.name,
+          value: form.slug,
+        })),
       };
-    }
+    },
+  });
+}
 
-    const response = await httpClient.sendRequest<ListFormsResponse>({
-      method: HttpMethod.GET,
-      url: BASE_URL + '/forms',
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: auth.secret_text,
-      },
-    });
+function disabledOptions({
+  placeholder,
+}: {
+  placeholder: string;
+}): DropdownState<never> {
+  return { disabled: true, options: [], placeholder };
+}
 
-    return {
-      disabled: false,
-      options: response.body.data.data.map((form) => ({
-        label: form.name,
-        value: form.slug,
-      })),
-    };
-  },
-});
+export const youformProps = { formId };
+
+export type PropParams<R extends boolean> = {
+  required: R;
+  displayName?: string;
+  description?: string;
+};

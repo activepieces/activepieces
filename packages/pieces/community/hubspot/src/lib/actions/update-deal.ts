@@ -27,11 +27,31 @@ export const updateDealAction = createAction({
 	audience: 'both',
 	aiMetadata: { description: 'Updates properties on an existing deal identified by its deal ID, such as name, pipeline, stage, or custom fields, then returns the refreshed deal. Use to modify a known deal; use Create Deal to make a new one. Idempotent: applying the same property values converges to the same deal state.', idempotent: true },
 	outputSchema: crmObjectOutputSchema,
+	propertyGroups: [
+		{
+			key: 'target',
+			display: 'section',
+			label: 'Deal to Update',
+			icon: 'tag',
+			props: ['dealId'],
+		},
+		{
+			key: 'changes',
+			display: 'section',
+			label: 'Changes',
+			icon: 'text',
+			props: ['changesInfo', 'dealname', 'pipelineId', 'pipelineStageId', 'objectProperties'],
+		},
+	],
 	props: {
 		dealId: Property.ShortText({
 			displayName: 'Deal ID',
 			description: 'Map it from an earlier step like Find Deal.',
 			required: true,
+		}),
+		changesInfo: Property.MarkDown({
+			value: 'Fields left empty keep their current value.',
+			variant: MarkdownVariant.INFO,
 		}),
 		dealname: Property.ShortText({
 			displayName: 'Deal Name',

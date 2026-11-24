@@ -2,6 +2,7 @@ import {
   Property,
   createAction,
   DropdownState,
+  MarkdownVariant,
 } from '@activepieces/pieces-framework';
 import { baserowAuth } from '../auth';
 import {
@@ -27,11 +28,41 @@ export const upsertRowAction = createAction({
     idempotent: true,
   },
   auth: baserowAuth,
+  propertyGroups: [
+    {
+      key: 'table',
+      display: 'section',
+      label: 'Location',
+      icon: 'location',
+      props: ['table_id'],
+    },
+    {
+      key: 'match',
+      display: 'section',
+      label: 'Match',
+      icon: 'filter',
+      props: ['match_field', 'match_value', 'info'],
+    },
+    {
+      key: 'values',
+      display: 'section',
+      label: 'Row Values',
+      icon: 'text',
+      props: ['table_fields'],
+    },
+    {
+      key: 'options',
+      display: 'section',
+      label: 'Options',
+      icon: 'sliders',
+      props: ['create_missing_select_options'],
+    },
+  ],
   props: {
     table_id: baserowCommon.tableId(),
     match_field: Property.Dropdown({
       displayName: 'Match Field',
-      description: 'Select the field to search for an existing row.',
+      description: 'The column that identifies the row, such as an email.',
       required: true,
       auth: baserowAuth,
       refreshers: ['auth', 'table_id'],
@@ -72,15 +103,19 @@ export const upsertRowAction = createAction({
     }),
     match_value: Property.ShortText({
       displayName: 'Match Value',
-      description:
-        'The value to search for (exact match). If a row with this value is found it will be updated; otherwise a new row is created.',
+      description: 'The exact value to look for in the match field.',
+      placeholder: 'jane@example.com',
       required: true,
+    }),
+    info: Property.MarkDown({
+      value:
+        'The first matching row is updated: empty fields keep their value and checkboxes are saved as shown. With no match, a new row is created.',
+      variant: MarkdownVariant.INFO,
     }),
     table_fields: baserowCommon.tableFields(true),
     create_missing_select_options: Property.Checkbox({
-      displayName: 'Create missing select options',
-      description:
-        'When enabled, single/multi-select values that do not yet exist in the field will be added before creating or updating the row. Existing options are preserved.',
+      displayName: 'Create Missing Select Options',
+      description: 'Adds any select option the column does not have yet.',
       required: false,
       defaultValue: false,
     }),

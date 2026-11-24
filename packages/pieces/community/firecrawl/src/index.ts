@@ -28,7 +28,7 @@ import { firecrawlAuth } from './lib/auth';
 export const firecrawl = createPiece({
   displayName: 'Firecrawl',
   description: 'The context API to search, scrape, and interact with the web at scale.',
-  minimumSupportedRelease: '0.86.4',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/firecrawl.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ["geekyme-fsmk", "geekyme", "arinmakk"],
@@ -63,6 +63,12 @@ export const firecrawl = createPiece({
       authMapping: async (auth) => ({
         'Authorization': `Bearer ${auth.secret_text}`,
       }),
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${FIRECRAWL_API_BASE_URL}`,
+          placeholder: '/team/credit-usage',
+        },
+      },
     }),
   ],
   triggers: [],

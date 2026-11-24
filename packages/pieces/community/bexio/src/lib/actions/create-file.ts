@@ -3,6 +3,7 @@ import { bexioAuth } from '../auth';
 import { HttpMethod, httpClient, AuthenticationType } from '@activepieces/pieces-common';
 import { bexioCommon } from '../common/index';
 import FormData from 'form-data';
+import { bexioOutputSchemas } from '../common/output-schemas';
 
 export const createFileAction = createAction({
   auth: bexioAuth,
@@ -10,7 +11,8 @@ export const createFileAction = createAction({
   classification: 'WRITE',
   displayName: 'Create File',
   description: 'Upload a new file to Bexio',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: bexioOutputSchemas.fileArrayOutputSchema,
   aiMetadata: { description: 'Uploads a file to the Bexio file manager via multipart form data, returning the stored file metadata. Use to add a document or attachment to Bexio storage; requires the file contents. Not idempotent: each call stores another copy of the file.', idempotent: false },
   props: {
     file: Property.File({

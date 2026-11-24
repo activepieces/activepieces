@@ -1,7 +1,7 @@
-import { tryCatch } from '@activepieces/core-utils'
-import { wideEvent } from '@activepieces/server-utils'
+import { isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { createLogger, wideEvent } from '@activepieces/server-utils'
 import { FastifyBaseLogger } from 'fastify'
-import { DataSource } from 'typeorm'
+import { DataSource, QueryRunner } from 'typeorm'
 import { BackgroundMigration } from './background-migration'
 import { databaseConnection, migrationDatabaseConnection } from './database-connection'
 import { BackgroundMigrationNotCompleteError } from './migration-helpers'
@@ -76,10 +76,8 @@ export const backgroundMigrationRunner = {
         const { data, error } = await tryCatch(async () => {
             const ds = dataSource ?? databaseConnection()
             const source = migrations ?? getBackgroundMigrations()
-            await ensureBackgroundMigrationsTable(ds)
-            const completed = await getCompletedNames(ds)
             const sourceNames = source.map(MigrationClass => new MigrationClass().name)
-            const pendingCount = sourceNames.filter(name => !completed.has(name)).length
+            const pendingCount = (await backgroundMigrationRunner.listPending({ migrations: source, dataSource: ds })).length
             const failedMigration = await getLatestFailure(ds, sourceNames)
             return {
                 pendingCount,
@@ -92,6 +90,20 @@ export const backgroundMigrationRunner = {
             return { pendingCount: 0, completedCount: 0, error: error instanceof Error ? error.message : String(error), failedMigration: null }
         }
         return data
+    },
+
+    async listPending({
+        migrations,
+        dataSource,
+    }: {
+        migrations?: (new () => BackgroundMigration)[]
+        dataSource?: DataSource
+    } = {}): Promise<string[]> {
+        const ds = dataSource ?? databaseConnection()
+        const source = migrations ?? getBackgroundMigrations()
+        await ensureBackgroundMigrationsTable(ds)
+        const completed = await getCompletedNames(ds)
+        return source.map(MigrationClass => new MigrationClass().name).filter(name => !completed.has(name))
     },
 }
 
@@ -113,7 +125,6 @@ async function runOne({
                 log.info({ migration: { name: migration.name } }, '[backgroundMigrationRunner] Migration already completed under another lock holder, skipping')
                 return
             }
-            log.info({ migration: { name: migration.name } }, '[backgroundMigrationRunner] Running migration')
             wideEvent.set({ migration: { name: migration.name } })
             await wideEvent.timed({
                 name: 'backgroundMigration',
@@ -132,10 +143,18 @@ async function executeMigrationBody({
     log: FastifyBaseLogger
     dataSource: DataSource
 }): Promise<void> {
+    const startedAt = Date.now()
+    let finished = false
+    let backendPid: number | undefined
+    emitProgress({ migrationName: migration.name, phase: 'started' })
+    const heartbeat = setInterval(() => {
+        emitHeartbeat({ migrationName: migration.name, startedAt, backendPid, isFinished: () => finished }).catch(() => undefined)
+    }, BACKGROUND_MIGRATION_HEARTBEAT_INTERVAL_MS)
     try {
         const executionDs = await migrationDatabaseConnection()
         const queryRunner = executionDs.createQueryRunner()
         try {
+            backendPid = await readBackendPid({ queryRunner })
             await migration.up(queryRunner)
         }
         finally {
@@ -152,8 +171,12 @@ async function executeMigrationBody({
         if (recordError) {
             log.error({ migration: { name: migration.name }, error: recordError instanceof Error ? recordError.message : String(recordError) }, '[backgroundMigrationRunner] Failed to persist migration failure; original error follows')
         }
-        log.error({ migration: { name: migration.name }, error: message }, '[backgroundMigrationRunner] Migration failed')
+        emitProgress({ migrationName: migration.name, phase: 'failed', elapsedMs: Date.now() - startedAt, error })
         throw error
+    }
+    finally {
+        finished = true
+        clearInterval(heartbeat)
     }
 
     await dataSource.query(
@@ -161,7 +184,72 @@ async function executeMigrationBody({
          ON CONFLICT ("name") DO UPDATE SET "executed_at" = NOW(), "failed_at" = NULL, "last_error" = NULL`,
         [migration.name],
     )
-    log.info({ migration: { name: migration.name } }, '[backgroundMigrationRunner] Migration completed')
+    emitProgress({ migrationName: migration.name, phase: 'completed', elapsedMs: Date.now() - startedAt })
+}
+
+function emitProgress({ migrationName, phase, elapsedMs, error, details }: EmitProgressParams): void {
+    const logger = createLogger({
+        event: 'background-migration.progress',
+        migration: { name: migrationName, phase, ...spreadIfDefined('elapsedMs', elapsedMs), ...details },
+    })
+    if (!isNil(error)) {
+        logger.error(error instanceof Error ? error : new Error(String(error)))
+    }
+    logger.emit({ _forceKeep: true })
+}
+
+async function emitHeartbeat({ migrationName, startedAt, backendPid, isFinished }: EmitHeartbeatParams): Promise<void> {
+    const createIndexProgress = isNil(backendPid) ? undefined : await readCreateIndexProgress({ backendPid })
+    if (isFinished()) {
+        return
+    }
+    emitProgress({
+        migrationName,
+        phase: 'running',
+        elapsedMs: Date.now() - startedAt,
+        details: isNil(createIndexProgress) ? undefined : { createIndexProgress },
+    })
+}
+
+async function readBackendPid({ queryRunner }: { queryRunner: QueryRunner }): Promise<number | undefined> {
+    const { data } = await tryCatch(async () => {
+        const rows: unknown = await queryRunner.query('SELECT pg_backend_pid() AS "pid"')
+        if (!Array.isArray(rows) || rows.length === 0) return undefined
+        const [row] = rows
+        if (row === null || typeof row !== 'object' || !('pid' in row) || typeof row.pid !== 'number') return undefined
+        return row.pid
+    })
+    return data ?? undefined
+}
+
+async function readCreateIndexProgress({ backendPid }: { backendPid: number }): Promise<unknown[] | undefined> {
+    const { data } = await tryCatch(async () => Promise.race([
+        queryCreateIndexProgress({ backendPid }),
+        rejectAfter({ ms: BACKGROUND_MIGRATION_PROGRESS_READ_TIMEOUT_MS }),
+    ]))
+    return data ?? undefined
+}
+
+async function queryCreateIndexProgress({ backendPid }: { backendPid: number }): Promise<unknown[] | undefined> {
+    const executionDs = await migrationDatabaseConnection()
+    const rows: unknown = await executionDs.query(
+        `SELECT p."phase",
+                p."index_relid"::regclass::text AS "indexName",
+                p."blocks_done" AS "blocksDone",
+                p."blocks_total" AS "blocksTotal",
+                p."tuples_done" AS "tuplesDone",
+                p."tuples_total" AS "tuplesTotal"
+           FROM pg_stat_progress_create_index p
+          WHERE p."pid" = $1`,
+        [backendPid],
+    )
+    return Array.isArray(rows) && rows.length > 0 ? rows : undefined
+}
+
+function rejectAfter({ ms }: { ms: number }): Promise<never> {
+    return new Promise((_resolve, reject) => {
+        setTimeout(() => reject(new Error(`timed out after ${ms}ms`)), ms).unref()
+    })
 }
 
 async function ensureBackgroundMigrationsTable(dataSource: DataSource): Promise<void> {
@@ -216,6 +304,8 @@ const MAX_CATCHUP_ATTEMPTS = 10
 
 export const backgroundMigrationLockKey = (migrationName: string): string => `background_migration:${migrationName}`
 export const BACKGROUND_MIGRATION_LOCK_TIMEOUT_SECONDS = 240
+export const BACKGROUND_MIGRATION_HEARTBEAT_INTERVAL_MS = 5 * 60 * 1000
+export const BACKGROUND_MIGRATION_PROGRESS_READ_TIMEOUT_MS = 10_000
 
 export const BACKGROUND_MIGRATIONS_TABLE = 'background_migrations'
 
@@ -230,4 +320,21 @@ export type BackgroundMigrationStatus = {
     completedCount: number
     error: string | null
     failedMigration: FailedBackgroundMigration | null
+}
+
+type BackgroundMigrationPhase = 'started' | 'running' | 'completed' | 'failed'
+
+type EmitProgressParams = {
+    migrationName: string
+    phase: BackgroundMigrationPhase
+    elapsedMs?: number
+    error?: unknown
+    details?: Record<string, unknown>
+}
+
+type EmitHeartbeatParams = {
+    migrationName: string
+    startedAt: number
+    backendPid: number | undefined
+    isFinished: () => boolean
 }

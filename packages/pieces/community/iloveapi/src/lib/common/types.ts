@@ -14,7 +14,19 @@ export type ILoveApiTool =
   | 'rotate'
   | 'extract'
   | 'repair'
+  | 'pdfa'
+  | 'validatepdfa'
+  | 'compressimage'
+  | 'resizeimage'
+  | 'cropimage'
+  | 'convertimage'
+  | 'upscaleimage'
+  | 'removebackgroundimage'
+  | 'watermarkimage'
+  | 'rotateimage'
   | 'sign';
+
+export type ILoveApiRegion = 'eu' | 'us' | 'fr' | 'de' | 'pl' | 'in' | 'sg';
 
 export type SignatureSigner = {
   name: string;
@@ -82,6 +94,7 @@ export type CreateSignatureResponse = {
 export type StartTaskResponse = {
   server: string;
   task: string;
+  remaining_credits?: number;
   remaining_files?: number;
 };
 

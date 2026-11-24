@@ -10,6 +10,10 @@ export const changeFileEncoding = createAction({
   description: 'Convert a file from one text encoding to another.',
   aiMetadata: { description: 'Re-encodes the bytes of a file from one character encoding to another (e.g. latin1 to utf8), writing the result to a new file under the output name you give. Use it when a downstream step mis-reads a file because of its character set; use Read File to simply get the content as text, or Create File to build a file from a string. The declared source encoding must actually match the file, since it is decoded blindly - a wrong choice silently corrupts characters rather than failing; deterministic and idempotent.', idempotent: true },
   outputSchema: changeFileEncodingActionOutputSchema,
+  propertyGroups: [
+    { key: 'source', display: 'section', label: 'Source', icon: 'paperclip', props: ['inputFile', 'inputEncoding'] },
+    { key: 'output', display: 'section', label: 'Output', icon: 'file', props: ['outputFileName', 'outputEncoding'] },
+  ],
   props: {
     inputFile: Property.File({
       displayName: 'Source File',

@@ -4,8 +4,8 @@ import {
   ApFlagId,
   PlanName,
   PlatformBillingInformation,
+  SelfServeTrialState,
 } from '@activepieces/shared';
-import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { ArrowUpRight, ExternalLink, RefreshCw } from 'lucide-react';
 import React, { useState } from 'react';
@@ -32,9 +32,11 @@ import {
   UsersCard,
   billingMutations,
   billingUtils,
+  SelfServeTrialBillingStatus,
   useCancelSubscriptionGuard,
   billingDialogHooks,
 } from '@/features/billing';
+import { InviteRewardBillingLink } from '@/features/members';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
@@ -43,10 +45,7 @@ import { UsageTab } from './usage-tab';
 
 export function BillingPlanTab() {
   return (
-    <BillingPageShell
-      lockTitle={t('Unlock Billing & Usage')}
-      errorMessage={t('Failed to load billing information')}
-    >
+    <BillingPageShell lockTitle={t('Unlock Billing & Usage')}>
       {({ platform, info }) => (
         <AdminPage>
           <AdminPageHeader
@@ -66,10 +65,7 @@ export function BillingPlanTab() {
 
 export function BillingUsageTab() {
   return (
-    <BillingPageShell
-      lockTitle={t('Unlock Billing & Usage')}
-      errorMessage={t('Failed to load billing information')}
-    >
+    <BillingPageShell lockTitle={t('Unlock Billing & Usage')}>
       {({ platform, info }) => <UsageTab platform={platform} info={info} />}
     </BillingPageShell>
   );
@@ -123,14 +119,17 @@ function PlanTab({ platform, info }: PlanTabProps) {
         total: appSumoAiCreditsTotal.toLocaleString(),
       })
     : undefined;
-  const hasBillingPortal = info.billingPortalAvailable;
-  const isComped = isPaid && isNil(info.trialEndsAt) && !hasBillingPortal;
+  const isComped = isPaid && isNil(info.trialEndsAt) && !info.hasPaymentMethod;
   const isCompedLifetimePlan =
     info.plan.plan === PlanName.APPSUMO ||
     info.plan.plan === PlanName.FREE_LEGACY;
   const hasLicenseKey = !isNil(platform.plan.licenseKey);
   const isTrialKeySection = isCloud && !hasLicenseKey;
-  const licenseKeyCopy = licenseKeySectionCopy({ hasLicenseKey, isCloud });
+  const licenseKeyCopy = licenseKeySectionCopy({
+    hasLicenseKey,
+    isCloud,
+    trialRunning: platform.selfServeTrial?.state === SelfServeTrialState.ACTIVE,
+  });
 
   return (
     <div className="flex w-full flex-col gap-6">
@@ -143,6 +142,7 @@ function PlanTab({ platform, info }: PlanTabProps) {
           </AlertDescription>
         </Alert>
       )}
+      <SelfServeTrialBillingStatus />
       <div className="flex flex-col gap-6">
         {!isCommunity && (
           <BillingSection
@@ -187,13 +187,17 @@ function PlanTab({ platform, info }: PlanTabProps) {
               </div>
             }
           >
-            <CreditsCard info={info} className={adminSurface.card} />
+            <CreditsCard
+              info={info}
+              className={adminSurface.card}
+              footerExtra={<InviteRewardBillingLink />}
+            />
             {isPaid &&
               isNil(info.trialEndsAt) &&
               !isNil(displayedCreditsFeature) && (
                 <AutoRechargeCard
                   feature={displayedCreditsFeature}
-                  hasCard={hasBillingPortal}
+                  hasCard={info.hasPaymentMethod}
                   note={autoRechargeNote}
                   className={adminSurface.card}
                 />
@@ -229,7 +233,7 @@ function PlanTab({ platform, info }: PlanTabProps) {
               )}
             >
               <div className="flex flex-col items-center gap-3">
-                {hasBillingPortal && (
+                {info.hasPaymentMethod && (
                   <Button
                     {...adminControl(AdminControl.BILLING_STRIPE_PORTAL_LINK)}
                     variant="outline"
@@ -268,17 +272,21 @@ function PlanTab({ platform, info }: PlanTabProps) {
           </>
         )}
 
-        <Separator />
-        <BillingSection
-          title={licenseKeyCopy.title}
-          description={licenseKeyCopy.description}
-        >
-          <LicenseKey
-            platform={platform}
-            isSelfHosted={edition === ApEdition.ENTERPRISE}
-            isTrialKey={isTrialKeySection}
-          />
-        </BillingSection>
+        {!isNil(licenseKeyCopy) && (
+          <>
+            <Separator />
+            <BillingSection
+              title={licenseKeyCopy.title}
+              description={licenseKeyCopy.description}
+            >
+              <LicenseKey
+                platform={platform}
+                isSelfHosted={edition === ApEdition.ENTERPRISE}
+                isTrialKey={isTrialKeySection}
+              />
+            </BillingSection>
+          </>
+        )}
       </div>
       {deactivateUsersDialog}
       <CancelSubscriptionDialog
@@ -301,10 +309,12 @@ function PlanTab({ platform, info }: PlanTabProps) {
 function licenseKeySectionCopy({
   hasLicenseKey,
   isCloud,
+  trialRunning,
 }: {
   hasLicenseKey: boolean;
   isCloud: boolean;
-}): { title: string; description: string } {
+  trialRunning: boolean;
+}): { title: string; description: string } | null {
   if (hasLicenseKey) {
     return {
       title: t('License key'),
@@ -314,6 +324,9 @@ function licenseKeySectionCopy({
     };
   }
   if (isCloud) {
+    if (trialRunning) {
+      return null;
+    }
     return {
       title: t('Trial Keys'),
       description: t('Got a trial key from our team? Activate it here.'),
@@ -367,7 +380,7 @@ const SubscriptionScheduleNotice = ({
 };
 
 function dayjsCancelDate(cancelAt: string): string {
-  return dayjs(cancelAt).format('MMM D, YYYY');
+  return billingUtils.formatDate(cancelAt);
 }
 
 const LinkButton = ({ children, ...props }: React.ComponentProps<'button'>) => (

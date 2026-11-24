@@ -12,7 +12,7 @@ const RATE_LIMIT_GUIDANCE =
   'Mastodon allows about 300 requests per 5 minutes per account by default (media uploads 30 per 30 minutes; status deletes and unboosts 30 per 30 minutes combined), and instances can tune these limits. Wait a few minutes before retrying.';
 
 const SCOPE_GUIDANCE =
-  'In Mastodon, open Preferences > Development, select the application, tick the top-level read and write scopes and save. Saving regenerates the access token, so paste the new token into this Activepieces connection.';
+  'In Mastodon, open Preferences > Development, select the application, tick the top-level read and write scopes and save. Saving regenerates the access token, so paste the new token into this connection.';
 
 const MIN_SCHEDULE_AHEAD_MS = 5 * 60 * 1000;
 const SCHEDULE_SAFETY_MARGIN_MS = 60 * 1000;
@@ -271,13 +271,16 @@ function hasValue(value: unknown): boolean {
 function optionalBooleanProp({
   displayName,
   description,
+  advanced,
 }: {
   displayName: string;
   description: string;
+  advanced?: boolean;
 }) {
   return Property.StaticDropdown<boolean>({
     displayName,
     description,
+    advanced,
     required: false,
     options: {
       disabled: false,
@@ -300,8 +303,13 @@ function limitProp({
 }) {
   return Property.Number({
     displayName: 'Limit',
-    description: `Maximum number of ${noun} to return in this page. Defaults to ${defaultLimit}, maximum ${maxLimit}.`,
+    description: `Maximum ${noun} per page, up to ${maxLimit}.`,
     required: false,
+    display: 'stepper',
+    min: 1,
+    max: maxLimit,
+    step: 1,
+    defaultValue: defaultLimit,
   });
 }
 
@@ -320,29 +328,29 @@ function notificationTypesProp({
   });
 }
 
-function maxIdProp() {
+function maxIdProp({ advanced }: { advanced?: boolean } = {}) {
   return Property.ShortText({
-    displayName: 'Max ID (older page)',
-    description:
-      'Cursor for the next (older) page. Pass the `next_max_id` value from the previous page of this same action. Leave empty for the newest page.',
+    displayName: 'Max ID',
+    description: 'For the next older page, paste next_max_id from the previous page.',
+    advanced,
     required: false,
   });
 }
 
-function sinceIdProp() {
+function sinceIdProp({ advanced }: { advanced?: boolean } = {}) {
   return Property.ShortText({
-    displayName: 'Since ID (newer results)',
-    description:
-      'Cursor for newer results. Pass the `prev_since_id` value from a previous page of this same action to page back towards newer items.',
+    displayName: 'Since ID',
+    description: 'For newer results, paste prev_since_id from a previous page.',
+    advanced,
     required: false,
   });
 }
 
-function minIdProp() {
+function minIdProp({ advanced }: { advanced?: boolean } = {}) {
   return Property.ShortText({
-    displayName: 'Min ID (newer page)',
-    description:
-      'Cursor for the page immediately newer than a previous page. Pass the `prev_min_id` value from a previous page of this same action.',
+    displayName: 'Min ID',
+    description: 'For the page just newer, paste prev_min_id from a previous page.',
+    advanced,
     required: false,
   });
 }
@@ -386,7 +394,7 @@ function buildComposeBody({
     );
   }
   if (hasPoll && (pollExpiresIn === undefined || pollExpiresIn === null)) {
-    throw new Error('Poll Duration (seconds) is required when Poll Options are provided.');
+    throw new Error('Poll Duration is required when Poll Options are provided.');
   }
   const hasPollSettings =
     (pollExpiresIn !== undefined && pollExpiresIn !== null) || pollMultiple !== undefined;
@@ -418,65 +426,66 @@ function composeProps() {
     status: Property.LongText({
       displayName: 'Status Text',
       description:
-        'The text of the post. Mentions (@user@domain), hashtags and links are parsed by Mastodon. Required unless Media IDs are provided. Use Get Instance Info to read the server character limit (500 by default).',
+        'Mentions, hashtags and links work as in Mastodon. Needed unless Media IDs are set.',
       required: false,
     }),
     visibility: Property.StaticDropdown({
       displayName: 'Visibility',
       description:
-        'Who can see the post. Leave empty to use the account default posting privacy.',
+        'Empty uses your account default. Unlisted stays off public timelines.',
       required: false,
       options: {
         disabled: false,
         options: [
           { label: 'Public', value: 'public' },
-          { label: 'Unlisted (public, hidden from public timelines)', value: 'unlisted' },
+          { label: 'Unlisted', value: 'unlisted' },
           { label: 'Followers only', value: 'private' },
-          { label: 'Direct (mentioned accounts only)', value: 'direct' },
+          { label: 'Mentioned people only', value: 'direct' },
         ],
       },
     }),
     in_reply_to_id: Property.ShortText({
-      displayName: 'In Reply To (Status ID)',
-      description:
-        'Local ID of the status to reply to, for example 109372843234737004. Obtain it from Get Status, a timeline or Search (with resolve for remote URLs).',
+      displayName: 'Reply To Status ID',
+      description: 'ID of the status to answer. Leave empty for a new status.',
+      placeholder: '109372843234737004',
       required: false,
     }),
     spoiler_text: Property.ShortText({
       displayName: 'Content Warning',
-      description: 'Optional content warning shown before the post text.',
+      description: 'Shown in place of the text until the reader opens the status.',
+      placeholder: 'Spoilers ahead',
       required: false,
     }),
     sensitive: optionalBooleanProp({
       displayName: 'Mark Media as Sensitive',
-      description: 'Whether attached media should be hidden behind a sensitive-content warning. Leave empty for the account default.',
+      description: 'Hide the media behind a warning. Empty uses your account default.',
     }),
     language: Property.ShortText({
       displayName: 'Language',
-      description: 'ISO 639-1 two-letter language code of the post, for example en or de.',
+      description: 'Two-letter ISO 639-1 language code.',
+      placeholder: 'en',
       required: false,
     }),
     media_ids: Property.Array({
       displayName: 'Media IDs',
-      description:
-        'IDs of media returned by Upload Media, one per item (up to the server limit, 4 by default). Cannot be combined with a poll.',
+      description: 'From Upload Media, one per item. Cannot be combined with a poll.',
       required: false,
     }),
     poll_options: Property.Array({
       displayName: 'Poll Options',
       description:
-        'Answer choices for a poll, one per item (2 to 4 on most servers). Cannot be combined with media.',
+        'Answer choices, one per item; most servers allow 2 to 4.',
       required: false,
     }),
     poll_expires_in: Property.Number({
-      displayName: 'Poll Duration (seconds)',
+      displayName: 'Poll Duration',
       description:
-        'How long the poll stays open, in seconds. Mastodon accepts 300 (5 minutes) to 2629746 (1 month). Required with Poll Options.',
+        'Seconds the poll stays open: 300 (5 minutes) to 2629746 (1 month).',
       required: false,
     }),
     poll_multiple: optionalBooleanProp({
       displayName: 'Allow Multiple Choices',
-      description: 'Whether voters may pick more than one option. Leave empty for single choice.',
+      description: 'Let voters pick more than one option. Empty means single choice.',
     }),
   };
 }

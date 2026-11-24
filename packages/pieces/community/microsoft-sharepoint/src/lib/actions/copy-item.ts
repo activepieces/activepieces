@@ -3,6 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { microsoftSharePointCommon } from '../common';
 import { Client, ResponseType } from '@microsoft/microsoft-graph-client';
+import { microsoftSharepointCopyItemOutputSchema } from '../output-schemas';
 
 const polling_delay_ms = 2000; 
 const polling_timeout_secs = 120; 
@@ -14,6 +15,7 @@ async function delay(ms: number) {
 export const copyItemAction = createAction({
   auth: microsoftSharePointAuth,
   name: 'microsoft_sharepoint_copy_item',
+  outputSchema: microsoftSharepointCopyItemOutputSchema,
   classification: 'WRITE',
   displayName: 'Copy File or Folder (Across Sites)',
   description:

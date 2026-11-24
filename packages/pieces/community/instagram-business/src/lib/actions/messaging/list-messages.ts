@@ -17,11 +17,15 @@ export const listMessages = createAction({
       'Reads the messages inside one Instagram direct message thread, given a conversation id from List Conversations, with sender, recipient, text and timestamp for each. Instagram returns only the most recent messages of a thread rather than its full history. Read-only and idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    { key: 'account', display: 'section', label: 'Account', icon: 'user', props: ['page'] },
+    { key: 'conversation', display: 'section', label: 'Thread', icon: 'inbox', props: ['conversation_id'] },
+  ],
   props: {
     page: instagramCommon.page,
     conversation_id: Property.ShortText({
       displayName: 'Conversation ID',
-      description: 'From List Conversations.',
+      description: 'The id from List Conversations.',
       required: true,
     }),
   },

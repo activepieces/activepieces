@@ -8,7 +8,6 @@ import { useFormContext } from 'react-hook-form';
 
 import { AgentLink } from '@/app/builder/step-settings/agent-settings/agent-link';
 import { agentLinkUtils } from '@/app/builder/step-settings/agent-settings/agent-link-utils';
-import { AgentModelField } from '@/app/builder/step-settings/agent-settings/agent-model-field';
 import { AgentTools } from '@/app/builder/step-settings/agent-settings/agent-tools';
 import { FormField } from '@/components/ui/form';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -147,16 +146,6 @@ const selectAgentFormComponentForProperty = (
         <AgentStructuredOutput
           disabled={disabled}
           structuredOutputField={field}
-        />
-      );
-    }
-    case AgentPieceProps.AI_PROVIDER_MODEL: {
-      return (
-        <AgentModelField
-          value={field.value}
-          onChange={field.onChange}
-          pieceVersion={params.dynamicPropsInfo?.pieceVersion ?? ''}
-          disabled={disabled}
         />
       );
     }

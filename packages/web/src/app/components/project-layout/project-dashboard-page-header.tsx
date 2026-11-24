@@ -101,9 +101,10 @@ export const ProjectDashboardPageHeader = ({
   };
 
   const titleContent = (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1 min-w-0">
       <ApProjectDisplay
         title={getProjectName(project)}
+        containerClassName="min-w-0"
         maxLengthToNotShowTooltip={30}
         titleClassName="text-sm font-medium"
         projectType={project.type}
@@ -112,7 +113,7 @@ export const ProjectDashboardPageHeader = ({
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Lock className="w-4 h-4" />
+              <Lock className="w-4 h-4 shrink-0" />
             </TooltipTrigger>
             <TooltipContent>
               <p>
@@ -128,11 +129,12 @@ export const ProjectDashboardPageHeader = ({
   );
 
   const rightContent = isProjectPage ? (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-3 shrink-0">
       {showProjectMembersIcons && (
         <Button
           variant="ghost"
           className="gap-2"
+          data-testid="project-members-button"
           aria-label={`View ${activeProjectMembers?.length} team member${
             activeProjectMembers?.length !== 1 ? 's' : ''
           }`}
@@ -154,8 +156,11 @@ export const ProjectDashboardPageHeader = ({
           variant="ghost"
           size="sm"
           onClick={() => setInviteOpen(true)}
+          aria-label={t('Add Members')}
         >
-          <span className="text-sm font-medium">{t('Add Members')}</span>
+          <span className="hidden sm:inline text-sm font-medium">
+            {t('Add Members')}
+          </span>
         </AnimatedIconButton>
       )}
       <AnimatedIconButton
@@ -164,6 +169,8 @@ export const ProjectDashboardPageHeader = ({
         variant="ghost"
         size="icon"
         className="h-8 w-8"
+        aria-label={t('Project settings')}
+        data-testid="project-settings-button"
         onClick={() => {
           setSettingsInitialTab(getFirstAvailableTab());
           setSettingsOpen(true);

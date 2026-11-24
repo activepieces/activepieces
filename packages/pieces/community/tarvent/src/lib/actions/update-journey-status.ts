@@ -1,6 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { tarventAuth } from '../auth';
-import { makeClient, tarventCommon } from '../common';
+import { tarventCommon } from '../common';
+import { tarventOperations } from '../common/operations';
+import { tarventOutputSchemas } from '../output-schemas';
 
 export const updateJourneyStatus = createAction({
   auth: tarventAuth,
@@ -8,33 +10,28 @@ export const updateJourneyStatus = createAction({
   classification: 'WRITE',
   displayName: 'Start/Stop Journey',
   description: 'Starts or stops a journey.',
-  audience: 'both',
-  aiMetadata: { description: 'Starts or stops a Tarvent automation journey, with the direction chosen by the action input. Use to activate or pause an entire journey (not an individual contact). Idempotent: it sets the journey to a target run state, so repeating with the same value has no further effect.', idempotent: true },
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Starts or stops a whole Tarvent automation journey by journey ID (not one contact; use Add/Remove A Contact From A Journey for that). Starting a journey can begin sending its emails to every contact it targets. Returns the journey ID and action. Not marked idempotent: Tarvent may reject starting a journey that is already running.',
+    idempotent: false,
+  },
+  outputSchema: tarventOutputSchemas.journeyStatus,
   props: {
-    journeyId: tarventCommon.journeyId(true, 'Select which journey to start or stop'),
+    journeyId: tarventCommon.journeyId(true, 'Journey to start or stop.'),
     action: Property.StaticDropdown({
       displayName: 'Action',
       description: 'Select whether to start or stop the journey.',
       required: true,
       options: {
         options: [
-          {
-            label: 'Start',
-
-            value: 'Start',
-          },
-          {
-            label: 'Stop',
-            value: 'Stop',
-          },
+          { label: 'Start', value: 'Start' },
+          { label: 'Stop', value: 'Stop' },
         ],
       },
     }),
   },
   async run(context) {
-    const { journeyId, action } = context.propsValue;
-
-    const client = makeClient(context.auth);
-    return await client.updateJourneyStatus(action, journeyId);
+    return tarventOperations.setJourneyStatus({ auth: context.auth.props, journeyId: context.propsValue.journeyId, start: context.propsValue.action === 'Start' });
   },
 });

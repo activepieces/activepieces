@@ -1,63 +1,49 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { ninjapipeAuth } from '../../';
-import { ninjapipeApiCall, flattenCustomFields, getAuth, ninjapipeCommon, toDateOnly } from '../common';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { ninjapipeAuth } from '../auth';
+import { ninjapipeClient } from '../common/client';
+import { ninjapipeFields } from '../common/fields';
+import { ninjapipeProps } from '../common/props';
+import { ninjapipeSchemas } from '../output-schemas';
 
 export const createProject = createAction({
   auth: ninjapipeAuth,
   name: 'create_project',
   classification: 'WRITE',
   displayName: 'Create Project',
-  description: 'Creates a new project.',
+  description: 'Creates a project.',
   audience: 'both',
-  aiMetadata: { description: 'Creates a new project in NinjaPipe with optional description, status, priority, due date, linked contact, team members, tags, and extra settings. Only Name is required. Not idempotent: each call creates another project, so avoid retries that would duplicate it.', idempotent: false },
+  aiMetadata: {
+    description: 'Create a NinjaPipe project. Required: name. Not idempotent: each call creates another project.',
+    idempotent: false,
+  },
+  outputSchema: ninjapipeSchemas.project,
   props: {
     name: Property.ShortText({ displayName: 'Name', required: true }),
     description: Property.LongText({ displayName: 'Description', required: false }),
-    status: ninjapipeCommon.projectStatusDropdown,
-    priority: ninjapipeCommon.priorityDropdown,
-    dueDate: Property.DateTime({
-      displayName: 'Due Date',
-      required: false,
-    }),
-    contactId: ninjapipeCommon.contactDropdown,
-    team: Property.Array({
-      displayName: 'Team',
-      description: 'Optional list of team members (account IDs).',
-      required: false,
-    }),
+    status: ninjapipeProps.staticDropdown({ displayName: 'Status', description: 'Status.', values: ['Planning', 'In Progress', 'Completed', 'On Hold', 'Cancelled'] }),
+    priority: ninjapipeProps.staticDropdown({ displayName: 'Priority', description: 'Priority.', values: ['High', 'Medium', 'Low'] }),
+    dueDate: Property.DateTime({ displayName: 'Due Date', description: 'Date (YYYY-MM-DD).', required: false }),
+    team: Property.Array({ displayName: 'Team Member IDs', required: false }),
     tags: Property.Array({ displayName: 'Tags', required: false }),
-    settingsJson: Property.Object({
-      displayName: 'Extra Settings',
-      description: 'Optional metadata (e.g. linked contact, custom fields).',
-      required: false,
-    }),
   },
   async run(context) {
-    const auth = getAuth(context);
     const p = context.propsValue;
-    const body: Record<string, unknown> = { name: p.name };
-    if (p.description) body['description'] = p.description;
-    if (p.status) body['status'] = p.status;
-    if (p.priority) body['priority'] = p.priority;
-    {
-      const v = toDateOnly(p.dueDate);
-      if (v) body['due_date'] = v;
-    }
-    if (p.team && Array.isArray(p.team) && p.team.length > 0) body['team'] = p.team;
-    if (p.tags && Array.isArray(p.tags) && p.tags.length > 0) body['tags'] = p.tags;
-    const settings: Record<string, unknown> =
-      p.settingsJson && typeof p.settingsJson === 'object'
-        ? { ...(p.settingsJson as Record<string, unknown>) }
-        : {};
-    if (p.contactId) settings['contact_id'] = p.contactId;
-    if (Object.keys(settings).length > 0) body['settings_json'] = settings;
-    const response = await ninjapipeApiCall<Record<string, unknown>>({
-      auth,
+    const body = ninjapipeFields.compact({
+      name: p.name,
+      description: p.description,
+      status: p.status,
+      priority: p.priority,
+      due_date: ninjapipeFields.toDateOnly({ value: p.dueDate, field: 'Due Date' }),
+      team: ninjapipeFields.toStringList(p.team),
+      tags: ninjapipeFields.toStringList(p.tags),
+    });
+    return ninjapipeClient.sendRecord({
+      auth: ninjapipeClient.readAuth(context.auth),
       method: HttpMethod.POST,
       path: '/projects',
       body,
+      operation: 'create project',
     });
-    return flattenCustomFields(response.body);
   },
 });

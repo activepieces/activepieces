@@ -34,11 +34,49 @@ describe('Update Meeting (by ID)', () => {
   it('sends only the fields given', async () => {
     const fetchMock = installFetch();
     fetchMock.mockResolvedValueOnce(emptyResponse({ status: 204 }));
-    const result = await runAction({ action: zoomUpdateMeetingById, propsValue: { meeting_id: '1', topic: 'New', duration: 0, waiting_room: false } });
+    const result = await runAction({ action: zoomUpdateMeetingById, propsValue: { meeting_id: '1', topic: 'New', duration: 0, waiting_room: 'no' } });
     const request = requestOf({ fetchMock, call: 0 });
     expect(request.method).toBe('PATCH');
     expect(request.body).toEqual({ topic: 'New', duration: 0, settings: { waiting_room: false } });
     expect(result).toEqual({ success: true, meeting_id: '1', occurrence_id: null, updated_fields: ['topic', 'duration', 'settings.waiting_room'] });
+  });
+
+  it('leaves the meeting settings out when they are left unchanged or omitted', async () => {
+    const fetchMock = installFetch();
+    fetchMock.mockResolvedValueOnce(emptyResponse({ status: 204 }));
+    await runAction({
+      action: zoomUpdateMeetingById,
+      propsValue: { meeting_id: '1', start_time: '2026-11-01T15:00:00Z', host_video: 'unchanged', participant_video: 'unchanged', waiting_room: 'unchanged' },
+    });
+    expect(requestOf({ fetchMock, call: 0 }).body).toEqual({ start_time: '2026-11-01T15:00:00Z' });
+  });
+
+  it('sends Yes as true for a tri-state setting', async () => {
+    const fetchMock = installFetch();
+    fetchMock.mockResolvedValueOnce(emptyResponse({ status: 204 }));
+    await runAction({ action: zoomUpdateMeetingById, propsValue: { meeting_id: '1', waiting_room: 'yes', mute_upon_entry: 'no' } });
+    expect(requestOf({ fetchMock, call: 0 }).body).toEqual({ settings: { mute_upon_entry: false, waiting_room: true } });
+  });
+
+  it('converts saved true and false strings from older steps', async () => {
+    const fetchMock = installFetch();
+    fetchMock.mockResolvedValueOnce(emptyResponse({ status: 204 }));
+    await runAction({ action: zoomUpdateMeetingById, propsValue: { meeting_id: '1', waiting_room: 'true', host_video: 'FALSE' } });
+    expect(requestOf({ fetchMock, call: 0 }).body).toEqual({ settings: { host_video: false, waiting_room: true } });
+  });
+
+  it('keeps saved boolean true and false values from older steps', async () => {
+    const fetchMock = installFetch();
+    fetchMock.mockResolvedValueOnce(emptyResponse({ status: 204 }));
+    await runAction({ action: zoomUpdateMeetingById, propsValue: { meeting_id: '1', waiting_room: true, host_video: false } });
+    expect(requestOf({ fetchMock, call: 0 }).body).toEqual({ settings: { host_video: false, waiting_room: true } });
+  });
+
+  it('omits settings saved as null or empty', async () => {
+    const fetchMock = installFetch();
+    fetchMock.mockResolvedValueOnce(emptyResponse({ status: 204 }));
+    await runAction({ action: zoomUpdateMeetingById, propsValue: { meeting_id: '1', topic: 'T', waiting_room: null, host_video: '' } });
+    expect(requestOf({ fetchMock, call: 0 }).body).toEqual({ topic: 'T' });
   });
 
   it('clears the agenda with Clear Agenda and targets an occurrence', async () => {

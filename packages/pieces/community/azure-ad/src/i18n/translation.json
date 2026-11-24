@@ -115,6 +115,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Deleted User": "New Deleted User",
   "New Group": "New Group",
   "New User": "New User",

@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { mastodonAuth } from '../..';
 import { MastodonEntity, mastodonClient } from '../common/client';
@@ -17,17 +17,30 @@ export const deleteStatus = createAction({
     idempotent: false,
   },
   outputSchema: deletedStatusOutputSchema,
+  propertyGroups: [
+    {
+      key: 'target',
+      display: 'section',
+      label: 'Status to Delete',
+      icon: 'trash',
+      props: ['delete_warning', 'status_id', 'delete_media'],
+    },
+  ],
   props: {
+    delete_warning: Property.MarkDown({
+      value: 'Deleting a status is permanent and cannot be undone.',
+      variant: MarkdownVariant.WARNING,
+    }),
     status_id: Property.ShortText({
       displayName: 'Status ID',
-      description:
-        'ID of your own status to delete. Map it from a previous Post Status step (Status > Status ID), Create Status, Get Status or List Account Statuses.',
+      description: 'ID of one of your own statuses, for example from Post Status.',
+      placeholder: '109372843234737004',
       required: true,
     }),
     delete_media: Property.Checkbox({
-      displayName: 'Delete Media Immediately',
+      displayName: 'Delete Media Now',
       description:
-        'Delete the attached media right away instead of keeping it for about 24 hours for reuse. Requires Mastodon 4.4 or later; older servers ignore it.',
+        'Remove attached media now, not after about 24 hours. Mastodon 4.4+.',
       required: false,
       defaultValue: false,
     }),

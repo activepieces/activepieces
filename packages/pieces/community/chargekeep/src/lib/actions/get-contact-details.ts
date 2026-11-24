@@ -1,14 +1,21 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { chargekeepAuth } from '../auth';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { chargekeepClient } from '../common/client';
+import { chargekeepMappers } from '../common/mappers';
+import { chargekeepOutputSchemas } from '../common/output-schemas';
 
 export const getContactDetails = createAction({
   name: 'getContactDetails',
   classification: 'READ',
   displayName: 'Get Contact Details',
-  description: 'Get Contact Details',
+  description: 'Get a contact by ID, XREF, affiliate code, user ID or user email.',
   audience: 'both',
-  aiMetadata: { description: 'Looks up and returns a single contact record from the ChargeKeep/Sperse CRM. Identify the contact by any of Contact ID, Contact Xref, Affiliate Code, User ID, or User Email (all optional, so pass whichever identifier you have). Use to fetch contact details before acting on them; read-only and safe to repeat.', idempotent: true },
+  aiMetadata: {
+    description: 'Looks up and returns one contact record from the ChargeKeep/Sperse CRM: name parts, contact group, emails, phones, addresses, tags, lists, XREFs and custom fields. Pass at least one identifier: Contact ID, Contact Xref, Affiliate Code, User ID (portal user, not contact) or User Email. Use Search Contacts first when you only have a name. Read-only and safe to repeat.',
+    idempotent: true,
+  },
+  outputSchema: chargekeepOutputSchemas.contact,
   auth: chargekeepAuth,
   props: {
     contactId: Property.Number({
@@ -28,49 +35,29 @@ export const getContactDetails = createAction({
       required: false,
       description: 'Id of the logged in user (not contact id)',
     }),
-    userEmail: Property.LongText({
+    userEmail: Property.ShortText({
       displayName: 'User Email',
       required: false,
       description: 'Email of the logged in user',
     }),
   },
   async run(context) {
-    const contact = {
-      contactId: context.propsValue.contactId,
-      xref: context.propsValue.xref,
-      affiliateCode: context.propsValue.affiliateCode,
-      userId: context.propsValue.userId,
-      userEmail: context.propsValue.userEmail,
+    const query = {
+      contactId: chargekeepClient.positiveId({ value: context.propsValue.contactId, label: 'Contact Id' }),
+      xref: chargekeepClient.text(context.propsValue.xref),
+      affiliateCode: chargekeepClient.text(context.propsValue.affiliateCode),
+      userId: chargekeepClient.positiveId({ value: context.propsValue.userId, label: 'User Id' }),
+      userEmail: chargekeepClient.text(context.propsValue.userEmail),
     };
-
-    // Filter out keys with undefined values
-    const filteredContact: Record<string, string | number> = Object.fromEntries(
-      Object.entries(contact).filter(([, value]) => value !== undefined)
-    ) as Record<string, string | number>; // Cast to ensure it's the correct type
-
-    // Create query parameters from the filtered contact object
-    const queryParams = new URLSearchParams(
-      Object.entries(filteredContact).map(([key, value]) => [
-        key,
-        String(value),
-      ])
-    );
-
-    // Send GET request with query parameters in the URL
-    const res = await httpClient.sendRequest({
+    if (Object.values(query).every((v) => v === undefined)) {
+      throw new Error('Provide at least one of Contact Id, Contact Xref, Affiliate Code, User Id or User Email.');
+    }
+    const res = await chargekeepClient.send({
+      auth: context.auth,
       method: HttpMethod.GET,
-      url: `${
-        context.auth.props.base_url
-      }/api/services/CRM/Contact/GetContactData?${queryParams.toString()}`,
-      headers: {
-        'api-key': context.auth.props.api_key,
-        'Content-Type': 'application/json',
-      },
+      path: '/api/services/CRM/Contact/GetContactData',
+      query,
     });
-
-    return {
-      status: res.status,
-      body: res.body,
-    };
+    return chargekeepMappers.contact(res.result);
   },
 });

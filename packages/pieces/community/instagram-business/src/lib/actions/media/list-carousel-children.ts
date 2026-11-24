@@ -17,11 +17,28 @@ export const listCarouselChildren = createAction({
       'Lists the individual photos and videos inside one Instagram carousel album, given the album media id. Only works on media whose media_type is CAROUSEL_ALBUM; other posts return an empty list. Read-only and idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'account',
+      display: 'section',
+      label: 'Account',
+      icon: 'user',
+      props: ['page'],
+    },
+    {
+      key: 'media',
+      display: 'section',
+      label: 'Carousel',
+      icon: 'file',
+      props: ['media_id'],
+    },
+  ],
   props: {
     page: instagramCommon.page,
     media_id: Property.ShortText({
-      displayName: 'Carousel Media ID',
-      description: 'The id of a post whose media type is CAROUSEL_ALBUM.',
+      displayName: 'Media ID',
+      description: 'The id of a carousel post, from List Media.',
+      placeholder: '17895695668004550',
       required: true,
     }),
   },

@@ -47,10 +47,16 @@ function readBoolean({ value, label }: { value: unknown; label: string }): boole
     return value;
   }
   const text = String(value).trim().toLowerCase();
-  if (text === 'true' || text === 'false') {
-    return text === 'true';
+  if (text === '') {
+    return undefined;
   }
-  throw new Error(`${label} must be true or false, got "${String(value)}".`);
+  if (text === 'true' || text === 'yes') {
+    return true;
+  }
+  if (text === 'false' || text === 'no') {
+    return false;
+  }
+  throw new Error(`${label} must be yes/no or true/false, got "${String(value)}".`);
 }
 
 function readText(value: unknown): string | undefined {

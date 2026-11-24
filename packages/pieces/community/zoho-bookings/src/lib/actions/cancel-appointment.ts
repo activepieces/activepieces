@@ -1,15 +1,20 @@
 import { propsValidation } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { bookingIdDropdown, zohoBookingsAuth, zohoBookingsCommon } from '../common';
+import * as z from 'zod/mini';
+import { zohoBookingsAuth } from '../auth';
+import { zohoBookingsApi } from '../common/api';
+import { zohoBookingsProps } from '../common/props';
+import { getAppointmentDetailsOutputSchema } from '../output-schemas';
 
-export const cancelAppointment = createAction({
+export const cancelAppointmentAction = createAction({
   auth: zohoBookingsAuth,
   name: 'cancelAppointment',
+  outputSchema: getAppointmentDetailsOutputSchema,
+  classification: 'DESTRUCTIVE',
   displayName: 'Cancel Appointment',
   description:
     'Update the status of a booking (cancel, complete, or mark as no-show)',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Cancel an existing Zoho Bookings appointment identified by its booking ID. Use the from/to time range to locate the booking ID first. Not idempotent: it submits a status-change request each call, though re-cancelling an already-cancelled booking has no further effect.',
@@ -28,33 +33,20 @@ export const cancelAppointment = createAction({
         'The ending time for the appointment (format: mm-dd-yyyy HH:mm:ss)',
       required: false,
     }),
-    booking_id: bookingIdDropdown,
+    booking_id: zohoBookingsProps.bookingId({ required: true }),
   },
   async run(context) {
     const { auth, propsValue } = context;
-    const location = auth.props?.['location'] as string || 'zoho.com';
 
-    // Validate props using Zod schema
-    await propsValidation.validateZod(
-      propsValue,
-      zohoBookingsCommon.cancelAppointmentSchema
-    );
+    await propsValidation.validateZod(propsValue, schema);
 
-    // Prepare form data
-    const formData = new FormData();
-    formData.append('booking_id', propsValue.booking_id as string);
-    formData.append('action', 'cancel');
-
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `${zohoBookingsCommon.baseUrl(location)}/updateappointment`,
-      headers: {
-        Authorization: `Zoho-oauthtoken ${auth.access_token}`,
-        contentType: 'application/x-www-form-urlencoded',
-      },
-      body: formData,
+    return await zohoBookingsApi.cancelAppointment({
+      auth,
+      bookingId: propsValue.booking_id,
     });
-
-    return response.body;
   },
 });
+
+const schema = {
+  booking_id: z.string().check(z.minLength(1)),
+};

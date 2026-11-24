@@ -2,10 +2,12 @@ import { FastifyInstance } from 'fastify'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { mcpOAuthClientService } from '../../../../src/app/mcp/oauth/client/mcp-oauth-client.service'
-import { MCP_OAUTH_REDIRECT_URI, mcpOAuthTestHelpers } from '../../../helpers/mcp-oauth'
+import { MCP_OAUTH_REDIRECT_URI, McpGrantee, mcpOAuthTestHelpers } from '../../../helpers/mcp-oauth'
+import { createTestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance
+let grantee: McpGrantee
 
 async function redeemCode({ clientId, headers, body }: {
     clientId: string
@@ -13,7 +15,7 @@ async function redeemCode({ clientId, headers, body }: {
     body?: Record<string, string>
 }): Promise<{ statusCode: number, json: () => Record<string, string> }> {
     const { verifier, challenge } = mcpOAuthTestHelpers.generatePkce()
-    const code = await mcpOAuthTestHelpers.issueCode({ clientId, codeChallenge: challenge })
+    const code = await mcpOAuthTestHelpers.issueCode({ clientId, codeChallenge: challenge, ...grantee })
     return app.inject({
         method: 'POST',
         url: '/token',
@@ -44,6 +46,8 @@ function renew({ refreshToken, headers, body }: {
 describe('MCP OAuth client profiles', () => {
     beforeAll(async () => {
         app = await setupTestEnvironment({ fresh: true })
+        const ctx = await createTestContext(app)
+        grantee = { userId: ctx.user.id, projectId: ctx.project.id, platformId: ctx.platform.id }
     })
 
     it('a client that omits the auth method and uses the Authorization header connects and renews', async () => {

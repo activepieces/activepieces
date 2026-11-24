@@ -23,7 +23,7 @@ export class AddConnectionIdsToFlowVersion1745530653784 implements MigrationInte
             // Update existing rows
             const flowVersions = await queryRunner.query('SELECT * FROM flow_version')
             for (const flowVersion of flowVersions) {
-                const connectionIds = flowStructureUtil.extractConnectionIds(flowVersion)
+                const connectionIds = flowStructureUtil.extractFlowConnectionIds(flowVersion)
 
                 await queryRunner.query('UPDATE flow_version SET "connectionIds" = $1 WHERE id = $2', [connectionIds, flowVersion.id])
             }

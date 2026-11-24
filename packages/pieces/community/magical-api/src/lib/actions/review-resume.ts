@@ -1,75 +1,49 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
-import { HttpMethod } from "@activepieces/pieces-common";
-import { magicalApiAuth } from "../common/auth";
-import { makeRequest } from "../common/client";
-
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { magicalApiAuth } from '../common/auth';
+import { isHttpUrl, runJob, normalizeRequestId } from '../common/poll';
+import { reviewResumeOutputSchema } from '../common/output-schemas';
 
 export const reviewResume = createAction({
-    auth: magicalApiAuth,
-    name: 'review_resume',
-    classification: 'READ',
-    displayName: 'Review Resume',
-    description: 'Analyze parsed resume using predefined criteria.',
-    audience: 'both',
-    aiMetadata: { description: 'Analyzes a publicly accessible resume file (PDF/DOC/DOCX) at a given URL against predefined review criteria, returning an assessment with a score. Use to evaluate resume quality without a specific job description. Either supply the resume URL to start a job, or pass the Request ID from a prior timed-out run to retrieve that result; the call polls until the review completes. Idempotent: re-running with the same URL re-evaluates the same resume.', idempotent: true },
-    props: {
-        url: Property.ShortText({
-            displayName: 'Resume URL',
-            description: 'Provide a direct URL to a publicly accessible resume file (PDF, DOC, or DOCX).',
-            required: false, 
-        }),
-        request_id: Property.ShortText({
-            displayName: 'Request ID (for retries)',
-            description: "If a previous run timed out, paste the Request ID here to get the result.",
-            required: false,
-        }),
-    },
-    async run(context) {
-        const { url, request_id } = context.propsValue;
-        const apiKey = context.auth;
-        const REVIEW_RESUME_ENDPOINT = '/resume-review';
-        let requestIdToPoll = request_id;
-        let response;
-
-
-        if (!requestIdToPoll) {
-            if (!url) {
-                throw new Error("To start a new request, you must provide a Resume URL.");
-            }
-            response = await makeRequest(apiKey, HttpMethod.POST, REVIEW_RESUME_ENDPOINT, { url });
-        } else {
-    
-            response = await makeRequest(apiKey, HttpMethod.POST, REVIEW_RESUME_ENDPOINT, { request_id: requestIdToPoll });
-        }
-
-
-        if (response.data?.score !== undefined) {
-            return response.data;
-        }
-
-        requestIdToPoll = response.data?.request_id;
-        if (!requestIdToPoll) {
-            throw new Error('Failed to start or retrieve the request. The API did not return a request_id or the final data.');
-        }
-
-
-        const maxAttempts = 20;
-        const pollInterval = 3000;
-        for (let attempt = 0; attempt < maxAttempts; attempt++) {
-            await sleep(pollInterval);
-            const pollResponse = await makeRequest(apiKey, HttpMethod.POST, REVIEW_RESUME_ENDPOINT, { request_id: requestIdToPoll });
-
-
-            if (pollResponse.data?.score !== undefined) {
-
-                return pollResponse.data;
-            }
-        }
-
-
-        throw new Error(
-            'Timeout: Resume review is taking longer than expected. You can check the status later with this Request ID: ' + requestIdToPoll
-        );
-    },
+  auth: magicalApiAuth,
+  name: 'review_resume',
+  classification: 'READ',
+  displayName: 'Review Resume',
+  description: 'Analyze parsed resume using predefined criteria.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Reviews a publicly accessible resume file (PDF/DOC/DOCX) at an http(s) URL against predefined criteria and returns an overall score (0-100), pros and cons with tips per section (contact, experiences, educations, skills, summary, format) and a suggested summary. Use to judge resume quality without a job description; use Score Resume to compare against a specific job. Each new review costs about 250 MagicalAPI credits. Either supply the resume URL, or pass the Request ID from a prior timed-out run to fetch that result; the call polls up to 60 seconds. Idempotent in effect (no data changes), but every new job spends credits.',
+    idempotent: true,
+  },
+  props: {
+    url: Property.ShortText({
+      displayName: 'Resume URL',
+      description: 'Provide a direct URL to a publicly accessible resume file (PDF, DOC, or DOCX).',
+      required: false,
+    }),
+    request_id: Property.ShortText({
+      displayName: 'Request ID (for retries)',
+      description: 'If a previous run timed out, paste the Request ID here to get the result.',
+      required: false,
+    }),
+  },
+  outputSchema: reviewResumeOutputSchema,
+  async run(context) {
+    const { url, request_id: rawRequestId } = context.propsValue;
+    const request_id = normalizeRequestId(rawRequestId);
+    if (!request_id) {
+      if (!url) {
+        throw new Error('To start a new request, you must provide a Resume URL.');
+      }
+      if (!isHttpUrl(url.trim())) {
+        throw new Error('Resume URL must be a public http(s) link to a PDF, DOC or DOCX file.');
+      }
+    }
+    return runJob({
+      apiKey: context.auth.secret_text,
+      service: 'resume_review',
+      input: { url: (url ?? '').trim() },
+      requestId: request_id,
+    });
+  },
 });

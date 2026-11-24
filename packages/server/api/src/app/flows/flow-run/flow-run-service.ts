@@ -1,6 +1,6 @@
-import { ActivepiecesError, apId, ApId, Cursor, ErrorCode, FlowId, FlowRunId, FlowVersionId, isNil, PlatformId, ProjectId, SeekPage } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, ApId, Cursor, ErrorCode, FlowId, FlowRunId, FlowVersionId, isEmpty, isNil, PlatformId, ProjectId, SeekPage } from '@activepieces/core-utils'
 import { apDayjs, apDayjsDuration, wideEvent } from '@activepieces/server-utils'
-import { ExecuteFlowJobData, ExecutionType, ExecutioOutputFile, FileCompression, FileType, FlowRetryStrategy, FlowRun, FlowRunCountByStatus, FlowRunStatus, FlowRunWithRetryError, flowStructureUtil, FlowVersion, GenericStepOutput, isFlowRunStateTerminal, JobPayload, LATEST_JOB_DATA_SCHEMA_VERSION, logSerializer, LogSliceRef, ResumeReason, RunEnvironment, RunInternalError, SampleDataFileType, StepOutput, StepOutputStatus, StepOutputType, StreamStepProgress, WorkerJobType } from '@activepieces/shared'
+import { ExecuteFlowJobData, ExecutionType, ExecutioOutputFile, FAILED_STATES, FileCompression, FileType, FlowRetryStrategy, FlowRun, FlowRunCountByStatus, FlowRunStatus, FlowRunWithRetryError, flowStructureUtil, FlowVersion, GenericStepOutput, isFlowRunStateTerminal, JobPayload, LATEST_JOB_DATA_SCHEMA_VERSION, logSerializer, LogSliceRef, ResumeReason, RunEnvironment, RunInternalError, SampleDataFileType, StepOutput, StepOutputStatus, StepOutputType, StreamStepProgress, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import pLimit from 'p-limit'
 import { ArrayContains, In, IsNull, Not, Repository, SelectQueryBuilder } from 'typeorm'
@@ -13,7 +13,7 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
-import { assertRunCreditsNotExceeded, shouldBlockRunOnCredits } from '../../platform/billing-provider'
+import { assertRunCreditsNotExceeded, CreditCheckSpeed, shouldBlockRunOnCredits } from '../../platform/billing-provider'
 import { projectService } from '../../project/project-service'
 import { waitpointService } from '../../waitpoints/waitpoint-service'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
@@ -24,8 +24,10 @@ import { sampleDataService } from '../step-run/sample-data.service'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
 import { runsMetadataQueue } from './flow-runs-queue'
+import { streamStepProgressUtils } from './stream-step-progress'
 
 const CANCELLABLE_STATUSES: FlowRunStatus[] = [FlowRunStatus.PAUSED, FlowRunStatus.QUEUED]
+const RETRYABLE_FROM_FAILED_STEP_STATUSES: FlowRunStatus[] = [...FAILED_STATES, FlowRunStatus.QUEUED, FlowRunStatus.RUNNING]
 const PARENT_BOUND_RETRY_BACKOFF_MS = apDayjsDuration(30, 'second').asMilliseconds()
 
 
@@ -72,7 +74,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             .andWhere({ parentWaitpointId: params.parentWaitpointId ?? IsNull() })
 
         if (!isNil(params.parentWaitpointId)) {
-            query = query.andWhere({ dispatchIndex: Not(IsNull()) })
+            query = query.andWhere({ dispatchIndex: params.dispatchIndex ?? Not(IsNull()) })
         }
 
         if (!params.includeArchived) {
@@ -157,6 +159,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         await assertRunCreditsNotExceeded({
             platformId: project.platformId,
             environment: oldFlowRun.environment,
+            creditCheckSpeed: CreditCheckSpeed.NORMAL,
             log,
         })
 
@@ -169,14 +172,29 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     ? await resolveStepOutput({ step: triggerStep, flowRun: oldFlowRun, log })
                     : undefined
 
-                await flowRunRepo().update({
-                    id: oldFlowRun.id,
-                    projectId: oldFlowRun.projectId,
-                }, {
-                    status: FlowRunStatus.QUEUED,
-                    startTime: apDayjs().toISOString(),
-                    finishTime: null,
-                })
+                const { raw: requeuedRuns } = await flowRunRepo().createQueryBuilder()
+                    .update()
+                    .set({
+                        status: FlowRunStatus.QUEUED,
+                        startTime: apDayjs().toISOString(),
+                        finishTime: null,
+                    })
+                    .where({
+                        id: oldFlowRun.id,
+                        projectId: oldFlowRun.projectId,
+                        status: In(RETRYABLE_FROM_FAILED_STEP_STATUSES),
+                    })
+                    .returning('id')
+                    .execute()
+                if (requeuedRuns.length === 0) {
+                    throw new ActivepiecesError({
+                        code: ErrorCode.FLOW_RUN_NOT_RETRYABLE,
+                        params: {
+                            flowRunId: oldFlowRun.id,
+                            status: oldFlowRun.status,
+                        },
+                    })
+                }
                 const updatedFlowRun = await findFlowRunOrThrow(oldFlowRun.id)
                 const platformId = await projectService(log).getPlatformId(updatedFlowRun.projectId)
                 await flowRunSideEffects(log).onRetry({ flowRun: updatedFlowRun, platformId })
@@ -238,14 +256,15 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             createdBefore,
             excludeFlowRunIds,
         })
-        const cancelParentFlowRuns = await Promise.allSettled(flowRuns.map(flowRun => cancelSingleRun(log, flowRun, platformId)))
+        const limit = pLimit(10)
+        const cancelParentFlowRuns = await Promise.allSettled(flowRuns.map(flowRun => limit(() => cancelSingleRun(log, flowRun, platformId))))
         const childFlows = await getAllChildRuns(flowRuns.map(flowRun => flowRun.id))
         log.info({
             flowRunsCount: flowRuns.length,
             childFlowCount: childFlows.length,
         }, 'Found cancellable descendant flows')
 
-        const canceChildlPromises = await Promise.allSettled(childFlows.map(flowRun => cancelSingleRun(log, flowRun, platformId)))
+        const canceChildlPromises = await Promise.allSettled(childFlows.map(flowRun => limit(() => cancelSingleRun(log, flowRun, platformId))))
         if (cancelParentFlowRuns.some(r => r.status === 'rejected')) {
             throw cancelParentFlowRuns.find(r => r.status === 'rejected')!.reason
         }
@@ -266,7 +285,12 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         })
     },
     async bulkRetry(params: BulkRetryParams): Promise<FlowRunWithRetryError[]> {
-        const filteredFlowRuns = await filterFlowRunsAndApplyFilters(params)
+        const isFromFailedStepByFilter = params.strategy === FlowRetryStrategy.FROM_FAILED_STEP && isEmpty(params.flowRunIds)
+        const statusFilter = isFromFailedStepByFilter ? restrictToFailedStatuses(params.status) : params.status
+        if (isFromFailedStepByFilter && isEmpty(statusFilter)) {
+            return []
+        }
+        const filteredFlowRuns = await filterFlowRunsAndApplyFilters({ ...params, status: statusFilter })
         const limit = pLimit(10)
         const results = await Promise.allSettled(
             filteredFlowRuns.map(flowRun =>
@@ -393,7 +417,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             httpRequestId: undefined,
             platformId: await projectService(log).getPlatformId(projectId),
             executeTrigger: false,
-            streamStepProgress: StreamStepProgress.WEBSOCKET,
+            streamStepProgress: streamStepProgressUtils.forRun({ flowRun, flowVersion }),
             sampleData: !isNil(stepNameToTest) ? await sampleDataService(log).getSampleDataForFlow({
                 projectId,
                 flowVersion,
@@ -405,12 +429,20 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
     async startManualTrigger({ projectId, flowVersionId, triggeredBy }: StartManualTriggerParams): Promise<FlowRun> {
         const flowVersion = await flowVersionService(log).getOneOrThrow(flowVersionId)
         await flowService(log).getOneOrThrow({ id: flowVersion.flowId, projectId })
+        if (!streamStepProgressUtils.hasManualTrigger({ flowVersion })) {
+            const message = `Flow version ${flowVersionId} is not started by a manual trigger, so it cannot be run manually.`
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message },
+            }, message)
+        }
         const triggerPayload = {}
         const platformId = await projectService(log).getPlatformId(projectId)
 
         const creditsExhausted = await shouldBlockRunOnCredits({
             platformId,
             environment: RunEnvironment.PRODUCTION,
+            creditCheckSpeed: CreditCheckSpeed.NORMAL,
             log,
         })
         if (creditsExhausted) {
@@ -444,7 +476,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             httpRequestId: undefined,
             platformId,
             executeTrigger: false,
-            streamStepProgress: StreamStepProgress.WEBSOCKET,
+            streamStepProgress: streamStepProgressUtils.forRun({ flowRun, flowVersion }),
             sampleData: undefined,
         }, log)
     },
@@ -521,12 +553,12 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
 })
 
 
-async function cancelSingleRun(log: FastifyBaseLogger, flowRun: FlowRun, platformId: string): Promise<void> {
+export async function cancelSingleRun(log: FastifyBaseLogger, flowRun: FlowRun, platformId: string): Promise<void> {
     await distributedLock(log).runExclusive({
         key: `runs_metadata_${flowRun.id}`,
         timeoutInSeconds: 30,
         fn: async () => {
-            await jobQueue(log).removeAllFlowRunJobs({ flowRunId: flowRun.id, platformId, projectId: flowRun.projectId })
+            await jobQueue(log).removeAllFlowRunJobs({ flowRunId: flowRun.id, platformId, projectId: flowRun.projectId, flowId: flowRun.flowId })
             await waitpointService(log).deleteByFlowRunId({ flowRunId: flowRun.id, projectId: flowRun.projectId })
             await runsMetadataQueue(log).add({
                 id: flowRun.id,
@@ -572,6 +604,13 @@ async function getAllChildRuns(parentRunIds: string[]): Promise<FlowRun[]> {
     return results as FlowRun[]
 }
 
+
+function restrictToFailedStatuses(statusFilter: FlowRunStatus[] | undefined): FlowRunStatus[] {
+    if (isNil(statusFilter) || statusFilter.length === 0) {
+        return FAILED_STATES
+    }
+    return statusFilter.filter((status) => FAILED_STATES.includes(status))
+}
 
 async function filterFlowRunsAndApplyFilters(
     params: FilterFlowRunsAndApplyFiltersParams,
@@ -626,7 +665,7 @@ async function filterFlowRunsAndApplyFilters(
     }
 
     if (params.failedStepName) {
-        query = query.andWhere('flow_run.failedStepName = :failedStepName', {
+        query = query.andWhere('flow_run."failedStep"->>\'name\' = :failedStepName', {
             failedStepName: params.failedStepName,
         })
     }
@@ -645,7 +684,7 @@ export async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogge
     const logsFileId = params.flowRun.logsFileId ?? apId()
 
     let jobPayload: JobPayload = { type: 'inline', value: null }
-    if (!isNil(params.payload) && isNil(params.workerHandlerId)) {
+    if (!isNil(params.payload) && isNil(params.workerHandlerId) && !(params.preferInlinePayload ?? false)) {
         jobPayload = await payloadOffloader.offloadPayload(log, params.payload, params.flowRun.projectId, params.platformId)
     }
     else if (!isNil(params.payload)) {
@@ -680,6 +719,7 @@ export async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogge
             ...commonJobData,
             executionType: ExecutionType.BEGIN,
             executeTrigger: params.executeTrigger,
+            entryStepName: params.entryStepName,
         }
     const aParentIsBlockedOnThisRun = params.flowRun.failParentOnFailure && !isNil(params.flowRun.parentRunId)
     await jobQueue(log).add({
@@ -850,6 +890,7 @@ type ListParams = {
     includeArchived?: boolean
     environment?: RunEnvironment
     parentWaitpointId?: ApId
+    dispatchIndex?: number
 }
 
 type GetOneParams = {
@@ -872,10 +913,11 @@ type AddToQueueParamsCommon = {
     streamStepProgress: StreamStepProgress
     sampleData?: Record<string, unknown>
     jobId?: string
+    preferInlinePayload?: boolean
 }
 
 export type AddToQueueParams = AddToQueueParamsCommon & (
-    | { executionType: ExecutionType.BEGIN, executeTrigger: boolean }
+    | { executionType: ExecutionType.BEGIN, executeTrigger: boolean, entryStepName?: string }
     | { executionType: ExecutionType.RESUME, resumeReason: ResumeReason }
 )
 

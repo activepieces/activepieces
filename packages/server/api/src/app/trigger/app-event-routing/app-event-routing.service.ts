@@ -1,4 +1,5 @@
 import { apId, FlowId, ProjectId } from '@activepieces/core-utils'
+import { EntityManager } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import {
     AppEventRouting,
@@ -42,8 +43,9 @@ export const appEventRoutingService = {
     async deleteListeners({
         projectId,
         flowId,
+        entityManager,
     }: DeleteParams): Promise<void> {
-        await appEventRoutingRepo().delete({
+        await appEventRoutingRepo(entityManager).delete({
             projectId,
             flowId,
         })
@@ -58,6 +60,7 @@ type ListParams = {
 type DeleteParams = {
     projectId: ProjectId
     flowId: FlowId
+    entityManager?: EntityManager
 }
 
 type CreateParams = {
