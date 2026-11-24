@@ -45,7 +45,7 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
             throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityType: 'conversation', entityId: input.conversationId } })
         }
         const projects = await agentHelpers.getUserProjects({ platformId: input.platformId, userId: conversation.userId, log })
-        const file = await readConversationFile({ platformId: input.platformId, conversationId: input.conversationId, accessibleProjectIds: projects.map((project) => project.id), fileId: input.fileId, log })
+        const file = await readConversationFile({ platformId: input.platformId, conversationId: input.conversationId, userId: conversation.userId, accessibleProjectIds: projects.map((project) => project.id), fileId: input.fileId, log })
         if (!isNil(input.markReadForRunId)) {
             await markTurnAsHavingRead({ conversationId: input.conversationId, runId: input.markReadForRunId })
         }
