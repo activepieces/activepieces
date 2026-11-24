@@ -74,7 +74,7 @@ function idempotencyKey(value: unknown): string | undefined {
   const text = String(value).trim();
   if (text === '') return undefined;
   if (!IDEMPOTENCY_KEY.test(text)) {
-    throw new Error('Idempotency Key must be 1-256 letters, digits, "-" or "_".');
+    throw new Error('The key must be 1-256 letters, digits, "-" or "_".');
   }
   return text;
 }

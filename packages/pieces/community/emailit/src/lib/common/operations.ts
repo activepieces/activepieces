@@ -37,7 +37,7 @@ async function updateSubscriber({ auth, input }: { auth: EmailitAuthInput; input
     last_name: emailitValues.optionalText(input.lastName),
   });
   if (Object.keys(body).length === 0) {
-    throw new Error('Choose at least one change: Subscribed, First Name or Last Name.');
+    throw new Error('Choose at least one change: subscription, first name or last name.');
   }
   try {
     return await emailitClient.request({

@@ -54,7 +54,7 @@ function audience() {
   return Property.Dropdown({
     auth: emailitAuth,
     displayName: 'Audience',
-    description: 'The audience (subscriber list).',
+    description: 'The subscriber list.',
     required: true,
     refreshers: ['auth'],
     options: async ({ auth }) => options({ auth, path: '/audiences', label: audienceLabel }),
@@ -76,7 +76,7 @@ function domain() {
   return Property.Dropdown({
     auth: emailitAuth,
     displayName: 'Domain',
-    description: 'The sending domain.',
+    description: 'A sending domain of your Emailit workspace.',
     required: true,
     refreshers: ['auth'],
     options: async ({ auth }) => options({ auth, path: '/domains', label: domainLabel }),

@@ -97,7 +97,7 @@ describe('send_email (existing action)', () => {
   test('bad input fails before any request', async () => {
     const seen = stubFetch(replies([{ body: SEND_REPLY }]));
     await expect(run({ action: sendEmailAction, props: { ...base, to: ['a@b.co'], scheduled_at: 'next tuesday-ish' } })).rejects.toThrow('not a valid date-time');
-    await expect(run({ action: sendEmailAction, props: { ...base, to: ['a@b.co'], idempotency_key: 'has space' } })).rejects.toThrow('Idempotency Key');
+    await expect(run({ action: sendEmailAction, props: { ...base, to: ['a@b.co'], idempotency_key: 'has space' } })).rejects.toThrow('The key must be');
     await expect(run({ action: sendEmailAction, props: { ...base, to: ['a@b.co'], subject: undefined } })).rejects.toThrow('Subject is required');
     await expect(run({ action: sendEmailAction, props: { ...base, to: ['a@b.co'], content: '  ' } })).rejects.toThrow('email body');
     await expect(run({ action: sendEmailAction, props: { ...base, to: [] } })).rejects.toThrow('at least one');
