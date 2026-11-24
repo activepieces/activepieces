@@ -7,7 +7,6 @@ import {
 } from '@activepieces/shared';
 import { useDraggable } from '@dnd-kit/core';
 import { Handle, NodeProps, Position } from '@xyflow/react';
-import { t } from 'i18next';
 import React, { useMemo } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
@@ -18,6 +17,7 @@ import { stepsHooks } from '@/features/pieces';
 import { cn } from '@/lib/utils';
 
 import { flowCanvasConsts } from '../../utils/consts';
+import { flowCanvasUtils } from '../../utils/flow-canvas-utils';
 import { ApStepNode } from '../../utils/types';
 
 import { StepNodeChevron } from './step-node-chevron';
@@ -66,10 +66,7 @@ const ApStepCanvasNode = React.memo(
       stepName: step.name,
       trigger: flowVersion.trigger,
     });
-    const stepDisplayName =
-      step.type === FlowTriggerType.EMPTY
-        ? t('Select Trigger')
-        : step.displayName;
+    const stepDisplayName = flowCanvasUtils.getStepDisplayName(step);
     const chevronClickOverride =
       step.type === FlowTriggerType.EMPTY
         ? () => setOpenedPieceSelectorStepNameOrAddButtonId(step.name)

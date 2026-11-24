@@ -11,7 +11,9 @@ import {
   ProcessInBatchesAction,
   StepLocationRelativeToParent,
   FlowTrigger,
+  FlowTriggerType,
   Note,
+  Step,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 
@@ -755,6 +757,12 @@ function determineInitiallySelectedStep(
   }
   return firstInvalidStep?.name ?? 'trigger';
 }
+const getStepDisplayName = (step: Step): string => {
+  return step.type === FlowTriggerType.EMPTY
+    ? t('Select Trigger')
+    : step.displayName;
+};
+
 const getBranchDisplayName = (branchName: string): string => {
   switch (branchName) {
     case 'Otherwise':
@@ -819,4 +827,5 @@ export const flowCanvasUtils = {
   determineInitiallySelectedStep,
   doesSelectionRectangleExist,
   getBranchDisplayName,
+  getStepDisplayName,
 };
