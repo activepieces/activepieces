@@ -160,7 +160,7 @@ function buildTelemetry({ functionId, billing }: { functionId: string, billing?:
     }
     return {
         telemetry: { functionId, integrations, includeRuntimeContext: AI_TRACE_RUNTIME_CONTEXT },
-        runtimeContext: aiObservability.runtimeContextOf({ billing }),
+        runtimeContext: aiObservability.runtimeContextOf({ billing, functionId }),
     }
 }
 
