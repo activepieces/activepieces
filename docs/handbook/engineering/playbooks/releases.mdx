@@ -8,7 +8,7 @@ All changes flow through a staging environment before reaching production. There
 ## How It Works
 
 1. **Merge to `main`** — `continuous-delivery-stg.yml` builds a `version.sha.beta` image, and deploys it to **staging** (`stg.activepieces.com`).
-2. **By hand** — `continuous-delivery-cloud.yml` (the Cloud gate) picks the tip of `main` (the run stops if staging has not deployed it), runs the E2E matrix and the upgrade test on the image staging built from it, and waits for one approval.
+2. **Sunday to Thursday at 8 AM UTC, or by hand** — `continuous-delivery-cloud.yml` (the Cloud gate) picks a candidate. A scheduled run takes the newest `main` commit that staging deployed; a manual run takes the tip of `main` (the run stops if staging has not deployed it). The gate runs the E2E matrix and the upgrade test on the image staging built from the candidate, and waits for one approval.
 3. **On approval** — the gate deploys that same image to the canary, then to the whole production fleet.
 4. **Self-hosted** — `release-self-hosted.yml`, by hand. The weekly `continuous-delivery-release.yml` is disabled.
 
@@ -56,9 +56,8 @@ To run any workflow manually, go to the repo's **Actions** tab, select the workf
 
 | Trigger | What happens |
 |---|---|
+| **Schedule** (Sunday to Thursday, 8 AM UTC) | Picks the newest of the last 30 `main` commits whose `deploy-staging-app` and `deploy-staging-workers` checks passed, not the tip. The run stops with no approval when every Cloud host, canary included, already runs that commit. |
 | **Manual dispatch** | Picks the tip of `main`, or the `main` commit named in `sha`. The run stops unless that commit's `deploy-staging-app` and `deploy-staging-workers` checks passed. `skip_tests` (emergency only) skips the E2E matrix, the upgrade test and the benchmark. |
-
-The gate has no schedule yet. A daily run (Sunday to Thursday, 8 AM UTC) comes back when the E2E suite covers more of the product; a scheduled run picks the newest `main` commit whose staging deploy checks passed, not the tip, and the `cut` job already stops it when every Cloud host runs the candidate.
 
 Then, for the candidate:
 

@@ -10,7 +10,7 @@ This page explains how code moves from merge to production and why each step exi
 ```
 Merge to main ──→ Deploy to staging
                           │
-                          Started by hand: the Cloud gate picks the tip of main, which staging must have deployed
+                          Sunday to Thursday, 8 AM UTC: the Cloud gate picks the newest commit staging deployed
                           │
                           E2E matrix + upgrade test + benchmark (report only) on the staging image
                           │
@@ -25,11 +25,11 @@ Each merge to `main` builds a `version.sha.beta` image and deploys it to staging
 
 **Why**: Every commit runs on a real deployment before Cloud gets it.
 
-### Cloud gate — by hand
+### Cloud gate — Sunday to Thursday
 
-`continuous-delivery-cloud.yml` takes the tip of `main`, and stops if staging has not deployed it. It runs the E2E matrix (four configurations) and the upgrade test from the last self-hosted release on the image staging built. It also benchmarks that image against the image Cloud runs; the numbers are in the run summary and do not block the approval. The run summary lists the tickets in the candidate. One approval in the `production` environment deploys the image to the canary and then to the fleet.
+`continuous-delivery-cloud.yml` runs Sunday to Thursday at 8 AM UTC and takes the newest `main` commit that staging deployed. When Cloud already runs that commit, the run stops with no approval. A run started by hand takes the tip of `main`, and stops if staging has not deployed it. It runs the E2E matrix (four configurations) and the upgrade test from the last self-hosted release on the image staging built. It also benchmarks that image against the image Cloud runs; the numbers are in the run summary and do not block the approval. The run summary lists the tickets in the candidate. One approval in the `production` environment deploys the image to the canary and then to the fleet.
 
-**Why**: Cloud gets the exact image that staging runs and the matrix tested. The gate runs by hand until the E2E suite covers more of the product; then it runs Sunday to Thursday at 8 AM UTC, so each deploy is small.
+**Why**: Cloud gets the exact image that staging runs and the matrix tested. The gate runs every working day, so each deploy carries about one day of `main`.
 
 ### Self-hosted
 
@@ -40,7 +40,8 @@ Self-hosted releases use `release-self-hosted.yml`. See [Releases](/handbook/eng
 | Time | What Happens |
 |---|---|
 | Any time | Merge to `main` → staging deploy |
-| When the release captain starts it | Cloud gate: checks, approval, canary, fleet |
+| Sunday to Thursday, 8 AM UTC | Cloud gate: checks, approval, canary, fleet |
+| When the release captain starts it | The same gate, on the tip of `main` or a hotfix |
 
 ## Overrides
 
@@ -50,4 +51,4 @@ Self-hosted releases use `release-self-hosted.yml`. See [Releases](/handbook/eng
 ## FAQ
 
 **Q: I merged at 10 AM UTC on a Wednesday. When does my code reach production?**
-It deploys to staging immediately. The next Cloud gate run picks it up, and it reaches Cloud when the E2E matrix passes and the deploy is approved. Until the gate runs on a schedule, that is when the release captain starts it.
+It deploys to staging immediately. The Thursday 8 AM UTC gate run picks it up when its staging deploy is green, and it reaches Cloud when the E2E matrix passes and the deploy is approved.
