@@ -1,4 +1,4 @@
-import { DynamicPropsValue, createAction } from '@activepieces/pieces-framework';
+import { DynamicPropsValue, MarkdownVariant, Property, createAction } from '@activepieces/pieces-framework';
 import { TeableCommon } from '../common';
 import { teableClient } from '../common/client';
 import { TeableAuth } from '../auth';
@@ -16,20 +16,44 @@ export const updateRecordAction = createAction({
       'Changes the given fields of one existing record; other fields keep their values, and Fields to Clear are emptied. Safe to retry.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'record',
+      display: 'section',
+      label: 'Record',
+      icon: 'inbox',
+      props: ['base_id', 'table_id', 'record_id'],
+    },
+    {
+      key: 'changes',
+      display: 'section',
+      label: 'Changes',
+      icon: 'sliders',
+      props: ['changes_help', 'fields', 'fields_to_clear'],
+    },
+  ],
   props: {
     base_id: TeableCommon.base_id,
     table_id: TeableCommon.table_id,
     record_id: TeableCommon.record_id,
-    fields: TeableCommon.fields,
+    changes_help: Property.MarkDown({
+      value:
+        'Fields you leave empty keep their current value. To empty one, pick it in Fields to Clear.',
+      variant: MarkdownVariant.INFO,
+    }),
+    fields: TeableCommon.update_fields,
     fields_to_clear: TeableCommon.fields_to_clear,
   },
   async run(context) {
     const { table_id, record_id } = context.propsValue;
-    const dynamicFields: DynamicPropsValue = context.propsValue.fields;
+    const dynamicFields: DynamicPropsValue = context.propsValue.fields ?? {};
     const fieldsToClear = context.propsValue.fields_to_clear ?? [];
     const fields: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(dynamicFields)) {
-      if (value !== undefined && value !== null && value !== '') {
+      if (value !== undefined &&
+        value !== null &&
+        value !== '' &&
+        !(Array.isArray(value) && value.length === 0)) {
         fields[key] = value;
       }
     }

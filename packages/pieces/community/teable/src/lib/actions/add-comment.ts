@@ -22,10 +22,26 @@ export const addCommentAction = createAction({
     record_id: TeableCommon.record_id,
     comment: Property.LongText({
       displayName: 'Comment',
-      description: 'The text of the comment.',
+      description: 'Plain text. Each line becomes its own paragraph.',
       required: true,
     }),
   },
+  propertyGroups: [
+    {
+      key: 'record',
+      display: 'section',
+      label: 'Record',
+      icon: 'inbox',
+      props: ['base_id', 'table_id', 'record_id'],
+    },
+    {
+      key: 'comment',
+      display: 'section',
+      label: 'Comment',
+      icon: 'text',
+      props: ['comment'],
+    },
+  ],
   outputSchema: teableOutputSchemas.addComment,
   async run(context) {
     const { table_id, record_id, comment } = context.propsValue;
@@ -33,11 +49,16 @@ export const addCommentAction = createAction({
     if (text.length === 0) {
       throw new Error('Comment must not be empty.');
     }
+    const content = text
+      .split('\n')
+      .map((line) => line.replace(/\r/g, '').trim())
+      .filter((line) => line.length > 0)
+      .map((line) => ({ type: 'p', children: [{ type: 'span', value: line }] }));
     await teableClient.createComment({
       auth: context.auth,
       tableId: table_id,
       recordId: record_id,
-      content: [{ type: 'p', children: [{ type: 'span', value: text }] }],
+      content,
     });
     return { success: true, recordId: record_id, comment: text };
   },
