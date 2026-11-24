@@ -2,6 +2,7 @@ import {
   APIErrorCode,
   APIResponseError,
   Client,
+  collectPaginatedAPI,
   isFullPage,
 } from '@notionhq/client';
 import { PageObjectResponse } from '@notionhq/client/build/src/api-endpoints';
@@ -22,12 +23,26 @@ async function enable({
     store,
     isRepublish,
     fetchLatest: async () => {
-      const response = await client(auth).databases.query({
+      const notion = client(auth);
+      const newest = await notion.databases.query({
         database_id: databaseId,
         sorts: [{ timestamp, direction: 'descending' }],
+        page_size: 1,
+      });
+      const latest = newest.results.find(isFullPage);
+      if (isNil(latest)) {
+        return [];
+      }
+      const pages = await collectPaginatedAPI(notion.databases.query, {
+        database_id: databaseId,
+        filter: timestampFilter({
+          timestamp,
+          bound: dayjs(latest[timestamp]).valueOf(),
+        }),
+        sorts: [{ timestamp, direction: 'ascending' }],
         page_size: PAGE_SIZE,
       });
-      return response.results
+      return pages
         .filter(isFullPage)
         .map((page) => toItem({ page, timestamp }));
     },
@@ -137,16 +152,17 @@ function toItem({
   page: PageObjectResponse;
   timestamp: DatabaseTimestamp;
 }): CheckpointItem {
-  const key =
-    timestamp === 'created_time'
-      ? notionCheckpoint.fingerprint([page.id])
-      : notionCheckpoint.fingerprint([
-          page.id,
-          page.last_edited_time,
-          JSON.stringify(page.properties),
-        ]);
+  const id = notionCheckpoint.fingerprint([page.id]);
   return {
-    key,
+    id,
+    version:
+      timestamp === 'created_time'
+        ? id
+        : notionCheckpoint.fingerprint([
+            page.id,
+            page.last_edited_time,
+            JSON.stringify(page.properties),
+          ]),
     time: dayjs(page[timestamp]).valueOf(),
     data: enrichPage(page),
   };

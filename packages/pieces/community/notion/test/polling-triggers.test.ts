@@ -79,6 +79,40 @@ describe('Updated Database Item', () => {
   });
 });
 
+describe('Updated Database Item, edge cases from review', () => {
+  it('delivers an edit that returns a row to an earlier value in the same minute', async () => {
+    addPage({ id: 'inv', at: '09:00:00', status: 'Draft' });
+    const ctx = makeCtx({ database_id: 'db' });
+    await hook(updatedDatabaseItem.onEnable, ctx);
+
+    editPage({ id: 'inv', at: '10:00:05', status: 'Approved' });
+    const first = await poll(updatedDatabaseItem, ctx);
+    editPage({ id: 'inv', at: '10:00:20', status: 'Draft' });
+    const second = await poll(updatedDatabaseItem, ctx);
+    editPage({ id: 'inv', at: '10:00:40', status: 'Approved' });
+    const third = await poll(updatedDatabaseItem, ctx);
+
+    expect([...first, ...second, ...third].map(status)).toEqual([
+      'Approved',
+      'Draft',
+      'Approved',
+    ]);
+  });
+
+  it('turning on with more than 100 rows in the newest minute sends none of them', async () => {
+    Array.from({ length: 250 }, (_, i) =>
+      addPage({ id: `row-${i}`, at: '09:00:00', status: 'Todo' })
+    );
+    const ctx = makeCtx({ database_id: 'db' });
+    await hook(updatedDatabaseItem.onEnable, ctx);
+
+    const first = await poll(updatedDatabaseItem, ctx);
+    const second = await poll(updatedDatabaseItem, ctx);
+
+    expect([...first, ...second]).toEqual([]);
+  });
+});
+
 describe('New Database Item', () => {
   it('delivers every row added after turning on with an empty database (PIE-1103)', async () => {
     vi.setSystemTime(at('09:00:30'));
@@ -198,6 +232,21 @@ describe('New Comment', () => {
 });
 
 describe('Updated Page', () => {
+  it('delivers every page edited between checks, not only the newest 100', async () => {
+    Array.from({ length: 300 }, (_, i) =>
+      addPage({ id: `p-${i}`, at: '09:00:00', status: '' })
+    );
+    const ctx = makeCtx({});
+    await hook(updatedPage.onEnable, ctx);
+
+    Array.from({ length: 250 }, (_, i) =>
+      editPage({ id: `p-${i}`, at: '10:00:00', status: '' })
+    );
+    const delivered = await poll(updatedPage, ctx);
+
+    expect(new Set(delivered.map(id)).size).toBe(250);
+  });
+
   it('keeps checking after it is turned on and sends only a valid search filter (PIE-1005)', async () => {
     addPage({ id: 'p1', at: '10:00:00', status: '' });
     addPage({ id: 'p2', at: '09:00:00', status: '' });
@@ -454,10 +503,8 @@ function search({
   const rows = [...fake.pages].sort(
     (a, b) => minute(b.edited) - minute(a.edited) || b.editSeq - a.editSeq
   );
-  return {
-    ...paginate({ rows, cursor: undefined, size: 100 }),
-    results: rows.map(pageToApi),
-  };
+  const page = paginate({ rows, cursor: args.start_cursor, size: 100 });
+  return { ...page, results: page.results.map(pageToApi) };
 }
 
 type FakePage = {
@@ -486,4 +533,7 @@ type QueryArgs = {
 
 type ListArgs = { block_id: string; start_cursor?: string };
 
-type SearchArgs = { filter?: Record<string, string> };
+type SearchArgs = {
+  filter?: Record<string, string>;
+  start_cursor?: string;
+};

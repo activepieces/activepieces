@@ -180,7 +180,7 @@ const getUpdatedPages = async (
   authentication: NotionAuthValue,
   startDate?: Date
 ) => {
-  const pages = await getPages(authentication, { direction: 'descending' });
+  const pages = await getPages(authentication, { editedSince: startDate });
   if (!startDate) {
     return pages;
   }

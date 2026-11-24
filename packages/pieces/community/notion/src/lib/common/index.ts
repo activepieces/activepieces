@@ -4,8 +4,9 @@ import {
   Property,
   DynamicPropsValue,
 } from '@activepieces/pieces-framework';
-import { AppConnectionType } from '@activepieces/pieces-framework';
+import { AppConnectionType, isNil } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
+import { SearchResponse } from '@notionhq/client/build/src/api-endpoints';
 import { NotionFieldMapping } from './models';
 import { notionAuth } from '../auth';
 
@@ -346,21 +347,40 @@ export const notionCommon = {
 
 export async function getPages(
   auth: NotionAuthValue,
-  sort?: {
-    direction: 'ascending' | 'descending';
+  options?: {
+    editedSince?: Date;
   }
 ): Promise<any[]> {
   const notion = new Client({
     auth: getNotionToken(auth),
     notionVersion: '2022-02-22',
   });
-
-  const pages = await notion.search({
-    filter: { property: 'object', value: 'page' },
-    sort: {
-      direction: sort?.direction ?? 'descending',
-      timestamp: 'last_edited_time',
-    },
-  });
-  return pages.results as any[];
+  const editedSince = options?.editedSince;
+  let results: SearchResponse['results'] = [];
+  let cursor: string | undefined = undefined;
+  for (let read = 0; read < MAX_SEARCH_PAGES; read++) {
+    const response = await notion.search({
+      filter: { property: 'object', value: 'page' },
+      sort: { direction: 'descending', timestamp: 'last_edited_time' },
+      start_cursor: cursor,
+    });
+    results = [...results, ...response.results];
+    const oldest = response.results.at(-1);
+    const reachedCheckpoint =
+      isNil(editedSince) ||
+      isNil(oldest) ||
+      !('last_edited_time' in oldest) ||
+      new Date(oldest.last_edited_time) < editedSince;
+    if (
+      !response.has_more ||
+      isNil(response.next_cursor) ||
+      reachedCheckpoint
+    ) {
+      break;
+    }
+    cursor = response.next_cursor;
+  }
+  return results;
 }
+
+const MAX_SEARCH_PAGES = 10;

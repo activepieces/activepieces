@@ -145,8 +145,10 @@ async function listComments({
 }
 
 function toItem(comment: CommentObjectResponse): CheckpointItem {
+  const id = notionCheckpoint.fingerprint([comment.id]);
   return {
-    key: notionCheckpoint.fingerprint([comment.id]),
+    id,
+    version: id,
     time: dayjs(comment.created_time).valueOf(),
     data: comment,
   };

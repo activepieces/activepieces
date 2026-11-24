@@ -48,14 +48,11 @@ function initial(items: CheckpointItem[]): NotionCheckpoint {
   if (items.length === 0) {
     return {
       since: dayjs().subtract(1, 'minute').startOf('minute').valueOf(),
-      seen: [],
+      seen: {},
     };
   }
   const since = newestTime(items);
-  return {
-    since,
-    seen: items.filter((item) => item.time === since).map((item) => item.key),
-  };
+  return { since, seen: versionsAt({ items, time: since }) };
 }
 
 function advance({
@@ -65,23 +62,20 @@ function advance({
   checkpoint: NotionCheckpoint;
   items: CheckpointItem[];
 }): { fresh: CheckpointItem[]; checkpoint: NotionCheckpoint } {
-  const seen = new Set(checkpoint.seen);
   const fresh = items.filter(
     (item) =>
       item.time > checkpoint.since ||
-      (item.time === checkpoint.since && !seen.has(item.key))
+      (item.time === checkpoint.since &&
+        checkpoint.seen[item.id] !== item.version)
   );
   const since = Math.max(checkpoint.since, newestTime(items));
-  const atSince = items
-    .filter((item) => item.time === since)
-    .map((item) => item.key);
-  const carried = since === checkpoint.since ? checkpoint.seen : [];
+  const carried = since === checkpoint.since ? checkpoint.seen : {};
   return {
     fresh,
     checkpoint: {
       ...checkpoint,
       since,
-      seen: [...new Set([...carried, ...atSince])],
+      seen: { ...carried, ...versionsAt({ items, time: since }) },
     },
   };
 }
@@ -91,6 +85,20 @@ function fingerprint(parts: string[]): string {
     .update(JSON.stringify(parts))
     .digest('hex')
     .slice(0, 16);
+}
+
+function versionsAt({
+  items,
+  time,
+}: {
+  items: CheckpointItem[];
+  time: number;
+}): Record<string, string> {
+  return Object.fromEntries(
+    items
+      .filter((item) => item.time === time)
+      .map((item) => [item.id, item.version])
+  );
 }
 
 function newestTime(items: CheckpointItem[]): number {
@@ -110,7 +118,7 @@ function fromLegacyLastItem(lastItem: unknown): NotionCheckpoint | null {
   }
   return {
     since: dayjs(epoch).add(1, 'minute').startOf('minute').valueOf(),
-    seen: [],
+    seen: {},
   };
 }
 
@@ -127,12 +135,13 @@ export const notionCheckpoint = {
 
 export type NotionCheckpoint = {
   since: number;
-  seen: string[];
+  seen: Record<string, string>;
   resume?: { cursor: string; bound: number };
 };
 
 export type CheckpointItem = {
-  key: string;
+  id: string;
+  version: string;
   time: number;
   data: unknown;
 };
