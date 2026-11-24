@@ -1,7 +1,8 @@
 import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
-import { getTeamId, SlackAuthValue } from '../common/auth-helpers';
+import { getTeamId, getUserId, SlackAuthValue } from '../common/auth-helpers';
 import { appWebhookSetupInfo } from '../common/props';
+import { connectionCanSee, SlackEventAuthorization } from '../common/conversation-access';
 import { newMessageTriggerOutputSchema } from '../output-schemas';
 
 export const newMessageTrigger = createTrigger({
@@ -49,11 +50,27 @@ export const newMessageTrigger = createTrigger({
 		if (context.propsValue.ignoreBots && payloadBody.event.bot_id) {
 			return [];
 		}
+		const isPrivateChannel = payloadBody.event.channel_type === 'group';
+		if (isPrivateChannel) {
+			const connectedUserId = await getUserId(context.auth);
+			const connectionCanSeePrivateChannel = await connectionCanSee({
+				auth: context.auth,
+				store: context.store,
+				connectedUserId,
+				channel: payloadBody.event.channel,
+				channelType: payloadBody.event.channel_type,
+				eventAuthorizations: payloadBody.authorizations,
+			});
+			if (!connectionCanSeePrivateChannel) {
+				return [];
+			}
+		}
 		return [payloadBody.event];
 	},
 });
 
 type PayloadBody = {
+	authorizations?: SlackEventAuthorization[];
 	event: {
 		channel: string;
 		bot_id?: string;

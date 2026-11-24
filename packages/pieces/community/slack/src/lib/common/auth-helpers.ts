@@ -47,6 +47,14 @@ export function getUserToken(auth: SlackAuthValue): string | undefined {
     ?.access_token;
 }
 
+export function getBotUserId(auth: SlackAuthValue): string | undefined {
+  if (auth.type === AppConnectionType.CUSTOM_AUTH) {
+    return undefined;
+  }
+  const botUserId = auth.data['bot_user_id'];
+  return typeof botUserId === 'string' ? botUserId : undefined;
+}
+
 export function requireUserToken(auth: SlackAuthValue): string {
   const token = getUserToken(auth);
   if (!token) {
