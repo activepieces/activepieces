@@ -3,7 +3,7 @@ import { ActionPreviewEvent, agentToolClassification } from '@activepieces/share
 import { tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { z } from 'zod'
 import { executeBatchAction, MAX_BATCH_SIZE, MAX_IDENTICAL_ACTION_FAILURES } from './configured-tools'
-import { AgentEventEmitter, cardTitleFields, extractUserFacingError, GateDecision, gateNoResponseMessage, isMissingConnectionResult, isSuccessResult, normalizePieceName, stableStringify, TaintState, TOOL_EXECUTION_TIMEOUT_MS, truncateLargeResult, withToolTimeout } from './tool-primitives'
+import { AgentEventEmitter, cardTitleFields, extractUserFacingError, GateDecision, gateNoResponseMessage, isMissingConnectionResult, isSuccessResult, normalizePieceName, stableStringify, TaintState, truncateLargeResult } from './tool-primitives'
 
 export function createProgressGuard() {
     const failureCounts = new Map<string, number>()
@@ -91,13 +91,6 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
         }
         return await requiresAuth({ pieceName, actionName }) ? blocked : null
     }
-    const executeWithTimeout = (toolName: string, toolInput: Record<string, unknown>) =>
-        withToolTimeout({
-            fn: () => executeTool(toolName, toolInput),
-            timeoutMs: TOOL_EXECUTION_TIMEOUT_MS,
-            toolName,
-        })
-
     return {
         ap_discover_action_auth: tool({
             description: 'Check what authentication a piece needs and find available connections. In chat you rarely need it: ap_show_connection_picker runs this check itself, so call the card directly. Use this only when you need the auth details without showing a card.',
@@ -106,7 +99,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                 pieceName: z.string().describe('Piece name, e.g. "@activepieces/piece-gmail"'),
             }),
             execute: async (input) => {
-                return executeWithTimeout('ap_discover_action_auth', input)
+                return executeTool('ap_discover_action_auth', input)
             },
         }),
 
@@ -116,7 +109,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                 connectionExternalId: z.string().describe('The connectionExternalId of the connection to verify'),
             }),
             execute: async (input) => {
-                return executeWithTimeout('ap_revalidate_connection', input)
+                return executeTool('ap_revalidate_connection', input)
             },
         }),
 
@@ -194,8 +187,8 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
 
                 if (isBatch) {
                     return executeBatchAction({
-                        executeWithTimeout: async (toolName, itemInput) => {
-                            const itemResult = await executeWithTimeout(toolName, itemInput)
+                        executeTool: async (toolName, itemInput) => {
+                            const itemResult = await executeTool(toolName, itemInput)
                             progressGuard.recordConnectionResult({ pieceName: toolInput.pieceName, result: itemResult })
                             return itemResult
                         },
@@ -207,7 +200,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                         description: toolInput.description,
                     })
                 }
-                const rawResult = await executeWithTimeout('ap_execute_action', toolInput)
+                const rawResult = await executeTool('ap_execute_action', toolInput)
                 const rawSuccess = isSuccessResult(rawResult)
                 progressGuard.recordConnectionResult({ pieceName: toolInput.pieceName, result: rawResult })
                 if (rawSuccess || !isMissingConnectionResult(rawResult)) {
@@ -255,7 +248,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
             }),
             execute: async (input) => {
                 taintState.tainted = true
-                return truncateLargeResult(await executeWithTimeout('ap_list_across_projects', input))
+                return truncateLargeResult(await executeTool('ap_list_across_projects', input))
             },
         }),
 
@@ -273,7 +266,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                     return connectionBreaker
                 }
                 taintState.tainted = true
-                const rawResult = await executeWithTimeout('ap_explore_data', toolInput)
+                const rawResult = await executeTool('ap_explore_data', toolInput)
                 progressGuard.recordConnectionResult({ pieceName: toolInput.pieceName, result: rawResult })
                 return truncateLargeResult(rawResult)
             },
@@ -291,7 +284,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
             }),
             execute: async (toolInput, { toolCallId }: ToolExecutionOptions<undefined>) => {
                 taintState.tainted = true
-                const rawResult = await executeWithTimeout('ap_run_code', toolInput)
+                const rawResult = await executeTool('ap_run_code', toolInput)
                 const resultObj = isObject(rawResult) ? rawResult as Record<string, unknown> : {}
                 const producedFiles = Array.isArray(resultObj['producedFiles']) ? resultObj['producedFiles'] : []
                 const timestamp = new Date().toISOString()
