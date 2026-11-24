@@ -1,6 +1,8 @@
+import { Readable } from 'node:stream';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { backBlazeS3Auth } from '../..';
-import { createBackBlazeS3 } from '../common';
+import { backblazeCommon } from '../common';
+import { backblazeAiCommon } from './ai/ai-common';
 
 export const readBackBlazeFileAction = createAction({
   auth: backBlazeS3Auth,
@@ -8,7 +10,7 @@ export const readBackBlazeFileAction = createAction({
   classification: 'READ',
   displayName: 'Read File',
   description: 'Read a file from Backblaze bucket to use it in other steps.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Fetches an object from the configured Backblaze B2 (S3-compatible) bucket by its key and writes it to a downstream file reference for use in later steps. Use to retrieve previously stored file content. Requires the exact object key including any extension. Idempotent: it only reads, leaving the bucket unchanged.', idempotent: true },
   props: {
     key: Property.ShortText({
@@ -20,19 +22,20 @@ export const readBackBlazeFileAction = createAction({
   async run(context) {
     const { bucket } = context.auth.props;
     const { key } = context.propsValue;
-    const s3 = createBackBlazeS3(context.auth.props);
+    const s3 = backblazeCommon.createBackBlazeS3(context.auth.props);
 
-    const file = await s3.getObject({
-      Bucket: bucket,
-      Key: key,
+    const file = await backblazeAiCommon.call({
+      operation: 'read file',
+      key,
+      request: () => s3.getObject({ Bucket: bucket, Key: key }),
     });
-    const base64 = await file.Body?.transformToString('base64');
-    if (!base64) {
-      throw new Error(`Could not read file ${key} from bucket`);
+    const body = file.Body;
+    if (!(body instanceof Readable)) {
+      throw new Error(`Backblaze read file: could not read "${key}" from the bucket.`);
     }
     return await context.files.write({
       fileName: key,
-      data: Buffer.from(base64, 'base64'),
+      data: body,
     });
   },
 });

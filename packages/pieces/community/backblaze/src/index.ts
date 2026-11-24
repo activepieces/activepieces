@@ -6,15 +6,23 @@ import {
 import { PieceCategory } from '@activepieces/pieces-framework';
 import { readBackBlazeFileAction } from './lib/actions/read-file';
 import { backBlazes3UploadFileAction } from './lib/actions/upload-file';
-import { createBackBlazeS3 } from './lib/common';
+import { backblazeCommon } from './lib/common';
 import { newBackBlazeFileTrigger } from './lib/triggers/new-file';
+import { backblazeListFilesAi } from './lib/actions/ai/list-files';
+import { backblazeGetFileMetadataAi } from './lib/actions/ai/get-file-metadata';
+import { backblazeReadFileAi } from './lib/actions/ai/read-file';
+import { backblazeUploadFileAi } from './lib/actions/ai/upload-file';
+import { backblazeCopyFileAi } from './lib/actions/ai/copy-file';
+import { backblazeDeleteFileAi } from './lib/actions/ai/delete-file';
 
 const description = `
 This piece allows you to upload files to BackBlaze Bucket compatible services.
 
 BackBlaze Settings:
 Regions: https://www.backblaze.com/apidocs/introduction-to-the-s3-compatible-api
-Endpoint: leave blank
+Endpoint: the S3 endpoint shown on your bucket's page, e.g. s3.us-west-004.backblazeb2.com.
+Or leave Endpoint blank and choose your bucket's Backblaze region (e.g. us-west-004) in Region.
+Access Key ID / Secret Access Key: your Application Key ID and Application Key.
 `;
 
 export const backBlazeS3Auth = PieceAuth.CustomAuth({
@@ -41,8 +49,28 @@ export const backBlazeS3Auth = PieceAuth.CustomAuth({
       options: {
         options: [
           {
-            label: 'Default',
-            value: 'us-east-1',
+            label: 'Backblaze US West [us-west-001]',
+            value: 'us-west-001',
+          },
+          {
+            label: 'Backblaze US West [us-west-002]',
+            value: 'us-west-002',
+          },
+          {
+            label: 'Backblaze US West [us-west-004]',
+            value: 'us-west-004',
+          },
+          {
+            label: 'Backblaze US East [us-east-005]',
+            value: 'us-east-005',
+          },
+          {
+            label: 'Backblaze EU Central [eu-central-003]',
+            value: 'eu-central-003',
+          },
+          {
+            label: 'Backblaze Canada East [ca-east-006]',
+            value: 'ca-east-006',
           },
           {
             label: 'US East (N. Virginia) [us-east-1]',
@@ -166,7 +194,7 @@ export const backBlazeS3Auth = PieceAuth.CustomAuth({
     }),
   },
   validate: async ({ auth }) => {
-    const s3 = createBackBlazeS3(auth);
+    const s3 = backblazeCommon.createBackBlazeS3(auth);
     try {
       await s3.listObjectsV2({
         Bucket: auth.bucket,
@@ -178,7 +206,7 @@ export const backBlazeS3Auth = PieceAuth.CustomAuth({
     } catch (e) {
       return {
         valid: false,
-        error: (e as Error)?.message,
+        error: backblazeCommon.describeValidationError(e),
       };
     }
   },
@@ -189,10 +217,19 @@ export const backblaze = createPiece({
   displayName: 'Backblaze',
   description: 'Scalable storage in the cloud',
   logoUrl: 'https://cdn.activepieces.com/pieces/backblaze.png',
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.86.4',
   authors: ["nhnansari","kishanprmr"],
   categories: [PieceCategory.DEVELOPER_TOOLS],
   auth: backBlazeS3Auth,
-  actions: [backBlazes3UploadFileAction, readBackBlazeFileAction],
+  actions: [
+    backBlazes3UploadFileAction,
+    readBackBlazeFileAction,
+    backblazeListFilesAi,
+    backblazeGetFileMetadataAi,
+    backblazeReadFileAi,
+    backblazeUploadFileAi,
+    backblazeCopyFileAi,
+    backblazeDeleteFileAi,
+  ],
   triggers: [newBackBlazeFileTrigger],
 });
