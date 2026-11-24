@@ -164,3 +164,53 @@ describe('new button click trigger run', () => {
     expect(await run({ interaction: buttonClick({ actions: [{ type: 'button' }] }) })).toEqual([]);
   });
 });
+
+describe('new button click trigger edge cases and scale', () => {
+  function runWith({ interaction, propsValue = {} }: { interaction: Record<string, unknown>; propsValue?: Record<string, unknown> }) {
+    return newButtonClickTrigger.run({ propsValue, payload: interactionRequest(interaction) } as never);
+  }
+
+  it('ignores a click with no container', async () => {
+    expect(await runWith({ interaction: buttonClick({ container: undefined }) })).toEqual([]);
+  });
+
+  it('ignores a click with no actions', async () => {
+    expect(await runWith({ interaction: buttonClick({ actions: [] }) })).toEqual([]);
+  });
+
+  it('starts one run when several clicked actions match', async () => {
+    const actions = [
+      { type: 'button', action_id: 'deploy_approve' },
+      { type: 'button', action_id: 'deploy_approve_2' },
+    ];
+    expect(await runWith({ interaction: buttonClick({ actions }), propsValue: { actionIdPrefix: 'deploy_' } })).toHaveLength(1);
+  });
+
+  it('treats a whitespace-only prefix as no prefix filter', async () => {
+    expect(await runWith({ interaction: buttonClick(), propsValue: { actionIdPrefix: '   ' } })).toHaveLength(1);
+  });
+
+  it('matches unicode action ids exactly', async () => {
+    const interaction = buttonClick({ actions: [{ type: 'button', action_id: 'موافقة_✅' }] });
+    expect(await runWith({ interaction, propsValue: { actionIds: ['موافقة_✅'] } })).toHaveLength(1);
+    expect(await runWith({ interaction, propsValue: { actionIds: ['موافقة'] } })).toEqual([]);
+  });
+
+  it('does not match a non-string filter item by its text form', async () => {
+    expect(await runWith({ interaction: buttonClick(), propsValue: { actionIds: [{}] } })).toEqual([]);
+    const interaction = buttonClick({ actions: [{ type: 'button', action_id: '[object Object]' }] });
+    expect(await runWith({ interaction, propsValue: { actionIds: ['deploy_approve', {}] } })).toEqual([]);
+  });
+
+  it('handles 1,000 actions, a 10,000-item filter and a 1 MB message quickly', async () => {
+    const actions = Array.from({ length: 1000 }, (_, i) => ({ type: 'button', action_id: `btn_${i}` }));
+    const actionIds = Array.from({ length: 10000 }, (_, i) => `other_${i}`).concat('btn_999');
+    const message = { type: 'message', ts: '1700000000.000100', text: 'x'.repeat(1024 * 1024) };
+    const started = performance.now();
+    const outputs = await runWith({ interaction: buttonClick({ actions, message }), propsValue: { actionIds } });
+    const elapsed = performance.now() - started;
+    expect(outputs).toHaveLength(1);
+    expect(outputs[0]).toMatchObject({ message: { text: message.text } });
+    expect(elapsed).toBeLessThan(1000);
+  });
+});

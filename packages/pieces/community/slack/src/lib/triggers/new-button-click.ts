@@ -103,17 +103,17 @@ export const newButtonClickTrigger = createTrigger({
             return [];
         }
 
-        const actionIds = toStringList(context.propsValue.actionIds);
+        const actionIds = toFilterList(context.propsValue.actionIds);
         const actionIdPrefix = (context.propsValue.actionIdPrefix ?? '').trim();
         const matchesFilters = (action: BlockAction) =>
-            (actionIds.length === 0 || actionIds.includes(action.action_id)) &&
+            (actionIds === null || actionIds.includes(action.action_id)) &&
             (actionIdPrefix === '' || action.action_id.startsWith(actionIdPrefix));
         if (!buttonActions.some(matchesFilters)) {
             return [];
         }
 
-        const channels = toStringList(context.propsValue.channels);
-        if (channels.length > 0 && !channels.includes(payload.channel?.id ?? '')) {
+        const channels = toFilterList(context.propsValue.channels);
+        if (channels !== null && !channels.includes(payload.channel?.id ?? '')) {
             return [];
         }
 
@@ -124,11 +124,21 @@ export const newButtonClickTrigger = createTrigger({
 
 const MESSAGE_CONTAINERS = ['message', 'message_attachment'];
 
-function toStringList(value: unknown): string[] {
+function toFilterList(value: unknown): string[] | null {
     if (!Array.isArray(value)) {
-        return [];
+        return null;
     }
-    return value.map((item) => String(item ?? '').trim()).filter((item) => item.length > 0);
+    const entries = value.filter((item) => !isBlank(item));
+    if (entries.length === 0) {
+        return null;
+    }
+    return entries
+        .filter((item) => typeof item === 'string' || typeof item === 'number')
+        .map((item) => String(item).trim());
+}
+
+function isBlank(item: unknown): boolean {
+    return item === null || item === undefined || (typeof item === 'string' && item.trim() === '');
 }
 
 const blockActionsPayloadSchema = z.looseObject({
