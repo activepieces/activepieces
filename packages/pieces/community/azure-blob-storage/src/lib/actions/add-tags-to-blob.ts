@@ -1,15 +1,17 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { azureBlobStorageAuth } from '../auth';
-import { BlobServiceClient, Tags } from '@azure/storage-blob';
 import { containerProp } from '../common';
+import { azureBlobCommon } from '../common/client';
+import { addTagsToBlobOutputSchema } from '../output-schemas';
 
 export const addTagsToBlob = createAction({
   auth: azureBlobStorageAuth,
   name: 'addTagsToBlob',
   classification: 'WRITE',
   displayName: 'Add Tags to Blob',
-  description: 'Adds Tags to the Blob at the specified location',
-  audience: 'both',
+  description: 'Adds Tags to the Blob at the specified location. Without Keep Existing Tags the blob gets exactly the tags given here, so leaving Tags empty removes all of its tags.',
+  audience: 'human',
+  outputSchema: addTagsToBlobOutputSchema,
   aiMetadata: { description: 'Sets key-value tags on the blob at the given container and blob name. Operates in two modes: by default it replaces all existing tags with the supplied set, or with the keep-existing-tags option it merges the new tags onto the current ones. Use to label or categorize a blob for later tag-based search. Idempotent: applying the same tags yields the same final tag set.', idempotent: true },
   props: {
     container: containerProp,
@@ -20,7 +22,7 @@ export const addTagsToBlob = createAction({
     }),
     tags: Property.Object({
       displayName: 'Tags',
-      description: 'The tags to add to the blob',
+      description: 'The tags to add to the blob (up to 10 in total). If empty and Keep Existing Tags is off, all tags are removed.',
       required: false,
       defaultValue: {},
     }),
@@ -33,19 +35,28 @@ export const addTagsToBlob = createAction({
   },
   async run(context) {
     const { container, blobName, tags, keepExistingTags } = context.propsValue;
-    const auth = context.auth.props;
+    const validTags = azureBlobCommon.validateTags({ tags });
+    const client = await azureBlobCommon.getServiceClient({
+      connectionString: context.auth.props.connectionString,
+    });
+    const blobClient = client.getContainerClient(container).getBlockBlobClient(blobName);
 
-    const blobServiceClient = BlobServiceClient.fromConnectionString(auth.connectionString);
-    const containerClient = blobServiceClient.getContainerClient(container);
-    const blobClient = containerClient.getBlockBlobClient(blobName);
-
-    let newtags = tags as Tags;
-
+    let finalTags = validTags;
     if (keepExistingTags) {
-      const previousTagResponse = await blobClient.getTags();
-      newtags = { ...previousTagResponse.tags, ...newtags };
-    };
+      const previous = await azureBlobCommon.callAzure({
+        operation: 'get blob tags',
+        isWrite: false,
+        request: () => blobClient.getTags(),
+      });
+      finalTags = azureBlobCommon.validateTags({ tags: { ...azureBlobCommon.toStringMap(previous.tags), ...validTags } });
+    }
 
-    return await blobClient.setTags(newtags);
+    await azureBlobCommon.callAzure({
+      operation: 'set blob tags',
+      isWrite: true,
+      request: () => blobClient.setTags(finalTags),
+    });
+
+    return { container, blobName, tags: finalTags };
   },
 });

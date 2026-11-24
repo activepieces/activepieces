@@ -993,7 +993,7 @@
     },
     "packages/pieces/community/azure-blob-storage": {
       "name": "@activepieces/piece-azure-blob-storage",
-      "version": "0.1.10",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -1004,6 +1004,7 @@
       },
       "devDependencies": {
         "tslib": "^2.3.0",
+        "vitest": "5.0.5",
       },
     },
     "packages/pieces/community/azure-communication-services": {

@@ -8,6 +8,18 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Azure Blob Storage 0.2.0: seven actions are no longer AI agent tools, and actions no longer return the raw SDK response
+
+**List Containers**, **List Blobs**, **Create Blob**, **Read Blob**, **Delete Blob**, **Add Tags to Blob** and **Find Blobs** are now shown only in the flow builder. AI agents and MCP clients use the new Azure Blob Storage AI tools instead. Their names and inputs are unchanged, so existing steps keep working.
+
+After you upgrade:
+
+- Create Blob, Create Container, Delete Container, Delete Blob and Add Tags to Blob no longer return the raw SDK response, so `_response` (the HTTP envelope, including request headers) and fields such as `requestId`, `date` and `version` are gone. Remap any later step that used them.
+- Create Blob returns `{ container, blobName, etag, lastModified, versionId, url }`; Create Container returns `{ containerName, accountName, etag, lastModified, url }`; Delete Container returns `{ containerName, deleted }`; Delete Blob returns `{ container, blobName, deleted }`; Add Tags to Blob returns `{ container, blobName, tags }`.
+- Find Blobs items now include `container` and `tags`, and tag values containing quotes are escaped instead of breaking the query.
+- Delete Container no longer fails when the container does not exist: it succeeds and returns `deleted: false`.
+- Read Blob no longer declares an output schema; its output (the file) is unchanged.
+
 #### Google Sheets 0.21.0: row triggers fire for more changes, and Trigger Column must be a column letter
 
 From Google Sheets 0.21.0, **New Row Added** and **New or Updated Row** also run the flow in three cases where they stayed silent before:
