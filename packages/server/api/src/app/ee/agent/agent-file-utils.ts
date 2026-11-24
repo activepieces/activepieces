@@ -1,8 +1,9 @@
-import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil, Permission } from '@activepieces/core-utils'
 import { AIProviderModelMetadata, CHAT_ALLOWED_MIME_TYPES, FileCompression, FileType } from '@activepieces/shared'
 import { ModelMessage, UserContent } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { fileService, GetDataResponse } from '../../file/file.service'
+import { resolvePermissionChecker } from '../../mcp/mcp-permissions'
 
 const TEXT_MIME_TYPES = new Set<string>(
     CHAT_ALLOWED_MIME_TYPES.filter((m) => m.startsWith('text/') || m === 'application/json'),
@@ -98,16 +99,22 @@ async function buildUserContentWithFiles({ text, files, attachmentNote }: {
     ]
 }
 
-async function readConversationFile({ platformId, conversationId, accessibleProjectIds, fileId, log }: { platformId: string, conversationId: string, accessibleProjectIds: string[], fileId: string, log: FastifyBaseLogger }): Promise<GetDataResponse> {
-    const file = await fileService(log).getFileOrThrow({ fileId, type: FileType.FLOW_STEP_FILE })
-    const readableHere = file.platformId === platformId
-        && file.metadata?.['conversationId'] === conversationId
-        && !isNil(file.projectId)
-        && accessibleProjectIds.includes(file.projectId)
+async function readConversationFile({ platformId, conversationId, userId, accessibleProjectIds, fileId, log }: { platformId: string, conversationId: string, userId: string, accessibleProjectIds: string[], fileId: string, log: FastifyBaseLogger }): Promise<GetDataResponse> {
+    const file = await fileService(log).getFileOrThrow({ fileId, type: [FileType.FLOW_STEP_FILE, FileType.FLOW_RUN_LOG_SLICE] })
+    const projectId = file.projectId
+    const inAccessibleProject = file.platformId === platformId && !isNil(projectId) && accessibleProjectIds.includes(projectId)
+    const readableHere = inAccessibleProject && (file.type === FileType.FLOW_RUN_LOG_SLICE
+        ? await canReadRuns({ userId, projectId, log })
+        : file.metadata?.['conversationId'] === conversationId)
     if (!readableHere) {
         throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityType: 'file', entityId: fileId } })
     }
-    return fileService(log).getDataOrThrow({ projectId: file.projectId ?? undefined, fileId, type: FileType.FLOW_STEP_FILE })
+    return fileService(log).getDataOrThrow({ projectId, fileId, type: file.type })
+}
+
+async function canReadRuns({ userId, projectId, log }: { userId: string, projectId: string, log: FastifyBaseLogger }): Promise<boolean> {
+    const checker = await resolvePermissionChecker({ userId, projectId, log })
+    return isNil(checker.check(Permission.READ_RUN, 'ap_read_result'))
 }
 
 function dropImagesForTextOnlyModels({ messages, models }: {

@@ -134,7 +134,7 @@ export function createResultTools({ readFile, taintState }: {
 }): ToolSet {
     return {
         ap_read_result: tool({
-            description: 'Read part of a large tool result that was saved as a file (its preview names the fileId). Pick a JSON path and fields, page with offset/limit, or search. Use this instead of calling the tool again or writing code to look at the result.',
+            description: 'Read part of a large tool result or a run step output that was saved as a file (the preview or ap_get_run names its fileId). Pick a JSON path and fields, page with offset/limit, or search. Use this instead of calling the tool again or writing code to look at the result.',
             inputSchema: z.object({
                 fileId: z.string().describe('The fileId from the large-result preview'),
                 path: z.string().optional().describe('Where to read in a JSON result, e.g. "records", "messages[3].payload.headers". Omit for the root.'),
@@ -147,7 +147,7 @@ export function createResultTools({ readFile, taintState }: {
                 taintState.tainted = true
                 const { data: stored, error } = await tryCatch(() => loadResultFile({ readFile, fileId }))
                 if (error || isNil(stored)) {
-                    return { error: `Could not read file ${fileId}. Use a fileId from a large-result preview in this conversation.` }
+                    return { error: `Could not read file ${fileId}. Use a fileId from a large-result preview or a run step output in this conversation.` }
                 }
                 return toolResultView.read({ stored, fileId, ...spreadIfDefined('path', path), ...spreadIfDefined('fields', fields), ...spreadIfDefined('offset', offset), ...spreadIfDefined('limit', limit), ...spreadIfDefined('search', search) })
             },

@@ -521,7 +521,7 @@ describe('buildProviderOptions', () => {
 
     for (const provider of [AIProviderName.ACTIVEPIECES, AIProviderName.OPENROUTER]) {
         it(`maps the tier's thinking budget to an effort level GLM accepts on ${provider}, since it ignores a token budget`, () => {
-            const effortAt = (thinkingBudget: number, disableThinking = false) => agentAiUtils.buildProviderOptions({ provider, tier: { id: 't', thinkingBudget }, modelId: 'z-ai/glm-5.3', disableThinking }).openrouter?.reasoning
+            const effortAt = (thinkingBudget: number, disableThinking = false) => agentAiUtils.buildProviderOptions({ provider, thinkingBudget, modelId: 'z-ai/glm-5.3', disableThinking }).openrouter?.reasoning
             expect(effortAt(5_000)).toEqual({ effort: 'low' })
             expect(effortAt(10_000)).toEqual({ effort: 'high' })
             expect(effortAt(20_000)).toEqual({ effort: 'high' })
@@ -529,7 +529,7 @@ describe('buildProviderOptions', () => {
         })
 
         it(`switches DeepSeek reasoning off with effort none on ${provider}`, () => {
-            const reasoning = agentAiUtils.buildProviderOptions({ provider, tier: TIER, modelId: 'deepseek/deepseek-v4.1-flash', disableThinking: true }).openrouter?.reasoning
+            const reasoning = agentAiUtils.buildProviderOptions({ provider, thinkingBudget: THINKING_BUDGET, modelId: 'deepseek/deepseek-v4.1-flash', disableThinking: true }).openrouter?.reasoning
             expect(reasoning).toEqual({ effort: 'none' })
         })
     }
