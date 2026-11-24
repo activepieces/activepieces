@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { TeableAuth } from '../auth';
 import { TeableCommon } from '../common';
 import { teableClient } from '../common/client';
@@ -17,16 +17,36 @@ export const uploadAttachmentAction = createAction({
     idempotent: false,
   },
   props: {
+    attachment_help: Property.MarkDown({
+      value: 'Adds the file next to any files already in the field.',
+      variant: MarkdownVariant.INFO,
+    }),
     base_id: TeableCommon.base_id,
     table_id: TeableCommon.table_id,
     record_id: TeableCommon.record_id,
     field_id: TeableCommon.attachment_field_id,
     file: Property.File({
       displayName: 'File',
-      description: 'The file to upload. Accepts a URL or a binary file.',
+      description: 'A file from an earlier step, or a public URL.',
       required: true,
     }),
   },
+  propertyGroups: [
+    {
+      key: 'record',
+      display: 'section',
+      label: 'Record',
+      icon: 'inbox',
+      props: ['base_id', 'table_id', 'record_id'],
+    },
+    {
+      key: 'attachment',
+      display: 'section',
+      label: 'Attachment',
+      icon: 'paperclip',
+      props: ['attachment_help', 'field_id', 'file'],
+    },
+  ],
   outputSchema: teableOutputSchemas.recordCore,
   async run(context) {
     const { table_id, record_id, field_id, file } = context.propsValue;

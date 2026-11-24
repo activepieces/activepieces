@@ -8,6 +8,17 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Teable 0.4.0: Update Record no longer empties fields you leave blank
+
+Before 0.4.0, every **Update Record** step sent the form's blank defaults for the record's fields: untouched Multiple select, Link and User fields were emptied, and untouched Checkbox fields were unchecked. From 0.4.0 an empty list is skipped, so those fields keep their current value. On new steps a Checkbox field is a Checked / Unchecked dropdown that starts empty and is skipped when left empty.
+
+Steps saved before 0.4.0 keep the `false` value the old checkbox stored, so they still uncheck that checkbox (it now shows as Unchecked).
+
+#### What you need to do
+
+- To empty a Multiple select, Link or User field with Update Record, pick it in **Fields to Clear** instead of deselecting every option.
+- In an existing step that should not touch a checkbox, open the step and clear that checkbox's value.
+
 #### Google Sheets 0.21.0: row triggers fire for more changes, and Trigger Column must be a column letter
 
 From Google Sheets 0.21.0, **New Row Added** and **New or Updated Row** also run the flow in three cases where they stayed silent before:

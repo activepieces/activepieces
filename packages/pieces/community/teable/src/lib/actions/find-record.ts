@@ -16,14 +16,24 @@ export const findRecordAction = createAction({
       'Fetches one record by its exact record ID and returns its current field values. For lookups by value use Search Records (Agent). Read-only and safe to retry.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'record',
+      display: 'section',
+      label: 'Record',
+      icon: 'inbox',
+      props: ['base_id', 'table_id', 'record_id'],
+    },
+  ],
   props: {
     base_id: TeableCommon.base_id,
     table_id: TeableCommon.table_id,
     record_id: TeableCommon.record_id,
     cellFormat: Property.StaticDropdown({
       displayName: 'Cell Format',
-      description: 'The format of the cell values in the response.',
+      description: 'JSON returns raw values; Text returns them as shown in Teable.',
       required: false,
+      advanced: true,
       defaultValue: 'json',
       options: {
         options: [

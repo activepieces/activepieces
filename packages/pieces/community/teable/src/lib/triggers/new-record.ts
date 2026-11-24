@@ -79,6 +79,15 @@ export const newRecordTrigger = createTrigger({
     base_id: TeableCommon.base_id,
     table_id: TeableCommon.table_id,
   },
+  propertyGroups: [
+    {
+      key: 'table',
+      display: 'section',
+      label: 'Table',
+      icon: 'inbox',
+      props: ['base_id', 'table_id'],
+    },
+  ],
   sampleData: {
     id: 'recPJvqohF1HW69vfbl',
     fields: {

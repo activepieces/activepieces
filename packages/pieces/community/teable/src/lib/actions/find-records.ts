@@ -1,4 +1,4 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { MarkdownVariant, Property, createAction } from '@activepieces/pieces-framework';
 import { TeableCommon } from '../common';
 import { teableClient } from '../common/client';
 import { TeableAuth } from '../auth';
@@ -11,39 +11,87 @@ export const findRecordsAction = createAction({
   name: 'teable_list_records',
   classification: 'SEARCH',
   displayName: 'List Records',
-  description:
-    'Retrieves records from a table with optional filtering, search, and sorting, paging through results automatically.',
+  description: 'Finds records in a table, with optional filter, search and sort.',
   audience: 'human',
   aiMetadata: {
     description:
       'Lists records from a Teable table, optionally narrowed by a filter expression, a view, or a search term. Read-only and safe to retry.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'table',
+      display: 'section',
+      label: 'Table',
+      icon: 'inbox',
+      props: ['base_id', 'table_id', 'view_id'],
+    },
+    {
+      key: 'find',
+      display: 'section',
+      label: 'Find Records',
+      icon: 'filter',
+      props: ['search', 'filter_help', 'filter', 'selectedRecordIds'],
+    },
+    {
+      key: 'results',
+      display: 'section',
+      label: 'Results',
+      icon: 'sliders',
+      props: ['take', 'orderBy'],
+    },
+  ],
   props: {
     base_id: TeableCommon.base_id,
     table_id: TeableCommon.table_id,
     view_id: TeableCommon.view_id,
-    filter: Property.LongText({
-      displayName: 'Filter',
-      description:
-        'A filter expression for the records. Use the visual query builder at https://app.teable.ai/developer/tool/query-builder to build one.',
-      required: false,
-    }),
     search: Property.ShortText({
       displayName: 'Search',
       description: 'Only return records containing this text in any field.',
+      placeholder: 'Jane',
       required: false,
+    }),
+    filter_help: Property.MarkDown({
+      value:
+        "Build a Filter with [Teable's query builder](https://app.teable.ai/developer/tool/query-builder) and paste the JSON here.",
+      variant: MarkdownVariant.INFO,
+    }),
+    filter: Property.LongText({
+      displayName: 'Filter',
+      description: "A JSON filter expression from Teable's query builder.",
+      placeholder: '{"conjunction": "and", "filterSet": []}',
+      required: false,
+    }),
+    selectedRecordIds: Property.Array({
+      displayName: 'Record IDs',
+      description: 'Only return these records.',
+      required: false,
+    }),
+    take: Property.Number({
+      displayName: 'Max Records',
+      description: 'Records to return, 1 to 5000. Default 100.',
+      required: false,
+      defaultValue: 100,
     }),
     orderBy: Property.LongText({
       displayName: 'Order By',
       description:
-        'A JSON array of sort conditions.',
+        'A JSON array of sort rules, each a field ID and asc or desc.',
+      placeholder: '[{"fieldId": "fldXXXXXXXXXXXXXXX", "order": "asc"}]',
       required: false,
+    }),
+    skip: Property.Number({
+      displayName: 'Skip',
+      description: 'Rows to skip before collecting results.',
+      required: false,
+      advanced: true,
+      defaultValue: 0,
     }),
     cellFormat: Property.StaticDropdown({
       displayName: 'Cell Format',
-      description: 'The format of the cell values in the response.',
+      description: 'JSON returns raw values; Text returns them as shown in Teable.',
       required: false,
+      advanced: true,
       defaultValue: 'json',
       options: {
         options: [
@@ -51,23 +99,6 @@ export const findRecordsAction = createAction({
           { label: 'Text', value: 'text' },
         ],
       },
-    }),
-    take: Property.Number({
-      displayName: 'Max Records',
-      description: `The maximum number of records to return (1-${MAX_TOTAL_RECORDS}). The action pages through the table automatically.`,
-      required: false,
-      defaultValue: 100,
-    }),
-    skip: Property.Number({
-      displayName: 'Skip',
-      description: 'The number of records to skip before collecting results.',
-      required: false,
-      defaultValue: 0,
-    }),
-    selectedRecordIds: Property.Array({
-      displayName: 'Selected Record IDs',
-      description: 'Only return the records with these IDs.',
-      required: false,
     }),
   },
   outputSchema: teableOutputSchemas.listRecords,

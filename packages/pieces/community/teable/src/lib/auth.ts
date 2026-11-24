@@ -128,14 +128,14 @@ To obtain your token:
     required: true,
     props: {
       token: PieceAuth.SecretText({
-        displayName: 'Personal Access Token',
-        description: 'Your Teable personal access token.',
+        displayName: 'Token',
+        description: 'Create one in Teable under Settings > Personal Access Token.',
         required: true,
       }),
       baseUrl: Property.ShortText({
         displayName: 'Base URL',
-        description:
-          'Teable Cloud: https://app.teable.ai — for self-hosted, enter your instance origin, e.g. https://teable.example.com.',
+        description: 'Leave empty for Teable Cloud. For self-hosted, your instance URL.',
+        placeholder: 'https://teable.example.com',
         required: false,
       }),
     },

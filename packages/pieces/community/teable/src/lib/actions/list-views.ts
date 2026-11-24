@@ -20,6 +20,15 @@ export const listViewsAction = createAction({
     base_id: TeableCommon.base_id,
     table_id: TeableCommon.table_id,
   },
+  propertyGroups: [
+    {
+      key: 'table',
+      display: 'section',
+      label: 'Table',
+      icon: 'inbox',
+      props: ['base_id', 'table_id'],
+    },
+  ],
   outputSchema: teableOutputSchemas.listViews,
   async run(context) {
     return teableClient.listViews({ auth: context.auth, tableId: context.propsValue.table_id });

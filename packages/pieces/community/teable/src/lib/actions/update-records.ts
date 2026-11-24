@@ -1,4 +1,4 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { MarkdownVariant, Property, createAction } from '@activepieces/pieces-framework';
 import { TeableAuth } from '../auth';
 import { TeableCommon } from '../common';
 import { teableClient } from '../common/client';
@@ -52,13 +52,34 @@ export const updateRecordsAction = createAction({
       'Changes up to 1000 existing rows in one call. Records is a JSON array of {"id", "fields"} objects; a field value of null clears that field. Safe to retry with the same values.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'table',
+      display: 'section',
+      label: 'Table',
+      icon: 'inbox',
+      props: ['base_id', 'table_id'],
+    },
+    {
+      key: 'records',
+      display: 'section',
+      label: 'Records',
+      icon: 'code',
+      props: ['records_help', 'records'],
+    },
+  ],
   props: {
     base_id: TeableCommon.base_id,
     table_id: TeableCommon.table_id,
+    records_help: Property.MarkDown({
+      value:
+        'Up to 1000 updates, e.g. `[{"id": "recXXX", "fields": {"Name": "Jane"}}]`. Fields you leave out keep their value; null empties one.',
+      variant: MarkdownVariant.INFO,
+    }),
     records: Property.Json({
       displayName: 'Records',
       description:
-        'A JSON array of updates with record IDs; a null field value clears it.',
+        'A JSON array of updates, each with a record id and its fields.',
       required: true,
     }),
   },
