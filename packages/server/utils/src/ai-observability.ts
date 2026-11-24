@@ -37,7 +37,7 @@ function reset(): void {
     tracing = undefined
 }
 
-function runtimeContextOf({ billing }: { billing?: ActivepiecesAiBilling }): AiTraceContext {
+function runtimeContextOf({ billing, functionId }: { billing?: ActivepiecesAiBilling, functionId?: string }): AiTraceContext {
     const ids = { ...runLabelsFromWideEvent(), ...(isNil(billing) ? idsFromWideEvent() : idsFromBilling({ billing })) }
     const groups = {
         ...(isNil(ids.platformId) ? {} : { platform: ids.platformId }),
@@ -50,6 +50,7 @@ function runtimeContextOf({ billing }: { billing?: ActivepiecesAiBilling }): AiT
         ...(isNil(ids.runSource) ? {} : { runSource: ids.runSource }),
         ...(isNil(ids.tierId) ? {} : { tierId: ids.tierId }),
         ...(isNil(ids.tierModel) ? {} : { tierModel: ids.tierModel }),
+        ...(isNil(functionId) ? {} : { functionId }),
     }
 }
 
@@ -107,6 +108,7 @@ const SPAN_ATTRIBUTE_BY_CONTEXT_KEY: Record<keyof AiTraceContext, string> = {
     runSource: 'ai_run_source',
     tierId: 'ai_tier_id',
     tierModel: 'ai_tier_model',
+    functionId: 'ai_function_id',
 }
 
 export const aiObservability = {
@@ -119,7 +121,7 @@ export const aiObservability = {
 
 export const POSTHOG_PROJECT_TOKEN = 'phc_7F92HoXJPeGnTKmYv0eOw62FurPMRW9Aqr0TPrDzvHh'
 export const POSTHOG_HOST = 'https://us.i.posthog.com'
-export const AI_TRACE_RUNTIME_CONTEXT = { distinctId: true, sessionId: true, groups: true, runSource: true, tierId: true, tierModel: true }
+export const AI_TRACE_RUNTIME_CONTEXT = { distinctId: true, sessionId: true, groups: true, runSource: true, tierId: true, tierModel: true, functionId: true }
 
 export type AiTraceContext = {
     distinctId?: string
@@ -128,6 +130,7 @@ export type AiTraceContext = {
     runSource?: string
     tierId?: string
     tierModel?: string
+    functionId?: string
 }
 
 type TraceIds = {
