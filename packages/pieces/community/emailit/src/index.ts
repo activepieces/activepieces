@@ -62,6 +62,12 @@ export const emailit = createPiece({
     listTemplatesAction,
     createCustomApiCallAction({
       baseUrl: () => EMAILIT_API_BASE,
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${EMAILIT_API_BASE}`,
+          placeholder: '/emails',
+        },
+      },
       auth: emailitAuth,
       authMapping: async (auth) => ({
         Authorization: `Bearer ${emailitClient.apiKeyOf(auth)}`,
