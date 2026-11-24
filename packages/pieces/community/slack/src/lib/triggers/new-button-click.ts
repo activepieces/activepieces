@@ -1,8 +1,8 @@
 import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { z } from 'zod';
 import { slackAuth } from '../auth';
-import { getTeamId, SlackAuthValue } from '../common/auth-helpers';
-import { BlockAction, BlockActionsPayload } from '../common/types';
+import { getTeamId } from '../common/auth-helpers';
+import { BlockAction } from '../common/types';
 import { interactivitySetupInfo, multiSelectChannelInfo, onlyBotChannels, slackChannels } from '../common/props';
 import { newButtonClickTriggerOutputSchema } from '../output-schemas';
 
@@ -48,7 +48,7 @@ export const newButtonClickTrigger = createTrigger({
         }),
         channelInfo: multiSelectChannelInfo,
         onlyBotChannels,
-        channels: slackChannels,
+        channels: { ...slackChannels, description: 'Empty means any channel or DM.' },
     },
     type: TriggerStrategy.APP_WEBHOOK,
     sampleData: {
@@ -84,7 +84,7 @@ export const newButtonClickTrigger = createTrigger({
     },
     outputSchema: newButtonClickTriggerOutputSchema,
     onEnable: async (context) => {
-        const teamId = await getTeamId(context.auth as SlackAuthValue);
+        const teamId = await getTeamId(context.auth);
         context.app.createListeners({
             events: [BLOCK_ACTIONS_EVENT],
             identifierValue: teamId,
@@ -94,7 +94,7 @@ export const newButtonClickTrigger = createTrigger({
 
     run: async (context) => {
         const payload = parseInteractionPayload(context.payload.body);
-        if (!payload || payload.type !== BLOCK_ACTIONS_EVENT) {
+        if (!payload || payload.type !== BLOCK_ACTIONS_EVENT || !MESSAGE_CONTAINERS.includes(payload.container?.type ?? '')) {
             return [];
         }
 
@@ -103,8 +103,8 @@ export const newButtonClickTrigger = createTrigger({
             return [];
         }
 
-        const actionIds = stringList.parse(context.propsValue.actionIds).filter((id) => id.length > 0);
-        const actionIdPrefix = context.propsValue.actionIdPrefix ?? '';
+        const actionIds = toStringList(context.propsValue.actionIds);
+        const actionIdPrefix = (context.propsValue.actionIdPrefix ?? '').trim();
         const matchesFilters = (action: BlockAction) =>
             (actionIds.length === 0 || actionIds.includes(action.action_id)) &&
             (actionIdPrefix === '' || action.action_id.startsWith(actionIdPrefix));
@@ -112,7 +112,7 @@ export const newButtonClickTrigger = createTrigger({
             return [];
         }
 
-        const channels = stringList.parse(context.propsValue.channels);
+        const channels = toStringList(context.propsValue.channels);
         if (channels.length > 0 && !channels.includes(payload.channel?.id ?? '')) {
             return [];
         }
@@ -122,24 +122,32 @@ export const newButtonClickTrigger = createTrigger({
     },
 });
 
-const stringList = z.array(z.string()).catch([]);
+const MESSAGE_CONTAINERS = ['message', 'message_attachment'];
+
+function toStringList(value: unknown): string[] {
+    if (!Array.isArray(value)) {
+        return [];
+    }
+    return value.map((item) => String(item ?? '').trim()).filter((item) => item.length > 0);
+}
 
 const blockActionsPayloadSchema = z.looseObject({
     type: z.string(),
-    team: z.looseObject({ id: z.string() }).optional(),
-    user: z.looseObject({ id: z.string() }).optional(),
-    channel: z.looseObject({ id: z.string() }).optional(),
+    team: z.looseObject({ id: z.string() }).nullish(),
+    user: z.looseObject({ id: z.string() }).nullish(),
+    channel: z.looseObject({ id: z.string() }).nullish(),
+    container: z.looseObject({ type: z.string() }).nullish(),
     actions: z.array(z.looseObject({ type: z.string(), action_id: z.string() })).optional(),
 });
 
-function parseInteractionPayload(body: unknown): BlockActionsPayload | null {
-    if (!body || typeof body !== 'object' || !('payload' in body)) {
+const interactionBodySchema = z.object({ payload: z.string() });
+
+function parseInteractionPayload(body: unknown): BlockActionsPayloadParsed | null {
+    const bodyResult = interactionBodySchema.safeParse(body);
+    if (!bodyResult.success) {
         return null;
     }
-    const raw = (body as { payload: unknown }).payload;
-    if (typeof raw !== 'string') {
-        return null;
-    }
+    const raw = bodyResult.data.payload;
     let parsed: unknown;
     try {
         parsed = JSON.parse(raw);
@@ -149,3 +157,5 @@ function parseInteractionPayload(body: unknown): BlockActionsPayload | null {
     const result = blockActionsPayloadSchema.safeParse(parsed);
     return result.success ? result.data : null;
 }
+
+type BlockActionsPayloadParsed = z.infer<typeof blockActionsPayloadSchema>;

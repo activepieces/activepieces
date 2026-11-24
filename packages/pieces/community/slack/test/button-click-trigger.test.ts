@@ -6,7 +6,10 @@ const PUBLIC_URL = 'https://ap.example.com/';
 
 function interactionRequest(interaction: Record<string, unknown>) {
   return {
-    headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded',
+      'x-slack-request-timestamp': String(Math.floor(Date.now() / 1000)),
+    },
     body: { payload: JSON.stringify(interaction) },
     method: 'POST',
     queryParams: {},
@@ -27,6 +30,7 @@ function buttonClick(overrides: Record<string, unknown> = {}) {
     team: { id: 'T123', domain: 'example' },
     user: { id: 'U123' },
     channel: { id: 'C123', name: 'general' },
+    container: { type: 'message', message_ts: '1700000000.000100', channel_id: 'C123' },
     actions: [{ type: 'button', action_id: 'deploy_approve', block_id: 'b1', value: 'release-42' }],
     ...overrides,
   };
@@ -82,7 +86,7 @@ describe('slack parseAndReply block_actions routing', () => {
 });
 
 describe('new button click trigger run', () => {
-  function run(interaction: Record<string, unknown>, propsValue: Record<string, unknown> = {}) {
+  function run({ interaction, propsValue = {} }: { interaction: Record<string, unknown>; propsValue?: Record<string, unknown> }) {
     return newButtonClickTrigger.run({
       propsValue,
       payload: interactionRequest(interaction),
@@ -90,32 +94,60 @@ describe('new button click trigger run', () => {
   }
 
   it('returns the payload without the verification token', async () => {
-    const [output] = (await run(buttonClick())) as Record<string, unknown>[];
-    expect(output).not.toHaveProperty('token');
-    expect(output).toMatchObject({ type: 'block_actions', channel: { id: 'C123' } });
+    const outputs = await run({ interaction: buttonClick() });
+    expect(outputs).toHaveLength(1);
+    expect(outputs[0]).not.toHaveProperty('token');
+    expect(outputs[0]).toMatchObject({ type: 'block_actions', channel: { id: 'C123' } });
+  });
+
+  it('ignores button clicks in modals and the App Home tab', async () => {
+    expect(await run({ interaction: buttonClick({ container: { type: 'view', view_id: 'V1' }, channel: undefined }) })).toEqual([]);
+  });
+
+  it('fires for buttons in message attachments', async () => {
+    expect(await run({ interaction: buttonClick({ container: { type: 'message_attachment' } }) })).toHaveLength(1);
+  });
+
+  it('keeps the action id filter when an item is not a string', async () => {
+    const reject = buttonClick({ actions: [{ type: 'button', action_id: 'deploy_reject' }] });
+    expect(await run({ interaction: reject, propsValue: { actionIds: ['deploy_approve', 5] } })).toEqual([]);
+    expect(await run({ interaction: buttonClick(), propsValue: { actionIds: ['deploy_approve', 5] } })).toHaveLength(1);
+  });
+
+  it('keeps the channel filter when an item is not a string', async () => {
+    expect(await run({ interaction: buttonClick(), propsValue: { channels: ['C999', null] } })).toEqual([]);
+  });
+
+  it('trims the action id prefix and action ids', async () => {
+    expect(await run({ interaction: buttonClick(), propsValue: { actionIdPrefix: 'deploy_ ' } })).toHaveLength(1);
+    expect(await run({ interaction: buttonClick(), propsValue: { actionIds: [' deploy_approve '] } })).toHaveLength(1);
+  });
+
+  it('accepts a payload whose team is null', async () => {
+    expect(await run({ interaction: buttonClick({ team: null, user: { id: 'U123', team_id: 'T123' } }) })).toHaveLength(1);
   });
 
   it('filters by exact action ids', async () => {
-    expect(await run(buttonClick(), { actionIds: ['deploy_approve'] })).toHaveLength(1);
-    expect(await run(buttonClick(), { actionIds: ['other'] })).toEqual([]);
+    expect(await run({ interaction: buttonClick(), propsValue: { actionIds: ['deploy_approve'] } })).toHaveLength(1);
+    expect(await run({ interaction: buttonClick(), propsValue: { actionIds: ['other'] } })).toEqual([]);
   });
 
   it('filters by action id prefix', async () => {
-    expect(await run(buttonClick(), { actionIdPrefix: 'deploy_' })).toHaveLength(1);
-    expect(await run(buttonClick(), { actionIdPrefix: 'rollback_' })).toEqual([]);
+    expect(await run({ interaction: buttonClick(), propsValue: { actionIdPrefix: 'deploy_' } })).toHaveLength(1);
+    expect(await run({ interaction: buttonClick(), propsValue: { actionIdPrefix: 'rollback_' } })).toEqual([]);
   });
 
   it('filters by channel', async () => {
-    expect(await run(buttonClick(), { channels: ['C123'] })).toHaveLength(1);
-    expect(await run(buttonClick(), { channels: ['C999'] })).toEqual([]);
-    expect(await run(buttonClick({ channel: undefined }), { channels: ['C123'] })).toEqual([]);
+    expect(await run({ interaction: buttonClick(), propsValue: { channels: ['C123'] } })).toHaveLength(1);
+    expect(await run({ interaction: buttonClick(), propsValue: { channels: ['C999'] } })).toEqual([]);
+    expect(await run({ interaction: buttonClick({ channel: undefined }), propsValue: { channels: ['C123'] } })).toEqual([]);
   });
 
   it('ignores non-button block actions and other interaction types', async () => {
     expect(
-      await run(buttonClick({ actions: [{ type: 'static_select', action_id: 'deploy_approve' }] })),
+      await run({ interaction: buttonClick({ actions: [{ type: 'static_select', action_id: 'deploy_approve' }] }) }),
     ).toEqual([]);
-    expect(await run({ type: 'view_submission', team: { id: 'T123' } })).toEqual([]);
+    expect(await run({ interaction: { type: 'view_submission', team: { id: 'T123' } } })).toEqual([]);
   });
 
   it('ignores a malformed body', async () => {
@@ -128,6 +160,6 @@ describe('new button click trigger run', () => {
   });
 
   it('ignores a payload whose actions do not match the expected shape', async () => {
-    expect(await run(buttonClick({ actions: [{ type: 'button' }] }))).toEqual([]);
+    expect(await run({ interaction: buttonClick({ actions: [{ type: 'button' }] }) })).toEqual([]);
   });
 });

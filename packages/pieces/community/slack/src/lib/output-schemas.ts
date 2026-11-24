@@ -681,6 +681,16 @@ export const newButtonClickTriggerOutputSchema: OutputSchema = {
       ],
     },
     {
+      key: 'container',
+      label: 'Container',
+      children: [
+        { key: 'type', label: 'Container Type' },
+        { key: 'message_ts', label: 'Message Timestamp' },
+        { key: 'channel_id', label: 'Channel ID' },
+        { key: 'is_ephemeral', label: 'Is Ephemeral' },
+      ],
+    },
+    {
       key: 'actions',
       label: 'Actions',
       labelKey: 'action_id',
