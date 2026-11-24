@@ -22,6 +22,12 @@ export const scrapegraphai = createPiece({
     ...scrapegraphaiAiActions,
     createCustomApiCallAction({
       baseUrl: () => scrapegraphaiClient.baseUrl(),
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${scrapegraphaiClient.baseUrl()}`,
+          placeholder: '/credits',
+        },
+      },
       auth: scrapegraphaiAuth,
       authMapping: async (auth) => ({
         'SGAI-APIKEY': `${auth.secret_text}`,
