@@ -1,9 +1,9 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { cognitoFormsAuth } from '../auth';
 import { cognitoRequest } from '../common/client';
 import { entryPath, stripEmptyValues } from '../common/entries';
-import { entryIdText, formIdDropdown, updateFormFields } from '../common/props';
+import { entryIdInput, formIdDropdown, updateFormFields } from '../common/props';
 
 export const updateEntryAction = createAction({
   auth: cognitoFormsAuth,
@@ -18,9 +18,17 @@ export const updateEntryAction = createAction({
   },
   props: {
     formId: formIdDropdown,
-    entryId: entryIdText('The entry number (for example 12) or the full entry ID (for example 5-12). You can map it from a trigger or a "Create Entry" step.'),
+    entryId: entryIdInput,
+    changesInfo: Property.MarkDown({
+      value: 'Fields you leave empty keep their current value. Fill in at least one.',
+      variant: MarkdownVariant.INFO,
+    }),
     entryData: updateFormFields,
   },
+  propertyGroups: [
+    { key: 'entry', display: 'section', label: 'Entry to update', icon: 'inbox', props: ['formId', 'entryId'] },
+    { key: 'changes', display: 'section', label: 'Changes', icon: 'sliders', props: ['changesInfo', 'entryData'] },
+  ],
   async run(context) {
     const { formId, entryId, entryData } = context.propsValue;
     const body = stripEmptyValues(entryData);
