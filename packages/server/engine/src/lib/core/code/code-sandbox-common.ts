@@ -22,6 +22,7 @@ export type CodeSandbox = {
 export type ScriptSession = {
     run(script: string): Promise<unknown>
     setGlobal(key: string, value: unknown, noOverwrite?: boolean): Promise<void>
+    reset(): Promise<void>
     dispose(): void
 }
 

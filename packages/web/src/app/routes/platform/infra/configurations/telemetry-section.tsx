@@ -63,6 +63,7 @@ export const TelemetrySection = ({
             <FormItem>
               <Switch
                 aria-label={t('Deployment setup')}
+                data-testid="configurations-deployment-setup"
                 checked={field.value}
                 onCheckedChange={field.onChange}
                 disabled={disabled}

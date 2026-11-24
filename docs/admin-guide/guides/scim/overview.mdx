@@ -12,8 +12,9 @@ SCIM (System for Cross-domain Identity Management) lets your identity provider a
 ## What SCIM Handles
 
 - **Provision users** when they are assigned in your identity provider
-- **Sync profile updates** such as name or email changes
-- **Deprovision users** when access is removed or accounts are deactivated
+- **Sync profile updates** such as name changes. An email change is not synced, because the email is how the user signs in.
+- **Deprovision users** when access is removed or accounts are deactivated. Deprovisioning deactivates the user in Activepieces; it does not delete the user or their data.
+- **Sync groups** as team projects. The members of a group join its project with the role that `AP_SCIM_DEFAULT_PROJECT_ROLE` sets.
 
 ## SCIM and SSO
 
@@ -27,6 +28,9 @@ You can use both together so user access is managed centrally in your identity p
 <CardGroup cols={2}>
   <Card title="Okta" icon="shield-check" href="./providers/okta">
     Configure SCIM provisioning from Okta to Activepieces.
+  </Card>
+  <Card title="Microsoft Entra ID" icon="shield-check" href="./providers/microsoft-entra-id">
+    Configure SCIM provisioning from Microsoft Entra ID to Activepieces.
   </Card>
 </CardGroup>
 
