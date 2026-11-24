@@ -1,4 +1,4 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { MarkdownVariant, Property, createAction } from '@activepieces/pieces-framework';
 import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { acuitySchedulingAuth } from '../auth';
 import { API_URL } from '../common';
@@ -21,90 +21,126 @@ export const createAppointmentAction = createAction({
 			'Books a new appointment for a client on Acuity given a datetime, appointment type, and client name. Operates in two modes: standard booking enforces availability/attribute checks and auto-assigns a calendar, while admin booking (enable Book as Admin) bypasses those checks, allows setting notes, and requires a calendar ID. Use to schedule a client; not idempotent — each call creates a separate appointment.',
 		idempotent: false,
 	},
+	propertyGroups: [
+		{
+			key: 'appointment',
+			display: 'section',
+			label: 'Appointment',
+			icon: 'calendar',
+			props: ['appointmentTypeID', 'calendarID', 'datetime', 'timezone'],
+		},
+		{
+			key: 'client',
+			display: 'section',
+			label: 'Client',
+			icon: 'user',
+			props: ['firstName', 'lastName', 'email', 'phone'],
+		},
+		{
+			key: 'booking',
+			display: 'section',
+			label: 'Admin Booking',
+			icon: 'sliders',
+			props: ['adminInfo', 'adminBooking', 'notes'],
+		},
+	],
 	props: {
-		datetime: Property.DateTime({
-			displayName: 'DateTime',
-			description: 'Date and time of the appointment.',
-			required: true,
-		}),
 		appointmentTypeID: appointmentTypeIdDropdown({
 			displayName: 'Appointment Type',
-			description: 'Select the type of appointment.',
+			description: 'The service being booked.',
 			required: true,
+		}),
+		calendarID: calendarIdDropdown({
+			displayName: 'Calendar',
+			description: 'Required when booking as admin. Empty: Acuity picks one.',
+			required: false,
+		}),
+		datetime: Property.DateTime({
+			displayName: 'Date and Time',
+			description: 'When the appointment starts.',
+			width: 'half',
+			required: true,
+		}),
+		timezone: Property.ShortText({
+			displayName: 'Timezone',
+			description: 'Used to check availability.',
+			placeholder: 'America/New_York',
+			width: 'half',
+			required: true,
+			defaultValue: 'UTC',
 		}),
 		firstName: Property.ShortText({
 			displayName: 'First Name',
-			description: "Client's first name.",
+			placeholder: 'Jane',
+			width: 'half',
 			required: true,
 		}),
 		lastName: Property.ShortText({
 			displayName: 'Last Name',
-			description: "Client's last name.",
+			placeholder: 'Doe',
+			width: 'half',
 			required: true,
 		}),
 		email: Property.ShortText({
 			displayName: 'Email',
-			description: "Client's email address. (Optional if booking as admin).",
+			description: 'Required unless booking as admin.',
+			placeholder: 'jane@example.com',
+			width: 'half',
 			required: false,
 		}),
 		phone: Property.ShortText({
 			displayName: 'Phone',
-			description: "Client's phone number.",
+			placeholder: '+15551234567',
+			width: 'half',
 			required: false,
 		}),
-		timezone: Property.ShortText({
-			displayName: 'Timezone',
-			description:
-				"Client's timezone (e.g., America/New_York). Required for accurate availability checking.",
-			required: true,
-			defaultValue: 'UTC',
+		adminInfo: Property.MarkDown({
+			value:
+				'Admin booking skips availability checks, needs a calendar, and is the only way to save notes.',
+			variant: MarkdownVariant.INFO,
 		}),
 		adminBooking: Property.Checkbox({
 			displayName: 'Book as Admin',
-			description:
-				'Set to true to book as an admin. Disables availability/attribute validations, allows setting notes, and makes Calendar ID required.',
+			description: 'Book even if the slot is not open.',
 			required: false,
 			defaultValue: false,
-		}),
-		calendarID: calendarIdDropdown({
-			displayName: 'Calendar ID',
-			description:
-				'Numeric ID of the calendar. Required if booking as admin. If not provided, Acuity tries to find an available calendar automatically for non-admin bookings.',
-			required: false,
-		}),
-		noEmail: Property.Checkbox({
-			displayName: 'Suppress Confirmation Email/SMS',
-			description: 'If true, confirmation emails or SMS will not be sent.',
-			required: false,
-			defaultValue: false,
-		}),
-		certificate: Property.ShortText({
-			displayName: 'Certificate Code',
-			description: 'Package or coupon certificate code.',
-			required: false,
 		}),
 		notes: Property.LongText({
 			displayName: 'Notes',
-			description: 'Appointment notes. Only settable if booking as admin.',
+			description: 'Saved only when booking as admin.',
+			required: false,
+		}),
+		addonIDs: addonIdsDropdown({
+			displayName: 'Add-ons',
+			description: 'Extras offered with the selected appointment type.',
+			required: false,
+			advanced: true,
+		}),
+		labelId: labelIdDropdown({
+			displayName: 'Label',
+			description: 'Tag the appointment with one label.',
+			required: false,
+			advanced: true,
+		}),
+		certificate: Property.ShortText({
+			displayName: 'Coupon or Package Code',
+			placeholder: 'SPRING10',
+			advanced: true,
 			required: false,
 		}),
 		smsOptIn: Property.Checkbox({
 			displayName: 'SMS Opt-In',
-			description:
-				'Indicates whether the client has explicitly given permission to receive SMS messages.',
+			description: 'The client agreed to receive SMS reminders.',
+			advanced: true,
 			required: false,
 			defaultValue: false,
 		}),
-		addonIDs: addonIdsDropdown({
-			displayName: 'Addons',
-			description:
-				'Select addons for the appointment. Addons are filtered by selected Appointment Type if available.',
+		noEmail: Property.Checkbox({
+			displayName: 'Skip Confirmation Message',
+			description: "Don't send the client the confirmation email or SMS.",
+			advanced: true,
 			required: false,
-		}),
-		labelId: labelIdDropdown({
-			displayName: 'Label',
-			description: 'Apply a label to the appointment. The API currently supports one label.',
-			required: false,
+			defaultValue: false,
 		}),
 	},
 	async run(context) {
@@ -137,11 +173,11 @@ export const createAppointmentAction = createAction({
 			body['addonIDs'] = props.addonIDs;
 		}
 		if (props.labelId) {
-			body['labelID'] = [{ id: props.labelId }];
+			body['labels'] = [{ id: props.labelId }];
 		}
 
 		if (props.adminBooking && !props.calendarID) {
-			throw new Error('Calendar ID is required when booking as admin.');
+			throw new Error('Calendar is required when booking as admin.');
 		}
 		if (props.adminBooking && props.email === '') {
 			delete body['email'];

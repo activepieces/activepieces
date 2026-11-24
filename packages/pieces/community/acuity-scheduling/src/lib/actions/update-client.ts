@@ -1,4 +1,4 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { MarkdownVariant, Property, createAction } from '@activepieces/pieces-framework';
 import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { acuitySchedulingAuth } from '../auth';
 import { API_URL } from '../common';
@@ -15,46 +15,73 @@ export const updateClientAction = createAction({
 			"Updates an existing Acuity client's details (name, email, phone, notes), identifying the client by their current first and last name (and optionally current phone to disambiguate). At least one new field must be supplied. Use to edit a known client rather than create one. Idempotent — applying the same field overwrites repeatedly yields the same client state.",
 		idempotent: true,
 	},
+	propertyGroups: [
+		{
+			key: 'client',
+			display: 'section',
+			label: 'Client to Update',
+			icon: 'user',
+			props: ['currentFirstName', 'currentLastName', 'currentPhone'],
+		},
+		{
+			key: 'changes',
+			display: 'section',
+			label: 'Changes',
+			icon: 'sliders',
+			props: [
+				'changesInfo',
+				'newFirstName',
+				'newLastName',
+				'newEmail',
+				'newPhone',
+				'newNotes',
+			],
+		},
+	],
 	props: {
 		currentFirstName: Property.ShortText({
-			displayName: 'Current First Name (Identifier)',
-			description: 'The current first name of the client to update.',
+			displayName: 'First Name',
+			width: 'half',
 			required: true,
 		}),
 		currentLastName: Property.ShortText({
-			displayName: 'Current Last Name (Identifier)',
-			description: 'The current last name of the client to update.',
+			displayName: 'Last Name',
+			width: 'half',
 			required: true,
 		}),
 		currentPhone: Property.ShortText({
-			displayName: 'Current Phone (Identifier, Optional)',
-			description:
-				'The current phone number of the client to update. Helps identify the client if names are not unique.',
+			displayName: 'Phone',
+			description: 'Only needed when two clients share a name.',
 			required: false,
+		}),
+		changesInfo: Property.MarkDown({
+			value: 'Empty fields keep their current value.',
+			variant: MarkdownVariant.INFO,
 		}),
 		newFirstName: Property.ShortText({
 			displayName: 'New First Name',
-			description: "Client's new first name. Leave blank to keep current.",
+			width: 'half',
 			required: false,
 		}),
 		newLastName: Property.ShortText({
 			displayName: 'New Last Name',
-			description: "Client's new last name. Leave blank to keep current.",
+			width: 'half',
 			required: false,
 		}),
 		newEmail: Property.ShortText({
 			displayName: 'New Email',
-			description: "Client's new email address. Leave blank to keep current.",
+			placeholder: 'jane@example.com',
+			width: 'half',
 			required: false,
 		}),
 		newPhone: Property.ShortText({
 			displayName: 'New Phone',
-			description: "Client's new phone number. Leave blank to keep current.",
+			placeholder: '+15551234567',
+			width: 'half',
 			required: false,
 		}),
 		newNotes: Property.LongText({
 			displayName: 'New Notes',
-			description: 'New notes about the client. Leave blank to keep current.',
 			required: false,
 		}),
 	},
@@ -77,9 +104,7 @@ export const updateClientAction = createAction({
 		if (props.newNotes) body['notes'] = props.newNotes;
 
 		if (Object.keys(body).length === 0) {
-			throw new Error(
-				'At least one field to update (New First Name, New Last Name, etc.) must be provided.',
-			);
+			throw new Error('Fill in at least one field under Changes.');
 		}
 
 		const response = await httpClient.sendRequest({

@@ -8,7 +8,7 @@ export const findClientAction = createAction({
 	name: 'find_client',
 	classification: 'SEARCH',
 	displayName: 'Find Client',
-	description: 'Finds client based on seach term.',
+	description: 'Find clients by name or phone number.',
 	audience: 'both',
 	aiMetadata: {
 		description:
@@ -18,7 +18,8 @@ export const findClientAction = createAction({
 	props: {
 		search: Property.ShortText({
 			displayName: 'Search Term',
-			description: 'Filter client list by first name, last name, or phone number.',
+			description: 'Matches first name, last name or phone number.',
+			placeholder: 'Jane',
 			required: true,
 		}),
 	},
@@ -30,7 +31,7 @@ export const findClientAction = createAction({
 			queryParams['search'] = props.search;
 		}
 
-		const response = await httpClient.sendRequest<Array<Record<string, any>>>({
+		const response = await httpClient.sendRequest<Array<Record<string, unknown>>>({
 			method: HttpMethod.GET,
 			url: `${API_URL}/clients`,
 			queryParams,

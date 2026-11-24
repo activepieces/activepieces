@@ -16,32 +16,40 @@ export const addBlockedTimeAction = createAction({
 			'Marks a time range on a specific Acuity calendar as unavailable for booking, optionally with notes. Use to reserve or hold off slots (e.g. breaks, holidays). Requires start time, end time, and a numeric calendar ID; end must be after start. Not idempotent — each call creates a new block.',
 		idempotent: false,
 	},
+	propertyGroups: [
+		{
+			key: 'block',
+			display: 'section',
+			label: 'Time to Block',
+			icon: 'calendar',
+			props: ['start', 'end', 'calendarID', 'notes'],
+		},
+	],
 	props: {
 		start: Property.DateTime({
 			displayName: 'Start Time',
-			description: 'The start date and time for the block (ISO 8601 format).',
+			width: 'half',
 			required: true,
 		}),
 		end: Property.DateTime({
 			displayName: 'End Time',
-			description: 'The end date and time for the block (ISO 8601 format).',
+			width: 'half',
 			required: true,
 		}),
 		calendarID: calendarIdDropdown({
-			displayName: 'Calendar ID',
-			description: 'The numeric ID of the calendar to add this block to.',
+			displayName: 'Calendar',
+			description: 'The calendar to block time on.',
 			required: true,
 		}),
 		notes: Property.LongText({
 			displayName: 'Notes',
-			description: 'Optional notes for the blocked off time.',
+			description: 'Shown on the blocked time in Acuity.',
 			required: false,
 		}),
 	},
 	async run(context) {
 		const props = context.propsValue;
 
-		// Basic validation: end time must be after start time
 		if (new Date(props.start) >= new Date(props.end)) {
 			throw new Error('End time must be after start time.');
 		}
