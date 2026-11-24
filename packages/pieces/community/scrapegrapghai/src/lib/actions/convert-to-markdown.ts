@@ -9,18 +9,19 @@ export const markdownifyAction = createAction({
 	outputSchema: scrapegrapghaiMarkdownifyOutputSchema,
 	classification: 'READ',
 	displayName: 'Convert to Markdown',
-	description: 'Convert any webpage into clean, readable Markdown format.',
+	description: 'Turn a webpage into clean, readable Markdown.',
 	audience: 'human',
 	aiMetadata: {
 		description:
-			'Fetches a webpage by URL and returns its content as clean, readable Markdown. Choose this when you need the whole page as text for an LLM or document rather than a targeted extraction — use Smart Scraper instead when you want specific fields described by a prompt. Requires a public URL; read-only and safe to retry.',
+			'Fetches a webpage by URL and returns its content as clean, readable Markdown. Choose this when you need the whole page as text for an LLM or document rather than a targeted extraction — use Extract Data from Webpage instead when you want specific fields described by a prompt. Requires a public URL; read-only and safe to retry.',
 		idempotent: true,
 	},
 	auth: scrapegraphaiAuth,
 	props: {
 		website_url: Property.ShortText({
 			displayName: 'Website URL',
-			description: 'The webpage URL to convert to Markdown',
+			description: 'Public webpage to read.',
+			placeholder: 'https://example.com/pricing',
 			required: true,
 		}),
 	},
