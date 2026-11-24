@@ -1,5 +1,10 @@
-import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
-import { TeableAuth } from '../auth';
+import {
+  DynamicPropsValue,
+  MarkdownVariant,
+  Property,
+  tryCatch,
+} from '@activepieces/pieces-framework';
+import { TeableAuth, TeableAuthValue } from '../auth';
 import { teableClient, TeableField } from './client';
 import { TeableComputedFieldTypes, TeableFieldType, TEABLE_MAX_PAGE_SIZE } from './constants';
 
@@ -16,12 +21,28 @@ function isRecordWritableField(field: TeableField): boolean {
   );
 }
 
-function buildFieldProp(field: TeableField) {
+function capitalizeFirst(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+function buildFieldProp({ field, mode }: { field: TeableField; mode: 'create' | 'update' }) {
   const displayName = field.name;
   const required = false;
   const choices = field.options?.choices ?? [];
   switch (field.type) {
     case TeableFieldType.CHECKBOX:
+      if (mode === 'update') {
+        return Property.StaticDropdown<boolean>({
+          displayName,
+          required,
+          options: {
+            options: [
+              { label: 'Checked', value: true },
+              { label: 'Unchecked', value: false },
+            ],
+          },
+        });
+      }
       return Property.Checkbox({ displayName, required });
     case TeableFieldType.NUMBER:
     case TeableFieldType.RATING:
@@ -59,15 +80,49 @@ function buildFieldProp(field: TeableField) {
   }
 }
 
-export const TeableCommon = {
-  base_id: Property.Dropdown({
+async function loadRecordFieldProps({
+  auth,
+  tableId,
+  mode,
+}: {
+  auth: TeableAuthValue | undefined;
+  tableId: unknown;
+  mode: 'create' | 'update';
+}): Promise<DynamicPropsValue> {
+  if (!auth || !tableId) {
+    return {};
+  }
+  const { data: fields, error } = await tryCatch(() =>
+    teableClient.listFields({ auth, tableId: String(tableId) }),
+  );
+  if (error) {
+    return {
+      load_error: Property.MarkDown({
+        value: "Could not load this table's fields. Check the connection and pick the table again.",
+        variant: MarkdownVariant.WARNING,
+      }),
+    };
+  }
+  const props: DynamicPropsValue = {};
+  for (const field of fields) {
+    if (isRecordWritableField(field)) {
+      props[field.name] = buildFieldProp({ field, mode });
+    }
+  }
+  return props;
+}
+
+function baseDropdown({ width }: { width: 'half' | undefined }) {
+  return Property.Dropdown({
     auth: TeableAuth,
     displayName: 'Base',
+    description: 'The Teable base that holds your table.',
     required: true,
+    width,
     refreshers: [],
     options: async ({ auth }) => {
       if (!auth) {
-        return { disabled: true, options: [], placeholder: 'Connect your account first.' };
+        return { disabled: true, options: [], placeholder: 'Connect first.' };
       }
       try {
         const bases = await teableClient.listBases({ auth });
@@ -83,16 +138,22 @@ export const TeableCommon = {
         };
       }
     },
-  }),
+  });
+}
+
+export const TeableCommon = {
+  base_id: baseDropdown({ width: 'half' }),
+  base_id_full: baseDropdown({ width: undefined }),
   table_id: Property.Dropdown({
     auth: TeableAuth,
     displayName: 'Table',
     description: 'The table inside the selected base.',
     required: true,
+    width: 'half',
     refreshers: ['base_id'],
     options: async ({ auth, base_id }) => {
       if (!auth || !base_id) {
-        return { disabled: true, options: [], placeholder: 'Select a base first.' };
+        return { disabled: true, options: [], placeholder: 'Pick a base.' };
       }
       try {
         const tables = await teableClient.listTables({ auth, baseId: String(base_id) });
@@ -112,8 +173,7 @@ export const TeableCommon = {
   record_id: Property.Dropdown({
     auth: TeableAuth,
     displayName: 'Record',
-    description:
-      'The record to act on. Shows the first 1000 records; pass a record ID directly for larger tables.',
+    description: 'Lists the first 1000 records. Map a record ID for larger tables.',
     required: true,
     refreshers: ['table_id'],
     options: async ({ auth, table_id }) => {
@@ -156,7 +216,7 @@ export const TeableCommon = {
         const views = await teableClient.listViews({ auth, tableId: String(table_id) });
         return {
           disabled: false,
-          options: views.map((v) => ({ label: `${v.name} (${v.type})`, value: v.id })),
+          options: views.map((v) => ({ label: `${v.name} (${capitalizeFirst(v.type)})`, value: v.id })),
         };
       } catch (error) {
         return {
@@ -170,27 +230,25 @@ export const TeableCommon = {
   fields: Property.DynamicProperties({
     auth: TeableAuth,
     displayName: 'Fields',
-    description: 'The fields to set on the record.',
+    description: 'Values to save. One input per field you can edit.',
     required: true,
     refreshers: ['auth', 'table_id'],
-    props: async ({ auth, table_id }) => {
-      if (!auth || !table_id) {
-        return {};
-      }
-      const fields = await teableClient.listFields({ auth, tableId: String(table_id) });
-      const props: DynamicPropsValue = {};
-      for (const field of fields) {
-        if (isRecordWritableField(field)) {
-          props[field.name] = buildFieldProp(field);
-        }
-      }
-      return props;
-    },
+    props: async ({ auth, table_id }) =>
+      loadRecordFieldProps({ auth, tableId: table_id, mode: 'create' }),
+  }),
+  update_fields: Property.DynamicProperties({
+    auth: TeableAuth,
+    displayName: 'Fields',
+    description: 'Values to change. One input per field you can edit.',
+    required: false,
+    refreshers: ['auth', 'table_id'],
+    props: async ({ auth, table_id }) =>
+      loadRecordFieldProps({ auth, tableId: table_id, mode: 'update' }),
   }),
   fields_to_clear: Property.MultiSelectDropdown({
     auth: TeableAuth,
     displayName: 'Fields to Clear',
-    description: 'Fields whose value should be removed from the record.',
+    description: 'Fields to empty on the record.',
     required: false,
     refreshers: ['table_id'],
     options: async ({ auth, table_id }) => {

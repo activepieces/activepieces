@@ -56,3 +56,23 @@ export const TeableCreatableFieldTypes: string[] = [
 export const TEABLE_CLOUD_URL = 'https://app.teable.ai';
 
 export const TEABLE_MAX_PAGE_SIZE = 1000;
+
+export const TeableCreatableFieldTypeOptions: { label: string; value: string }[] = [
+  { label: 'Single line text', value: TeableFieldType.SINGLE_LINE_TEXT },
+  { label: 'Long text', value: TeableFieldType.LONG_TEXT },
+  { label: 'User', value: TeableFieldType.USER },
+  { label: 'Attachment', value: TeableFieldType.ATTACHMENT },
+  { label: 'Checkbox', value: TeableFieldType.CHECKBOX },
+  { label: 'Multiple select', value: TeableFieldType.MULTIPLE_SELECT },
+  { label: 'Single select', value: TeableFieldType.SINGLE_SELECT },
+  { label: 'Date', value: TeableFieldType.DATE },
+  { label: 'Number', value: TeableFieldType.NUMBER },
+  { label: 'Rating', value: TeableFieldType.RATING },
+  { label: 'Formula', value: TeableFieldType.FORMULA },
+  { label: 'Link', value: TeableFieldType.LINK },
+  { label: 'Created time', value: TeableFieldType.CREATED_TIME },
+  { label: 'Last modified time', value: TeableFieldType.LAST_MODIFIED_TIME },
+  { label: 'Created by', value: TeableFieldType.CREATED_BY },
+  { label: 'Last modified by', value: TeableFieldType.LAST_MODIFIED_BY },
+  { label: 'Auto number', value: TeableFieldType.AUTO_NUMBER },
+];
