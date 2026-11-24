@@ -16,7 +16,7 @@ Ids are named `area.thing.action` (`pieces.install.open`, `projects.delete.confi
 `open`, `submit`, `confirm`, `toggle`, `select`, `copy`, `link` or `run` (a button that acts
 at once, such as Sync or Refresh). Cancel, Close and Back carry no id. A control opts in by
 carrying `adminControl(AdminControl.AREA_THING_ACTION)`, and one click listener at the router root
-reports it, so it covers every signed-in page and not only `/platform` (plan banners, billing
+reports it, so it covers every page and not only `/platform` (plan banners, billing
 dialogs and connection dialogs render outside it), but not an embedded app.
 Keeping new buttons covered is a convention for reviewers, not a failing test.
 A control the plan has locked carries no id, because its click already reports

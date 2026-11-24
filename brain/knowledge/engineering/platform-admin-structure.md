@@ -170,7 +170,7 @@ silently. Worker groups is the last page on the old full-page teaser.
   `src/lib/admin-control.ts`, with the id `area.thing.action` as its value; a test pins the id naming, the
   member spelling and that every member is used. One document click listener, mounted once by
   `AdminControlClicksLayout` at the router root (never in `SuspenseWrapper`, or `/platform` clicks count
-  twice), reports the nearest tagged element on every signed-in page, not only `/platform`, dialogs and
+  twice), reports the nearest tagged element on every page, not only `/platform`, dialogs and
   menus included, and is off when embedded. A shared component needs an optional prop to tag a button it
   renders itself (`controlId` on `ConfirmationDeleteDialog` and `CopyToClipboardInput`). Do not tag Cancel or Close, the paywall
   buttons that already report `platform.admin.*` events, the Configurations consent controls, or a Radix
