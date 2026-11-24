@@ -30,7 +30,7 @@ export const teable = createPiece({
   displayName: 'Teable',
   auth: TeableAuth,
   description: 'No-code database built on PostgreSQL',
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/teable.png',
   categories: [PieceCategory.PRODUCTIVITY],
   authors: ['codegino', 'onyedikachi-david'],
@@ -65,6 +65,12 @@ export const teable = createPiece({
       authMapping: async (auth) => ({
         Authorization: `Bearer ${teableAuthUtil.getToken(auth)}`,
       }),
+      props: {
+        url: {
+          description: "Full URL, or a path after your Teable address's /api.",
+          placeholder: '/table/tblXXXXXXXXXXXXXXX/record',
+        },
+      },
     }),
   ],
   triggers: [newRecordTrigger, updatedRecordTrigger],
