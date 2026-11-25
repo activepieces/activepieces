@@ -13,11 +13,17 @@ import { toast } from 'sonner';
 
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { useSocket } from '@/components/providers/socket-provider';
+import { chatDom } from '@/features/chat/lib/chat-dom';
 import {
   FollowChange,
   followAlong,
   useFollowAlong,
 } from '@/features/chat/lib/follow/follow-along';
+import {
+  followHold,
+  useFollowHold,
+} from '@/features/chat/lib/follow/follow-hold';
+import { pageFocus } from '@/features/chat/lib/follow/page-focus';
 import { resourceRegistry } from '@/features/chat/lib/resources/registry';
 import {
   chatPanelUtils,
@@ -117,6 +123,33 @@ export function FollowAlongController({
   }, [socket, queryClient]);
 
   useEffect(() => {
+    const press = (event: PointerEvent) => {
+      if (!chatDom.inChat(event.target)) {
+        followHold.report({ pressing: true });
+      }
+    };
+    let releaseTimer: ReturnType<typeof setTimeout> | undefined;
+    const releaseAfterClick = () => {
+      clearTimeout(releaseTimer);
+      releaseTimer = setTimeout(
+        () => followHold.report({ pressing: false }),
+        0,
+      );
+    };
+    window.addEventListener('pointerdown', press, true);
+    window.addEventListener('pointerup', releaseAfterClick, true);
+    window.addEventListener('pointercancel', releaseAfterClick, true);
+    return () => {
+      window.removeEventListener('pointerdown', press, true);
+      window.removeEventListener('pointerup', releaseAfterClick, true);
+      window.removeEventListener('pointercancel', releaseAfterClick, true);
+      clearTimeout(releaseTimer);
+      followHold.report({ pressing: false });
+    };
+  }, []);
+
+  useEffect(() => {
+    let stopLeaving = (): void => undefined;
     const leaveIfDeleted = (change: FollowChange) => {
       const deletedByThisChat =
         change.op === ResourceChangeOp.DELETE && change.navigable && !embedded;
@@ -132,9 +165,19 @@ export function FollowAlongController({
           ? t('The AI deleted {name}.', { name: change.resource.name })
           : t('The AI deleted this page.'),
       );
-      const route = resourceRegistry.parentRoute(change.resource);
-      selfNavRef.current = route;
-      navigate(route, { replace: true });
+      stopLeaving();
+      stopLeaving = untilPageFree((focused) => {
+        if (!isOnDeletedPage()) {
+          return true;
+        }
+        if (pageFocus.isBusyIn(focused) || followHold.pagePressed()) {
+          return false;
+        }
+        const route = resourceRegistry.parentRoute(change.resource);
+        selfNavRef.current = route;
+        navigate(route, { replace: true });
+        return true;
+      });
     };
     const stopListening = followAlong.onToolDone((change) => {
       leaveIfDeleted(change);
@@ -142,7 +185,10 @@ export function FollowAlongController({
         runOfTarget.current = change.runId;
       }
     });
-    return stopListening;
+    return () => {
+      stopListening();
+      stopLeaving();
+    };
   }, [navigate, embedded]);
 
   useEffect(() => {
@@ -154,6 +200,7 @@ export function FollowAlongController({
     const target = state.target;
     if (!target || !state.following) return;
     const onTarget = resourceRegistry.isOn({ pathname, ref: target });
+    if (onTarget) followAlong.dismissOffer();
     if (pathChanged && !selfNavigated && !onTarget) {
       if (state.phase === 'editing') followAlong.stopFollowing();
       return;
@@ -169,10 +216,60 @@ export function FollowAlongController({
       return;
     }
 
-    const route = resourceRegistry.route(target);
-    const push = followAlong.claimHistoryPush(runOfTarget.current);
-    selfNavRef.current = route.split('?')[0];
-    chatPanelUtils.openBeside({ route, push, name: target.name });
+    const open = () => {
+      const route = resourceRegistry.route(target);
+      const push = followAlong.claimHistoryPush(runOfTarget.current);
+      selfNavRef.current = route.split('?')[0];
+      chatPanelUtils.openBeside({ route, push, name: target.name });
+    };
+    const conversationAtStart = useChatPanel.getState().conversationId;
+    let settled = false;
+    const tryOpen = (focused: Element | null): boolean => {
+      const latest = useFollowAlong.getState();
+      if (
+        !latest.following ||
+        !latest.target ||
+        resourceRegistry.keyOf(latest.target) !== resourceRegistry.keyOf(target)
+      ) {
+        followAlong.dismissOffer();
+        return true;
+      }
+      const offersTarget =
+        latest.offer !== null &&
+        resourceRegistry.keyOf(latest.offer.resource) ===
+          resourceRegistry.keyOf(target);
+      if (offersTarget && chatDom.inChat(focused)) return false;
+      if (
+        pageFocus.isBusyIn(focused) ||
+        followHold.holds({ fullPage: chatPanelUtils.isFullPage() })
+      ) {
+        followAlong.offer({ resource: target, runId: runOfTarget.current });
+        return false;
+      }
+      if (followHold.pagePressed()) return false;
+      followAlong.dismissOffer();
+      open();
+      return true;
+    };
+    const stop = untilPageFree((focused) => (settled = tryOpen(focused)));
+    return () => {
+      stop();
+      const latest = useFollowAlong.getState();
+      if (latest.phase === 'editing') {
+        followAlong.dismissOffer();
+        return;
+      }
+      const stillPending =
+        !settled &&
+        latest.following &&
+        latest.target !== null &&
+        resourceRegistry.keyOf(latest.target) ===
+          resourceRegistry.keyOf(target) &&
+        useChatPanel.getState().conversationId === conversationAtStart;
+      if (stillPending) {
+        followAlong.offer({ resource: target, runId: runOfTarget.current });
+      }
+    };
   }, [
     pathname,
     targetKey,
@@ -188,6 +285,33 @@ export function FollowAlongController({
 
 function sessionOwner(): string {
   return `${authenticationSession.getPlatformId()}:${authenticationSession.getCurrentUserId()}`;
+}
+
+function untilPageFree(run: (focused: Element | null) => boolean): () => void {
+  if (run(document.activeElement)) return () => undefined;
+  const onFocusIn = (event: FocusEvent) => retry(eventElement(event.target));
+  const onFocusOut = (event: FocusEvent) =>
+    retry(eventElement(event.relatedTarget));
+  const stopHold = useFollowHold.subscribe(() => retry(document.activeElement));
+  const stopGate = useChatPanel.subscribe((state, previous) => {
+    if (state.gateOpen !== previous.gateOpen) retry(document.activeElement);
+  });
+  const stop = () => {
+    window.removeEventListener('focusin', onFocusIn, true);
+    window.removeEventListener('focusout', onFocusOut, true);
+    stopHold();
+    stopGate();
+  };
+  const retry = (focused: Element | null) => {
+    if (run(focused)) stop();
+  };
+  window.addEventListener('focusin', onFocusIn, true);
+  window.addEventListener('focusout', onFocusOut, true);
+  return stop;
+}
+
+function eventElement(target: EventTarget | null): Element | null {
+  return target instanceof Element ? target : null;
 }
 
 const NAME_STALE_MS = 2000;

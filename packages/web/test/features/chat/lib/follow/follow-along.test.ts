@@ -49,6 +49,24 @@ describe('followAlong', () => {
     expect(useFollowAlong.getState().target).toBeNull();
   });
 
+  it('drops the Open offer for a page the AI deletes', () => {
+    change({ id: 'flow-a', op: ResourceChangeOp.UPDATE, runId: 'run-1' });
+    followAlong.offer({
+      resource: {
+        kind: ApResourceKind.FLOW,
+        id: 'flow-a',
+        projectId: 'p1',
+        name: 'flow-a',
+      },
+      runId: 'run-1',
+    });
+    followAlong.endRun({ conversationId: 'chat-1', runId: 'run-1' });
+
+    change({ id: 'flow-a', op: ResourceChangeOp.DELETE, runId: 'run-2' });
+
+    expect(useFollowAlong.getState().offer).toBeNull();
+  });
+
   it('follows only server changes made by a live run of this tab', () => {
     expect(followAlong.runOf('chat-1')).toBeNull();
     followAlong.startRun(run);
@@ -78,5 +96,21 @@ describe('followAlong', () => {
       target: null,
       phase: 'idle',
     });
+  });
+
+  it('shares the run history entry when the user accepts an offer', () => {
+    followAlong.offer({
+      resource: {
+        kind: ApResourceKind.FLOW,
+        id: 'flow-a',
+        projectId: 'p1',
+        name: 'flow-a',
+      },
+      runId: 'run-1',
+    });
+
+    followAlong.acceptOffer();
+
+    expect(followAlong.claimHistoryPush('run-1')).toBe(false);
   });
 });
