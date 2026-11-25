@@ -1,0 +1,1301 @@
+{
+  "schema": 1,
+  "base_url": "https://api.paymos.io",
+  "user_agent_prefix": "paymos-",
+  "request_signing": {
+    "algorithm": "HMAC-SHA256",
+    "signature_encoding": "base64",
+    "timestamp_header": "X-Request-Timestamp",
+    "authorization_format": "HMAC-SHA256 {api_key}:{signature}",
+    "canonical_format": "{timestamp}\\n{uppercase_method}\\n{path}\\n{query_with_optional_leading_question_mark}\\n{body_hash}",
+    "body_hash": "lowercase hex sha256 of the exact body bytes; EMPTY STRING when the request has no body (never sha256(\"\") = e3b0c442...), so a body-less request signs a trailing newline with nothing after it"
+  },
+  "query": {
+    "encoding": "RFC3986",
+    "sort_keys": true,
+    "sort_repeated_values": true,
+    "include_leading_question_mark_in_signature": true
+  },
+  "retry": {
+    "default_max_retries": 2,
+    "default_base_delay_ms": 150,
+    "retry_after": true,
+    "transport_errors": [
+      "GET",
+      "HEAD",
+      "OPTIONS"
+    ],
+    "http_5xx": [
+      "GET",
+      "HEAD",
+      "OPTIONS"
+    ],
+    "http_429": [
+      "GET",
+      "HEAD",
+      "OPTIONS",
+      "POST"
+    ]
+  },
+  "pagination": {
+    "default_max_pages": 100,
+    "next_cursor_field": "next_cursor",
+    "reject_repeated_cursor": true
+  },
+  "errors": {
+    "400": "validation",
+    "401": "authentication",
+    "403": "permission",
+    "404": "not_found",
+    "409": "conflict",
+    "410": "gone",
+    "429": "rate_limit",
+    "500": "server",
+    "503": "unavailable"
+  },
+  "resources": {
+    "system": [
+      {
+        "method": "GET",
+        "path": "/v1/time",
+        "operation": "time"
+      }
+    ],
+    "invoices": [
+      {
+        "method": "POST",
+        "path": "/v1/invoices",
+        "operation": "create"
+      },
+      {
+        "method": "GET",
+        "path": "/v1/invoices/{id}",
+        "operation": "get"
+      },
+      {
+        "method": "GET",
+        "path": "/v1/invoices",
+        "operation": "list"
+      },
+      {
+        "method": "POST",
+        "path": "/v1/invoices/{id}/cancel",
+        "operation": "cancel"
+      },
+      {
+        "method": "POST",
+        "path": "/v1/invoices/{id}/confirm-payment",
+        "operation": "confirm_payment"
+      },
+      {
+        "method": "POST",
+        "path": "/v1/sandbox/invoices/{id}/simulate-payment",
+        "operation": "simulate_payment"
+      }
+    ],
+    "withdrawals": [
+      {
+        "method": "POST",
+        "path": "/v1/withdrawals",
+        "operation": "create"
+      },
+      {
+        "method": "GET",
+        "path": "/v1/withdrawals/{id}",
+        "operation": "get"
+      },
+      {
+        "method": "GET",
+        "path": "/v1/withdrawals",
+        "operation": "list"
+      },
+      {
+        "method": "POST",
+        "path": "/v1/withdrawals/{id}/cancel",
+        "operation": "cancel"
+      },
+      {
+        "method": "POST",
+        "path": "/v1/sandbox/withdrawals/{id}/simulate-completion",
+        "operation": "simulate_completion"
+      }
+    ],
+    "refunds": [
+      {
+        "method": "POST",
+        "path": "/v1/refunds",
+        "operation": "create"
+      },
+      {
+        "method": "GET",
+        "path": "/v1/refunds",
+        "operation": "list"
+      },
+      {
+        "method": "GET",
+        "path": "/v1/refunds/{id}",
+        "operation": "get"
+      },
+      {
+        "method": "POST",
+        "path": "/v1/sandbox/refunds/{id}/simulate",
+        "operation": "simulate"
+      }
+    ],
+    "balances": [
+      {
+        "method": "GET",
+        "path": "/v1/balances",
+        "operation": "get"
+      }
+    ],
+    "payment_channels": [
+      {
+        "method": "POST",
+        "path": "/v1/payment-channels",
+        "operation": "create"
+      },
+      {
+        "method": "GET",
+        "path": "/v1/payment-channels/{id}",
+        "operation": "get"
+      },
+      {
+        "method": "GET",
+        "path": "/v1/payment-channels",
+        "operation": "list"
+      },
+      {
+        "method": "POST",
+        "path": "/v1/payment-channels/{id}/block",
+        "operation": "block"
+      },
+      {
+        "method": "POST",
+        "path": "/v1/payment-channels/{id}/unblock",
+        "operation": "unblock"
+      },
+      {
+        "method": "POST",
+        "path": "/v1/sandbox/payment-channels/{id}/simulate-deposit",
+        "operation": "simulate_deposit"
+      }
+    ],
+    "payment_channel_deposits": [
+      {
+        "method": "GET",
+        "path": "/v1/payment-channel-deposits",
+        "operation": "list"
+      },
+      {
+        "method": "GET",
+        "path": "/v1/payment-channel-deposits/{id}",
+        "operation": "get"
+      }
+    ]
+  },
+  "vectors": {
+    "refunds": {
+      "authentication": "Payment key with verified HMAC",
+      "create": {
+        "method": "POST",
+        "path": "/v1/refunds",
+        "body": {
+          "invoice_id": "inv_74BPZFhr9qy9Uz2fbRkdJX",
+          "mode": "full",
+          "external_order_id": "refund-order-1"
+        },
+        "new_status": 201,
+        "replay_status": 200,
+        "changed_mode_status": 409,
+        "idempotency_field": "external_order_id",
+        "rejected_fields": [
+          "amount",
+          "currency",
+          "network",
+          "destination_address",
+          "address",
+          "parts"
+        ]
+      },
+      "overpayment": {
+        "method": "POST",
+        "path": "/v1/refunds",
+        "body": {
+          "invoice_id": "inv_74BPZFhr9qy9Uz2fbRkdJX",
+          "mode": "overpayment",
+          "external_order_id": "refund-order-2"
+        },
+        "amount_is_server_calculated": true
+      },
+      "list": {
+        "method": "GET",
+        "path": "/v1/refunds",
+        "filters": [
+          "invoice_id",
+          "status",
+          "created_from",
+          "created_to"
+        ],
+        "period_format": "RFC 3339",
+        "pagination": [
+          "cursor",
+          "limit"
+        ],
+        "page_sizes": [
+          100,
+          100,
+          5
+        ],
+        "invalid_cursor_status": 400,
+        "cache_control": "private, no-store"
+      },
+      "get": {
+        "method": "GET",
+        "path": "/v1/refunds/{id}",
+        "id_is_withdrawal_id": true,
+        "foreign_or_missing_status": 404,
+        "cache_control": "private, no-store"
+      },
+      "wire": {
+        "modes": [
+          "full",
+          "overpayment"
+        ],
+        "required_fields": [
+          "withdrawal_id",
+          "invoice_id",
+          "mode",
+          "amount",
+          "currency",
+          "network",
+          "status",
+          "first_sender",
+          "created_at",
+          "type",
+          "project_id"
+        ],
+        "amount_type": "decimal string",
+        "timestamps": "Unix seconds",
+        "ordinary_withdrawals_exclude_refunds": true,
+        "public_invoice_and_widget_exclude_refund_finance": true
+      },
+      "simulate": {
+        "method": "POST",
+        "path": "/v1/sandbox/refunds/{id}/simulate",
+        "statuses": [
+          "completed",
+          "failed",
+          "cancelled"
+        ],
+        "body": {
+          "status": "completed"
+        },
+        "foreign_or_production_status": 404,
+        "same_terminal_status_is_idempotent": true
+      }
+    },
+    "post_signing": {
+      "api_key": "pk_test_key",
+      "api_secret": "sk_test_secret",
+      "timestamp": "1700000000",
+      "method": "POST",
+      "path": "/v1/invoices",
+      "query": "",
+      "body": "{\"amount\":\"10.00\"}",
+      "body_sha256": "e9eb495accbce2a0e95bbe079b9f9e42ccae20371c1516e3ed3036d2a787cf53",
+      "signature": "AS+pbf8GlSGee9Oh5XhpasBpXB488AGEoqjDMx+dwak=",
+      "authorization": "HMAC-SHA256 pk_test_key:AS+pbf8GlSGee9Oh5XhpasBpXB488AGEoqjDMx+dwak="
+    },
+    "post_empty_body_signing": {
+      "note": "POST with NO body: bodyHash is the empty string, never sha256(\"\"). Pins the fork a method-based shortcut (\"only GET is empty\") would miss.",
+      "api_key": "pk_test_key",
+      "api_secret": "sk_test_secret",
+      "timestamp": "1700000000",
+      "method": "POST",
+      "path": "/v1/invoices/inv_74BPZFhr9qy9Uz2fbRkdJX/cancel",
+      "query": "",
+      "body": "",
+      "body_sha256": "",
+      "signature": "3vOr/bIyVDPQWapX33E1H5tdzAseP+orHIX0q/HNuR8=",
+      "authorization": "HMAC-SHA256 pk_test_key:3vOr/bIyVDPQWapX33E1H5tdzAseP+orHIX0q/HNuR8="
+    },
+    "get_query_signing": {
+      "api_key": "pk_test_key",
+      "api_secret": "sk_test_secret",
+      "timestamp": "1700000000",
+      "method": "GET",
+      "path": "/v1/invoices",
+      "query": "?limit=50&project_id=prj%2Fa&status=paid&status=paid_over",
+      "body": "",
+      "signature": "O8M5GGSzzJAgj5w1jDViIWS4njJvohvnZi7+twuG+e0="
+    },
+    "ton_webhooks": {
+      "description": "Synthetic signed schema 1 TON events with raw and friendly addresses; signature v1 is the HMAC format",
+      "secret": "whsec_sdk_fixture",
+      "now": 1700000000,
+      "vectors": [
+        {
+          "name": "invoice_raw",
+          "event_id": "evt_invoice_raw",
+          "event_type": "invoice.paid",
+          "version": 1,
+          "header": "t=1700000000,v1=a4fa25190387f446a419bb30ab7e77845a420ca711044b55c4e2cc9cb0face4c",
+          "raw_body": "{\"event_id\":\"evt_invoice_raw\",\"event_type\":\"invoice.paid\",\"version\":1,\"occurred_at\":1700000000,\"data\":{\"invoice_id\":\"inv_1\",\"status\":\"paid\",\"is_test\":false,\"payment\":{\"network\":\"TON\",\"currency\":\"USDT\",\"address\":\"0:ca6e321c7cce9ecedf0a8ca2492ec8592494aa5fb5ce0387dff96ef6af982a3e\",\"contract_address\":\"0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe\",\"expected\":\"10.50\"}}}",
+          "expect": [
+            {
+              "path": [
+                "payment",
+                "address"
+              ],
+              "value": "0:ca6e321c7cce9ecedf0a8ca2492ec8592494aa5fb5ce0387dff96ef6af982a3e"
+            },
+            {
+              "path": [
+                "payment",
+                "contract_address"
+              ],
+              "value": "0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe"
+            },
+            {
+              "path": [
+                "payment",
+                "expected"
+              ],
+              "value": "10.50"
+            },
+            {
+              "path": [
+                "payment",
+                "network"
+              ],
+              "value": "TON"
+            },
+            {
+              "path": [
+                "is_test"
+              ],
+              "value": false
+            }
+          ]
+        },
+        {
+          "name": "withdrawal_raw",
+          "event_id": "evt_withdrawal_raw",
+          "event_type": "withdrawal.completed",
+          "version": 1,
+          "header": "t=1700000000,v1=d2ddcc287aa77e0270f4a75af04e9f4008306ad8bb6f57803e6dc706875eac26",
+          "raw_body": "{\"event_id\":\"evt_withdrawal_raw\",\"event_type\":\"withdrawal.completed\",\"version\":1,\"occurred_at\":1700000000,\"data\":{\"withdrawal_id\":\"wdr_1\",\"status\":\"completed\",\"is_test\":false,\"network\":\"TON\",\"currency\":\"USDT\",\"amount\":\"10.50\",\"destination_address\":\"0:ca6e321c7cce9ecedf0a8ca2492ec8592494aa5fb5ce0387dff96ef6af982a3e\"}}",
+          "expect": [
+            {
+              "path": [
+                "destination_address"
+              ],
+              "value": "0:ca6e321c7cce9ecedf0a8ca2492ec8592494aa5fb5ce0387dff96ef6af982a3e"
+            },
+            {
+              "path": [
+                "amount"
+              ],
+              "value": "10.50"
+            },
+            {
+              "path": [
+                "network"
+              ],
+              "value": "TON"
+            },
+            {
+              "path": [
+                "is_test"
+              ],
+              "value": false
+            }
+          ]
+        },
+        {
+          "name": "refund_raw",
+          "event_id": "evt_refund_raw",
+          "event_type": "withdrawal.completed",
+          "version": 1,
+          "header": "t=1700000000,v1=624a1fe24a1af4dbc4937b739dd56e858f38f9077b1424ada3ddcef8e77bf649",
+          "raw_body": "{\"event_id\":\"evt_refund_raw\",\"event_type\":\"withdrawal.completed\",\"version\":1,\"occurred_at\":1700000000,\"data\":{\"withdrawal_id\":\"wdr_2\",\"invoice_id\":\"inv_1\",\"mode\":\"overpayment\",\"external_order_id\":\"refund-order-1\",\"status\":\"completed\",\"is_final\":true,\"is_test\":false,\"amount\":\"10.50\",\"currency\":\"USDT\",\"network\":\"TON\",\"destination_address\":\"0:ca6e321c7cce9ecedf0a8ca2492ec8592494aa5fb5ce0387dff96ef6af982a3e\",\"first_sender\":\"0:ca6e321c7cce9ecedf0a8ca2492ec8592494aa5fb5ce0387dff96ef6af982a3e\",\"created_at\":1700000000,\"completed_at\":1700000000}}",
+          "expect": [
+            {
+              "path": [
+                "destination_address"
+              ],
+              "value": "0:ca6e321c7cce9ecedf0a8ca2492ec8592494aa5fb5ce0387dff96ef6af982a3e"
+            },
+            {
+              "path": [
+                "first_sender"
+              ],
+              "value": "0:ca6e321c7cce9ecedf0a8ca2492ec8592494aa5fb5ce0387dff96ef6af982a3e"
+            },
+            {
+              "path": [
+                "amount"
+              ],
+              "value": "10.50"
+            },
+            {
+              "path": [
+                "network"
+              ],
+              "value": "TON"
+            },
+            {
+              "path": [
+                "is_test"
+              ],
+              "value": false
+            },
+            {
+              "path": [
+                "invoice_id"
+              ],
+              "value": "inv_1"
+            },
+            {
+              "path": [
+                "mode"
+              ],
+              "value": "overpayment"
+            },
+            {
+              "path": [
+                "external_order_id"
+              ],
+              "value": "refund-order-1"
+            },
+            {
+              "path": [
+                "is_final"
+              ],
+              "value": true
+            },
+            {
+              "path": [
+                "created_at"
+              ],
+              "value": 1700000000
+            },
+            {
+              "path": [
+                "completed_at"
+              ],
+              "value": 1700000000
+            }
+          ]
+        },
+        {
+          "name": "channel_deposit_raw",
+          "event_id": "evt_channel_deposit_raw",
+          "event_type": "payment_channel.deposit.confirmed",
+          "version": 1,
+          "header": "t=1700000000,v1=65304a7b178cf3585bd4dbf8896e7819539aa23a66b566f12142cc0f601e304b",
+          "raw_body": "{\"event_id\":\"evt_channel_deposit_raw\",\"event_type\":\"payment_channel.deposit.confirmed\",\"version\":1,\"occurred_at\":1700000000,\"data\":{\"id\":\"pcd_1\",\"status\":\"confirmed\",\"is_test\":false,\"network\":\"TON\",\"currency\":\"USDT\",\"gross\":\"10.50\",\"contract_address\":\"0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe\",\"source_address\":\"0:ca6e321c7cce9ecedf0a8ca2492ec8592494aa5fb5ce0387dff96ef6af982a3e\",\"destination_address\":\"0:ca6e321c7cce9ecedf0a8ca2492ec8592494aa5fb5ce0387dff96ef6af982a3e\"}}",
+          "expect": [
+            {
+              "path": [
+                "contract_address"
+              ],
+              "value": "0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe"
+            },
+            {
+              "path": [
+                "source_address"
+              ],
+              "value": "0:ca6e321c7cce9ecedf0a8ca2492ec8592494aa5fb5ce0387dff96ef6af982a3e"
+            },
+            {
+              "path": [
+                "destination_address"
+              ],
+              "value": "0:ca6e321c7cce9ecedf0a8ca2492ec8592494aa5fb5ce0387dff96ef6af982a3e"
+            },
+            {
+              "path": [
+                "gross"
+              ],
+              "value": "10.50"
+            },
+            {
+              "path": [
+                "network"
+              ],
+              "value": "TON"
+            },
+            {
+              "path": [
+                "is_test"
+              ],
+              "value": false
+            }
+          ]
+        },
+        {
+          "name": "invoice_friendly",
+          "event_id": "evt_invoice_friendly",
+          "event_type": "invoice.paid",
+          "version": 1,
+          "header": "t=1700000000,v1=443f23a357da0190dbe80a62a3543cbe31d901d94a56fbb02164b9670755b4e3",
+          "raw_body": "{\"event_id\":\"evt_invoice_friendly\",\"event_type\":\"invoice.paid\",\"version\":1,\"occurred_at\":1700000000,\"data\":{\"invoice_id\":\"inv_1\",\"status\":\"paid\",\"is_test\":false,\"payment\":{\"network\":\"TON\",\"currency\":\"USDT\",\"address\":\"UQDKbjIcfM6ezt8KjKJJLshZJJSqX7XOA4ff-W72r5gqPuwA\",\"contract_address\":\"EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs\",\"expected\":\"10.50\"}}}",
+          "expect": [
+            {
+              "path": [
+                "payment",
+                "address"
+              ],
+              "value": "UQDKbjIcfM6ezt8KjKJJLshZJJSqX7XOA4ff-W72r5gqPuwA"
+            },
+            {
+              "path": [
+                "payment",
+                "contract_address"
+              ],
+              "value": "EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs"
+            },
+            {
+              "path": [
+                "payment",
+                "expected"
+              ],
+              "value": "10.50"
+            },
+            {
+              "path": [
+                "payment",
+                "network"
+              ],
+              "value": "TON"
+            },
+            {
+              "path": [
+                "is_test"
+              ],
+              "value": false
+            }
+          ]
+        },
+        {
+          "name": "withdrawal_friendly",
+          "event_id": "evt_withdrawal_friendly",
+          "event_type": "withdrawal.completed",
+          "version": 1,
+          "header": "t=1700000000,v1=db8ec30417aa24b9f9a1fef4029d6ee9783b9c4d51fa910552f3f69f3e85f76e",
+          "raw_body": "{\"event_id\":\"evt_withdrawal_friendly\",\"event_type\":\"withdrawal.completed\",\"version\":1,\"occurred_at\":1700000000,\"data\":{\"withdrawal_id\":\"wdr_1\",\"status\":\"completed\",\"is_test\":false,\"network\":\"TON\",\"currency\":\"USDT\",\"amount\":\"10.50\",\"destination_address\":\"UQDKbjIcfM6ezt8KjKJJLshZJJSqX7XOA4ff-W72r5gqPuwA\"}}",
+          "expect": [
+            {
+              "path": [
+                "destination_address"
+              ],
+              "value": "UQDKbjIcfM6ezt8KjKJJLshZJJSqX7XOA4ff-W72r5gqPuwA"
+            },
+            {
+              "path": [
+                "amount"
+              ],
+              "value": "10.50"
+            },
+            {
+              "path": [
+                "network"
+              ],
+              "value": "TON"
+            },
+            {
+              "path": [
+                "is_test"
+              ],
+              "value": false
+            }
+          ]
+        },
+        {
+          "name": "refund_friendly",
+          "event_id": "evt_refund_friendly",
+          "event_type": "withdrawal.completed",
+          "version": 1,
+          "header": "t=1700000000,v1=12091805f2b1ef4272463081317ebe8397d0f435f7cc614b28f621dd76af3a1b",
+          "raw_body": "{\"event_id\":\"evt_refund_friendly\",\"event_type\":\"withdrawal.completed\",\"version\":1,\"occurred_at\":1700000000,\"data\":{\"withdrawal_id\":\"wdr_2\",\"invoice_id\":\"inv_1\",\"mode\":\"overpayment\",\"external_order_id\":\"refund-order-1\",\"status\":\"completed\",\"is_final\":true,\"is_test\":false,\"amount\":\"10.50\",\"currency\":\"USDT\",\"network\":\"TON\",\"destination_address\":\"UQDKbjIcfM6ezt8KjKJJLshZJJSqX7XOA4ff-W72r5gqPuwA\",\"first_sender\":\"UQDKbjIcfM6ezt8KjKJJLshZJJSqX7XOA4ff-W72r5gqPuwA\",\"created_at\":1700000000,\"completed_at\":1700000000,\"type\":\"refund\",\"project_id\":\"prj_1\"}}",
+          "expect": [
+            {
+              "path": [
+                "destination_address"
+              ],
+              "value": "UQDKbjIcfM6ezt8KjKJJLshZJJSqX7XOA4ff-W72r5gqPuwA"
+            },
+            {
+              "path": [
+                "first_sender"
+              ],
+              "value": "UQDKbjIcfM6ezt8KjKJJLshZJJSqX7XOA4ff-W72r5gqPuwA"
+            },
+            {
+              "path": [
+                "amount"
+              ],
+              "value": "10.50"
+            },
+            {
+              "path": [
+                "network"
+              ],
+              "value": "TON"
+            },
+            {
+              "path": [
+                "is_test"
+              ],
+              "value": false
+            },
+            {
+              "path": [
+                "invoice_id"
+              ],
+              "value": "inv_1"
+            },
+            {
+              "path": [
+                "mode"
+              ],
+              "value": "overpayment"
+            },
+            {
+              "path": [
+                "external_order_id"
+              ],
+              "value": "refund-order-1"
+            },
+            {
+              "path": [
+                "is_final"
+              ],
+              "value": true
+            },
+            {
+              "path": [
+                "created_at"
+              ],
+              "value": 1700000000
+            },
+            {
+              "path": [
+                "completed_at"
+              ],
+              "value": 1700000000
+            },
+            {
+              "path": [
+                "type"
+              ],
+              "value": "refund"
+            },
+            {
+              "path": [
+                "project_id"
+              ],
+              "value": "prj_1"
+            }
+          ]
+        },
+        {
+          "name": "channel_deposit_friendly",
+          "event_id": "evt_channel_deposit_friendly",
+          "event_type": "payment_channel.deposit.confirmed",
+          "version": 1,
+          "header": "t=1700000000,v1=71d49447016c1f340b666a1b9098d8389347898e1bbf0eb43dda2b72ae0908c3",
+          "raw_body": "{\"event_id\":\"evt_channel_deposit_friendly\",\"event_type\":\"payment_channel.deposit.confirmed\",\"version\":1,\"occurred_at\":1700000000,\"data\":{\"id\":\"pcd_1\",\"status\":\"confirmed\",\"is_test\":false,\"network\":\"TON\",\"currency\":\"USDT\",\"gross\":\"10.50\",\"contract_address\":\"EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs\",\"source_address\":\"UQDKbjIcfM6ezt8KjKJJLshZJJSqX7XOA4ff-W72r5gqPuwA\",\"destination_address\":\"UQDKbjIcfM6ezt8KjKJJLshZJJSqX7XOA4ff-W72r5gqPuwA\"}}",
+          "expect": [
+            {
+              "path": [
+                "contract_address"
+              ],
+              "value": "EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs"
+            },
+            {
+              "path": [
+                "source_address"
+              ],
+              "value": "UQDKbjIcfM6ezt8KjKJJLshZJJSqX7XOA4ff-W72r5gqPuwA"
+            },
+            {
+              "path": [
+                "destination_address"
+              ],
+              "value": "UQDKbjIcfM6ezt8KjKJJLshZJJSqX7XOA4ff-W72r5gqPuwA"
+            },
+            {
+              "path": [
+                "gross"
+              ],
+              "value": "10.50"
+            },
+            {
+              "path": [
+                "network"
+              ],
+              "value": "TON"
+            },
+            {
+              "path": [
+                "is_test"
+              ],
+              "value": false
+            }
+          ]
+        },
+        {
+          "name": "invoice_v1",
+          "event_id": "evt_invoice_v1",
+          "event_type": "invoice.paid",
+          "version": 1,
+          "header": "t=1700000000,v1=5c3feef93b8332f1d0bb4b66f5bfca34e9d45d6a798ecf195877c3eeefe71196",
+          "raw_body": "{\"event_id\":\"evt_invoice_v1\",\"event_type\":\"invoice.paid\",\"version\":1,\"occurred_at\":1700000000,\"data\":{\"invoice_id\":\"inv_1\",\"status\":\"paid\",\"is_test\":false,\"payment\":{\"network\":\"TON\",\"currency\":\"USDT\",\"address\":\"0:ca6e321c7cce9ecedf0a8ca2492ec8592494aa5fb5ce0387dff96ef6af982a3e\",\"contract_address\":\"0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe\",\"expected\":\"10.50\"}}}",
+          "expect": [
+            {
+              "path": [
+                "payment",
+                "address"
+              ],
+              "value": "0:ca6e321c7cce9ecedf0a8ca2492ec8592494aa5fb5ce0387dff96ef6af982a3e"
+            },
+            {
+              "path": [
+                "payment",
+                "contract_address"
+              ],
+              "value": "0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe"
+            },
+            {
+              "path": [
+                "payment",
+                "expected"
+              ],
+              "value": "10.50"
+            },
+            {
+              "path": [
+                "payment",
+                "network"
+              ],
+              "value": "TON"
+            },
+            {
+              "path": [
+                "is_test"
+              ],
+              "value": false
+            }
+          ]
+        },
+        {
+          "name": "withdrawal_v1",
+          "event_id": "evt_withdrawal_v1",
+          "event_type": "withdrawal.completed",
+          "version": 1,
+          "header": "t=1700000000,v1=fdbbc099095180b35f8939c8021bf73158cb3d2c99cf478b89ce7fd860447c63",
+          "raw_body": "{\"event_id\":\"evt_withdrawal_v1\",\"event_type\":\"withdrawal.completed\",\"version\":1,\"occurred_at\":1700000000,\"data\":{\"withdrawal_id\":\"wdr_1\",\"status\":\"completed\",\"is_test\":false,\"network\":\"TON\",\"currency\":\"USDT\",\"amount\":\"10.50\",\"destination_address\":\"0:ca6e321c7cce9ecedf0a8ca2492ec8592494aa5fb5ce0387dff96ef6af982a3e\"}}",
+          "expect": [
+            {
+              "path": [
+                "destination_address"
+              ],
+              "value": "0:ca6e321c7cce9ecedf0a8ca2492ec8592494aa5fb5ce0387dff96ef6af982a3e"
+            },
+            {
+              "path": [
+                "amount"
+              ],
+              "value": "10.50"
+            },
+            {
+              "path": [
+                "network"
+              ],
+              "value": "TON"
+            },
+            {
+              "path": [
+                "is_test"
+              ],
+              "value": false
+            }
+          ]
+        },
+        {
+          "name": "refund_v1",
+          "event_id": "evt_refund_v1",
+          "event_type": "withdrawal.completed",
+          "version": 1,
+          "header": "t=1700000000,v1=64ea37ea6428a281e13bc1edb5965f9b826f7fdbce04e859548cbf0f5989dbba",
+          "raw_body": "{\"event_id\":\"evt_refund_v1\",\"event_type\":\"withdrawal.completed\",\"version\":1,\"occurred_at\":1700000000,\"data\":{\"withdrawal_id\":\"wdr_2\",\"invoice_id\":\"inv_1\",\"type\":\"refund\",\"status\":\"completed\",\"is_test\":false,\"network\":\"TON\",\"currency\":\"USDT\",\"amount\":\"10.50\",\"destination_address\":\"0:ca6e321c7cce9ecedf0a8ca2492ec8592494aa5fb5ce0387dff96ef6af982a3e\",\"first_sender\":\"0:ca6e321c7cce9ecedf0a8ca2492ec8592494aa5fb5ce0387dff96ef6af982a3e\"}}",
+          "expect": [
+            {
+              "path": [
+                "destination_address"
+              ],
+              "value": "0:ca6e321c7cce9ecedf0a8ca2492ec8592494aa5fb5ce0387dff96ef6af982a3e"
+            },
+            {
+              "path": [
+                "first_sender"
+              ],
+              "value": "0:ca6e321c7cce9ecedf0a8ca2492ec8592494aa5fb5ce0387dff96ef6af982a3e"
+            },
+            {
+              "path": [
+                "amount"
+              ],
+              "value": "10.50"
+            },
+            {
+              "path": [
+                "network"
+              ],
+              "value": "TON"
+            },
+            {
+              "path": [
+                "is_test"
+              ],
+              "value": false
+            },
+            {
+              "path": [
+                "type"
+              ],
+              "value": "refund"
+            },
+            {
+              "path": [
+                "invoice_id"
+              ],
+              "value": "inv_1"
+            }
+          ]
+        },
+        {
+          "name": "channel_deposit_v1",
+          "event_id": "evt_channel_deposit_v1",
+          "event_type": "payment_channel.deposit.confirmed",
+          "version": 1,
+          "header": "t=1700000000,v1=26171784044cbce51177d844f98bd4dff1ccb33f7ea9be273ee5a266eb396557",
+          "raw_body": "{\"event_id\":\"evt_channel_deposit_v1\",\"event_type\":\"payment_channel.deposit.confirmed\",\"version\":1,\"occurred_at\":1700000000,\"data\":{\"id\":\"pcd_1\",\"status\":\"confirmed\",\"is_test\":false,\"network\":\"TON\",\"currency\":\"USDT\",\"gross\":\"10.50\",\"contract_address\":\"0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe\",\"source_address\":\"0:ca6e321c7cce9ecedf0a8ca2492ec8592494aa5fb5ce0387dff96ef6af982a3e\",\"destination_address\":\"0:ca6e321c7cce9ecedf0a8ca2492ec8592494aa5fb5ce0387dff96ef6af982a3e\"}}",
+          "expect": [
+            {
+              "path": [
+                "contract_address"
+              ],
+              "value": "0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe"
+            },
+            {
+              "path": [
+                "source_address"
+              ],
+              "value": "0:ca6e321c7cce9ecedf0a8ca2492ec8592494aa5fb5ce0387dff96ef6af982a3e"
+            },
+            {
+              "path": [
+                "destination_address"
+              ],
+              "value": "0:ca6e321c7cce9ecedf0a8ca2492ec8592494aa5fb5ce0387dff96ef6af982a3e"
+            },
+            {
+              "path": [
+                "gross"
+              ],
+              "value": "10.50"
+            },
+            {
+              "path": [
+                "network"
+              ],
+              "value": "TON"
+            },
+            {
+              "path": [
+                "is_test"
+              ],
+              "value": false
+            }
+          ]
+        },
+        {
+          "name": "invoice_v2",
+          "event_id": "evt_invoice_v2",
+          "event_type": "invoice.paid",
+          "version": 2,
+          "header": "t=1700000000,v1=b8aab224da702b154a069dd39a1c0ffa2bc3b5670436f577fe46e7a7d57e7bea",
+          "raw_body": "{\"event_id\":\"evt_invoice_v2\",\"event_type\":\"invoice.paid\",\"version\":2,\"occurred_at\":1700000000,\"data\":{\"invoice_id\":\"inv_1\",\"status\":\"paid\",\"is_test\":false,\"payment\":{\"network\":\"TON\",\"currency\":\"USDT\",\"address\":\"UQDKbjIcfM6ezt8KjKJJLshZJJSqX7XOA4ff-W72r5gqPuwA\",\"contract_address\":\"EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs\",\"expected\":\"10.50\"}}}",
+          "expect": [
+            {
+              "path": [
+                "payment",
+                "address"
+              ],
+              "value": "UQDKbjIcfM6ezt8KjKJJLshZJJSqX7XOA4ff-W72r5gqPuwA"
+            },
+            {
+              "path": [
+                "payment",
+                "contract_address"
+              ],
+              "value": "EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs"
+            },
+            {
+              "path": [
+                "payment",
+                "expected"
+              ],
+              "value": "10.50"
+            },
+            {
+              "path": [
+                "payment",
+                "network"
+              ],
+              "value": "TON"
+            },
+            {
+              "path": [
+                "is_test"
+              ],
+              "value": false
+            }
+          ]
+        },
+        {
+          "name": "withdrawal_v2",
+          "event_id": "evt_withdrawal_v2",
+          "event_type": "withdrawal.completed",
+          "version": 2,
+          "header": "t=1700000000,v1=188597aa50246e9c4906d31728643cc9c539c1e4bdec083cd0a312a305882fc5",
+          "raw_body": "{\"event_id\":\"evt_withdrawal_v2\",\"event_type\":\"withdrawal.completed\",\"version\":2,\"occurred_at\":1700000000,\"data\":{\"withdrawal_id\":\"wdr_1\",\"status\":\"completed\",\"is_test\":false,\"network\":\"TON\",\"currency\":\"USDT\",\"amount\":\"10.50\",\"destination_address\":\"UQDKbjIcfM6ezt8KjKJJLshZJJSqX7XOA4ff-W72r5gqPuwA\"}}",
+          "expect": [
+            {
+              "path": [
+                "destination_address"
+              ],
+              "value": "UQDKbjIcfM6ezt8KjKJJLshZJJSqX7XOA4ff-W72r5gqPuwA"
+            },
+            {
+              "path": [
+                "amount"
+              ],
+              "value": "10.50"
+            },
+            {
+              "path": [
+                "network"
+              ],
+              "value": "TON"
+            },
+            {
+              "path": [
+                "is_test"
+              ],
+              "value": false
+            }
+          ]
+        },
+        {
+          "name": "refund_v2",
+          "event_id": "evt_refund_v2",
+          "event_type": "withdrawal.completed",
+          "version": 2,
+          "header": "t=1700000000,v1=7a9ebb281ce92c8e2e3860f5111ba39400ca62b7ca1433d83d541381c1508276",
+          "raw_body": "{\"event_id\":\"evt_refund_v2\",\"event_type\":\"withdrawal.completed\",\"version\":2,\"occurred_at\":1700000000,\"data\":{\"withdrawal_id\":\"wdr_2\",\"invoice_id\":\"inv_1\",\"type\":\"refund\",\"status\":\"completed\",\"is_test\":false,\"network\":\"TON\",\"currency\":\"USDT\",\"amount\":\"10.50\",\"destination_address\":\"UQDKbjIcfM6ezt8KjKJJLshZJJSqX7XOA4ff-W72r5gqPuwA\",\"first_sender\":\"UQDKbjIcfM6ezt8KjKJJLshZJJSqX7XOA4ff-W72r5gqPuwA\"}}",
+          "expect": [
+            {
+              "path": [
+                "destination_address"
+              ],
+              "value": "UQDKbjIcfM6ezt8KjKJJLshZJJSqX7XOA4ff-W72r5gqPuwA"
+            },
+            {
+              "path": [
+                "first_sender"
+              ],
+              "value": "UQDKbjIcfM6ezt8KjKJJLshZJJSqX7XOA4ff-W72r5gqPuwA"
+            },
+            {
+              "path": [
+                "amount"
+              ],
+              "value": "10.50"
+            },
+            {
+              "path": [
+                "network"
+              ],
+              "value": "TON"
+            },
+            {
+              "path": [
+                "is_test"
+              ],
+              "value": false
+            },
+            {
+              "path": [
+                "type"
+              ],
+              "value": "refund"
+            },
+            {
+              "path": [
+                "invoice_id"
+              ],
+              "value": "inv_1"
+            }
+          ]
+        },
+        {
+          "name": "channel_deposit_v2",
+          "event_id": "evt_channel_deposit_v2",
+          "event_type": "payment_channel.deposit.confirmed",
+          "version": 2,
+          "header": "t=1700000000,v1=97136e2e98719857858cae4a2db9cdc3a4592b8fd45d0b064f81192ecc1d732f",
+          "raw_body": "{\"event_id\":\"evt_channel_deposit_v2\",\"event_type\":\"payment_channel.deposit.confirmed\",\"version\":2,\"occurred_at\":1700000000,\"data\":{\"id\":\"pcd_1\",\"status\":\"confirmed\",\"is_test\":false,\"network\":\"TON\",\"currency\":\"USDT\",\"gross\":\"10.50\",\"contract_address\":\"EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs\",\"source_address\":\"UQDKbjIcfM6ezt8KjKJJLshZJJSqX7XOA4ff-W72r5gqPuwA\",\"destination_address\":\"UQDKbjIcfM6ezt8KjKJJLshZJJSqX7XOA4ff-W72r5gqPuwA\"}}",
+          "expect": [
+            {
+              "path": [
+                "contract_address"
+              ],
+              "value": "EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs"
+            },
+            {
+              "path": [
+                "source_address"
+              ],
+              "value": "UQDKbjIcfM6ezt8KjKJJLshZJJSqX7XOA4ff-W72r5gqPuwA"
+            },
+            {
+              "path": [
+                "destination_address"
+              ],
+              "value": "UQDKbjIcfM6ezt8KjKJJLshZJJSqX7XOA4ff-W72r5gqPuwA"
+            },
+            {
+              "path": [
+                "gross"
+              ],
+              "value": "10.50"
+            },
+            {
+              "path": [
+                "network"
+              ],
+              "value": "TON"
+            },
+            {
+              "path": [
+                "is_test"
+              ],
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    "webhook": {
+      "secret": "whsec_test_secret",
+      "timestamp": 1700000000,
+      "now": 1700000000,
+      "tolerance_seconds": 300,
+      "raw_body": "{\"event_id\":\"evt_123\",\"event_type\":\"invoice.paid\",\"version\":1,\"occurred_at\":1700000000,\"data\":{\"invoice_id\":\"inv_123\"}}",
+      "signature": "8f62822925c2d12af1b822edcc1e9392ce064c20d003cbbc11f131485348005b",
+      "header": "t=1700000000,v1=ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff,v1=8f62822925c2d12af1b822edcc1e9392ce064c20d003cbbc11f131485348005b"
+    },
+    "problem_details": {
+      "flat": {
+        "type": "about:blank",
+        "title": "Conflict",
+        "status": 409,
+        "detail": "Conflict.",
+        "code": "conflict",
+        "field": "client_request_id"
+      },
+      "multi": {
+        "type": "about:blank",
+        "title": "Bad Request",
+        "status": 400,
+        "detail": "Validation failed.",
+        "code": "validation_failed",
+        "errors": [
+          {
+            "code": "field_required",
+            "field": "address",
+            "message": "Required."
+          }
+        ]
+      }
+    },
+    "invoices": {
+      "authentication": "Payment key with verified HMAC",
+      "create_single_product": {
+        "method": "POST",
+        "path": "/v1/invoices",
+        "body": {
+          "project_id": "prj_1",
+          "amount": "47.00",
+          "currency": "USD",
+          "external_order_id": "order-product-single",
+          "products": [
+            {
+              "title": "Studio Pro",
+              "description": "One-month access",
+              "quantity": 2,
+              "unit_amount": "24.50"
+            }
+          ]
+        },
+        "response": {
+          "invoice_id": "inv_prod_1",
+          "project_id": "prj_1",
+          "status": "awaiting_client",
+          "is_final": false,
+          "is_test": true,
+          "payment_url": "https://pay.paymos.io/i/inv_prod_1",
+          "order": {
+            "external_id": "order-product-single",
+            "amount": "47.00",
+            "currency": "USD",
+            "products": [
+              {
+                "title": "Studio Pro",
+                "description": "One-month access",
+                "quantity": 2,
+                "unit_amount": "24.50"
+              }
+            ]
+          },
+          "created_at": 1700000000,
+          "updated_at": 1700000000
+        }
+      },
+      "create_multi_product": {
+        "method": "POST",
+        "path": "/v1/invoices",
+        "body": {
+          "project_id": "prj_1",
+          "amount": "59.00",
+          "currency": "USD",
+          "external_order_id": "order-product-multi",
+          "products": [
+            {
+              "title": "Studio Pro",
+              "description": "One-month access",
+              "quantity": 2,
+              "unit_amount": "24.50"
+            },
+            {
+              "title": "Priority Support",
+              "quantity": 1,
+              "unit_amount": "12.00"
+            }
+          ]
+        },
+        "response": {
+          "invoice_id": "inv_prod_2",
+          "project_id": "prj_1",
+          "status": "awaiting_client",
+          "is_final": false,
+          "is_test": true,
+          "payment_url": "https://pay.paymos.io/i/inv_prod_2",
+          "order": {
+            "external_id": "order-product-multi",
+            "amount": "59.00",
+            "currency": "USD",
+            "products": [
+              {
+                "title": "Studio Pro",
+                "description": "One-month access",
+                "quantity": 2,
+                "unit_amount": "24.50"
+              },
+              {
+                "title": "Priority Support",
+                "quantity": 1,
+                "unit_amount": "12.00"
+              }
+            ]
+          },
+          "created_at": 1700000000,
+          "updated_at": 1700000000
+        }
+      },
+      "legacy_without_products": {
+        "method": "POST",
+        "path": "/v1/invoices",
+        "body": {
+          "project_id": "prj_1",
+          "amount": "30.00",
+          "currency": "USD",
+          "external_order_id": "order-legacy-1"
+        },
+        "response": {
+          "invoice_id": "inv_legacy_1",
+          "project_id": "prj_1",
+          "status": "awaiting_client",
+          "is_final": false,
+          "is_test": true,
+          "payment_url": "https://pay.paymos.io/i/inv_legacy_1",
+          "order": {
+            "external_id": "order-legacy-1",
+            "amount": "30.00",
+            "currency": "USD"
+          },
+          "created_at": 1700000000,
+          "updated_at": 1700000000
+        }
+      },
+      "null_products": {
+        "method": "POST",
+        "path": "/v1/invoices",
+        "body": {
+          "project_id": "prj_1",
+          "amount": "30.00",
+          "currency": "USD",
+          "external_order_id": "order-null-products-1",
+          "products": null
+        },
+        "response": {
+          "invoice_id": "inv_null_1",
+          "project_id": "prj_1",
+          "status": "awaiting_client",
+          "is_final": false,
+          "is_test": true,
+          "payment_url": "https://pay.paymos.io/i/inv_null_1",
+          "order": {
+            "external_id": "order-null-products-1",
+            "amount": "30.00",
+            "currency": "USD"
+          },
+          "created_at": 1700000000,
+          "updated_at": 1700000000
+        }
+      },
+      "products_wire": {
+        "min_items": 1,
+        "max_items": 50,
+        "required_item_fields": [
+          "title",
+          "quantity",
+          "unit_amount"
+        ],
+        "optional_item_fields": [
+          "description"
+        ],
+        "omit_null_optional_item_fields": true,
+        "quantity_type": "integer",
+        "unit_amount_type": "decimal string",
+        "amount_independent_of_products_sum": true,
+        "excluded_from_webhooks": true
+      }
+    }
+  }
+}
