@@ -93,14 +93,14 @@ export const askOpenAI = createAction({
     temperature: Property.Number({
       displayName: 'Temperature',
       required: false,
-      description: 'From 0 to 2. Lower is more focused, higher is more varied.',
+      description: 'From 0 to 2. Lower is more focused, higher is more varied. Not sent for gpt-6 models or retired gpt-5 models, which only accept the default.',
       defaultValue: 1,
       advanced: true,
     }),
     topP: Property.Number({
       displayName: 'Top P',
       required: false,
-      description: 'From 0 to 1. Adjust this or Temperature, not both.',
+      description: 'From 0 to 1. Adjust this or Temperature, not both. Not sent for gpt-6 models or retired gpt-5 models, which only accept the default.',
       defaultValue: 1,
       advanced: true,
     }),
@@ -108,7 +108,7 @@ export const askOpenAI = createAction({
       displayName: 'Frequency Penalty',
       required: false,
       description:
-        'From -2 to 2. Higher values make the model repeat itself less.',
+        'From -2 to 2. Higher values make the model repeat itself less. Not sent for gpt-6 models or retired gpt-5 models, which only accept the default.',
       defaultValue: 0,
       advanced: true,
     }),
@@ -116,7 +116,7 @@ export const askOpenAI = createAction({
       displayName: 'Presence Penalty',
       required: false,
       description:
-        'From -2 to 2. Higher values push the model toward new topics.',
+        'From -2 to 2. Higher values push the model toward new topics. Not sent for gpt-6 models or retired gpt-5 models, which only accept the default.',
       advanced: true,
     }),
     roles: Property.Json({
