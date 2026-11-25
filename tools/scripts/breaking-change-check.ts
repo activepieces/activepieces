@@ -103,9 +103,9 @@ function main(): void {
             errors.push(entry.error)
         }
     }
-    for (const entry of addedEntries) {
-        if (!entry.error && entry.missing.length > 0) {
-            errors.push(`${entry.file}: a new entry needs ${entry.missing.join(' and ')}.`)
+    for (const entry of touchedEntries) {
+        if (entry.isCurrent && !entry.error && entry.missing.length > 0) {
+            errors.push(`${entry.file}: an entry added on or after ${ENTRIES_REQUIRING_IMPACT_FROM} needs ${entry.missing.join(' and ')}.`)
         }
     }
     if (errors.length === 0) {

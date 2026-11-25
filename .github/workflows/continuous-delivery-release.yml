@@ -142,6 +142,9 @@ jobs:
         with:
           bun-version: latest
 
+      - name: Install dependencies
+        run: bun install --frozen-lockfile --ignore-scripts
+
       - name: Roll unreleased breaking changes under the released version
         env:
           TAG: ${{ needs.weekly-release.outputs.release }}

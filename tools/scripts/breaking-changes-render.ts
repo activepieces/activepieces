@@ -14,7 +14,11 @@ function parseEntryFile({ fileName, text }: { fileName: string, text: string }):
     if (`${parsed.data.id}.md` !== fileName) {
         throw new Error(`${fileName}: id "${parsed.data.id}" must match the file name`)
     }
-    return { meta: parsed.data, body: match[2].trim() }
+    const body = match[2].trim()
+    if (body.length === 0) {
+        throw new Error(`${fileName}: the body must say what changed and what self-hosters need to do`)
+    }
+    return { meta: parsed.data, body }
 }
 
 function readEntries({ dir }: { dir: string }): Entry[] {

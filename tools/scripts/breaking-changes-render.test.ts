@@ -31,6 +31,10 @@ describe('parseEntryFile', () => {
         expect(() => file({ fileName: 'alpha.md', frontMatter: 'id: alpha\ntitle: "x"\nadded: \'2026-11-20\'\nimpact: catastrophic' })).toThrow('impact')
     })
 
+    it('rejects an entry with an empty body', () => {
+        expect(() => breakingChangesRender.parseEntryFile({ fileName: 'alpha.md', text: '---\nid: alpha\ntitle: "x"\nadded: \'2026-11-20\'\n---\n\n' })).toThrow('body')
+    })
+
     it('rejects a file without front-matter', () => {
         expect(() => breakingChangesRender.parseEntryFile({ fileName: 'alpha.md', text: '#### Alpha\n\nBody.\n' })).toThrow('front-matter')
     })
