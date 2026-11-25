@@ -43,6 +43,7 @@ import { AiRouterRoutes } from './ai-router-routes';
 import { BatchBreadcrumb, BatchBrowser } from './batch-browser';
 import { BatchLogsPanel, EmptyStatePanel } from './batch-logs-panel';
 import { batchUtils } from './batch-utils';
+import { runStepHeaderStatus } from './run-step-header-status';
 import { truncatedInputUtils } from './truncated-input-utils';
 import { useStepOutputInRun } from './use-step-output-in-run';
 
@@ -177,12 +178,9 @@ export const FlowStepInputOutput = () => {
       />
     );
   }
-  const status: 'success' | 'failed' | 'testing' | 'idle' =
-    selectedStepOutput.status === StepOutputStatus.FAILED
-      ? 'failed'
-      : selectedStepOutput.status === StepOutputStatus.RUNNING
-      ? 'testing'
-      : 'success';
+  const status = runStepHeaderStatus.fromStepOutputStatus(
+    selectedStepOutput.status,
+  );
 
   const stepKind: 'action' | 'trigger' =
     selectedStep.type === FlowTriggerType.PIECE ? 'trigger' : 'action';
@@ -302,7 +300,7 @@ export const FlowStepInputOutput = () => {
                 explanationContext={explanationContext}
                 pieceDisplayName={pieceModel?.displayName}
               />
-            ) : status === 'success' ? (
+            ) : status !== 'failed' ? (
               <SmartOutputViewer
                 json={parsedOutput}
                 title={t('Output')}

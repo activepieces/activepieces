@@ -18,7 +18,7 @@ const editionConfigs = {
     testIgnore: ['**/ee/**', '**/cloud/**'],
   },
   ee: {
-    testIgnore: ['**/cloud/**'],
+    testIgnore: ['**/ce/**', '**/cloud/**'],
   },
   cloud: {
     testIgnore: ['**/ce/**', '**/ee/**'],
@@ -28,12 +28,26 @@ const editionConfigs = {
 const editionConfig = editionConfigs[AP_EDITION as keyof typeof editionConfigs];
 
 const QUARANTINE = /@quarantine/;
+const PLATFORM_STATE = /@platform-state/;
+const PARALLEL_PROJECT = `@activepieces/${AP_EDITION}`;
+const SKIPPED = [
+  ...(process.env.CI ? [QUARANTINE] : []),
+  ...(process.env.E2E_GREP_INVERT ? [new RegExp(process.env.E2E_GREP_INVERT, 'i')] : []),
+];
+
+const browser = {
+  ...devices['Desktop Chrome'],
+  headless: true,
+  ...(E2E_INSTANCE_URL && {
+    channel: 'chromium',
+    launchOptions: { args: [`--unsafely-treat-insecure-origin-as-secure=${E2E_INSTANCE_URL}`] },
+  }),
+};
 
 const config: PlaywrightTestConfig = {
   testDir: './scenarios',
   testMatch: '**/*.spec.ts',
   testIgnore: editionConfig.testIgnore,
-  grepInvert: process.env.CI ? QUARANTINE : undefined,
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -60,14 +74,19 @@ const config: PlaywrightTestConfig = {
     headless: true,
   },
 
-  /* Configure projects for major browsers */
   projects: [
     {
-      name: `@activepieces/${AP_EDITION}`,
-      use: {
-        ...devices['Desktop Chrome'],
-        headless: true,
-      },
+      name: PARALLEL_PROJECT,
+      grepInvert: [...SKIPPED, PLATFORM_STATE],
+      use: browser,
+    },
+    {
+      name: 'platform-state',
+      grep: PLATFORM_STATE,
+      grepInvert: SKIPPED,
+      workers: 1,
+      dependencies: [PARALLEL_PROJECT],
+      use: browser,
     },
   ],
 

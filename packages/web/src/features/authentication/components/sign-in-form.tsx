@@ -244,7 +244,7 @@ const SignInForm = ({ onForgotPassword }: SignInFormProps) => {
             )}
           />
           {form?.formState?.errors?.root?.serverError && (
-            <FormMessage>
+            <FormMessage data-testid="sign-in-error">
               {form.formState.errors.root.serverError.message}
             </FormMessage>
           )}

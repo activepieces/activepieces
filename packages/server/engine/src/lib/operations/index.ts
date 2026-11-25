@@ -1,6 +1,7 @@
 import { inspect } from 'util'
 import { formatPieceError, tryCatch } from '@activepieces/core-utils'
 import { EngineOperation, EngineOperationType, EngineResponse, EngineResponseStatus, ExecuteActionOperation, ExecuteExtractPieceMetadataOperation, ExecuteFlowOperation, ExecutePropsOptions, ExecuteRefreshTokenAuthOperation, ExecuteResolveConnectionIdentifierOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, ExecutionError, ExecutionErrorType, TriggerHookType } from '@activepieces/shared'
+import { operationScope } from '../helper/operation-scope'
 import { actionOperation } from './action.operation'
 import { authRefreshOperation } from './auth-refresh.operation'
 import { authValidationOperation } from './auth-validation.operation'
@@ -43,6 +44,7 @@ export async function execute(operationType: EngineOperationType, operation: Eng
             }
         }
     })
+    await operationScope.disposeAll()
     if (result.error) {
         console.error(result.error)
         return {
