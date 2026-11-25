@@ -234,7 +234,11 @@ export function FollowAlongController({
         followAlong.dismissOffer();
         return true;
       }
-      if (latest.offer !== null && chatDom.inChat(focused)) return false;
+      const offersTarget =
+        latest.offer !== null &&
+        resourceRegistry.keyOf(latest.offer.resource) ===
+          resourceRegistry.keyOf(target);
+      if (offersTarget && chatDom.inChat(focused)) return false;
       if (
         pageFocus.isBusyIn(focused) ||
         followHold.holds({ fullPage: chatPanelUtils.isFullPage() })
