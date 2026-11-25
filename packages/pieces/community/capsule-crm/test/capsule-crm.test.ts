@@ -465,3 +465,13 @@ describe('opportunity value on the human actions', () => {
     expect(capsuleCrmClient.opportunityValue({ amount: undefined, currency: undefined })).toBeUndefined();
   });
 });
+
+describe('update contact ignores agent placeholder text', () => {
+  it('drops {} and [] in text fields', async () => {
+    const { capsuleCrmClient } = await import('../src/lib/common/client');
+    expect(capsuleCrmClient.optionalText('{}')).toBeUndefined();
+    expect(capsuleCrmClient.optionalText('[]')).toBeUndefined();
+    expect(capsuleCrmClient.optionalText('  ')).toBeUndefined();
+    expect(capsuleCrmClient.optionalText(' Notes ')).toBe('Notes');
+  });
+});

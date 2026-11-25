@@ -323,11 +323,11 @@ export const updateContactAction = createAction({
       auth,
       partyId: capsuleCrmClient.segment(String(propsValue.contact_id)),
       params: {
-        firstName: optionalText(contactFields['firstName']),
-        lastName: optionalText(contactFields['lastName']),
-        name: optionalText(contactFields['organisationName']),
-        jobTitle: optionalText(contactFields['title']),
-        about: optionalText(propsValue.about),
+        firstName: capsuleCrmClient.optionalText(contactFields['firstName']),
+        lastName: capsuleCrmClient.optionalText(contactFields['lastName']),
+        name: capsuleCrmClient.optionalText(contactFields['organisationName']),
+        jobTitle: capsuleCrmClient.optionalText(contactFields['title']),
+        about: capsuleCrmClient.optionalText(propsValue.about),
         ownerId: propsValue.ownerId,
         teamId: propsValue.teamId,
         addresses: nestedItems({ value: propsValue.addresses, key: 'addresses' }),
@@ -338,10 +338,6 @@ export const updateContactAction = createAction({
     });
   },
 });
-
-function optionalText(value: unknown): string | undefined {
-  return typeof value === 'string' && value.trim() !== '' ? value : undefined;
-}
 
 function nestedItems({ value, key }: { value: unknown; key: string }): Record<string, unknown>[] | undefined {
   if (typeof value !== 'object' || value === null || !(key in value)) {
