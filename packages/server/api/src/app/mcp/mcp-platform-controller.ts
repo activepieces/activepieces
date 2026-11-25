@@ -6,8 +6,10 @@ import { securityAccess } from '../core/security/authorization/fastify-security'
 import { userIdentityHelper } from '../helper/user-identity-helper'
 import { mcpAccess } from './mcp-access'
 import { mcpServerService } from './mcp-service'
+import { platformAdminApi } from './platform-admin/platform-admin-api'
 
 export const mcpPlatformController: FastifyPluginAsyncZod = async (app) => {
+    app.addHook('onRoute', platformAdminApi.page('admin-guide/guides/mcp-server'))
 
     app.get('/', GetPlatformMcpRoute, async (req) => {
         return mcpServerService(req.log).getByPlatformId(req.principal.platform.id)
@@ -82,6 +84,7 @@ const UpdatePlatformMcpRoute = {
 const RotatePlatformTokenRoute = {
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+        mcp: { deny: true },
     },
     schema: {
         tags: ['mcp'],

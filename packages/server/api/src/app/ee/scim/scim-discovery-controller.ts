@@ -11,8 +11,10 @@ import {
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { platformAdminApi } from '../../mcp/platform-admin/platform-admin-api'
 
 export const scimDiscoveryController: FastifyPluginAsyncZod = async (app) => {
+    app.addHook('onRoute', platformAdminApi.page('admin-guide/guides/scim/overview'))
 
     app.get('/ServiceProviderConfig', ServiceProviderConfigRequest, async (_request, reply) => {
         return reply.status(StatusCodes.OK).send({

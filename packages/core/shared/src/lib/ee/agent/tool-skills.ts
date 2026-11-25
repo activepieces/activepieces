@@ -47,18 +47,18 @@ function renderToolCatalog({ tools }: { tools: { name: string, description?: str
         .join('\n')
 }
 
-function renderSkillsNote({ surface }: { surface: SkillSurface }): string {
+function renderSkillsNote({ surface, excludedSkills = [] }: { surface: SkillSurface, excludedSkills?: string[] }): string {
     const lines = [
         `\n\n${SKILLS_NOTE_HEADING}`,
         `Only a few tools are attached to you directly. Every other tool named in these instructions or listed below is real and reachable, but calling it by its own name fails: call \`${LAZY_TOOL_NAME}\` with its name as \`tool\` and its arguments as \`input\`, e.g. \`${LAZY_TOOL_NAME}({ "tool": "ap_validate_flow", "input": { "flowId": "..." } })\`.`,
         `Never guess a tool's arguments. Load the skills the work in front of you needs, together in one \`${LOAD_SKILL_NAME}\` call, and load another when the work reaches it. Each returns its playbook and the input schema of every tool in it. Or fetch one tool's schema with \`${GET_TOOL_SCHEMA_NAME}\`. A loaded skill stays in the conversation, so do not load it again.`,
         'If a call is rejected for its input, fix it from the schema in the error and retry once.',
     ]
-    return surface === 'CHAT' ? [...lines, '', 'Skills:', renderSkillIndex()].join('\n') : lines.join('\n')
+    return surface === 'CHAT' ? [...lines, '', 'Skills:', renderSkillIndex({ excludedSkills })].join('\n') : lines.join('\n')
 }
 
-function renderSkillIndex(): string {
-    return AGENT_SKILLS.map((skill) => `- ${skill.name} — load ${skill.loadWhen}`).join('\n')
+function renderSkillIndex({ excludedSkills }: { excludedSkills: string[] }): string {
+    return AGENT_SKILLS.filter((skill) => !excludedSkills.includes(skill.name)).map((skill) => `- ${skill.name} — load ${skill.loadWhen}`).join('\n')
 }
 
 function firstSentence(text: string): string {
@@ -75,6 +75,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 const MAX_CATALOG_LINE_CHARS = 160
 const CARD_TITLE_KEYS = ['title', 'activeTitle', 'doneTitle']
 const SKILLS_NOTE_HEADING = '## Skills and tools'
+const PLATFORM_ADMIN_SKILL_NAME = 'platform_admin'
 
 const LAZY_TOOL_NAME = 'ap_lazy_tool'
 const LOAD_SKILL_NAME = 'ap_load_skill'
@@ -201,6 +202,12 @@ const AGENT_SKILLS: readonly AgentSkill[] = [
     { name: 'http_fallback', loadWhen: 'when calling an API directly because no connection exists', guideTopic: 'http_fallback', entersBuildPhase: false, toolNames: [] },
     { name: 'ai', loadWhen: 'when a flow uses native AI steps or needs to pick an AI model', guideTopic: 'ai', entersBuildPhase: false, toolNames: ['ap_list_ai_models'] },
     { name: 'build_flow_advanced', loadWhen: 'when a flow needs dedup, loops over many items, or formula expressions', guideTopic: 'build_flow_advanced', entersBuildPhase: false, toolNames: [] },
+    {
+        name: PLATFORM_ADMIN_SKILL_NAME,
+        loadWhen: 'when the user asks how a platform admin setting works or wants one changed: users, projects, roles, SSO, AI providers, API keys, pieces, connections, billing',
+        entersBuildPhase: false,
+        toolNames: ['ap_platform_guide', 'ap_platform_read', 'ap_platform_write'],
+    },
     { name: 'about_activepieces', loadWhen: 'when asked what Activepieces is, how it is hosted or priced', guideTopic: 'about_activepieces', entersBuildPhase: false, toolNames: [] },
 ]
 
@@ -215,7 +222,7 @@ export const agentToolSkills = {
     renderSkillsNote,
 }
 
-export { AGENT_SKILLS, CORE_TOOL_NAMES, LAZY_TOOL_NAME, GET_TOOL_SCHEMA_NAME, LOAD_SKILL_NAME, MAX_CORE_TOOLS, SKILLS_NOTE_HEADING }
+export { AGENT_SKILLS, CORE_TOOL_NAMES, LAZY_TOOL_NAME, GET_TOOL_SCHEMA_NAME, LOAD_SKILL_NAME, MAX_CORE_TOOLS, PLATFORM_ADMIN_SKILL_NAME, SKILLS_NOTE_HEADING }
 
 export type SkillSurface = 'CHAT' | 'AGENT'
 

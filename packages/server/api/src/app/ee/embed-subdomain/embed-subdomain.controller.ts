@@ -3,10 +3,12 @@ import { AddAllowedEmbedOriginsRequestBody, AddAllowedEmbedOriginsResponse, Embe
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { platformAdminApi } from '../../mcp/platform-admin/platform-admin-api'
 import { platformService } from '../../platform/platform.service'
 import { embedSubdomainService } from './embed-subdomain.service'
 
 export const embedSubdomainController: FastifyPluginAsyncZod = async (app) => {
+    app.addHook('onRoute', platformAdminApi.page('admin-guide/guides/embedding'))
     app.post('/', UpsertSubdomainEndpoint, async (request) => {
         return embedSubdomainService(request.log).upsert({
             platformId: request.principal.platform.id,

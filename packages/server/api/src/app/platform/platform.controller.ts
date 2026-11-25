@@ -18,12 +18,14 @@ import { system } from '../helper/system/system'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
 import { userIdentityHelper } from '../helper/user-identity-helper'
+import { platformAdminApi } from '../mcp/platform-admin/platform-admin-api'
 import { userService } from '../user/user-service'
 import { billingProvider } from './billing-provider'
 import { platformService } from './platform.service'
 
 const edition = system.getEdition()
 export const platformController: FastifyPluginAsyncZod = async (app) => {
+    app.addHook('onRoute', platformAdminApi.page('admin-guide/guides/general'))
     app.post('/', CreatePlatformEndpoint, async (req) => {
         const isOnboarding = req.principal.type === PrincipalType.ONBOARDING
         if (!isOnboarding && edition !== ApEdition.CLOUD) {
@@ -260,6 +262,7 @@ const GetPlatformRequest = {
 const DeletePlatformRequest = {
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+        mcp: { deny: true },
     },
     schema: {
         params: z.object({

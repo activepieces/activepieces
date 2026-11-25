@@ -5,9 +5,11 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { system } from '../../helper/system/system'
+import { platformAdminApi } from '../../mcp/platform-admin/platform-admin-api'
 import { userService } from '../user-service'
 
 export const platformUserController: FastifyPluginAsyncZod = async (app) => {
+    app.addHook('onRoute', platformAdminApi.page('admin-guide/guides/permissions'))
 
     app.get('/', ListUsersRequest, async (req) => {
         const platformId = req.principal.platform.id

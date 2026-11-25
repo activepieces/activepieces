@@ -1,0 +1,17 @@
+---
+title: "API Keys"
+icon: "key"
+description: "Create and revoke platform API keys for calling the Activepieces API"
+---
+
+Go to **Platform Admin → Developers → API Keys** to manage the keys your scripts and services use to call the [Activepieces API](/endpoints/overview).
+
+- **Create API Key**: give the key a name and create it. The key is shown once, in the dialog that opens. Copy it before you close the dialog, because it cannot be viewed again.
+- **Revoke**: deletes the key. Anything still using it stops working right away.
+- The list shows each key's name, when it was created and when it was last used.
+
+An API key acts for the whole platform, not for one user, so keep it in a secret store and give each service its own key. That way you can revoke one without breaking the others.
+
+API keys need a plan with API access.
+
+AI assistants connected over MCP can list and revoke API keys, but cannot create them: a new key is shown only once, so it has to be created here by a person who can copy it.

@@ -6,10 +6,12 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { ProjectResourceType } from '../core/security/authorization/common'
 import { securityAccess } from '../core/security/authorization/fastify-security'
+import { platformAdminApi } from '../mcp/platform-admin/platform-admin-api'
 import { aiProviderService } from './ai-provider-service'
 import { platformModelTierService } from './platform-model-tier-service'
 
 export const platformModelTierController: FastifyPluginAsyncZod = async (app) => {
+    app.addHook('onRoute', platformAdminApi.page('admin-guide/guides/ai-tiers'))
     app.get('/', ListPlatformModelTiers, async (request) => {
         return platformModelTierService.listSummaries({ platformId: request.principal.platform.id, scope: { type: 'project', projectId: request.projectId } })
     })

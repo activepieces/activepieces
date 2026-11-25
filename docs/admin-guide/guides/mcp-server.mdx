@@ -1,0 +1,29 @@
+---
+title: "MCP Server"
+icon: "plug"
+description: "Choose which tools AI clients can use across the platform, and see what they did"
+---
+
+Go to **Platform Admin → Developers → MCP Server** to control what AI clients, such as Claude, ChatGPT or Cursor, can do when connected to Activepieces over [MCP](/mcp/overview).
+
+## Tools
+
+The tools are grouped by what they can do:
+
+- **View**: read flows, runs, tables, connections and pieces. Always on.
+- **Edit flows**: create, rename and duplicate flows, and edit drafts.
+- **Publish and run**: publish, test and run flows and actions, and change tables.
+- **Delete**: permanently delete flows, tables, fields and records.
+- **Platform admin**: read and change platform settings. Only platform admins get these tools, and they can do exactly what that admin can do in the UI.
+
+Switch a tool off here and it is off for every project and every connected client. A project admin can switch off more tools for their own project, but cannot switch back on a tool the platform switched off.
+
+Turn off **ap_platform_write** to let AI clients read platform settings without changing them.
+
+## Activity
+
+**MCP Activity** lists the actions connected clients ran, newest first.
+
+## Connections
+
+Each person connects their own AI client and signs in with their own account, so a client can never do more than the person who connected it.

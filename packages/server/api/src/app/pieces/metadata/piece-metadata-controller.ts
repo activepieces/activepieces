@@ -287,6 +287,7 @@ const SyncPiecesRequest = {
 const DeletePieceRequest = {
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+        mcp: { doc: 'admin-guide/guides/manage-pieces' },
     },
     schema: {
         tags: ['pieces'],

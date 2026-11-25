@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { AuthorizationType } from '../src/app/core/security/authorization/common'
 import { FastifyRouteSecurity } from '../src/app/core/security/authorization/fastify-security'
+import { McpRouteConfig } from '../src/app/mcp/platform-admin/platform-admin-api'
 import { ApId, Permission } from '@activepieces/core-utils';
 import { EndpointScope, MaybeProjectExtra, Principal, Principal, PrincipalForTypes, PrincipalForTypes, PrincipalType } from '@activepieces/shared';
 import fastify, {
@@ -51,6 +52,7 @@ declare module 'fastify' {
         rawBody?: boolean
         security: FastifyRouteSecurity
         otel?: boolean
+        mcp?: McpRouteConfig
     }
     
 

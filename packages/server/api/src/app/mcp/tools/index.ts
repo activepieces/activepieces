@@ -114,6 +114,8 @@ export const ALL_CONTROLLABLE_TOOL_NAMES = [
     'ap_test_step',
     'ap_retry_run',
     'ap_run_action',
+    'ap_platform_read',
+    'ap_platform_write',
 ]  as const
 
 export const activepiecesTools = (mcp: ProjectScopedMcpServer, userId: string | undefined, log: FastifyBaseLogger): McpToolDefinition[] => [

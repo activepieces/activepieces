@@ -4,11 +4,13 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { ProjectResourceType } from '../../../core/security/authorization/common'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
+import { platformAdminApi } from '../../../mcp/platform-admin/platform-admin-api'
 import { pieceSetService } from './piece-set.service'
 
 const platformAdminSecurity = securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE])
 
 export const pieceSetController: FastifyPluginAsyncZod = async (app) => {
+    app.addHook('onRoute', platformAdminApi.page('admin-guide/guides/manage-pieces'))
     const service = pieceSetService(app.log)
 
     app.get('/', ListPieceSets, async (req) => {

@@ -4,10 +4,12 @@ import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { platformAdminApi } from '../../mcp/platform-admin/platform-admin-api'
 import { aiProviderService } from '../ai-provider-service'
 import { aiUsageReadService } from './ai-usage-read.service'
 
 export const aiUsageController: FastifyPluginAsyncZod = async (app) => {
+    app.addHook('onRoute', platformAdminApi.page('admin-guide/guides/ai-usage'))
     app.get('/overview', GetOverview, async (request) => {
         return aiUsageReadService(request.log).overview({ platformId: request.principal.platform.id, ...request.query })
     })

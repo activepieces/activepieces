@@ -9,6 +9,7 @@ import { securityAccess } from '../../core/security/authorization/fastify-securi
 import { applicationEvents } from '../../helper/application-events'
 import { auditEvents } from '../../helper/audit-events'
 import { securityHelper } from '../../helper/security-helper'
+import { platformAdminApi } from '../../mcp/platform-admin/platform-admin-api'
 import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 
 export const globalConnectionModule: FastifyPluginAsyncZod = async (app) => {
@@ -17,6 +18,7 @@ export const globalConnectionModule: FastifyPluginAsyncZod = async (app) => {
 }
 
 const globalConnectionController: FastifyPluginAsyncZod = async (app) => {
+    app.addHook('onRoute', platformAdminApi.page('admin-guide/guides/global-connections'))
     app.post('/', UpsertGlobalConnectionRequest, async (request, reply) => {
         const appConnection = await appConnectionService(request.log).upsert({
             platformId: request.principal.platform.id,

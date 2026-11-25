@@ -24,7 +24,7 @@ const IDENTITY = {
     },
 }
 
-const EVERYTHING_AVAILABLE = { searchAvailable: true, fetchAvailable: true, scrapeAvailable: true, imageAvailable: true, imageEditAvailable: true, emailAvailable: true, agentsAvailable: true, tasksAvailable: true }
+const EVERYTHING_AVAILABLE = { searchAvailable: true, fetchAvailable: true, scrapeAvailable: true, imageAvailable: true, imageEditAvailable: true, emailAvailable: true, agentsAvailable: true, tasksAvailable: true, platformAdminAvailable: true }
 
 function notesFor(source: AgentRunSource): string {
     return agentSurfaceNotes.buildRunNotes({
@@ -134,7 +134,7 @@ describe('what each surface is told it can do', () => {
         const notes = agentSurfaceNotes.buildRunNotes({
             source: AgentRunSource.CHAT,
             currentDate: 'Tuesday, August 18, 2026',
-            searchAvailable: false, fetchAvailable: false, scrapeAvailable: false, imageAvailable: false, imageEditAvailable: false, emailAvailable: false, agentsAvailable: false, tasksAvailable: false,
+            searchAvailable: false, fetchAvailable: false, scrapeAvailable: false, imageAvailable: false, imageEditAvailable: false, emailAvailable: false, agentsAvailable: false, tasksAvailable: false, platformAdminAvailable: false,
             userEmail: 'owner@acme.com',
             userIdentity: null,
             connections: null,
@@ -255,6 +255,12 @@ describe('the skills note', () => {
         for (const tool of CHAT_ONLY_TOOLS) {
             expect(notes).not.toContain(tool)
         }
+    })
+
+    it('lists the platform admin skill only for platform admins', () => {
+        const forMember = agentSurfaceNotes.buildRunNotes({ source: AgentRunSource.CHAT, currentDate: 'Tuesday, August 18, 2026', ...EVERYTHING_AVAILABLE, platformAdminAvailable: false, userEmail: 'owner@acme.com', userIdentity: null, connections: null, memory: { instructions: null, memories: [] } })
+        expect(notesFor(AgentRunSource.CHAT)).toContain('- platform_admin — load')
+        expect(forMember).not.toContain('platform_admin')
     })
 
     it('adds nothing on surfaces without skills', () => {

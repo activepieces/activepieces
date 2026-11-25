@@ -2,9 +2,11 @@ import { PlatformConfiguration, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, Upd
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { securityAccess } from '../core/security/authorization/fastify-security'
+import { platformAdminApi } from '../mcp/platform-admin/platform-admin-api'
 import { platformConfigurationService } from './platform-configuration.service'
 
 export const platformConfigurationController: FastifyPluginAsyncZod = async (app) => {
+    app.addHook('onRoute', platformAdminApi.page('admin-guide/guides/configurations'))
     app.get('/', GetPlatformConfigurationEndpoint, async (request) => {
         return platformConfigurationService(request.log).getOrCreateForPlatform({
             platformId: request.principal.platform.id,

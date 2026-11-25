@@ -7,10 +7,12 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { ProjectResourceType } from '../core/security/authorization/common'
 import { securityAccess } from '../core/security/authorization/fastify-security'
+import { platformAdminApi } from '../mcp/platform-admin/platform-admin-api'
 import { aiModelOptionsService } from './ai-model-options-service'
 import { aiProviderService } from './ai-provider-service'
 
 export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
+    app.addHook('onRoute', platformAdminApi.page('admin-guide/guides/setup-ai-providers'))
     app.get('/', ListAIProvidersForProject, async (request) => {
         return aiProviderService(app.log).listForProject({
             platformId: request.principal.platform.id,

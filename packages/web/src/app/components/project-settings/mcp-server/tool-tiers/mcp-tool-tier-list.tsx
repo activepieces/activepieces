@@ -8,6 +8,7 @@ import {
   Pencil,
   Play,
   Trash2,
+  ShieldCheck,
 } from 'lucide-react';
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
@@ -56,9 +57,12 @@ export function McpToolTierList({
   const tiers = useMemo(
     () =>
       mcpToolTiers.groupByTier(
-        getToolCategories({ toolSearchEnabled: toolSearchEnabled ?? false }),
+        getToolCategories({
+          toolSearchEnabled: toolSearchEnabled ?? false,
+          scope,
+        }),
       ),
-    [toolSearchEnabled],
+    [toolSearchEnabled, scope],
   );
   const [pendingDisabledTools, setPendingDisabledTools] = useState<
     string[] | null
@@ -314,6 +318,7 @@ const TIER_ICON: Record<McpToolTier, LucideIcon> = {
   draft: Pencil,
   live: Play,
   delete: Trash2,
+  admin: ShieldCheck,
 };
 
 type McpToolTierListProps = {

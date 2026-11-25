@@ -3,9 +3,11 @@ import { ListPlatformAppConnectionsRequestQuery, PlatformAppConnectionOwnersResp
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { securityAccess } from '../core/security/authorization/fastify-security'
+import { platformAdminApi } from '../mcp/platform-admin/platform-admin-api'
 import { appConnectionService } from './app-connection-service/app-connection-service'
 
 export const platformAppConnectionController: FastifyPluginAsyncZod = async (app) => {
+    app.addHook('onRoute', platformAdminApi.page('admin-guide/guides/connections'))
     app.get('/', ListPlatformAppConnectionsRequest, async (request): Promise<SeekPage<PlatformAppConnectionsListItem>> => {
         const { displayName, pieceName, status, scope, cursor, limit, projectIds, ownerIds } = request.query
         return appConnectionService(request.log).listForPlatform({

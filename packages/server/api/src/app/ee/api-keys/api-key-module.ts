@@ -4,6 +4,7 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { platformAdminApi } from '../../mcp/platform-admin/platform-admin-api'
 import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 import { apiKeyService } from './api-key-service'
 
@@ -13,6 +14,7 @@ export const apiKeyModule: FastifyPluginAsyncZod = async (app) => {
 }
 
 export const apiKeyController: FastifyPluginAsyncZod = async (app) => {
+    app.addHook('onRoute', platformAdminApi.page('admin-guide/guides/api-keys'))
     app.post('/', CreateRequest, async (req, res) => {
         const platformId = req.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
@@ -58,6 +60,7 @@ const ListRequest = {
 const CreateRequest = {
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+        mcp: { deny: true },
     },
     schema: {
         body: CreateApiKeyRequest,

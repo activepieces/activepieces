@@ -9,6 +9,7 @@ import { authnRateLimit } from '../../../core/security/rate-limit'
 import { getEntitlementsForceRefreshKey } from '../../../database/redis/keys'
 import { distributedStore } from '../../../database/redis-connections'
 import { rejectedPromiseHandler } from '../../../helper/promise-handler'
+import { platformAdminApi } from '../../../mcp/platform-admin/platform-admin-api'
 import { billingProvider } from '../../../platform/billing-provider'
 import { platformService } from '../../../platform/platform.service'
 import { userService } from '../../../user/user-service'
@@ -19,6 +20,7 @@ const FORCE_REFRESH_DEDUP_SECONDS = 60
 const DEFAULT_USAGE_PAGE_SIZE = 10
 
 export const platformPlanController: FastifyPluginAsyncZod = async (app) => {
+    app.addHook('onRoute', platformAdminApi.page('admin-guide/guides/billing'))
 
     app.get('/info', InfoRequest, async (request) => {
         return getBillingInformation(request.log, request.principal.platform.id)
@@ -85,7 +87,7 @@ export const platformPlanController: FastifyPluginAsyncZod = async (app) => {
         await provider.refreshEntitlements(platformId)
     })
 
-    app.post('/portal', { config: PLATFORM_ADMIN_ONLY }, async (request) => {
+    app.post('/portal', { config: BILLING_CHANGE_ONLY_BY_HAND }, async (request) => {
         const { url } = await billingProvider.get(request.log).getBillingPortalUrl({ platformId: request.principal.platform.id })
         return url
     })
@@ -201,6 +203,11 @@ const PLATFORM_ADMIN_ONLY = {
     security: securityAccess.platformAdminOnly([PrincipalType.USER]),
 }
 
+const BILLING_CHANGE_ONLY_BY_HAND = {
+    ...PLATFORM_ADMIN_ONLY,
+    mcp: { deny: true },
+}
+
 const InfoRequest = {
     config: PLATFORM_ADMIN_ONLY,
     schema: {
@@ -250,18 +257,18 @@ const CheckoutRequest = {
             [StatusCodes.OK]: CheckoutSessionResponse,
         },
     },
-    config: PLATFORM_ADMIN_ONLY,
+    config: BILLING_CHANGE_ONLY_BY_HAND,
 }
 
 const CancelRequest = {
-    config: PLATFORM_ADMIN_ONLY,
+    config: BILLING_CHANGE_ONLY_BY_HAND,
     schema: {
         body: CancelSubscriptionRequest,
     },
 }
 
 const ReactivateRequest = {
-    config: PLATFORM_ADMIN_ONLY,
+    config: BILLING_CHANGE_ONLY_BY_HAND,
 }
 
 
@@ -274,7 +281,7 @@ const AdjustUnconsumableFeatureQuantityRequest = {
             }),
         },
     },
-    config: PLATFORM_ADMIN_ONLY,
+    config: BILLING_CHANGE_ONLY_BY_HAND,
 }
 
 const ActivateLicenseRequest = {
@@ -293,7 +300,7 @@ const ConsumableProductAutoTopupRequest = {
             [StatusCodes.OK]: z.object({}),
         },
     },
-    config: PLATFORM_ADMIN_ONLY,
+    config: BILLING_CHANGE_ONLY_BY_HAND,
 }
 
 const SetupPaymentRequest = {
@@ -305,7 +312,7 @@ const SetupPaymentRequest = {
             }),
         },
     },
-    config: PLATFORM_ADMIN_ONLY,
+    config: BILLING_CHANGE_ONLY_BY_HAND,
 }
 
 const StartSelfServeTrialRequest = {
@@ -315,7 +322,7 @@ const StartSelfServeTrialRequest = {
         },
     },
     config: {
-        ...PLATFORM_ADMIN_ONLY,
+        ...BILLING_CHANGE_ONLY_BY_HAND,
         rateLimit: authnRateLimit,
     },
 }

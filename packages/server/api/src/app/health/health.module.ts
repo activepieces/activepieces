@@ -2,6 +2,7 @@ import { GetDiagnosticsResponse, GetSystemHealthChecksResponse, PlatformMetricsH
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { securityAccess } from '../core/security/authorization/fastify-security'
+import { platformAdminApi } from '../mcp/platform-admin/platform-admin-api'
 import { healthMetricsService } from './health-metrics.service'
 import { healthStatusService } from './health.service'
 
@@ -10,6 +11,7 @@ export const healthModule: FastifyPluginAsyncZod = async (app) => {
 }
 
 const healthController: FastifyPluginAsyncZod = async (app) => {
+    app.addHook('onRoute', platformAdminApi.page('admin-guide/guides/health'))
     app.get(
         '/',
         {

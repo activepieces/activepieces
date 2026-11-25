@@ -18,12 +18,14 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { platformAdminApi } from '../../mcp/platform-admin/platform-admin-api'
 import { machineService } from '../machine/machine-service'
 import { flowWorkerGroupService } from './flow-worker-group.service'
 import { platformWorkerGroupService } from './platform-worker-group.service'
 import { workerGroupAssignmentService } from './worker-group-assignment.service'
 
 export const workerGroupController: FastifyPluginAsyncZod = async (app) => {
+    app.addHook('onRoute', platformAdminApi.page('admin-guide/guides/workers'))
     app.get('/', ListWorkerGroupsRequestOptions, async (request) => {
         await assertWorkerGroupsEnabled(request.principal.platform.id, request.log)
         return machineService(request.log).listWorkerGroups()
