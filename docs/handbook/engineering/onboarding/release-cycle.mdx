@@ -14,7 +14,7 @@ Merge to main ──→ Deploy to staging
                           │
                           E2E matrix + upgrade test + benchmark (report only) on the staging image
                           │
-                          One approval ──→ canary ──→ whole Cloud fleet
+                          One approval (a safe scheduled run needs none) ──→ canary ──→ whole Cloud fleet
 ```
 
 ## Steps & Why
@@ -27,7 +27,7 @@ Each merge to `main` builds a `version.sha.beta` image and deploys it to staging
 
 ### Cloud gate — Sunday to Wednesday
 
-`continuous-delivery-cloud.yml` runs Sunday to Wednesday at 8 AM UTC and takes the newest `main` commit that staging deployed. When Cloud already runs that commit, the run stops with no approval. A run started by hand takes the tip of `main`, and stops if staging has not deployed it. It runs the E2E matrix (four configurations) and the upgrade test from the last self-hosted release on the image staging built. It also benchmarks that image against the image Cloud runs; the numbers are in the run summary and do not block the approval. The run summary lists the tickets in the candidate. One approval in the `production` environment deploys the image to the canary and then to the fleet.
+`continuous-delivery-cloud.yml` runs Sunday to Wednesday at 8 AM UTC and takes the newest `main` commit that staging deployed. When Cloud already runs that commit, the run stops with no approval. A run started by hand takes the tip of `main`, and stops if staging has not deployed it. It runs the E2E matrix (four configurations) and the upgrade test from the last self-hosted release on the image staging built. It also benchmarks that image against the image Cloud runs; the numbers are in the run summary and do not block the approval. The run summary lists the tickets in the candidate. One approval in the `production` environment deploys the image to the canary and then to the fleet. A scheduled run needs no approval when its candidate contains the commit Cloud runs and adds no migration that cannot roll back. The `RELEASES_PAUSED` repository variable stops the scheduled runs.
 
 **Why**: Cloud gets the exact image that staging runs and the matrix tested. The gate runs four days a week, so each deploy carries one to four days of `main`.
 
