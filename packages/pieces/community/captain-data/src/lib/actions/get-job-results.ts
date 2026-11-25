@@ -1,75 +1,31 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { captainDataAuth } from '../auth';
 
-import { captainDataAuth } from '../..';
-import { CAPTAIN_DATA_BASE_URL, CaptainDataAuthType } from '../..';
-import { workflowProp } from '../common';
-
-export const getJobResults = createAction({
-  // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
+const getJobResults = createAction({
   name: 'getJobResults',
   classification: 'READ',
-  displayName: 'Get job results',
-  description: 'Get all results for a specific job',
-  audience: 'both',
-  aiMetadata: {
-    description:
-      'Retrieves all output records produced by a specific Captain Data job (a single past run of a workflow), identified by its workflow UID and job UID. Use this to read the data a launched workflow has gathered. Read-only and idempotent; results are not paginated.',
-    idempotent: true,
-  },
+  displayName: '(Deprecated) Get job results',
+  description:
+    'No longer works: Captain Data shut down its v3 jobs API on 2026-01-09. Use the People and Company actions instead.',
+  audience: 'human',
   auth: captainDataAuth,
+  requireAuth: false,
   props: {
-    workflow: workflowProp,
-    job: Property.Dropdown({
-      auth: captainDataAuth,
+    workflow: Property.ShortText({
+      displayName: 'Workflow',
+      required: false,
+    }),
+    job: Property.ShortText({
       displayName: 'Job',
-      required: true,
-      refreshers: ['workflow'],
-      options: async ({ auth, workflow }) => {
-        if (!auth || !workflow) {
-          return {
-            disabled: true,
-            options: [],
-          };
-        }
-        const response = await httpClient.sendRequest({
-          url: `${CAPTAIN_DATA_BASE_URL}/workflows/${workflow}/jobs`,
-          method: HttpMethod.GET,
-          headers: {
-            Authorization: `x-api-key ${auth.props.apiKey}`,
-            'x-project-id': auth.props.projectId,
-          },
-        });
-        return {
-          disabled: false,
-          options: response.body.map(
-            (job: {
-              uid: string;
-              name: string;
-              workflow_name: string;
-              status: string;
-              start_time: string;
-            }) => {
-              return {
-                value: job.uid,
-                label: job.start_time,
-              };
-            }
-          ),
-        };
-      },
+      required: false,
     }),
   },
-  async run({ auth, propsValue }) {
-    // We don't do pagination because Captain Data's API doc does provide details nor even examples :shrug:
-    const response = await httpClient.sendRequest({
-      url: `${CAPTAIN_DATA_BASE_URL}/jobs/${propsValue.job}/results`,
-      method: HttpMethod.GET,
-      headers: {
-        Authorization: `x-api-key ${auth.props.apiKey}`,
-        'x-project-id': auth.props.projectId,
-      },
-    });
-    return response.body;
+  async run() {
+    throw new Error(V3_SHUTDOWN_MESSAGE);
   },
 });
+
+const V3_SHUTDOWN_MESSAGE =
+  'Captain Data v3 (workflows/jobs) was shut down on 2026-01-09. Use the new People/Company actions.';
+
+export { getJobResults, V3_SHUTDOWN_MESSAGE };

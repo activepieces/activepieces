@@ -1,0 +1,77 @@
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { captainDataAuth } from '../auth';
+import {
+  captainDataClient,
+  captainDataUtils,
+  PROFILE_URL_NOT_FOUND_HINT,
+} from '../common';
+
+export const listPersonExperiences = createAction({
+  name: 'list_person_experiences',
+  classification: 'READ',
+  displayName: 'List Person Experiences',
+  description:
+    "Lists the experiences on a person's LinkedIn profile, by Person UID or LinkedIn profile URL. Returns up to 20 entries; Captain Data does not page this list, so longer histories are cut at 20. Costs 1 credit plus 1 credit per 20 results.",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Returns the experiences entries on one person's LinkedIn profile. Returns up to 20 entries; Captain Data does not page this list, so longer histories are cut at 20. Identify the person with exactly one of people_uid (uid from Find Person, Search People or Find Company Employees) or li_profile_url (some profiles resolve only by people_uid; if the URL is not found, use people_uid from Find Person or Search People). Costs 1 credit plus 1 per 20 results.",
+    idempotent: true,
+  },
+  auth: captainDataAuth,
+  props: {
+    people_uid: Property.ShortText({
+      displayName: 'Person UID',
+      description:
+        'The uid from Find Person, Search People or Find Company Employees. Leave empty when using the profile URL.',
+      required: false,
+    }),
+    li_profile_url: Property.ShortText({
+      displayName: 'LinkedIn Profile URL',
+      description:
+        'LinkedIn profile URL (/in/, /pub/ or Sales Navigator), e.g. https://www.linkedin.com/in/jane-doe. Leave empty when using Person UID. If Captain Data cannot find the profile, use the Person UID from Find Person instead.',
+      required: false,
+    }),
+  },
+  outputSchema: {
+    fields: [
+      {
+        key: 'items',
+        label: 'List Person Experiences',
+        labelKey: 'title',
+        listItems: [
+          { key: 'title', label: 'Title' },
+          { key: 'company_name', label: 'Company Name' },
+          { key: 'company_description', label: 'Company Description' },
+          {
+            key: 'li_company_url',
+            label: 'LinkedIn Company URL',
+            format: 'url',
+          },
+          { key: 'li_company_id', label: 'LinkedIn Company ID' },
+          { key: 'location', label: 'Location' },
+          { key: 'job_contract_type', label: 'Contract Type' },
+          { key: 'date', label: 'Date' },
+          { key: 'job_time_period', label: 'Time Period' },
+          { key: 'company_logo_url', label: 'Company Logo', format: 'image' },
+          { key: 'extracted_at', label: 'Extracted At', format: 'datetime' },
+        ],
+      },
+    ],
+  },
+  async run({ auth, propsValue }) {
+    const lookup = captainDataUtils.personLookupParams({
+      peopleUid: propsValue.people_uid,
+      liProfileUrl: propsValue.li_profile_url,
+    });
+    return captainDataClient.getItems({
+      apiKey: auth.props.apiKey,
+      path: '/people/experiences',
+      operation: 'list person experiences',
+      queryParams: lookup,
+      retryTransientNotFound: 'li_profile_url' in lookup,
+      invalidInputHint:
+        'li_profile_url' in lookup ? PROFILE_URL_NOT_FOUND_HINT : undefined,
+    });
+  },
+});
