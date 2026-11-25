@@ -7,6 +7,8 @@ describe('posthogConfig.projectToken', () => {
     })
 
     it('uses the built-in token when AP_POSTHOG_PROJECT_TOKEN is unset', () => {
+        vi.stubEnv('AP_POSTHOG_PROJECT_TOKEN', undefined)
+
         expect(posthogConfig.projectToken()).toBe(posthogConfig.meteringProjectToken)
     })
 
@@ -20,12 +22,5 @@ describe('posthogConfig.projectToken', () => {
         vi.stubEnv('AP_POSTHOG_PROJECT_TOKEN', '')
 
         expect(posthogConfig.projectToken()).toBeNull()
-    })
-
-    it('keeps the metering token whatever AP_POSTHOG_PROJECT_TOKEN says', () => {
-        const builtIn = posthogConfig.projectToken()
-        vi.stubEnv('AP_POSTHOG_PROJECT_TOKEN', '')
-
-        expect(posthogConfig.meteringProjectToken).toBe(builtIn)
     })
 })

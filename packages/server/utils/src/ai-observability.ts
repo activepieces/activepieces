@@ -11,8 +11,7 @@ import { wideEvent } from './wide-event'
 
 let tracing: { processor: BatchSpanProcessor, integration: Telemetry } | undefined
 
-function init({ enabled }: { enabled: boolean }): void {
-    const projectToken = posthogConfig.projectToken()
+function init({ enabled, projectToken }: { enabled: boolean, projectToken: string | null }): void {
     if (!enabled || isNil(projectToken) || !isNil(tracing)) {
         return
     }
