@@ -7403,7 +7403,7 @@
     },
     "packages/pieces/community/poper": {
       "name": "@activepieces/piece-poper",
-      "version": "0.2.7",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
