@@ -23,7 +23,7 @@ We use two main hosting providers:
 | Staging | `stg.activepieces.com` | `mrsk/stg` |
 | Production | `cloud.activepieces.com` | `mrsk/prod` |
 
-Staging receives every merge to `main`. The release captain promotes a staging commit to production by hand through the Cloud gate. See the [Releases & Deployment](/handbook/engineering/playbooks/releases) playbook for the full flow.
+Staging receives every merge to `main`. The Cloud gate promotes a staging commit to production Sunday to Wednesday at 8 AM UTC, with no approval when the candidate is safe and one approval otherwise; the release captain can also start it by hand. See the [Releases & Deployment](/handbook/engineering/playbooks/releases) playbook for the full flow.
 
 ## Observability: Logs & Telemetry
 

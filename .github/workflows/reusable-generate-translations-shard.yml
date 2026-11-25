@@ -66,6 +66,15 @@ jobs:
         run: |
           npm run cli pieces generate-translation-file-for-all-pieces -- --shard-index ${{ inputs.shard_index }} --shard-total ${{ inputs.shard_total }}
 
+      - name: Upload the shard's translatable text by JSON path
+        uses: actions/upload-artifact@v6
+        with:
+          name: translatable-text-by-json-path-shard-${{ inputs.shard_index }}
+          path: tools/translatable-text-by-json-path/
+          if-no-files-found: ignore
+          retention-days: 1
+          overwrite: true
+
       - name: Commit and push changes (if any)
         env:
           BRANCH_NAME: ${{ inputs.branch_name }}
