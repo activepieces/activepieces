@@ -1,12 +1,14 @@
 import { Readable } from 'node:stream';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { s3Send, textractSend, s3ClientConstructor, uploadDone, uploadClients } = vi.hoisted(() => ({
+const { s3Send, textractSend, s3ClientConstructor, uploadDone, uploadClients, uploadOptions, uploadState } = vi.hoisted(() => ({
   s3Send: vi.fn<(command: AwsCommand) => Promise<unknown>>(),
   textractSend: vi.fn<(command: AwsCommand) => Promise<unknown>>(),
   s3ClientConstructor: vi.fn(),
   uploadDone: vi.fn<(params: UploadParams) => Promise<unknown>>(),
   uploadClients: new Array<unknown>(),
+  uploadOptions: new Array<Record<string, unknown>>(),
+  uploadState: { uploadId: undefined as string | undefined },
 }));
 
 vi.mock('@aws-sdk/client-s3', () => ({
@@ -17,12 +19,21 @@ vi.mock('@aws-sdk/client-s3', () => ({
   DeleteObjectCommand: vi.fn(function (input: unknown) {
     return { kind: 'delete', input };
   }),
+  AbortMultipartUploadCommand: vi.fn(function (input: unknown) {
+    return { kind: 'abort', input };
+  }),
 }));
 
 vi.mock('@aws-sdk/lib-storage', () => ({
-  Upload: vi.fn(function ({ client, params }: { client: unknown; params: UploadParams }) {
+  Upload: vi.fn(function ({ client, params, ...options }: { client: unknown; params: UploadParams }) {
     uploadClients.push(client);
-    return { done: () => uploadDone(params) };
+    uploadOptions.push(options);
+    return {
+      done: () => uploadDone(params),
+      get uploadId() {
+        return uploadState.uploadId;
+      },
+    };
   }),
 }));
 
@@ -54,6 +65,8 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
     s3ClientConstructor.mockReset();
     uploadDone.mockReset();
     uploadClients.length = 0;
+    uploadOptions.length = 0;
+    uploadState.uploadId = undefined;
     uploadedBodies.length = 0;
     s3Send.mockResolvedValue({});
     uploadDone.mockImplementation(async (params) => {
@@ -141,7 +154,7 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
 
     it('names s3:DeleteObjectVersion when the version cannot be deleted', async () => {
       uploadDone.mockResolvedValue({ VersionId: 'version-7' });
-      s3Send.mockRejectedValueOnce(awsError('AccessDenied', 'Access Denied'));
+      s3Send.mockRejectedValueOnce(awsError({ name: 'AccessDenied', message: 'Access Denied' }));
 
       const result = await runAction({ source: 'file', file: new ApFile('contract.pdf', Buffer.from('%PDF'), 'pdf') });
 
@@ -167,24 +180,56 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
     });
 
     it('names the missing permission when S3 refuses the upload, and never starts a job', async () => {
-      uploadDone.mockRejectedValueOnce(awsError('AccessDenied', 'Access Denied'));
+      uploadDone.mockRejectedValueOnce(awsError({ name: 'AccessDenied', message: 'Access Denied' }));
 
       await expect(
         runAction({ source: 'file', file: new ApFile('contract.pdf', Buffer.from('%PDF'), 'pdf') })
       ).rejects.toThrow(
-        'S3 refused the upload to bucket "docs-bucket" (AccessDenied: Access Denied). The connection needs s3:PutObject, s3:GetObject and s3:DeleteObject on this bucket.'
+        'S3 refused the upload to bucket "docs-bucket" (AccessDenied: Access Denied). The connection needs s3:PutObject, s3:GetObject and s3:DeleteObject on this bucket, plus s3:DeleteObjectVersion if it is versioned.'
       );
       expect(textractSend).not.toHaveBeenCalled();
       expect(s3Send).not.toHaveBeenCalled();
     });
 
+    it('keeps the cause of a failed multipart upload and removes the parts already sent', async () => {
+      uploadState.uploadId = 'upload-1';
+      uploadDone.mockRejectedValueOnce(Object.assign(new Error('terminated'), { name: 'TypeError' }));
+
+      await expect(
+        runAction({ source: 'file', file: new ApFile('contract.pdf', Buffer.from('%PDF'), 'pdf') })
+      ).rejects.toThrow(
+        /^Could not read the file to upload \(TypeError: terminated\)\. Check the File to Upload field and try again\.$/
+      );
+      expect(uploadOptions).toEqual([{ leavePartsOnError: true }]);
+      expect(abortInputs()).toEqual([{ Bucket: BUCKET, Key: expect.stringMatching(UPLOAD_KEY), UploadId: 'upload-1' }]);
+      expect(textractSend).not.toHaveBeenCalled();
+    });
+
+    it('keeps the cause and says so when the parts already sent cannot be removed', async () => {
+      uploadState.uploadId = 'upload-1';
+      uploadDone.mockRejectedValueOnce(Object.assign(new Error('terminated'), { name: 'TypeError' }));
+      s3Send.mockRejectedValueOnce(awsError({ name: 'AccessDenied', message: 'Access Denied' }));
+
+      const error = await runAction({
+        source: 'file',
+        file: new ApFile('contract.pdf', Buffer.from('%PDF'), 'pdf'),
+      }).catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(Error);
+      const message = error instanceof Error ? error.message : '';
+      expect(message).toMatch(/^Could not read the file to upload \(TypeError: terminated\)\. /);
+      expect(message).toMatch(
+        /The parts already sent could not be removed from s3:\/\/docs-bucket\/activepieces-textract-uploads\/[0-9a-f-]{36}\.pdf \(AccessDenied: Access Denied\)\. Give the connection s3:AbortMultipartUpload on this bucket, or add a lifecycle rule that aborts incomplete multipart uploads\.$/
+      );
+    });
+
     it.each([
       [
-        awsError('NoSuchBucket', 'The specified bucket does not exist'),
+        awsError({ name: 'NoSuchBucket', message: 'The specified bucket does not exist' }),
         'The S3 bucket "docs-bucket" does not exist (NoSuchBucket: The specified bucket does not exist). Check the S3 Bucket field.',
       ],
       [
-        awsError('PermanentRedirect', 'The bucket you are attempting to access must be addressed using the specified endpoint.'),
+        awsError({ name: 'PermanentRedirect', message: 'The bucket you are attempting to access must be addressed using the specified endpoint.' }),
         'The S3 bucket "docs-bucket" is in another AWS region (PermanentRedirect: The bucket you are attempting to access must be addressed using the specified endpoint.). Use a bucket in the connection\'s region.',
       ],
       [
@@ -213,7 +258,7 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
 
     it('names s3:GetObject and still deletes when Textract cannot read the uploaded copy', async () => {
       textractSend.mockRejectedValueOnce(
-        awsError('InvalidS3ObjectException', 'Unable to get object metadata from S3')
+        awsError({ name: 'InvalidS3ObjectException', message: 'Unable to get object metadata from S3' })
       );
 
       await expect(
@@ -231,7 +276,7 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
         'The file is too large for Textract. PDF and TIFF files can be up to 500 MB, JPEG and PNG files up to 10 MB.',
       ],
     ])('explains %s for the uploaded file and still deletes it', async (name, message) => {
-      textractSend.mockRejectedValueOnce(awsError(name, 'rejected'));
+      textractSend.mockRejectedValueOnce(awsError({ name, message: 'rejected' }));
 
       await expect(
         runAction({ source: 'file', file: new ApFile('notes.docx', Buffer.from('PK'), 'docx') })
@@ -243,7 +288,7 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
       textractSend.mockImplementation(async (command: AwsCommand) =>
         command.kind === 'start' ? { JobId: 'job-1' } : { JobStatus: 'FAILED', StatusMessage: 'Unsupported document' }
       );
-      s3Send.mockRejectedValueOnce(awsError('AccessDenied', 'Access Denied'));
+      s3Send.mockRejectedValueOnce(awsError({ name: 'AccessDenied', message: 'Access Denied' }));
 
       const error = await runAction({
         source: 'file',
@@ -257,7 +302,7 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
     });
 
     it('returns the results with a warning when the uploaded file cannot be deleted', async () => {
-      s3Send.mockRejectedValueOnce(awsError('AccessDenied', 'Access Denied'));
+      s3Send.mockRejectedValueOnce(awsError({ name: 'AccessDenied', message: 'Access Denied' }));
 
       const result = await runAction({ source: 'file', file: new ApFile('contract.pdf', Buffer.from('%PDF'), 'pdf') });
 
@@ -275,7 +320,7 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
           ? { JobId: 'job-1' }
           : { ...threePageResult(), JobStatus: 'PARTIAL_SUCCESS', Warnings: [{ ErrorCode: 'UNSUPPORTED_PAGE', Pages: [2] }] }
       );
-      s3Send.mockRejectedValueOnce(awsError('AccessDenied', 'Access Denied'));
+      s3Send.mockRejectedValueOnce(awsError({ name: 'AccessDenied', message: 'Access Denied' }));
 
       const result = await runAction({ source: 'file', file: new ApFile('contract.pdf', Buffer.from('%PDF'), 'pdf') });
 
@@ -368,7 +413,7 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
 
     it('explains a Deduplication Token already used with other inputs', async () => {
       textractSend.mockRejectedValueOnce(
-        awsError('IdempotentParameterMismatchException', 'ClientRequestToken reused with different parameters')
+        awsError({ name: 'IdempotentParameterMismatchException', message: 'ClientRequestToken reused with different parameters' })
       );
 
       await expect(
@@ -471,7 +516,7 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
   });
 
   it('explains LimitExceededException as too many running jobs', async () => {
-    textractSend.mockRejectedValueOnce(awsError('LimitExceededException', 'limit'));
+    textractSend.mockRejectedValueOnce(awsError({ name: 'LimitExceededException', message: 'limit' }));
 
     await expect(runAction({ source: 's3', s3Key: 'contract.pdf' })).rejects.toThrow(
       'Too many Textract jobs are running in this AWS account.'
@@ -548,6 +593,13 @@ function deleteInputs(): Record<string, unknown>[] {
     .map((command) => command.input);
 }
 
+function abortInputs(): Record<string, unknown>[] {
+  return s3Send.mock.calls
+    .map(([command]) => command)
+    .filter((command) => command.kind === 'abort')
+    .map((command) => command.input);
+}
+
 function expectNoS3Calls() {
   expect(uploadDone).not.toHaveBeenCalled();
   expect(s3Send).not.toHaveBeenCalled();
@@ -563,7 +615,7 @@ function getCalls(): AwsCommand[] {
   return textractSend.mock.calls.map(([command]) => command).filter((command) => command.kind === 'get');
 }
 
-function awsError(name: string, message: string): Error {
+function awsError({ name, message }: { name: string; message: string }): Error {
   return Object.assign(new Error(message), { name, $metadata: { httpStatusCode: 400 } });
 }
 

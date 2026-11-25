@@ -1,6 +1,7 @@
 import { ApFile, ApStreamingFile, Property, ServerContext, createAction } from '@activepieces/pieces-framework';
 import { streamUtils } from '@activepieces/pieces-common';
 import type { S3Client } from '@aws-sdk/client-s3';
+import type { Upload } from '@aws-sdk/lib-storage';
 import {
   StartDocumentAnalysisCommand,
   GetDocumentAnalysisCommand,
@@ -178,7 +179,7 @@ async function analyzeUploadedFile({
       warnings: [result.warnings, cleanupWarning].filter(Boolean).join(' '),
     };
   } catch (e) {
-    const error = isAwsError(e, 'InvalidS3ObjectException')
+    const error = isAwsError(e) && e.name === 'InvalidS3ObjectException'
       ? new TextractStepError(
           `Textract could not read the uploaded copy from the bucket (${describeAwsError(e)}). The connection needs s3:GetObject on this bucket.`
         )
@@ -202,16 +203,44 @@ async function uploadDocument({
 }): Promise<UploadedDocument> {
   const extension = file.extension?.replace(/[^a-zA-Z0-9]/g, '');
   const key = `${UPLOAD_KEY_PREFIX}/${randomUUID()}${extension ? `.${extension}` : ''}`;
-  const { Upload } = await import('@aws-sdk/lib-storage');
+  const storage = await import('@aws-sdk/lib-storage');
+  let upload: Upload | undefined;
   try {
     const { body } = streamUtils.toStreamingBody(file);
-    const response = await new Upload({
+    upload = new storage.Upload({
       client: s3,
       params: { Bucket: bucket, Key: key, Body: body },
-    }).done();
+      leavePartsOnError: true,
+    });
+    const response = await upload.done();
     return { key, versionId: response.VersionId };
   } catch (e) {
-    throw new TextractStepError(uploadErrorMessage({ bucket, error: e }));
+    const message = uploadErrorMessage({ bucket, error: e });
+    const abortWarning = await abortPartialUpload({ s3, bucket, key, uploadId: upload?.uploadId });
+    throw new TextractStepError(abortWarning ? `${message} ${abortWarning}` : message);
+  }
+}
+
+async function abortPartialUpload({
+  s3,
+  bucket,
+  key,
+  uploadId,
+}: {
+  s3: S3Client;
+  bucket: string;
+  key: string;
+  uploadId: string | undefined;
+}): Promise<string | undefined> {
+  if (!uploadId) {
+    return undefined;
+  }
+  const { AbortMultipartUploadCommand } = await import('@aws-sdk/client-s3');
+  try {
+    await s3.send(new AbortMultipartUploadCommand({ Bucket: bucket, Key: key, UploadId: uploadId }));
+    return undefined;
+  } catch (e) {
+    return `The parts already sent could not be removed from s3://${bucket}/${key} (${describeAwsError(e)}). Give the connection s3:AbortMultipartUpload on this bucket, or add a lifecycle rule that aborts incomplete multipart uploads.`;
   }
 }
 
@@ -222,7 +251,7 @@ function uploadErrorMessage({ bucket, error }: { bucket: string; error: unknown 
   }
   switch (error.name) {
     case 'AccessDenied':
-      return `S3 refused the upload to bucket "${bucket}" (${reason}). The connection needs s3:PutObject, s3:GetObject and s3:DeleteObject on this bucket.`;
+      return `S3 refused the upload to bucket "${bucket}" (${reason}). The connection needs s3:PutObject, s3:GetObject and s3:DeleteObject on this bucket, plus s3:DeleteObjectVersion if it is versioned.`;
     case 'NoSuchBucket':
       return `The S3 bucket "${bucket}" does not exist (${reason}). Check the S3 Bucket field.`;
     case 'PermanentRedirect':
@@ -252,8 +281,8 @@ async function deleteUploadedDocument({
   }
 }
 
-function isAwsError(error: unknown, name?: string): error is Error {
-  return error instanceof Error && '$metadata' in error && (name === undefined || error.name === name);
+function isAwsError(error: unknown): error is Error {
+  return error instanceof Error && '$metadata' in error;
 }
 
 function describeAwsError(error: unknown): string {
