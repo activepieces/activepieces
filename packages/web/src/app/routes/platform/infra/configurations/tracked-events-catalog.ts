@@ -8,6 +8,7 @@ import {
   Layers,
   LucideIcon,
   Mail,
+  MessageSquare,
   Shield,
   User,
   Workflow,
@@ -106,6 +107,14 @@ const buildEventLabels = (): Record<TelemetryEventName, TrackedEvent> => ({
     group: 'accounts',
     label: t('Invitation accepted'),
   },
+  [TelemetryEventName.INVITE_REWARD_OFFER_CLICKED]: {
+    group: 'accounts',
+    label: t('Clicked the invite reward offer'),
+  },
+  [TelemetryEventName.INVITE_REWARD_GRANTED]: {
+    group: 'accounts',
+    label: t('Earned invite reward credits'),
+  },
   [TelemetryEventName.CHECKOUT_STARTED]: {
     group: 'billing',
     label: t('Checkout started'),
@@ -125,6 +134,14 @@ const buildEventLabels = (): Record<TelemetryEventName, TrackedEvent> => ({
   [TelemetryEventName.TRIAL_STARTED]: {
     group: 'billing',
     label: t('Trial started'),
+  },
+  [TelemetryEventName.TRIAL_ENDED]: {
+    group: 'billing',
+    label: t('Trial ended'),
+  },
+  [TelemetryEventName.TRIAL_SEATS_DEACTIVATED]: {
+    group: 'billing',
+    label: t('Users deactivated after the trial'),
   },
   [TelemetryEventName.SALES_HANDOFF_CLICKED]: {
     group: 'billing',
@@ -158,6 +175,30 @@ const buildEventLabels = (): Record<TelemetryEventName, TrackedEvent> => ({
     group: 'platformAdmin',
     label: t('Clicked a button on a platform administration page'),
   },
+  [TelemetryEventName.CONNECTION_SWITCH_DECIDED]: {
+    group: 'flows',
+    label: t("Chose an option when switching a step's connection"),
+  },
+  [TelemetryEventName.CONNECTION_REPLACE_OPENED]: {
+    group: 'flows',
+    label: t('Opened the replace connection dialog'),
+  },
+  [TelemetryEventName.CONNECTION_REPLACE_COMPLETED]: {
+    group: 'flows',
+    label: t('Replaced a connection'),
+  },
+  [TelemetryEventName.MEMORY_IMPORT_NUDGE_SHOWN]: {
+    group: 'chat',
+    label: t('Saw the memory import suggestion'),
+  },
+  [TelemetryEventName.MEMORY_IMPORT_NUDGE_CLICKED]: {
+    group: 'chat',
+    label: t('Opened memory import from chat'),
+  },
+  [TelemetryEventName.MEMORY_IMPORT_NUDGE_IMPORTED]: {
+    group: 'chat',
+    label: t('Imported memory from chat'),
+  },
 });
 
 const buildGroups = (): TrackedEventGroup[] => {
@@ -167,6 +208,7 @@ const buildGroups = (): TrackedEventGroup[] => {
     { id: 'emailCodes', title: t('Emailed sign-in codes'), icon: Mail },
     { id: 'flows', title: t('Flows and the builder'), icon: Workflow },
     { id: 'mcp', title: t('MCP'), icon: Layers },
+    { id: 'chat', title: t('Chat'), icon: MessageSquare },
     { id: 'billing', title: t('Billing'), icon: CreditCard },
     {
       id: 'platformAdmin',
@@ -195,6 +237,7 @@ export type TrackedEventGroupId =
   | 'emailCodes'
   | 'flows'
   | 'mcp'
+  | 'chat'
   | 'billing'
   | 'platformAdmin';
 

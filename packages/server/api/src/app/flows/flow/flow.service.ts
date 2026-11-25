@@ -1,6 +1,6 @@
 import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, FlowVersionId, isNil, Metadata, PlatformId, ProjectId, SeekPage, tryCatch, UserId } from '@activepieces/core-utils'
 import { apDayjs, apDayjsDuration } from '@activepieces/server-utils'
-import { CreateFlowRequest, Flow, FlowCreator, FlowOperationRequest, FlowOperationStatus, FlowOperationType, flowPieceUtil, FlowStatus, FlowTrigger, FlowTriggerType, FlowVersion, FlowVersionState, PopulatedFlow, requiredActionsUtil, SharedTemplate, TelemetryEventName, TemplateStatus, TemplateType, TriggerSource, UncategorizedFolderId, UserWithMetaInformation } from '@activepieces/shared'
+import { CreateFlowRequest, Flow, FlowCreator, FlowOperationRequest, FlowOperationStatus, FlowOperationType, flowPieceUtil, FlowStatus, flowStructureUtil, FlowTrigger, FlowTriggerType, FlowVersion, FlowVersionState, PopulatedFlow, requiredActionsUtil, SharedTemplate, TelemetryEventName, TemplateStatus, TemplateType, TriggerSource, UncategorizedFolderId, UserWithMetaInformation } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In, IsNull, Not } from 'typeorm'
@@ -111,6 +111,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         connectionExternalIds,
         agentExternalIds,
         externalIds,
+        flowIds,
         versionState = FlowVersionState.DRAFT,
         includeTriggerSource = true,
         sortBy,
@@ -201,8 +202,13 @@ export const flowService = (log: FastifyBaseLogger) => ({
             queryBuilder.andWhere('ff."externalId" IN (:...externalIds)', { externalIds })
         }
 
+        if (flowIds !== undefined) {
+            queryBuilder.andWhere('ff.id IN (:...flowIds)', { flowIds })
+        }
+
         if (connectionExternalIds !== undefined) {
-            queryBuilder.andWhere('latest_version."connectionIds" && :connectionExternalIds', { connectionExternalIds })
+            const filteredVersion = versionState === FlowVersionState.DRAFT ? 'latest_version' : 'published_version'
+            queryBuilder.andWhere(`${filteredVersion}."connectionIds" && :connectionExternalIds`, { connectionExternalIds })
         }
 
         if (agentExternalIds !== undefined) {
@@ -342,6 +348,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         emitEvents = true,
         skipRequiredActionsCheck = false,
         editorSessionId = null,
+        auditExplanation,
     }: UpdateParams): Promise<PopulatedFlow> {
         const flowBeforeOperation = emitEvents
             ? previousFlow ?? await this.getOnePopulatedOrThrow({ id, projectId })
@@ -349,43 +356,19 @@ export const flowService = (log: FastifyBaseLogger) => ({
 
         switch (operation.type) {
             case FlowOperationType.LOCK_AND_PUBLISH: {
-                const flow = await this.getOneOrThrow({ id, projectId })
-                const flowVersionToPublish = await flowVersionService(log).getFlowVersionOrThrow({ flowId: id, versionId: undefined })
-                if (!skipRequiredActionsCheck) {
-                    await assertRequiredActionsPresent({
-                        projectId,
-                        platformId,
-                        flowVersion: flowVersionToPublish,
-                        log,
-                    })
-                }
-                const requestedStatus = operation.request.status ?? FlowStatus.ENABLED
-                if (requestedStatus === FlowStatus.ENABLED) {
-                    assertTriggerIsSelected({ trigger: flowVersionToPublish.trigger })
-                    await triggerUtils(log).getPieceTriggerOrThrow({ flowVersion: flowVersionToPublish, projectId })
-                }
-                const route = await publishHooksFactory.get(log).routePublish({ flow, projectId, platformId, userId })
-                if (route === 'NEEDS_APPROVAL') {
-                    await publishHooksFactory.get(log).submitForApproval({
-                        flow,
-                        flowVersionToPublish,
-                        userId,
-                        projectId,
-                        platformId,
-                        requestedStatus,
-                    })
-                    break
-                }
-                const isRepublish = await this.isRepublish({ previousFlow: flow, versionToPublish: flowVersionToPublish, newStatus: requestedStatus })
-                await this.updatedPublishedVersionId({
+                await withStatusLock({
                     id,
-                    userId,
-                    projectId,
-                    platformId,
-                    flowVersionToPublish,
-                    isRepublish,
+                    log,
+                    fn: () => publish({
+                        id,
+                        projectId,
+                        platformId,
+                        userId,
+                        requestedStatus: operation.request.status ?? FlowStatus.ENABLED,
+                        skipRequiredActionsCheck,
+                        log,
+                    }),
                 })
-                await this.applyStatusChangeForPublishedFlow({ id, projectId, newStatus: requestedStatus, isRepublish })
                 break
             }
 
@@ -449,28 +432,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 break
             }
             default: {
-                await withDraftLock({ flowId: id, log, fn: async () => {
-                    const { version: lastVersion, createdNewDraft } = await createNewDraftIfVersionIsPublished({
-                        flowId: id,
-                        projectId,
-                        platformId,
-                        userId,
-                        log,
-                    })
-                    const { error } = await tryCatch(() => flowVersionService(log).applyOperation({
-                        userId,
-                        projectId,
-                        platformId,
-                        flowVersion: lastVersion,
-                        userOperation: operation,
-                    }))
-                    if (!isNil(error)) {
-                        if (createdNewDraft) {
-                            await tryCatch(() => flowVersionRepo().delete({ id: lastVersion.id, flowId: id }))
-                        }
-                        throw error
-                    }
-                } })
+                await withDraftLock({ flowId: id, log, fn: () => writeDraft({ id, projectId, platformId, userId, operation, log }) })
             }
         }
 
@@ -492,19 +454,51 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 previousVersion: flowBeforeOperation.version,
                 previousStatus: flowBeforeOperation.status,
                 operation,
+                auditExplanation,
             })
         }
         return updatedFlow
     },
+
+    async replaceConnection({ id, projectId, platformId, userId, sourceExternalId, targetExternalId, applyToPublishedVersion, auditExplanation }: ReplaceConnectionParams): Promise<void> {
+        const flowBeforeReplace = await this.getOnePopulatedOrThrow({ id, projectId })
+        const { appliedOperations, error } = await replaceConnectionForDraftAndPublishedVersions({ id, projectId, platformId, userId, sourceExternalId, targetExternalId, applyToPublishedVersion, log })
+        if (appliedOperations.length > 0) {
+            await flowSideEffects(log).onDraftWritten({ flowId: id, projectId, editorSessionId: null })
+            appliedOperations.forEach(({ operation, flowAfterOperation }, index) => {
+                const flowBeforeOperation = index === 0 ? flowBeforeReplace : appliedOperations[index - 1].flowAfterOperation
+                flowSideEffects(log).onOperationApplied({
+                    platformId,
+                    projectId,
+                    userId,
+                    flow: flowAfterOperation,
+                    previousVersion: flowBeforeOperation.version,
+                    previousStatus: flowBeforeOperation.status,
+                    operation,
+                    auditExplanation,
+                })
+            })
+        }
+        if (!isNil(error)) {
+            throw error
+        }
+    },
+
     async updatedPublishedVersionId({
         id,
         userId,
         projectId,
         platformId,
         flowVersionToPublish,
-        isRepublish,
-    }: UpdatePublishedVersionIdParams): Promise<PopulatedFlow> {
+        requestedStatus,
+    }: UpdatePublishedVersionIdParams): Promise<UpdatePublishedVersionIdResult> {
         const flowToUpdate = await this.getOneOrThrow({ id, projectId })
+        const liveVersion = flowToUpdate.status === FlowStatus.ENABLED && !isNil(flowToUpdate.publishedVersionId)
+            ? await flowVersionService(log).getFlowVersionOrThrow({ flowId: id, versionId: flowToUpdate.publishedVersionId })
+            : undefined
+        const republishParams = { previouslyPublished: liveVersion, toPublish: flowVersionToPublish, requestedStatus }
+        const isRepublish = flowPublishUtils.isRepublish(republishParams)
+        const isTriggerUnchanged = flowPublishUtils.isTriggerUnchanged(republishParams)
 
         if (flowToUpdate.status === FlowStatus.ENABLED && !isNil(flowToUpdate.publishedVersionId)) {
             await triggerSourceService(log).disable({
@@ -513,6 +507,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 simulate: false,
                 ignoreError: true,
                 isRepublish,
+                isTriggerUnchanged,
             })
         }
 
@@ -552,7 +547,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 payload: { flowId: id },
             },
         }), log)
-        return publishedFlow
+        return { publishedFlow, isRepublish, isTriggerUnchanged }
     },
 
     async setPublishedVersion({ flow, lockedVersion, entityManager }: SetPublishedVersionParams): Promise<void> {
@@ -567,21 +562,12 @@ export const flowService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async isRepublish({ previousFlow, versionToPublish, newStatus }: IsRepublishParams): Promise<boolean> {
-        const previousVersionId = previousFlow.publishedVersionId
-        const keepsRunning = previousFlow.status === FlowStatus.ENABLED && newStatus === FlowStatus.ENABLED
-        if (!keepsRunning || isNil(previousVersionId)) {
-            return false
-        }
-        const previousVersion = await flowVersionService(log).getFlowVersionOrThrow({ flowId: previousFlow.id, versionId: previousVersionId })
-        return flowPublishUtils.isSameTrigger({
-            published: previousVersion.trigger,
-            toPublish: versionToPublish.trigger,
-        })
+    async withStatusLock<T>({ id, fn }: { id: FlowId, fn: () => Promise<T> }): Promise<T> {
+        return withStatusLock({ id, log, fn })
     },
 
-    async applyStatusChangeForPublishedFlow({ id, projectId, newStatus, isRepublish }: ApplyStatusChangeForPublishedFlowParams): Promise<void> {
-        await applyStatusChange({ id, projectId, newStatus, isRepublish }, log)
+    async changeStatusHoldingLock(params: ChangeStatusParams): Promise<void> {
+        await changeStatus(params, log)
     },
 
     async delete({ id, projectId, previousFlow, userId, ip, emitEvents = true }: DeleteParams): Promise<void> {
@@ -829,68 +815,196 @@ const lockFlowVersionIfNotLocked = async ({
 }
 
 
-async function withDraftLock({ flowId, log, fn }: {
+async function withDraftLock<T>({ flowId, log, fn }: {
     flowId: FlowId
     log: FastifyBaseLogger
-    fn: () => Promise<void>
-}): Promise<void> {
-    await distributedLock(log).runExclusive({
+    fn: () => Promise<T>
+}): Promise<T> {
+    return distributedLock(log).runExclusive({
         key: `flow-draft-update-${flowId}`,
         timeoutInSeconds: DRAFT_UPDATE_LOCK_TIMEOUT_SECONDS,
         fn,
     })
 }
 
-async function applyStatusChange(params: {
-    id: FlowId
-    projectId: ProjectId
-    newStatus: FlowStatus
-    isRepublish?: boolean
-}, log: FastifyBaseLogger): Promise<void> {
-    const triggerTimeout = system.getNumberOrThrow(AppSystemProp.TRIGGER_TIMEOUT_SECONDS)
-    await distributedLock(log).runExclusive({
-        key: `flow-status-change-${params.id}`,
-        timeoutInSeconds: triggerTimeout + 30,
+async function writeDraft({ id, projectId, platformId, userId, operation, log }: WriteDraftParams): Promise<void> {
+    const { version: lastVersion, createdNewDraft } = await createNewDraftIfVersionIsPublished({
+        flowId: id,
+        projectId,
+        platformId,
+        userId,
+        log,
+    })
+    const { error } = await tryCatch(() => flowVersionService(log).applyOperation({
+        userId,
+        projectId,
+        platformId,
+        flowVersion: lastVersion,
+        userOperation: operation,
+    }))
+    if (!isNil(error)) {
+        if (createdNewDraft) {
+            await tryCatch(() => flowVersionRepo().delete({ id: lastVersion.id, flowId: id }))
+        }
+        throw error
+    }
+}
+
+async function publish({ id, projectId, platformId, userId, requestedStatus, skipRequiredActionsCheck, log }: PublishParams): Promise<void> {
+    const flow = await flowService(log).getOneOrThrow({ id, projectId })
+    const flowVersionToPublish = await flowVersionService(log).getFlowVersionOrThrow({ flowId: id, versionId: undefined })
+    if (!skipRequiredActionsCheck) {
+        await assertRequiredActionsPresent({
+            projectId,
+            platformId,
+            flowVersion: flowVersionToPublish,
+            log,
+        })
+    }
+    if (requestedStatus === FlowStatus.ENABLED) {
+        assertTriggerIsSelected({ trigger: flowVersionToPublish.trigger })
+        await triggerUtils(log).getPieceTriggerOrThrow({ flowVersion: flowVersionToPublish, projectId })
+    }
+    const route = await publishHooksFactory.get(log).routePublish({ flow, projectId, platformId, userId })
+    if (route === 'NEEDS_APPROVAL') {
+        await publishHooksFactory.get(log).submitForApproval({
+            flow,
+            flowVersionToPublish,
+            userId,
+            projectId,
+            platformId,
+            requestedStatus,
+        })
+        return
+    }
+    const { isRepublish, isTriggerUnchanged } = await flowService(log).updatedPublishedVersionId({
+        id,
+        userId,
+        projectId,
+        platformId,
+        flowVersionToPublish,
+        requestedStatus,
+    })
+    await changeStatus({ id, projectId, newStatus: requestedStatus, isRepublish, isTriggerUnchanged }, log)
+}
+
+async function replaceConnectionForDraftAndPublishedVersions({ id, projectId, platformId, userId, sourceExternalId, targetExternalId, applyToPublishedVersion, log }: ReplaceConnectionForDraftAndPublishedVersionsParams): Promise<ReplaceConnectionResult> {
+    return withDraftLock({
+        flowId: id,
+        log,
         fn: async () => {
-            const flowToUpdate = await flowService(log).getOneOrThrow({
-                id: params.id,
-                projectId: params.projectId,
-            })
-            if (flowToUpdate.status === params.newStatus) {
-                return
+            if (!applyToPublishedVersion) {
+                return replaceConnectionInDraft({ id, projectId, platformId, userId, sourceExternalId, targetExternalId, log })
             }
-
-            const publishedFlowVersionId = flowToUpdate.publishedVersionId
-            if (isNil(publishedFlowVersionId)) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.FLOW_OPERATION_INVALID,
-                    params: { message: 'Publish the flow before turning it on' },
-                })
-            }
-            const publishedFlowVersion = await flowVersionService(log).getFlowVersionOrThrow({
-                flowId: flowToUpdate.id,
-                versionId: publishedFlowVersionId,
+            return withStatusLock({
+                id,
+                log,
+                fn: async () => {
+                    const flow = await flowService(log).getOneOrThrow({ id, projectId })
+                    const publishedVersionId = flow.publishedVersionId
+                    if (isNil(publishedVersionId)) {
+                        return replaceConnectionInDraft({ id, projectId, platformId, userId, sourceExternalId, targetExternalId, log })
+                    }
+                    const latestVersion = await flowVersionService(log).getFlowVersionOrThrow({ flowId: id, versionId: undefined })
+                    const publishedVersion = await flowVersionService(log).getFlowVersionOrThrow({ flowId: id, versionId: publishedVersionId })
+                    const replaceInDraftOperation = createImportOperationToReplaceConnection({ flowVersion: latestVersion, sourceExternalId, targetExternalId })
+                    const replaceInPublishedVersionOperation = createImportOperationToReplaceConnection({ flowVersion: publishedVersion, sourceExternalId, targetExternalId })
+                    const appliedOperations: AppliedOperation[] = []
+                    const { error } = await tryCatch(async () => {
+                        await writeDraft({ id, projectId, platformId, userId, operation: replaceInPublishedVersionOperation, log })
+                        appliedOperations.push(await recordAppliedOperation({ id, projectId, operation: replaceInPublishedVersionOperation, log }))
+                        await publish({ id, projectId, platformId, userId, requestedStatus: flow.status, skipRequiredActionsCheck: true, log })
+                        appliedOperations.push(await recordAppliedOperation({ id, projectId, operation: { type: FlowOperationType.LOCK_AND_PUBLISH, request: { status: flow.status } }, log }))
+                    })
+                    const hadUnpublishedChanges = latestVersion.id !== publishedVersionId
+                    if (!hadUnpublishedChanges && isNil(error)) {
+                        return { appliedOperations, error }
+                    }
+                    const { error: restoreDraftError } = await tryCatch(async () => {
+                        await writeDraft({ id, projectId, platformId, userId, operation: replaceInDraftOperation, log })
+                        appliedOperations.push(await recordAppliedOperation({ id, projectId, operation: replaceInDraftOperation, log }))
+                    })
+                    return { appliedOperations, error: error ?? restoreDraftError }
+                },
             })
-            if (params.newStatus === FlowStatus.ENABLED) {
-                assertTriggerIsSelected({ trigger: publishedFlowVersion.trigger })
-            }
-
-            await flowSideEffects(log).preUpdateStatus({
-                flowToUpdate,
-                publishedFlowVersion,
-                newStatus: params.newStatus,
-                templateId: flowToUpdate.templateId ?? undefined,
-                isRepublish: params.isRepublish,
-            })
-
-            await flowRepo().save({
-                ...flowToUpdate,
-                status: params.newStatus,
-                publishedVersionId: publishedFlowVersion.id,
-            })
-            await flowExecutionCache(log).invalidate(params.id)
         },
     })
+}
+
+async function replaceConnectionInDraft({ id, projectId, platformId, userId, sourceExternalId, targetExternalId, log }: ReplaceConnectionInDraftParams): Promise<ReplaceConnectionResult> {
+    const latestVersion = await flowVersionService(log).getFlowVersionOrThrow({ flowId: id, versionId: undefined })
+    if (!latestVersion.connectionIds.includes(sourceExternalId)) {
+        return { appliedOperations: [], error: null }
+    }
+    const replaceInDraftOperation = createImportOperationToReplaceConnection({ flowVersion: latestVersion, sourceExternalId, targetExternalId })
+    await writeDraft({ id, projectId, platformId, userId, operation: replaceInDraftOperation, log })
+    return { appliedOperations: [await recordAppliedOperation({ id, projectId, operation: replaceInDraftOperation, log })], error: null }
+}
+
+async function recordAppliedOperation({ id, projectId, operation, log }: RecordAppliedOperationParams): Promise<AppliedOperation> {
+    const flowAfterOperation = await flowService(log).getOnePopulatedOrThrow({ id, projectId })
+    return { operation, flowAfterOperation }
+}
+
+function createImportOperationToReplaceConnection({ flowVersion, sourceExternalId, targetExternalId }: CreateImportOperationToReplaceConnectionParams): FlowOperationRequest {
+    return {
+        type: FlowOperationType.IMPORT_FLOW,
+        request: flowStructureUtil.replaceConnection({ flowVersion, sourceExternalId, targetExternalId }),
+    }
+}
+
+async function applyStatusChange(params: ChangeStatusParams, log: FastifyBaseLogger): Promise<void> {
+    await withStatusLock({ id: params.id, log, fn: () => changeStatus(params, log) })
+}
+
+async function withStatusLock<T>({ id, log, fn }: WithStatusLockParams<T>): Promise<T> {
+    const triggerTimeout = system.getNumberOrThrow(AppSystemProp.TRIGGER_TIMEOUT_SECONDS)
+    return distributedLock(log).runExclusive({
+        key: `flow-status-change-${id}`,
+        timeoutInSeconds: triggerTimeout * 2 + 30,
+        fn,
+    })
+}
+
+async function changeStatus(params: ChangeStatusParams, log: FastifyBaseLogger): Promise<void> {
+    const flowToUpdate = await flowService(log).getOneOrThrow({
+        id: params.id,
+        projectId: params.projectId,
+    })
+    if (flowToUpdate.status === params.newStatus) {
+        return
+    }
+
+    const publishedFlowVersionId = flowToUpdate.publishedVersionId
+    if (isNil(publishedFlowVersionId)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.FLOW_OPERATION_INVALID,
+            params: { message: 'Publish the flow before turning it on' },
+        })
+    }
+    const publishedFlowVersion = await flowVersionService(log).getFlowVersionOrThrow({
+        flowId: flowToUpdate.id,
+        versionId: publishedFlowVersionId,
+    })
+    if (params.newStatus === FlowStatus.ENABLED) {
+        assertTriggerIsSelected({ trigger: publishedFlowVersion.trigger })
+    }
+
+    await flowSideEffects(log).preUpdateStatus({
+        flowToUpdate,
+        publishedFlowVersion,
+        newStatus: params.newStatus,
+        templateId: flowToUpdate.templateId ?? undefined,
+        isRepublish: params.isRepublish,
+        isTriggerUnchanged: params.isTriggerUnchanged,
+    })
+
+    await flowRepo().save({
+        ...flowToUpdate,
+        status: params.newStatus,
+        publishedVersionId: publishedFlowVersion.id,
+    })
+    await flowExecutionCache(log).invalidate(params.id)
 }
 
 export const getFolderIdFromRequest = async ({ projectId, folderId, folderName, log }: { projectId: string, folderId: string | undefined, folderName: string | undefined, log: FastifyBaseLogger }) => {
@@ -962,6 +1076,7 @@ type ListParamsBase = {
     name?: string
     versionState?: FlowVersionState
     externalIds?: string[]
+    flowIds?: FlowId[]
     connectionExternalIds?: string[]
     agentExternalIds?: string[]
     includeTriggerSource?: boolean
@@ -1009,6 +1124,66 @@ type UpdateParams = EventEmissionParams & {
     previousFlow?: PopulatedFlow
     skipRequiredActionsCheck?: boolean
     editorSessionId?: string | null
+    auditExplanation?: string
+}
+
+type ReplaceConnectionParams = {
+    id: FlowId
+    projectId: ProjectId
+    platformId: PlatformId
+    userId: UserId
+    sourceExternalId: string
+    targetExternalId: string
+    applyToPublishedVersion: boolean
+    auditExplanation: string
+}
+
+type ReplaceConnectionForDraftAndPublishedVersionsParams = Omit<ReplaceConnectionParams, 'auditExplanation'> & {
+    log: FastifyBaseLogger
+}
+
+type ReplaceConnectionInDraftParams = Omit<ReplaceConnectionForDraftAndPublishedVersionsParams, 'applyToPublishedVersion'>
+
+type ReplaceConnectionResult = {
+    appliedOperations: AppliedOperation[]
+    error: Error | null
+}
+
+type AppliedOperation = {
+    operation: FlowOperationRequest
+    flowAfterOperation: PopulatedFlow
+}
+
+type RecordAppliedOperationParams = {
+    id: FlowId
+    projectId: ProjectId
+    operation: FlowOperationRequest
+    log: FastifyBaseLogger
+}
+
+type CreateImportOperationToReplaceConnectionParams = {
+    flowVersion: FlowVersion
+    sourceExternalId: string
+    targetExternalId: string
+}
+
+type WriteDraftParams = {
+    id: FlowId
+    projectId: ProjectId
+    platformId: PlatformId
+    userId: UserId | null
+    operation: FlowOperationRequest
+    log: FastifyBaseLogger
+}
+
+type PublishParams = {
+    id: FlowId
+    projectId: ProjectId
+    platformId: PlatformId
+    userId: UserId | null
+    requestedStatus: FlowStatus
+    skipRequiredActionsCheck: boolean
+    log: FastifyBaseLogger
 }
 
 type UpdatePublishedVersionIdParams = {
@@ -1017,26 +1192,33 @@ type UpdatePublishedVersionIdParams = {
     platformId: PlatformId
     projectId: ProjectId
     flowVersionToPublish: FlowVersion
+    requestedStatus: FlowStatus
+}
+
+type ChangeStatusParams = {
+    id: FlowId
+    projectId: ProjectId
+    newStatus: FlowStatus
+    isRepublish?: boolean
+    isTriggerUnchanged?: boolean
+}
+
+type WithStatusLockParams<T> = {
+    id: FlowId
+    log: FastifyBaseLogger
+    fn: () => Promise<T>
+}
+
+type UpdatePublishedVersionIdResult = {
+    publishedFlow: PopulatedFlow
     isRepublish: boolean
+    isTriggerUnchanged: boolean
 }
 
 type SetPublishedVersionParams = {
     flow: Flow
     lockedVersion: FlowVersion
     entityManager: EntityManager
-}
-
-type IsRepublishParams = {
-    previousFlow: Flow
-    versionToPublish: FlowVersion
-    newStatus: FlowStatus
-}
-
-type ApplyStatusChangeForPublishedFlowParams = {
-    id: FlowId
-    projectId: ProjectId
-    newStatus: FlowStatus
-    isRepublish: boolean
 }
 
 type DeleteParams = EventEmissionParams & {

@@ -1,6 +1,9 @@
-import { AIProviderName } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, ActivepiecesAiCostEvent, AIProviderName } from '@activepieces/core-utils'
 import { ACTIVEPIECES_CHAT_TIERS, ACTIVEPIECES_IMAGE_TIERS, aiProviderCredentials } from '@activepieces/shared'
+import { generateImage, generateText, jsonSchema, tool } from 'ai'
 import { describe, expect, it } from 'vitest'
+import { activepiecesAiCost } from '../src/activepieces-ai-cost'
+import { aiProviderKeyHealth, KeyHealthObservation } from '../src/ai-provider-key-health'
 import { aiUtils, WebSearchOptions } from '../src/ai-utils'
 
 function anthropicSearchArgs(options: WebSearchOptions): Record<string, unknown> {
@@ -147,18 +150,18 @@ describe('aiUtils.createModel on the managed Activepieces key', () => {
     const managed = aiProviderCredentials({ provider: AIProviderName.ACTIVEPIECES, auth: { apiKey: 'sk-managed' }, config: {} })
 
     it('refuses a model that no published tier or allow-list entry permits', () => {
-        expect(() => aiUtils.createModel({ credentials: managed, modelId: 'perplexity/sonar-deep-research' }))
+        expect(() => aiUtils.createModel({ credentials: managed, modelId: 'perplexity/sonar-deep-research', billing: null }))
             .toThrow(/not available on Activepieces AI credits/)
     })
 
     it('runs a model the tiers permit', () => {
-        expect(() => aiUtils.createModel({ credentials: managed, modelId: ACTIVEPIECES_CHAT_TIERS[0].modelId })).not.toThrow()
+        expect(() => aiUtils.createModel({ credentials: managed, modelId: ACTIVEPIECES_CHAT_TIERS[0].modelId, billing: null })).not.toThrow()
     })
 
     it('refuses an image model outside the managed image tiers', () => {
         expect(() => aiUtils.createModelForImages({ credentials: managed, modelId: 'openai/gpt-5-image' }))
             .toThrow(/not available on Activepieces AI credits/)
-        expect(() => aiUtils.createModel({ credentials: managed, modelId: 'openai/gpt-5-image', imageGeneration: true }))
+        expect(() => aiUtils.createModel({ credentials: managed, modelId: 'openai/gpt-5-image', imageGeneration: true, billing: null }))
             .toThrow(/not available on Activepieces AI credits/)
     })
 
@@ -169,28 +172,176 @@ describe('aiUtils.createModel on the managed Activepieces key', () => {
 
     it('leaves a customer-supplied OpenRouter key unrestricted', () => {
         const own = aiProviderCredentials({ provider: AIProviderName.OPENROUTER, auth: { apiKey: 'sk-own' }, config: {} })
-        expect(() => aiUtils.createModel({ credentials: own, modelId: 'perplexity/sonar-deep-research' })).not.toThrow()
+        expect(() => aiUtils.createModel({ credentials: own, modelId: 'perplexity/sonar-deep-research', billing: null })).not.toThrow()
     })
 })
 
 describe('what the managed provider is asked to send back', () => {
-    function settingsFor({ provider, webSearchEnabled = false }: { provider: AIProviderName, webSearchEnabled?: boolean }): Record<string, unknown> | undefined {
-        const model = aiUtils.createModel({ credentials: aiProviderCredentials({ provider, auth: { apiKey: 'key' }, config: {} }), modelId: ACTIVEPIECES_CHAT_TIERS[0].modelId, webSearchEnabled })
-        return (model as unknown as { settings?: Record<string, unknown> }).settings
+    async function settingsFor({ provider, webSearchEnabled = false }: { provider: AIProviderName, webSearchEnabled?: boolean }): Promise<Record<string, unknown>> {
+        const model = aiUtils.createModel({ credentials: aiProviderCredentials({ provider, auth: { apiKey: 'key' }, config: {} }), modelId: ACTIVEPIECES_CHAT_TIERS[0].modelId, webSearchEnabled, billing: null })
+        return sentBody(() => generateText({ model, prompt: 'hi', maxRetries: 0 }))
     }
 
-    it('asks OpenRouter to report what a managed call cost, which is the whole basis of the bill', () => {
-        expect(settingsFor({ provider: AIProviderName.ACTIVEPIECES })).toMatchObject({ usage: { include: true } })
+    it('asks OpenRouter to report what a managed call cost, which is the whole basis of the bill', async () => {
+        expect(await settingsFor({ provider: AIProviderName.ACTIVEPIECES })).toMatchObject({ usage: { include: true } })
     })
 
-    it('keeps asking for the cost when web search is on, rather than letting the plugin setting replace it', () => {
-        expect(settingsFor({ provider: AIProviderName.ACTIVEPIECES, webSearchEnabled: true })).toMatchObject({
+    it('keeps asking for the cost when web search is on, rather than letting the plugin setting replace it', async () => {
+        expect(await settingsFor({ provider: AIProviderName.ACTIVEPIECES, webSearchEnabled: true })).toMatchObject({
             usage: { include: true },
             plugins: [{ id: 'web', max_results: 5 }],
         })
     })
 
-    it('does not ask for cost accounting on a customer own OpenRouter key, which we never pay for', () => {
-        expect(settingsFor({ provider: AIProviderName.OPENROUTER })).toEqual({})
+    it('asks a customer own OpenRouter key for its cost too, so AI usage shows what the provider charged', async () => {
+        expect(await settingsFor({ provider: AIProviderName.OPENROUTER })).toMatchObject({ usage: { include: true } })
     })
 })
+
+describe('what a LiteLLM proxy is told about a call, for its spend logs', () => {
+    const flowStep = { projectId: 'project-1', platformId: 'platform-1', flowId: 'flow-1', runId: 'run-1' }
+    const metadata = { platformId: 'platform-1', conversationId: 'conversation-1', runId: 'agent-run-1' }
+
+    async function headersFor({ provider, ...ids }: { provider: AIProviderName.LITELLM | AIProviderName.CUSTOM, flowStep?: typeof flowStep, metadata?: typeof metadata & { surface?: 'chat' | 'agent' } }): Promise<Record<string, string>> {
+        const credentials = aiProviderCredentials({ provider, auth: { apiKey: 'sk-proxy' }, config: { baseUrl: 'https://litellm.example.com/v1', apiKeyHeader: 'Authorization', models: [] } })
+        const model = aiUtils.createModel({ credentials, modelId: 'prod-smart', billing: null, ...ids })
+        return sentHeaders(() => generateText({ model, prompt: 'hi', maxRetries: 0 }))
+    }
+
+    it('names the project as the customer and the flow run as the trace on a flow step', async () => {
+        expect(await headersFor({ provider: AIProviderName.LITELLM, flowStep })).toMatchObject({
+            'x-litellm-customer-id': 'project-1',
+            'x-litellm-trace-id': 'run-1',
+            'x-litellm-tags': 'ap-surface:flow,ap-platform:platform-1',
+        })
+    })
+
+    it('traces chat by conversation and names no customer, since a conversation is not tied to one project', async () => {
+        const headers = await headersFor({ provider: AIProviderName.LITELLM, metadata })
+        expect(headers).toMatchObject({ 'x-litellm-trace-id': 'conversation-1', 'x-litellm-tags': 'ap-surface:chat,ap-platform:platform-1' })
+        expect(headers).not.toHaveProperty('x-litellm-customer-id')
+    })
+
+    it('tags an agent run apart from chat', async () => {
+        expect(await headersFor({ provider: AIProviderName.LITELLM, metadata: { ...metadata, surface: 'agent' } })).toMatchObject({ 'x-litellm-tags': 'ap-surface:agent,ap-platform:platform-1' })
+    })
+
+    it('sends a custom provider nothing new', async () => {
+        const fromFlow = await headersFor({ provider: AIProviderName.CUSTOM, flowStep })
+        const fromChat = await headersFor({ provider: AIProviderName.CUSTOM, metadata })
+        expect(fromFlow).toMatchObject({ 'x-ap-project-id': 'project-1', 'x-ap-run-id': 'run-1' })
+        expect(Object.keys({ ...fromFlow, ...fromChat }).filter((name) => name.startsWith('x-litellm-'))).toEqual([])
+    })
+
+    it('sends the same headers on an image call from a flow step', async () => {
+        const model = aiUtils.createModelForImages({ credentials: LITELLM_CREDENTIALS, modelId: 'prod-image', flowStep })
+        const headers = await sentHeaders(() => generateImage({ model: model!, prompt: 'a banner', maxRetries: 0 }))
+        expect(headers).toMatchObject({
+            'x-litellm-customer-id': 'project-1',
+            'x-litellm-trace-id': 'run-1',
+            'x-litellm-tags': 'ap-surface:flow,ap-platform:platform-1',
+        })
+    })
+})
+
+describe('aiUtils.createModelForImages key health', () => {
+    it('reports a rejected key on an image call', async () => {
+        const observations: KeyHealthObservation[] = []
+        aiProviderKeyHealth.setReporter((observation) => observations.push(observation))
+        const original = globalThis.fetch
+        globalThis.fetch = () => Promise.resolve(new Response('{"error":{"message":"bad key"}}', { status: 401 }))
+        try {
+            const model = aiUtils.createModelForImages({ credentials: LITELLM_CREDENTIALS, modelId: 'prod-image', platformId: 'platform-1', providerConfigId: 'config-1' })
+            await generateImage({ model: model!, prompt: 'a banner', maxRetries: 0 }).catch(() => undefined)
+        }
+        finally {
+            globalThis.fetch = original
+            aiProviderKeyHealth.setReporter(() => undefined)
+        }
+
+        expect(observations).toEqual([expect.objectContaining({ platformId: 'platform-1', providerConfigId: 'config-1' })])
+    })
+})
+
+describe('aiUtils.createModel tool choice', () => {
+    it('asks the model to call a required tool instead of forcing tool_choice, which some models reject', async () => {
+        const model = aiUtils.createModel({ credentials: aiProviderCredentials({ provider: AIProviderName.ANTHROPIC, auth: { apiKey: 'key' }, config: {} }), modelId: 'claude-opus-5-5', billing: null })
+        const body = await sentBody(() => generateText({
+            model,
+            prompt: 'hi',
+            maxRetries: 0,
+            tools: { extractData: tool({ inputSchema: jsonSchema({ type: 'object', properties: {} }) }) },
+            toolChoice: 'required',
+        }))
+
+        expect(body.tool_choice).toEqual({ type: 'auto' })
+    })
+
+    it('bills the dollar cost of every attempt when a managed model answers a required tool in text first', async () => {
+        const reported: ActivepiecesAiCostEvent[] = []
+        activepiecesAiCost.setReporter((event) => reported.push(event))
+        const replies = [
+            { id: 'gen-text', choices: [{ index: 0, message: { role: 'assistant', content: 'The total is 1250.' }, finish_reason: 'stop' }], usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15, cost: 0.003 } },
+            { id: 'gen-tool', choices: [{ index: 0, message: { role: 'assistant', content: null, tool_calls: [{ id: 'call_1', type: 'function', function: { name: 'extractData', arguments: '{}' } }] }, finish_reason: 'tool_calls' }], usage: { prompt_tokens: 12, completion_tokens: 6, total_tokens: 18, cost: 0.004 } },
+        ]
+        const original = globalThis.fetch
+        globalThis.fetch = () => Promise.resolve(new Response(JSON.stringify(replies.shift()), { headers: { 'content-type': 'application/json' } }))
+        try {
+            const model = aiUtils.createModel({ credentials: aiProviderCredentials({ provider: AIProviderName.OPENROUTER, auth: { apiKey: 'key' }, config: {} }), modelId: 'anthropic/claude-opus-5.5', billing: BILLING, usageOnly: true })
+            await generateText({
+                model,
+                prompt: 'hi',
+                maxRetries: 0,
+                tools: { extractData: tool({ inputSchema: jsonSchema({ type: 'object', properties: {} }) }) },
+                toolChoice: 'required',
+            })
+        }
+        finally {
+            globalThis.fetch = original
+            activepiecesAiCost.setReporter(() => undefined)
+        }
+
+        expect(reported.map((event) => event.call?.observedCostUsd)).toEqual([0.003, 0.004])
+    })
+})
+
+async function sentBody(send: () => Promise<unknown>): Promise<Record<string, unknown>> {
+    const original = globalThis.fetch
+    let body: Record<string, unknown> = {}
+    globalThis.fetch = (_input, init) => {
+        body = typeof init?.body === 'string' ? JSON.parse(init.body) : {}
+        return Promise.resolve(new Response('{}'))
+    }
+    try {
+        await send().catch(() => undefined)
+    }
+    finally {
+        globalThis.fetch = original
+    }
+    return body
+}
+
+async function sentHeaders(send: () => Promise<unknown>): Promise<Record<string, string>> {
+    const original = globalThis.fetch
+    let headers: Record<string, string> = {}
+    globalThis.fetch = (_input, init) => {
+        headers = Object.fromEntries(new Headers(init?.headers).entries())
+        return Promise.resolve(new Response('{}'))
+    }
+    try {
+        await send().catch(() => undefined)
+    }
+    finally {
+        globalThis.fetch = original
+    }
+    return headers
+}
+
+const LITELLM_CREDENTIALS = aiProviderCredentials({ provider: AIProviderName.LITELLM, auth: { apiKey: 'sk-proxy' }, config: { baseUrl: 'https://litellm.example.com/v1', apiKeyHeader: 'Authorization', models: [] } })
+
+const BILLING: ActivepiecesAiBilling = {
+    source: ActivepiecesAiConsumerSource.AI_STEP_IN_FLOW,
+    platformId: 'platform-1',
+    projectId: 'project-1',
+    flowRun: { flowId: 'flow-1', flowRunId: 'run-1' },
+}

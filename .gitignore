@@ -98,6 +98,9 @@ scratch.md
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+/packages/tests-e2e/.auth/
+/packages/tests-e2e/test-results/
+/packages/tests-e2e/playwright-report/
 /redis-binaries/
 
 # Terraform
@@ -108,3 +111,9 @@ deploy/terraform/**/.terraform.lock.hcl
 deploy/terraform/**/terraform.tfvars
 deploy/terraform/**/terraform-*.tfvars
 .devtools
+
+packages/**/bun.lock
+packages/**/package-lock.json
+
+# translatable text by JSON path, written by the translation CLI (the nightly keeps its copy on the i18n/translatable-text-by-json-path branch)
+/tools/translatable-text-by-json-path/

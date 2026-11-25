@@ -140,6 +140,39 @@ describe('Bulk retry flow runs (POST /v1/flow-runs/retry)', () => {
         expect(await countRunsForProject(otherProject.id)).toBe(1)
         expect(await readStatus(otherRun.id)).toBe(FlowRunStatus.FAILED)
     })
+
+    it('scopes retry to the failedStepName filter', async () => {
+        const projectId = ctx.project.id
+        const { flow: matching } = await createFailedRun({ projectId, failedStepName: 'step_1' })
+        const { flow: other } = await createFailedRun({ projectId, failedStepName: 'step_2' })
+
+        const response = await ctx.post('/v1/flow-runs/retry', {
+            projectId,
+            strategy: FlowRetryStrategy.ON_LATEST_VERSION,
+            failedStepName: 'step_1',
+        })
+
+        expect(response.statusCode).toBe(200)
+        await waitForRunCountForFlow({ flowId: matching.id, expected: 2 })
+        expect(await countRunsForFlow(other.id)).toBe(1)
+    })
+})
+
+describe('Bulk archive flow runs (POST /v1/flow-runs/archive)', () => {
+    it('scopes archive to the failedStepName filter', async () => {
+        const projectId = ctx.project.id
+        const { run: matching } = await createFailedRun({ projectId, failedStepName: 'step_1' })
+        const { run: other } = await createFailedRun({ projectId, failedStepName: 'step_2' })
+
+        const response = await ctx.post('/v1/flow-runs/archive', {
+            projectId,
+            failedStepName: 'step_1',
+        })
+
+        expect(response.statusCode).toBe(200)
+        expect(await readArchivedAt(matching.id)).not.toBeNull()
+        expect(await readArchivedAt(other.id)).toBeNull()
+    })
 })
 
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -148,10 +181,12 @@ async function createFailedRun({
     projectId,
     createdAt,
     status = FlowRunStatus.FAILED,
+    failedStepName,
 }: {
     projectId: string
     createdAt?: string
     status?: FlowRunStatus
+    failedStepName?: string
 }): Promise<{ flow: { id: string }, flowVersion: { id: string }, run: { id: string } }> {
     const flow = createMockFlow({ projectId })
     await db.save('flow', flow)
@@ -169,7 +204,10 @@ async function createFailedRun({
         status,
         environment: RunEnvironment.PRODUCTION,
     })
-    await db.save('flow_run', run)
+    await db.save('flow_run', {
+        ...run,
+        failedStep: failedStepName ? { name: failedStepName, displayName: failedStepName } : undefined,
+    })
 
     if (createdAt) {
         await databaseConnection().query(
@@ -192,6 +230,11 @@ async function countRunsForFlow(flowId: string): Promise<number> {
 async function readStatus(runId: string): Promise<FlowRunStatus> {
     const row = await db.findOneByOrFail<{ status: FlowRunStatus }>('flow_run', { id: runId })
     return row.status
+}
+
+async function readArchivedAt(runId: string): Promise<string | null> {
+    const row = await db.findOneByOrFail<{ archivedAt: string | null }>('flow_run', { id: runId })
+    return row.archivedAt
 }
 
 async function waitForCount({

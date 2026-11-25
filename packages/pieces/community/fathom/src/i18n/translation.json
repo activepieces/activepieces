@@ -119,6 +119,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Recording": "New Recording",
   "Fires when Fathom finishes processing a new meeting recording. Turn on at least one of the Include options.": "Fires when Fathom finishes processing a new meeting recording. Turn on at least one of the Include options.",
   "Trigger For": "Trigger For",

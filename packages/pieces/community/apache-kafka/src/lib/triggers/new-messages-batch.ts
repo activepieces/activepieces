@@ -1,30 +1,8 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework'
 import { kafkaAuth } from '../auth'
-import { kafkaClient } from '../common/client'
-import { kafkaConfig } from '../common/config'
-import { kafkaRecords } from '../common/records'
+import { kafkaOutputSchemas } from '../output-schemas'
 import { kafkaTriggerProps } from './props'
-
-async function readBatch({ auth, topic, consumerGroup, maxMessages, pollTimeoutSeconds, startFrom, commit }: {
-  auth: Parameters<typeof kafkaClient.consume>[0]['auth']
-  topic: string
-  consumerGroup: string
-  maxMessages: number
-  pollTimeoutSeconds: number
-  startFrom: string
-  commit: boolean
-}) {
-  const records = await kafkaClient.consume({
-    auth,
-    topic,
-    consumerGroup,
-    maxMessages,
-    pollTimeoutSeconds,
-    fromBeginning: kafkaConfig.readStartFrom(startFrom),
-    commit,
-  })
-  return kafkaRecords.toTriggerOutput({ records, topic: kafkaConfig.readTopic(topic), batch: true })
-}
+import { kafkaTriggerRead } from './read'
 
 export const newMessagesBatch = createTrigger({
   auth: kafkaAuth,
@@ -49,38 +27,18 @@ export const newMessagesBatch = createTrigger({
       timestamp: '1710000000000',
     }],
   },
+  outputSchema: kafkaOutputSchemas.newMessagesBatch,
   type: TriggerStrategy.POLLING,
   async test(context) {
-    return readBatch({
-      auth: context.auth.props,
-      topic: context.propsValue.topic,
-      consumerGroup: context.propsValue.consumerGroup,
-      maxMessages: context.propsValue.maxMessages,
-      pollTimeoutSeconds: context.propsValue.pollTimeoutSeconds,
-      startFrom: context.propsValue.startFrom,
-      commit: false,
-    })
+    return kafkaTriggerRead.sample({ auth: context.auth.props, props: context.propsValue, batch: true })
   },
   async onEnable(context) {
-    await kafkaClient.pinStartOffsets({
-      auth: context.auth.props,
-      topic: context.propsValue.topic,
-      consumerGroup: context.propsValue.consumerGroup,
-      fromBeginning: kafkaConfig.readStartFrom(context.propsValue.startFrom),
-    })
+    await kafkaTriggerRead.enable({ auth: context.auth.props, props: context.propsValue })
   },
   async onDisable() {
     return
   },
   async run(context) {
-    return readBatch({
-      auth: context.auth.props,
-      topic: context.propsValue.topic,
-      consumerGroup: context.propsValue.consumerGroup,
-      maxMessages: context.propsValue.maxMessages,
-      pollTimeoutSeconds: context.propsValue.pollTimeoutSeconds,
-      startFrom: context.propsValue.startFrom,
-      commit: true,
-    })
+    return kafkaTriggerRead.poll({ auth: context.auth.props, props: context.propsValue, batch: true })
   },
 })

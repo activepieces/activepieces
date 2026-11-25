@@ -187,7 +187,12 @@ function McpAuthorizePage() {
             {t('Authorize Application')}
           </CardTitle>
           <CardDescription>
-            <span className="font-semibold text-gray-12">{clientName}</span>{' '}
+            <span
+              className="font-semibold text-gray-12"
+              data-testid="mcp-authorize-client-name"
+            >
+              {clientName}
+            </span>{' '}
             {t('wants to connect to your Activepieces account')}
           </CardDescription>
           {currentUser && (
@@ -322,7 +327,9 @@ function decodeJwtPayload(token: string | null): AuthRequestSummary {
     }>(token);
     return {
       clientName: payload.clientName ?? t('Unknown app'),
-      isPlatformScoped: payload.resource?.endsWith('/mcp/platform') ?? false,
+      isPlatformScoped:
+        payload.resource?.replace(/\/+$/, '').endsWith('/mcp/platform') ??
+        false,
       expiresAt: payload.exp ?? null,
     };
   } catch {

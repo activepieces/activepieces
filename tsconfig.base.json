@@ -78,6 +78,9 @@
       "@activepieces/piece-amazon-lambda": [
         "packages/pieces/community/amazon-lambda/src/index.ts"
       ],
+      "@activepieces/piece-amazon-redshift": [
+        "packages/pieces/community/amazon-redshift/src/index.ts"
+      ],
       "@activepieces/piece-amazon-s3": [
         "packages/pieces/community/amazon-s3/src/index.ts"
       ],
@@ -238,6 +241,9 @@
       "@activepieces/piece-google-document-ai": [
         "packages/pieces/community/google-document-ai/src/index.ts"
       ],
+      "@activepieces/piece-google-workspace": [
+        "packages/pieces/community/google-workspace/src/index.ts"
+      ],
       "@activepieces/piece-rounded-studio": [
         "packages/pieces/community/rounded-studio/src/index.ts"
       ],
@@ -395,11 +401,17 @@
       "@activepieces/piece-data-summarizer": [
         "packages/pieces/core/data-summarizer/src/index.ts"
       ],
+      "@activepieces/piece-databricks": [
+        "packages/pieces/community/databricks/src/index.ts"
+      ],
       "@activepieces/piece-datadog": [
         "packages/pieces/community/datadog/src/index.ts"
       ],
       "@activepieces/piece-dataforb2b": [
         "packages/pieces/community/dataforb2b/src/index.ts"
+      ],
+      "@activepieces/piece-datalab": [
+        "packages/pieces/community/datalab/src/index.ts"
       ],
       "@activepieces/piece-date-helper": [
         "packages/pieces/core/date-helper/src/index.ts"
@@ -723,6 +735,9 @@
       ],
       "@activepieces/piece-jira-data-center": [
         "packages/pieces/community/jira-data-center/src/index.ts"
+      ],
+      "@activepieces/piece-jira-service-management": [
+        "packages/pieces/community/jira-service-management/src/index.ts"
       ],
       "@activepieces/piece-jotform": [
         "packages/pieces/community/jotform/src/index.ts"
@@ -1188,6 +1203,9 @@
       "@activepieces/piece-sage-accounting": [
         "packages/pieces/community/sage-accounting/src/index.ts"
       ],
+      "@activepieces/piece-sage-intacct": [
+        "packages/pieces/community/sage-intacct/src/index.ts"
+      ],
       "@activepieces/piece-saleor": [
         "packages/pieces/community/saleor/src/index.ts"
       ],
@@ -1196,6 +1214,9 @@
       ],
       "@activepieces/piece-salesloft": [
         "packages/pieces/community/salesloft/src/index.ts"
+      ],
+      "@activepieces/piece-salla": [
+        "packages/pieces/community/salla/src/index.ts"
       ],
       "@activepieces/piece-savvycal": [
         "packages/pieces/community/savvycal/src/index.ts"
@@ -1545,6 +1566,9 @@
       ],
       "@activepieces/piece-wootric": [
         "packages/pieces/community/wootric/src/index.ts"
+      ],
+      "@activepieces/piece-word-documents": [
+        "packages/pieces/core/word-documents/src/index.ts"
       ],
       "@activepieces/piece-wordpress": [
         "packages/pieces/community/wordpress/src/index.ts"

@@ -3,6 +3,7 @@ import {
   FlowAction,
   FlowActionType,
   FlowOperationType,
+  flowCanvasUtils,
   flowStructureUtil,
   StepLocationRelativeToParent,
 } from '@activepieces/shared';
@@ -18,8 +19,8 @@ import {
   RouteOff,
   Trash,
 } from 'lucide-react';
-import { toast } from 'sonner';
 
+import { clipboardUtils } from '@/components/custom/clipboard/use-copy-to-clipboard';
 import { Shortcut, ShortcutProps } from '@/components/custom/shortcut';
 import {
   ContextMenuContent,
@@ -39,6 +40,7 @@ import {
   pasteNodes,
   toggleSkipSelectedNodes,
 } from '../utils/bulk-actions';
+import { flowCanvasUtils as builderFlowCanvasUtils } from '../utils/flow-canvas-utils';
 
 import { CanvasContextMenuProps, ContextMenuType } from './canvas-context-menu';
 
@@ -93,11 +95,14 @@ export const CanvasContextMenuContent = ({
   );
   const showPasteAfterLastStep =
     !readonly && contextMenuType === ContextMenuType.CANVAS;
-  const showPasteAsFirstLoopAction =
+  const showPasteInsideLoopOrBatch =
     selectedNodes.length === 1 &&
-    firstSelectedStep?.type === FlowActionType.LOOP_ON_ITEMS &&
+    !isNil(firstSelectedStep) &&
+    flowCanvasUtils.isLoopOrBatchStep(firstSelectedStep) &&
     !readonly &&
     contextMenuType === ContextMenuType.STEP;
+  const isSelectedStepBatch =
+    firstSelectedStep?.type === FlowActionType.PROCESS_IN_BATCHES;
   const showPasteAsBranchChild =
     selectedNodes.length === 1 &&
     !isNil(firstSelectedStep) &&
@@ -154,7 +159,7 @@ export const CanvasContextMenuContent = ({
     showCopyReference ||
     showDuplicate ||
     showSkip ||
-    showPasteAsFirstLoopAction ||
+    showPasteInsideLoopOrBatch ||
     showPasteAsBranchChild ||
     showPasteAsCofBranchChild ||
     showPasteAfterCurrentStep ||
@@ -225,18 +230,17 @@ export const CanvasContextMenuContent = ({
 
         {showCopyReference && (
           <ContextMenuItem
-            onClick={() => {
-              navigator.clipboard.writeText(
-                `{{${selectedNodes[0]}['output']}}`,
-              );
-              toast.success(t('Reference copied to clipboard'));
-            }}
+            onClick={() =>
+              clipboardUtils.copy({
+                value: `{{${selectedNodes[0]}['output']}}`,
+              })
+            }
             className="flex items-center gap-2"
           >
             <Braces className="w-4 h-4"></Braces> {t('Copy reference')}
           </ContextMenuItem>
         )}
-        {(showPasteAsFirstLoopAction ||
+        {(showPasteInsideLoopOrBatch ||
           showPasteAsBranchChild ||
           showPasteAsCofBranchChild ||
           showPasteAfterCurrentStep) && (
@@ -258,15 +262,16 @@ export const CanvasContextMenuContent = ({
           </ContextMenuItem>
         )}
 
-        {showPasteAsFirstLoopAction && (
+        {showPasteInsideLoopOrBatch && (
           <ContextMenuItem
             onClick={() => {
               pasteNodes(
                 flowVersion,
                 {
                   parentStepName: selectedNodes[0],
-                  stepLocationRelativeToParent:
-                    StepLocationRelativeToParent.INSIDE_LOOP,
+                  stepLocationRelativeToParent: isSelectedStepBatch
+                    ? StepLocationRelativeToParent.INSIDE_BATCH
+                    : StepLocationRelativeToParent.INSIDE_LOOP,
                 },
                 applyOperation,
               );
@@ -274,7 +279,9 @@ export const CanvasContextMenuContent = ({
             className="flex items-center gap-2"
           >
             <ClipboardPaste className="w-4 h-4"></ClipboardPaste>{' '}
-            {t('Paste Inside Loop')}
+            {isSelectedStepBatch
+              ? t('Paste Inside Batch')
+              : t('Paste Inside Loop')}
           </ContextMenuItem>
         )}
 
@@ -323,7 +330,9 @@ export const CanvasContextMenuContent = ({
                         );
                       }}
                     >
-                      {branch.branchName}
+                      {builderFlowCanvasUtils.getBranchDisplayName(
+                        branch.branchName,
+                      )}
                     </ContextMenuItem>
                   ),
                 )}

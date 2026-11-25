@@ -4,6 +4,7 @@ export { EditGlobalConnectionDialog } from './components/edit-global-connection-
 export { RenameConnectionDialog } from './components/rename-connection-dialog';
 export { RevalidateConnectionButton } from './components/revalidate-connection-button';
 export {
+  appConnectionsHooks,
   appConnectionsMutations,
   appConnectionsQueries,
 } from './hooks/app-connections-hooks';

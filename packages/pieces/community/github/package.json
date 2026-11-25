@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-github",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {
@@ -20,6 +20,6 @@
   "devDependencies": {
     "@types/jsonwebtoken": "9.0.10",
     "tslib": "2.6.2",
-    "vitest": "3.2.6"
+    "vitest": "5.0.5"
   }
 }

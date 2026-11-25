@@ -1,40 +1,46 @@
-import { propsValidation } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import * as z from 'zod/mini'
 import { tarventAuth } from '../auth';
-import { makeClient } from '../common';
+import { tarventCommon } from '../common';
+import { tarventTransport } from '../common/transport';
+import { tarventOutputSchemas } from '../output-schemas';
 
 export const createSuppressionFilter = createAction({
   auth: tarventAuth,
   name: 'tarvent_create_suppression_filter',
-  classification: 'DESTRUCTIVE',
+  classification: 'WRITE',
   displayName: 'Add Contact To Suppression List',
-  description: 'Creates a suppression filter in your account to suppress a contact.',
+  description: 'Creates a suppression filter in your account so an email address receives no more email.',
   audience: 'both',
-  aiMetadata: { description: 'Adds an email address to the Tarvent account-level suppression list so it is blocked from future sends, with an optional reason. Use to permanently stop messaging a specific address. Not idempotent: each call creates another suppression filter record.', idempotent: false },
+  aiMetadata: {
+    description:
+      'Adds one email address to the Tarvent account-level suppression list (with an optional reason up to 255 characters) so no campaign or transactional email is sent to it from any audience. Reversible with Remove From Suppression List. Returns the filter ID. Not idempotent: each call creates another suppression filter record.',
+    idempotent: false,
+  },
+  outputSchema: tarventOutputSchemas.suppressionFilter,
   props: {
     email: Property.ShortText({
       displayName: 'Email address',
-      description: 'Enter the email to add to the suppression list.',
+      description: 'The email to add to the suppression list.',
       required: true,
-      defaultValue: '',
     }),
     reason: Property.LongText({
       displayName: 'Suppression reason',
-      description: 'Use the description to describe why this contact is being suppressed.',
+      description: 'Why this contact is being suppressed (255 character limit).',
       required: false,
-      defaultValue: '',
-    })
+    }),
   },
   async run(context) {
-    const { email, reason } = context.propsValue;
-
-    await propsValidation.validateZod(context.propsValue, {
-      email: z.string().check(z.minLength(1), z.maxLength(100, 'Email has no more than 100 characters.')),
-      reason: z.string().check(z.minLength(0), z.maxLength(255, 'Suppression reason has no more than 255 characters.')),
+    const email = tarventCommon.requireText({ value: context.propsValue.email, label: 'Email address' });
+    const reason = tarventCommon.trimmed(context.propsValue.reason);
+    tarventCommon.checkLength({ value: email, label: 'Email address', max: 320 });
+    tarventCommon.checkLength({ value: reason, label: 'Suppression reason', max: 255 });
+    const { localPart, domain } = tarventCommon.splitEmail(email);
+    return tarventTransport.field<Record<string, unknown>>({
+      auth: context.auth.props,
+      query: 'mutation CreateSuppressionFilter($input: CreateSuppressionFilterInput!) { createAccountSuppressionFilter(input: $input) { id localPart domain reason createdUtc } }',
+      variables: { input: { localPart, domain, reason: reason ?? '' } },
+      name: 'createAccountSuppressionFilter',
     });
-
-    const client = makeClient(context.auth);
-    return await client.createSuppressionFilter(email, reason);
   },
 });
+

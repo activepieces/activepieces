@@ -111,6 +111,7 @@ const AI_TAB_PATHS = {
   providers: '',
   capabilities: 'capabilities',
   tiers: 'tiers',
+  usage: 'usage',
 };
 const PIECES_TAB_PATHS = { pieces: '', 'piece-sets': 'piece-sets' };
 
@@ -208,6 +209,54 @@ export const platformRoutes = [
     ),
   },
   {
+    path: '/platform/ai/usage',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="AI Usage">
+          <LegacyTabRedirect basePath="/platform/ai" tabPaths={AI_TAB_PATHS}>
+            <PlanFeatureSample feature="aiProviders">
+              <SuspenseWrapper>
+                <AIProvidersPage section="usage" />
+              </SuspenseWrapper>
+            </PlanFeatureSample>
+          </LegacyTabRedirect>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/ai/usage/:dimension',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="AI Usage">
+          <LegacyTabRedirect basePath="/platform/ai" tabPaths={AI_TAB_PATHS}>
+            <PlanFeatureSample feature="aiProviders">
+              <SuspenseWrapper>
+                <AIProvidersPage section="usage-list" />
+              </SuspenseWrapper>
+            </PlanFeatureSample>
+          </LegacyTabRedirect>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/ai/usage/:dimension/:id',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="AI Usage">
+          <LegacyTabRedirect basePath="/platform/ai" tabPaths={AI_TAB_PATHS}>
+            <PlanFeatureSample feature="aiProviders">
+              <SuspenseWrapper>
+                <AIProvidersPage section="usage-detail" />
+              </SuspenseWrapper>
+            </PlanFeatureSample>
+          </LegacyTabRedirect>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
     path: '/platform/mcp',
     element: (
       <PlatformLayout>
@@ -261,9 +310,11 @@ export const platformRoutes = [
             basePath="/platform/pieces"
             tabPaths={PIECES_TAB_PATHS}
           >
-            <SuspenseWrapper>
-              <PieceSetsPage />
-            </SuspenseWrapper>
+            <PlanFeatureSample feature="pieces">
+              <SuspenseWrapper>
+                <PieceSetsPage />
+              </SuspenseWrapper>
+            </PlanFeatureSample>
           </LegacyTabRedirect>
         </PageTitle>
       </PlatformLayout>
@@ -274,9 +325,11 @@ export const platformRoutes = [
     element: (
       <PlatformLayout>
         <PageTitle title="Piece Set">
-          <SuspenseWrapper>
-            <PieceSetDetailsPage />
-          </SuspenseWrapper>
+          <PlanFeatureSample feature="pieces">
+            <SuspenseWrapper>
+              <PieceSetDetailsPage />
+            </SuspenseWrapper>
+          </PlanFeatureSample>
         </PageTitle>
       </PlatformLayout>
     ),

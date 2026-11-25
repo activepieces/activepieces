@@ -231,6 +231,7 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
                                   <FormControl>
                                     <Checkbox
                                       id={input.name}
+                                      data-testid={`form-field-${input.name}`}
                                       onCheckedChange={(e) => field.onChange(e)}
                                       checked={field.value === true}
                                     ></Checkbox>
@@ -266,6 +267,7 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
                                       {...field}
                                       name={input.name}
                                       id={input.name}
+                                      data-testid={`form-field-${input.name}`}
                                       onChange={field.onChange}
                                       value={String(field.value ?? '')}
                                     />
@@ -278,6 +280,7 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
                                       onChange={field.onChange}
                                       id={input.name}
                                       name={input.name}
+                                      data-testid={`form-field-${input.name}`}
                                       value={String(field.value ?? '')}
                                     />
                                   </FormControl>
@@ -287,6 +290,7 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
                                     <Input
                                       name={input.name}
                                       id={input.name}
+                                      data-testid={`form-field-${input.name}`}
                                       onChange={(e) => {
                                         const file = e.target.files?.[0];
                                         if (file) {
@@ -315,6 +319,7 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
                   type="submit"
                   className="w-full mt-4"
                   loading={isPending}
+                  data-testid="form-submit"
                 >
                   {t('Submit')}
                 </Button>
@@ -322,7 +327,9 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
                 {markdownResponse && (
                   <>
                     <Separator className="my-4" />
-                    <ApMarkdown markdown={markdownResponse} />
+                    <div data-testid="form-response">
+                      <ApMarkdown markdown={markdownResponse} />
+                    </div>
                   </>
                 )}
               </CardContent>

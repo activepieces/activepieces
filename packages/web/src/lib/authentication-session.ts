@@ -17,16 +17,14 @@ const tokenKey = 'token';
 const projectIdKey = 'projectId';
 export const authenticationSession = {
   setProjectId(projectId: string) {
-    ApStorage.getInstance().setItem(projectIdKey, projectId);
+    saveProjectId(projectId);
   },
   saveResponse(response: AuthenticationResponse, isEmbedding: boolean) {
     if (isEmbedding) {
       ApStorage.setInstanceToSessionStorage();
     }
     ApStorage.getInstance().setItem(tokenKey, response.token);
-    if (!isNil(response.projectId)) {
-      ApStorage.getInstance().setItem(projectIdKey, response.projectId);
-    }
+    saveProjectIdOrClear(response.projectId);
     queryClient.invalidateQueries({ queryKey: ['flags'] });
     window.dispatchEvent(new Event('storage'));
   },
@@ -53,9 +51,14 @@ export const authenticationSession = {
     if (isNil(token)) {
       return null;
     }
-    const projectId = ApStorage.getInstance().getItem(projectIdKey);
-    if (!isNil(projectId)) {
-      return projectId;
+    const tabProjectId = window.sessionStorage.getItem(tabProjectIdKey());
+    if (!isNil(tabProjectId)) {
+      return tabProjectId;
+    }
+    const lastUsedProjectId = ApStorage.getInstance().getItem(projectIdKey);
+    if (!isNil(lastUsedProjectId)) {
+      window.sessionStorage.setItem(tabProjectIdKey(), lastUsedProjectId);
+      return lastUsedProjectId;
     }
     const decodedJwt = getDecodedJwt(token);
     if ('projectId' in decodedJwt && typeof decodedJwt.projectId === 'string') {
@@ -106,16 +109,14 @@ export const authenticationSession = {
       platformId,
     });
     ApStorage.getInstance().setItem(tokenKey, result.token);
-    if (!isNil(result.projectId)) {
-      ApStorage.getInstance().setItem(projectIdKey, result.projectId);
-    }
+    saveProjectIdOrClear(result.projectId);
     window.location.href = '/';
   },
   switchToProject(projectId: string) {
     if (authenticationSession.getProjectId() === projectId) {
       return;
     }
-    ApStorage.getInstance().setItem(projectIdKey, projectId);
+    saveProjectId(projectId);
     window.dispatchEvent(new Event('storage'));
   },
   isLoggedIn(): boolean {
@@ -126,7 +127,7 @@ export const authenticationSession = {
     return !this.isJwtExpired(token);
   },
   clearSession() {
-    ApStorage.getInstance().removeItem(projectIdKey);
+    removeProjectId();
     ApStorage.getInstance().removeItem(tokenKey);
   },
   logOut() {
@@ -141,4 +142,26 @@ export const authenticationSession = {
 
 function getDecodedJwt(token: string): Principal {
   return jwtDecode<Principal>(token);
+}
+
+function saveProjectIdOrClear(projectId: string | null | undefined): void {
+  if (isNil(projectId)) {
+    removeProjectId();
+    return;
+  }
+  saveProjectId(projectId);
+}
+
+function saveProjectId(projectId: string): void {
+  window.sessionStorage.setItem(tabProjectIdKey(), projectId);
+  ApStorage.getInstance().setItem(projectIdKey, projectId);
+}
+
+function removeProjectId(): void {
+  window.sessionStorage.removeItem(tabProjectIdKey());
+  ApStorage.getInstance().removeItem(projectIdKey);
+}
+
+function tabProjectIdKey(): string {
+  return `${projectIdKey}:${authenticationSession.getPlatformId()}:${authenticationSession.getCurrentUserId()}`;
 }

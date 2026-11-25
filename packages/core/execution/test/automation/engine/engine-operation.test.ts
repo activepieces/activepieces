@@ -112,4 +112,10 @@ describe('normalizeToolOutputToExecuteResponse', () => {
         const result = normalizeToolOutputToExecuteResponse(raw)
         expect(result.output).toEqual({ key: 'structured' })
     })
+
+    it('treats the worker\'s failed tool call shape as FAILED', () => {
+        const result = normalizeToolOutputToExecuteResponse({ failed: true, error: 'The action failed' })
+        expect(result.status).toBe(ExecutionToolStatus.FAILED)
+        expect(result.errorMessage).toBe('The action failed')
+    })
 })

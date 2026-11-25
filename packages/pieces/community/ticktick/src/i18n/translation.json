@@ -294,6 +294,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Task Created": "New Task Created",
   "Triggers when a new task is created in a selected project.": "Triggers when a new task is created in a selected project.",
   "Project": "Project",

@@ -1,9 +1,10 @@
-import { isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { isNil, isObject, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { AppConnectionStatus, pickDefaultConnectionExternalId } from '@activepieces/shared'
 import { tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { z } from 'zod'
 import { GateDecision, gateNoResponseMessage, normalizePieceName, questionTextSchema, questionTitleSchema, richOptionSchema, stableStringify } from './tool-primitives'
 
-export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectionSelected, onConnectorReconnected, onGateOpened, accountAlreadyChosenFor, connectionChosenEarlierFor }: {
+export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectionSelected, onConnectorReconnected, onGateOpened, accountAlreadyChosenFor, connectionChosenEarlierFor, pieceNeedsNoConnection, autoPickedConnectionFor }: {
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
     displayToolTimeoutMs: number
     onConnectionSelected?: (params: { pieceName: string, connectionExternalId: string, label: string, projectId: string }) => Promise<void>
@@ -11,8 +12,24 @@ export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onCo
     onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
     accountAlreadyChosenFor?: (pieceName: string) => boolean
     connectionChosenEarlierFor?: (pieceName: string) => Promise<{ externalId: string, label: string } | null>
+    pieceNeedsNoConnection?: (pieceName: string) => Promise<boolean>
+    autoPickedConnectionFor?: (pieceName: string) => Promise<PickedConnection | null>
 }): ToolSet {
     const unansweredCards = new Set<string>()
+
+    async function storeApprovedConnection({ input, payload }: { input: Record<string, unknown>, payload: Record<string, unknown> }): Promise<{ connectionExternalId?: string, label?: string }> {
+        const pieceName = normalizePieceName(typeof input['piece'] === 'string' ? input['piece'] : '')
+        const cardChoseAccount = typeof payload['connectionExternalId'] === 'string'
+        const autoPicked = cardChoseAccount || isNil(autoPickedConnectionFor) ? null : await autoPickedConnectionFor(pieceName)
+        const chosen = isNil(autoPicked) ? payload : { connectionExternalId: autoPicked.externalId, label: autoPicked.label, projectId: autoPicked.projectId }
+        const connectionExternalId = typeof chosen['connectionExternalId'] === 'string' ? chosen['connectionExternalId'] : undefined
+        const label = typeof chosen['label'] === 'string' ? chosen['label'] : undefined
+        const projectId = typeof chosen['projectId'] === 'string' ? chosen['projectId'] : ''
+        if (!isNil(connectionExternalId) && onConnectionSelected) {
+            await onConnectionSelected({ pieceName, connectionExternalId, label: label ?? connectionExternalId, projectId })
+        }
+        return { ...spreadIfDefined('connectionExternalId', connectionExternalId), ...spreadIfDefined('label', label) }
+    }
 
     function refuseIfAccountAlreadyChosen(input: Record<string, unknown>): { content: { type: string, text: string }[] } | undefined {
         const piece = typeof input['piece'] === 'string' ? input['piece'] : ''
@@ -36,13 +53,29 @@ export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onCo
         return { content: [{ type: 'text', text: `The user already picked the ${displayName} account "${chosenEarlier.label}" earlier in this conversation, so the card was not shown again. Use connectionExternalId "${chosenEarlier.externalId}" and carry on without asking. If they ask to use a different account, call this again with switchAccount true.` }] }
     }
 
+    async function refuseIfNoConnectionNeeded(input: Record<string, unknown>): Promise<CardRefusal | undefined> {
+        if (isNil(pieceNeedsNoConnection)) {
+            return undefined
+        }
+        const piece = typeof input['piece'] === 'string' ? input['piece'] : ''
+        const displayName = typeof input['displayName'] === 'string' ? input['displayName'] : piece
+        const { data: needsNoConnection, error } = await tryCatch(() => pieceNeedsNoConnection(normalizePieceName(piece)))
+        if (!isNil(error)) {
+            return { notShown: true, content: [{ type: 'text', text: `Could not check whether ${displayName} needs a connection, so the card was not shown. Call this again.` }] }
+        }
+        if (!needsNoConnection) {
+            return undefined
+        }
+        return { notShown: true, content: [{ type: 'text', text: `${displayName} needs no connection, so the card was not shown. Call its actions without auth.` }] }
+    }
+
     function blockingExecute({ dismissMessage, successKey, toolName, getDisplayName, onApproved, refuseWhen }: {
         dismissMessage: string | ((input: Record<string, unknown>) => string)
         successKey?: string
         toolName: string
         getDisplayName?: (input: Record<string, unknown>) => string
         onApproved?: (params: { input: Record<string, unknown>, payload?: Record<string, unknown> }) => Promise<Record<string, unknown>>
-        refuseWhen?: (input: Record<string, unknown>) => { content: { type: string, text: string }[] } | undefined | Promise<{ content: { type: string, text: string }[] } | undefined>
+        refuseWhen?: (input: Record<string, unknown>) => CardRefusal | undefined | Promise<CardRefusal | undefined>
     }) {
         return async (input: Record<string, unknown>, options: ToolExecutionOptions<undefined>) => {
             const refusal = await refuseWhen?.(input)
@@ -91,18 +124,8 @@ export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onCo
                 refuseWhen: refuseIfAccountAlreadyChosen,
                 dismissMessage: 'The user chose not to connect this service. Stop and ask: "Would you like me to continue building with a placeholder you can connect later, or would you prefer to stop here?"',
                 onApproved: async ({ input, payload = {} }) => {
-                    const connectionExternalId = payload['connectionExternalId']
-                    const label = payload['label']
-                    const projectId = payload['projectId']
-                    if (typeof connectionExternalId === 'string' && onConnectionSelected) {
-                        await onConnectionSelected({
-                            pieceName: normalizePieceName(typeof input['piece'] === 'string' ? input['piece'] : ''),
-                            connectionExternalId,
-                            label: typeof label === 'string' ? label : connectionExternalId,
-                            projectId: typeof projectId === 'string' ? projectId : '',
-                        })
-                    }
-                    return { connected: true, label: typeof label === 'string' ? label : 'Connected' }
+                    const { label } = await storeApprovedConnection({ input, payload })
+                    return { connected: true, label: label ?? 'Connected' }
                 },
             }),
         }),
@@ -131,7 +154,7 @@ export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onCo
         }),
 
         ap_show_connection_picker: tool({
-            description: 'The connection card for a piece that needs auth. Use it whenever a piece needs a connection — it lists every account the user has for that piece, pre-selects one, and offers to connect a new account, so the same card covers zero, one, or many existing connections. Just provide the piece name; the system manages connection details. It returns the chosen connection\'s `connectionExternalId` — pass that exact value as `auth` to ap_get_piece_props / ap_resolve_property_options / ap_execute_action (never guess or use the label). After the user picks or connects, briefly confirm the account chosen. If they dismiss without selecting, do not pick a connection on their behalf.',
+            description: 'The connection card for a piece. Call it directly, with no separate auth check first: it checks the piece itself and answers "needs no connection" for pieces without auth, reuses an account already picked in this conversation, and otherwise shows the card. The card lists every account the user has for that piece, pre-selects one, and offers to connect a new account, so it covers zero, one, or many existing connections. Just provide the piece name; the system manages connection details. It returns the chosen connection\'s `connectionExternalId` — pass that exact value as `auth` to ap_get_piece_props / ap_resolve_property_options / ap_execute_action (never guess or use the label). After the user picks or connects, briefly confirm the account chosen. If they dismiss without selecting, do not pick a connection on their behalf.',
             inputSchema: z.object({
                 piece: z.string().min(1).describe('Piece short name'),
                 displayName: z.string().describe('Human-readable piece name'),
@@ -139,24 +162,14 @@ export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onCo
             }),
             execute: blockingExecute({
                 toolName: 'ap_show_connection_picker',
-                refuseWhen: async (input) => refuseIfAccountAlreadyChosen(input) ?? await refuseIfPickedEarlierInConversation(input),
+                refuseWhen: async (input) => refuseIfAccountAlreadyChosen(input) ?? await refuseIfPickedEarlierInConversation(input) ?? await refuseIfNoConnectionNeeded(input),
                 dismissMessage: (input) => `The user chose not to select a ${typeof input['displayName'] === 'string' ? input['displayName'] : 'service'} account. Do not pick one on their behalf. Ask: "Would you like me to continue building with a placeholder you can connect later, or would you prefer to stop here?"`,
                 onApproved: async ({ input, payload = {} }) => {
-                    const connectionExternalId = payload['connectionExternalId']
-                    const label = payload['label']
-                    const projectId = payload['projectId']
-                    if (typeof connectionExternalId === 'string' && onConnectionSelected) {
-                        await onConnectionSelected({
-                            pieceName: normalizePieceName(typeof input['piece'] === 'string' ? input['piece'] : ''),
-                            connectionExternalId,
-                            label: typeof label === 'string' ? label : connectionExternalId,
-                            projectId: typeof projectId === 'string' ? projectId : '',
-                        })
-                    }
+                    const { connectionExternalId, label } = await storeApprovedConnection({ input, payload })
                     return {
                         selected: true,
-                        label: typeof label === 'string' ? label : 'Connected',
-                        ...spreadIfDefined('connectionExternalId', typeof connectionExternalId === 'string' ? connectionExternalId : undefined),
+                        label: label ?? 'Connected',
+                        ...spreadIfDefined('connectionExternalId', connectionExternalId),
                     }
                 },
             }),
@@ -266,3 +279,26 @@ function cardIdentity({ toolName, input }: { toolName: string, input: Record<str
 function cardStillUnansweredMessage(displayName: string): string {
     return `The ${displayName} card was already shown in this turn and the user has not answered it, so it was not shown again. Do not ask for it again now. End your reply with one short line saying what you need from them, and continue when they answer.`
 }
+
+function preselectedConnection({ stored }: { stored: unknown }): PickedConnection | null {
+    if (!Array.isArray(stored)) {
+        return null
+    }
+    const healthy = stored.filter((connection): connection is PickedConnection & { updated?: string } => isObject(connection)
+        && connection['status'] === AppConnectionStatus.ACTIVE
+        && typeof connection['externalId'] === 'string'
+        && typeof connection['label'] === 'string'
+        && typeof connection['projectId'] === 'string')
+    const externalId = pickDefaultConnectionExternalId({
+        healthy,
+        updatedByExternalId: Object.fromEntries(healthy.map((connection) => [connection.externalId, connection.updated])),
+    })
+    const picked = healthy.find((connection) => connection.externalId === externalId)
+    return isNil(picked) ? null : { externalId: picked.externalId, label: picked.label, projectId: picked.projectId }
+}
+
+export const displayToolUtils = { preselectedConnection }
+
+type CardRefusal = { content: { type: string, text: string }[], notShown?: true }
+
+export type PickedConnection = { externalId: string, label: string, projectId: string }

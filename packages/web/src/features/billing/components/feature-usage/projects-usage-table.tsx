@@ -17,6 +17,7 @@ import { DateTimePickerWithRange } from '@/components/custom/date-time-picker-ra
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { billingQueries } from '@/features/billing';
 import { projectCollectionUtils } from '@/features/projects';
+import { authenticationSession } from '@/lib/authentication-session';
 
 export function ProjectsUsageTable({
   platformId,
@@ -96,7 +97,7 @@ function ProjectNameLink({
   const navigate = useNavigate();
   const goToProjectHome = () => {
     projectCollectionUtils.setCurrentProject(projectId);
-    navigate('/');
+    navigate(authenticationSession.appendProjectRoutePrefix('/automations'));
   };
   return (
     <TextWithTooltip tooltipMessage={projectName}>
@@ -126,7 +127,7 @@ const COLUMNS: ColumnDef<RowDataWithActions<ProjectUsageRow>, unknown>[] = [
     accessorKey: 'aiCreditsUsed',
     header: () => <span className="text-sm">{t('AI Usage')}</span>,
     cell: ({ row }) => (
-      <span className="text-sm">
+      <span className="text-sm" data-testid="usage-project-ai-credits">
         {Math.round(row.original.aiCreditsUsed).toLocaleString()}
       </span>
     ),
@@ -135,7 +136,7 @@ const COLUMNS: ColumnDef<RowDataWithActions<ProjectUsageRow>, unknown>[] = [
     id: 'runsCreditsUsed',
     header: () => <span className="text-sm">{t('Runs Usage')}</span>,
     cell: ({ row }) => (
-      <span className="text-sm">
+      <span className="text-sm" data-testid="usage-project-runs-credits">
         {Math.round(
           Math.max(0, row.original.creditsUsed - row.original.aiCreditsUsed),
         ).toLocaleString()}
@@ -146,7 +147,7 @@ const COLUMNS: ColumnDef<RowDataWithActions<ProjectUsageRow>, unknown>[] = [
     accessorKey: 'creditsUsed',
     header: () => <span className="text-sm">{t('Total')}</span>,
     cell: ({ row }) => (
-      <span className="text-sm">
+      <span className="text-sm" data-testid="usage-project-total-credits">
         {Math.round(row.original.creditsUsed).toLocaleString()}
       </span>
     ),

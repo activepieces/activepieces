@@ -125,13 +125,18 @@ jobs:
         env:
           AFFECTED_PACKAGES: ${{ needs.changes.outputs.packages }}
           RUN_ALL: ${{ needs.changes.outputs.all }}
+          VITEST_MAX_WORKERS: '1'
         run: |
           set -euo pipefail
           FILTERS=$(echo "$AFFECTED_PACKAGES" | jq -r '.[] | select(. != "api") | "--filter=" + .' | tr '\n' ' ')
           if [ "$RUN_ALL" = "true" ]; then
             FILTERS="$FILTERS $(npx tsx tools/scripts/test-filters.ts)"
           fi
-          npx turbo run typecheck build test $FILTERS
+          if [ -z "${FILTERS// /}" ]; then
+            echo "Only api is affected and the api-tests jobs cover it, so there is nothing to build here."
+            exit 0
+          fi
+          npx turbo run typecheck build test $FILTERS --concurrency=100%
 
       - name: Check new migrations are rollback-safe
         run: npx tsx tools/scripts/check-migration-rollback.ts

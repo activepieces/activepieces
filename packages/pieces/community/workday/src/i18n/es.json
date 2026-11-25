@@ -247,5 +247,8 @@
   "Additional Filters (JSON)": "Additional Filters (JSON)",
   "The Workday Query Language (WQL) query to execute. Must include a date/timestamp column for deduplication.": "La consulta de idioma de consulta de jornada laboral (WQL) a ejecutar. Debe incluir una columna de fecha/hora para deduplicación.",
   "The name of the date/timestamp field in your query results used for detecting new records (e.g., \"createdDate\").": "El nombre del campo fecha/marca de tiempo en los resultados de la consulta utilizados para detectar nuevos registros (por ejemplo, \"createdDate\").",
-  "Field used to detect new/updated records (e.g. `lastFunctionallyUpdated`).": "Field used to detect new/updated records (e.g. `lastFunctionallyUpdated`)."
+  "Field used to detect new/updated records (e.g. `lastFunctionallyUpdated`).": "Field used to detect new/updated records (e.g. `lastFunctionallyUpdated`).",
+  "Source": "Fuente",
+  "Limit": "Límite",
+  "Time Tracking": "Seguimiento de Tiempo"
 }

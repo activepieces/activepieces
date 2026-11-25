@@ -46,6 +46,9 @@ export const newIssueType = createTrigger({
     await context.store.put('issueTypeIds', JSON.stringify(ids));
   },
   async onDisable(context) {
+    if (context.isRepublish) {
+      return;
+    }
     await context.store.delete('issueTypeIds');
   },
   async run(context) {

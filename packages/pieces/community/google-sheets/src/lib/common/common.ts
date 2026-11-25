@@ -19,7 +19,23 @@ export const googleSheetsCommon = {
 	deleteRow,
 	clearSheet,
 	getHeaderRow,
+	quoteSheetTitle,
+	sheetRange,
 };
+
+function quoteSheetTitle(title: string): string {
+	const plainName = /^[A-Za-z_][A-Za-z0-9_]*$/.test(title);
+	const looksLikeCell = /^[A-Za-z]{1,3}[0-9]+$/.test(title) || /^R[0-9]*C[0-9]*$/i.test(title);
+	if (plainName && !looksLikeCell) {
+		return title;
+	}
+	return `'${title.replace(/'/g, "''")}'`;
+}
+
+function sheetRange({ sheetName, range }: { sheetName: string; range?: string }): string {
+	const quoted = quoteSheetTitle(sheetName);
+	return isNil(range) || range === '' ? quoted : `${quoted}!${range}`;
+}
 
 export async function findSheetName(
 	auth: GoogleSheetsAuthValue,
@@ -71,16 +87,16 @@ async function getGoogleSheetRows({
 		return [];
 	}
 
-	let range = '';
+	let range: string | undefined = undefined;
 	if (rowIndex_s !== undefined) {
-		range = `!A${rowIndex_s}:ZZZ`;
+		range = `A${rowIndex_s}:ZZZ`;
 	}
 	if (rowIndex_s !== undefined && rowIndex_e !== undefined) {
-		range = `!A${rowIndex_s}:ZZZ${rowIndex_e}`;
+		range = `A${rowIndex_s}:ZZZ${rowIndex_e}`;
 	}
 	const rowsResponse = await httpClient.sendRequest<{ values: [string[]][] }>({
 		method: HttpMethod.GET,
-		url: `${googleSheetsCommon.baseUrl}/${spreadsheetId}/values/${encodeURIComponent(`${sheetName}${range}`)}`,
+		url: `${googleSheetsCommon.baseUrl}/${spreadsheetId}/values/${encodeURIComponent(sheetRange({ sheetName, range }))}`,
 		authentication: {
 			type: AuthenticationType.BEARER_TOKEN,
 			token: await getAccessToken(auth),
@@ -90,19 +106,14 @@ async function getGoogleSheetRows({
 
 	const headerResponse = await httpClient.sendRequest<{ values: [string[]][] }>({
 		method: HttpMethod.GET,
-		url: `${googleSheetsCommon.baseUrl}/${spreadsheetId}/values/${encodeURIComponent(`${sheetName}!A${headerRow}:ZZZ${headerRow}`)}`,
+		url: `${googleSheetsCommon.baseUrl}/${spreadsheetId}/values/${encodeURIComponent(sheetRange({ sheetName, range: `A${headerRow}:ZZZ${headerRow}` }))}`,
 		authentication: {
 			type: AuthenticationType.BEARER_TOKEN,
 			token: await getAccessToken(auth),
 		},
 	});
 
-	if (!headerResponse.body.values) {
-		throw new Error(`Unable to read headers from row ${headerRow} in sheet "${sheetName}". The row appears to be empty or inaccessible.`);
-	}
-
-	const headers = headerResponse.body.values[0] ?? [];
-	const headerCount = headers.length;
+	const headerCount = headerResponse.body.values?.[0]?.length ?? 0;
 
 	const startingRow = rowIndex_s ? rowIndex_s - 1 : 0;
 
@@ -153,14 +164,23 @@ export const columnToLabel = (columnIndex: number) => {
 };
 export const labelToColumn = (label: string) => {
 	const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+	const normalized = normalizeColumnLabel(label);
+	if (isNil(normalized)) {
+		return -1;
+	}
 	let column = 0;
 
-	for (let i = 0; i < label.length; i++) {
-		column += (alphabet.indexOf(label[i]) + 1) * Math.pow(26, label.length - i - 1);
+	for (let i = 0; i < normalized.length; i++) {
+		column += (alphabet.indexOf(normalized[i]) + 1) * Math.pow(26, normalized.length - i - 1);
 	}
 
 	return column - 1;
 };
+
+export function normalizeColumnLabel(label: string): string | undefined {
+	const normalized = String(label).trim().toUpperCase();
+	return /^[A-Z]{1,3}$/.test(normalized) ? normalized : undefined;
+}
 
 export function objectToArray(obj: { [x: string]: any }) {
 	const maxIndex = Math.max(...Object.keys(obj).map((key) => labelToColumn(key)));
@@ -198,6 +218,7 @@ export async function mapRowsToHeaderNames(
 		sheetId,
 		rowIndex_s: headerRow,
 		rowIndex_e: headerRow,
+		headerRow,
 	});
 
 	if (headerRows.length === 0) {

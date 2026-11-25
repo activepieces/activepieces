@@ -311,5 +311,7 @@
   "GET": "KRIJG",
   "PATCH": "BEKIJK",
   "DELETE": "VERWIJDEREN",
-  "HEAD": "HOOFD"
+  "HEAD": "HOOFD",
+  "Request": "Request",
+  "Data to send": "Data to send"
 }

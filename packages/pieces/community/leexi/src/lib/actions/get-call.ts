@@ -1,35 +1,38 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
-import { leexiAuth } from "../common/auth";
-import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
-import { BASE_URL } from "../common/constants";
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { leexiAuth } from '../common/auth';
+import { leexiApi } from '../common/client';
+import { LeexiCall } from '../common/types';
+import { leexiOutputFields } from '../common/constants';
 
 export const getCallAction = createAction({
-    name: 'get-call',
-    classification: 'READ',
-    auth: leexiAuth,
-    displayName: 'Get Call',
-    description: 'Gets call details.',
-    audience: 'both',
-    aiMetadata: { description: 'Retrieves the full details of a single Leexi call (recording/transcription session) by its call ID. Use this to look up a specific call when you already have its ID, e.g. after a "New Call Created" trigger fires. Read-only; safe to retry.', idempotent: true },
-    props: {
-        callId: Property.ShortText({
-            displayName: 'Call ID',
-            required: true
-        })
-    },
-    async run(context) {
-        const { callId } = context.propsValue;
-
-        const response = await httpClient.sendRequest({
-            method: HttpMethod.GET,
-            url: BASE_URL + `/calls/${callId}`,
-            authentication: {
-                type: AuthenticationType.BASIC,
-                username: context.auth.username,
-                password: context.auth.password
-            }
-        })
-
-        return response.body;
-    }
-})
+  name: 'get-call',
+  classification: 'READ',
+  auth: leexiAuth,
+  displayName: 'Get Call',
+  description: 'Gets call details.',
+  audience: 'human',
+  outputSchema: {
+    fields: [
+      {
+        key: 'data',
+        label: 'Call',
+        children: leexiOutputFields.callDetail,
+      },
+    ],
+  },
+  props: {
+    callId: Property.ShortText({
+      displayName: 'Call ID',
+      description: 'The UUID of the Leexi call.',
+      required: true,
+    }),
+  },
+  async run(context) {
+    return await leexiApi.request<{ data: LeexiCall }>({
+      auth: context.auth,
+      method: HttpMethod.GET,
+      path: ['calls', context.propsValue.callId.trim()],
+    });
+  },
+});

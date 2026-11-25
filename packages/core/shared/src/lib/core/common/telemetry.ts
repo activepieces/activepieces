@@ -55,6 +55,19 @@ type TrialStarted = {
     trialEndsAt: string
 }
 
+type TrialEnded = {
+    platformId: string
+    plan: string
+    trialEndedAt: string
+}
+
+type TrialSeatsDeactivated = {
+    platformId: string
+    plan: string
+    deactivatedUsers: number
+    revokedInvites: number
+}
+
 type InviteSent = {
     platformId: string
     type: 'platform' | 'project'
@@ -66,10 +79,20 @@ type InviteAccepted = {
     type: 'platform' | 'project'
 }
 
+type InviteRewardOfferClicked = {
+    surface: InviteRewardSurface
+    rewardedInvitesLeft: number
+}
+
+type InviteRewardGranted = {
+    platformId: string
+    credits: number
+}
+
 type SalesHandoffClicked = {
     featureKey?: string
     plan?: string
-    surface: string
+    surface: SalesLinkLocationInWebApp
 }
 
 type SignInFailed = {
@@ -144,12 +167,12 @@ type PlatformAdminGateBlocked = {
 type PlatformAdminUpgradeClicked = {
     feature: string | null
     tier: string | null
-    surface: PlatformAdminSurface
+    surface: UpgradeLocationInWebApp
 }
 
 type PlatformAdminSalesContacted = {
     feature: string
-    surface: Exclude<PlatformAdminSurface, PlatformAdminSurface.DIALOG>
+    surface: Exclude<UpgradeLocationInWebApp, UpgradeLocationInWebApp.DIALOG>
 }
 
 type PlatformAdminControlClicked = {
@@ -167,6 +190,29 @@ type McpServerConnected = {
     userId: string
     projectId?: string
     platformId?: string
+}
+
+type ConnectionSwitchDecided = {
+    choice: ConnectionSwitchChoice
+    pieceName: string
+    clearedInputCount: number
+    replaceAvailable: boolean
+}
+
+type MemoryImportNudge = {
+    conversationId: string
+}
+
+type ConnectionReplaceOpened = {
+    source: ConnectionReplaceSource
+    pieceName?: string
+}
+
+type ConnectionReplaceCompleted = {
+    source: ConnectionReplaceSource
+    pieceName: string
+    flowCount: number
+    applyToPublishedVersions: boolean
 }
 
 type BaseTelemetryEvent<T, P> = {
@@ -201,8 +247,12 @@ export enum TelemetryEventName {
     PLAN_CANCELLED = 'plan.cancelled',
     PLAN_REACTIVATED = 'plan.reactivated',
     TRIAL_STARTED = 'trial.started',
+    TRIAL_ENDED = 'trial.ended',
+    TRIAL_SEATS_DEACTIVATED = 'trial.seats.deactivated',
     INVITE_SENT = 'invite.sent',
     INVITE_ACCEPTED = 'invite.accepted',
+    INVITE_REWARD_OFFER_CLICKED = 'invite.reward.offer.clicked',
+    INVITE_REWARD_GRANTED = 'invite.reward.granted',
     SALES_HANDOFF_CLICKED = 'sales.handoff.clicked',
     ADMIN_NAV_LOCKED_CLICKED = 'admin.nav.locked.clicked',
     PLATFORM_ADMIN_PAGE_VIEWED = 'platform.admin.page.viewed',
@@ -211,13 +261,49 @@ export enum TelemetryEventName {
     PLATFORM_ADMIN_SALES_CONTACTED = 'platform.admin.sales.contacted',
     PLATFORM_ADMIN_LIMIT_REACHED = 'platform.admin.limit.reached',
     PLATFORM_ADMIN_CONTROL_CLICKED = 'platform.admin.control.clicked',
+    CONNECTION_SWITCH_DECIDED = 'connection.switch.decided',
+    CONNECTION_REPLACE_OPENED = 'connection.replace.opened',
+    CONNECTION_REPLACE_COMPLETED = 'connection.replace.completed',
+    MEMORY_IMPORT_NUDGE_SHOWN = 'chat.memory_nudge.shown',
+    MEMORY_IMPORT_NUDGE_CLICKED = 'chat.memory_nudge.clicked',
+    MEMORY_IMPORT_NUDGE_IMPORTED = 'chat.memory_nudge.imported',
 }
 
-export enum PlatformAdminSurface {
+export enum InviteRewardSurface {
+    SIDEBAR_CARD = 'sidebar_card',
+    CREDITS_ALERT = 'credits_alert',
+    BILLING_CREDITS = 'billing_credits',
+}
+
+export enum ConnectionSwitchChoice {
+    SWITCH = 'switch',
+    REPLACE = 'replace',
+    CANCEL = 'cancel',
+}
+
+export enum ConnectionReplaceSource {
+    BUILDER_CONNECTIONS_BUTTON = 'builder_connections_button',
+    SWITCH_DIALOG = 'switch_dialog',
+    PROJECT_CONNECTIONS_PAGE = 'project_connections_page',
+}
+
+export enum SalesLinkLocationInWebApp {
+    ENTERPRISE_PLAN_INDICATOR = 'enterprise_plan_indicator',
+    ENTERPRISE_TRIAL_BILLING = 'enterprise_trial_billing',
+    ENTERPRISE_TRIAL_ENDED = 'enterprise_trial_ended',
+    ENTERPRISE_TRIAL_ENDING = 'enterprise_trial_ending',
+    ENTERPRISE_TRIAL_START = 'enterprise_trial_start',
+    ENTERPRISE_TRIAL_USED = 'enterprise_trial_used',
+    LOCKED_FEATURE = 'locked_feature',
+    PLAN_SELECTOR = 'plan_selector',
+}
+
+export enum UpgradeLocationInWebApp {
     SAMPLE = 'sample',
     TEASER = 'teaser',
     DIALOG = 'dialog',
     LIMIT = 'limit',
+    BANNER = 'banner',
 }
 
 export enum PlatformAdminLimit {
@@ -251,8 +337,12 @@ export type TelemetryEvent =
     | BaseTelemetryEvent<TelemetryEventName.PLAN_CANCELLED, PlanChange>
     | BaseTelemetryEvent<TelemetryEventName.PLAN_REACTIVATED, PlanChange>
     | BaseTelemetryEvent<TelemetryEventName.TRIAL_STARTED, TrialStarted>
+    | BaseTelemetryEvent<TelemetryEventName.TRIAL_ENDED, TrialEnded>
+    | BaseTelemetryEvent<TelemetryEventName.TRIAL_SEATS_DEACTIVATED, TrialSeatsDeactivated>
     | BaseTelemetryEvent<TelemetryEventName.INVITE_SENT, InviteSent>
     | BaseTelemetryEvent<TelemetryEventName.INVITE_ACCEPTED, InviteAccepted>
+    | BaseTelemetryEvent<TelemetryEventName.INVITE_REWARD_OFFER_CLICKED, InviteRewardOfferClicked>
+    | BaseTelemetryEvent<TelemetryEventName.INVITE_REWARD_GRANTED, InviteRewardGranted>
     | BaseTelemetryEvent<TelemetryEventName.SALES_HANDOFF_CLICKED, SalesHandoffClicked>
     | BaseTelemetryEvent<TelemetryEventName.ADMIN_NAV_LOCKED_CLICKED, AdminNavLockedClicked>
     | BaseTelemetryEvent<TelemetryEventName.PLATFORM_ADMIN_PAGE_VIEWED, PlatformAdminPageViewed>
@@ -261,6 +351,12 @@ export type TelemetryEvent =
     | BaseTelemetryEvent<TelemetryEventName.PLATFORM_ADMIN_SALES_CONTACTED, PlatformAdminSalesContacted>
     | BaseTelemetryEvent<TelemetryEventName.PLATFORM_ADMIN_LIMIT_REACHED, PlatformAdminLimitReached>
     | BaseTelemetryEvent<TelemetryEventName.PLATFORM_ADMIN_CONTROL_CLICKED, PlatformAdminControlClicked>
+    | BaseTelemetryEvent<TelemetryEventName.CONNECTION_SWITCH_DECIDED, ConnectionSwitchDecided>
+    | BaseTelemetryEvent<TelemetryEventName.CONNECTION_REPLACE_OPENED, ConnectionReplaceOpened>
+    | BaseTelemetryEvent<TelemetryEventName.CONNECTION_REPLACE_COMPLETED, ConnectionReplaceCompleted>
+    | BaseTelemetryEvent<TelemetryEventName.MEMORY_IMPORT_NUDGE_SHOWN, MemoryImportNudge>
+    | BaseTelemetryEvent<TelemetryEventName.MEMORY_IMPORT_NUDGE_CLICKED, MemoryImportNudge>
+    | BaseTelemetryEvent<TelemetryEventName.MEMORY_IMPORT_NUDGE_IMPORTED, MemoryImportNudge>
 
 export const CLOUD_ONLY_TELEMETRY_EVENTS: ReadonlySet<TelemetryEventName> = new Set([
     TelemetryEventName.ONBOARDING_COMPLETED,
@@ -269,8 +365,12 @@ export const CLOUD_ONLY_TELEMETRY_EVENTS: ReadonlySet<TelemetryEventName> = new 
     TelemetryEventName.PLAN_CANCELLED,
     TelemetryEventName.PLAN_REACTIVATED,
     TelemetryEventName.TRIAL_STARTED,
+    TelemetryEventName.TRIAL_ENDED,
+    TelemetryEventName.TRIAL_SEATS_DEACTIVATED,
     TelemetryEventName.SALES_HANDOFF_CLICKED,
     TelemetryEventName.ADMIN_NAV_LOCKED_CLICKED,
+    TelemetryEventName.INVITE_REWARD_OFFER_CLICKED,
+    TelemetryEventName.INVITE_REWARD_GRANTED,
     TelemetryEventName.SIGNED_UP,
     TelemetryEventName.SIGNED_IN,
     TelemetryEventName.SIGN_UP_SUBMITTED,

@@ -1,13 +1,11 @@
 import { isNil } from '@activepieces/core-utils'
-import { ApplicationEventName, ClaimTokenRequest, SignUpMethod, TelemetryEventName, ThirdPartyAuthnProviderEnum } from '@activepieces/shared'
+import { ClaimTokenRequest, SignUpMethod, TelemetryEventName, ThirdPartyAuthnProviderEnum, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
+import { authenticationSideEffects } from '../../../authentication/authentication-side-effects'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
-import { applicationEvents } from '../../../helper/application-events'
 import { networkUtils } from '../../../helper/network-utils'
 import { rejectedPromiseHandler } from '../../../helper/promise-handler'
-import { system } from '../../../helper/system/system'
-import { AppSystemProp } from '../../../helper/system/system-props'
 import { telemetry } from '../../../helper/telemetry.utils'
 import { platformUtils } from '../../../platform/platform.utils'
 import { federatedAuthnService } from './federated-authn-service'
@@ -32,18 +30,13 @@ const federatedAuthnController: FastifyPluginAsyncZod = async (app) => {
             platformId: platformId ?? undefined,
             code: req.body.code,
         })
+        authenticationSideEffects(req.log).onSignIn({
+            response,
+            signedUp,
+            method: UserIdentityProvider.GOOGLE,
+            ip: networkUtils.clientIp(req),
+        })
         if (signedUp && !isNil(response.platformId)) {
-            applicationEvents(req.log).sendUserEvent({
-                platformId: response.platformId,
-                userId: response.id,
-                projectId: response.projectId ?? undefined,
-                ip: networkUtils.extractClientRealIp(req, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
-            }, {
-                action: ApplicationEventName.USER_SIGNED_UP,
-                data: {
-                    source: 'sso',
-                },
-            })
             rejectedPromiseHandler(telemetry(req.log).identifySignUp({
                 userId: response.id,
                 platformId: response.platformId,

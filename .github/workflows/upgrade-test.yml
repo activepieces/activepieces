@@ -1,0 +1,216 @@
+name: Upgrade Test
+
+# Installs the last self-hosted release, seeds a flow and a paused run, upgrades to the image under test,
+# and checks that both still work. Only the image changes: the compose file and the seed come from the old release.
+on:
+  workflow_call:
+    inputs:
+      image:
+        description: 'Image to upgrade to, e.g. ghcr.io/activepieces/activepieces-cloud:<tag>. Empty builds the checked-out commit.'
+        type: string
+        default: ''
+      from_tag:
+        description: 'Self-hosted release to upgrade from. Empty uses the latest GitHub release.'
+        type: string
+        default: ''
+      ref:
+        description: 'Commit to take the check scripts from. Empty uses the commit that triggered the run.'
+        type: string
+        default: ''
+    outputs:
+      swapped:
+        description: 'true once the upgrade starts, so a later failure is the image under test and not the setup'
+        value: ${{ jobs.upgrade.outputs.swapped }}
+  workflow_dispatch:
+    inputs:
+      image:
+        description: 'Image to upgrade to, e.g. ghcr.io/activepieces/activepieces-cloud:<tag>. Empty builds the checked-out commit.'
+        type: string
+        default: ''
+      from_tag:
+        description: 'Self-hosted release to upgrade from. Empty uses the latest GitHub release.'
+        type: string
+        default: ''
+  pull_request:
+    paths:
+      - .github/workflows/upgrade-test.yml
+      - smoke-test/verify.sh
+      - smoke-test/verify-delay.sh
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  upgrade:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    outputs:
+      swapped: ${{ steps.swap.outputs.swapped }}
+    env:
+      COMPOSE_FILE: from/benchmark/docker-compose.yml
+      WORKER_REPLICAS: 1
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Resolve the release to upgrade from
+        id: from
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FROM_TAG: ${{ inputs.from_tag }}
+        run: |
+          TAG="${FROM_TAG:-$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName)}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Upgrading from $TAG" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ steps.from.outputs.tag }}
+          path: from
+          sparse-checkout: benchmark
+
+      - uses: docker/login-action@v4
+        if: inputs.image
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull the image under test
+        if: inputs.image
+        env:
+          IMAGE: ${{ inputs.image }}
+        run: |
+          docker pull "$IMAGE"
+          docker tag "$IMAGE" activepieces-candidate:local
+
+      - name: Build the image from this commit
+        if: ${{ !inputs.image }}
+        run: docker build -t activepieces-candidate:local .
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Start the old release
+        env:
+          FROM_TAG: ${{ steps.from.outputs.tag }}
+        run: |
+          docker pull "ghcr.io/activepieces/activepieces:$FROM_TAG"
+          docker tag "ghcr.io/activepieces/activepieces:$FROM_TAG" activepieces-benchmark:local
+          docker compose up -d --no-build
+
+      # The old release syncs every piece version from Cloud one at a time, and one failed fetch stops the sync
+      # for an hour. Like the e2e matrix, install the pieces the checks use and pin the seed to those versions.
+      - name: Install the pieces the checks use
+        env:
+          FROM_TAG: ${{ steps.from.outputs.tag }}
+        run: |
+          API=localhost:8080/api/v1
+          for i in $(seq 1 60); do
+            curl -sf "$API/flags" > /dev/null && break
+            sleep 5
+          done
+          TOKEN=$(curl -s --fail-with-body "$API/authentication/sign-up" \
+            -H "Content-Type: application/json" \
+            -d '{"email":"bench@activepieces.com","password":"BenchmarkPass1","firstName":"Bench","lastName":"Mark","trackEvents":false,"newsLetter":false}' | jq -er .token)
+          REGISTRY=$(curl -sf --retry 5 "https://cloud.activepieces.com/api/v1/pieces/registry?edition=ce&release=${FROM_TAG%%-*}")
+          latest() {
+            echo "$REGISTRY" | jq -er --arg name "@activepieces/piece-$1" --arg prefix "$2" \
+              '[.[] | select(.name == $name and (.version | startswith($prefix))) | .version] | max_by(split(".") | map(tonumber))'
+          }
+          install() {
+            curl -s --fail-with-body "$API/pieces" \
+              -H "Authorization: Bearer $TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "{\"packageType\":\"REGISTRY\",\"scope\":\"PLATFORM\",\"pieceName\":\"@activepieces/piece-$1\",\"pieceVersion\":\"$2\"}" > /dev/null
+            echo "Installed @activepieces/piece-$1@$2"
+          }
+          WEBHOOK_VERSION=$(latest webhook 0.1.)
+          MATH_VERSION=$(latest math-helper 0.0.)
+          DELAY_VERSION=$(latest delay '')
+          install webhook "$WEBHOOK_VERSION"
+          install math-helper "$MATH_VERSION"
+          install delay "$DELAY_VERSION"
+          echo "WEBHOOK_VERSION=$WEBHOOK_VERSION" >> "$GITHUB_ENV"
+          echo "MATH_VERSION=$MATH_VERSION" >> "$GITHUB_ENV"
+
+      - name: Seed a flow on the old release
+        id: seed
+        working-directory: from
+        run: |
+          if [ -f benchmark/setup.ts ]; then
+            FLOW_ID=$(bun run benchmark/setup.ts)
+          else
+            FLOW_ID=$(bash benchmark/setup.sh)
+          fi
+          echo "flow_id=$FLOW_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Check the flow on the old release
+        env:
+          FLOW_ID: ${{ steps.seed.outputs.flow_id }}
+        run: smoke-test/verify.sh "$FLOW_ID"
+
+      - name: Pause a run on the old release
+        env:
+          PHASE: arm
+          DELAY_SECONDS: 60
+        run: smoke-test/verify-delay.sh
+
+      - name: Upgrade to the image under test
+        id: swap
+        run: |
+          docker tag activepieces-candidate:local activepieces-benchmark:local
+          echo "swapped=true" >> "$GITHUB_OUTPUT"
+          docker compose up -d --no-deps --no-build app worker
+          EXPECTED=$(docker image inspect -f '{{.Id}}' activepieces-candidate:local)
+          CREATED=$(docker compose ps -a -q app worker | xargs -r docker inspect -f '{{.Image}}' | sort -u)
+          if [ "$CREATED" != "$EXPECTED" ]; then
+            echo "::error::The app and worker containers use $CREATED, not the image under test $EXPECTED"
+            exit 1
+          fi
+
+      - name: Wait for the background migrations
+        run: |
+          for i in $(seq 1 60); do
+            curl -sf localhost:8080/api/v1/flags > /dev/null && break
+            sleep 5
+          done
+          curl -sf localhost:8080/api/v1/flags > /dev/null
+          TOKEN=$(curl -s --fail-with-body localhost:8080/api/v1/authentication/sign-in \
+            -H "Content-Type: application/json" \
+            -d '{"email":"bench@activepieces.com","password":"BenchmarkPass1"}' | jq -er .token)
+          for i in $(seq 1 60); do
+            MIGRATIONS=$(curl -s localhost:8080/api/v1/health/system -H "Authorization: Bearer $TOKEN" | jq -c '.backgroundMigrations')
+            echo "$MIGRATIONS"
+            if [ "$(echo "$MIGRATIONS" | jq -r '.failedMigration')" != "null" ]; then
+              echo "::error::A background migration failed: $MIGRATIONS"
+              exit 1
+            fi
+            if echo "$MIGRATIONS" | jq -e '.error == null and .pendingCount == 0' > /dev/null; then
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::Background migrations did not finish within 5 minutes"
+          exit 1
+
+      - name: Check the flow after the upgrade
+        env:
+          FLOW_ID: ${{ steps.seed.outputs.flow_id }}
+        run: smoke-test/verify.sh "$FLOW_ID"
+
+      - name: Check that the paused run finishes after the upgrade
+        env:
+          PHASE: check
+        run: smoke-test/verify-delay.sh localhost:8080 180
+
+      - name: Show app and worker logs on failure
+        if: failure()
+        run: docker compose logs --tail=200 app worker
+
+      - name: Teardown
+        if: always()
+        run: docker compose down -v

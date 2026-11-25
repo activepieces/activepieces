@@ -18,7 +18,7 @@
   "Performance metrics per campaign, ad group, ad, keyword, search term or account, over a date range": "Performance metrics per campaign, ad group, ad, keyword, search term or account, over a date range",
   "Upload e-mails, phones or addresses to a Customer Match audience list (Data Manager API)": "Upload e-mails, phones or addresses to a Customer Match audience list (Data Manager API)",
   "Remove members (by e-mail, phone or address) from a Customer Match audience list (Data Manager API)": "Remove members (by e-mail, phone or address) from a Customer Match audience list (Data Manager API)",
-  "Call any Google Ads API endpoint. The path must start with the API version: /v25/customers/{customerId}/... (e.g. /v25/customers/1234567890/campaignBudgets:mutate). Base URL: https://googleads.googleapis.com. Data Manager API endpoints take a full URL on https://datamanager.googleapis.com (e.g. GET https://datamanager.googleapis.com/v1/requestStatus:retrieve?requestId=... to check a Customer Match upload).": "Call any Google Ads API endpoint. The path must start with the API version: /v25/customers/{customerId}/... (e.g. /v25/customers/1234567890/campaignBudgets:mutate). Base URL: https://googleads.googleapis.com. Data Manager API endpoints take a full URL on https://datamanager.googleapis.com (e.g. GET https://datamanager.googleapis.com/v1/requestStatus:retrieve?requestId=... to check a Customer Match upload).",
+  "Call any Google Ads API endpoint. The path must start with the API version: /v25/customers/{customerId}/... (e.g. /v25/customers/1234567890/campaignBudgets:mutate). Data Manager API endpoints take a full URL on https://datamanager.googleapis.com (e.g. GET https://datamanager.googleapis.com/v1/requestStatus:retrieve?requestId=... to check a Customer Match upload).": "Call any Google Ads API endpoint. The path must start with the API version: /v25/customers/{customerId}/... (e.g. /v25/customers/1234567890/campaignBudgets:mutate). Data Manager API endpoints take a full URL on https://datamanager.googleapis.com (e.g. GET https://datamanager.googleapis.com/v1/requestStatus:retrieve?requestId=... to check a Customer Match upload).",
   "Customer": "Customer",
   "Resource Type": "Resource Type",
   "Record": "Record",
@@ -115,6 +115,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Record": "New Record",
   "Fires when a campaign, ad group, ad, keyword or audience list is created in the selected account (removed records are ignored)": "Fires when a campaign, ad group, ad, keyword or audience list is created in the selected account (removed records are ignored)"
 }

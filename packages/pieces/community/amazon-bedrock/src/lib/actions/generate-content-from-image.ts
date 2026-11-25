@@ -5,6 +5,7 @@ import {
 } from '@aws-sdk/client-bedrock-runtime';
 import { ModelModality } from '@aws-sdk/client-bedrock';
 import { awsBedrockCombinedAuth } from '../auth';
+import { sendPromptOutputSchema } from '../output-schemas';
 import {
   buildFileContentBlock,
   buildS3ContentBlock,
@@ -18,6 +19,7 @@ export const generateContentFromImage = createAction({
   audience: 'both',
   auth: awsBedrockCombinedAuth,
   name: 'generate_content_from_image',
+  outputSchema: sendPromptOutputSchema,
   classification: 'READ',
   displayName: 'Generate Content from Image',
   description: 'Ask a Bedrock model a question about an image.',

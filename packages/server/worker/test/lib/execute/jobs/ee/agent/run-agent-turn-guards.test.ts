@@ -91,6 +91,14 @@ describe('classifyAgentRunError', () => {
         expect(classify(apiError({ statusCode: 400, message: 'Grok 4.1 Fast is deprecated' }), AIProviderName.OPENROUTER)).toBe('user')
     })
 
+    it('blames the user for a 400 from their own custom endpoint, whose request rules we cannot meet', () => {
+        expect(classify(apiError({ statusCode: 400, message: 'Request is missing x-opencode-session and cannot be routed efficiently.' }), AIProviderName.CUSTOM)).toBe('user')
+    })
+
+    it('blames the user for a 400 from their LiteLLM proxy, whose routing and budgets the admin configures', () => {
+        expect(classify(apiError({ statusCode: 400, message: 'Invalid model name passed in model=prod-smart' }), AIProviderName.LITELLM)).toBe('user')
+    })
+
     it('keeps a 400 we caused internal, so an illegal tool name is not laundered as user config', () => {
         expect(classify(apiError({ statusCode: 400, message: "tools.0.name: should match pattern '^[a-zA-Z0-9_.-]{1,64}$'" }))).toBe('internal')
     })

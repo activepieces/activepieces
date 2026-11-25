@@ -34,7 +34,7 @@ describe('useCopyToClipboard', () => {
     const { result } = renderHook(() => useCopyToClipboard());
 
     await act(async () => {
-      result.current.copy('hello');
+      result.current.copy({ value: 'hello' });
     });
 
     expect(writeText).toHaveBeenCalledWith('hello');
@@ -50,12 +50,10 @@ describe('useCopyToClipboard', () => {
     const { result } = renderHook(() => useCopyToClipboard());
 
     await act(async () => {
-      expect(() => result.current.copy('hello')).not.toThrow();
+      expect(() => result.current.copy({ value: 'hello' })).not.toThrow();
     });
 
-    expect(toastError).toHaveBeenCalledWith('Failed to copy to clipboard', {
-      duration: 3000,
-    });
+    expect(toastError).toHaveBeenCalledWith('Failed to copy to clipboard');
     expect(result.current.isCopied).toBe(false);
   });
 
@@ -64,7 +62,7 @@ describe('useCopyToClipboard', () => {
     const { result } = renderHook(() => useCopyToClipboard());
 
     await act(async () => {
-      result.current.copy('hello');
+      result.current.copy({ value: 'hello' });
     });
 
     expect(toastError).toHaveBeenCalledTimes(1);

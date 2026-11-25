@@ -3,12 +3,36 @@ import { QueryRunner } from 'typeorm'
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { BackgroundMigration } from '../../../../src/app/database/background-migration'
 import {
+    BACKGROUND_MIGRATION_HEARTBEAT_INTERVAL_MS,
+    BACKGROUND_MIGRATION_PROGRESS_READ_TIMEOUT_MS,
     BACKGROUND_MIGRATIONS_TABLE,
     backgroundMigrationRunner,
 } from '../../../../src/app/database/background-migration-runner'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { BackgroundMigrationNotCompleteError, migrationHelpers } from '../../../../src/app/database/migration-helpers'
+import { BackfillPieceTranslation1874000000000 } from '../../../../src/app/database/migration/postgres/background/1874000000000-BackfillPieceTranslation'
+import { ReshapeFlowRunListIndexesForBarrierChildren1871000000000 } from '../../../../src/app/database/migration/postgres/background/1871000000000-ReshapeFlowRunListIndexesForBarrierChildren'
+import { RefetchMissingPieceTranslations1879000000000 } from '../../../../src/app/database/migration/postgres/background/1879000000000-RefetchMissingPieceTranslations'
+import { getBackgroundMigrations } from '../../../../src/app/database/postgres-connection'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
+
+const { emittedSpy } = vi.hoisted(() => ({ emittedSpy: vi.fn() }))
+
+vi.mock('@activepieces/server-utils', async (importOriginal) => {
+    const original = await importOriginal<typeof import('@activepieces/server-utils')>()
+    return {
+        ...original,
+        createLogger: (...args: Parameters<typeof original.createLogger>) => {
+            const logger = original.createLogger(...args)
+            const emit = logger.emit.bind(logger)
+            logger.emit = (overrides) => {
+                emittedSpy(logger.getContext())
+                return emit(overrides)
+            }
+            return logger
+        },
+    }
+})
 
 let app: FastifyInstance | null = null
 
@@ -144,6 +168,23 @@ describe('backgroundMigrationRunner', () => {
         expect(status.completedCount).toBeGreaterThanOrEqual(1)
     })
 
+    it('listPending names every unfinished migration, including one whose pod died without recording a failure', async () => {
+        const done = makeTestMigration({ name: `PendingDone${Date.now()}` })
+        const failed = makeTestMigration({
+            name: `PendingFailed${Date.now()}`,
+            up: async () => {
+                throw new Error('canceling statement due to statement timeout')
+            },
+        })
+        const killedMidRun = makeTestMigration({ name: `PendingKilled${Date.now()}` })
+        await backgroundMigrationRunner.run({ log: app!.log, migrations: [done] })
+        await expect(backgroundMigrationRunner.run({ log: app!.log, migrations: [failed] })).rejects.toThrow(/statement timeout/)
+
+        const pending = await backgroundMigrationRunner.listPending({ migrations: [done, failed, killedMidRun] })
+
+        expect(pending).toEqual([new failed().name, new killedMidRun().name])
+    })
+
     it('getStatus returns error-shape instead of throwing on DB failure', async () => {
         const ds = databaseConnection()
         const spy = vi.spyOn(ds, 'query').mockRejectedValueOnce(new Error('db down'))
@@ -153,6 +194,114 @@ describe('backgroundMigrationRunner', () => {
         expect(status.completedCount).toBe(0)
         expect(status.failedMigration).toBeNull()
         spy.mockRestore()
+    })
+})
+
+describe('background migration progress events', () => {
+    afterEach(() => {
+        vi.useRealTimers()
+        emittedSpy.mockClear()
+    })
+
+    it('emits started and completed as their own events, not only inside the job wide event', async () => {
+        const MigrationClass = makeTestMigration({ name: `ProgressHappy${Date.now()}` })
+        const name = new MigrationClass().name
+
+        await backgroundMigrationRunner.run({ log: app!.log, migrations: [MigrationClass] })
+
+        expect(progressPhasesFor(name)).toEqual(['started', 'completed'])
+        expect(progressEventsFor(name).at(-1)?.migration.elapsedMs).toEqual(expect.any(Number))
+    })
+
+    it('emits failed with the elapsed time when the migration throws', async () => {
+        const MigrationClass = makeTestMigration({
+            name: `ProgressFails${Date.now()}`,
+            up: async () => {
+                throw new Error('canceling statement due to statement timeout')
+            },
+        })
+        const name = new MigrationClass().name
+
+        await expect(
+            backgroundMigrationRunner.run({ log: app!.log, migrations: [MigrationClass] }),
+        ).rejects.toThrow(/statement timeout/)
+
+        expect(progressPhasesFor(name)).toEqual(['started', 'failed'])
+        expect(progressEventsFor(name).at(-1)?.error?.message).toMatch(/statement timeout/)
+    })
+
+    it('emits a running heartbeat while a long migration is still in progress', async () => {
+        vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] })
+        const name = `ProgressHeartbeat${Date.now()}`
+        const MigrationClass = makeTestMigration({
+            name,
+            up: async () => {
+                vi.advanceTimersByTime(BACKGROUND_MIGRATION_HEARTBEAT_INTERVAL_MS)
+                await vi.waitFor(() => expect(progressPhasesFor(name)).toContain('running'))
+            },
+        })
+
+        await backgroundMigrationRunner.run({ log: app!.log, migrations: [MigrationClass] })
+
+        expect(progressPhasesFor(name)).toEqual(['started', 'running', 'completed'])
+        const heartbeat = progressEventsFor(name).find((event) => event.migration.phase === 'running')
+        expect(heartbeat?.migration.elapsedMs).toEqual(expect.any(Number))
+    })
+
+    it('still emits the heartbeat, without index details, when the progress read waits on a busy pool', { timeout: 30_000 }, async () => {
+        vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] })
+        const ds = databaseConnection()
+        const query = ds.query.bind(ds)
+        const spy = vi.spyOn(ds, 'query').mockImplementation(async (sql: string, parameters?: unknown[]) =>
+            sql.includes('pg_stat_progress_create_index') ? new Promise<never>(() => undefined) : query(sql, parameters))
+        const name = `ProgressBusyPool${Date.now()}`
+        const MigrationClass = makeTestMigration({
+            name,
+            up: async () => {
+                vi.advanceTimersByTime(BACKGROUND_MIGRATION_HEARTBEAT_INTERVAL_MS)
+                await vi.waitFor(() => expect(progressPhasesFor(name)).toContain('running'), { timeout: BACKGROUND_MIGRATION_PROGRESS_READ_TIMEOUT_MS + 5_000 })
+            },
+        })
+
+        await backgroundMigrationRunner.run({ log: app!.log, migrations: [MigrationClass] })
+        spy.mockRestore()
+
+        const heartbeat = progressEventsFor(name).find((event) => event.migration.phase === 'running')
+        expect(heartbeat?.migration.elapsedMs).toEqual(expect.any(Number))
+        expect(progressPhasesFor(name)).toEqual(['started', 'running', 'completed'])
+    })
+
+    it('drops a heartbeat that is still reading progress when the migration finishes', async () => {
+        vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] })
+        const name = `ProgressLateHeartbeat${Date.now()}`
+        const MigrationClass = makeTestMigration({
+            name,
+            up: async () => {
+                vi.advanceTimersByTime(BACKGROUND_MIGRATION_HEARTBEAT_INTERVAL_MS)
+            },
+        })
+
+        await backgroundMigrationRunner.run({ log: app!.log, migrations: [MigrationClass] })
+        await new Promise((resolve) => setTimeout(resolve, 200))
+
+        expect(progressPhasesFor(name)).toEqual(['started', 'completed'])
+    })
+})
+
+describe('getBackgroundMigrations', () => {
+    it('runs the quick piece-translation backfill before the hours-long flow_run index reshape', () => {
+        const order = getBackgroundMigrations()
+
+        expect(order.indexOf(BackfillPieceTranslation1874000000000)).toBeGreaterThanOrEqual(0)
+        expect(order.indexOf(BackfillPieceTranslation1874000000000)).toBeLessThan(order.indexOf(ReshapeFlowRunListIndexesForBarrierChildren1871000000000))
+        expect(order.at(-1)).toBe(ReshapeFlowRunListIndexesForBarrierChildren1871000000000)
+    })
+
+    it('runs the translation repair after the backfill and before the flow_run index reshape', () => {
+        const order = getBackgroundMigrations()
+
+        expect(order.indexOf(RefetchMissingPieceTranslations1879000000000)).toBeGreaterThan(order.indexOf(BackfillPieceTranslation1874000000000))
+        expect(order.indexOf(RefetchMissingPieceTranslations1879000000000)).toBeLessThan(order.indexOf(ReshapeFlowRunListIndexesForBarrierChildren1871000000000))
     })
 })
 
@@ -271,6 +420,20 @@ async function waitFor(predicate: () => boolean, timeoutMs: number): Promise<voi
     }
 }
 
+function progressEventsFor(name: string): ProgressEvent[] {
+    return emittedSpy.mock.calls
+        .map(([context]) => context)
+        .filter((context): context is ProgressEvent => isProgressEvent(context) && context.migration.name === name)
+}
+
+function progressPhasesFor(name: string): string[] {
+    return progressEventsFor(name).map((event) => event.migration.phase)
+}
+
+function isProgressEvent(context: unknown): context is ProgressEvent {
+    return typeof context === 'object' && context !== null && 'event' in context && context.event === 'background-migration.progress'
+}
+
 async function selectByName(name: string): Promise<{ name: string }[]> {
     const rows = await databaseConnection().query(
         `SELECT "name" FROM "${BACKGROUND_MIGRATIONS_TABLE}" WHERE "executed_at" IS NOT NULL`,
@@ -280,4 +443,10 @@ async function selectByName(name: string): Promise<{ name: string }[]> {
 
 async function selectCompletedByName(name: string): Promise<{ name: string }[]> {
     return selectByName(name)
+}
+
+type ProgressEvent = {
+    event: 'background-migration.progress'
+    migration: { name: string, phase: string, elapsedMs?: number }
+    error?: { message: string }
 }

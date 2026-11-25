@@ -7,14 +7,14 @@ const { bedrockClientMock, runtimeClientMock, sendMock } = vi.hoisted(() => ({
 }));
 
 vi.mock('@aws-sdk/client-bedrock', () => ({
-  BedrockClient: bedrockClientMock.mockImplementation(() => ({ send: sendMock })),
-  ListFoundationModelsCommand: vi.fn((input: unknown) => ({ input })),
-  ListInferenceProfilesCommand: vi.fn((input: unknown) => ({ input })),
+  BedrockClient: bedrockClientMock.mockImplementation(function () { return { send: sendMock } }),
+  ListFoundationModelsCommand: vi.fn(function (input: unknown) { return { input } }),
+  ListInferenceProfilesCommand: vi.fn(function (input: unknown) { return { input } }),
   ModelModality: { TEXT: 'TEXT', IMAGE: 'IMAGE' },
 }));
 
 vi.mock('@aws-sdk/client-bedrock-runtime', () => ({
-  BedrockRuntimeClient: runtimeClientMock.mockImplementation(() => ({ send: sendMock })),
+  BedrockRuntimeClient: runtimeClientMock.mockImplementation(function () { return { send: sendMock } }),
   AudioFormat: {},
   DocumentFormat: {},
   ImageFormat: {},

@@ -12,6 +12,7 @@ export type AiToolProviderInfo = {
   name: string;
   description: string;
   signupUrl: string;
+  logoUrl: string;
 };
 
 export type AiToolCapabilityInfo = {
@@ -25,15 +26,14 @@ export const AI_TOOL_CATALOG: AiToolCapabilityInfo[] = [
   {
     capability: AiToolCapability.WEB_SEARCH,
     name: t('Web Search'),
-    description: t(
-      'Let the assistant search the live web for current information.',
-    ),
+    description: t('Search the live web for current information.'),
     providers: [
       {
         id: AiToolProvider.TAVILY,
         name: 'Tavily',
         description: t('Search API built for AI agents.'),
         signupUrl: 'https://app.tavily.com',
+        logoUrl: 'https://cdn.activepieces.com/pieces/tavily.jpg',
       },
     ],
   },
@@ -41,7 +41,7 @@ export const AI_TOOL_CATALOG: AiToolCapabilityInfo[] = [
     capability: AiToolCapability.WEB_SCRAPING,
     name: t('Web Scraping'),
     description: t(
-      'Let the assistant extract the full clean content of a web page as markdown, including JavaScript-rendered pages.',
+      'Read any web page as clean text, including JavaScript pages.',
     ),
     providers: [
       {
@@ -49,21 +49,21 @@ export const AI_TOOL_CATALOG: AiToolCapabilityInfo[] = [
         name: 'Firecrawl',
         description: t('Clean markdown extraction, handles JS-rendered pages.'),
         signupUrl: 'https://www.firecrawl.dev',
+        logoUrl: 'https://cdn.activepieces.com/pieces/firecrawl.png',
       },
       {
         id: AiToolProvider.APIFY,
         name: 'Apify',
         description: t('Heavy-duty crawling and content extraction.'),
         signupUrl: 'https://console.apify.com',
+        logoUrl: 'https://cdn.activepieces.com/pieces/apify.png',
       },
     ],
   },
   {
     capability: AiToolCapability.IMAGE_GENERATION,
     name: t('Image Generation'),
-    description: t(
-      'Let the assistant generate images — realistic photos, marketing graphics with text, brand logos, and abstract art.',
-    ),
+    description: t('Create images, from photos to graphics with text.'),
     providers: [
       {
         id: AiToolProvider.FAL,
@@ -72,15 +72,14 @@ export const AI_TOOL_CATALOG: AiToolCapabilityInfo[] = [
           'One key for Flux, Ideogram, Recraft and more — the assistant picks the right model.',
         ),
         signupUrl: 'https://fal.ai/dashboard/keys',
+        logoUrl: 'https://cdn.activepieces.com/pieces/fal-ai.png',
       },
     ],
   },
   {
     capability: AiToolCapability.EMBEDDINGS,
     name: t('Embeddings'),
-    description: t(
-      'Index knowledge-base files so agents can search them. Pick one of your AI keys and its embedding model.',
-    ),
+    description: t('Index knowledge-base files so agents can search them.'),
     providers: [],
   },
 ];

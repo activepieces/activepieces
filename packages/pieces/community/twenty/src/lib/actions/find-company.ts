@@ -1,15 +1,16 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { twentyAuth } from '../auth';
-import { twentyRequest, parseRecords } from '../common';
+import { twentyApi } from '../common/api';
+import { findCompanyOutputSchema } from '../output-schemas';
 
-export const findCompany = createAction({
+export const findCompanyAction = createAction({
   auth: twentyAuth,
   name: 'find_company',
+  outputSchema: findCompanyOutputSchema,
   classification: 'SEARCH',
   displayName: 'Find Company',
   description: 'Searches for company records in Twenty CRM.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Looks up company records in Twenty CRM, optionally filtering by an exact-match company name and/or domain. Use to resolve a company to its record ID before updating or linking, or to check existence; leaving both filters empty returns all companies. Idempotent: a read-only query with no side effects.', idempotent: true },
   props: {
     name: Property.ShortText({
@@ -25,23 +26,11 @@ export const findCompany = createAction({
   },
   async run(context) {
     const { name, domainName } = context.propsValue;
-    const queryParams: Record<string, string> = {};
 
-    if (name) {
-      queryParams['filter[name][eq]'] = name;
-    }
-    if (domainName) {
-      queryParams['filter[domainName][primaryLinkUrl][eq]'] = domainName;
-    }
-
-    const body = await twentyRequest(
-      context.auth,
-      HttpMethod.GET,
-      '/rest/companies',
-      undefined,
-      queryParams,
-    );
-
-    return parseRecords(body);
+    return await twentyApi.findCompanies({
+      auth: context.auth,
+      name,
+      domainName,
+    });
   },
 });

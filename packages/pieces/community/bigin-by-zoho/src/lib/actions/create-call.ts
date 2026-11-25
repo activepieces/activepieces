@@ -1,8 +1,10 @@
+import { assertWriteSucceeded } from '../common/request';
+import { biginOutputSchemas } from '../common/output-schemas';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { biginAuth } from '../auth';
 import { contactsDropdown, tagsDropdown, usersDropdown } from '../common/props';
 import { biginApiService } from '../common/request';
-import { formatDateTime, getSafeLabel, handleDropdownError } from '../common/helpers';
+import { formatCallDuration, formatDateTimeKeepOffset, formatDateTime, getSafeLabel, handleDropdownError } from '../common/helpers';
 
 export const createCall = createAction({
   auth: biginAuth,
@@ -10,12 +12,13 @@ export const createCall = createAction({
   classification: 'WRITE',
   displayName: 'Create Call',
   description: 'Creates a Call Log Entry Record',
-  audience: 'both',
-  aiMetadata: { description: 'Logs a call in Bigin CRM with a required start time, duration in minutes, and type (Outbound, Inbound, or Missed), plus optional subject, description, agenda, reminder, dialed number, owner, contact, and a related Pipeline or Company record. Use to record a phone interaction. Not idempotent: each call creates a new call log entry.', idempotent: false },
+  audience: 'human',
+  outputSchema: biginOutputSchemas.legacyAckWithMessage,
+  aiMetadata: { description: 'Logs a call in Bigin CRM with a required start time, duration in minutes, and type (Outbound, Inbound, or Missed), plus optional subject, description, agenda, reminder, dialed number, owner, contact, and a related Pipeline or Company record. Use to record a completed phone interaction; the start time must be in the past. Not idempotent: each call creates a new call log entry.', idempotent: false },
   props: {
     callStartTime: Property.DateTime({
       displayName: 'Call Start Time',
-      description: 'Provide the start time of the call in ISO8601 format.',
+      description: 'Start time of the completed call in ISO8601 format. Must be in the past: Bigin rejects a future start time with a duration.',
       required: true,
     }),
     callDuration: Property.Number({
@@ -81,7 +84,6 @@ export const createCall = createAction({
       description: 'Select the specific record the call is related to.',
       required: false,
       refreshers: ['auth', 'relatedModule'],
-      defaultValue: {},
       options: async ({ auth, relatedModule }): Promise<any> => {
         if (!auth) return handleDropdownError('Please connect first');
         if (!relatedModule) return { options: [] };
@@ -113,12 +115,15 @@ export const createCall = createAction({
     tag: tagsDropdown('Calls'),
   },
   async run({ auth, propsValue }) {
-    try {
+    
       const { access_token, data } = auth;
       const api_domain = data['api_domain'];
+      if (new Date(propsValue.callStartTime).getTime() > Date.now()) {
+        throw new Error('Call Start Time must be in the past: this logs a completed call, and Bigin rejects a future start time with a duration.');
+      }
       const payload: any = {
-        Call_Start_Time: formatDateTime(propsValue.callStartTime),
-        Call_Duration: Number(propsValue.callDuration),
+        Call_Start_Time: formatDateTimeKeepOffset(propsValue.callStartTime),
+        Call_Duration: formatCallDuration(Number(propsValue.callDuration)),
         Call_Type: propsValue.callType,
       };
   
@@ -130,19 +135,20 @@ export const createCall = createAction({
         payload.Dialled_Number = propsValue.dialledNumber;
       if (propsValue.owner) payload.Owner = { id: propsValue.owner };
       if (propsValue.contactName)
-        payload.Contact_Name = { id: propsValue.contactName };
+        payload.Who_Id = { id: propsValue.contactName };
 
-      if (propsValue.relatedTo && propsValue.relatedModule) {
+      const relatedTo = typeof propsValue.relatedTo === 'string' ? propsValue.relatedTo.trim() : '';
+      if (relatedTo !== '' && propsValue.relatedModule) {
         const relatedModuleMap = {
           Pipelines: 'Deals',
           Companies: 'Accounts',
         };
   
-        payload.$related_module =
+        payload.$se_module =
           relatedModuleMap[
             propsValue.relatedModule as keyof typeof relatedModuleMap
           ] || 'Deals';
-        payload.Related_To = { id: propsValue.relatedTo };
+        payload.What_Id = { id: relatedTo };
       }
   
       if (propsValue.tag) payload.Tag = propsValue.tag.map((t: any) => ({ name: t }));
@@ -153,17 +159,11 @@ export const createCall = createAction({
         { data: [payload] }
       );
       
+      assertWriteSucceeded(response.data?.[0]);
       return {
         message: 'Call log Entry created successfully',
         data: response.data[0],
       };
-    } catch (error: any) {
-      console.error('Error creating call log entry:', error);
-      throw new Error(
-        error instanceof Error
-          ? `Failed to create call log entry: ${error.message}`
-          : 'Failed to create call log entry due to an unknown error'
-      );
-    }
+    
   },
 });

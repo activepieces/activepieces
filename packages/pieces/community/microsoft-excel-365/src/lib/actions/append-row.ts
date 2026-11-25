@@ -54,7 +54,7 @@ export const appendRowAction = createAction({
 
 		const response: WorkbookRange = await client
 			.api(
-				`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='${rangeFrom}:${rangeTo}')`
+				`${drivePath}/items/${workbookId}/workbook/worksheets/${encodeURIComponent(worksheetId)}/range(address='${rangeFrom}:${rangeTo}')`
 			)
 			.patch({
 				values: [values],

@@ -3,7 +3,7 @@ import { ActionPreviewEvent, agentToolClassification } from '@activepieces/share
 import { tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { z } from 'zod'
 import { executeBatchAction, MAX_BATCH_SIZE, MAX_IDENTICAL_ACTION_FAILURES } from './configured-tools'
-import { AgentEventEmitter, cardTitleFields, extractUserFacingError, GateDecision, gateNoResponseMessage, isSuccessResult, stableStringify, TaintState, TOOL_EXECUTION_TIMEOUT_MS, truncateLargeResult, withToolTimeout } from './tool-primitives'
+import { AgentEventEmitter, cardTitleFields, extractUserFacingError, GateDecision, gateNoResponseMessage, isSuccessResult, stableStringify, TaintState, truncateLargeResult } from './tool-primitives'
 
 function createProgressGuard() {
     const failureCounts = new Map<string, number>()
@@ -43,30 +43,24 @@ function createProgressGuard() {
     }
 }
 
-export function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, onGateOpened, taintState }: {
+export function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, onGateOpened, isDeclaredReadOnly, taintState }: {
     executeTool: (toolName: string, toolInput: Record<string, unknown>) => Promise<unknown>
     eventEmitter: AgentEventEmitter
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
     onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
+    isDeclaredReadOnly?: (params: { pieceName: string, actionName: string }) => Promise<boolean | undefined>
     taintState: TaintState
 }): ToolSet {
     const progressGuard = createProgressGuard()
-    const executeWithTimeout = (toolName: string, toolInput: Record<string, unknown>) =>
-        withToolTimeout({
-            fn: () => executeTool(toolName, toolInput),
-            timeoutMs: TOOL_EXECUTION_TIMEOUT_MS,
-            toolName,
-        })
-
     return {
         ap_discover_action_auth: tool({
-            description: 'Check what authentication a piece needs and find available connections. Call this BEFORE ap_execute_action to determine if auth is needed.',
+            description: 'Check what authentication a piece needs and find available connections. In chat you rarely need it: ap_show_connection_picker runs this check itself, so call the card directly. Use this only when you need the auth details without showing a card.',
             inputSchema: z.object({
                 ...cardTitleFields,
                 pieceName: z.string().describe('Piece name, e.g. "@activepieces/piece-gmail"'),
             }),
             execute: async (input) => {
-                return executeWithTimeout('ap_discover_action_auth', input)
+                return executeTool('ap_discover_action_auth', input)
             },
         }),
 
@@ -76,12 +70,12 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                 connectionExternalId: z.string().describe('The connectionExternalId of the connection to verify'),
             }),
             execute: async (input) => {
-                return executeWithTimeout('ap_revalidate_connection', input)
+                return executeTool('ap_revalidate_connection', input)
             },
         }),
 
         ap_execute_action: tool({
-            description: 'Execute a piece action once or in batch. Before the FIRST call to an action you have not already inspected this conversation, call ap_get_piece_props to get the exact prop names, required fields, dropdown values, and dynamic sub-field shapes — never guess the input shape (guessing fails validation and wastes turns). Use ap_discover_action_auth first to check if auth is needed. The system manages connections automatically after the user selects one. If a call fails, fix the input from the returned error and retry ONCE; do not re-send a near-identical call repeatedly. For batch execution, provide an items array where each element is a complete input object for one invocation.',
+            description: 'Execute a piece action once or in batch. Before the FIRST call to an action you have not already inspected this conversation, call ap_get_piece_props to get the exact prop names, required fields, dropdown values, and dynamic sub-field shapes — never guess the input shape (guessing fails validation and wastes turns). Get the connection through ap_show_connection_picker, which also checks whether the piece needs one. The system manages connections automatically after the user selects one. If a call fails, fix the input from the returned error and retry ONCE; do not re-send a near-identical call repeatedly. For batch execution, provide an items array where each element is a complete input object for one invocation.',
             inputSchema: z.object({
                 ...cardTitleFields,
                 pieceName: z.string().describe('Piece name, e.g. "@activepieces/piece-gmail"'),
@@ -103,12 +97,16 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                         return guardResult
                     }
                 }
-                const needsPreview = agentToolClassification.requiresActionPreview({
+                const { data: declaredReadOnly } = await tryCatch(async () => isDeclaredReadOnly?.({ pieceName: toolInput.pieceName, actionName: toolInput.actionName }))
+                const executedInputs = isBatch ? toolInput.items! : [toolInput.input ?? {}]
+                const gatedInputs = executedInputs.filter((input) => agentToolClassification.requiresActionPreview({
                     actionName: toolInput.actionName,
-                    input: toolInput.input,
+                    input,
                     needsConfirmation: toolInput.needsConfirmation,
                     tainted: taintState.tainted,
-                })
+                    declaredReadOnly: declaredReadOnly ?? undefined,
+                }))
+                const needsPreview = gatedInputs.length > 0
                 taintState.tainted = true
 
                 if (needsPreview) {
@@ -120,7 +118,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                         input: toolInput.input ?? {},
                         isBatch: !!isBatch,
                         batchCount: isBatch ? toolInput.items!.length : undefined,
-                        batchSamples: isBatch ? toolInput.items!.slice(0, 3) : undefined,
+                        batchSamples: isBatch ? gatedInputs.slice(0, 3) : undefined,
                     }
                     eventEmitter.emitActionPreview(previewData)
                     if (onGateOpened) {
@@ -132,7 +130,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                                 pieceName: toolInput.pieceName,
                                 actionName: toolInput.actionName,
                                 input: toolInput.input ?? {},
-                                items: isBatch ? toolInput.items!.slice(0, 3) : undefined,
+                                items: isBatch ? gatedInputs.slice(0, 3) : undefined,
                                 batchCount: isBatch ? toolInput.items!.length : undefined,
                             },
                         }))
@@ -146,7 +144,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
 
                 if (isBatch) {
                     return executeBatchAction({
-                        executeWithTimeout,
+                        executeTool,
                         eventEmitter,
                         toolCallId: options.toolCallId,
                         pieceName: toolInput.pieceName,
@@ -155,7 +153,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                         description: toolInput.description,
                     })
                 }
-                const rawResult = await executeWithTimeout('ap_execute_action', toolInput)
+                const rawResult = await executeTool('ap_execute_action', toolInput)
                 const rawSuccess = isSuccessResult(rawResult)
                 progressGuard.recordActionRunResult({
                     pieceName: toolInput.pieceName,
@@ -173,6 +171,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                 const isReadOnly = agentToolClassification.isReadOnlyActionCall({
                     actionName: toolInput.actionName,
                     input: toolInput.input,
+                    declaredReadOnly: declaredReadOnly ?? undefined,
                 })
                 if (!isReadOnly) {
                     eventEmitter.emitActionReceipt({
@@ -199,7 +198,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
             }),
             execute: async (input) => {
                 taintState.tainted = true
-                return truncateLargeResult(await executeWithTimeout('ap_list_across_projects', input))
+                return truncateLargeResult(await executeTool('ap_list_across_projects', input))
             },
         }),
 
@@ -212,11 +211,8 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                 input: z.record(z.string(), z.unknown()).optional().describe('Input for the read action (keep limits small)'),
             }),
             execute: async (toolInput) => {
-                if (!agentToolClassification.isReadOnlyActionCall({ actionName: toolInput.actionName, input: toolInput.input })) {
-                    return agentToolClassification.readOnlyRejection(toolInput.actionName)
-                }
                 taintState.tainted = true
-                const rawResult = await executeWithTimeout('ap_explore_data', toolInput)
+                const rawResult = await executeTool('ap_explore_data', toolInput)
                 return truncateLargeResult(rawResult)
             },
         }),
@@ -233,7 +229,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
             }),
             execute: async (toolInput, { toolCallId }: ToolExecutionOptions<undefined>) => {
                 taintState.tainted = true
-                const rawResult = await executeWithTimeout('ap_run_code', toolInput)
+                const rawResult = await executeTool('ap_run_code', toolInput)
                 const resultObj = isObject(rawResult) ? rawResult as Record<string, unknown> : {}
                 const producedFiles = Array.isArray(resultObj['producedFiles']) ? resultObj['producedFiles'] : []
                 const timestamp = new Date().toISOString()

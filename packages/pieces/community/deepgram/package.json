@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-deepgram",
-  "version": "0.3.1",
+  "version": "0.3.3",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {
@@ -15,11 +15,11 @@
     "mime-types": "2.1.35",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*",
-    "undici": "7.29.1"
+    "undici": "7.30.1"
   },
   "devDependencies": {
     "@types/mime-types": "2.1.1",
     "tslib": "2.6.2",
-    "vitest": "3.2.6"
+    "vitest": "5.0.5"
   }
 }

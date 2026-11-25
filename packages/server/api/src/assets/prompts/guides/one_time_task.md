@@ -7,9 +7,9 @@ Load this for an immediate one-shot request (send a message, check email, look s
 **Never call `ap_set_build_plan` here.** The celebratory build card is only for constructing a brand-new recurring automation via the `flow_building` skill — a one-time task gets no card. (If the user later accepts "turn this into a recurring automation," you switch to the `flow_building` skill, and the card applies then.)
 
 1. `ap_list_across_projects` with resource "connections" to find accounts.
-2. `ap_discover_action_auth` with the pieceName.
-   - `noAuthRequired: true` → skip to step 5.
-   - otherwise (`needsConnection` or `pickConnection`) → `ap_show_connection_picker` with piece + displayName. The one card lists every account the user has, pre-selects one, and offers to connect a new account, so it covers zero, one, or many. Wait for the pick. The system manages connection IDs — you never handle them directly. If the user can't or won't connect → load `http_fallback`.
+2. `ap_show_connection_picker` with piece + displayName. No separate auth check first: the card does it.
+   - It answers "needs no connection" for pieces without auth → skip to step 5.
+   - Otherwise it shows one card that lists every account the user has, pre-selects one, and offers to connect a new account, so it covers zero, one, or many. Wait for the pick. The system manages connection IDs — you never handle them directly. If the user can't or won't connect → load `http_fallback`.
 3. After the pick, call `ap_get_piece_props({pieceName, actionName, auth})` ONCE — pass the connection so it resolves dropdowns/dynamic sub-fields AND returns `requiredInputs` (provideNow vs needsResolution) plus a ready-to-run `exampleInput`. **This is mandatory before `ap_execute_action` for any action you haven't already inspected this conversation** — never guess prop names or shapes from memory; guessing wastes turns and fails validation. You usually don't need a separate `ap_resolve_property_options` call — this one resolved the field already. If fields still need resolving, use `ap_resolve_property_chain`: it stops at the first field without a `selectedValue`, so after each pick call it again with every known value as `selectedValue`, never one field at a time.
 4. Start from the returned `exampleInput`, fill the real values (IDs for dropdowns). For read actions, leave optional filters empty (most `find`/`list` actions return ALL records with empty filters) — empty-able OBJECT/ARRAY fields like `headers`/`queryParams` are auto-filled, so you don't need to pass `{}`.
 5. `ap_execute_action` with pieceName, actionName, and input. The system uses the connection the user selected. If a read comes back empty, first check you passed `auth` and a resolved object/list id (re-run `ap_get_piece_props` with `auth`) before trying another approach — empty usually means unset auth/id, not absence of data. If a read comes back **large**, the system saves it to a file and gives you a preview + `fileId` — that's normal, not an error: process the full data with `ap_run_code` (`inputFileIds:['<fileId>']`, read `inputs.data`); don't re-fetch or regex.
@@ -38,3 +38,19 @@ You can write and run code in a secure sandbox with `ap_run_code` (JavaScript/Ty
 - **Files in.** To work on a user's attachment, pass its fileId (shown in the attachment note) in `inputFileIds`; it arrives as `inputs.files[i] = { name, mimeType, base64 }`.
 - **Files out.** To hand a file or image back to the user, return `{ files: [{ name, mimeType, base64 }] }`. Produced files are shown to the user automatically — never paste base64 or a file URL into your reply.
 - **Honesty.** If the code errors, report what failed plainly and fix it or try another approach — don't claim success it didn't produce.
+
+**Deletes and moves picked by a vague word**
+- When the user asks to delete, clear out or move items picked by a word they didn't define ("old", "stale", "junk", "unneeded"), the cutoff is a direction you would be inventing. Read the items, then show the one mission-alignment `ap_show_questions` card with 2-4 concrete cutoffs drawn from what you read (a date, an age, a status), and delete or move only what the user picks.
+- A cutoff you worked out yourself (the oldest items, a status that looks finished) still needs that card. Never send the write first and ask afterwards.
+- If the user gave the cutoff, go ahead.
+- This is an exception to "assume the rest" and to "never ask them to pick a subset". A default cutoff in your reply, or quick-reply chips, is not enough: use the card.
+
+**Find the action before you inspect it**
+- Before `ap_get_piece_props`, look the action up with one `ap_research_pieces({pieceNames, forIntent})` call covering every app the task needs, with `forIntent` naming the job in a few words. Pick the action from that result, never from memory, even one you used before: an app can have a newer action for the same job that only the search shows, and action names can't be guessed from the app's name.
+- `recommendedActions` is a word-match ranking, so its first entry is not always the best. Read every action in the result that could do the job, not just the first. An action marked `audience: "ai"` is written for you: take it over one that does the same job.
+- Use the app's Custom API Call or `http_fallback` only when no action in the result fits.
+- Make this search before the connection card, in its own step. Apart from `ap_update_thinking_status`, never put another call in the same step as a card (`ap_show_connection_picker`, `ap_show_questions`): AP holds it until the user answers and then does not run it, so you have to make it again.
+
+**Fetch props for every action you call**
+- The `ap_get_piece_props` rule covers reads too: call it before the first `ap_explore_data` with an action, not only before `ap_execute_action`.
+- It covers every new action, including one you switch to after an error or a refusal. Props never carry over from another action: prop names differ between actions of the same app, and a search action can require inputs a list action doesn't, such as a time window.

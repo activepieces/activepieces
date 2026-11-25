@@ -108,6 +108,7 @@ async function request<T = unknown>({
   body,
   redactBody,
   extraHeaders,
+  timeout,
 }: {
   auth: NetlifyAuthValue;
   method: HttpMethod;
@@ -116,6 +117,7 @@ async function request<T = unknown>({
   body?: Record<string, unknown> | Record<string, unknown>[];
   redactBody?: boolean;
   extraHeaders?: Record<string, string>;
+  timeout?: number;
 }): Promise<{ status: number; body: T }> {
   const hasBody = body !== undefined && method !== HttpMethod.GET && method !== HttpMethod.DELETE;
   const headers: Record<string, string> = {
@@ -132,7 +134,7 @@ async function request<T = unknown>({
       headers,
       queryParams: buildQuery(query),
       body: hasBody ? body : undefined,
-      timeout: REQUEST_TIMEOUT_MS,
+      timeout: timeout ?? REQUEST_TIMEOUT_MS,
       followRedirects: false,
       redactBodyInErrors: redactBody === true,
     }, { dispatcher });

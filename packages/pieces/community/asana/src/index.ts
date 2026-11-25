@@ -1,8 +1,5 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  OAuth2PropertyValue,
-  createPiece,
-} from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
 import { asanaCreateTaskAction } from './lib/actions/create-task';
 import { asanaGetCurrentUserAction } from './lib/actions/ai/get-current-user';
@@ -269,8 +266,15 @@ export const asana = createPiece({
       baseUrl: () => `https://app.asana.com/api/1.0`,
       auth: asanaAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+        Authorization: `Bearer ${auth.access_token}`,
       }),
+      props: {
+        url: {
+          description:
+            'Full URL, or a path relative to https://app.asana.com/api/1.0',
+          placeholder: '/users/me',
+        },
+      },
     }),
   ],
   triggers: [],

@@ -51,7 +51,7 @@ export const requestApprovalInMail = createAction({
         const waitpoint = await context.run.createWaitpoint({
           type: 'WEBHOOK',
         });
-        const confirmationLink = `${waitpoint.resumeUrl}/confirm`;
+        const confirmationLink = `${waitpoint.publicResumeUrl ?? waitpoint.resumeUrl}/confirm`;
 
         const htmlBody = `
         <div>

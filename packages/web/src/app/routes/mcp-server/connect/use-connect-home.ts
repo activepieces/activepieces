@@ -16,21 +16,61 @@ export function useConnectHome({ clients }: { clients: CatalogClient[] }) {
     },
   });
 
-  const grantsByClient = useMemo(
+  const statusByClient = useMemo(
     () =>
-      groupByClient({
+      statusFromGrants({
         grants: grantsQuery.data?.data ?? [],
         clients: ordered,
       }),
     [grantsQuery.data, ordered],
   );
 
+  const featured = useMemo(
+    () =>
+      ordered.filter(
+        (client) =>
+          !DEMOTED_CLIENTS.includes(client.key) ||
+          statusByClient.has(client.key),
+      ),
+    [ordered, statusByClient],
+  );
+
   return {
-    clients: ordered,
-    grantsByClient,
-    isGrantsError: grantsQuery.isError,
-    refetchGrants: grantsQuery.refetch,
+    clients: featured,
+    allClients: ordered,
+    namedCount: ordered.filter((client) => client.group !== 'other').length,
+    statusByClient,
+    isStatusLoading: grantsQuery.isLoading,
+    isStatusError:
+      grantsQuery.isError ||
+      (grantsQuery.isPaused && grantsQuery.data === undefined),
+    refetchStatus: grantsQuery.refetch,
   };
+}
+
+function statusFromGrants({
+  grants,
+  clients,
+}: {
+  grants: McpOAuthGrant[];
+  clients: CatalogClient[];
+}): Map<string, ClientStatus> {
+  const clientKeys = new Set(clients.map((client) => client.key));
+  return grants.reduce((statuses, grant) => {
+    const key = clientKeys.has(grant.clientKey) ? grant.clientKey : 'unknown';
+    const lastUsedAt = latest(statuses.get(key)?.lastUsedAt, grant.lastUsedAt);
+    return new Map(statuses).set(key, { lastUsedAt });
+  }, new Map<string, ClientStatus>());
+}
+
+function latest(a: string | null | undefined, b: string | null): string | null {
+  if (!a) {
+    return b;
+  }
+  if (!b) {
+    return a;
+  }
+  return a > b ? a : b;
 }
 
 function orderClients(clients: CatalogClient[]): CatalogClient[] {
@@ -41,28 +81,8 @@ function orderClients(clients: CatalogClient[]): CatalogClient[] {
   return [...clients].sort((a, b) => rank(a) - rank(b));
 }
 
-function groupByClient({
-  grants,
-  clients,
-}: {
-  grants: McpOAuthGrant[];
-  clients: CatalogClient[];
-}): Map<string, McpOAuthGrant[]> {
-  const clientKeys = new Set(clients.map((client) => client.key));
-  const groups = new Map<string, McpOAuthGrant[]>();
-  for (const grant of grants) {
-    const key = clientKeys.has(grant.clientKey) ? grant.clientKey : 'unknown';
-    const group = groups.get(key);
-    if (group) {
-      group.push(grant);
-    } else {
-      groups.set(key, [grant]);
-    }
-  }
-  return groups;
-}
-
 const GRANTS_LIMIT = 100;
+const DEMOTED_CLIENTS = ['gemini-cli', 'antigravity', 'zed', 'cline', 'goose'];
 const CLIENT_ORDER = [
   'claude',
   'chatgpt',
@@ -72,6 +92,13 @@ const CLIENT_ORDER = [
   'vscode',
   'gemini-cli',
   'opencode',
+  'copilot-cli',
   'windsurf',
+  'antigravity',
+  'zed',
+  'cline',
+  'goose',
   'unknown',
 ];
+
+export type ClientStatus = { lastUsedAt: string | null };

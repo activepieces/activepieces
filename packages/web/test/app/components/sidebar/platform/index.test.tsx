@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import * as React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
@@ -9,6 +9,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { PlatformNav } from '@/app/components/sidebar/platform';
 
 const plan = vi.hoisted(() => ({ aiProvidersEnabled: false }));
+const flags = vi.hoisted(() => ({ edition: 'cloud' }));
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
 
@@ -20,7 +21,7 @@ vi.mock('@/hooks/platform-hooks', () => ({
 
 vi.mock('@/hooks/flags-hooks', () => ({
   flagsHooks: {
-    useFlag: () => ({ data: 'cloud' }),
+    useFlag: () => ({ data: flags.edition }),
   },
 }));
 
@@ -98,4 +99,21 @@ describe('platform sidebar AI Center', () => {
       screen.queryAllByRole('listitem', { name: 'Providers locked' }),
     ).toEqual([]);
   });
+
+  it.each(['cloud', 'ee'])(
+    'shows Tiers between Providers and Capabilities, then Usage, on %s',
+    (edition) => {
+      plan.aiProvidersEnabled = true;
+      flags.edition = edition;
+
+      renderSidebar();
+
+      const aiCenter = screen.getByRole('list', { name: 'AI Center' });
+      expect(
+        within(aiCenter)
+          .getAllByRole('listitem')
+          .map((item) => item.getAttribute('aria-label')),
+      ).toEqual(['Providers', 'Tiers', 'Capabilities', 'Usage']);
+    },
+  );
 });

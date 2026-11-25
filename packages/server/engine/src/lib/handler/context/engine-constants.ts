@@ -1,8 +1,12 @@
+import path from 'node:path'
 import { ensureTrailingSlash, isNil, PlatformId, ProjectId } from '@activepieces/core-utils'
 import { ContextVersion } from '@activepieces/pieces-framework'
 import { BaseEngineOperation, BeginExecuteFlowOperation, DEFAULT_MCP_DATA, EngineGenericError, ExecutePropsOptions, ExecuteTriggerOperation, ExecutionState, ExecutionType, flowStructureUtil, FlowTrigger, FlowVersionState, Project, ResumeExecuteFlowOperation, ResumePayload, RunEnvironment, StreamStepProgress, TriggerHookType } from '@activepieces/shared'
 import { retryFetch } from '../../api/retry-fetch'
+import { SharedScriptSession } from '../../core/code/shared-script-session'
+import { operationScope } from '../../helper/operation-scope'
 import { createPropsResolver, PropsResolver } from '../../variables/props-resolver'
+import { scriptEvaluator } from '../../variables/script-evaluator'
 
 type RetryConstants = {
     maxAttempts: number
@@ -27,6 +31,7 @@ type EngineConstantsParams = {
     resumePayload?: ResumePayload
     runEnvironment?: RunEnvironment
     stepNameToTest?: string
+    entryStepName?: string
     logsFileId?: string
     timeoutInSeconds: number
     platformId: PlatformId
@@ -68,16 +73,18 @@ export class EngineConstants {
     public readonly resumePayload?: ResumePayload
     public readonly runEnvironment?: RunEnvironment
     public readonly stepNameToTest?: string
+    public readonly entryStepName?: string
     public readonly logsFileId?: string
     public readonly stepNames: string[] = []
     public readonly actionRunMode: boolean
     private project: Project | null = null
+    private scriptSession: SharedScriptSession | null = null
 
     public get isRunningApTests(): boolean {
         return EngineConstants.TEST_MODE
     }
 
-    public get isTestFlow(): boolean {
+    public get isStreamingToBuilder(): boolean {
         return this.streamStepProgress === StreamStepProgress.WEBSOCKET
     }
 
@@ -113,6 +120,7 @@ export class EngineConstants {
         this.resumePayload = params.resumePayload
         this.runEnvironment = params.runEnvironment
         this.stepNameToTest = params.stepNameToTest
+        this.entryStepName = params.entryStepName
         this.logsFileId = params.logsFileId
         this.platformId = params.platformId
         this.timeoutInSeconds = params.timeoutInSeconds
@@ -132,6 +140,7 @@ export class EngineConstants {
             resumePayload: input.executionType === ExecutionType.RESUME ? input.resumePayload : undefined,
             runEnvironment: input.runEnvironment,
             stepNameToTest: input.stepNameToTest ?? undefined,
+            entryStepName: input.entryStepName,
             logsFileId: input.logsFileId,
         })
     }
@@ -171,7 +180,15 @@ export class EngineConstants {
             contextVersion,
             stepNames: this.stepNames,
             pieceName,
+            scriptSession: this.getScriptSession(),
         })
+    }
+    private getScriptSession(): SharedScriptSession {
+        if (isNil(this.scriptSession)) {
+            this.scriptSession = scriptEvaluator.initSession({ flowVersionDir: path.resolve(this.baseCodeDirectory, this.flowVersionId) })
+            operationScope.track(this.scriptSession)
+        }
+        return this.scriptSession
     }
     private async getProject(): Promise<Project> {
         if (this.project) {

@@ -1,26 +1,7 @@
 import { Property, DynamicPropsValue } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { knackApiCall, KnackAuthProps } from './client';
+import { knackApiCall, KnackAuthValue } from './client';
 import { knackAuth } from './auth';
-
-interface KnackObject {
-  key: string;
-  name: string;
-}
-
-export interface KnackGetObjectResponse {
-  object: {
-    fields: {
-      type: string;
-      key: string;
-      name: string;
-      format: {
-        type: string;
-        options: string[];
-      };
-    }[];
-  };
-}
 
 export const objectDropdown = Property.Dropdown({
   displayName: 'Object',
@@ -35,27 +16,19 @@ export const objectDropdown = Property.Dropdown({
         options: [],
       };
     }
-
-    const typedAuth = auth;
-
     try {
-      const response = await knackApiCall<{ objects: KnackObject[] }>({
-        method: HttpMethod.GET,
-        auth: typedAuth,
-        resourceUri: '/objects',
-      });
-
+      const objects = await knackListObjects({ auth });
       return {
         disabled: false,
-        options: response.objects.map((object) => ({
+        options: objects.map((object) => ({
           label: object.name,
           value: object.key,
         })),
       };
-    } catch (error: any) {
+    } catch (error) {
       return {
         disabled: true,
-        placeholder: `Error loading objects: ${error.message}`,
+        placeholder: `Error loading objects: ${errorText(error)}`,
         options: [],
       };
     }
@@ -66,25 +39,18 @@ export const fieldIdDropdown = Property.Dropdown({
   auth: knackAuth,
   displayName: 'Field ID',
   required: true,
-  description:'Field to find the record by',
+  description: 'Field to find the record by',
   refreshers: ['object'],
   options: async ({ auth, object }) => {
-    if (!auth || !object) {
+    if (!auth || typeof object !== 'string' || object.length === 0) {
       return {
         disabled: true,
         placeholder: 'Please select an object first.',
         options: [],
       };
     }
-    const typedAuth = auth;
-
     try {
-      const response = await knackApiCall<KnackGetObjectResponse>({
-        method: HttpMethod.GET,
-        auth: typedAuth,
-        resourceUri: `/objects/${object}`,
-      });
-
+      const response = await knackGetObject({ auth, objectKey: object });
       return {
         disabled: false,
         options: response.object.fields.map((field) => ({
@@ -92,10 +58,10 @@ export const fieldIdDropdown = Property.Dropdown({
           value: field.key,
         })),
       };
-    } catch (error: any) {
+    } catch (error) {
       return {
         disabled: true,
-        placeholder: `Error loading objects: ${error.message}`,
+        placeholder: `Error loading fields: ${errorText(error)}`,
         options: [],
       };
     }
@@ -108,21 +74,14 @@ export const recordFields = Property.DynamicProperties({
   refreshers: ['object'],
   required: true,
   props: async ({ auth, object }) => {
-    if (!auth || !object) {
+    if (!auth || typeof object !== 'string' || object.length === 0) {
       return {};
     }
-
     const props: DynamicPropsValue = {};
+    const response = await knackGetObject({ auth, objectKey: object });
+    const fields: KnackField[] = response.object.fields ?? [];
 
-    const typedAuth = auth;
-
-    const response = await knackApiCall<KnackGetObjectResponse>({
-      method: HttpMethod.GET,
-      auth: typedAuth,
-      resourceUri: `/objects/${object}`,
-    });
-
-    for (const field of response.object.fields) {
+    for (const field of fields) {
       switch (field.type) {
         case 'short_text':
         case 'email':
@@ -150,18 +109,16 @@ export const recordFields = Property.DynamicProperties({
           });
           break;
         case 'multiple_choice': {
-          const options = field.format.options.map((option) => ({
+          const options = (field.format?.options ?? []).map((option) => ({
             label: option,
             value: option,
           }));
           props[field.key] =
-            field.format.type === 'multi'
+            field.format?.type === 'multi' || field.format?.type === 'checkboxes'
               ? Property.StaticMultiSelectDropdown({
                   displayName: field.name,
                   required: false,
-                  options: {
-                    options,
-                  },
+                  options: { options },
                 })
               : Property.StaticDropdown({
                   displayName: field.name,
@@ -176,39 +133,142 @@ export const recordFields = Property.DynamicProperties({
             required: false,
           });
           break;
+        case 'date_time':
+          props[field.key] = Property.DateTime({
+            displayName: field.name,
+            required: false,
+          });
+          break;
+        default:
+          if (!READ_ONLY_FIELD_TYPES.includes(field.type)) {
+            props[field.key] = Property.Json({
+              displayName: `${field.name} (${field.type})`,
+              description: 'Value in the format Knack expects for this field type, as JSON.',
+              required: false,
+            });
+          }
+          break;
       }
     }
     return props;
   },
 });
 
+export async function knackListObjects({ auth }: { auth: KnackAuthValue }): Promise<KnackObjectSummary[]> {
+  const response = await knackApiCall<{ objects: KnackObjectSummary[] }>({
+    method: HttpMethod.GET,
+    auth,
+    resourceUri: '/objects',
+  });
+  return response.objects ?? [];
+}
+
+export async function knackGetObject({
+  auth,
+  objectKey,
+}: {
+  auth: KnackAuthValue;
+  objectKey: string;
+}): Promise<KnackGetObjectResponse> {
+  return knackApiCall<KnackGetObjectResponse>({
+    method: HttpMethod.GET,
+    auth,
+    resourceUri: `/objects/${encodeURIComponent(objectKey)}`,
+  });
+}
+
 export function knackTransformFields(
   objectDetails: KnackGetObjectResponse,
-  recordFields: Record<string, any>
-): Record<string, any> {
-  const fields = objectDetails.object.fields;
-
+  record: Record<string, unknown>
+): Record<string, unknown> {
   const keyToNameMap: Record<string, string> = {};
-  for (const field of fields) {
+  for (const field of objectDetails.object.fields) {
     if (field && field.key && field.name) {
       keyToNameMap[field.key] = field.name;
     }
   }
 
-  const transformed: Record<string, any> = {};
-
-  for (const [key, value] of Object.entries(recordFields)) {
+  const transformed: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(record)) {
     const isRaw = key.endsWith('_raw');
     const baseKey = isRaw ? key.slice(0, -4) : key;
-
     const fieldName = keyToNameMap[baseKey];
     if (fieldName) {
-      const transformedKey = isRaw ? `${fieldName} raw` : fieldName;
-      transformed[transformedKey] = value;
+      transformed[isRaw ? `${fieldName} raw` : fieldName] = value;
     } else {
       transformed[key] = value;
     }
   }
-
   return transformed;
 }
+
+export function splitKnackRecord(record: Record<string, unknown>): KnackSplitRecord {
+  const { id, ...fields } = record;
+  return { id: typeof id === 'string' ? id : String(id ?? ''), fields };
+}
+
+export function parseFieldsObject(value: unknown): Record<string, unknown> {
+  const parsed: unknown = typeof value === 'string' ? safeJsonParse(value) : value;
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+    throw new Error('Fields must be a JSON object keyed by Knack field key, e.g. {"field_1": "value"}.');
+  }
+  const result: Record<string, unknown> = {};
+  for (const [key, entry] of Object.entries(parsed)) {
+    result[key] = entry;
+  }
+  return result;
+}
+
+export function safeJsonParse(value: string): unknown {
+  try {
+    return JSON.parse(value);
+  } catch {
+    throw new Error('Value is not valid JSON.');
+  }
+}
+
+function errorText(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+const READ_ONLY_FIELD_TYPES = [
+  'auto_increment',
+  'equation',
+  'concatenation',
+  'sum',
+  'count',
+  'min',
+  'max',
+  'average',
+  'user_roles',
+];
+
+export type KnackObjectSummary = {
+  key: string;
+  name: string;
+};
+
+export type KnackField = {
+  type: string;
+  key: string;
+  name: string;
+  required?: boolean;
+  unique?: boolean;
+  format?: {
+    type?: string;
+    options?: string[];
+  };
+};
+
+export type KnackGetObjectResponse = {
+  object: {
+    key?: string;
+    name?: string;
+    fields: KnackField[];
+  };
+};
+
+export type KnackSplitRecord = {
+  id: string;
+  fields: Record<string, unknown>;
+};

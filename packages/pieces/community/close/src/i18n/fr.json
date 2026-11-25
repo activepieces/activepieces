@@ -229,6 +229,7 @@
   "nextCursor from the previous page.": "nextCursor from the previous page.",
   "Words to find, e.g. company name or email.": "Words to find, e.g. company name or email.",
   "emailacct_... from Get Current User.": "emailacct_... from Get Current User.",
+  "Pass an empty string to clear it.": "Pass an empty string to clear it.",
   "Replaces all emails on the contact.": "Replaces all emails on the contact.",
   "Replaces all phones on the contact.": "Replaces all phones on the contact.",
   "Replaces all URLs on the contact.": "Replaces all URLs on the contact.",
@@ -276,11 +277,12 @@
   "PUT": "EFFACER",
   "DELETE": "SUPPRIMER",
   "HEAD": "TÊTE",
+  "Request": "Requête",
+  "Data to send": "Données à envoyer",
   "New Lead Created": "Nouveau prospect créé",
   "New Contact Added": "Nouveau contact ajouté",
   "New Opportunity Added": "Nouvelle opportunité ajoutée",
   "Triggers when a new lead is created.": "Déclenche lorsqu'un nouveau prospect est créé.",
   "Triggers when a new contact is created.": "Déclenche lorsqu'un nouveau contact est créé.",
-  "Triggers when a new opportunity is created.": "Déclenche quand une nouvelle opportunité est créée.",
-  "Pass an empty string to clear it.": "Pass an empty string to clear it."
+  "Triggers when a new opportunity is created.": "Déclenche quand une nouvelle opportunité est créée."
 }

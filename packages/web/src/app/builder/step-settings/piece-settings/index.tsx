@@ -16,7 +16,6 @@ import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { AutoFormFieldWrapper } from '@/app/builder/piece-properties/auto-form-field-wrapper';
-import { ConnectionSelect } from '@/app/connections/connection-select';
 import { FormField } from '@/components/ui/form';
 import { Skeleton } from '@/components/ui/skeleton';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -27,6 +26,8 @@ import { filterPropertyUtils } from '../../piece-properties/filter-property-util
 import { GenericPropertiesForm } from '../../piece-properties/generic-properties-form';
 import { PieceNotAvailableAlert } from '../piece-not-available-alert';
 import { useStepSettingsContext } from '../step-settings-context';
+
+import { ConnectionSelectWithSwitchConfirmation } from './switch-connection-confirmation-dialog';
 
 const PieceSettings = React.memo((props: PieceSettingsProps) => {
   const {
@@ -67,10 +68,14 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
   );
 
   const { data: frontendUrl } = flagsHooks.useFlag<string>(ApFlagId.PUBLIC_URL);
+  const { data: embedSubdomainUrl } = flagsHooks.useFlag<string>(
+    ApFlagId.EMBED_SUBDOMAIN_URL,
+  );
+  const publicLinkBaseUrl = embedSubdomainUrl ?? frontendUrl;
   const markdownVariables = {
     webhookUrl: `${webhookPrefixUrl}/${props.flowId}`,
-    formUrl: `${frontendUrl}forms/${props.flowId}`,
-    chatUrl: `${frontendUrl}chats/${props.flowId}`,
+    formUrl: `${publicLinkBaseUrl}forms/${props.flowId}`,
+    chatUrl: `${publicLinkBaseUrl}chats/${props.flowId}`,
     pausedFlowTimeoutDays: pausedFlowTimeoutDays?.toString() ?? '',
     webhookTimeoutSeconds: webhookTimeoutSeconds?.toString() ?? '',
   };
@@ -170,8 +175,9 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
                   dynamicInputModeToggled={authDynamicInputModeToggled}
                   isForConnectionSelect={true}
                 >
-                  <ConnectionSelect
+                  <ConnectionSelectWithSwitchConfirmation
                     piece={pieceModel}
+                    stepProps={(selectedAction ?? selectedTrigger)?.props ?? {}}
                     value={field.value}
                     onChange={field.onChange}
                     disabled={props.readonly}

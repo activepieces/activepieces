@@ -2,10 +2,12 @@ import { randomBytes } from 'node:crypto'
 import { FastifyInstance } from 'fastify'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { MCP_OAUTH_REDIRECT_URI, mcpOAuthTestHelpers } from '../../../helpers/mcp-oauth'
+import { MCP_OAUTH_REDIRECT_URI, McpGrantee, mcpOAuthTestHelpers } from '../../../helpers/mcp-oauth'
+import { createTestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance
+let grantee: McpGrantee
 
 const OTHER_REDIRECT_URI = 'https://example.com/other/callback'
 
@@ -37,12 +39,14 @@ function redeem({ clientId, code, verifier, redirectUri = MCP_OAUTH_REDIRECT_URI
 describe('MCP OAuth authorization code redemption', () => {
     beforeAll(async () => {
         app = await setupTestEnvironment({ fresh: true })
+        const ctx = await createTestContext(app)
+        grantee = { userId: ctx.user.id, projectId: ctx.project.id, platformId: ctx.platform.id }
     })
 
     it('redeems a code exactly once', async () => {
         const clientId = await registerPublicClient()
         const { verifier, challenge } = mcpOAuthTestHelpers.generatePkce()
-        const code = await mcpOAuthTestHelpers.issueCode({ clientId, codeChallenge: challenge })
+        const code = await mcpOAuthTestHelpers.issueCode({ clientId, codeChallenge: challenge, ...grantee })
 
         const first = await redeem({ clientId, code, verifier })
         const second = await redeem({ clientId, code, verifier })
@@ -55,7 +59,7 @@ describe('MCP OAuth authorization code redemption', () => {
     it('redeems a code exactly once under concurrent redemption', async () => {
         const clientId = await registerPublicClient()
         const { verifier, challenge } = mcpOAuthTestHelpers.generatePkce()
-        const code = await mcpOAuthTestHelpers.issueCode({ clientId, codeChallenge: challenge })
+        const code = await mcpOAuthTestHelpers.issueCode({ clientId, codeChallenge: challenge, ...grantee })
 
         const results = await Promise.all(
             Array.from({ length: 4 }, () => redeem({ clientId, code, verifier })),
@@ -68,7 +72,7 @@ describe('MCP OAuth authorization code redemption', () => {
         const owner = await registerPublicClient()
         const attacker = await registerPublicClient()
         const { verifier, challenge } = mcpOAuthTestHelpers.generatePkce()
-        const code = await mcpOAuthTestHelpers.issueCode({ clientId: owner, codeChallenge: challenge })
+        const code = await mcpOAuthTestHelpers.issueCode({ clientId: owner, codeChallenge: challenge, ...grantee })
 
         const res = await redeem({ clientId: attacker, code, verifier })
 
@@ -79,7 +83,7 @@ describe('MCP OAuth authorization code redemption', () => {
     it('refuses a code presented with a different redirect_uri', async () => {
         const clientId = await registerPublicClient([MCP_OAUTH_REDIRECT_URI, OTHER_REDIRECT_URI])
         const { verifier, challenge } = mcpOAuthTestHelpers.generatePkce()
-        const code = await mcpOAuthTestHelpers.issueCode({ clientId, codeChallenge: challenge })
+        const code = await mcpOAuthTestHelpers.issueCode({ clientId, codeChallenge: challenge, ...grantee })
 
         const res = await redeem({ clientId, code, verifier, redirectUri: OTHER_REDIRECT_URI })
 
@@ -90,7 +94,7 @@ describe('MCP OAuth authorization code redemption', () => {
     it('refuses an expired code', async () => {
         const clientId = await registerPublicClient()
         const { verifier, challenge } = mcpOAuthTestHelpers.generatePkce()
-        const code = await mcpOAuthTestHelpers.issueCode({ clientId, codeChallenge: challenge })
+        const code = await mcpOAuthTestHelpers.issueCode({ clientId, codeChallenge: challenge, ...grantee })
         await databaseConnection().query(
             'UPDATE mcp_oauth_authorization_code SET "expiresAt" = NOW() - INTERVAL \'1 hour\' WHERE "code" = $1',
             [code],
@@ -105,7 +109,7 @@ describe('MCP OAuth authorization code redemption', () => {
     it('refuses a code presented with the wrong PKCE verifier', async () => {
         const clientId = await registerPublicClient()
         const { challenge } = mcpOAuthTestHelpers.generatePkce()
-        const code = await mcpOAuthTestHelpers.issueCode({ clientId, codeChallenge: challenge })
+        const code = await mcpOAuthTestHelpers.issueCode({ clientId, codeChallenge: challenge, ...grantee })
 
         const res = await redeem({ clientId, code, verifier: randomBytes(32).toString('base64url') })
 

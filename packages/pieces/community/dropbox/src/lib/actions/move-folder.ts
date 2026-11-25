@@ -11,39 +11,50 @@ export const dropboxMoveFolder = createAction({
   auth: dropboxAuth,
   name: 'move_dropbox_folder',
   classification: 'WRITE',
-  description: 'Move a folder',
+  description: 'Move or rename a folder',
   audience: 'human',
   aiMetadata: { description: 'Moves (or renames) the folder at the source path, including its contents, to a new destination path within Dropbox; optionally autorenames on conflict. Use to relocate or rename an entire directory. Not idempotent: after a successful move the source no longer exists, so repeating the call fails or, with autorename, produces a differently named folder.', idempotent: false },
-  displayName: 'Move folder',
+  displayName: 'Move Folder',
   outputSchema: folderMetadataOutputSchema,
   props: {
     from_path: Property.ShortText({
       displayName: 'From Path',
-      description:
-        'The current path of the folder (e.g. /folder1/sourceFolder)',
+      description: 'Path of the folder to move.',
+      placeholder: '/Reports',
       required: true,
     }),
     to_path: Property.ShortText({
       displayName: 'To Path',
-      description:
-        'The new path for the folder (e.g. /folder2/destinationFolder)',
+      description: 'New path, including the folder name.',
+      placeholder: '/Archive/Reports',
       required: true,
     }),
     autorename: Property.Checkbox({
       displayName: 'Auto Rename',
       description:
-        "If there's a conflict, have the Dropbox server try to autorename the folder to avoid conflict.",
+        'If the name is taken, save under a new name instead of failing.',
       defaultValue: false,
       required: false,
+      advanced: true,
     }),
     allow_ownership_transfer: Property.Checkbox({
       displayName: 'Allow Ownership Transfer',
       description:
-        'Allows moves by owner even if it would result in an ownership transfer.',
+        'Allow the move even if it changes who owns the folder.',
       defaultValue: false,
       required: false,
+      advanced: true,
     }),
   },
+  propertyGroups: [
+    {
+      key: 'paths',
+      display: 'section',
+      label: 'From and To',
+      icon: 'file',
+      props: ['from_path', 'to_path'],
+    },
+  ],
   async run(context) {
     const params = {
       from_path: context.propsValue.from_path,

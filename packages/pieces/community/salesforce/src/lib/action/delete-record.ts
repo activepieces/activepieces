@@ -1,4 +1,4 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { MarkdownVariant, Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { salesforceAuth } from '../..';
 import { callSalesforceApi, salesforcesCommon } from '../common';
@@ -9,11 +9,15 @@ export const deleteRecord = createAction({
     name: 'delete_record',
     classification: 'DESTRUCTIVE',
     displayName: 'Delete Record',
-    description: 'Deletes an existing record in an object.',
+    description: 'Deletes a record. It goes to the Recycle Bin.',
     audience: 'human',
     aiMetadata: { description: 'Delete a single record of any object by its ID. Destructive and irreversible from here; not idempotent, since a repeat call on an already-deleted ID errors. Use this generic delete for objects without a dedicated one (Delete Opportunity exists separately).', idempotent: false },
     outputSchema: successOutputSchema,
     props: {
+        recycle_info: Property.MarkDown({
+            value: 'Deleted records go to the Recycle Bin, where they can be restored.',
+            variant: MarkdownVariant.INFO,
+        }),
         object: salesforcesCommon.object,
         record_id: salesforcesCommon.record,
     },

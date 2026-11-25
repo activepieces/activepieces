@@ -68,8 +68,8 @@ export const apGetPiecePropsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                     })
                 }
 
-                const requiredInputs = mcpUtils.buildRequiredInputs(props)
-                const exampleInput = mcpUtils.buildExampleInput(props)
+                const requiredInputs = mcpUtils.buildRequiredInputs({ props, providedInput })
+                const exampleInput = mcpUtils.buildExampleInput({ props, providedInput })
 
                 const aiMetadata = component.aiMetadata
                 const declaredOutputFields = component.outputSchema?.fields
@@ -209,7 +209,7 @@ async function discoverAvailableConnections({ pieceName, projectId, platformId, 
         const connections = await appConnectionService(log).list({
             projectId,
             platformId,
-            pieceName,
+            pieceNames: [pieceName],
             cursorRequest: null,
             scope: undefined,
             displayName: undefined,
@@ -241,7 +241,7 @@ async function validateAuthOwnership({ auth, pieceName, projectId, platformId, l
         const connections = await appConnectionService(log).list({
             projectId,
             platformId,
-            pieceName,
+            pieceNames: [pieceName],
             cursorRequest: null,
             scope: undefined,
             displayName: undefined,

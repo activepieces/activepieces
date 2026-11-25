@@ -1,137 +1,78 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { HttpError, HttpMethod, QueryParams } from '@activepieces/pieces-common';
-import { hunterApiCall } from '../common';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { hunterAuth } from '../auth';
-import {
-    domainProp,
-    companyProp,
-    firstNameProp,
-    lastNameProp,
-    fullNameProp,
-    maxDurationProp,
-} from '../common/props';
+import { apiKeyOf, optionalInteger, optionalText } from '../common/client';
+import { hunterOutputSchemas } from '../common/output-schemas';
+import { companyProp, domainProp, fullNameProp, maxDurationProp } from '../common/props';
+import { hunterRequests } from '../common/requests';
 
 export const findEmailAction = createAction({
-    auth: hunterAuth,
-    name: 'find-email',
-    classification: 'SEARCH',
-    displayName: 'Find Email',
-    description: 'Retrieve/propose the most likely email for a person at a domain.',
-    audience: 'both',
-    aiMetadata: { description: 'Finds the most likely professional email address for a named person at a given company, returning a confidence score and supporting sources. Use to discover an unknown contact email from a name plus an organization. Requires either a domain or a company name, plus either both first and last name or a full name; this is a read-only lookup and is idempotent for the same input.', idempotent: true },
-    props: {
-        domain: domainProp,
-        company: companyProp,
-        first_name: firstNameProp,
-        last_name: lastNameProp,
-        full_name: fullNameProp,
-        max_duration: maxDurationProp,
-    },
-    async run(context) {
-        const {
-            domain,
-            company,
-            first_name,
-            last_name,
-            full_name,
-            max_duration,
-        } = context.propsValue as {
-            domain?: string;
-            company?: string;
-            first_name?: string;
-            last_name?: string;
-            full_name?: string;
-            max_duration?: number;
-        };
-
-        if (!domain && !company) {
-            throw new Error('You must provide at least a domain or a company name.');
-        }
-        if (
-            !((first_name && last_name) || full_name)
-        ) {
-            throw new Error(
-                'You must provide both first_name and last_name, or a full_name.'
-            );
-        }
-        if (max_duration !== undefined && (max_duration < 3 || max_duration > 20)) {
-            throw new Error('max_duration must be between 3 and 20 seconds.');
-        }
-
-        const qparams: QueryParams = {};
-        if (domain) qparams['domain'] = domain;
-        else if (company) qparams['company'] = company;
-        if (first_name) qparams['first_name'] = first_name;
-        if (last_name) qparams['last_name'] = last_name;
-        if (full_name) qparams['full_name'] = full_name;
-        if (max_duration !== undefined) qparams['max_duration'] = String(max_duration);
-
-        let responseBody: any;
-        try {
-            responseBody = await hunterApiCall({
-                apiKey: context.auth,
-                endpoint: '/email-finder',
-                method: HttpMethod.GET,
-                qparams,
-            });
-        } catch (err) {
-            const httpErr = err as HttpError;
-            const status = httpErr.response?.status;
-            const errId = (httpErr.response?.body as any)?.errors?.[0]?.id;
-            const details = (httpErr.response?.body as any)?.errors?.[0]?.details ?? '';
-
-            if (status === 400) {
-                switch (errId) {
-                    case 'wrong_params':
-                        throw new Error(
-                            'Missing required parameter—please supply domain or company, and first_name+last_name or full_name.'
-                        );
-                    case 'invalid_first_name':
-                        throw new Error('The supplied first_name is invalid.');
-                    case 'invalid_last_name':
-                        throw new Error('The supplied last_name is invalid.');
-                    case 'invalid_full_name':
-                        throw new Error('The supplied full_name is invalid.');
-                    case 'invalid_domain':
-                        throw new Error(
-                            'The supplied domain is invalid or lacks MX records.'
-                        );
-                    case 'invalid_max_duration':
-                        throw new Error(
-                            'The supplied max_duration is invalid (must be 3–20 seconds).'
-                        );
-                }
-            }
-            if (status === 429) {
-                throw new Error(
-                    'Rate limit exceeded (15 requests/sec, 500 req/min). Please retry shortly.'
-                );
-            }
-            if (status === 451 && errId === 'claimed_email') {
-                throw new Error(
-                    'This email address cannot be processed because its owner requested to stop processing.'
-                );
-            }
-            throw new Error(
-                `Hunter Email Finder error: ${details} (status ${status}).`
-            );
-        }
-
-        const d = responseBody.data;
-        return {
-            first_name: d.first_name,
-            last_name: d.last_name,
-            email: d.email,
-            score: d.score,
-            domain: d.domain,
-            accept_all: d.accept_all,
-            position: d.position,
-            twitter: d.twitter,
-            linkedin_url: d.linkedin_url,
-            phone_number: d.phone_number,
-            company: d.company,
-            sources: d.sources,
-            verification: d.verification,
-        };
-    },
+  auth: hunterAuth,
+  name: 'find-email',
+  classification: 'SEARCH',
+  displayName: 'Find Email',
+  description: 'Find the most likely email of a person at a company. Uses 1 credit when an email is found.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Finds the most likely professional email for a person at a company, with a confidence score, sources and verification status. Needs a domain, a company name or a LinkedIn handle, plus first and last name or a full name (not needed with a LinkedIn handle). Costs 1 Hunter credit when an email is found (none when not found; repeats of the same email in a billing month are free). Read-only on Hunter data.',
+    idempotent: true,
+  },
+  props: {
+    domain: domainProp,
+    company: companyProp,
+    first_name: Property.ShortText({ displayName: 'First Name', required: false }),
+    last_name: Property.ShortText({ displayName: 'Last Name', required: false }),
+    full_name: fullNameProp,
+    linkedin_handle: Property.ShortText({
+      displayName: 'LinkedIn Handle',
+      required: false,
+      description: 'Handle from the LinkedIn profile URL. Replaces domain and name.',
+      placeholder: 'john-doe-123',
+    }),
+    max_duration: maxDurationProp,
+  },
+  outputSchema: hunterOutputSchemas.emailFinder,
+  async run(context) {
+    const domain = optionalText(context.propsValue.domain);
+    const company = optionalText(context.propsValue.company);
+    const firstName = optionalText(context.propsValue.first_name);
+    const lastName = optionalText(context.propsValue.last_name);
+    const fullName = optionalText(context.propsValue.full_name);
+    const linkedinHandle = optionalText(context.propsValue.linkedin_handle);
+    if (linkedinHandle === undefined) {
+      if (domain === undefined && company === undefined) {
+        throw new Error('Provide a domain, a company name or a LinkedIn handle.');
+      }
+      if (!((firstName !== undefined && lastName !== undefined) || fullName !== undefined)) {
+        throw new Error('Provide both first and last name, or a full name.');
+      }
+    }
+    const data = await hunterRequests.findEmail({
+      apiKey: apiKeyOf(context.auth),
+      query: {
+        domain,
+        company: domain === undefined ? company : undefined,
+        first_name: firstName,
+        last_name: lastName,
+        full_name: fullName,
+        linkedin_handle: linkedinHandle,
+        max_duration: optionalInteger({ value: context.propsValue.max_duration, label: 'Max Duration', min: 3, max: 20 }),
+      },
+    });
+    return {
+      first_name: data['first_name'],
+      last_name: data['last_name'],
+      email: data['email'],
+      score: data['score'],
+      domain: data['domain'],
+      accept_all: data['accept_all'],
+      position: data['position'],
+      twitter: data['twitter'],
+      linkedin_url: data['linkedin_url'],
+      phone_number: data['phone_number'],
+      company: data['company'],
+      sources: data['sources'],
+      verification: data['verification'],
+    };
+  },
 });

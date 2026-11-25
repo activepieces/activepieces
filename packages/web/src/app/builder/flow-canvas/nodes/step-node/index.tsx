@@ -1,4 +1,5 @@
 import {
+  FlowActionType,
   FlowOperationType,
   FlowTriggerType,
   Step,
@@ -16,6 +17,7 @@ import { stepsHooks } from '@/features/pieces';
 import { cn } from '@/lib/utils';
 
 import { flowCanvasConsts } from '../../utils/consts';
+import { flowCanvasUtils } from '../../utils/flow-canvas-utils';
 import { ApStepNode } from '../../utils/types';
 
 import { StepNodeChevron } from './step-node-chevron';
@@ -64,6 +66,7 @@ const ApStepCanvasNode = React.memo(
       stepName: step.name,
       trigger: flowVersion.trigger,
     });
+    const stepDisplayName = flowCanvasUtils.getStepDisplayName(step);
     const chevronClickOverride =
       step.type === FlowTriggerType.EMPTY
         ? () => setOpenedPieceSelectorStepNameOrAddButtonId(step.name)
@@ -153,8 +156,10 @@ const ApStepCanvasNode = React.memo(
         {...stepNodeDivListeners}
       >
         {isTrigger && <TriggerWidget isSelected={isSelected} />}
-        <LoopIterationInput stepName={step.name} />
-        <ApStepNodeStatusInRun stepName={step.name} />
+        {step.type === FlowActionType.LOOP_ON_ITEMS && (
+          <LoopIterationInput stepName={step.name} />
+        )}
+        <ApStepNodeStatusInRun stepName={step.name} stepType={step.type} />
         <ApStepNodeSkippedStatus stepName={step.name} />
         <ApStepNodeStatusInDraft stepName={step.name} />
         <div
@@ -194,7 +199,7 @@ const ApStepCanvasNode = React.memo(
                     displayName={stepMetadata?.displayName ?? ''}
                   />
                   <StepNodeDisplayName
-                    stepDisplayName={step.displayName}
+                    stepDisplayName={stepDisplayName}
                     stepIndex={stepIndex}
                     isSkipped={isSkipped}
                     pieceDisplayName={stepMetadata?.displayName ?? ''}
@@ -216,7 +221,7 @@ const ApStepCanvasNode = React.memo(
             >
               <div className="flex flex-col items-center min-w-0 pointer-events-auto">
                 <StepNodeDisplayName
-                  stepDisplayName={step.displayName}
+                  stepDisplayName={stepDisplayName}
                   stepIndex={stepIndex}
                   isSkipped={isSkipped}
                   pieceDisplayName={stepMetadata?.displayName ?? ''}

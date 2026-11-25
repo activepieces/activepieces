@@ -69,4 +69,23 @@ describe('kafkaConfig', () => {
       brokers: 'kafka.internal:9092',
     })).toBe('Enter a topic name, for example orders.')
   })
+
+  it('builds a fail-fast config for connection checks', () => {
+    expect(kafkaConfig.buildForValidation({
+      brokers: 'kafka.internal:9092',
+      securityProtocol: 'PLAINTEXT',
+    })).toMatchObject({
+      brokers: ['kafka.internal:9092'],
+      connectionTimeout: 5_000,
+      retry: { retries: 0 },
+    })
+  })
+
+  it('does not repeat a cause that is already in the error message', () => {
+    const error = new Error('Connection error: connect ECONNREFUSED 127.0.0.1:9999', {
+      cause: new Error('Connection error: connect ECONNREFUSED 127.0.0.1:9999'),
+    })
+    const message = kafkaConfig.describeError({ error, brokers: 'localhost:9999' })
+    expect(message.match(/ECONNREFUSED/g)).toHaveLength(1)
+  })
 })

@@ -19,6 +19,29 @@ export const findRecordAction = createAction({
       'Reads records from an AITable datasheet, optionally narrowing by record IDs, a formula filter, or a field-name projection, with pagination controls; leaving the filters empty returns all records (paged). Use to look up or list datasheet rows before acting on them. Idempotent: it only reads data.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'location',
+      display: 'section',
+      label: 'Location',
+      icon: 'location',
+      props: ['space_id', 'datasheet_id'],
+    },
+    {
+      key: 'filters',
+      display: 'section',
+      label: 'Filters',
+      icon: 'filter',
+      props: ['filter', 'recordIds'],
+    },
+    {
+      key: 'results',
+      display: 'section',
+      label: 'Results',
+      icon: 'sliders',
+      props: ['fieldNames', 'pageSize'],
+    },
+  ],
   props: {
     space_id: APITableCommon.space_id,
     datasheet_id: APITableCommon.datasheet_id,

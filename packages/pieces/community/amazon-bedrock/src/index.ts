@@ -8,6 +8,7 @@ import { generateImage } from './lib/actions/generate-image';
 import { generateEmbeddings } from './lib/actions/generate-embeddings';
 import { customApiCall } from './lib/actions/custom-api-call';
 import { awsBedrockCombinedAuth } from './lib/auth';
+import { amazonBedrockAiActions } from './lib/actions/ai';
 
 export const awsBedrock = createPiece({
   displayName: 'AWS Bedrock',
@@ -17,6 +18,6 @@ export const awsBedrock = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/amazon-bedrock.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ["onyedikachi-david"],
-  actions: [sendPrompt, generateContentFromImage, generateImage, generateEmbeddings, customApiCall],
+  actions: [sendPrompt, generateContentFromImage, generateImage, generateEmbeddings, ...amazonBedrockAiActions, customApiCall],
   triggers: [],
 });

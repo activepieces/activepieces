@@ -143,6 +143,9 @@ export const alertsService = (log: FastifyBaseLogger) => ({
             id: alertId,
         })
     },
+    async deleteByProjectId({ projectId }: { projectId: ApId }): Promise<void> {
+        await repo().delete({ projectId })
+    },
 })
 
 async function getFlowOwnerEmail({ log, flowId, projectId }: { log: FastifyBaseLogger, flowId: string, projectId: string }): Promise<string | undefined> {

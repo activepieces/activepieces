@@ -40,7 +40,8 @@ export const gistly = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/gistly.svg',
   authors: ['rafalzawadzki'],
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE, PieceCategory.DEVELOPER_TOOLS, PieceCategory.CONTENT_AND_FILES],
-  description: 'YouTube Transcripts',
+  description: 'The Gistly API now lives at Supadata. Use the Supadata piece instead.',
+  deprecated: true,
   actions: [getTranscriptAction],
   triggers: [],
 }); 

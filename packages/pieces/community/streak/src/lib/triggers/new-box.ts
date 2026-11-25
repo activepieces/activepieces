@@ -1,3 +1,4 @@
+import { boxWebhookOutputSchema } from '../common/output-schemas';
 import { createPipelineWebhookTrigger } from '../common/trigger-factory';
 
 export const newBoxTrigger = createPipelineWebhookTrigger({
@@ -9,6 +10,7 @@ export const newBoxTrigger = createPipelineWebhookTrigger({
       'Fires when a new box (CRM record such as a deal or lead) is created in the selected Streak pipeline, representing a freshly added record.',
   },
   event: 'BOX_CREATE',
+  outputSchema: boxWebhookOutputSchema,
   sampleData: {
     boxKey: 'agxzfm1haWxmb29nYWVyMQsSDE9yZ2FuaXphdGlvbiIHc3RyZWFrMAwLEgRVc2VyGNwGDAsSA0JveBiAgIDAj-iiCgw',
     name: 'Acme Inc',

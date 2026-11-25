@@ -28,6 +28,7 @@ import { Input } from '@/components/ui/input';
 import { samlSsoApi, ssoMutations } from '@/features/platform-admin';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
+import { DomainVerificationStatus } from '@/lib/statuses';
 
 export const DomainVerification = ({
   platform,
@@ -167,7 +168,7 @@ const PendingDomain = ({
           </h3>
           <p className="text-sm text-gray-11">
             {t(
-              'Add this TXT record at your DNS provider, then verify. Verify within 3 hours or the domain is dropped.',
+              'Add this TXT record at your DNS provider, then verify. Verify within 7 days or the domain is dropped.',
             )}
           </p>
         </div>
@@ -204,7 +205,10 @@ const VerifiedDomain = ({
         media={<DomainStatusIcon status="verified" />}
         title={domain}
       >
-        <StatusDot tone="success" className="text-xs text-gray-11">
+        <StatusDot
+          status={DomainVerificationStatus.VERIFIED}
+          className="text-xs text-gray-11"
+        >
           {t('Verified')}
         </StatusDot>
       </SettingsRow>

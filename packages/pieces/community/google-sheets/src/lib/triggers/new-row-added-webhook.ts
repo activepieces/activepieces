@@ -1,27 +1,79 @@
 import {
-	DEDUPE_KEY_PROPERTY,
+	createTrigger,
+	isNil,
 	Property,
+	Store,
 	TriggerStrategy,
 	WebhookRenewStrategy,
-	createTrigger,
 } from '@activepieces/pieces-framework';
-
-import {
-	createFileNotification,
-	deleteFileNotification,
-	getWorkSheetName,
-	getWorkSheetValues,
-	hashObject,
-	isChangeContentMessage,
-	isSyncMessage,
-	mapRowsToColumnLabels,
-	WebhookInformation,
-} from './helpers';
-
 import { googleSheetsAuth } from '../common/common';
 import { commonProps } from '../common/props';
-import { areSheetIdsValid,  } from '../common/common';
 import { googlesheetsNewRowAddedTriggerOutputSchema } from '../output-schemas';
+import { getWorkSheetName, getWorkSheetValues, mapRowsToColumnLabels, sheetIdentity } from './helpers';
+import { LoadedSnapshot, RowFingerprint, rowSnapshot, SnapshotIdentity } from './row-snapshot';
+import { rowRun } from './row-run';
+import { sheetChannel } from './sheet-channel';
+
+const CHANNEL_STORE_KEY = 'googlesheets_new_row_added';
+const SNAPSHOT_STORE_KEY = 'googlesheets_new_row_added_snapshot';
+const DELIVERED_STORE_KEY = 'googlesheets_new_row_added_delivered';
+const NO_TRIGGER_COLUMN = 'first_cell';
+
+function legacyStoreKey(sheetId: number): string {
+	return `${sheetId}`;
+}
+
+async function findAddedRows({
+	store,
+	identity,
+	previous,
+	current,
+}: {
+	store: Store;
+	identity: SnapshotIdentity;
+	previous: LoadedSnapshot | null;
+	current: RowFingerprint[];
+}): Promise<{ indexes: number[]; legacy: boolean; unchanged: boolean; loaded: LoadedSnapshot | null; previousByIndex: Map<number, string> }> {
+	if (!isNil(previous)) {
+		const { changes, lastKnownIndex } = rowSnapshot.diffRows({
+			previous: previous.rows,
+			current,
+			pairMovedRowsByTrigger: true,
+		});
+		return {
+			indexes: changes
+				.filter(
+					(change) =>
+						change.kind === 'new' &&
+						change.index > lastKnownIndex &&
+						!rowSnapshot.isEmptyRow(change.current),
+				)
+				.map((change) => change.index),
+			legacy: false,
+			unchanged: rowSnapshot.sameRows({ previous: previous.rows, current }),
+			loaded: previous,
+			previousByIndex: new Map(
+				changes.flatMap((change): [number, string][] =>
+					isNil(change.previous) ? [] : [[change.index, change.previous.full]],
+				),
+			),
+		};
+	}
+	const legacyRowCount = await store.get<unknown>(legacyStoreKey(identity.sheetId));
+	if (typeof legacyRowCount === 'number') {
+		return {
+			indexes: current
+				.map((_row, index) => index)
+				.filter((index) => index >= legacyRowCount),
+			legacy: true,
+			unchanged: false,
+			loaded: null,
+			previousByIndex: new Map(),
+		};
+	}
+	console.info('[google-sheets] new_row_added: no row snapshot for these settings, taking a new baseline.');
+	return { indexes: [], legacy: false, unchanged: false, loaded: null, previousByIndex: new Map() };
+}
 
 export const newRowAddedTrigger = createTrigger({
 	auth: googleSheetsAuth,
@@ -31,12 +83,12 @@ export const newRowAddedTrigger = createTrigger({
 	description: 'Triggers when a new row is added to the bottom of a worksheet.',
 	aiMetadata: {
 		description:
-			'Fires when one or more rows are appended to the bottom of the selected worksheet, emitting one event per newly added row with its column values. Use to react to fresh entries only; edits to existing rows do not fire this. Delivery may lag up to a few minutes due to Google notification delays.',
+			'Fires for rows appended below the last row it has already seen in the selected worksheet, emitting one event per new row with its column values. Inserting rows above the bottom, sorting, deleting rows and editing existing rows do not fire this. Delivery may lag up to a few minutes due to Google notification delays.',
 	},
 	props: {
 		info: Property.MarkDown({
 			value:
-				'Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.',
+				'Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.\n\nOnly rows added below the last row fire. Rows inserted higher up, sorting and edits do not.',
 		}),
 		...commonProps,
 	},
@@ -47,143 +99,105 @@ export const newRowAddedTrigger = createTrigger({
 	},
 	type: TriggerStrategy.WEBHOOK,
 	async onEnable(context) {
-		const { spreadsheetId:inputSpreadsheetId, sheetId:inputSheetId } = context.propsValue;
+		const { spreadsheetId, sheetId } = sheetIdentity(context.propsValue);
+		const identity = { spreadsheetId, sheetId, triggerColumn: NO_TRIGGER_COLUMN };
+		await getWorkSheetName(context.auth, spreadsheetId, sheetId);
+		const keepSnapshot =
+			context.isRepublish === true &&
+			!isNil(await rowSnapshot.loadSnapshot({ store: context.store, key: SNAPSHOT_STORE_KEY, identity }));
+		if (!keepSnapshot) {
+			const { grid, readAt } = await rowRun.readRows({ auth: context.auth, spreadsheetId, sheetId });
+			await rowSnapshot.saveSnapshot({
+				store: context.store,
+				key: SNAPSHOT_STORE_KEY,
+				identity,
+				rows: rowSnapshot.fingerprintRowsByFirstCell({ rows: grid.raw }),
+				readAt,
+			});
+		}
+		await context.store.delete(legacyStoreKey(sheetId));
 
-		 if (!areSheetIdsValid(inputSpreadsheetId, inputSheetId)) {
-					throw new Error('Please select a spreadsheet and sheet first.');
-				}
-		
-		const sheetId = Number(inputSheetId);
-		const spreadsheetId = inputSpreadsheetId as string;
-
-		const sheetName = await getWorkSheetName(context.auth, spreadsheetId, sheetId);
-		const currentSheetValues = await getWorkSheetValues(context.auth, spreadsheetId, sheetName);
-
-		await context.store.put(`${sheetId}`, currentSheetValues.length);
-
-		const fileNotificationRes = await createFileNotification(
-			context.auth,
+		await sheetChannel.openChannel({
+			auth: context.auth,
+			store: context.store,
+			storeKey: CHANNEL_STORE_KEY,
 			spreadsheetId,
-			context.webhookUrl,
-			context.propsValue.includeTeamDrives,
-		);
-
-		await context.store.put<WebhookInformation>(
-			'googlesheets_new_row_added',
-			fileNotificationRes.data,
-		);
+			webhookUrl: context.webhookUrl,
+			includeTeamDrives: context.propsValue.includeTeamDrives,
+		});
 	},
 	async onDisable(context) {
-		const webhook = await context.store.get<WebhookInformation>(`googlesheets_new_row_added`);
-		if (webhook != null && webhook.id != null && webhook.resourceId != null) {
-			try
-			{
-			await deleteFileNotification(context.auth, webhook.id, webhook.resourceId);
-			}
-			catch(err){
-  				console.debug("deleteFileNotification failed :",JSON.stringify(err));
-			}
-		}
+		await sheetChannel.closeChannel({
+			auth: context.auth,
+			store: context.store,
+			storeKey: CHANNEL_STORE_KEY,
+		});
 	},
 	async run(context) {
-		if (isSyncMessage(context.payload.headers)) {
-			return [];
-		}
-		if (!isChangeContentMessage(context.payload.headers)) {
-			return [];
-		}
-
-		const { spreadsheetId:inputSpreadsheetId, sheetId:inputSheetId } = context.propsValue;
-
-		 if (!areSheetIdsValid(inputSpreadsheetId, inputSheetId)) {
-					throw new Error('Please select a spreadsheet and sheet first.');
-				}
-		
-		const sheetId = Number(inputSheetId);
-		const spreadsheetId = inputSpreadsheetId as string;
-
-		const oldRowCount = (await context.store.get(`${sheetId}`)) as number;
-
-		const sheetName = await getWorkSheetName(context.auth, spreadsheetId, sheetId);
-		const currentRowValues = await getWorkSheetValues(context.auth, spreadsheetId, sheetName);
-		const currentRowCount = currentRowValues.length;
-
-		const headers =  currentRowValues[0] ?? [];
-		const headerCount = headers.length;
-
-		if (oldRowCount >= currentRowCount) {
-			if (oldRowCount > currentRowCount) {
-				await context.store.put(`${sheetId}`, currentRowCount);
-			}
+		const handle = await rowRun.shouldHandleNotification({
+			store: context.store,
+			channelStoreKey: CHANNEL_STORE_KEY,
+			headers: context.payload.headers,
+		});
+		if (!handle) {
 			return [];
 		}
 
-		// create A1 notation range for new rows
-		const range = `${sheetName}!${oldRowCount + 1}:${currentRowCount}`;
+		const { spreadsheetId, sheetId } = sheetIdentity(context.propsValue);
+		const identity: SnapshotIdentity = { spreadsheetId, sheetId, triggerColumn: NO_TRIGGER_COLUMN };
 
-		const newRowValues = await getWorkSheetValues(
-			context.auth,
-			spreadsheetId,
-			range,
-		);
+		const previous = await rowSnapshot.loadSnapshot({ store: context.store, key: SNAPSHOT_STORE_KEY, identity });
+		const { grid, readAt } = await rowRun.readRows({ auth: context.auth, spreadsheetId, sheetId });
+		const current = rowSnapshot.fingerprintRowsByFirstCell({ rows: grid.raw });
 
-		await context.store.put(`${sheetId}`, currentRowCount);
+		const added = await findAddedRows({ store: context.store, identity, previous, current });
+		const events = rowRun.labelRows({ display: grid.display, indexes: added.indexes });
 
-		const transformedRowValues = mapRowsToColumnLabels(newRowValues, oldRowCount,headerCount);
-		return transformedRowValues.map((row) => {
-			return {
-				...row,
-				[DEDUPE_KEY_PROPERTY]: hashObject(row),
-			};
+		if (!added.unchanged) {
+			await rowSnapshot.saveSnapshotIfNewer({
+				store: context.store,
+				key: SNAPSHOT_STORE_KEY,
+				identity,
+				rows: current,
+				loaded: added.loaded,
+				readAt,
+			});
+		}
+		if (added.legacy) {
+			await context.store.delete(legacyStoreKey(sheetId));
+		}
+
+		return rowRun.deliverOnce({
+			store: context.store,
+			storeKey: DELIVERED_STORE_KEY,
+			identity,
+			events,
+			previousByIndex: added.previousByIndex,
 		});
 	},
 	async onRenew(context) {
-		// get current channel ID & resource ID
-		const webhook = await context.store.get<WebhookInformation>(`googlesheets_new_row_added`);
-
-		const { spreadsheetId:inputSpreadsheetId, sheetId:inputSheetId } = context.propsValue;
-
-		 if (!areSheetIdsValid(inputSpreadsheetId, inputSheetId)) {
-					throw new Error('Please select a spreadsheet and sheet first.');
-				}
-		
-		const spreadsheetId = inputSpreadsheetId as string;
-
-		if (webhook != null && webhook.id != null && webhook.resourceId != null) {
-			await deleteFileNotification(context.auth, webhook.id, webhook.resourceId);
-			const fileNotificationRes = await createFileNotification(
-				context.auth,
-				spreadsheetId,
-				context.webhookUrl,
-				context.propsValue.includeTeamDrives,
-			);
-			await context.store.put<WebhookInformation>(
-				'googlesheets_new_row_added',
-				fileNotificationRes.data,
-			);
-		}
+		const { spreadsheetId } = sheetIdentity(context.propsValue);
+		await sheetChannel.openChannel({
+			auth: context.auth,
+			store: context.store,
+			storeKey: CHANNEL_STORE_KEY,
+			spreadsheetId,
+			webhookUrl: context.webhookUrl,
+			includeTeamDrives: context.propsValue.includeTeamDrives,
+		});
 	},
 	async test(context) {
-		const { spreadsheetId:inputSpreadsheetId, sheetId:inputSheetId } = context.propsValue;
-
-		 if (!areSheetIdsValid(inputSpreadsheetId, inputSheetId)) {
-					throw new Error('Please select a spreadsheet and sheet first.');
-				}
-		
-		const sheetId = Number(inputSheetId);
-		const spreadsheetId = inputSpreadsheetId as string;
-		
+		const { spreadsheetId, sheetId } = sheetIdentity(context.propsValue);
 		const sheetName = await getWorkSheetName(context.auth, spreadsheetId, sheetId);
-		const currentSheetValues = await getWorkSheetValues(context.auth, spreadsheetId, sheetName);
+		const currentSheetValues = await getWorkSheetValues({
+			auth: context.auth,
+			spreadsheetId,
+			sheetName,
+		});
 
-		const headers =  currentSheetValues[0] ?? [];
-		const headerCount = headers.length;
+		const headerCount = (currentSheetValues[0] ?? []).length;
 
-		const transformedRowValues = mapRowsToColumnLabels(currentSheetValues, 0,headerCount)
-			.slice(-5)
-			.reverse();
-
-		return transformedRowValues;
+		return mapRowsToColumnLabels(currentSheetValues, 0, headerCount).slice(1).slice(-5).reverse();
 	},
 	sampleData: {},
 });

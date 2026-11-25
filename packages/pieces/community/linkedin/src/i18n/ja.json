@@ -81,5 +81,10 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "削除",
-  "HEAD": "頭"
+  "HEAD": "頭",
+  "Post": "投稿",
+  "Link Preview": "Link Preview",
+  "Post As": "Post As",
+  "Request": "Request",
+  "Data to send": "Data to send"
 }

@@ -154,6 +154,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Message Received": "New Message Received",
   "Message Status Update": "Message Status Update",
   "Triggers when a new WhatsApp message is received.": "Triggers when a new WhatsApp message is received.",

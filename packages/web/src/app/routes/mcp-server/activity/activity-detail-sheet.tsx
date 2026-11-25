@@ -1,12 +1,11 @@
 import { PopulatedMcpActivity, ProjectType } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Check, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, X } from 'lucide-react';
 import React, { ReactNode, useRef } from 'react';
 
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { SimpleJsonViewer } from '@/components/custom/simple-json-viewer';
 import { LoadingSpinner } from '@/components/custom/spinner';
-import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import { UserAvatar } from '@/components/custom/user-avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -35,6 +34,7 @@ import { ClientIcon } from '../client-icon';
 import { mcpActivityQueries } from '../mcp-activity-hooks';
 import { mcpClientDisplay } from '../mcp-client-display';
 
+import { McpActivityStatusBadge } from './activity-columns';
 import { activityUtils, ParsedOutput } from './activity-utils';
 
 export function ActivityDetailSheet({
@@ -168,19 +168,7 @@ function ActivityDetail({
               </span>
             )}
             <span className="flex shrink-0 items-center gap-2">
-              {row.status === 'SUCCEEDED' ? (
-                <StatusIconWithText
-                  icon={Check}
-                  text={t('Succeeded')}
-                  variant="success"
-                />
-              ) : (
-                <StatusIconWithText
-                  icon={X}
-                  text={t('Failed')}
-                  variant="error"
-                />
-              )}
+              <McpActivityStatusBadge status={row.status} />
               <span aria-hidden>·</span>
               <span>{formatUtils.formatDuration(row.durationMs, true)}</span>
             </span>
@@ -426,7 +414,7 @@ function NavButton({ label, shortcut, icon: Icon, onClick }: NavButtonProps) {
         </span>
       </TooltipTrigger>
       <TooltipContent>
-        {label} <span className="text-gray-11">{shortcut}</span>
+        {label} <span className="text-gray-1/70">{shortcut}</span>
       </TooltipContent>
     </Tooltip>
   );

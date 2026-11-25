@@ -85,6 +85,7 @@ export type WorkerToApiContract = {
     uploadFlowBundle(input: UploadFlowBundleRequest): Promise<void>
     recordTriggerRun(input: RecordTriggerRunRequest): Promise<void>
     extendLock(input: { jobId: string, token: string, queueName: string }): Promise<void>
+    beginShutdown(): Promise<void>
     disableFlow(input: DisableFlowRequest): Promise<void>
     sendAgentEvent(input: SendAgentEventRequest): Promise<void>
     getAgentConfig(input: GetAgentConfigRequest): Promise<AgentConfigResponse>
@@ -137,6 +138,7 @@ export type GetAgentConfigRequest = {
     messageSource?: 'onboarding'
     agentId?: string
     flowRunId?: string
+    waitpointId?: string
     projectId?: string | null
     userMessage: string
     modelName: string | null
@@ -166,8 +168,12 @@ export type AgentConfigResponse = {
     fastModelId: string
     imageModelId?: string
     searchCredentials?: AiProviderCredentials
+    searchProviderConfigId?: string
     searchModelId?: string
     imageCredentials?: AiProviderCredentials
+    imageProviderConfigId?: string
+    agentId?: string
+    projectId?: string
     systemPrompt: string
     messages: unknown[]
     allMessages: unknown[]
@@ -255,8 +261,16 @@ export type SaveAgentFileResponse = {
 export type UpdateAgentProgressRequest = {
     conversationId: string
     runId?: string
-    uiMessages: unknown[]
+    uiMessages?: unknown[]
     messages?: unknown[]
+    turn?: AgentProgressTurn
+}
+
+export type AgentProgressTurn = {
+    baseMessageCount: number
+    messages: unknown[]
+    baseUiMessageCount: number
+    uiMessages: unknown[]
 }
 
 export type HeartbeatAgentConversationRequest = {
@@ -352,6 +366,7 @@ export type ResumeFlowStepRequest = {
 
 export type ExecuteAgentToolResponse = {
     result: unknown
+    cancelReason?: string
 }
 
 export type SendAgentEmailRequest = {
@@ -531,6 +546,7 @@ export type SaveFlowStepFileRequest = {
 export type ReportAiUsageRequest = {
     billing: ActivepiecesAiBilling
     provider: AIProviderName
+    providerConfigId?: string
     modelId: string
     idempotencyKey: string
     usage: AiUsageCharge
@@ -538,6 +554,10 @@ export type ReportAiUsageRequest = {
     generationId?: string
     inputTokens?: number
     outputTokens?: number
+    cacheReadTokens?: number
+    cacheWriteTokens?: number
+    reasoningTokens?: number
+    observedCostUsd?: number
     requestId?: string
     flowRun?: AiUsageFlowRunContext
     chat?: AiUsageChatContext
@@ -557,6 +577,7 @@ export type AiUsageChatContext = {
 export type AiUsageCharge =
     | { type: AiChargeBasis.PROVIDER_REPORTED_COST, costUsd: number }
     | { type: AiChargeBasis.FIXED_CREDITS, credits: number }
+    | { type: AiChargeBasis.USAGE_ONLY }
 
 export type ReadFlowStepFileRequest = {
     projectId: string

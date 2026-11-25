@@ -5,5 +5,6 @@
   "Markdown": "Markdown",
   "Connection External ID": "Connection External ID",
   "\nUse this step when the flow only learns which connection to use while it runs, for example from a webhook.\n\nIt returns that connection's credentials. To use them in a later step, turn on **Dynamic value** on that step's connection field and insert this step's output.\n": "\nUse this step when the flow only learns which connection to use while it runs, for example from a webhook.\n\nIt returns that connection's credentials. To use them in a later step, turn on **Dynamic value** on that step's connection field and insert this step's output.\n",
-  "Hover the app icon on the Connections page to copy it.": "Hover the app icon on the Connections page to copy it."
+  "Hover the app icon on the Connections page to copy it.": "Hover the app icon on the Connections page to copy it.",
+  "Connections": "Connections"
 }

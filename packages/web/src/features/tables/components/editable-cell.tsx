@@ -134,6 +134,7 @@ export function EditableCell({
             )
       }
       tabIndex={0}
+      data-editing={isEditing}
       onClick={() => {
         onClick?.();
         setSelectedCell({ rowIdx, columnIdx: column.idx });

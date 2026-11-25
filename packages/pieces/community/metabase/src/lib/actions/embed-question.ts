@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { queryMetabaseApi } from '../common';
 import { metabaseAuth } from '../..';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { embedQuestionOutputSchema } from '../output-schemas';
 
 interface MetabaseParam {
   id: string;
@@ -11,13 +12,14 @@ interface MetabaseParam {
 
 export const embedQuestion = createAction({
   name: 'embedQuestion',
+  outputSchema: embedQuestionOutputSchema,
   classification: 'WRITE',
   auth: metabaseAuth,
   requireAuth: true,
   displayName: 'Embed question',
   description:
     'Enable embedding for a Metabase question and configure parameters',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       "Updates a Metabase question (card) by its ID to toggle static embedding on or off and set how each parameter is exposed in the embed (disabled, editable, or locked). Use when configuring a question for external embedding. This mutates the card's settings, but is idempotent — re-running with the same inputs leaves the card in the same configured state.",

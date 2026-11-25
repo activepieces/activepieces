@@ -44,6 +44,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Campaign": "New Campaign",
   "Trigger when a new campaign is created": "Trigger when a new campaign is created"
 }

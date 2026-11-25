@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, connectionTemplate, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { AgentConversation, AgentConversationStatus, AgentRunSource, AgentToolType, CreateAgentConversationRequest, ImportAgentMemoryRequest, InstructAgentMemoryRequest, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, SendAgentMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest, UpdateAgentMemoryRequest, WorkerJobType } from '@activepieces/shared'
+import { AgentAbortReason, AgentConversation, AgentConversationStatus, AgentRunSource, AgentToolType, CreateAgentConversationRequest, ImportAgentMemoryRequest, InstructAgentMemoryRequest, LATEST_JOB_DATA_SCHEMA_VERSION, MemoryImportNudgeClaimResponse, MemoryImportNudgeResponse, PrincipalType, SendAgentMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest, UpdateAgentMemoryRequest, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -160,13 +160,7 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
 
         if (wasStreaming) {
             log.info({ ...spreadIfDefined('preemptedRunId', preemptedRunId ?? undefined) }, '[agentConversationController] Cancelling in-flight run before new message')
-            const cancelPromises = [
-                agentApprovalGate.requestCancel({ conversationId }),
-            ]
-            if (preemptedRunId) {
-                cancelPromises.push(agentApprovalGate.requestCancel({ conversationId, runId: preemptedRunId }))
-            }
-            await Promise.all(cancelPromises)
+            await agentApprovalGate.requestCancel({ conversationId, runId: preemptedRunId ?? undefined, reason: AgentAbortReason.PREEMPTED })
             const stillOwned = await updateConversationForRun({
                 conversationId,
                 runId,
@@ -230,13 +224,7 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
         const conversation = await agentConversationService(log).getConversationOrThrow({ id: conversationId, platformId, userId })
         const activeRunId = conversation.activeRunId
         log.info({ ...spreadIfDefined('activeRunId', activeRunId ?? undefined) }, '[agentConversationController] Cancel requested')
-        const cancelPromises = [
-            agentApprovalGate.requestCancel({ conversationId }),
-        ]
-        if (activeRunId) {
-            cancelPromises.push(agentApprovalGate.requestCancel({ conversationId, runId: activeRunId }))
-        }
-        await Promise.all(cancelPromises)
+        await agentApprovalGate.requestCancel({ conversationId, runId: activeRunId ?? undefined, reason: AgentAbortReason.USER_CANCEL })
         await agentHelpers.conversationRepo().update(conversationId, {
             status: AgentConversationStatus.IDLE,
         })
@@ -296,16 +284,31 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
         })
     })
 
+    app.get('/memory/import-nudge', GetMemoryImportNudgeRoute, async (request): Promise<MemoryImportNudgeResponse> => {
+        const eligible = await agentHelpers.memoryImportNudgeEligible({
+            platformId: request.principal.platform.id,
+            userId: request.principal.id,
+        })
+        return { eligible }
+    })
+
+    app.post('/memory/import-nudge/claim', ClaimMemoryImportNudgeRoute, async (request): Promise<MemoryImportNudgeClaimResponse> => {
+        const claimed = await agentHelpers.claimMemoryImportNudge({
+            platformId: request.principal.platform.id,
+            userId: request.principal.id,
+        })
+        return { claimed }
+    })
+
     app.post('/memory/import', ImportMemoryRoute, async (request) => {
         const platformId = request.principal.platform.id
         const userId = request.principal.id
-        const draft = await agentMemoryAi.extract({ platformId, text: request.body.text, log: request.log })
+        const draft = await agentMemoryAi.extract({ platformId, userId, text: request.body.text, log: request.log })
         const current = await agentHelpers.getUserMemory({ platformId, userId })
         return agentHelpers.saveUserMemory({
             platformId,
             userId,
-            memories: [...current.memories, ...draft.memories],
-            baseMemories: current.memories,
+            memories: { next: [...current.memories, ...draft.memories], base: current.memories },
         })
     })
 
@@ -536,6 +539,32 @@ const UpdateMemoryRoute = {
         tags: ['agent'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         body: UpdateAgentMemoryRequest,
+    },
+}
+
+const GetMemoryImportNudgeRoute = {
+    config: {
+        security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
+    },
+    schema: {
+        tags: ['agent'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        response: {
+            [StatusCodes.OK]: MemoryImportNudgeResponse,
+        },
+    },
+}
+
+const ClaimMemoryImportNudgeRoute = {
+    config: {
+        security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
+    },
+    schema: {
+        tags: ['agent'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        response: {
+            [StatusCodes.OK]: MemoryImportNudgeClaimResponse,
+        },
     },
 }
 

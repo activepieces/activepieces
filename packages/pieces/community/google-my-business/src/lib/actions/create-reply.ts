@@ -13,6 +13,22 @@ export const createReply = createAction({
   description: 'Reply to a review, or replace the reply already posted.',
   audience: 'human',
   aiMetadata: { description: 'Posts the business owner\'s reply to a specific Google Business Profile review, or overwrites the existing reply if one is already present. Use to respond to customer reviews; safe to repeat since it upserts on the review name. Requires the full review resource name in the form accounts/{account}/locations/{location}/reviews/{review}.', idempotent: true },
+  propertyGroups: [
+    {
+      key: 'review',
+      display: 'section',
+      label: 'Review',
+      icon: 'inbox',
+      props: ['reviewName'],
+    },
+    {
+      key: 'reply',
+      display: 'section',
+      label: 'Reply',
+      icon: 'reply',
+      props: ['comment'],
+    },
+  ],
   props: {
     reviewName: Property.ShortText({
       displayName: 'Review ID',

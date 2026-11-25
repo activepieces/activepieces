@@ -1,8 +1,11 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
 
 export const sendfoxAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  description:
-    'To obtain your personal token, follow these steps:\n1. Log in to your SendFox account.\n2. Visit https://sendfox.com/account/oauth to create one\n3. From OAuth Apps click on Create New Token.\n4. Enter any name you want then click create.\n5. Copy and paste your token here.',
+  displayName: 'Personal Access Token',
+  description: `To get your personal access token:
+1. In SendFox, open **Settings → Connections → API tokens**, or go to [sendfox.com/account/oauth](https://sendfox.com/account/oauth).
+2. Under **Personal Access Tokens**, click **Create New Token**.
+3. Enter a name for the token and click **Create**.
+4. Copy the token right away (SendFox shows it only once) and paste it here.`,
   required: true,
 });

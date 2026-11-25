@@ -122,7 +122,13 @@ export function buildMessageBlocks({
     // would mislabel a completed card as failed. Batch executions stream their
     // own live progress, so skip those too.
     const cardKind = chatPartUtils.getPendingCardKind(toolName);
-    if (isStreaming && cardKind && !toolCallMeta[toolCallId]?.batchProgress) {
+    const finishedWithoutCard = p.state === 'output-available';
+    if (
+      isStreaming &&
+      cardKind &&
+      !finishedWithoutCard &&
+      !toolCallMeta[toolCallId]?.batchProgress
+    ) {
       const state = p.state;
       const phase: CardSkeletonPhase =
         state === 'output-error' || state === 'output-denied'

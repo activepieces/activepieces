@@ -39,6 +39,8 @@ interface ConfirmationDeleteDialogProps {
   controlId?: AdminControl;
   contentClassName?: string;
   keepOpenOnOutsideClick?: boolean;
+  confirmVariant?: 'destructive' | 'default';
+  cancelButtonText?: string;
 }
 
 export const ConfirmationDeleteDialog = ({
@@ -59,6 +61,8 @@ export const ConfirmationDeleteDialog = ({
   controlId,
   contentClassName,
   keepOpenOnOutsideClick = false,
+  confirmVariant = 'destructive',
+  cancelButtonText,
 }: ConfirmationDeleteDialogProps) => {
   const [isControlled] = useState(
     open !== undefined && onOpenChange !== undefined,
@@ -128,16 +132,16 @@ export const ConfirmationDeleteDialog = ({
             disabled={isPending}
             onClick={() => handleClose()}
           >
-            {t('Cancel')}
+            {cancelButtonText || t('Cancel')}
           </Button>
           <Button
-            variant="destructive"
+            variant={confirmVariant}
             loading={isPending}
             disabled={confirmDisabled || !typed.confirmed}
             onClick={() => mutate()}
             {...adminControl(controlId)}
           >
-            {isDanger && <TriangleAlert className="size-4 mr-2" />}
+            {isDanger && <TriangleAlert className="size-4" />}
             {buttonText || t('Remove')}
           </Button>
         </DialogFooter>

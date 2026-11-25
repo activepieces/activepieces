@@ -132,6 +132,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Profile": "New Profile",
   "Profile Added to List/Segment": "Profile Added to List/Segment",
   "Triggers when a new profile is created in Klaviyo.": "Triggers when a new profile is created in Klaviyo.",
