@@ -1,4 +1,6 @@
 import { t } from 'i18next';
+import { CircleSlash } from 'lucide-react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { ReactNode, useEffect, useRef, useState } from 'react';
 
 import { chatDom } from '@/features/chat/lib/chat-dom';
@@ -23,7 +25,7 @@ import { ActionPreviewCard } from './action-preview-card';
 import { ChatCardSkeleton } from './chat-card-primitives';
 import { ChatInput, ComposerHandle } from './chat-input';
 import { ConnectionPickerCard } from './connection-picker-card';
-import { FollowFinishedNote } from './follow-finished-note';
+import { chatNote, FollowFinishedNote } from './follow-finished-note';
 import { FollowOfferRow } from './follow-offer-row';
 import { McpReconnectCard, McpReconnectData } from './mcp-reconnect-card';
 import { MultiQuestionForm } from './multi-question-form';
@@ -47,6 +49,13 @@ export function ChatBottomBar({
   replyStopped,
 }: ChatBottomBarProps) {
   const [composerEngaged, setComposerEngaged] = useState(false);
+  const [skipped, setSkipped] = useState(false);
+  const reduced = useReducedMotion();
+  useEffect(() => {
+    if (!skipped) return;
+    const timer = setTimeout(() => setSkipped(false), SKIPPED_VISIBLE_MS);
+    return () => clearTimeout(timer);
+  }, [skipped]);
   const pendingActionPreview = useChatStoreContext((s) =>
     chatStoreSelectors.pendingActionPreview({
       state: s,
@@ -122,7 +131,10 @@ export function ChatBottomBar({
   // dismissed/rejected so the card doesn't flash back before the worker unblocks.
   const handleSend = (text: string, files?: File[]) => {
     void onSend(text, files);
-    dismissActiveCard?.();
+    if (dismissActiveCard) {
+      dismissActiveCard();
+      setSkipped(true);
+    }
   };
 
   const minimal = recede === true && !activeCard && !composerEngaged;
@@ -155,6 +167,19 @@ export function ChatBottomBar({
     <div ref={rootRef} className="relative flex flex-col gap-2">
       {activeCard ?? <FollowFinishedNote />}
       {inPanel && <FollowOfferRow />}
+      <AnimatePresence initial={false}>
+        {skipped && !activeCard && (
+          <motion.div
+            key="skipped"
+            role="status"
+            className={chatNote.CLASS}
+            {...chatNote.motion(reduced)}
+          >
+            <CircleSlash className="size-3" />
+            {t('Skipped')}
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div
         className={cn(
           'overflow-hidden rounded-xl border transition-colors duration-(--dur-micro) ease-[ease]',
@@ -268,3 +293,5 @@ type ChatBottomBarProps = {
   autoFocus?: boolean;
   replyStopped?: boolean;
 };
+
+const SKIPPED_VISIBLE_MS = 2500;
