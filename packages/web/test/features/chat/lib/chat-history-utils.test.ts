@@ -45,6 +45,16 @@ describe('chatHistoryUtils.filterByTitle', () => {
       chatHistoryUtils.filterByTitle({ conversations: chats, query: '  ' }),
     ).toBe(chats);
   });
+
+  it('matches the title as shown, without Markdown marks', () => {
+    const chats = [titled('Sales **report**'), titled('Weekly leads')];
+
+    expect(
+      chatHistoryUtils
+        .filterByTitle({ conversations: chats, query: 'sales report' })
+        .map((chat) => chat.title),
+    ).toEqual(['Sales **report**']);
+  });
 });
 
 describe('chatHistoryUtils.recentChats', () => {

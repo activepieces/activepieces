@@ -1,26 +1,27 @@
 name: Continuous Delivery — Cloud
 
-# The Cloud gate. Picks the newest main commit that passed E2E on staging, tests the image staging built
-# from it, waits for one approval, then deploys that image to the canary and to the fleet.
+# The Cloud gate. A manual run picks the tip of main and stops if staging has not deployed it; a scheduled run
+# picks the newest main commit that staging deployed, and stops when the RELEASES_PAUSED repository variable is true.
+# It runs the E2E matrix and the upgrade test on the image staging built from that commit, waits for one approval,
+# then deploys that image to the canary and to the fleet. A scheduled run skips the approval when its candidate
+# contains the commit Cloud runs and adds no migration that cannot roll back.
 # With hotfix_prs, it instead cherry-picks only those merged PRs onto the commit Cloud runs, builds that,
 # and sends it through the same checks, approval and deploy.
 on:
+  schedule:
+    - cron: '0 8 * * 0-3'
   workflow_dispatch:
     inputs:
       sha:
-        description: 'Commit on main to deploy. Empty takes the newest one that passed E2E on staging.'
+        description: 'Commit on main to deploy. Empty takes the tip of main, which staging must have deployed.'
         type: string
         default: ''
       hotfix_prs:
         description: 'Comma-separated PR numbers already merged into main. Deploys only these on top of what Cloud runs.'
         type: string
         default: ''
-      allow_migrations:
-        description: 'Let a hotfix PR that changes a migration through'
-        type: boolean
-        default: false
-      skip_migration_check:
-        description: 'Deploy even when a pending migration is marked breaking'
+      skip_tests:
+        description: 'Emergency only. Skip the E2E matrix, the upgrade test and the benchmark. The approval still runs.'
         type: boolean
         default: false
 
@@ -37,7 +38,9 @@ jobs:
       image_tag: ${{ steps.pick.outputs.image_tag || steps.hotfix.outputs.image_tag }}
       from_tag: ${{ steps.from.outputs.tag }}
       cloud_sha: ${{ steps.cloud.outputs.sha }}
+      cloud_image_tag: ${{ steps.cloud.outputs.image_tag }}
       skip: ${{ steps.pick.outputs.skip }}
+      approval_environment: ${{ steps.approval.outputs.environment }}
     steps:
       # The App token can push a pick branch whose commits change workflow files; GITHUB_TOKEN cannot.
       - name: Create GitHub App token
@@ -73,17 +76,19 @@ jobs:
       - name: Read the commit Cloud runs
         id: cloud
         run: |
-          CLOUD_SHA=$(ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal app version --config-file=config/app.yml 2>&1; exit"' \
-            | tr -d '\r' | { grep -oE '^[0-9]+\.[0-9]+\.[0-9]+\.[a-f0-9]{40}\.(beta|pick)$' || true; } | head -1 | cut -d. -f4)
+          CLOUD_TAG=$(ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal app version --config-file=config/app.yml 2>&1; exit"' \
+            | tr -d '\r' | { grep -oE '^[0-9]+\.[0-9]+\.[0-9]+\.[a-f0-9]{40}\.(beta|pick)$' || true; } | head -1)
+          CLOUD_SHA=$(echo "$CLOUD_TAG" | cut -d. -f4)
           if [ -z "$CLOUD_SHA" ]; then
             echo "::error::Could not read the version the Cloud fleet runs"
             exit 1
           fi
           echo "sha=$CLOUD_SHA" >> "$GITHUB_OUTPUT"
+          echo "image_tag=$CLOUD_TAG" >> "$GITHUB_OUTPUT"
           echo "Cloud runs \`$CLOUD_SHA\`" >> "$GITHUB_STEP_SUMMARY"
 
-      # A scheduled run stops when every app and worker host, canary included, already runs the candidate,
-      # so a quiet day asks for no approval and a deploy that stopped half way is retried.
+      # A scheduled run stops when releases are paused, or when every app and worker host, canary included,
+      # already runs the candidate, so a quiet day deploys nothing and a deploy that stopped half way is retried.
       - name: Pick the candidate
         id: pick
         if: ${{ !inputs.hotfix_prs }}
@@ -91,31 +96,42 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           INPUT_SHA: ${{ inputs.sha }}
           CLOUD_SHA: ${{ steps.cloud.outputs.sha }}
+          RELEASES_PAUSED: ${{ vars.RELEASES_PAUSED }}
         run: |
-          e2e_passed() {
-            [ -n "$(gh api "repos/$GITHUB_REPOSITORY/commits/$1/check-runs?check_name=e2e-staging" \
-              --jq '.check_runs[] | select(.conclusion == "success") | .id')" ]
+          if [ "$GITHUB_EVENT_NAME" = schedule ] && [ "$RELEASES_PAUSED" = true ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "Releases are paused: the \`RELEASES_PAUSED\` repository variable is \`true\`. Nothing to deploy." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          staging_deployed() {
+            for JOB in deploy-staging-app deploy-staging-workers; do
+              [ -n "$(gh api "repos/$GITHUB_REPOSITORY/commits/$1/check-runs?check_name=$JOB" \
+                --jq '.check_runs[] | select(.conclusion == "success") | .id')" ] || return 1
+            done
           }
+          if [ -z "$INPUT_SHA" ] && [ "$GITHUB_EVENT_NAME" != schedule ]; then
+            INPUT_SHA=origin/main
+          fi
           if [ -n "$INPUT_SHA" ]; then
             SHA=$(git rev-parse --verify "$INPUT_SHA^{commit}")
             if ! git merge-base --is-ancestor "$SHA" origin/main; then
               echo "::error::$SHA is not on main"
               exit 1
             fi
-            if ! e2e_passed "$SHA"; then
-              echo "::error::e2e-staging did not pass on $SHA"
+            if ! staging_deployed "$SHA"; then
+              echo "::error::Staging did not deploy $SHA. Run the gate again when its staging deploy is green, or set sha to an older commit."
               exit 1
             fi
           else
             SHA=""
             for COMMIT in $(git rev-list --first-parent -n 30 origin/main); do
-              if e2e_passed "$COMMIT"; then
+              if staging_deployed "$COMMIT"; then
                 SHA=$COMMIT
                 break
               fi
             done
             if [ -z "$SHA" ]; then
-              echo "::error::e2e-staging did not pass on any of the last 30 commits on main"
+              echo "::error::Staging deployed none of the last 30 commits on main"
               exit 1
             fi
           fi
@@ -148,7 +164,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           HOTFIX_PRS: ${{ inputs.hotfix_prs }}
           INPUT_SHA: ${{ inputs.sha }}
-          ALLOW_MIGRATIONS: ${{ inputs.allow_migrations }}
           CLOUD_SHA: ${{ steps.cloud.outputs.sha }}
         run: |
           if [ -n "$INPUT_SHA" ]; then
@@ -165,11 +180,6 @@ jobs:
             fi
             if git log --format=%s "$CLOUD_SHA" | grep -qE "\(#$PR\)$"; then
               echo "::error::#$PR is already on Cloud"
-              exit 1
-            fi
-            MIGRATIONS=$(git diff --name-only "$MERGE^" "$MERGE" -- packages/server/api/src/app/database/migration/ packages/server/api/src/app/ee/database/migrations/)
-            if [ -n "$MIGRATIONS" ] && [ "$ALLOW_MIGRATIONS" != true ]; then
-              echo "::error::#$PR changes a migration ($MIGRATIONS). It may need schema changes Cloud does not have yet. Set allow_migrations to pick it anyway."
               exit 1
             fi
             COMMITS="$COMMITS$MERGE"$'\n'
@@ -209,6 +219,90 @@ jobs:
           echo "tag=$FROM_TAG" >> "$GITHUB_OUTPUT"
           echo "Upgrade test from \`$FROM_TAG\`" >> "$GITHUB_STEP_SUMMARY"
 
+      # Lists the migrations the candidate adds over the commit Cloud runs, so the approver sees them before
+      # the canary applies them. deploy fails if Cloud moves after the cut, so that commit is what the database ran.
+      - name: List the migrations the deploy applies
+        id: migrations
+        if: steps.pick.outputs.skip != 'true'
+        env:
+          SHA: ${{ steps.pick.outputs.sha || steps.hotfix.outputs.sha }}
+          CLOUD_SHA: ${{ steps.cloud.outputs.sha }}
+        run: |
+          FILES=$(git diff --diff-filter=A --name-only "$CLOUD_SHA" "$SHA" -- \
+              packages/server/api/src/app/database/migration/ packages/server/api/src/app/ee/database/migrations/ \
+            | { grep -E '/[0-9]{13}-[^/]+\.ts$' || true; } \
+            | while read -r FILE; do echo "$(basename "$FILE") $FILE"; done | sort | cut -d' ' -f2)
+          ROWS=""
+          BLOCKING=0
+          BACKGROUND=0
+          BREAKING=0
+          for FILE in $FILES; do
+            NAME=$(basename "$FILE" .ts | cut -d- -f2-)
+            if [[ "$FILE" == */background/* ]]; then
+              TRACK="Background, after boot"
+              ROLLBACK="Forward-only"
+              BACKGROUND=$((BACKGROUND + 1))
+            else
+              TRACK="Blocking, at boot"
+              ROLLBACK="Yes"
+              BLOCKING=$((BLOCKING + 1))
+              if git show "$SHA:$FILE" | grep -qE '^\s*([a-z]+ )*breaking\s*=\s*true\b'; then
+                ROLLBACK="**No, breaking**"
+                BREAKING=$((BREAKING + 1))
+              fi
+            fi
+            PR=$(git log -1 --diff-filter=A --format=%s "$SHA" -- "$FILE" | { grep -oE '\(#[0-9]+\)$' || true; } | tr -d '(#)')
+            ROWS="$ROWS| [\`$NAME\`]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/$SHA/$FILE) | $TRACK | $ROLLBACK | ${PR:+[#$PR]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/pull/$PR)} |"$'\n'
+          done
+          {
+            echo "## Migrations"
+            if [ -z "$FILES" ]; then
+              echo "The candidate adds no migration."
+            else
+              echo "The canary applies $((BLOCKING + BACKGROUND)) new migration(s) after the approval: $BLOCKING blocking, $BACKGROUND background."
+              if [ "$BREAKING" -gt 0 ]; then
+                echo
+                echo "> [!WARNING]"
+                echo "> $BREAKING migration(s) cannot roll back. After this deploy, a rollback to the image Cloud runs now needs \`force\`."
+              fi
+              echo
+              echo "| Migration | Track | Rolls back | PR |"
+              echo "|---|---|---|---|"
+              printf '%s' "$ROWS"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "breaking=$BREAKING" >> "$GITHUB_OUTPUT"
+
+      # A candidate that does not contain the commit Cloud runs (a hotfix pick, or an older staging commit)
+      # would take that commit off Cloud, so a person checks it.
+      - name: Decide whether the deploy waits for an approval
+        id: approval
+        if: steps.pick.outputs.skip != 'true'
+        env:
+          SHA: ${{ steps.pick.outputs.sha || steps.hotfix.outputs.sha }}
+          CLOUD_SHA: ${{ steps.cloud.outputs.sha }}
+          BREAKING: ${{ steps.migrations.outputs.breaking }}
+        run: |
+          ENVIRONMENT=production
+          if [ "$GITHUB_EVENT_NAME" = schedule ]; then
+            if [ "$BREAKING" != 0 ]; then
+              REASON="the candidate adds a migration that cannot roll back"
+            elif ! git merge-base --is-ancestor "$CLOUD_SHA" "$SHA" 2>/dev/null; then
+              REASON="Cloud runs \`$CLOUD_SHA\`, which the candidate does not contain"
+            else
+              ENVIRONMENT=production-scheduled
+            fi
+            {
+              echo "## Approval"
+              if [ "$ENVIRONMENT" = production-scheduled ]; then
+                echo "The candidate contains what Cloud runs and adds no migration that cannot roll back. The deploy starts without an approval."
+              else
+                echo "This scheduled run waits for an approval: $REASON."
+              fi
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo "environment=$ENVIRONMENT" >> "$GITHUB_OUTPUT"
+
   # Staging never built a hotfix combination, so the gate builds it. The .pick tag never replaces a .beta image.
   build-pick:
     needs: cut
@@ -242,7 +336,7 @@ jobs:
 
   e2e-matrix:
     needs: [cut, build-pick]
-    if: always() && needs.cut.result == 'success' && needs.cut.outputs.skip != 'true' && (needs.build-pick.result == 'success' || needs.build-pick.result == 'skipped')
+    if: always() && !inputs.skip_tests && needs.cut.result == 'success' && needs.cut.outputs.skip != 'true' && (needs.build-pick.result == 'success' || needs.build-pick.result == 'skipped')
     uses: ./.github/workflows/e2e-matrix.yml
     with:
       image: ghcr.io/activepieces/activepieces-cloud:${{ needs.cut.outputs.image_tag }}
@@ -251,7 +345,7 @@ jobs:
 
   upgrade-test:
     needs: [cut, build-pick]
-    if: always() && needs.cut.result == 'success' && needs.cut.outputs.skip != 'true' && (needs.build-pick.result == 'success' || needs.build-pick.result == 'skipped')
+    if: always() && !inputs.skip_tests && needs.cut.result == 'success' && needs.cut.outputs.skip != 'true' && (needs.build-pick.result == 'success' || needs.build-pick.result == 'skipped')
     uses: ./.github/workflows/upgrade-test.yml
     with:
       image: ghcr.io/activepieces/activepieces-cloud:${{ needs.cut.outputs.image_tag }}
@@ -259,9 +353,19 @@ jobs:
       from_tag: ${{ needs.cut.outputs.from_tag }}
     secrets: inherit
 
+  # Report only: the approver reads the numbers in this job's summary; a slower candidate does not block.
+  benchmark:
+    needs: [cut, build-pick]
+    if: always() && !inputs.skip_tests && needs.cut.result == 'success' && needs.cut.outputs.skip != 'true' && (needs.build-pick.result == 'success' || needs.build-pick.result == 'skipped')
+    uses: ./.github/workflows/benchmark-compare.yml
+    with:
+      baseline_image: ghcr.io/activepieces/activepieces-cloud:${{ needs.cut.outputs.cloud_image_tag }}
+      candidate_image: ghcr.io/activepieces/activepieces-cloud:${{ needs.cut.outputs.image_tag }}
+    secrets: inherit
+
   # Posts each check's result on the candidate SHA, and names the check that failed.
   report:
-    needs: [cut, e2e-matrix, upgrade-test]
+    needs: [cut, e2e-matrix, upgrade-test, benchmark]
     if: always() && needs.cut.result == 'success' && needs.cut.outputs.skip != 'true'
     runs-on: ubuntu-latest
     permissions:
@@ -276,6 +380,8 @@ jobs:
           E2E_RESULT: ${{ needs.e2e-matrix.result }}
           UPGRADE_RESULT: ${{ needs.upgrade-test.result }}
           SWAPPED: ${{ needs.upgrade-test.outputs.swapped }}
+          BENCHMARK_RESULT: ${{ needs.benchmark.result }}
+          SKIP_TESTS: ${{ inputs.skip_tests }}
         run: |
           post() {
             STATE=failure
@@ -284,13 +390,18 @@ jobs:
             echo "- \`$1\`: $3" >> "$GITHUB_STEP_SUMMARY"
             if [ "$STATE" != success ]; then echo "::error::$1 failed on $SHA: $3"; fi
           }
-          post e2e-matrix "$E2E_RESULT" "E2E matrix $E2E_RESULT"
-          if [ "$UPGRADE_RESULT" = success ]; then
-            post upgrade-test "$UPGRADE_RESULT" "Upgrade from $FROM_TAG passed"
-          elif [ "$SWAPPED" = true ]; then
-            post upgrade-test "$UPGRADE_RESULT" "The candidate broke after the upgrade from $FROM_TAG"
+          if [ "$SKIP_TESTS" = true ]; then
+            echo "- \`e2e-matrix\`, \`upgrade-test\` and \`benchmark\`: skipped by \`skip_tests\`, no status posted" >> "$GITHUB_STEP_SUMMARY"
           else
-            post upgrade-test "$UPGRADE_RESULT" "Setup failed before the upgrade from $FROM_TAG, not the candidate"
+            post e2e-matrix "$E2E_RESULT" "E2E matrix $E2E_RESULT"
+            if [ "$UPGRADE_RESULT" = success ]; then
+              post upgrade-test "$UPGRADE_RESULT" "Upgrade from $FROM_TAG passed"
+            elif [ "$SWAPPED" = true ]; then
+              post upgrade-test "$UPGRADE_RESULT" "The candidate broke after the upgrade from $FROM_TAG"
+            else
+              post upgrade-test "$UPGRADE_RESULT" "Setup failed before the upgrade from $FROM_TAG, not the candidate"
+            fi
+            echo "- \`benchmark\`: $BENCHMARK_RESULT (report only, the numbers are in the benchmark job summary)" >> "$GITHUB_STEP_SUMMARY"
           fi
 
   # Lists the tickets between the commit Cloud runs and the candidate, so the approver sees them.
@@ -326,12 +437,14 @@ jobs:
           done
 
   # The one approval. A newer candidate cancels an older one that still waits here.
+  # It waits for the benchmark so the numbers are there, but does not read its result.
+  # production-scheduled has no reviewers; only a scheduled run that cut found safe uses it.
   approve:
-    needs: [cut, e2e-matrix, upgrade-test, tickets]
-    if: ${{ !cancelled() && needs.cut.outputs.skip != 'true' && needs.e2e-matrix.result == 'success' && needs.upgrade-test.result == 'success' && needs.tickets.result == 'success' }}
+    needs: [cut, build-pick, e2e-matrix, upgrade-test, tickets, benchmark]
+    if: ${{ !cancelled() && needs.cut.outputs.skip != 'true' && (needs.build-pick.result == 'success' || needs.build-pick.result == 'skipped') && (inputs.skip_tests || (needs.e2e-matrix.result == 'success' && needs.upgrade-test.result == 'success')) && needs.tickets.result == 'success' }}
     runs-on: ubuntu-latest
     environment:
-      name: production
+      name: ${{ needs.cut.outputs.approval_environment || 'production' }}
       url: https://cloud.activepieces.com
     concurrency:
       group: ${{ inputs.hotfix_prs && format('cloud-approval-hotfix-{0}', github.run_id) || 'cloud-approval' }}
@@ -339,9 +452,10 @@ jobs:
     steps:
       - run: echo "Approved ${{ needs.cut.outputs.image_tag }}"
 
-  # One job holds the production lock from the migration check through the fleet deploy, because
+  # One job holds the production lock from the Cloud re-read through the fleet deploy, because
   # GitHub keeps only one pending job per group: a lock per job lets a later run slip between the
   # canary and the fleet. The group matches continuous-delivery-rollback.yml.
+  # The canary app applies every pending migration on the shared database at boot; cut listed them for the approver.
   deploy:
     needs: [cut, approve]
     if: ${{ !cancelled() && needs.approve.result == 'success' }}
@@ -350,29 +464,6 @@ jobs:
       group: promote-production
       cancel-in-progress: false
     steps:
-      - uses: actions/checkout@v5
-        with:
-          ref: ${{ needs.cut.outputs.sha }}
-          fetch-depth: 0
-
-      - uses: actions/setup-node@v6
-        if: inputs.skip_migration_check != true
-        with:
-          node-version: 24
-
-      - uses: oven-sh/setup-bun@v2
-        if: inputs.skip_migration_check != true
-        with:
-          bun-version: latest
-
-      - name: Install dependencies
-        if: inputs.skip_migration_check != true
-        run: bun install --frozen-lockfile
-
-      - name: Build shared and server-utils packages
-        if: inputs.skip_migration_check != true
-        run: bunx turbo run build --filter=@activepieces/shared --filter=@activepieces/server-utils
-
       - name: Configure SSH
         run: |
           mkdir -p ~/.ssh/
@@ -415,34 +506,6 @@ jobs:
             echo "::error::Cloud moved from $CUT_CLOUD_SHA to $CLOUD_SHA after this run picked $SHA. Start a new run."
             exit 1
           fi
-
-      # The canary app runs migrations on the shared database at boot, so a pending migration marked
-      # breaking stops the deploy here, before any host changes. An unreadable manifest fails the job.
-      - name: Get current canary manifest
-        id: current-manifest
-        if: inputs.skip_migration_check != true
-        run: |
-          MANIFEST=$(ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal app exec \
-            --reuse \
-            --config-file=config/app-canary.yml -- \
-            cat /usr/src/app/packages/server/api/dist/src/migration-manifest.json; exit"' \
-            2>/dev/null | tr -d '\r' | { grep '^\[' || true; } | head -1)
-          if ! echo "$MANIFEST" | jq -e 'type == "array" and length > 0' > /dev/null 2>&1; then
-            echo "::error::Could not read the migration manifest of the running canary"
-            exit 1
-          fi
-          echo "json=$MANIFEST" >> $GITHUB_OUTPUT
-
-      - name: Check for breaking migrations
-        id: check
-        if: inputs.skip_migration_check != true
-        run: bunx tsx tools/scripts/check-manifest-migrations.ts '${{ steps.current-manifest.outputs.json }}'
-
-      - name: Fail on breaking migrations
-        if: steps.check.outputs.has_breaking == 'true'
-        run: |
-          echo "::error::Breaking migrations pending on ${{ needs.cut.outputs.sha }}: ${{ steps.check.outputs.breaking_names }}"
-          exit 1
 
       - name: Deploy canary app
         run: |

@@ -66,8 +66,7 @@ export const newWorksheetTrigger = createTrigger({
 		return worksheets;
 	},
 	async run(context) {
-		const existingIds = (await context.store.get<string>('worksheets')) ?? '[]';
-		const parsedExistingIds = JSON.parse(existingIds) as number[];
+		const existingIds = await context.store.get<string>('worksheets');
 
 		const authClient = await createGoogleClient(context.auth);
 
@@ -76,6 +75,18 @@ export const newWorksheetTrigger = createTrigger({
 		const response = await sheets.spreadsheets.get({
 			spreadsheetId: context.propsValue.spreadsheetId as string,
 		});
+		if (isNil(existingIds)) {
+			const baseline = (response.data.sheets ?? [])
+				.map((sheet) => sheet.properties?.sheetId)
+				.filter((id): id is number => !isNil(id));
+			console.info('[google-sheets] new_worksheet: no known worksheets for this flow, taking a new baseline.');
+			await context.store.put('worksheets', JSON.stringify(baseline));
+			return [];
+		}
+		const parsedIds: unknown = JSON.parse(existingIds);
+		const parsedExistingIds = Array.isArray(parsedIds)
+			? parsedIds.filter((id): id is number => typeof id === 'number')
+			: [];
 		if (isNil(response.data.sheets) || response.data.sheets.length === 0) {
 			return [];
 		}
