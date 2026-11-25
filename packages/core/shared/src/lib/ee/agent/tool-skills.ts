@@ -24,15 +24,27 @@ function isMetaTool(toolName: string): boolean {
 }
 
 function effectiveToolCall({ toolName, input }: { toolName: string, input: unknown }): EffectiveToolCall {
-    if (toolName !== LAZY_TOOL_NAME || !isRecord(input) || typeof input['tool'] !== 'string') {
+    const call = toolName === LAZY_TOOL_NAME ? lazyCall(input) : undefined
+    if (call === undefined) {
         return { toolName, input }
     }
-    const innerInput = input['input']
+    const innerInput = call['input']
     if (!isRecord(innerInput)) {
-        return { toolName: input['tool'], input: innerInput }
+        return { toolName: call.tool, input: innerInput }
     }
-    const outerTitles = Object.fromEntries(CARD_TITLE_KEYS.filter((key) => typeof input[key] === 'string' && innerInput[key] === undefined).map((key) => [key, input[key]]))
-    return { toolName: input['tool'], input: { ...innerInput, ...outerTitles } }
+    const outerTitles = Object.fromEntries(CARD_TITLE_KEYS.filter((key) => typeof call[key] === 'string' && innerInput[key] === undefined).map((key) => [key, call[key]]))
+    return { toolName: call.tool, input: { ...innerInput, ...outerTitles } }
+}
+
+function lazyCall(input: unknown): (Record<string, unknown> & { tool: string }) | undefined {
+    if (!isRecord(input)) {
+        return undefined
+    }
+    if (typeof input['tool'] === 'string') {
+        return { ...input, tool: input['tool'] }
+    }
+    const { input: wrapped, ...outer } = input
+    return isRecord(wrapped) && typeof wrapped['tool'] === 'string' ? { ...outer, ...wrapped, tool: wrapped['tool'] } : undefined
 }
 
 function uncataloguedToolNames({ surface, allToolNames }: { surface: SkillSurface, allToolNames: string[] }): string[] {
