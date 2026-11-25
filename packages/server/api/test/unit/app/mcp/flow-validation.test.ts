@@ -36,6 +36,27 @@ describe('flowValidation.validateFlow — formulas', () => {
     })
 })
 
+describe('flowValidation.validateFlow — project scoped references', () => {
+    it('accepts a project variable reference copied from the Variables page', () => {
+        const result = flowValidation.validateFlow({ trigger: flowWithInput({ body: { token: '{{variables[\'ATOMIC_CLAIM_API_TOKEN\']}}' } }) })
+
+        expect(result.issues).toEqual([])
+        expect(flowValidation.hasNoBlockingIssues(result.issues)).toBe(true)
+    })
+
+    it('accepts a connection reference', () => {
+        const result = flowValidation.validateFlow({ trigger: flowWithInput({ auth: '{{connections[\'my-conn\']}}' }) })
+
+        expect(result.issues).toEqual([])
+    })
+
+    it('still flags a missing step used next to a project variable', () => {
+        const result = flowValidation.validateFlow({ trigger: flowWithInput({ text: '{{variables[\'API_TOKEN\']}} {{step_9[\'output\'].id}}' }) })
+
+        expect(result.issues.map((issue) => issue.message)).toEqual([expect.stringContaining('"{{step_9...}}" which does not exist')])
+    })
+})
+
 function flowWithInput(input: Record<string, unknown>): FlowTrigger {
     return {
         name: 'trigger',
