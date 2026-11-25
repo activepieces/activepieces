@@ -297,11 +297,14 @@ export default function ProjectsPage() {
                       })}
                       controlId={AdminControl.PROJECTS_DELETE_CONFIRM}
                       mutationFn={async () => {
-                        projectCollectionUtils.delete(
-                          deletableProjects.map((row) => row.id),
-                        );
-                        resetSelection();
-                        setSelectedRows([]);
+                        try {
+                          await projectCollectionUtils.delete(
+                            deletableProjects.map((row) => row.id),
+                          );
+                        } finally {
+                          resetSelection();
+                          setSelectedRows([]);
+                        }
                       }}
                       onError={(error) => {
                         toast.error(t('Error'), {
