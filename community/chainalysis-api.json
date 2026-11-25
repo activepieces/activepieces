@@ -1,0 +1,8 @@
+{
+  "actions.checkAddressSanction.description": "Check if an address is sanctioned",
+  "actions.checkAddressSanction.displayName": "Check Address Sanctions",
+  "actions.checkAddressSanction.props.address.description": "Address to check for sanctions",
+  "actions.checkAddressSanction.props.address.displayName": "Address",
+  "auth.description": "API Key for Chainalysis Screening API",
+  "description": "Chainalysis Screening API allows you to check if a blockchain address is sanctioned."
+}

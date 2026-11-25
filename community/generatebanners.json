@@ -1,0 +1,14 @@
+{
+  "actions.render_template.description": "Render a GenerateBanners template",
+  "actions.render_template.displayName": "Render Template",
+  "actions.render_template.props.filetype.displayName": "File type",
+  "actions.render_template.props.filetype.options.options[value=jpg].label": "Image (jpg)",
+  "actions.render_template.props.filetype.options.options[value=pdf].label": "Document (pdf)",
+  "actions.render_template.props.filetype.options.options[value=png].label": "Image (png)",
+  "actions.render_template.props.template_id.displayName": "Template",
+  "actions.render_template.props.variables.displayName": "Variables",
+  "auth.description": "\nTo obtain your GenerateBanners public and secret API Keys, you can follow the steps below:\n\n1. Go to the [GenerateBanners homepage](https://www.generatebanners.com/).\n2. Sign up or log in into your account.\n3. Go to your [account page](https://www.generatebanners.com/app/account).\n4. The public and secret API keys are now displayed, copy them one by one into the right Activepieces fields.\n",
+  "auth.password.displayName": "Secret API Key",
+  "auth.username.displayName": "Public API Key",
+  "description": "Image generation API for banners and social media posts"
+}

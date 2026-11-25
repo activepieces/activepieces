@@ -1,0 +1,22 @@
+{
+  "actions.call_method.description": "Call a SOAP from a given wsdl specification",
+  "actions.call_method.displayName": "Call SOAP Method",
+  "actions.call_method.props.args.description": "Arguments for the SOAP method",
+  "actions.call_method.props.args.displayName": "Parameters",
+  "actions.call_method.props.method.description": "The SOAP Method",
+  "actions.call_method.props.method.displayName": "Method",
+  "actions.call_method.props.parsed.displayName": "Parsed",
+  "actions.call_method.props.wsdl.displayName": "WSDL URL",
+  "auth.props.customHeader.description": "Custom Header Content",
+  "auth.props.customHeader.displayName": "Custom Header",
+  "auth.props.password.description": "The WS Security password",
+  "auth.props.password.displayName": "Password",
+  "auth.props.type.displayName": "Authentication Type",
+  "auth.props.type.options.options[value=Basic].label": "Basic Auth",
+  "auth.props.type.options.options[value=Header].label": "Custom Header",
+  "auth.props.type.options.options[value=None].label": "None",
+  "auth.props.type.options.options[value=WS].label": "WS Security",
+  "auth.props.username.description": "The WS Security username",
+  "auth.props.username.displayName": "Username",
+  "description": "Simple Object Access Protocol for communication between applications"
+}

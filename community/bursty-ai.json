@@ -1,0 +1,10 @@
+{
+  "actions.runWorkflow.description": "Run a Bursty AI workflow and optionally wait for and return the results",
+  "actions.runWorkflow.displayName": "Run Workflow",
+  "actions.runWorkflow.props.get_result.description": "Wait for the workflow to complete and return the results (default: false)",
+  "actions.runWorkflow.props.get_result.displayName": "Wait for Result",
+  "actions.runWorkflow.props.workflow_id.description": "The ID of the Bursty AI workflow to run",
+  "actions.runWorkflow.props.workflow_id.displayName": "Workflow ID",
+  "auth.description": "API Key for Bursty-ai",
+  "description": "Automate content creation, SEO optimization, email outreach, and influencer partnerships with BurstyAI's no-code AI workflows."
+}

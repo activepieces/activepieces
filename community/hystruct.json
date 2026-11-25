@@ -1,0 +1,12 @@
+{
+  "actions.create_job.description": "Create and queue a new job to run for a workflow",
+  "actions.create_job.displayName": "Create Job",
+  "actions.create_job.props.workflowId.description": "The ID of the workflow to run",
+  "actions.create_job.props.workflowId.displayName": "Workflow ID",
+  "auth.description": "\nTo get your API key:\n1. Log in to your Hystruct dashboard\n2. Click on your profile picture (top right)\n3. Click **Settings**\n4. Click **API Keys**\n5. Copy and paste your API key here\n",
+  "description": "AI-powered document structuring and data extraction",
+  "triggers.workflow_event.description": "Triggers when a workflow event occurs (e.g., job completed, data updated)",
+  "triggers.workflow_event.displayName": "Workflow Event",
+  "triggers.workflow_event.props.markdown.description": "## Webhook Setup\n\nTo receive workflow events, set up a webhook in your Hystruct dashboard:\n\n1. Log in to Hystruct and go to **Integrations**\n2. Click **Webhooks** → **Create webhook**\n3. Paste this URL as the Webhook URL:\n```text\n{{webhookUrl}}\n```\n4. Select the events you want to subscribe to\n5. Optionally enter a Workflow ID to filter events\n6. Click **Save**\n",
+  "triggers.workflow_event.props.markdown.displayName": "Markdown"
+}

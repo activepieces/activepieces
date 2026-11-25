@@ -1,0 +1,16 @@
+{
+  "actions.run_workflow.description": "Run a workflow from your MindStudio app and start a thread.",
+  "actions.run_workflow.displayName": "Run Workflow",
+  "actions.run_workflow.props.appId.description": "MindStudio app ID to run.",
+  "actions.run_workflow.props.appId.displayName": "App ID",
+  "actions.run_workflow.props.callbackUrl.description": "URL to receive the execution result asynchronously.",
+  "actions.run_workflow.props.callbackUrl.displayName": "Callback URL",
+  "actions.run_workflow.props.includeBillingCost.description": "Return the billing cost in the response.",
+  "actions.run_workflow.props.includeBillingCost.displayName": "Include Billing Cost",
+  "actions.run_workflow.props.variables.description": "Key-value variables passed to the app.",
+  "actions.run_workflow.props.variables.displayName": "Variables",
+  "actions.run_workflow.props.workflow.description": "Workflow name to run (without the .flow extension).",
+  "actions.run_workflow.props.workflow.displayName": "Workflow",
+  "auth.description": "Your MindStudio API key (Bearer token).",
+  "description": "Run MindStudio workflows and get AI results."
+}

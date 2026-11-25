@@ -1,0 +1,20 @@
+{
+  "actions.addOrderNote.description": "Add a note to a Saleor order",
+  "actions.addOrderNote.displayName": "Add Order Note",
+  "actions.addOrderNote.props.message.description": "The content of the note",
+  "actions.addOrderNote.props.message.displayName": "Note Message",
+  "actions.addOrderNote.props.orderId.description": "The ID of the order",
+  "actions.addOrderNote.props.orderId.displayName": "Order ID",
+  "actions.getOrder.description": "Get an order according to the ID",
+  "actions.getOrder.displayName": "Get an order",
+  "actions.getOrder.props.orderId.displayName": "The ID of the order",
+  "actions.rawGraphqlQuery.description": "Perform a raw GraphQL query",
+  "actions.rawGraphqlQuery.displayName": "Raw GraphQL query",
+  "actions.rawGraphqlQuery.props.query.displayName": "Query",
+  "actions.rawGraphqlQuery.props.variables.displayName": "Parameters",
+  "auth.description": "Saleor",
+  "auth.props.apiUrl.description": "Your Saleor GraphQL API endpoint",
+  "auth.props.apiUrl.displayName": "Saleor API URL",
+  "auth.props.token.description": "Your token",
+  "auth.props.token.displayName": "Saleor token"
+}

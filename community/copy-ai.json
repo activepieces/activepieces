@@ -1,0 +1,23 @@
+{
+  "actions.get_workflow_run_outputs.description": "Retrieves the outputs of a completed workflow run.",
+  "actions.get_workflow_run_outputs.displayName": "Get Workflow Run Outputs",
+  "actions.get_workflow_run_outputs.props.runId.description": "The ID of the workflow run to get outputs from.",
+  "actions.get_workflow_run_outputs.props.runId.displayName": "Run ID",
+  "actions.get_workflow_run_outputs.props.workflowId.displayName": "Workflow ID",
+  "actions.get_workflow_run_status.description": "Retrieves the status of a workflow execution.",
+  "actions.get_workflow_run_status.displayName": "Get Workflow Run Status",
+  "actions.get_workflow_run_status.props.runId.description": "The ID of the workflow run to check.",
+  "actions.get_workflow_run_status.props.runId.displayName": "Run ID",
+  "actions.get_workflow_run_status.props.workflowId.displayName": "Workflow ID",
+  "actions.run_workflow.description": "Start a Copy.ai workflow execution.",
+  "actions.run_workflow.displayName": "Run Workflow",
+  "actions.run_workflow.props.inputs.description": "The input data for the workflow.",
+  "actions.run_workflow.props.inputs.displayName": "Workflow Inputs",
+  "actions.run_workflow.props.workflowId.description": "The ID of the workflow to run.",
+  "actions.run_workflow.props.workflowId.displayName": "Workflow ID",
+  "auth.description": "\nTo use Copy AI, you need to get an API key:\n1. Login to your account at https://copy.ai.\n2. Click on Workflows in the left sidebar.\n3. Click on any Workflow you have. You need to create a new Workflow, if you don't have one.\n4. Click on the API tab.\n5. Click the Copy button below WORKSPACE API KEY.\n",
+  "description": "AI-powered content generation and copywriting platform",
+  "triggers.workflow_run_completed.description": "Triggered when a workflow run is completed.",
+  "triggers.workflow_run_completed.displayName": "Workflow Run Completed",
+  "triggers.workflow_run_completed.props.workflowId.displayName": "Workflow ID"
+}

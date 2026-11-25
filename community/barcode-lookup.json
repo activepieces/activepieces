@@ -1,0 +1,10 @@
+{
+  "actions.searchByBarcode.description": "Search for product information by barcode",
+  "actions.searchByBarcode.displayName": "Search By Barcode",
+  "actions.searchByBarcode.props.barcode.description": "The barcode/UPC/EAN number to search for",
+  "actions.searchByBarcode.props.barcode.displayName": "Barcode",
+  "actions.searchByBarcode.props.formatted.description": "Return results in a clean, easy to read format",
+  "actions.searchByBarcode.props.formatted.displayName": "Formatted Output",
+  "auth.description": "API Key for Barcode Lookup",
+  "description": "Lookup product information by barcode number"
+}

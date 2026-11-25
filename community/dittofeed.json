@@ -1,0 +1,21 @@
+{
+  "actions.identify.description": "Identify a user in Dittofeed.",
+  "actions.identify.displayName": "Identify User",
+  "actions.identify.props.traits.displayName": "User Traits",
+  "actions.identify.props.userId.displayName": "User ID",
+  "actions.screen.description": "Track a screen view event.",
+  "actions.screen.displayName": "Screen Event",
+  "actions.screen.props.name.displayName": "Screen Name",
+  "actions.screen.props.properties.displayName": "Screen Properties",
+  "actions.screen.props.userId.displayName": "User ID",
+  "actions.track.description": "Track an event for a user.",
+  "actions.track.displayName": "Track Event",
+  "actions.track.props.event.displayName": "Event Name",
+  "actions.track.props.properties.displayName": "Event Properties",
+  "actions.track.props.userId.displayName": "User ID",
+  "auth.props.apiKey.description": "Your API key of Dittofeed.",
+  "auth.props.apiKey.displayName": "API Key",
+  "auth.props.baseUrl.description": "The base URL of your Dittofeed instance.",
+  "auth.props.baseUrl.displayName": "Base URL",
+  "description": "Customer data platform for user analytics and tracking"
+}

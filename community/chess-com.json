@@ -1,0 +1,13 @@
+{
+  "actions.get_daily_puzzle.description": "Retrieve today's Chess.com daily puzzle.",
+  "actions.get_daily_puzzle.displayName": "Get Daily Puzzle",
+  "actions.get_player_profile.description": "Retrieve a Chess.com player's public profile by username (avatar, country, join date, followers).",
+  "actions.get_player_profile.displayName": "Get Player Profile",
+  "actions.get_player_profile.props.username.description": "The Chess.com username to look up.",
+  "actions.get_player_profile.props.username.displayName": "Username",
+  "actions.get_player_stats.description": "Retrieve a Chess.com player's ratings and W/D/L for rapid, blitz, bullet, and chess960.",
+  "actions.get_player_stats.displayName": "Get Player Stats",
+  "actions.get_player_stats.props.username.description": "The Chess.com username to look up.",
+  "actions.get_player_stats.props.username.displayName": "Username",
+  "description": "Access Chess.com player data"
+}

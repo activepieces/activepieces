@@ -1,0 +1,21 @@
+{
+  "actions.create_session.description": "Creates a new Devin session",
+  "actions.create_session.displayName": "Create Session",
+  "actions.create_session.props.idempotent.displayName": "Idempotent",
+  "actions.create_session.props.playbookId.displayName": "Playbook ID",
+  "actions.create_session.props.prompt.displayName": "Prompt",
+  "actions.create_session.props.snapshotId.displayName": "Snapshot ID",
+  "actions.create_session.props.unlisted.displayName": "Unlisted",
+  "actions.get_session_details.description": "Retrieves details of a specific Devin session",
+  "actions.get_session_details.displayName": "Get Session Details",
+  "actions.get_session_details.props.sessionId.description": "The ID of the session to retrieve details for",
+  "actions.get_session_details.props.sessionId.displayName": "Session ID",
+  "actions.send_message.description": "Sends a message to a Devin session",
+  "actions.send_message.displayName": "Send Message",
+  "actions.send_message.props.message.description": "The message to send to the session",
+  "actions.send_message.props.message.displayName": "Message",
+  "actions.send_message.props.sessionId.description": "The ID of the session to send the message to",
+  "actions.send_message.props.sessionId.displayName": "Session ID",
+  "auth.description": "Your Devin API key (used in the Authorization header).",
+  "description": "AI-powered engineering assistant for automating development tasks, code generation, and technical conversations."
+}

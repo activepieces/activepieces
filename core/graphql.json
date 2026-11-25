@@ -1,0 +1,22 @@
+{
+  "actions.send_request.description": "Makes a GraphQL request.",
+  "actions.send_request.displayName": "Send Request",
+  "actions.send_request.props.failsafe.displayName": "No Error on Failure",
+  "actions.send_request.props.headers.displayName": "Headers",
+  "actions.send_request.props.method.displayName": "Method",
+  "actions.send_request.props.method.options.options[value=DELETE].label": "DELETE",
+  "actions.send_request.props.method.options.options[value=GET].label": "GET",
+  "actions.send_request.props.method.options.options[value=HEAD].label": "HEAD",
+  "actions.send_request.props.method.options.options[value=PATCH].label": "PATCH",
+  "actions.send_request.props.method.options.options[value=POST].label": "POST",
+  "actions.send_request.props.method.options.options[value=PUT].label": "PUT",
+  "actions.send_request.props.proxy_settings.displayName": "Proxy Settings",
+  "actions.send_request.props.query.displayName": "Query",
+  "actions.send_request.props.queryParams.displayName": "Query params",
+  "actions.send_request.props.timeout.displayName": "Timeout(in seconds)",
+  "actions.send_request.props.url.displayName": "URL",
+  "actions.send_request.props.use_proxy.description": "Use a proxy for this request",
+  "actions.send_request.props.use_proxy.displayName": "Use Proxy",
+  "actions.send_request.props.variables.displayName": "Variables",
+  "displayName": "GraphQL"
+}

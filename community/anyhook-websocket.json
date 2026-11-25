@@ -1,0 +1,13 @@
+{
+  "auth.props.proxyBaseUrl.description": "The URL of your AnyHook server",
+  "auth.props.proxyBaseUrl.displayName": "AnyHook Server URL",
+  "description": "AnyHook Websocket enables real-time communication through AnyHook proxy server by allowing you to subscribe and listen to websocket events",
+  "triggers.websocket_subscription_trigger.description": "Triggers on a new Websocket subscription event",
+  "triggers.websocket_subscription_trigger.displayName": "New Websocket Subscription Event",
+  "triggers.websocket_subscription_trigger.props.headers.description": "Custom headers for the Websocket connection, such as authentication tokens.",
+  "triggers.websocket_subscription_trigger.props.headers.displayName": "Headers",
+  "triggers.websocket_subscription_trigger.props.message.description": "The message to send to the Websocket server to subscribe to events.",
+  "triggers.websocket_subscription_trigger.props.message.displayName": "Subscription Message",
+  "triggers.websocket_subscription_trigger.props.websocketUrl.description": "Websocket endpoint URL to connect to.",
+  "triggers.websocket_subscription_trigger.props.websocketUrl.displayName": "Endpoint URL"
+}

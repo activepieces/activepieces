@@ -1,0 +1,16 @@
+{
+  "actions.findPhoneNumberCarrier.description": "Find the carrier of a phone number using ClearoutPhone API",
+  "actions.findPhoneNumberCarrier.displayName": "Find Phone Number Carrier",
+  "actions.findPhoneNumberCarrier.props.phoneNumber.description": "The phone number to validate (e.g., +447766733573 )",
+  "actions.findPhoneNumberCarrier.props.phoneNumber.displayName": "Phone Number",
+  "actions.findPhoneNumberIsMobile.description": "Determine if a phone number is a mobile number using ClearoutPhone API",
+  "actions.findPhoneNumberIsMobile.displayName": "Find Phone Number Is Mobile",
+  "actions.findPhoneNumberIsMobile.props.phoneNumber.description": "The phone number to validate (e.g., +447766733573 )",
+  "actions.findPhoneNumberIsMobile.props.phoneNumber.displayName": "Phone Number",
+  "actions.validatePhoneNumber.description": "Validate a phone number and retrieve comprehensive information using ClearoutPhone API",
+  "actions.validatePhoneNumber.displayName": "Validate Phone Number",
+  "actions.validatePhoneNumber.props.phoneNumber.description": "The phone number to validate (e.g., +447766733573 )",
+  "actions.validatePhoneNumber.props.phoneNumber.displayName": "Phone Number",
+  "auth.description": "ClearoutPhone API Key\n\n## Generating an API Token\n\nOnce signed up and logged in, click on **Dashboard -> API** tab available on left sidebar and then click on **\"Generate API Token\"**. \n.",
+  "description": "ClearoutPhone is a phone number validation and verification service that helps businesses ensure the accuracy and validity of their phone number data."
+}

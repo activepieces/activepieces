@@ -1,0 +1,9 @@
+{
+  "actions.sendMessage.displayName": "Send Message",
+  "actions.sendMessage.props.text.description": "The message to send",
+  "actions.sendMessage.props.text.displayName": "Message",
+  "actions.sendMessage.props.to.description": "The recipient of the message",
+  "actions.sendMessage.props.to.displayName": "To",
+  "auth.description": "The auth token for Whatsable",
+  "description": "Manage your WhatsApp business account"
+}

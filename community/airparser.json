@@ -1,0 +1,21 @@
+{
+  "actions.extract_data_from_document.description": "Retrieves parsed JSON data from a specific document.",
+  "actions.extract_data_from_document.displayName": "Get Data from Document",
+  "actions.extract_data_from_document.props.documentId.displayName": "Document",
+  "actions.extract_data_from_document.props.inboxId.displayName": "Inbox",
+  "actions.upload_document.description": "Upload a document to an Airparser inbox for parsing.",
+  "actions.upload_document.displayName": "Upload Document",
+  "actions.upload_document.props.file.description": "The document file to upload for parsing.",
+  "actions.upload_document.props.file.displayName": "File",
+  "actions.upload_document.props.fileName.displayName": "File Name",
+  "actions.upload_document.props.inboxId.displayName": "Inbox",
+  "actions.upload_document.props.meta.description": "Optional metadata to associate with the document.",
+  "actions.upload_document.props.meta.displayName": "Metadata",
+  "auth.description": "You can find your API key in the Airparser dashboard under Account Settings.",
+  "description": "Extract structured data from emails, PDFs, or documents with Airparser.",
+  "triggers.document_parsed.description": "Triggers when a new document is parsed in a specific inbox.",
+  "triggers.document_parsed.displayName": "Document Parsed",
+  "triggers.document_parsed.props.inboxId.displayName": "Inbox",
+  "triggers.document_parsed.props.markdown.description": "## Airparser Webhook Setup\n\t\t\tTo use this trigger, you need to manually set up a webhook in your Airparser account:\n\n\t\t\t1. Login to your Airparser account.\n\t\t\t2. Navigate to **Integrations** > **Webhooks** in the left sidebar.\n\t\t\t3. Enter the following URL in the webhooks field and select **Document Parsed** as webhook trigger:\n\t\t\t```text\n\t\t\t{{webhookUrl}}\n\t\t\t```\n\t\t\t4. Click Save to register the webhook.\n\t\t\t",
+  "triggers.document_parsed.props.markdown.displayName": "Markdown"
+}

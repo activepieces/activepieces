@@ -1,0 +1,8 @@
+{
+  "actions.text_to_qrcode.description": "Turn text or a link into a PNG QR code image.",
+  "actions.text_to_qrcode.displayName": "Generate QR Code",
+  "actions.text_to_qrcode.props.text.description": "Encoded into a PNG image file. About 2,300 characters at most.",
+  "actions.text_to_qrcode.props.text.displayName": "Text or Link",
+  "description": "Make QR code images from text or links.",
+  "displayName": "QR Code"
+}

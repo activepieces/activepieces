@@ -1,0 +1,14 @@
+{
+  "actions.detect-text.description": "Analyzes text and returns the likelihood of it being AI-generated or human-written.",
+  "actions.detect-text.displayName": "Detect Text",
+  "actions.detect-text.props.text.displayName": "Input Text",
+  "actions.humanize-text.description": "Rephrases a given AI-generated text to be more human like.",
+  "actions.humanize-text.displayName": "Humanize Text",
+  "actions.humanize-text.props.style.description": "The desired writing style for the output.",
+  "actions.humanize-text.props.style.displayName": "Text Style",
+  "actions.humanize-text.props.style.options.options[value=academic].label": "academic",
+  "actions.humanize-text.props.style.options.options[value=formal].label": "formal",
+  "actions.humanize-text.props.style.options.options[value=standard].label": "standard",
+  "actions.humanize-text.props.text.displayName": "Input Text",
+  "auth.description": "You can obtain API key from [Settings](https://hastewire.com/humanizer/account/api-keys)."
+}

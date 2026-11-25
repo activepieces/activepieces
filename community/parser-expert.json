@@ -1,0 +1,18 @@
+{
+  "actions.get_extracted_data.description": "Retrieve the extracted data using the parser ID and bucket ID. The parser ID is returned when you upload a document.",
+  "actions.get_extracted_data.displayName": "Get Extracted Data",
+  "actions.get_extracted_data.props.bucket_id.description": "The ID of the bucket where the data is stored.",
+  "actions.get_extracted_data.props.bucket_id.displayName": "Bucket ID",
+  "actions.get_extracted_data.props.parser_id.description": "The ID of the parser. This is returned when content is uploaded.",
+  "actions.get_extracted_data.props.parser_id.displayName": "Parser ID",
+  "actions.upload_document.description": "Upload a document or provide a webpage URL to parse. Supported formats: PDF, DOCX, Image, Txt File (maximum 10 pages per document).",
+  "actions.upload_document.displayName": "Upload Document",
+  "actions.upload_document.props.bucket_id.description": "The ID of the bucket where the data will be stored. You can find this in your dashboard under Manage Bucket.",
+  "actions.upload_document.props.bucket_id.displayName": "Bucket ID",
+  "actions.upload_document.props.file.description": "The file to upload. Supported formats: PDF, DOCX, Image, Txt File (maximum 10 pages per document). This will be ignored if webpage URL is provided.",
+  "actions.upload_document.props.file.displayName": "File",
+  "actions.upload_document.props.webpage_url.description": "The URL of the webpage to extract content from. This will be ignored if file is provided.",
+  "actions.upload_document.props.webpage_url.displayName": "Webpage URL",
+  "auth.description": "Your Parser Expert API key. You can find this in your dashboard under Integration -> New API Key.",
+  "description": "Parse documents and extract data from PDFs, DOCX files, images, and webpages using Parser Expert's powerful API."
+}

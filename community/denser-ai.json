@@ -1,0 +1,22 @@
+{
+  "actions.processInputText.description": "Input text processed by the chatbot",
+  "actions.processInputText.displayName": "Process input text",
+  "actions.processInputText.props.citation.description": "Whether to include citations in the response",
+  "actions.processInputText.props.citation.displayName": "Citations",
+  "actions.processInputText.props.model.description": "The model to be used by the chatbot (e.g., gpt-3.5, gpt-4)",
+  "actions.processInputText.props.model.displayName": "Model",
+  "actions.processInputText.props.model.options.options[value=claude-3-5-haiku].label": "claude-3-5-haiku",
+  "actions.processInputText.props.model.options.options[value=claude-3-5-sonnet].label": "claude-3-5-sonnet",
+  "actions.processInputText.props.model.options.options[value=claude-3-7-sonnet].label": "claude-3-7-sonnet",
+  "actions.processInputText.props.model.options.options[value=gpt-3.5].label": "gpt-3.5",
+  "actions.processInputText.props.model.options.options[value=gpt-4].label": "gpt-4",
+  "actions.processInputText.props.model.options.options[value=gpt-4o-mini].label": "gpt-4o-mini",
+  "actions.processInputText.props.model.options.options[value=gpt-4o].label": "gpt-4o",
+  "actions.processInputText.props.prompt.description": "The prompt to be used by the chatbot e.g., \"Please provide your answer in the following format: ...\"",
+  "actions.processInputText.props.prompt.displayName": "Prompt",
+  "actions.processInputText.props.question.description": "The question to be processed by the chatbot",
+  "actions.processInputText.props.question.displayName": "Question",
+  "auth.props.apiKey.displayName": "API key",
+  "auth.props.chatbotId.description": "The Chatbot ID is available on the [main dashboard of Denser Chatbot](https://denser.ai/u/chatbots). Simply choose the ID of the chatbot you want",
+  "auth.props.chatbotId.displayName": "Chatbot ID"
+}

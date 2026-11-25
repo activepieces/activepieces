@@ -1,0 +1,17 @@
+{
+  "actions.failFlow.description": "Fails this step with your error message.",
+  "actions.failFlow.displayName": "Fail Flow",
+  "actions.failFlow.props.info.description": "The run fails here and later steps do not run. If Add Error Handler is on, only this step fails. The Failure branch runs and the flow continues.",
+  "actions.failFlow.props.info.displayName": "Markdown",
+  "actions.failFlow.props.message.description": "Shown as the step's error. Can include data from earlier steps.",
+  "actions.failFlow.props.message.displayName": "Error Message",
+  "actions.getRunId.description": "Gets this run's ID and a link to open it.",
+  "actions.getRunId.displayName": "Get Run Info",
+  "actions.getRunId.props.info.description": "Outputs this run's ID and a link that opens the run.",
+  "actions.getRunId.props.info.displayName": "Markdown",
+  "actions.stopFlow.description": "Ends the run at this step and marks it as succeeded.",
+  "actions.stopFlow.displayName": "Stop Flow",
+  "actions.stopFlow.props.info.description": "The run ends here and is marked as succeeded. Steps after this one do not run.",
+  "actions.stopFlow.props.info.displayName": "Markdown",
+  "description": "Stop or fail a running flow, or get a link to the current run."
+}

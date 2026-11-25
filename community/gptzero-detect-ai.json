@@ -1,0 +1,12 @@
+{
+  "actions.scanFile.description": "Scan a file for AI-generated content detection",
+  "actions.scanFile.displayName": "Scan File",
+  "actions.scanFile.props.file.description": "The file to scan for AI-generated content",
+  "actions.scanFile.props.file.displayName": "File",
+  "actions.scanText.description": "Scan text content for AI-generated content detection",
+  "actions.scanText.displayName": "Scan Text",
+  "actions.scanText.props.text.description": "The text content to scan for AI-generated content",
+  "actions.scanText.props.text.displayName": "Text",
+  "auth.description": "https://app.gptzero.me/app/api to get your API key",
+  "description": "Detect AI-generated text with GPTZero API"
+}

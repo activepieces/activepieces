@@ -1,0 +1,12 @@
+{
+  "actions.create_approval_links.description": "Creates an approval link without pausing the flow",
+  "actions.create_approval_links.displayName": "Create Approval Links",
+  "actions.create_approval_links.props.markdown.description": "Makes a link to send by email or chat, without pausing the flow. Approval Link and Disapproval Link open the same page, where the person picks Approve or Disapprove. To pause until they answer, add a **Wait for Approval** step after you send it.\n\nThis piece is legacy but still supported. The approval actions in the Approvals tab send the request and wait for the answer in one step.",
+  "actions.create_approval_links.props.markdown.displayName": "Markdown",
+  "actions.wait_for_approval.description": "Pauses the flow until someone approves or disapproves",
+  "actions.wait_for_approval.displayName": "Wait for Approval",
+  "actions.wait_for_approval.props.markdown.description": "Pauses the flow until someone picks Approve or Disapprove. They answer through the link from a **Create Approval Links** step earlier in this flow; send it to them by email or chat before this step.\n\nThis piece is legacy but still supported. For a new flow, prefer the approval actions in the Approvals tab, which send the request and wait for the answer in one step.",
+  "actions.wait_for_approval.props.markdown.displayName": "Markdown",
+  "description": "Pause a flow until someone approves or disapproves",
+  "displayName": "Approval (Legacy)"
+}

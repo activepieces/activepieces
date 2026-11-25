@@ -1,0 +1,9 @@
+{
+  "actions.get_transcript.description": "Fetches transcript of a YouTube video.",
+  "actions.get_transcript.displayName": "Get Transcript",
+  "actions.get_transcript.props.text.description": "If true, the transcript will be merged into a single text instead of timestamped chunks.",
+  "actions.get_transcript.props.text.displayName": "Merge Text",
+  "actions.get_transcript.props.url.displayName": "YouTube URL",
+  "auth.description": "\nTo obtain your free Gistly API Key, sign up at [Gistly](https://gist.ly/youtube-transcript-api) and then copy the key available in the [dashboard](https://api-portal.gist.ly/).\n",
+  "description": "The Gistly API now lives at Supadata. Use the Supadata piece instead."
+}

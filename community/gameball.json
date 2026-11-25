@@ -1,0 +1,7 @@
+{
+  "actions.sendEvent.description": "Send an event to gameball",
+  "actions.sendEvent.displayName": "Send event",
+  "actions.sendEvent.props.eventName.displayName": "Event Name",
+  "actions.sendEvent.props.playerUniqueId.displayName": "Your Player Unique Id",
+  "auth.description": "Please use your gameball api key. visit [help center](https://help.gameball.co/en/articles/3467114-get-your-account-integration-details-api-key-and-transaction-key) for more information"
+}

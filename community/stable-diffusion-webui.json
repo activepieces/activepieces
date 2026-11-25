@@ -1,0 +1,9 @@
+{
+  "actions.textToImage.displayName": "Text to Image",
+  "actions.textToImage.props.advancedParameters.description": "Refer to API documentation",
+  "actions.textToImage.props.advancedParameters.displayName": "Advanced parameters (key/value)",
+  "actions.textToImage.props.model.displayName": "Model",
+  "actions.textToImage.props.prompt.displayName": "Prompt",
+  "auth.props.baseUrl.displayName": "Stable Diffusion web UI API base URL",
+  "description": "A web interface for Stable Diffusion"
+}

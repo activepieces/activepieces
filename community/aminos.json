@@ -1,0 +1,15 @@
+{
+  "actions.createUser.description": "Create a user and plan in Aminos One Panel",
+  "actions.createUser.displayName": "Create User on Aminos One",
+  "actions.createUser.props.useremail.description": "Username, should be an e-mail address",
+  "actions.createUser.props.useremail.displayName": "Username (e-mail)",
+  "actions.createUser.props.userfriendlyname.description": "The name of the user",
+  "actions.createUser.props.userfriendlyname.displayName": "Name of user",
+  "actions.createUser.props.userplanid.description": "Plan ID number from the plans in your Aminos One panel",
+  "actions.createUser.props.userplanid.displayName": "Plan ID",
+  "auth.description": "Enter Aminos One authentication details",
+  "auth.props.access_token.description": "Enter the API key from your Aminos One panel",
+  "auth.props.access_token.displayName": "API key",
+  "auth.props.base_url.description": "Enter the base URL",
+  "auth.props.base_url.displayName": "Base URL"
+}

@@ -1,0 +1,23 @@
+{
+  "actions.extract_text.description": "Get the text, headers and footers of a Word document (.docx).",
+  "actions.extract_text.displayName": "Extract Text",
+  "actions.extract_text.propertyGroups[key=input].label": "Document",
+  "actions.extract_text.props.file.description": "Pick a .docx file from an earlier step, such as an email attachment, or paste a URL to download.",
+  "actions.extract_text.props.file.displayName": "Word Document",
+  "actions.extract_text.props.password.description": "Only needed when the document is password-protected.",
+  "actions.extract_text.props.password.displayName": "Password",
+  "actions.fill_template.description": "Fill the {{placeholders}} in a Word template (.docx) and get a new document.",
+  "actions.fill_template.displayName": "Fill Template",
+  "actions.fill_template.props.data.description": "Optional. A JSON object with values for the placeholders. It overrides the fields above, and is needed for a list inside a list.",
+  "actions.fill_template.props.data.displayName": "Data (JSON)",
+  "actions.fill_template.props.fields.description": "One field per placeholder in the template. They appear once the template is set, or mapped from a step you have tested.",
+  "actions.fill_template.props.fields.displayName": "Fields",
+  "actions.fill_template.props.fileName.description": "Name of the new document. Leave empty to use the template's name.",
+  "actions.fill_template.props.fileName.displayName": "File Name",
+  "actions.fill_template.props.syntax.description": "Type placeholders in your Word template with double braces:\n- `{{name}}` is replaced by the \"name\" value. `{{customer.city}}` reads a nested value.\n- `{{#items}}` ... `{{/items}}` repeats a table row or paragraph for each entry of the \"items\" list. Inside it, use the entry's fields, like `{{description}}`.\n- `{{#paid}}` ... `{{/paid}}` shows the text only when \"paid\" is true; `{{^paid}}` ... `{{/paid}}` only when it is false or empty.",
+  "actions.fill_template.props.syntax.displayName": "Markdown",
+  "actions.fill_template.props.template.description": "A .docx file with {{placeholders}}, from an earlier step or a URL.",
+  "actions.fill_template.props.template.displayName": "Word Template",
+  "description": "Read Word documents (.docx) and fill Word templates in your flow, no Microsoft account needed.",
+  "displayName": "Word Documents"
+}

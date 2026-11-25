@@ -1,0 +1,8 @@
+{
+  "triggers.new-submission.description": "Triggers when form receives a new submission.",
+  "triggers.new-submission.displayName": "New Submission",
+  "triggers.new-submission.props.liveMarkdown.description": "**Live URL:**\n```text\n{{webhookUrl}}\n```\ngenerate sample data & triggers published flow.\n\n",
+  "triggers.new-submission.props.liveMarkdown.displayName": "Markdown",
+  "triggers.new-submission.props.md.description": "\nTo set up the trigger for new form submissions, follow these steps:\n\n1. Go to the \"Dashboard\" section.\n2. Select the form where you want the trigger to occur.\n3. Click on the \"Settings\" section.\n4. Find the \"Webhook URL\" field and paste above URL there.  \n6. Click on \"Save\".\n",
+  "triggers.new-submission.props.md.displayName": "Markdown"
+}

@@ -1,0 +1,11 @@
+{
+  "actions.afforai_ask_chatbot.description": "Gets AI-generated completions for a given chatbot.",
+  "actions.afforai_ask_chatbot.displayName": "Ask Chatbot",
+  "actions.afforai_ask_chatbot.props.google.displayName": "AI to search for information on Google?",
+  "actions.afforai_ask_chatbot.props.history.displayName": "Chat History",
+  "actions.afforai_ask_chatbot.props.powerful.displayName": "AI should search more deeply for information in the given files ?",
+  "actions.afforai_ask_chatbot.props.sessionID.description": "You can find Chatbot ID by clicking settings button under **Actions** for given chatbot.",
+  "actions.afforai_ask_chatbot.props.sessionID.displayName": "Chatbot ID",
+  "auth.description": "\n  To obtain your API Key, follow these steps:\n  1. Log in to your Afforai account.\n  2. Navigate to **API** section on left panel.\n  3. On the top-right, you can find you API key.\n  ",
+  "description": "Helps you search, summarize, and translate knowledge from hundreds of documents to help you produce trustworthy research."
+}

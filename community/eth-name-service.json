@@ -1,0 +1,8 @@
+{
+  "actions.listEnsDomains.description": "List the ENS domains for a given address.",
+  "actions.listEnsDomains.displayName": "List ENS Domains",
+  "actions.listEnsDomains.props.address.description": "Address to list ENS domains for",
+  "actions.listEnsDomains.props.address.displayName": "Address",
+  "auth.description": "*Get your api Key: https://thegraph.com/studio/apikeys",
+  "description": "Ethereum Name Service (ENS) is a decentralized naming system on the Ethereum blockchain."
+}

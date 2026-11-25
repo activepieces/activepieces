@@ -1,0 +1,21 @@
+{
+  "actions.delayFor.description": "Delays the execution of the next action for a given duration",
+  "actions.delayFor.displayName": "Delay For",
+  "actions.delayFor.propertyGroups[key=duration].label": "Wait time",
+  "actions.delayFor.props.delayFor.displayName": "Amount",
+  "actions.delayFor.props.markdown.description": "\n**Note:** The maximum duration per step is {{pausedFlowTimeoutDays}} days.\n",
+  "actions.delayFor.props.markdown.displayName": "Markdown",
+  "actions.delayFor.props.unit.displayName": "Unit",
+  "actions.delayFor.props.unit.options.options[value=days].label": "Days",
+  "actions.delayFor.props.unit.options.options[value=hours].label": "Hours",
+  "actions.delayFor.props.unit.options.options[value=minutes].label": "Minutes",
+  "actions.delayFor.props.unit.options.options[value=seconds].label": "Seconds",
+  "actions.delay_until.description": "Delays the execution of the next action until a given timestamp",
+  "actions.delay_until.displayName": "Delay Until",
+  "actions.delay_until.props.delayUntilTimestamp.description": "A time without a timezone is read as UTC.",
+  "actions.delay_until.props.delayUntilTimestamp.displayName": "Date and Time",
+  "actions.delay_until.props.markdown.description": "\n**Note:** The maximum duration per step is {{pausedFlowTimeoutDays}} days.\n",
+  "actions.delay_until.props.markdown.displayName": "Markdown",
+  "description": "Pause your flow for a set duration or until a specific time",
+  "displayName": "Delay"
+}

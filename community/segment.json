@@ -1,0 +1,7 @@
+{
+  "actions.identifyUser.displayName": "Identify User",
+  "actions.identifyUser.props.traits.description": "The traits to associate with the user",
+  "actions.identifyUser.props.traits.displayName": "Traits",
+  "actions.identifyUser.props.userId.displayName": "User ID",
+  "auth.description": "Copy and paste your analytics write key here"
+}

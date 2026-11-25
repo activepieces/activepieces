@@ -1,0 +1,12 @@
+{
+  "actions.validatePhone.description": "Validate a phone number and retrieve line type, carrier, and location information",
+  "actions.validatePhone.displayName": "Validate Phone Number",
+  "actions.validatePhone.props.phoneNumber.description": "The phone number to validate (e.g., 7029270000, 1-702-927-0000)",
+  "actions.validatePhone.props.phoneNumber.displayName": "Phone Number",
+  "actions.validatePhone.props.searchType.description": "Type of phone lookup to perform",
+  "actions.validatePhone.props.searchType.displayName": "Search Type",
+  "actions.validatePhone.props.searchType.options.options[value=basic].label": "Basic (Line Type + Carrier + Location + Fake Check)",
+  "actions.validatePhone.props.searchType.options.options[value=fake].label": "Fake Number Check Only",
+  "auth.description": "\nTo get your API Key:\n\n1. Sign up and create an account at Phone Validator\n2. Visit your account information to obtain your API key\n3. Copy your API key and paste it here\n",
+  "description": "Validate phone numbers and retrieve line type, carrier, and location information"
+}

@@ -1,0 +1,8 @@
+{
+  "actions.advanced_mapping.description": "Map data from one format to another",
+  "actions.advanced_mapping.displayName": "Advanced Mapping",
+  "actions.advanced_mapping.props.mapping.description": "The mapping to use",
+  "actions.advanced_mapping.props.mapping.displayName": "Mapping",
+  "description": "tools to manipulate data structure",
+  "displayName": "Data Mapper"
+}

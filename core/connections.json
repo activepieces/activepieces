@@ -1,0 +1,10 @@
+{
+  "actions.read_connection.description": "Get a connection's credentials by its external ID",
+  "actions.read_connection.displayName": "Read Connection",
+  "actions.read_connection.props.connection_name.description": "Hover the app icon on the Connections page to copy it.",
+  "actions.read_connection.props.connection_name.displayName": "Connection External ID",
+  "actions.read_connection.props.info.description": "\nUse this step when the flow only learns which connection to use while it runs, for example from a webhook.\n\nIt returns that connection's credentials. To use them in a later step, turn on **Dynamic value** on that step's connection field and insert this step's output.\n",
+  "actions.read_connection.props.info.displayName": "Markdown",
+  "description": "Look up a connection's credentials while the flow runs",
+  "displayName": "Connections"
+}

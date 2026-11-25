@@ -1,0 +1,19 @@
+{
+  "actions.send_email.description": "Send a text or HTML email",
+  "actions.send_email.displayName": "Send Email",
+  "actions.send_email.props.bcc.description": "List of emails in bcc",
+  "actions.send_email.props.bcc.displayName": "Bcc",
+  "actions.send_email.props.cc.description": "List of emails in cc",
+  "actions.send_email.props.cc.displayName": "Cc",
+  "actions.send_email.props.content.description": "HTML is only allowed if you selected HTML as type",
+  "actions.send_email.props.content.displayName": "Content",
+  "actions.send_email.props.content_type.displayName": "Content Type",
+  "actions.send_email.props.from.description": "Sender email",
+  "actions.send_email.props.from.displayName": "Sender Email (From)",
+  "actions.send_email.props.reply_to.description": "Email to receive replies on (defaults to sender)",
+  "actions.send_email.props.reply_to.displayName": "Reply To",
+  "actions.send_email.props.subject.displayName": "Subject",
+  "actions.send_email.props.to.description": "Emails of the recipients",
+  "actions.send_email.props.to.displayName": "To",
+  "description": "Communication services from Microsoft Azure"
+}

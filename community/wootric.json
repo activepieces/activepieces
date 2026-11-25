@@ -1,0 +1,9 @@
+{
+  "actions.trigger_wootric_survey.description": "Trigger a survey from Wootric",
+  "actions.trigger_wootric_survey.displayName": "Trigger Wootric Survey",
+  "actions.trigger_wootric_survey.props.emails.description": "End user emails, where you want the survey to be received",
+  "actions.trigger_wootric_survey.props.emails.displayName": "Emails",
+  "actions.trigger_wootric_survey.props.surveyImmediately.description": "Enter \"true\" to survey immediately to bypass checks, otherwise \"false\"",
+  "actions.trigger_wootric_survey.props.surveyImmediately.displayName": "Survey Immediately",
+  "description": "Measure and boost customer happiness"
+}

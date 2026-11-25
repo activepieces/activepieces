@@ -1,0 +1,21 @@
+{
+  "description": "Extract data and insights from the Tenzo platform for sales, forecasting, and analytics.",
+  "triggers.new_daily_forecast.description": "Triggers when there is a new daily forecast for a selected location.",
+  "triggers.new_daily_forecast.displayName": "New Daily Forecast",
+  "triggers.new_daily_forecast.props.location_id.description": "Select the location to filter data",
+  "triggers.new_daily_forecast.props.location_id.displayName": "Location",
+  "triggers.new_summary_payments.description": "Triggers when there is new daily sales and payments data.",
+  "triggers.new_summary_payments.displayName": "New Summary Payments",
+  "triggers.new_summary_payments.props.area_id.description": "Select the area to filter data",
+  "triggers.new_summary_payments.props.area_id.displayName": "Area",
+  "triggers.new_summary_payments.props.include_deleted.description": "Include data that has been deleted",
+  "triggers.new_summary_payments.props.include_deleted.displayName": "Include Deleted",
+  "triggers.new_summary_payments.props.location_id.description": "Select the location to filter data",
+  "triggers.new_summary_payments.props.location_id.displayName": "Location",
+  "triggers.new_summary_sales.description": "Triggers when there is new daily sales data.",
+  "triggers.new_summary_sales.displayName": "New Summary Sales",
+  "triggers.new_summary_sales.props.area_id.description": "Select the area to filter data",
+  "triggers.new_summary_sales.props.area_id.displayName": "Area",
+  "triggers.new_summary_sales.props.location_id.description": "Select the location to filter data",
+  "triggers.new_summary_sales.props.location_id.displayName": "Location"
+}

@@ -1,0 +1,14 @@
+{
+  "actions.publish_to_topic.description": "Publish message to topic",
+  "actions.publish_to_topic.displayName": "Publish to topic",
+  "actions.publish_to_topic.props.message.displayName": "Message",
+  "actions.publish_to_topic.props.topic.displayName": "Topic",
+  "auth.description": "\nYou can get it from the [Google Cloud Console](https://console.cloud.google.com/apis/credentials/serviceaccountkey).\n",
+  "auth.props.json.displayName": "Service Key (JSON)",
+  "description": "Google Cloud's event streaming service",
+  "triggers.new_message_in_topic.description": "Trigger when a new message is sended.",
+  "triggers.new_message_in_topic.displayName": "New Message",
+  "triggers.new_message_in_topic.props.ackDeadlineSeconds.displayName": "Ack Deadline Seconds",
+  "triggers.new_message_in_topic.props.subscription.displayName": "Subscription name",
+  "triggers.new_message_in_topic.props.topic.displayName": "Topic"
+}

@@ -1,0 +1,8 @@
+{
+  "description": "Start a flow on demand with a button click.",
+  "displayName": "Manual Trigger",
+  "triggers.manual_trigger.description": "Start the flow on demand with the Run Flow button",
+  "triggers.manual_trigger.displayName": "Manual Trigger",
+  "triggers.manual_trigger.props.markdown.description": "Publish the flow, then click **Run Flow** on the canvas to start it.\n\nThis trigger passes no data, so later steps have nothing to map from it.",
+  "triggers.manual_trigger.props.markdown.displayName": "Markdown"
+}

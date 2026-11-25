@@ -1,0 +1,8 @@
+{
+  "actions.ask-bot.description": "Sends message to selected bot.",
+  "actions.ask-bot.displayName": "Ask Bot",
+  "actions.ask-bot.props.botId.description": "You can find this in your Bot Details page in the dashboard.",
+  "actions.ask-bot.props.botId.displayName": "Bot ID",
+  "actions.ask-bot.props.prompt.displayName": "Question",
+  "auth.description": "You can obtain API key from [Dashboard Settings](https://dashboard.tinytalk.ai/)."
+}

@@ -1,0 +1,12 @@
+{
+  "actions.analyze-email.description": "Validates an email address and returns its deliverability status.",
+  "actions.analyze-email.displayName": "Analyze Email",
+  "actions.analyze-email.props.email.displayName": "Email",
+  "actions.analyze-email.props.enableAI.displayName": "Enable AI?",
+  "actions.analyze-email.props.enableAutoCorrection.displayName": "Enable Auto Correction?",
+  "actions.analyze-ip-address.description": "Provides comprehensive insights into a specified IP address.",
+  "actions.analyze-ip-address.displayName": "Analyze IP Address",
+  "actions.analyze-ip-address.props.enableAI.displayName": "Enable AI?",
+  "actions.analyze-ip-address.props.ip.displayName": "Ip Address",
+  "auth.description": "You can obtain your API key from [API Key List](https://app.opportify.ai/api-keys/list)."
+}

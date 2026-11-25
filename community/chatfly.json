@@ -1,0 +1,12 @@
+{
+  "actions.send_message.description": "Send a message to ChatFly bot",
+  "actions.send_message.displayName": "Send Message",
+  "actions.send_message.props.bot_id.description": "The ID of your bot",
+  "actions.send_message.props.bot_id.displayName": "Bot ID",
+  "actions.send_message.props.message.description": "The message to send",
+  "actions.send_message.props.message.displayName": "Message",
+  "actions.send_message.props.session_id.description": "The ID of the session",
+  "actions.send_message.props.session_id.displayName": "Session ID",
+  "auth.description": "Enter your ChatFly API key",
+  "description": "ChatFly allows you to build AI chatbots trained on your data."
+}

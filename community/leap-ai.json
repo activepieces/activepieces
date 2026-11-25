@@ -1,0 +1,16 @@
+{
+  "actions.getAWorkflowRun.description": "Retrieve the status and results of a workflow run",
+  "actions.getAWorkflowRun.displayName": "Get a Workflow Run",
+  "actions.getAWorkflowRun.props.workflow_run_id.description": "The ID of the workflow run to retrieve",
+  "actions.getAWorkflowRun.props.workflow_run_id.displayName": "Workflow Run ID",
+  "actions.runAWorkflow.description": "Execute a Leap AI workflow and return the run ID",
+  "actions.runAWorkflow.displayName": "Run a Workflow",
+  "actions.runAWorkflow.props.input.description": "Variables that the workflow can use globally and their values (optional)",
+  "actions.runAWorkflow.props.input.displayName": "Input Variables",
+  "actions.runAWorkflow.props.webhook_url.description": "The URL to which workflow results should be sent on completion (optional)",
+  "actions.runAWorkflow.props.webhook_url.displayName": "Webhook URL",
+  "actions.runAWorkflow.props.workflow_id.description": "The ID of the workflow to run",
+  "actions.runAWorkflow.props.workflow_id.displayName": "Workflow ID",
+  "auth.description": "Provide your Leap AI API key. \n\n**How to get your API key:**\n1. Go to [app.tryleap.ai](https://app.tryleap.ai)\n2. Click on **Settings** in the left sidebar (bottom)\n3. Navigate to the **API** section\n4. Click **Create API Key** to generate a new key\n5. Copy and paste the key here",
+  "description": "Automate any workflow with AI. Build custom AI automations to scale your marketing, sales, and operations."
+}

@@ -1,0 +1,14 @@
+{
+  "actions.upload_document.description": "Upload a new document to FlowParser for processing",
+  "actions.upload_document.displayName": "Upload Document",
+  "actions.upload_document.props.file.description": "The document file to upload",
+  "actions.upload_document.props.file.displayName": "File",
+  "auth.description": "\nTo get your API Key:\n\n1. Go to your FlowParser account\n2. Navigate to API settings\n3. Copy your API key\n4. Paste it here\n",
+  "description": "Upload, process, and manage documents programmatically with FlowParser's REST API.",
+  "triggers.new_parsed_document_by_template.description": "Triggers when a new document is parsed using a specific template",
+  "triggers.new_parsed_document_by_template.displayName": "New Parsed Document by Template",
+  "triggers.new_parsed_document_by_template.props.templateId.description": "Select a template to monitor for new parsed documents",
+  "triggers.new_parsed_document_by_template.props.templateId.displayName": "Template",
+  "triggers.new_parsed_document_found.description": "Triggers when a document has been successfully parsed",
+  "triggers.new_parsed_document_found.displayName": "New Parsed Document Found"
+}

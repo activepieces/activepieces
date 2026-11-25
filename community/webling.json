@@ -1,0 +1,15 @@
+{
+  "actions.EventsById.description": "Gets event data by a list of event IDs and optional calendar ID to filter.",
+  "actions.EventsById.displayName": "Get Events by ID",
+  "actions.EventsById.props.calendarId.description": "Calendar to filter the events by.",
+  "actions.EventsById.props.calendarId.displayName": "Calendar",
+  "actions.EventsById.props.eventIds.description": "Comma separated list of event IDs (e.g. '536,525,506,535'). When at least one ID doesn't exist the whole query return a 404 error.",
+  "actions.EventsById.props.eventIds.displayName": "Event ID list",
+  "auth.props.apikey.displayName": "API Key",
+  "auth.props.baseUrl.displayName": "Base URL",
+  "triggers.onChangedData.description": "Triggers when anything was added, updated or deleted since last request.",
+  "triggers.onChangedData.displayName": "On Changed Data",
+  "triggers.onEventChanged.description": "Triggers when an event is added or updated.",
+  "triggers.onEventChanged.displayName": "New or Updated Event",
+  "triggers.onEventChanged.props.calendarId.displayName": "Calendar"
+}
