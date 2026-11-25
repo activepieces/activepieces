@@ -1,5 +1,5 @@
 import { ActivepiecesError, ErrorCode, FlowId, isNil, PlatformId, ProjectId, tryCatch, unique, UserId } from '@activepieces/core-utils'
-import { PropertyType } from '@activepieces/pieces-framework'
+import { getAuthPropertyForValue, PropertyType } from '@activepieces/pieces-framework'
 import { AppConnection, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, EngineResponse, EngineResponseStatus, ExecuteRefreshTokenAuthResponse, PopulatedFlow, WorkerJobType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -266,7 +266,7 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
                     version: connection.pieceVersion,
                     platformId: connection.platformId,
                 })
-                const auth = Array.isArray(pieceMetadata.auth) ? pieceMetadata.auth[0] : pieceMetadata.auth
+                const auth = getAuthPropertyForValue({ authValueType: connection.value.type, pieceAuth: pieceMetadata.auth })
                 const hasRefresh = auth?.type === PropertyType.CUSTOM_AUTH && !isNil(auth.refresh)
                 pieceRefreshSupportCache.set(cacheKey, hasRefresh)
                 return hasRefresh
