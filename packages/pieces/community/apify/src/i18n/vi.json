@@ -1,8 +1,7 @@
 {
   "Access Apify tools for web scraping, data extraction, and automation.": "Truy cập các công cụ Apify để thu thập dữ liệu web, trích xuất dữ liệu và tự động hóa.",
-  "API Key": "Khóa API",
-  "Find your API key on Apify in the settings, API & Integrations section.": "Tìm API Key của bạn trên Apify trong phần settings, API & Integrations.",
-  "Enter API key authentication details": "Nhập chi tiết xác thực API Key",
+  "API token": "API Token",
+  "Find your API token in [Apify Console](https://console.apify.com/settings/integrations?utm_source=activepieces&utm_medium=integrations) under **Settings** > **API & Integrations**.": "Tìm API Token của bạn trong [Apify Console](https://console.apify.com/settings/integrations?utm_source=activepieces&utm_medium=integrations) tại **Settings** > **API & Integrations**.",
   "Get Dataset Items": "Lấy các mục Dataset",
   "Run Actor": "Chạy Actor",
   "Run Task": "Chạy Task",

@@ -1,8 +1,7 @@
 {
   "Access Apify tools for web scraping, data extraction, and automation.": "Accédez aux outils Apify pour le grattage web, l'extraction de données et l'automatisation.",
-  "API Key": "Clé API",
-  "Find your API key on Apify in the settings, API & Integrations section.": "Trouvez votre clé API sur Apify dans la section paramètres, API & Integrations.",
-  "Enter API key authentication details": "Entrez les détails d'authentification de la clé API",
+  "API token": "Jeton d'API",
+  "Find your API token in [Apify Console](https://console.apify.com/settings/integrations?utm_source=activepieces&utm_medium=integrations) under **Settings** > **API & Integrations**.": "Trouvez votre jeton d'API dans [Apify Console](https://console.apify.com/settings/integrations?utm_source=activepieces&utm_medium=integrations), sous **Settings** > **API & Integrations**.",
   "Get Dataset Items": "Récupérer les éléments du jeu de données",
   "Run Actor": "Exécuter l'acteur",
   "Run Task": "Exécuter la tâche",

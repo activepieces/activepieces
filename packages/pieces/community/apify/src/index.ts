@@ -44,13 +44,11 @@ import { apifyGetAccount } from './lib/actions/get-account';
 import { apifyGetAccountLimits } from './lib/actions/get-account-limits';
 
 export const apifyAuth = PieceAuth.CustomAuth({
-  description: 'Enter API key authentication details',
+  description: 'Create an API token for Activepieces in [Apify Console](https://console.apify.com/settings/integrations?createApiToken=true&for=Activepieces&utm_source=activepieces&utm_medium=integrations) and copy it right after creating it — it is shown only once.',
   props: {
     apikey: PieceAuth.SecretText({
-      displayName: 'API Key',
+      displayName: 'API token',
       required: true,
-      description:
-        'Create an API token for Activepieces in [Apify Console](https://console.apify.com/settings/integrations?createApiToken=true&for=Activepieces&utm_source=activepieces&utm_medium=integrations) and copy it right after creating it — it is shown only once.',
     }),
   },
   validate: async ({ auth }) => {
