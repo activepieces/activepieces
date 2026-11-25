@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/core-utils'
-import { apVersionUtil } from '@activepieces/server-utils'
+import { apVersionUtil, posthogConfig } from '@activepieces/server-utils'
 import { ExecutionMode, NetworkMode, WorkerGroupScope, WorkerMachineHealthcheckRequest, WorkerMachineStatus, WorkerMachineType, WorkerMachineWithStatus, WorkerSettingsResponse } from '@activepieces/shared'
 
 import { FastifyBaseLogger } from 'fastify'
@@ -55,6 +55,7 @@ async function buildSettingsResponse(_log: FastifyBaseLogger): Promise<WorkerSet
         ENFORCE_CONNECTION_PIECE_BINDING: system.getBoolean(AppSystemProp.ENFORCE_CONNECTION_PIECE_BINDING) ?? false,
         NETWORK_MODE: system.getOrThrow<NetworkMode>(AppSystemProp.NETWORK_MODE),
         PAGE_ONCALL_WEBHOOK: system.get(AppSystemProp.PAGE_ONCALL_WEBHOOK),
+        POSTHOG_PROJECT_TOKEN: posthogConfig.projectToken(),
         APP_VERSION: apVersionUtil.getCurrentRelease(),
     }
     settingsCache.set(cacheKey, settings)
