@@ -136,7 +136,7 @@ export const apAddStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBaseL
                             const labels = await buildFlowReview.resolveDropdownLabels({ pieceName: versionResult.normalizedPieceName, pieceVersion: versionResult.pieceVersion, componentName: actionName, componentType: 'action', stepName, input: isObject(pieceSettings.input) ? pieceSettings.input : resolvedInput, fields: Object.keys(resolvedInput), projectId: mcp.projectId, platformId: project.platformId, log })
                             labelNote = buildFlowReview.labelNote(labels)
                             pieceSettings.input = labels.input
-                            pieceSettings.propertySettings = await mcpUtils.resolveDynamicPropertySettings({ pieceName: versionResult.normalizedPieceName, pieceVersion: versionResult.pieceVersion, componentName: actionName, componentType: 'action', input: labels.input, projectId: mcp.projectId, platformId: project.platformId, log })
+                            pieceSettings.propertySettings = await mcpUtils.resolveDynamicPropertySettings({ pieceName: versionResult.normalizedPieceName, pieceVersion: versionResult.pieceVersion, componentName: actionName, componentType: 'action', input: labels.input, propertySettings: labels.propertySettings, projectId: mcp.projectId, platformId: project.platformId, log })
                         }
                     }
                     skeletonAction = {
@@ -231,7 +231,7 @@ export const apAddStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBaseL
                 const hasConfig = input !== undefined || auth !== undefined || sourceCode !== undefined || loopItems !== undefined
                 const addedStep = flowStructureUtil.getStep(stepName, updatedFlow.version.trigger)
                 const stepValid = hasConfig && addedStep ? addedStep.valid : false
-                const structured = { stepName, displayName, valid: stepValid }
+                const structured = { ...buildFlowReview.flowState(updatedFlow), stepName, displayName, valid: stepValid }
                 if (hasConfig && addedStep && !addedStep.valid) {
                     return {
                         content: [{

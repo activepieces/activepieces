@@ -372,7 +372,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                     messages: [...(config.allMessages as ModelMessage[]), ...accumulatedResponseMessages],
                     uiMessages: [
                         ...(config.previousUiMessages as PersistedAgentMessage[]),
-                        ...(uiParts.length > 0 ? [{ role: PersistedAgentRole.ASSISTANT, parts: uiParts, thinkingDurationMs, tainted: taintState.readInThisReply() }] : []),
+                        ...(uiParts.length > 0 ? [{ role: PersistedAgentRole.ASSISTANT, parts: uiParts, thinkingDurationMs, toolDurationMs: turn.toolDurationMs, tainted: taintState.readInThisReply() }] : []),
                     ],
                     ...answeredByOf({ answeredBy: turn.answeredBy }),
                 }
@@ -426,7 +426,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 messages: [...(config.allMessages as ModelMessage[]), ...accumulatedResponseMessages],
                 uiMessages: [
                     ...(config.previousUiMessages as PersistedAgentMessage[]),
-                    ...(uiParts.length > 0 ? [{ role: PersistedAgentRole.ASSISTANT, parts: uiParts, thinkingDurationMs, tainted: taintState.readInThisReply() }] : []),
+                    ...(uiParts.length > 0 ? [{ role: PersistedAgentRole.ASSISTANT, parts: uiParts, thinkingDurationMs, toolDurationMs: turn.toolDurationMs, tainted: taintState.readInThisReply() }] : []),
                 ],
                 ...spreadIfDefined('title', autoTitle),
                 ...spreadIfDefined('modelName', isNil(data.modelName) && isNil(config.platformTier) ? config.tier.id : undefined),
@@ -745,6 +745,7 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
     // the turn — injected as `auth` into piece-introspection tools so the model can't resolve
     // props/dropdowns against a guessed externalId. Keyed by normalized piece name.
     const selectedConnectionByPiece = new Map<string, string>()
+    const actionProgressGuard = agentWorkerTools.createProgressGuard()
     const localTools = agentWorkerTools.createLocalTools({
         onSetProjectContext: async (projectId) => {
             const { error } = await tryCatch(() => ctx.apiClient.updateProjectContext({ conversationId, runId, projectId, provider: runKey().provider, providerConfigId: runKey().providerConfigId }))
@@ -775,6 +776,11 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
         return typeof result === 'boolean' ? result : undefined
     }
 
+    const actionRequiresAuth = async ({ pieceName, actionName }: { pieceName: string, actionName: string }): Promise<boolean | undefined> => {
+        const { result } = await ctx.apiClient.executeAgentTool({ toolName: '__action_requires_auth', toolInput: { pieceName, actionName }, platformId, userId, source, conversationId })
+        return typeof result === 'boolean' ? result : undefined
+    }
+
     const piecesTheAuthorGaveAnAccount = new Set(source !== AgentRunSource.AGENT ? [] : configuredPieceTools
         .filter((tool) => !isNil(tool.pieceMetadata.predefinedInput?.auth))
         .map((tool) => tool.pieceMetadata.pieceName))
@@ -799,6 +805,7 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
             const externalId = selected['externalId']
             const label = selected['label']
             selectedConnectionByPiece.set(pieceName, externalId)
+            actionProgressGuard.connectionPicked({ pieceName })
             return { externalId, label: typeof label === 'string' ? label : externalId }
         },
         pieceNeedsNoConnection: async (pieceName) => {
@@ -816,6 +823,7 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
         },
         onConnectionSelected: async ({ pieceName, connectionExternalId, label, projectId: connProjectId }) => {
             selectedConnectionByPiece.set(pieceName, connectionExternalId)
+            actionProgressGuard.connectionPicked({ pieceName })
             await tryCatch(() => ctx.apiClient.executeAgentTool({
                 toolName: '__store_selected_connection',
                 toolInput: { pieceName, connectionExternalId, label, projectId: connProjectId },
@@ -825,7 +833,7 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
         onConnectorReconnected: (connectorUuid) => brokenConnectors.delete(connectorUuid),
         onGateOpened: storePendingGate,
     })
-    const crossProjectTools = agentWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter: toolEventEmitter, waitForApproval, onGateOpened: storePendingGate, isDeclaredReadOnly, taintState })
+    const crossProjectTools = agentWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter: toolEventEmitter, waitForApproval, onGateOpened: storePendingGate, isDeclaredReadOnly, actionRequiresAuth, taintState, progressGuard: actionProgressGuard })
     const agentSurfaceTools = agentsAvailable && !dryRun && !discoveryOnly
         ? agentWorkerTools.createAgentSurfaceTools({ executeTool: executeCrossProjectTool, taintState, eventEmitter: toolEventEmitter, waitForApproval, onGateOpened: storePendingGate })
         : {}
@@ -843,6 +851,7 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
         brokenConnectors,
         taintState,
         getSelectedAuth: ({ pieceName }) => selectedConnectionByPiece.get(pieceName),
+        onToolResult: buildPlanTools.onFlowToolResult,
         saveLargeResult: async ({ json, fileName }) => {
             const { data: saved } = await tryCatch(() => ctx.apiClient.saveAgentFile({
                 platformId, conversationId, data: Buffer.from(json, 'utf8'), mediaType: 'application/json',
@@ -904,7 +913,7 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
             crossProject: crossProjectTools,
             web: webTools,
             thinking: thinkingTools,
-            buildPlan: buildPlanTools,
+            buildPlan: buildPlanTools.tools,
             email: emailTools,
             agentSurface: agentSurfaceTools,
             mcp: mcpTools as ToolSet,

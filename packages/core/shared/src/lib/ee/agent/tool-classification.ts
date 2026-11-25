@@ -77,3 +77,5 @@ export const agentToolClassification = {
     readOnlyRejection,
     hasFailureTextPrefix,
 }
+
+export const MISSING_AUTH_INPUT_TEXT = 'auth (connection required — use ap_list_connections)'

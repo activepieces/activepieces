@@ -92,6 +92,36 @@ describe('aiTraceScrubber', () => {
         expect(span.status).toEqual({ code: SpanStatusCode.ERROR, message: 'TypeError' })
         expect(span.events[0].attributes?.['exception.type']).toBe('TypeError')
     })
+
+    it('scrubs a tool input: auth subtrees, secret-like keys and authorization header pairs, keeping task data', () => {
+        const input = {
+            auth: { access_token: 'hidden-1' },
+            authFields: { key: 'hidden-2' },
+            author: 'Ada',
+            props: { title: 'Roadmap', cookie: 'hidden-3', 'x-api-key': 'hidden-4', privateKey: 'hidden-5', accessKey: 'hidden-6', passwd: 'hidden-7', bot_token: 'hidden-8', webhookSecret: 'hidden-9', bearerToken: 'hidden-10', authorization: 'hidden-11' },
+            headers: [{ name: 'Authorization', value: 'Bearer hidden-12' }, { name: 'Accept', value: 'application/json' }],
+        }
+
+        const scrubbed = aiTraceScrubber.scrubJson({ value: input })
+
+        expect(JSON.stringify(scrubbed)).not.toMatch(/hidden-/)
+        expect(scrubbed).toEqual({
+            auth: '[REDACTED]',
+            authFields: '[REDACTED]',
+            author: 'Ada',
+            props: { title: 'Roadmap', cookie: '[REDACTED]', 'x-api-key': '[REDACTED]', privateKey: '[REDACTED]', accessKey: '[REDACTED]', passwd: '[REDACTED]', bot_token: '[REDACTED]', webhookSecret: '[REDACTED]', bearerToken: '[REDACTED]', authorization: '[REDACTED]' },
+            headers: [{ name: 'Authorization', value: '[REDACTED]' }, { name: 'Accept', value: 'application/json' }],
+        })
+    })
+
+    it('masks only header-style name/value pairs, keeping metrics whose name merely mentions a token', () => {
+        const input = { headers: [{ name: 'x-API-key', value: 'hidden-1' }, { key: 'Cookie', value: 'hidden-2' }], metrics: [{ name: 'Token count', value: 5 }, { name: 'Total tokens', value: '12' }] }
+
+        expect(aiTraceScrubber.scrubJson({ value: input })).toEqual({
+            headers: [{ name: 'x-API-key', value: '[REDACTED]' }, { key: 'Cookie', value: '[REDACTED]' }],
+            metrics: [{ name: 'Token count', value: 5 }, { name: 'Total tokens', value: '12' }],
+        })
+    })
 })
 
 function exportOneSpan(record: (tracer: ReturnType<BasicTracerProvider['getTracer']>) => void): ReadableSpan {

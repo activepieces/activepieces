@@ -1,5 +1,5 @@
 import { createConfiguredFlowTools, createConfiguredKnowledgeBaseTools, createConfiguredPieceTools } from './tools/configured-tools'
-import { createCrossProjectTools } from './tools/cross-project-tools'
+import { createCrossProjectTools, createProgressGuard } from './tools/cross-project-tools'
 import { createDisplayTools } from './tools/display-tools'
 import { createEmailTools } from './tools/email-tools'
 import { createEventEmitter } from './tools/event-emitter'
@@ -23,6 +23,7 @@ export const agentWorkerTools = {
     createLocalTools,
     createResultTools,
     createCrossProjectTools,
+    createProgressGuard,
     createWebTools,
     createSearchTools,
     createProviderSearchTools,

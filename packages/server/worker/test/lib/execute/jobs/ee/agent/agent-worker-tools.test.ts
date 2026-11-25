@@ -1,7 +1,9 @@
-import { ActionPreviewEvent, ActionReceiptEvent, AgentToolType, KnowledgeBaseSourceType, SendAgentEmailResponse, ToolProgressEvent } from '@activepieces/shared'
+import { ActionPreviewEvent, ActionReceiptEvent, AgentToolType, BuildPlanEvent, KnowledgeBaseSourceType, SendAgentEmailResponse, ToolProgressEvent } from '@activepieces/shared'
 import { asSchema } from 'ai'
 import { describe, expect, it, vi } from 'vitest'
+import { z } from 'zod'
 import { AgentEventEmitter, agentWorkerTools } from '../../../../../../src/lib/execute/jobs/ee/agent/agent-worker-tools'
+import { buildPlanSync } from '../../../../../../src/lib/execute/jobs/ee/agent/tools/session-tools'
 import { displayToolUtils } from '../../../../../../src/lib/execute/jobs/ee/agent/tools/display-tools'
 
 function makeMockEventEmitter(): { eventEmitter: AgentEventEmitter, progressEvents: ToolProgressEvent[] } {
@@ -14,6 +16,10 @@ function makeMockEventEmitter(): { eventEmitter: AgentEventEmitter, progressEven
         },
         progressEvents,
     }
+}
+
+function firstText(result: unknown): string {
+    return toolTextResult.parse(result).content[0].text
 }
 
 const mockLog = {
@@ -578,6 +584,7 @@ describe('agentWorkerTools', () => {
 
     describe('ap_execute_action progress guard', () => {
         const callOptions = { messages: [], abortSignal: undefined as unknown as AbortSignal }
+        const everyActionNeedsAuth = async (): Promise<boolean> => true
 
         it('stops retrying an identical call after it fails MAX_IDENTICAL_ACTION_FAILURES times', async () => {
             const { eventEmitter } = makeMockEventEmitter()
@@ -617,6 +624,127 @@ describe('agentWorkerTools', () => {
             await tools.ap_execute_action.execute({ pieceName: 'p', actionName: 'send_request', input: { a: 2 } }, { ...callOptions, toolCallId: 'a2' })
 
             expect(executeTool).toHaveBeenCalledTimes(2)
+        })
+
+        it('runs an action that needs no connection on a piece whose other actions are blocked, and still blocks one that does', async () => {
+            const { eventEmitter } = makeMockEventEmitter()
+            const executeTool = vi.fn().mockResolvedValue({ success: false, missingConnection: true, error: '❌ No Discord account is selected in this conversation.' })
+            const actionRequiresAuth = vi.fn(async ({ actionName }: { pieceName: string, actionName: string }) => actionName !== 'send_message_webhook')
+            const tools = agentWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ outcome: 'approved' }), guides: {}, taintState: { tainted: false }, actionRequiresAuth })
+
+            await tools.ap_execute_action.execute({ pieceName: '@activepieces/piece-discord', actionName: 'send_message', input: { text: 'a' } }, { ...callOptions, toolCallId: 'd1' })
+            await tools.ap_execute_action.execute({ pieceName: '@activepieces/piece-discord', actionName: 'send_message', input: { text: 'b' } }, { ...callOptions, toolCallId: 'd2' })
+            executeTool.mockResolvedValue(mcpSuccess('Sent'))
+            await tools.ap_execute_action.execute({ pieceName: '@activepieces/piece-discord', actionName: 'send_message_webhook', input: { text: 'c' } }, { ...callOptions, toolCallId: 'd3' })
+            await tools.ap_execute_action.execute({ pieceName: '@activepieces/piece-discord', actionName: 'send_message_webhook', input: { text: 'd' } }, { ...callOptions, toolCallId: 'd4' })
+            const authed = await tools.ap_execute_action.execute({ pieceName: '@activepieces/piece-discord', actionName: 'send_message', input: { text: 'e' } }, { ...callOptions, toolCallId: 'd5' })
+
+            expect(executeTool).toHaveBeenCalledTimes(4)
+            expect(firstText(authed)).toContain('Stop calling')
+            expect(actionRequiresAuth.mock.calls.filter(([params]) => params.actionName === 'send_message_webhook')).toHaveLength(1)
+        })
+
+        it('asks once for an action whose answer is unknown, and again after a failed lookup', async () => {
+            const { eventEmitter } = makeMockEventEmitter()
+            const executeTool = vi.fn().mockResolvedValue({ success: false, missingConnection: true, error: '❌ No Discord account is selected in this conversation.' })
+            const unknownAnswer = vi.fn().mockResolvedValue(undefined)
+            const failingLookup = vi.fn().mockRejectedValue(new Error('metadata unavailable'))
+            const unknownTools = agentWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ outcome: 'approved' }), guides: {}, taintState: { tainted: false }, actionRequiresAuth: unknownAnswer })
+            const failingTools = agentWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ outcome: 'approved' }), guides: {}, taintState: { tainted: false }, actionRequiresAuth: failingLookup })
+
+            for (const tools of [unknownTools, failingTools]) {
+                for (const index of [1, 2, 3, 4]) {
+                    await tools.ap_execute_action.execute({ pieceName: '@activepieces/piece-discord', actionName: 'send_message', input: { text: `${index}` } }, { ...callOptions, toolCallId: `u${index}` })
+                }
+            }
+
+            expect(unknownAnswer).toHaveBeenCalledTimes(1)
+            expect(failingLookup).toHaveBeenCalledTimes(2)
+            expect(executeTool).toHaveBeenCalledTimes(8)
+        })
+
+        it('stops every action of a piece with no connection after two missing-connection failures, across inputs, actions and both tools', async () => {
+            const { eventEmitter } = makeMockEventEmitter()
+            const executeTool = vi.fn().mockResolvedValue({ success: false, missingConnection: true, error: '❌ No Gmail account is selected in this conversation.' })
+            const tools = agentWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ outcome: 'approved' }), guides: {}, taintState: { tainted: false }, actionRequiresAuth: everyActionNeedsAuth })
+
+            await tools.ap_execute_action.execute({ pieceName: '@activepieces/piece-gmail', actionName: 'gmail_search_mail', input: { q: 'a' } }, { ...callOptions, toolCallId: 'm1' })
+            await tools.ap_explore_data.execute({ pieceName: 'gmail', actionName: 'gmail_get_email', input: { id: '1' } }, { ...callOptions, toolCallId: 'm2' })
+            const third = await tools.ap_execute_action.execute({ pieceName: '@activepieces/piece-gmail', actionName: 'gmail_list_labels', input: {} }, { ...callOptions, toolCallId: 'm3' })
+            const fourth = await tools.ap_explore_data.execute({ pieceName: '@activepieces/piece-gmail', actionName: 'gmail_search_mail', input: { q: 'b' } }, { ...callOptions, toolCallId: 'm4' })
+
+            expect(executeTool).toHaveBeenCalledTimes(2)
+            for (const blocked of [third, fourth]) {
+                const text = firstText(blocked)
+                expect(text).toContain('Stop calling @activepieces/piece-gmail actions until ap_show_connection_picker returns selected')
+            }
+        })
+
+        it('counts the shared missing-auth validation text as a missing connection', async () => {
+            const { eventEmitter } = makeMockEventEmitter()
+            const executeTool = vi.fn().mockResolvedValue(mcpFailure('Cannot run action: Missing required inputs: auth (connection required — use ap_list_connections)'))
+            const tools = agentWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ outcome: 'approved' }), guides: {}, taintState: { tainted: false }, actionRequiresAuth: everyActionNeedsAuth })
+
+            await tools.ap_execute_action.execute({ pieceName: '@activepieces/piece-slack', actionName: 'send_message', input: { text: 'a' } }, { ...callOptions, toolCallId: 'v1' })
+            await tools.ap_execute_action.execute({ pieceName: '@activepieces/piece-slack', actionName: 'send_message', input: { text: 'b' } }, { ...callOptions, toolCallId: 'v2' })
+            await tools.ap_execute_action.execute({ pieceName: '@activepieces/piece-slack', actionName: 'send_message', input: { text: 'c' } }, { ...callOptions, toolCallId: 'v3' })
+
+            expect(executeTool).toHaveBeenCalledTimes(2)
+        })
+
+        it('lets an identical ap_execute_action retry through once the account is connected', async () => {
+            const { eventEmitter } = makeMockEventEmitter()
+            const executeTool = vi.fn().mockResolvedValue({ success: false, missingConnection: true, error: '❌ No Gmail account is selected in this conversation.' })
+            const progressGuard = agentWorkerTools.createProgressGuard()
+            const tools = agentWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ outcome: 'approved' }), guides: {}, taintState: { tainted: false }, actionRequiresAuth: everyActionNeedsAuth, progressGuard })
+            const call = { pieceName: '@activepieces/piece-gmail', actionName: 'gmail_send_email', input: { to: 'a@b.c' } }
+
+            await tools.ap_execute_action.execute(call, { ...callOptions, toolCallId: 'i1' })
+            await tools.ap_execute_action.execute(call, { ...callOptions, toolCallId: 'i2' })
+            progressGuard.connectionPicked({ pieceName: 'gmail' })
+            await tools.ap_execute_action.execute(call, { ...callOptions, toolCallId: 'i3' })
+
+            expect(executeTool).toHaveBeenCalledTimes(3)
+        })
+
+        it('lets a call that brings its own auth through after the piece breaker trips', async () => {
+            const { eventEmitter } = makeMockEventEmitter()
+            const executeTool = vi.fn().mockResolvedValue({ success: false, missingConnection: true, error: '❌ No Gmail account is selected in this conversation.' })
+            const tools = agentWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ outcome: 'approved' }), guides: {}, taintState: { tainted: false }, actionRequiresAuth: everyActionNeedsAuth })
+
+            await tools.ap_explore_data.execute({ pieceName: '@activepieces/piece-gmail', actionName: 'gmail_search_mail', input: { q: 'a' } }, { ...callOptions, toolCallId: 'x1' })
+            await tools.ap_explore_data.execute({ pieceName: '@activepieces/piece-gmail', actionName: 'gmail_search_mail', input: { q: 'b' } }, { ...callOptions, toolCallId: 'x2' })
+            executeTool.mockResolvedValue(mcpSuccess('found'))
+            await tools.ap_explore_data.execute({ pieceName: '@activepieces/piece-gmail', actionName: 'gmail_search_mail', input: { q: 'c', auth: 'conn-1' } }, { ...callOptions, toolCallId: 'x3' })
+            await tools.ap_execute_action.execute({ pieceName: '@activepieces/piece-gmail', actionName: 'gmail_list_labels', items: [{ auth: 'conn-1' }, { auth: 'conn-1' }] }, { ...callOptions, toolCallId: 'x4' })
+            const blank = await tools.ap_explore_data.execute({ pieceName: '@activepieces/piece-gmail', actionName: 'gmail_search_mail', input: { q: 'd', auth: '' } }, { ...callOptions, toolCallId: 'x5' })
+
+            expect(executeTool).toHaveBeenCalledTimes(5)
+            expect(firstText(blank)).toContain('Stop calling')
+        })
+
+        it('counts a batch whose items come back without a connection', async () => {
+            const { eventEmitter } = makeMockEventEmitter()
+            const executeTool = vi.fn().mockResolvedValue({ success: false, missingConnection: true, error: '❌ No Gmail account is selected in this conversation.' })
+            const tools = agentWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ outcome: 'approved' }), guides: {}, taintState: { tainted: false }, actionRequiresAuth: everyActionNeedsAuth })
+
+            await tools.ap_execute_action.execute({ pieceName: '@activepieces/piece-gmail', actionName: 'gmail_get_email', items: [{ id: '1' }, { id: '2' }] }, { ...callOptions, toolCallId: 'b1' })
+            const next = await tools.ap_execute_action.execute({ pieceName: '@activepieces/piece-gmail', actionName: 'gmail_get_email', input: { id: '3' } }, { ...callOptions, toolCallId: 'b2' })
+
+            expect(executeTool).toHaveBeenCalledTimes(2)
+            expect(firstText(next)).toContain('Stop calling')
+        })
+
+        it('keeps other pieces running while one piece has no connection', async () => {
+            const { eventEmitter } = makeMockEventEmitter()
+            const executeTool = vi.fn().mockResolvedValue({ success: false, missingConnection: true, error: '❌ No Gmail account is selected in this conversation.' })
+            const tools = agentWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ outcome: 'approved' }), guides: {}, taintState: { tainted: false }, actionRequiresAuth: everyActionNeedsAuth })
+
+            await tools.ap_explore_data.execute({ pieceName: '@activepieces/piece-gmail', actionName: 'gmail_search_mail', input: { q: 'a' } }, { ...callOptions, toolCallId: 'o1' })
+            await tools.ap_explore_data.execute({ pieceName: '@activepieces/piece-gmail', actionName: 'gmail_search_mail', input: { q: 'b' } }, { ...callOptions, toolCallId: 'o2' })
+            await tools.ap_explore_data.execute({ pieceName: '@activepieces/piece-slack', actionName: 'list_channels', input: {} }, { ...callOptions, toolCallId: 'o3' })
+
+            expect(executeTool).toHaveBeenCalledTimes(3)
         })
     })
 
@@ -808,6 +936,182 @@ describe('an agent does not offer to connect an account its author already chose
     })
 })
 
+const PLAN: BuildPlanEvent = {
+    buildId: 'b1',
+    phase: 'detecting',
+    flowName: 'Email triage',
+    tagline: 'Never sort email again',
+    iconName: 'mail',
+    updatedAt: '2026-10-28T00:00:00.000Z',
+    steps: [
+        { id: 'classify', label: 'AI classifies urgency', status: 'pending' },
+        { id: 'slack', label: 'Slack ping for urgent mail', status: 'pending' },
+    ],
+}
+
+const result = ({ flowId, name, steps }: { flowId: string, name: string, steps: [string, 'ok' | 'problem'][] }) => ({
+    structuredContent: { flowId, displayName: name, flowSteps: steps.map(([displayName, state]) => ({ displayName, state })) },
+})
+const rows = (plan: BuildPlanEvent) => plan.steps.map((step) => `${step.label}=${step.status}`)
+const built = (value: unknown) => {
+    const flow = buildPlanSync.builtFlowOf({ result: value })
+    if (flow === null) throw new Error('no flow')
+    return flow
+}
+
+describe('buildPlanSync', () => {
+    it('shows the real steps of a single built flow, with the broken one still in progress, whatever the card labels were', () => {
+        const flow = built(result({ flowId: 'f1', name: 'Email triage', steps: [['gmail_new_email_received', 'ok'], ['Classify urgency', 'ok'], ['Ping me on Slack', 'problem']] }))
+        const next = buildPlanSync.withBuiltRows({ plan: PLAN, builtFlows: [flow], plannedRows: [] })
+
+        expect(rows(next)).toEqual(['Gmail new email received=done', 'Classify urgency=done', 'Ping me on Slack=in_progress'])
+        expect(next).toMatchObject({ phase: 'building', flowId: 'f1' })
+    })
+
+    it('shows one row per flow for a solution of several flows', () => {
+        const flows = [
+            built(result({ flowId: 'f1', name: 'Morning task digest', steps: [['every_day', 'ok'], ['Send morning digest', 'ok']] })),
+            built(result({ flowId: 'f2', name: 'Midday task check-in', steps: [['cron_expression', 'problem'], ['Send check-in email', 'ok']] })),
+        ]
+
+        expect(rows(buildPlanSync.withBuiltRows({ plan: PLAN, builtFlows: flows, plannedRows: [] }))).toEqual(['Morning task digest=done', 'Midday task check-in=in_progress'])
+    })
+
+    it('keeps the flows not built yet when the card plans several flows', () => {
+        const plannedRows = [
+            { id: 'digest', label: 'Build Morning digest flow (8am)', status: 'pending' as const, flowName: 'Morning digest flow' },
+            { id: 'checkin', label: 'Midday check-in flow', status: 'pending' as const, flowName: 'Midday check-in flow' },
+            { id: 'recap', label: 'Evening recap flow', status: 'pending' as const, flowName: 'Evening recap flow' },
+        ]
+        const flow = built(result({ flowId: 'f1', name: 'Morning digest flow', steps: [['catch_webhook', 'ok'], ['Send morning digest', 'ok']] }))
+
+        const next = buildPlanSync.withBuiltRows({ plan: PLAN, builtFlows: [flow], plannedRows })
+
+        expect(rows(next)).toEqual(['Morning digest flow=done', 'Midday check-in flow=pending', 'Evening recap flow=pending'])
+    })
+
+    it('shows a planned flow once when two rows name it', () => {
+        const plannedRows = [
+            { id: 'build', label: 'Build the digest', status: 'pending' as const, flowName: 'Morning digest flow' },
+            { id: 'test', label: 'Test the digest', status: 'pending' as const, flowName: 'Morning digest flow' },
+        ]
+        const flow = built(result({ flowId: 'f1', name: 'Morning digest flow', steps: [['every_day', 'ok']] }))
+
+        const next = buildPlanSync.withBuiltRows({ plan: PLAN, builtFlows: [flow], plannedRows })
+
+        expect(next.steps.map((step) => step.id)).toEqual(['f1'])
+    })
+
+    it('tells apart planned flows named in a non-Latin script', () => {
+        const plannedRows = [
+            { id: 'orders', label: '接收订单', status: 'pending' as const, flowName: '接收订单' },
+            { id: 'summary', label: '每日汇总', status: 'pending' as const, flowName: '每日汇总' },
+        ]
+        const flow = built(result({ flowId: 'f1', name: '接收订单', steps: [['every_day', 'ok']] }))
+
+        expect(rows(buildPlanSync.withBuiltRows({ plan: PLAN, builtFlows: [flow], plannedRows }))).toEqual(['接收订单=done', '每日汇总=pending'])
+    })
+
+    it('keeps the real steps of a single flow when the rows only mention its name', () => {
+        const plannedRows = [{ id: 'setup', label: 'Set up Email triage', status: 'pending' as const }]
+        const flow = built(result({ flowId: 'f1', name: 'Email triage', steps: [['gmail_new_email_received', 'ok'], ['Classify urgency', 'problem']] }))
+
+        expect(rows(buildPlanSync.withBuiltRows({ plan: PLAN, builtFlows: [flow], plannedRows }))).toEqual(['Gmail new email received=done', 'Classify urgency=in_progress'])
+    })
+
+    it('marks the unfinished steps failed once the model sets phase failed', () => {
+        const flow = built(result({ flowId: 'f1', name: 'Email triage', steps: [['Classify urgency', 'ok'], ['Ping me on Slack', 'problem']] }))
+
+        expect(rows(buildPlanSync.withBuiltRows({ plan: { ...PLAN, phase: 'failed' }, builtFlows: [flow], plannedRows: [] }))).toEqual(['Classify urgency=done', 'Ping me on Slack=failed'])
+    })
+
+    it('marks every row done once the model sets phase done', () => {
+        const flow = built(result({ flowId: 'f1', name: 'Email triage', steps: [['Ping me on Slack', 'problem']] }))
+
+        expect(rows(buildPlanSync.withBuiltRows({ plan: { ...PLAN, phase: 'done' }, builtFlows: [flow], plannedRows: [] }))).toEqual(['Ping me on Slack=done'])
+    })
+
+    it('keeps the plan unchanged when no flow is built yet', () => {
+        expect(buildPlanSync.withBuiltRows({ plan: PLAN, builtFlows: [], plannedRows: [] })).toEqual(PLAN)
+    })
+
+    it('ignores results that are not a flow build or edit', () => {
+        expect(buildPlanSync.builtFlowOf({ result: { structuredContent: { rolledBack: true } } })).toBeNull()
+    })
+})
+
+describe('ap_set_build_plan', () => {
+    it('accepts a phase-only update and keeps the card it already shows', async () => {
+        const plans: BuildPlanEvent[] = []
+        const { eventEmitter } = makeMockEventEmitter()
+        const { tools } = agentWorkerTools.createBuildPlanTools({ eventEmitter: { ...eventEmitter, emitBuildPlan: (plan) => { plans.push(plan) } }, getProjectId: () => null })
+        const setPlan = tools['ap_set_build_plan']
+        const first = { phase: 'detecting', flowName: PLAN.flowName, tagline: PLAN.tagline, iconName: PLAN.iconName, steps: PLAN.steps }
+        await setPlan.execute?.(first, CALL)
+        const update = await asSchema(setPlan.inputSchema).validate?.({ phase: 'testing' })
+        expect(update?.success).toBe(true)
+        await setPlan.execute?.({ phase: 'testing' }, CALL)
+
+        expect(plans.at(-1)).toMatchObject({ phase: 'testing', flowName: 'Email triage', tagline: 'Never sort email again', iconName: 'mail', steps: PLAN.steps })
+    })
+
+    it('starts the card at detecting when the first call leaves the phase out, then keeps the phase it has', async () => {
+        const plans: BuildPlanEvent[] = []
+        const { eventEmitter } = makeMockEventEmitter()
+        const { tools } = agentWorkerTools.createBuildPlanTools({ eventEmitter: { ...eventEmitter, emitBuildPlan: (plan) => { plans.push(plan) } }, getProjectId: () => null })
+        const setPlan = tools['ap_set_build_plan']
+        const first = { flowName: PLAN.flowName, tagline: PLAN.tagline, iconName: PLAN.iconName, steps: PLAN.steps }
+        expect((await asSchema(setPlan.inputSchema).validate?.(first))?.success).toBe(true)
+        await setPlan.execute?.(first, CALL)
+        await setPlan.execute?.({ phase: 'testing' }, CALL)
+        expect((await asSchema(setPlan.inputSchema).validate?.({ steps: [] }))?.success).toBe(true)
+        await setPlan.execute?.({ steps: [] }, CALL)
+
+        expect(plans.map((plan) => plan.phase)).toEqual(['detecting', 'testing', 'testing'])
+        expect(plans.at(-1)?.steps).toEqual(PLAN.steps)
+    })
+
+    it('lets only flows built this turn update the card', async () => {
+        const plans: BuildPlanEvent[] = []
+        const { eventEmitter } = makeMockEventEmitter()
+        const { tools, onFlowToolResult } = agentWorkerTools.createBuildPlanTools({ eventEmitter: { ...eventEmitter, emitBuildPlan: (plan) => { plans.push(plan) } }, getProjectId: () => null })
+        await tools['ap_set_build_plan'].execute?.({ phase: 'building', flowName: PLAN.flowName, tagline: PLAN.tagline, iconName: PLAN.iconName, steps: PLAN.steps }, CALL)
+        const emitted = plans.length
+
+        onFlowToolResult({ toolName: 'ap_update_step', result: result({ flowId: 'other', name: 'Other', steps: [['Step', 'ok']] }) })
+        expect(plans).toHaveLength(emitted)
+
+        onFlowToolResult({ toolName: 'ap_build_flow', result: result({ flowId: 'mine', name: 'Mine', steps: [['Step', 'problem']] }) })
+        expect(plans).toHaveLength(emitted + 1)
+
+        onFlowToolResult({ toolName: 'ap_update_step', result: result({ flowId: 'mine', name: 'Mine', steps: [['Step', 'ok']] }) })
+        expect(plans).toHaveLength(emitted + 2)
+    })
+
+    it('keeps a granular build on the card after ap_create_flow', async () => {
+        const plans: BuildPlanEvent[] = []
+        const { eventEmitter } = makeMockEventEmitter()
+        const { tools, onFlowToolResult } = agentWorkerTools.createBuildPlanTools({ eventEmitter: { ...eventEmitter, emitBuildPlan: (plan) => { plans.push(plan) } }, getProjectId: () => null })
+        await tools['ap_set_build_plan'].execute?.({ phase: 'building', flowName: PLAN.flowName, tagline: PLAN.tagline, iconName: PLAN.iconName, steps: PLAN.steps }, CALL)
+        const emitted = plans.length
+
+        onFlowToolResult({ toolName: 'ap_create_flow', result: { structuredContent: { flowId: 'granular', displayName: 'Granular' } } })
+        expect(plans).toHaveLength(emitted)
+
+        onFlowToolResult({ toolName: 'ap_apply_flow_operations', result: result({ flowId: 'granular', name: 'Granular', steps: [['Step', 'ok']] }) })
+        expect(plans).toHaveLength(emitted + 1)
+    })
+
+    it('asks for the card fields when the first call leaves them out', async () => {
+        const { eventEmitter } = makeMockEventEmitter()
+        const { tools } = agentWorkerTools.createBuildPlanTools({ eventEmitter: { ...eventEmitter, emitBuildPlan: () => {} }, getProjectId: () => null })
+
+        await expect(tools['ap_set_build_plan'].execute?.({ phase: 'building' }, CALL)).resolves.toMatchObject({ ok: false })
+    })
+})
+
+const CALL = { toolCallId: 'call_1', messages: [], abortSignal: new AbortController().signal, context: undefined }
+
 describe('the connection card does the auth check itself', () => {
     function pickerChecking({ needsNoConnection }: { needsNoConnection: boolean | Error }) {
         const gatesOpened: string[] = []
@@ -923,3 +1227,5 @@ describe('picking the account a connection card would pre-select', () => {
         expect(displayToolUtils.preselectedConnection({ stored: undefined })).toBeNull()
     })
 })
+
+const toolTextResult = z.object({ content: z.array(z.object({ text: z.string() })).min(1) })

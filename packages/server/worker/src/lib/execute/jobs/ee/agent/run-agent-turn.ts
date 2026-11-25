@@ -1,13 +1,15 @@
 import { AiProviderKeyStatus, AIProviderName, ErrorCode, formatPieceError, isFallbackWorthy, isNil, isObject, isProviderBillingError, isTransientProviderError, ProviderOutcomeSignal, spreadIfDefined, toError, tryCatch, tryCatchSync, unique } from '@activepieces/core-utils'
-import { agentAiUtils, aiProviderSignal, ContentPartLike } from '@activepieces/server-utils'
+import { agentAiUtils, aiProviderSignal, aiTraceScrubber, ContentPartLike } from '@activepieces/server-utils'
 import { AgentPhase, AgentRunSource, agentToolClassification, agentToolPhases, agentToolSkills, AI_PROVIDER_ENTITY_TYPES, aiProviderUtils, apErrorOf, CHAT_CREDITS_PER_TOOL_CALL, chatBilling, ChatToolCall, LAZY_TOOL_NAME, PersistedAgentPart, SkillSurface, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
 import { APICallError, generateText, isLoopFinished, isStepCount, LanguageModel, LanguageModelUsage, ModelMessage, NoSuchToolError, RetryError, StepResultPerformance, StopCondition, streamText, ToolChoice, ToolExecutionOptions, ToolSet } from 'ai'
-import { buildSkillSurface } from './tools/skill-tools'
+import { buildSkillSurface, decodeReroutedInput } from './tools/skill-tools'
+import { cardTitleFields, isMissingConnectionResult } from './tools/tool-primitives'
 
 const MAX_AUTO_CONTINUATIONS = 3
 const MAX_EMPTY_CONTINUATIONS = 2
 const MAX_STREAM_RETRIES = 1
 const MAX_IDENTICAL_TOOL_FAILURES = 2
+const MAX_ERROR_CAUSE_DEPTH = 3
 const IN_LOOP_COMPACTION_THRESHOLD = 0.6
 const RUNAWAY_TURN_CONTEXT_MULTIPLE = 90
 const STREAM_RETRY_BASE_DELAY_MS = 1_000
@@ -91,6 +93,8 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
     const maxTurnTokens = runawayTokenCeiling(models[0].provider)
     let totalInputTokens = 0
     let totalOutputTokens = 0
+    let stepToolMs = 0
+    let toolDurationMs = 0
     const tokenBudgetSpent = (): boolean => totalInputTokens + totalOutputTokens >= maxTurnTokens
     const loopStopCondition = [
         ...(Array.isArray(baseStopCondition) ? baseStopCondition : [baseStopCondition]),
@@ -200,18 +204,21 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
         },
         repairToolCall: async ({ toolCall, error, inputSchema }) => {
             if (NoSuchToolError.isInstance(error)) {
-                if (!isNil(skillSurface) && toolCall.toolName in skillSurface.tools && isParsableJson(toolCall.input)) {
+                const target = skillSurface?.tools[toolCall.toolName]
+                if (!isNil(target) && isParsableJson(toolCall.input)) {
                     log.info({ toolName: toolCall.toolName }, 'Rerouting a deferred tool called by name through ap_lazy_tool')
                     reroutedCallIds.add(toolCall.toolCallId)
-                    return { ...toolCall, toolName: LAZY_TOOL_NAME, input: JSON.stringify({ tool: toolCall.toolName, input: JSON.parse(toolCall.input) }) }
+                    const input = await decodeReroutedInput({ target, input: JSON.parse(toolCall.input) })
+                    return { ...toolCall, toolName: LAZY_TOOL_NAME, input: JSON.stringify({ tool: toolCall.toolName, input }) }
                 }
                 log.warn({ toolName: toolCall.toolName }, 'Model called a tool that is not active in this phase')
                 return null
             }
             if (toolCall.toolName === LAZY_TOOL_NAME && isParsableJson(toolCall.input)) {
+                log.warn({ toolName: toolCall.toolName, input: redactedToolInput(toolCall.input), error: repairErrorSummary(error) }, 'Returning a malformed lazy tool call to the model')
                 return null
             }
-            log.warn({ toolName: toolCall.toolName, error }, 'Repairing malformed tool call')
+            log.warn({ toolName: toolCall.toolName, input: redactedToolInput(toolCall.input), error: repairErrorSummary(error) }, 'Repairing malformed tool call')
             const schema = await inputSchema({ toolName: toolCall.toolName })
             const { data: repaired } = await tryCatch(async () => {
                 const { text } = await generateText({
@@ -229,6 +236,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
             return { ...toolCall, input: repaired }
         },
         onToolExecutionEnd: ({ toolCall, toolOutput, toolExecutionMs }) => {
+            stepToolMs = Math.max(stepToolMs, toolExecutionMs)
             const effectiveCall = agentToolSkills.effectiveToolCall({ toolName: toolCall.toolName, input: toolCall.input })
             toolCalls.push({
                 toolName: effectiveCall.toolName,
@@ -252,6 +260,8 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
         onStepEnd: ({ content, response, usage: stepUsage }) => {
             totalInputTokens += stepUsage.inputTokens ?? 0
             totalOutputTokens += stepUsage.outputTokens ?? 0
+            toolDurationMs += stepToolMs
+            stepToolMs = 0
             uiParts.push(...agentAiUtils.buildStepParts({ content: content as ContentPartLike[] }))
             currentAttemptMessages = [...currentAttemptMessages, ...agentAiUtils.collectStepMessages([{ response }])]
             const responseMessages = [...accumulatedResponseMessages, ...currentAttemptMessages]
@@ -386,6 +396,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
         continuations,
         totalInputTokens,
         totalOutputTokens,
+        toolDurationMs,
         toolCalls,
         answeredBy: lastStepUsedFast && !isNil(fast) ? fast : current(),
         allModelsFailed: !isNil(streamError) && runsATier && failedModelIds.size === unique(ranked.map((candidate) => candidate.modelId)).length,
@@ -443,7 +454,7 @@ export function delayWithJitter(baseMs: number): Promise<void> {
 // Centralized loop-breaker: an identical (tool + input) call that already failed
 // MAX_IDENTICAL_TOOL_FAILURES times is short-circuited with a directive to change
 // approach, instead of letting the model re-fire the same failing call indefinitely.
-function wrapToolsWithFailureGuard({ tools, log }: { tools: ToolSet, log: AgentTurnLogger }): ToolSet {
+export function wrapToolsWithFailureGuard({ tools, log }: { tools: ToolSet, log: AgentTurnLogger }): ToolSet {
     const failureCounts = new Map<string, number>()
     const guarded: ToolSet = {}
     for (const [name, toolDef] of Object.entries(tools)) {
@@ -455,7 +466,7 @@ function wrapToolsWithFailureGuard({ tools, log }: { tools: ToolSet, log: AgentT
         guarded[name] = {
             ...toolDef,
             execute: async (input: unknown, options: ToolExecutionOptions<undefined>) => {
-                const key = `${name}::${fingerprintInput(input)}`
+                const key = `${name}::${fingerprintInput({ toolName: name, input })}`
                 if ((failureCounts.get(key) ?? 0) >= MAX_IDENTICAL_TOOL_FAILURES) {
                     log.warn({ tool: { name } }, 'Short-circuited repeated unproductive tool call')
                     return { content: [{ type: 'text', text: `✋ This exact ${name} call already came back the same unproductive way ${MAX_IDENTICAL_TOOL_FAILURES} times (an error, or an empty result) and was NOT retried. Stop repeating it: change the parameters, switch the action (e.g. a list/search action instead of a find-one), or try a different approach. Do not re-send the identical call.` }] }
@@ -465,6 +476,9 @@ function wrapToolsWithFailureGuard({ tools, log }: { tools: ToolSet, log: AgentT
                 const isFailure = text.length > 0 && agentToolClassification.hasFailureTextPrefix(text)
                 const isEmptyRead = text.length > 0 && !isFailure && looksEmptyResultText(text)
                 const isTransient = isFailure && isTransientFailureText(text)
+                if (isMissingConnectionResult(result)) {
+                    return result
+                }
                 // Brake on repeated UNPRODUCTIVE identical calls — permanent failures AND empty reads —
                 // so the agent stops re-running the same find that keeps returning nothing (the Attio
                 // thrash). Transient errors (429/5xx/timeout) are exempt: retrying those can succeed.
@@ -481,9 +495,22 @@ function wrapToolsWithFailureGuard({ tools, log }: { tools: ToolSet, log: AgentT
     return guarded
 }
 
-function fingerprintInput(input: unknown): string {
-    const { data } = tryCatchSync(() => JSON.stringify(input))
+function fingerprintInput({ toolName, input }: { toolName: string, input: unknown }): string {
+    const { data } = tryCatchSync(() => JSON.stringify(withoutCardTitles({ toolName, input })))
     return data ?? ''
+}
+
+function withoutCardTitles({ toolName, input }: { toolName: string, input: unknown }): unknown {
+    if (!isObject(input)) {
+        return input
+    }
+    const untitled = withoutTitleKeys(input)
+    const nested = untitled['input']
+    return toolName === LAZY_TOOL_NAME && isObject(nested) ? { ...untitled, input: withoutTitleKeys(nested) } : untitled
+}
+
+function withoutTitleKeys(record: Record<string, unknown>): Record<string, unknown> {
+    return Object.fromEntries(Object.entries(record).filter(([key]) => !Object.hasOwn(cardTitleFields, key)))
 }
 
 export function jsonInputFrom(text: string): string | undefined {
@@ -548,6 +575,30 @@ export function looksEmptyResultText(text: string): boolean {
 }
 
 
+function redactedToolInput(text: string): unknown {
+    const { data, error } = tryCatchSync((): unknown => JSON.parse(text))
+    return isNil(error) ? aiTraceScrubber.scrubJson({ value: data }) : { unparsable: true, length: text.length }
+}
+
+function repairErrorSummary(error: Error): { name: string, issues: ValidationIssueSummary[] } {
+    return { name: error.name, issues: validationIssuesIn({ error, depth: 0 }) }
+}
+
+function validationIssuesIn({ error, depth }: { error: unknown, depth: number }): ValidationIssueSummary[] {
+    if (!isObject(error) || depth > MAX_ERROR_CAUSE_DEPTH) {
+        return []
+    }
+    const issues = error['issues']
+    if (Array.isArray(issues)) {
+        return issues.filter(isObject).map((issue) => ({ path: issuePath(issue['path']), code: typeof issue['code'] === 'string' ? issue['code'] : 'unknown' }))
+    }
+    return validationIssuesIn({ error: error['cause'], depth: depth + 1 })
+}
+
+function issuePath(path: unknown): string {
+    return Array.isArray(path) ? path.filter((segment) => typeof segment === 'string' || typeof segment === 'number').join('.') : ''
+}
+
 function isParsableJson(text: string): boolean {
     return tryCatchSync((): unknown => JSON.parse(text)).error === null
 }
@@ -611,6 +662,8 @@ type AgentTurnLogger = {
     warn: (obj: Record<string, unknown>, msg: string) => void
     error: (obj: Record<string, unknown>, msg: string) => void
 }
+
+type ValidationIssueSummary = { path: string, code: string }
 
 export type AgentTurnToolCall = {
     toolName: string
@@ -685,6 +738,7 @@ export type AgentTurnResult = {
     continuations: number
     totalInputTokens: number
     totalOutputTokens: number
+    toolDurationMs: number
     toolCalls: AgentTurnToolCall[]
     answeredBy: TurnModel
     allModelsFailed: boolean

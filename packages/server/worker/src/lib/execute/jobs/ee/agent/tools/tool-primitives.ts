@@ -1,6 +1,6 @@
 import { isNil, isObject, spreadIfDefined } from '@activepieces/core-utils'
 import { largeResultUtils, MAX_TOOL_RESULT_BYTES } from '@activepieces/server-utils'
-import { ActionPreviewEvent, ActionReceiptEvent, agentToolClassification, agentToolPhases, BuildPlanEvent, FileProducedEvent, ImageGeneratedEvent, PersistedAgentMessageSchema, PersistedAgentRole, SubagentProgressEvent, ToolProgressEvent } from '@activepieces/shared'
+import { ActionPreviewEvent, ActionReceiptEvent, agentToolClassification, agentToolPhases, BuildPlanEvent, FileProducedEvent, ImageGeneratedEvent, MISSING_AUTH_INPUT_TEXT, PersistedAgentMessageSchema, PersistedAgentRole, SubagentProgressEvent, ToolProgressEvent } from '@activepieces/shared'
 import { JSONSchema7, ToolExecutionOptions, ToolSet } from 'ai'
 import { z } from 'zod'
 
@@ -78,7 +78,7 @@ function buildOversizeEnvelope({ result, text }: { result: unknown, text: string
     }
 }
 
-export function plainJsonSchema<T = JSONSchema7>(schema: JSONSchema7): T {
+export function plainJsonSchema<T = JSONSchema7>(schema: unknown): T {
     const plain: T = JSON.parse(JSON.stringify(schema))
     return plain
 }
@@ -128,6 +128,13 @@ export function isSuccessResult(result: unknown): boolean {
         return !agentToolClassification.hasFailureTextPrefix(text)
     }
     return false
+}
+
+export function isMissingConnectionResult(result: unknown): boolean {
+    if (isObject(result) && (result['missingConnection'] === true || isMissingConnectionResult(result['value']))) {
+        return true
+    }
+    return isObject(result) && extractResultText(result).includes(MISSING_AUTH_INPUT_TEXT)
 }
 
 export function extractResultText(result: unknown): string {

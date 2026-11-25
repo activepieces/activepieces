@@ -36,6 +36,26 @@ describe('agentToolSkills', () => {
             .toEqual({ toolName: 'ap_validate_flow', input: { flowId: 'x', title: 'Your flow' } })
     })
 
+    it('unwraps a lazy call wrapped twice in the same tool and keeps the outer labels', () => {
+        expect(agentToolSkills.effectiveToolCall({ toolName: LAZY_TOOL_NAME, input: { tool: 'ap_validate_flow', title: 'Your flow', input: { tool: 'ap_validate_flow', input: { flowId: 'x' } } } }))
+            .toEqual({ toolName: 'ap_validate_flow', input: { flowId: 'x', title: 'Your flow' } })
+    })
+
+    it('prefers the inner label when a lazy call is wrapped twice in the same tool', () => {
+        expect(agentToolSkills.effectiveToolCall({ toolName: LAZY_TOOL_NAME, input: { tool: 'ap_validate_flow', title: 'outer', input: { tool: 'ap_validate_flow', title: 'inner', input: { flowId: 'x' } } } }))
+            .toEqual({ toolName: 'ap_validate_flow', input: { flowId: 'x', title: 'inner' } })
+    })
+
+    it('does not unwrap an inner call that names a different tool', () => {
+        expect(agentToolSkills.effectiveToolCall({ toolName: LAZY_TOOL_NAME, input: { tool: 'ap_validate_flow', input: { tool: 'ap_other', input: { flowId: 'x' } } } }))
+            .toEqual({ toolName: 'ap_validate_flow', input: { tool: 'ap_other', input: { flowId: 'x' } } })
+    })
+
+    it('does not unwrap an inner call whose input is not an object', () => {
+        expect(agentToolSkills.effectiveToolCall({ toolName: LAZY_TOOL_NAME, input: { tool: 'ap_validate_flow', input: { tool: 'ap_validate_flow', input: 'x' } } }))
+            .toEqual({ toolName: 'ap_validate_flow', input: { tool: 'ap_validate_flow', input: 'x' } })
+    })
+
     it('carries pill labels from the outer call into the inner input without overriding inner ones', () => {
         const effective = agentToolSkills.effectiveToolCall({
             toolName: LAZY_TOOL_NAME,

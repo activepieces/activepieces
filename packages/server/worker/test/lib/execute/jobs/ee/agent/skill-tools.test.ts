@@ -2,7 +2,7 @@ import { LAZY_TOOL_NAME, MAX_CORE_TOOLS } from '@activepieces/shared'
 import { asSchema, jsonSchema, Schema, tool, ToolSet } from 'ai'
 import { describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
-import { buildSkillSurface, unwrapLazyToolChunk } from '../../../../../../src/lib/execute/jobs/ee/agent/tools/skill-tools'
+import { buildSkillSurface, decodeReroutedInput, unwrapLazyToolChunk } from '../../../../../../src/lib/execute/jobs/ee/agent/tools/skill-tools'
 import { cardTitleFields } from '../../../../../../src/lib/execute/jobs/ee/agent/tools/tool-primitives'
 
 function stubTools(names: string[]): ToolSet {
@@ -124,6 +124,7 @@ describe('paid tools', () => {
         const fullPlaybook = String(await surfaceFor(true).tools['ap_load_skill']?.execute?.({ skills: ['web_and_media'] }, CALL_OPTIONS))
         expect(fullPlaybook).toContain('### ap_web_search')
     })
+
 })
 
 describe('ap_lazy_tool', () => {
@@ -292,6 +293,48 @@ describe('ap_lazy_tool input schema', () => {
         expect(errorMessageOf(result)).toContain('credits')
     })
 
+    it('accepts the call wrapped in an extra input object and keeps its labels', async () => {
+        await expect(validateWrapped({ surface: chatSurface(), value: { input: { tool: 'ap_add_step', title: 'Your step', input: { value: 'x' } } } })).resolves.toMatchObject({ success: true, value: { tool: 'ap_add_step', title: 'Your step', input: { value: 'x' } } })
+    })
+
+    it('accepts the call wrapped twice in the same tool and keeps its labels', async () => {
+        await expect(validateWrapped({ surface: chatSurface(), value: { tool: 'ap_add_step', title: 'Your step', input: { tool: 'ap_add_step', input: { value: 'x' } } } })).resolves.toMatchObject({ success: true, value: { tool: 'ap_add_step', title: 'Your step', input: { value: 'x' } } })
+    })
+
+    it('rejects an inner call that names a different tool', async () => {
+        const result = await validateWrapped({ surface: chatSurface(), value: { tool: 'ap_add_step', input: { tool: 'ap_other', input: { value: 'x' } } } })
+        expect(result.success).toBe(false)
+    })
+
+    it('runs a tool that is attached directly when it is called through the lazy tool', async () => {
+        const surface = chatSurface()
+        expect(surface.coreToolNames).toContain('ap_research_pieces')
+        await expect(validateWrapped({ surface, value: { tool: 'ap_research_pieces', input: { value: 'x' } } })).resolves.toMatchObject({ success: true, value: { tool: 'ap_research_pieces', input: { value: 'x' } } })
+    })
+
+    it('treats a call with no input as a call with no arguments, and shows the schema when the tool needs some', async () => {
+        const result = await validateWrapped({ surface: chatSurface(), value: { tool: 'ap_add_step' } })
+        expect(errorMessageOf(result)).toContain('Invalid input for "ap_add_step"')
+        expect(errorMessageOf(result)).toContain('Input schema')
+    })
+
+    it('leaves arguments next to input where they are instead of guessing which input they belong to', async () => {
+        const result = await validateWrapped({ surface: chatSurface(), value: { tool: 'ap_add_step', input: {}, value: 'x' } })
+        expect(errorMessageOf(result)).toContain('Invalid input for "ap_add_step"')
+    })
+
+    it('shows the call shape when the call names no tool', async () => {
+        const empty = await validateWrapped({ surface: chatSurface(), value: {} })
+        const noTool = await validateWrapped({ surface: chatSurface(), value: { input: { value: 'x' } } })
+        expect(errorMessageOf(empty)).toContain('{"tool": "ap_validate_flow", "input": {"flowId": "..."}}')
+        expect(errorMessageOf(noTool)).toContain('named no `tool`')
+    })
+
+    it('sends a meta tool called through the lazy tool back to its own name', async () => {
+        const result = await validateWrapped({ surface: chatSurface(), value: { tool: 'ap_load_skill', input: { skills: ['flow_building'] } } })
+        expect(errorMessageOf(result)).toContain('call it by its own name')
+    })
+
     it('rejects a call without an input object', async () => {
         const result = await validateWrapped({ surface: chatSurface(), value: { tool: 'ap_add_step', input: 'x' } })
         expect(errorMessageOf(result)).toContain('`input` object')
@@ -302,6 +345,7 @@ describe('ap_lazy_tool input schema', () => {
         expect(JSON.parse(JSON.stringify(schema))).toEqual(schema)
         expect(schema).toMatchObject({ type: 'object', properties: { tool: { type: 'string' }, input: { type: 'object' } } })
     })
+
 })
 
 describe('unwrapLazyToolChunk', () => {
@@ -317,6 +361,11 @@ describe('unwrapLazyToolChunk', () => {
             { type: 'tool-input-available', toolCallId: 'c1', toolName: 'ap_add_step', input: { value: 'x' } },
         ])
         expect(available.release).toBe('c1')
+    })
+
+    it('names a call rerouted from its own name after the inner tool, matching the start already sent', () => {
+        const available = unwrapLazyToolChunk({ chunk: { type: 'tool-input-available', toolCallId: 'c3', toolName: LAZY_TOOL_NAME, input: { tool: 'ap_add_step', input: { value: 'x', title: 'Your step' } } }, heldStarts: new Map() })
+        expect(available).toEqual({ emit: [{ type: 'tool-input-available', toolCallId: 'c3', toolName: 'ap_add_step', input: { value: 'x', title: 'Your step' } }] })
     })
 
     it('passes other chunks through', () => {
@@ -348,6 +397,44 @@ describe('ap_get_tool_schema', () => {
     it('keeps a real title input', async () => {
         const result = await schemaOf(z.object({ title: z.string().describe('Task title') }))
         expect(result).toMatchObject({ inputSchema: { properties: { title: { type: 'string', description: 'Task title' } }, required: ['title'] } })
+    })
+
+    it('shows a record field as an object that takes keys, at any depth', async () => {
+        const result = await schemaOf(z.object({ fields: z.record(z.string(), z.unknown()).describe('Fields'), rows: z.array(z.object({ cells: z.record(z.string(), z.unknown()) })) }))
+        expect(result).toMatchObject({ inputSchema: { properties: { fields: { type: 'object', description: 'Fields' }, rows: { items: { properties: { cells: { type: 'object' } } } } } } })
+        expect(JSON.stringify(result)).not.toContain('additionalProperties')
+        expect(JSON.stringify(result)).not.toContain('propertyNames')
+
+        const tools = { ...stubTools(CHAT_TOOL_NAMES), ap_web_search: tool({ description: 'Search.', inputSchema: z.object({ options: z.record(z.string(), z.unknown()).describe('Options') }), execute: vi.fn() }) }
+        const surface = buildSkillSurface({ tools, surface: 'CHAT', guides: {}, onSkillLoaded: vi.fn(), canAffordPaidTool: () => true })
+        const playbook = String(await surface.tools['ap_load_skill']?.execute?.({ skills: ['web_and_media'] }, CALL_OPTIONS))
+        expect(playbook).toContain('"options":{"type":"object","description":"Options"}')
+        expect(playbook).not.toContain('additionalProperties')
+        expect(playbook).not.toContain('propertyNames')
+
+        const lazySchema = JSON.stringify(await asSchema(chatSurface().tools[LAZY_TOOL_NAME]?.inputSchema).jsonSchema)
+        expect(lazySchema).not.toContain('propertyNames')
+        expect(lazySchema).not.toContain('additionalProperties')
+    })
+})
+
+describe('decodeReroutedInput', () => {
+    const target = tool({
+        description: 'Explore.',
+        inputSchema: z.object({ input: z.record(z.string(), z.unknown()), limit: z.number().int(), note: z.string(), flag: z.boolean().optional() }),
+        execute: vi.fn(),
+    })
+
+    it('decodes JSON text in fields the schema types as something other than a string', async () => {
+        await expect(decodeReroutedInput({ target, input: { input: '{}', limit: '5', note: 'n', flag: 'true' } })).resolves.toEqual({ input: {}, limit: 5, note: 'n', flag: true })
+    })
+
+    it('leaves a string field holding JSON text untouched', async () => {
+        await expect(decodeReroutedInput({ target, input: { input: {}, limit: 1, note: '{"a":1}' } })).resolves.toEqual({ input: {}, limit: 1, note: '{"a":1}' })
+    })
+
+    it('leaves text that does not parse, or parses to the wrong type', async () => {
+        await expect(decodeReroutedInput({ target, input: { input: '{not json', limit: '[1]', note: 'n' } })).resolves.toEqual({ input: '{not json', limit: '[1]', note: 'n' })
     })
 })
 

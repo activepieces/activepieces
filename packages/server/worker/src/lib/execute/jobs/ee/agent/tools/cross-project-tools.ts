@@ -1,13 +1,14 @@
-import { isObject, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { isNil, isObject, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { ActionPreviewEvent, agentToolClassification } from '@activepieces/shared'
 import { tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { z } from 'zod'
 import { executeBatchAction, MAX_BATCH_SIZE, MAX_IDENTICAL_ACTION_FAILURES } from './configured-tools'
-import { AgentEventEmitter, cardTitleFields, extractUserFacingError, GateDecision, gateNoResponseMessage, isSuccessResult, stableStringify, TaintState, truncateLargeResult } from './tool-primitives'
+import { AgentEventEmitter, cardTitleFields, extractUserFacingError, GateDecision, gateNoResponseMessage, isMissingConnectionResult, isSuccessResult, normalizePieceName, stableStringify, TaintState, truncateLargeResult } from './tool-primitives'
 
-function createProgressGuard() {
+export function createProgressGuard() {
     const failureCounts = new Map<string, number>()
     const succeededWrites = new Set<string>()
+    const missingConnectionCounts = new Map<string, number>()
 
     const actionKey = ({ pieceName, actionName, input }: { pieceName: string, actionName: string, input: unknown }): string =>
         `${pieceName}::${actionName}::${stableStringify(input ?? {})}`
@@ -19,6 +20,25 @@ function createProgressGuard() {
         `✋ This exact action already ran successfully earlier in this turn (${actionName}) — it was NOT run again to avoid a duplicate side effect. Treat it as done; only repeat it if the user explicitly asks or the input changes.`
 
     return {
+        checkPieceConnection: ({ pieceName, inputs }: { pieceName: string, inputs: Record<string, unknown>[] }): { content: { type: string, text: string }[] } | null => {
+            if ((missingConnectionCounts.get(normalizePieceName(pieceName)) ?? 0) < MAX_MISSING_CONNECTION_FAILURES) {
+                return null
+            }
+            if (inputs.length > 0 && inputs.every(hasAuthInput)) {
+                return null
+            }
+            return { content: [{ type: 'text', text: `✋ Not run. Stop calling ${pieceName} actions until ap_show_connection_picker returns selected, or tell the user you need the account.` }] }
+        },
+        recordConnectionResult: ({ pieceName, result }: { pieceName: string, result: unknown }): void => {
+            if (!isMissingConnectionResult(result)) {
+                return
+            }
+            const key = normalizePieceName(pieceName)
+            missingConnectionCounts.set(key, (missingConnectionCounts.get(key) ?? 0) + 1)
+        },
+        connectionPicked: ({ pieceName }: { pieceName: string }): void => {
+            missingConnectionCounts.delete(normalizePieceName(pieceName))
+        },
         checkActionRun: ({ pieceName, actionName, input }: { pieceName: string, actionName: string, input: unknown }): { content: { type: string, text: string }[] } | null => {
             const key = actionKey({ pieceName, actionName, input })
             if (succeededWrites.has(key)) {
@@ -43,15 +63,34 @@ function createProgressGuard() {
     }
 }
 
-export function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, onGateOpened, isDeclaredReadOnly, taintState }: {
+export function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, onGateOpened, isDeclaredReadOnly, actionRequiresAuth, taintState, progressGuard = createProgressGuard() }: {
     executeTool: (toolName: string, toolInput: Record<string, unknown>) => Promise<unknown>
     eventEmitter: AgentEventEmitter
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
     onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
     isDeclaredReadOnly?: (params: { pieceName: string, actionName: string }) => Promise<boolean | undefined>
+    actionRequiresAuth?: (params: { pieceName: string, actionName: string }) => Promise<boolean | undefined>
     taintState: TaintState
+    progressGuard?: ProgressGuard
 }): ToolSet {
-    const progressGuard = createProgressGuard()
+    const requiresAuthByAction = new Map<string, Promise<RequiresAuthAnswer>>()
+    const requiresAuth = async ({ pieceName, actionName }: { pieceName: string, actionName: string }): Promise<boolean> => {
+        const key = `${normalizePieceName(pieceName)}::${actionName}`
+        const lookup = requiresAuthByAction.get(key) ?? lookUpRequiresAuth({ actionRequiresAuth, pieceName, actionName })
+        requiresAuthByAction.set(key, lookup)
+        const answer = await lookup
+        if (answer.lookupFailed) {
+            requiresAuthByAction.delete(key)
+        }
+        return answer.requiresAuth
+    }
+    const connectionBreakerFor = async ({ pieceName, actionName, inputs }: { pieceName: string, actionName: string, inputs: Record<string, unknown>[] }): Promise<{ content: { type: string, text: string }[] } | null> => {
+        const blocked = progressGuard.checkPieceConnection({ pieceName, inputs })
+        if (isNil(blocked)) {
+            return null
+        }
+        return await requiresAuth({ pieceName, actionName }) ? blocked : null
+    }
     return {
         ap_discover_action_auth: tool({
             description: 'Check what authentication a piece needs and find available connections. In chat you rarely need it: ap_show_connection_picker runs this check itself, so call the card directly. Use this only when you need the auth details without showing a card.',
@@ -75,7 +114,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
         }),
 
         ap_execute_action: tool({
-            description: 'Execute a piece action once or in batch. Before the FIRST call to an action you have not already inspected this conversation, call ap_get_piece_props to get the exact prop names, required fields, dropdown values, and dynamic sub-field shapes — never guess the input shape (guessing fails validation and wastes turns). Get the connection through ap_show_connection_picker, which also checks whether the piece needs one. The system manages connections automatically after the user selects one. If a call fails, fix the input from the returned error and retry ONCE; do not re-send a near-identical call repeatedly. For batch execution, provide an items array where each element is a complete input object for one invocation.',
+            description: 'Execute a piece action once or in batch. Before the FIRST call to an action you have not already inspected this conversation, call ap_get_piece_props to get the exact prop names, required fields, dropdown values, and dynamic sub-field shapes — never guess the input shape (guessing fails validation and wastes turns). Get the connection through ap_show_connection_picker, which also checks whether the piece needs one. A piece that needs an account fails until one is picked with ap_show_connection_picker. If a call fails, fix the input from the returned error and retry ONCE; do not re-send a near-identical call repeatedly. For batch execution, provide an items array where each element is a complete input object for one invocation.',
             inputSchema: z.object({
                 ...cardTitleFields,
                 pieceName: z.string().describe('Piece name, e.g. "@activepieces/piece-gmail"'),
@@ -87,6 +126,10 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
             }),
             execute: async (toolInput, options) => {
                 const isBatch = toolInput.items && toolInput.items.length > 0
+                const connectionBreaker = await connectionBreakerFor({ pieceName: toolInput.pieceName, actionName: toolInput.actionName, inputs: isBatch ? toolInput.items! : [toolInput.input ?? {}] })
+                if (connectionBreaker) {
+                    return connectionBreaker
+                }
                 if (!isBatch) {
                     const guardResult = progressGuard.checkActionRun({
                         pieceName: toolInput.pieceName,
@@ -144,7 +187,11 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
 
                 if (isBatch) {
                     return executeBatchAction({
-                        executeTool,
+                        executeTool: async (toolName, itemInput) => {
+                            const itemResult = await executeTool(toolName, itemInput)
+                            progressGuard.recordConnectionResult({ pieceName: toolInput.pieceName, result: itemResult })
+                            return itemResult
+                        },
                         eventEmitter,
                         toolCallId: options.toolCallId,
                         pieceName: toolInput.pieceName,
@@ -155,12 +202,15 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                 }
                 const rawResult = await executeTool('ap_execute_action', toolInput)
                 const rawSuccess = isSuccessResult(rawResult)
-                progressGuard.recordActionRunResult({
-                    pieceName: toolInput.pieceName,
-                    actionName: toolInput.actionName,
-                    input: toolInput.input,
-                    success: rawSuccess,
-                })
+                progressGuard.recordConnectionResult({ pieceName: toolInput.pieceName, result: rawResult })
+                if (rawSuccess || !isMissingConnectionResult(rawResult)) {
+                    progressGuard.recordActionRunResult({
+                        pieceName: toolInput.pieceName,
+                        actionName: toolInput.actionName,
+                        input: toolInput.input,
+                        success: rawSuccess,
+                    })
+                }
                 const result = truncateLargeResult(rawResult)
                 const resultObj = isObject(rawResult) ? rawResult as Record<string, unknown> : {}
                 const meta = isObject(resultObj['_meta']) ? resultObj['_meta'] as Record<string, unknown> : undefined
@@ -211,8 +261,13 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                 input: z.record(z.string(), z.unknown()).optional().describe('Input for the read action (keep limits small)'),
             }),
             execute: async (toolInput) => {
+                const connectionBreaker = await connectionBreakerFor({ pieceName: toolInput.pieceName, actionName: toolInput.actionName, inputs: [toolInput.input ?? {}] })
+                if (connectionBreaker) {
+                    return connectionBreaker
+                }
                 taintState.tainted = true
                 const rawResult = await executeTool('ap_explore_data', toolInput)
+                progressGuard.recordConnectionResult({ pieceName: toolInput.pieceName, result: rawResult })
                 return truncateLargeResult(rawResult)
             },
         }),
@@ -275,3 +330,28 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
     }
 }
 
+async function lookUpRequiresAuth({ actionRequiresAuth, pieceName, actionName }: {
+    actionRequiresAuth?: (params: { pieceName: string, actionName: string }) => Promise<boolean | undefined>
+    pieceName: string
+    actionName: string
+}): Promise<RequiresAuthAnswer> {
+    if (isNil(actionRequiresAuth)) {
+        return { requiresAuth: false, lookupFailed: false }
+    }
+    const { data, error } = await tryCatch(() => actionRequiresAuth({ pieceName, actionName }))
+    return { requiresAuth: data === true, lookupFailed: !isNil(error) }
+}
+
+function hasAuthInput(input: Record<string, unknown>): boolean {
+    const auth = input['auth']
+    return !isNil(auth) && auth !== ''
+}
+
+const MAX_MISSING_CONNECTION_FAILURES = 2
+
+export type ProgressGuard = ReturnType<typeof createProgressGuard>
+
+type RequiresAuthAnswer = {
+    requiresAuth: boolean
+    lookupFailed: boolean
+}

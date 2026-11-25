@@ -1,4 +1,5 @@
 import { AIProviderName } from '@activepieces/core-utils'
+import { LAZY_TOOL_NAME } from '@activepieces/shared'
 import { tool } from 'ai'
 import { convertArrayToReadableStream, MockLanguageModelV3 } from 'ai/test'
 import { describe, expect, it } from 'vitest'
@@ -11,8 +12,9 @@ const TIER = { id: 'fast', thinkingBudget: 5_000, modelId: 'anthropic/claude-hai
 
 const MALFORMED_INPUT = '{ query: "activepieces pricing", }'
 
-async function turnWhereTheModelRepairsWith({ repairText, toolInput = MALFORMED_INPUT }: { repairText: string, toolInput?: string }): Promise<RepairTurn> {
+async function turnWhereTheModelRepairsWith({ repairText, toolInput = MALFORMED_INPUT, toolName = 'ap_web_search' }: { repairText: string, toolInput?: string, toolName?: string }): Promise<RepairTurn> {
     const ranWith: unknown[] = []
+    const warnings: Warning[] = []
     const repairPrompts: string[] = []
     let streamed = 0
     const model = new MockLanguageModelV3({
@@ -21,7 +23,7 @@ async function turnWhereTheModelRepairsWith({ repairText, toolInput = MALFORMED_
             const parts = streamed === 1
                 ? [
                     { type: 'stream-start' as const, warnings: [] },
-                    { type: 'tool-call' as const, toolCallId: 'call-1', toolName: 'ap_web_search', input: toolInput },
+                    { type: 'tool-call' as const, toolCallId: 'call-1', toolName, input: toolInput },
                     { type: 'finish' as const, finishReason: 'tool-calls' as const, usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 } },
                 ]
                 : [
@@ -65,9 +67,10 @@ async function turnWhereTheModelRepairsWith({ repairText, toolInput = MALFORMED_
         tier: TIER,
         phaseState: { phase: 'discovery' },
         abortSignal: new AbortController().signal,
-        log: silentLog,
+        log: { ...silentLog, warn: (fields, message) => { warnings.push({ fields, message }) } },
+        ...(toolName === LAZY_TOOL_NAME ? { skills: { surface: 'CHAT', guides: {} } } : {}),
     })
-    return { ranWith, repairPrompts }
+    return { ranWith, repairPrompts, warnings }
 }
 
 describe('repairing a tool call the model got wrong', () => {
@@ -115,9 +118,45 @@ describe('repairing a tool call the model got wrong', () => {
 
         expect(ranWith).toEqual([])
     })
+
+    it('logs the rejected input and the validator message before repairing', async () => {
+        const { warnings } = await turnWhereTheModelRepairsWith({ toolInput: '{"query":123}', repairText: '{"query":"123"}' })
+
+        expect(warnings).toEqual([{ message: 'Repairing malformed tool call', fields: { toolName: 'ap_web_search', input: { query: 123 }, error: { name: 'AI_InvalidToolInputError', issues: [{ path: 'query', code: 'invalid_type' }] } } }])
+    })
+
+    it('logs only the length of an input that is not JSON, since it may hold anything', async () => {
+        const secretInput = '{ query: "x", apiKey: "sk-hidden-3", }'
+        const { warnings } = await turnWhereTheModelRepairsWith({ toolInput: secretInput, repairText: '{"query":"activepieces pricing"}' })
+
+        expect(warnings).toEqual([{ message: 'Repairing malformed tool call', fields: { toolName: 'ap_web_search', input: { unparsable: true, length: secretInput.length }, error: { name: 'AI_InvalidToolInputError', issues: [] } } }])
+        expect(JSON.stringify(warnings)).not.toMatch(/hidden-/)
+    })
+
+    it('logs a rejected lazy call once and hands it back to the model without a repair call', async () => {
+        const { warnings, repairPrompts, ranWith } = await turnWhereTheModelRepairsWith({ toolName: LAZY_TOOL_NAME, toolInput: '{}', repairText: '{}' })
+
+        expect(warnings).toEqual([{ message: 'Returning a malformed lazy tool call to the model', fields: { toolName: LAZY_TOOL_NAME, input: {}, error: { name: expect.any(String), issues: expect.any(Array) } } }])
+        expect(repairPrompts).toEqual([])
+        expect(ranWith).toEqual([])
+    })
 })
+
+describe('keeping secrets out of the repair warning', () => {
+    it('never logs a secret from a valid JSON input, neither in the input nor through the validator error', async () => {
+        const { warnings } = await turnWhereTheModelRepairsWith({ toolInput: '{"query":123,"apiKey":"sk-hidden-1","auth":{"token":"hidden-2"}}', repairText: '{"query":"123"}' })
+
+        expect(warnings).toHaveLength(1)
+        expect(JSON.stringify(warnings)).not.toMatch(/hidden-/)
+        expect(warnings[0].fields['input']).toEqual({ query: 123, apiKey: '[REDACTED]', auth: '[REDACTED]' })
+    })
+
+})
+
+type Warning = { fields: Record<string, unknown>, message: string }
 
 type RepairTurn = {
     ranWith: unknown[]
     repairPrompts: string[]
+    warnings: Warning[]
 }

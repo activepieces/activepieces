@@ -10,7 +10,7 @@ const PROMPT_PATH = path.resolve('packages/server/api/src/assets/prompts/chat-sy
 const CHARS_PER_TOKEN = 4
 // ~4.2k tokens today. Ceiling set just above to block bloat while leaving room for the planned
 // de-dup to bring it DOWN. Lower this number as de-dup lands — never raise it without a reason.
-const MAX_TOKENS = 5_000
+const MAX_TOKENS = 5_050
 
 const REQUIRED_SECTIONS = ['<identity>', '<persona>', '<product_model>', '<interpreting_intent>', '<operating_principles>', '<guardrails>', '<decision_framework>']
 

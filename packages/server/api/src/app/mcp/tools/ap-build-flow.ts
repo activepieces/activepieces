@@ -139,7 +139,7 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                         pieceVersion: triggerVersionResult.pieceVersion,
                         triggerName: trigger.triggerName,
                         input: triggerInput,
-                        propertySettings: await mcpUtils.resolveDynamicPropertySettings({ pieceName: triggerVersionResult.normalizedPieceName, pieceVersion: triggerVersionResult.pieceVersion, componentName: trigger.triggerName, componentType: 'trigger', input: triggerInput, projectId, platformId, log }),
+                        propertySettings: await mcpUtils.resolveDynamicPropertySettings({ pieceName: triggerVersionResult.normalizedPieceName, pieceVersion: triggerVersionResult.pieceVersion, componentName: trigger.triggerName, componentType: 'trigger', input: triggerInput, propertySettings: triggerLabels.propertySettings, projectId, platformId, log }),
                     },
                 })
                 let currentFlow = await flowService(log).update({
@@ -194,11 +194,11 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                     const stepUnknown = isNil(pieceAction) ? { input: step.input, unknownKeys: [], message: '' } : await mcpUtils.dropUnknownInputProps({ ...pieceAction, input: step.input, platformId, log })
                     const rewritten = mcpUtils.rewriteAllReferences({ input: stepUnknown.input, loopItems: step.loopItems, conditions: step.branches, trigger: latestTrigger })
                     const labels = isNil(pieceAction) || isNil(rewritten.input)
-                        ? { input: rewritten.input, resolved: [], problems: [] }
+                        ? { input: rewritten.input, resolved: [], problems: [], propertySettings: {} }
                         : await buildFlowReview.resolveDropdownLabels({ ...pieceAction, stepName, input: { ...rewritten.input, ...authInput }, projectId, platformId, log })
                     const stepInput = isNil(pieceAction) ? labels.input : await withOptionalDefaults({ pieceAction, input: labels.input, platformId, log })
                     const rewrittenStep = { ...step, input: stepInput, loopItems: rewritten.loopItems, branches: rewritten.conditions }
-                    const propertySettings = isNil(pieceAction) ? {} : await mcpUtils.resolveDynamicPropertySettings({ ...pieceAction, input: { ...(stepInput ?? {}), ...authInput }, projectId, platformId, log })
+                    const propertySettings = isNil(pieceAction) ? {} : await mcpUtils.resolveDynamicPropertySettings({ ...pieceAction, input: { ...(stepInput ?? {}), ...authInput }, propertySettings: labels.propertySettings, projectId, platformId, log })
                     const skeleton = buildSkeleton({ step: rewrittenStep, name: stepName, resolvedPieceVersion, resolvedPieceName, propertySettings })
                     const parseResult = UpdateActionRequest.safeParse(skeleton)
                     if (!parseResult.success) {

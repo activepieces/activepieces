@@ -1,9 +1,9 @@
 import { ActivepiecesError, AIProviderName, ErrorCode } from '@activepieces/core-utils'
 import { AgentRunSource, AI_PROVIDER_ENTITY_TYPES } from '@activepieces/shared'
-import { APICallError, RetryError } from 'ai'
+import { APICallError, jsonSchema, RetryError } from 'ai'
 import { describe, expect, it } from 'vitest'
 
-import { classifyAgentRunError, firstStepUsesFastModel, isTransientFailureText, jsonInputFrom, looksEmptyResultText } from '../../../../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
+import { classifyAgentRunError, firstStepUsesFastModel, isTransientFailureText, jsonInputFrom, looksEmptyResultText, wrapToolsWithFailureGuard } from '../../../../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
 
 function apiError({ statusCode, message, responseBody }: { statusCode: number, message: string, responseBody?: string }): APICallError {
     return new APICallError({ message, url: 'https://provider.test/v1/chat', requestBodyValues: {}, statusCode, responseBody })
@@ -234,5 +234,103 @@ describe('jsonInputFrom', () => {
         for (const text of rejected) {
             expect(jsonInputFrom(text), text).toBeUndefined()
         }
+    })
+})
+
+describe('wrapToolsWithFailureGuard', () => {
+    const silentLog = { debug: () => undefined, info: () => undefined, warn: () => undefined, error: () => undefined }
+    const callOptions = { toolCallId: 't', messages: [] }
+
+    it('treats a call that only renames its card title as the same failing call', async () => {
+        let calls = 0
+        const guarded = wrapToolsWithFailureGuard({
+            tools: {
+                ap_execute_action: {
+                    inputSchema: jsonSchema({ type: 'object' }),
+                    execute: async () => {
+                        calls += 1
+                        return { content: [{ type: 'text', text: '❌ Cannot run action: missing field' }] }
+                    },
+                },
+            },
+            log: silentLog,
+        })
+        const execute = guarded.ap_execute_action.execute
+        const base = { pieceName: '@activepieces/piece-gmail', actionName: 'gmail_send_email', input: { to: 'a@b.c' } }
+
+        for (const [index, title] of ['Send email', 'Sending the email', 'Send it now', 'Try again'].entries()) {
+            await execute?.({ ...base, title, activeTitle: `${title}…`, doneTitle: `${title} done` }, { ...callOptions, toolCallId: `t${index}` })
+        }
+
+        expect(calls).toBe(2)
+    })
+
+    it('strips card titles from the arguments of a lazily called tool too', async () => {
+        let calls = 0
+        const guarded = wrapToolsWithFailureGuard({
+            tools: {
+                ap_lazy_tool: {
+                    inputSchema: jsonSchema({ type: 'object' }),
+                    execute: async () => {
+                        calls += 1
+                        return { content: [{ type: 'text', text: '❌ Cannot run action: missing field' }] }
+                    },
+                },
+            },
+            log: silentLog,
+        })
+
+        for (const [index, title] of ['Send email', 'Sending it', 'Send now'].entries()) {
+            await guarded.ap_lazy_tool.execute?.({ tool: 'ap_execute_action', title, input: { pieceName: 'p', actionName: 'a', title, doneTitle: title } }, { ...callOptions, toolCallId: `l${index}` })
+        }
+
+        expect(calls).toBe(2)
+    })
+
+    it('treats a changed task title inside a real tool\'s input as a new call', async () => {
+        let calls = 0
+        const guarded = wrapToolsWithFailureGuard({
+            tools: {
+                ap_execute_action: {
+                    inputSchema: jsonSchema({ type: 'object' }),
+                    execute: async () => {
+                        calls += 1
+                        return { content: [{ type: 'text', text: '❌ Cannot run action: nothing found' }] }
+                    },
+                },
+            },
+            log: silentLog,
+        })
+
+        for (const [index, title] of ['Roadmap', 'Roadmap', 'Q3 Roadmap'].entries()) {
+            await guarded.ap_execute_action.execute?.({ pieceName: '@activepieces/piece-notion', actionName: 'search', input: { title } }, { ...callOptions, toolCallId: `n${index}` })
+        }
+
+        expect(calls).toBe(3)
+    })
+
+    it('never answers a missing-connection failure with its change-the-parameters message', async () => {
+        let calls = 0
+        const guarded = wrapToolsWithFailureGuard({
+            tools: {
+                ap_execute_action: {
+                    inputSchema: jsonSchema({ type: 'object' }),
+                    execute: async () => {
+                        calls += 1
+                        return { success: false, missingConnection: true, error: '❌ No Gmail account is selected in this conversation. Call ap_show_connection_picker' }
+                    },
+                },
+            },
+            log: silentLog,
+        })
+        const input = { pieceName: '@activepieces/piece-gmail', actionName: 'gmail_search_mail', input: {} }
+
+        const results = []
+        for (const index of [1, 2, 3, 4]) {
+            results.push(await guarded.ap_execute_action.execute?.(input, { ...callOptions, toolCallId: `c${index}` }))
+        }
+
+        expect(calls).toBe(4)
+        expect(JSON.stringify(results)).not.toContain('change the parameters')
     })
 })

@@ -4,16 +4,15 @@
 1. **Discover** (discovery's guide arrives with this skill, so don't load it separately): infer the business logic (categories, routing, thresholds, destinations, wording) from their company, their real data (`ap_explore_data`) and market practice. Don't ask the user for it; every assumption becomes an editable line in the closing brief. If the flow is recurring and reads persistent data, decide now how run N+1 avoids reprocessing run N.
 2. **Research:** `ap_research_pieces({pieceNames, forIntent})` for the apps (missing app → `http_fallback` skill), pick from `recommendedActions`, then ONE `ap_get_piece_props` call with the trigger and every action as `items` (each with its `auth` when the app needs one). It resolves dropdowns and returns each one's `requiredInputs`, a ready `exampleInput`, its output fields and each trigger's sample payload. Never call it once per action.
 3. **Handoff:** one-line recap, make sure each app has a connection the user picked (`ap_show_connection_picker`, one card per app still missing one, all in one reply), choose sensible defaults, and only ask (`ap_show_questions`) about a single make-or-break choice you truly can't infer.
+   If the user declines or has no connection for an app, still build that app's own trigger and steps with `auth` left empty and tell them connecting it is the one thing left. Never swap the app for a Schedule, HTTP or Code workaround unless they ask.
 4. **Build** (below), **reflect**, then share the link and offer a test and "Turn it on?".
 
 Most flows are 2–5 linear steps. Add routers, loops or stored state only when the goal needs them (`control_flow`, `state` skills). Reprocessing safety on a recurring flow is never optional: load `build_flow_advanced` for dedup patterns, formulas and runtime limits. Existing flows (inspect, rename, pause, delete) are in `flow_management`.
 
 ## The build card
 Right after loading this skill, for every brand-new automation, whatever starts it (a schedule, an event, a webhook, a form or a manual trigger), and never for one-time tasks, lookups or edits to an existing flow, call `ap_set_build_plan` (silent, no thinking status) with `phase: 'detecting'`, a short `flowName`, a bold `tagline` about the exact busywork it kills (about 7 words, no period, e.g. "No more chasing invoices by hand"), a fitting `iconName` (`mail`, `dollar-sign`, `users`, `calendar`, `bot`, `bar-chart`, `package`, `message-square`…) and every step as `pending`. The card is the progress, so don't narrate each step in text.
-- Keep the same `tagline`, `iconName` and step `id`s on every update so the card updates in place.
-- Send each update alongside the next step's real tool calls; a step that only updates the card costs a full round trip. Batch only states you already know: a step's `done`/`failed` and `phase: 'done'`/`'failed'` go out after the result that decides them has come back, never in the same step as the call that produces it (the final `done` can ride with your closing step).
-- Set `flowId` as soon as the build returns it. One-shot builds: flip steps to `done`/`failed` as you validate them (`phase: 'building'`). Incremental builds: `in_progress` before adding a step, `done` after it validates.
-- `phase: 'testing'` while testing, `phase: 'done'` with the `flowId` when verified (reveals Open / Test / Run), `phase: 'failed'` on a genuine give-up.
+- Later calls send only what changed, usually just the `phase`: `testing` while testing, `done` when verified (reveals Open / Test / Run), `failed` on a genuine give-up. Built flows fill in and tick off their own rows.
+- Send each update alongside the next step's real tool calls, never as a step on its own. Set `done`/`failed` only after the result that decides it has come back (the final `done` can ride with your closing step).
 
 Open the build with ONE thinking status that frames the whole job; a short text line between phases is fine.
 

@@ -63,6 +63,7 @@ function build({ mcp, caseReplay, auth, mode, user, onNote = ignoreNote }: { mcp
         mcpToolSet: replayed({ tools: mcp.toolSet, caseReplay, mode, declaredReadOnly }),
         brokenConnectors: new Set(),
         taintState,
+        onToolResult: buildPlanTools.onFlowToolResult,
     })
     return agentToolPolicy.selectToolsForSource({
         source: AgentRunSource.CHAT,
@@ -79,7 +80,7 @@ function build({ mcp, caseReplay, auth, mode, user, onNote = ignoreNote }: { mcp
                 mode,
             }),
             thinking: agentWorkerTools.createThinkingTools(),
-            buildPlan: buildPlanTools,
+            buildPlan: buildPlanTools.tools,
             email: {},
             agentSurface: agentWorkerTools.createAgentSurfaceTools({ executeTool, taintState, eventEmitter, waitForApproval: approve, onGateOpened: noop }),
             mcp: onlyTools(mcpTools),

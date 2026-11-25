@@ -1,7 +1,7 @@
 import { formulaEvaluator } from '@activepieces/core-formula'
 import { isNil, isObject, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
-import { FlowActionType, flowStructureUtil, FlowTrigger, FlowTriggerType, RouterActionSettingsWithValidation, Step } from '@activepieces/shared'
+import { FlowActionType, flowStructureUtil, FlowTrigger, FlowTriggerType, PopulatedFlow, PropertyExecutionType, PropertySettings, RouterActionSettingsWithValidation, Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { flowValidation } from './flow-validation'
@@ -22,14 +22,31 @@ async function resolveDropdownLabels({ pieceName, pieceVersion, componentName, c
 }): Promise<LabelResolution> {
     const component = await findComponent({ pieceName, pieceVersion, componentName, componentType, platformId, log })
     if (isNil(component)) {
-        return { input, resolved: [], problems: [] }
+        return { input, resolved: [], problems: [], propertySettings: {} }
     }
     let currentInput = input
+    let propertySettings: Record<string, PropertySettings> = {}
     const resolved: string[] = []
     const problems: FlowProblem[] = []
     for (const [field, prop] of Object.entries(component.props)) {
-        const labels = labelsToResolve(currentInput[field])
-        if (!DROPDOWN_TYPES.has(prop.type) || labels.length === 0 || (!isNil(fields) && !fields.includes(field))) {
+        if (!isNil(fields) && !fields.includes(field)) {
+            continue
+        }
+        const value = currentInput[field]
+        if (prop.type === PropertyType.DYNAMIC && isObject(value) && !Array.isArray(value)) {
+            const schema = await dynamicSchemaFor({ field, pieceName, pieceVersion, componentName, input: currentInput, projectId, platformId, log })
+            if (isNil(schema)) {
+                continue
+            }
+            const remap = remapDynamicKeys({ stepName, field, value, schema })
+            resolved.push(...remap.resolved)
+            problems.push(...remap.problems)
+            currentInput = { ...currentInput, [field]: remap.input }
+            propertySettings = { ...propertySettings, [field]: { type: PropertyExecutionType.MANUAL, schema } }
+            continue
+        }
+        const labels = labelsToResolve(value)
+        if (!DROPDOWN_TYPES.has(prop.type) || labels.length === 0) {
             continue
         }
         const options = await optionsFor({ prop, field, pieceName, pieceVersion, componentName, input: currentInput, projectId, platformId, log })
@@ -46,7 +63,7 @@ async function resolveDropdownLabels({ pieceName, pieceVersion, componentName, c
             currentInput = { ...currentInput, [field]: Array.isArray(currentInput[field]) ? values : values[0] }
         }
     }
-    return { input: currentInput, resolved, problems }
+    return { input: currentInput, resolved, problems, propertySettings }
 }
 
 async function findProblems({ trigger, invalidReasons, labelProblems, platformId, log }: {
@@ -75,6 +92,13 @@ function flowStepStates({ trigger, problemStepNames, skippedDisplayNames = [] }:
         ...flowStructureUtil.getAllSteps(trigger).map((step) => ({ displayName: step.displayName, state: problemStepNames.has(step.name) ? 'problem' as const : 'ok' as const })),
         ...skippedDisplayNames.map((displayName) => ({ displayName, state: 'skipped' as const })),
     ]
+}
+
+function flowState(flow: PopulatedFlow): { flowId: string, flowName: string, flowSteps: FlowStepState[] } {
+    const { trigger } = flow.version
+    const invalidStepNames = flowStructureUtil.getAllSteps(trigger).filter((step) => !step.valid).map((step) => step.name)
+    const flowIssueStepNames = flowValidation.validateFlow({ trigger }).issues.filter((issue) => issue.severity !== 'info').map((issue) => issue.stepName)
+    return { flowId: flow.id, flowName: flow.version.displayName, flowSteps: flowStepStates({ trigger, problemStepNames: new Set([...invalidStepNames, ...flowIssueStepNames]) }) }
 }
 
 function labelNote(resolution: LabelResolution): string {
@@ -217,6 +241,52 @@ async function optionsFor({ prop, field, pieceName, pieceVersion, componentName,
     return result?.status === 'options' && result.options.length > 0 ? result.options : undefined
 }
 
+async function dynamicSchemaFor({ field, pieceName, pieceVersion, componentName, input, projectId, platformId, log }: {
+    field: string
+    pieceName: string
+    pieceVersion: string
+    componentName: string
+    input: Record<string, unknown>
+    projectId: string
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<PiecePropertyMap | undefined> {
+    const { data: result } = await tryCatch(() => mcpUtils.executePropertyResolution({ pieceName, pieceVersion, actionOrTriggerName: componentName, propertyName: field, input, projectId, platformId, log }))
+    return result?.status === 'dynamic' && Object.keys(result.props).length > 0 ? result.props : undefined
+}
+
+function remapDynamicKeys({ stepName, field, value, schema }: {
+    stepName: string
+    field: string
+    value: Record<string, unknown>
+    schema: PiecePropertyMap
+}): Omit<LabelResolution, 'propertySettings'> {
+    const entries = Object.entries(value).map(([key, item]) => ({ key, item, target: dynamicKeyFor({ key, schema }) }))
+    const renamed = entries.filter((entry) => !isNil(entry.target) && entry.target !== entry.key)
+    const unknownKeys = entries.filter((entry) => isNil(entry.target)).map((entry) => JSON.stringify(entry.key))
+    const problems = unknownKeys.length === 0 ? [] : [{ step: stepName, field, message: `unknown key ${unknownKeys.join(', ')}, valid keys: ${formatDynamicKeys(schema)}` }]
+    return {
+        input: Object.fromEntries(entries.map((entry) => [entry.target ?? entry.key, entry.item])),
+        resolved: renamed.map((entry) => `${stepName}.${field}: key "${entry.key}" → ${JSON.stringify(entry.target)}`),
+        problems,
+    }
+}
+
+function dynamicKeyFor({ key, schema }: { key: string, schema: PiecePropertyMap }): string | undefined {
+    if (Object.hasOwn(schema, key)) {
+        return key
+    }
+    const wanted = key.trim().toLowerCase()
+    const matches = Object.entries(schema).filter(([, prop]) => prop.displayName.trim().toLowerCase() === wanted)
+    return matches.length === 1 ? matches[0][0] : undefined
+}
+
+function formatDynamicKeys(schema: PiecePropertyMap): string {
+    const keys = Object.entries(schema).map(([key, prop]) => prop.displayName === key ? key : `${key} (${prop.displayName})`)
+    const shown = keys.slice(0, MAX_SHOWN_OPTIONS).join(', ')
+    return keys.length > MAX_SHOWN_OPTIONS ? `${shown}, … (${keys.length - MAX_SHOWN_OPTIONS} more)` : shown
+}
+
 function pickOption({ options, label }: { options: DropdownOption[], label: string }): { value: unknown, changed: boolean, problem?: string } {
     if (options.some((option) => option.value === label)) {
         return { value: label, changed: false }
@@ -306,6 +376,7 @@ function shortPieceName(pieceName: string): string {
 export const buildFlowReview = {
     resolveDropdownLabels,
     flowStepStates,
+    flowState,
     labelNote,
     findProblems,
     formatProblem,
@@ -335,6 +406,7 @@ type LabelResolution = {
     input: Record<string, unknown>
     resolved: string[]
     problems: FlowProblem[]
+    propertySettings: Record<string, PropertySettings>
 }
 
 export type FlowStepState = {

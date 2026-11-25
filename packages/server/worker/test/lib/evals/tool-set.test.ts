@@ -1,5 +1,6 @@
-import { ToolSet } from 'ai'
+import { tool, ToolSet } from 'ai'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { z } from 'zod'
 import { replay } from './replay'
 import { scriptedUser, ScriptedUser } from './scripted-user'
 import { evalToolSet } from './tool-set'
@@ -13,6 +14,19 @@ describe('evalToolSet.build', () => {
     it('offers ap_set_build_plan to the agent', () => {
         const tools = buildWith({ mcpTools: {} })
         expect(tools['ap_set_build_plan']?.execute).toBeDefined()
+    })
+
+    it('runs the build card hook on flow tool results like production', async () => {
+        const tools = buildWith({
+            mcpTools: {
+                ap_build_flow: tool({
+                    inputSchema: z.object({}),
+                    execute: async () => ({ content: [{ type: 'text', text: 'Built.' }] }),
+                }),
+            },
+        })
+        const result = await tools['ap_build_flow']?.execute?.({}, { toolCallId: 'call-1', messages: [], context: undefined })
+        expect(JSON.stringify(result)).toContain('No build card is showing')
     })
 
     it('stores the connection the scripted user picks on the dev server', async () => {

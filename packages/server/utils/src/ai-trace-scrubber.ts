@@ -140,7 +140,8 @@ function scrubJson({ value }: { value: unknown }): unknown {
         return value.map((item) => scrubJson({ value: item }))
     }
     if (isObject(value)) {
-        return Object.fromEntries(Object.entries(value).map(([key, child]) => [key, holdsSecret({ key, value: child }) ? REDACTED : scrubJson({ value: child })]))
+        const namesSecret = isSensitiveHeaderPair(value)
+        return Object.fromEntries(Object.entries(value).map(([key, child]) => [key, holdsSecret({ key, value: child }) || (namesSecret && key === 'value') ? REDACTED : scrubJson({ value: child })]))
     }
     if (typeof value === 'string') {
         return scrubText({ text: value })
@@ -152,9 +153,14 @@ function holdsSecret({ key, value }: { key: string, value: unknown }): boolean {
     return isSensitiveKey(key) && value !== null && (typeof value === 'string' || typeof value === 'object')
 }
 
+function isSensitiveHeaderPair(record: Record<string, unknown>): boolean {
+    const name = record['name'] ?? record['key']
+    return typeof name === 'string' && typeof record['value'] === 'string' && SENSITIVE_HEADER_NAMES.includes(name.toLowerCase())
+}
+
 function isSensitiveKey(key: string): boolean {
     const normalized = key.toLowerCase().replace(/[^a-z]/g, '')
-    return SENSITIVE_KEY_PARTS.some((part) => normalized.includes(part))
+    return SENSITIVE_EXACT_KEYS.includes(normalized) || SENSITIVE_KEY_PARTS.some((part) => normalized.includes(part))
 }
 
 function isStringOrEmpty(item: unknown): item is string | null | undefined {
@@ -167,8 +173,14 @@ const SCAN_BUDGET_PER_CHAR = 10
 
 const SENSITIVE_KEY_PARTS = ['token', 'password', 'passwd', 'secret', 'apikey', 'authorization', 'credential', 'privatekey', 'accesskey', 'cookie']
 
+const SENSITIVE_EXACT_KEYS = ['auth', 'authfields']
+
+const SENSITIVE_HEADER_NAMES = ['authorization', 'proxy-authorization', 'cookie', 'set-cookie', 'x-api-key', 'api-key']
+
 const ERROR_DETAIL_ATTRIBUTES = new Set(['exception.message', 'exception.stacktrace'])
 
 export const aiTraceScrubber = {
     wrapExporter,
+    scrubJson,
+    isSensitiveKey,
 }
