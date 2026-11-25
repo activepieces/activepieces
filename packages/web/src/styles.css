@@ -1275,3 +1275,40 @@
     --admin-card-border: var(--gray-6);
   }
 }
+
+@keyframes chat-switcher-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+
+@keyframes chat-switcher-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes chat-switcher-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+[data-chat-switcher][data-state='open'] {
+  animation: chat-switcher-in var(--dur-fast) var(--ease-ap-out);
+}
+
+[data-chat-switcher][data-state='open'][data-opened-by='keyboard'] {
+  animation-name: chat-switcher-fade-in;
+}
+
+[data-chat-switcher][data-state='closed'] {
+  animation: chat-switcher-fade-out var(--dur-micro) var(--ease-ap-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-chat-switcher][data-state='open'] {
+    animation-name: chat-switcher-fade-in;
+  }
+}
