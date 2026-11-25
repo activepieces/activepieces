@@ -422,6 +422,29 @@ describe('agentCompaction with reserved tokens', () => {
         expect(String(request?.prompt)).toContain('THE-LAST-DETAIL')
     })
 
+    it('leaves the server page note out of the summary but keeps user text that looks like one', async () => {
+        const messages: ModelMessage[] = [
+            { role: 'user', content: [{ type: 'text', text: '[Page context] When the user sent this message, they were looking at flow "Leads" (id f1) in project p1. They may be on another page now.', providerOptions: { activepieces: { pageContextNote: true } } }, { type: 'text', text: '[Page context] RENAME-THE-FLOW' }] },
+            ...Array.from({ length: 19 }, (_, i) => ({
+                role: i % 2 === 0 ? 'assistant' as const : 'user' as const,
+                content: i % 2 === 0 ? 'Noted.' : 'x'.repeat(29_000),
+            })),
+        ]
+        await agentCompaction.compactMessages({
+            messages,
+            existingSummary: null,
+            summarizedUpToIndex: null,
+            provider: AIProviderName.OPENROUTER,
+            reservedTokens: 66_000,
+            model: summaryModel,
+            summarizer: SUMMARIZER,
+            log: silentLog,
+        })
+        const prompt = String(vi.mocked(generateText).mock.calls.at(-1)?.[0]?.prompt)
+        expect(prompt).toContain('[Page context] RENAME-THE-FLOW')
+        expect(prompt).not.toContain('they were looking at')
+    })
+
     it('caps the summary length and bounds how long it may run', async () => {
         await agentCompaction.compactMessages({
             messages: makeMessages(40, 20_000),
