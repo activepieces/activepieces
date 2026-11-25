@@ -1,12 +1,9 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
 
 const markdownDescription = `
-To obtain your GenerateBanners public and secret API Keys, you can follow the steps below:
-
-1. Go to the [GenerateBanners homepage](https://www.generatebanners.com/).
-2. Sign up or log in into your account.
-3. Go to your [account page](https://www.generatebanners.com/app/account).
-4. The public and secret API keys are now displayed, copy them one by one into the right Activepieces fields.
+1. Log in to [GenerateBanners](https://www.generatebanners.com/).
+2. Open your [account page](https://www.generatebanners.com/app/account).
+3. Copy the public and secret API keys into the fields below.
 `;
 
 export const generatebannersAuth = PieceAuth.BasicAuth({
@@ -14,8 +11,10 @@ export const generatebannersAuth = PieceAuth.BasicAuth({
   required: true,
   username: {
     displayName: 'Public API Key',
+    description: 'Shown on your GenerateBanners account page.',
   },
   password: {
     displayName: 'Secret API Key',
+    description: 'Shown next to the public key; keep it private.',
   },
 });
