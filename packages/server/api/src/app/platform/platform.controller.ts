@@ -216,6 +216,7 @@ async function addSelfServeTrialToPlatform<T extends PlatformWithoutSensitiveDat
 const CreatePlatformEndpoint = {
     config: {
         security: securityAccess.unscoped([PrincipalType.ONBOARDING, PrincipalType.USER]),
+        mcp: { deny: true },
     },
     schema: {
         body: CreatePlatformRequest,

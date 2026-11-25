@@ -10,13 +10,18 @@ import { userService } from '../../user/user-service'
 
 let server: FastifyInstance | null = null
 let exposedRoutesCache: ExposedRoute[] | null = null
-const registeredRoutes: RouteOptions[] = []
+let registeredRoutes: RouteOptions[] = []
 
-function init(app: FastifyInstance): void {
+function collectRoutes(app: FastifyInstance): void {
     server = app
+    registeredRoutes = []
+    exposedRoutesCache = null
     app.addHook('onRoute', (route) => {
         registeredRoutes.push(route)
     })
+}
+
+function guardMcpCalls(app: FastifyInstance): void {
     app.addHook('preHandler', async (request, reply) => {
         const isBlockedMcpCall = isMcpCall(request) && !isExposed(request.routeOptions.config.mcp)
         if (isBlockedMcpCall) {
@@ -78,7 +83,7 @@ function describeSchema(schema: RouteOptions['schema']): Record<string, unknown>
 
 async function call({ userId, method, path, query, body, log }: PlatformAdminCallParams): Promise<CallResult> {
     if (isNil(server)) {
-        throw new Error('platformAdminApi.init was not called')
+        throw new Error('platformAdminApi.collectRoutes was not called')
     }
     const user = await userService(log).getOneOrFail({ id: userId })
     assertNotNullOrUndefined(user.platformId, 'platformId')
@@ -105,7 +110,8 @@ async function call({ userId, method, path, query, body, log }: PlatformAdminCal
 }
 
 export const platformAdminApi = {
-    init,
+    collectRoutes,
+    guardMcpCalls,
     page,
     routes,
     exposedRoutes,
