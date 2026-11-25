@@ -1,7 +1,12 @@
 import { openaiAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import OpenAI from 'openai';
-import { isLLM } from '../common/common';
+import {
+	functionToolParams,
+	isLLM,
+	rejectsFunctionTools,
+	resolveModelId,
+} from '../common/common';
 
 export const extractStructuredDataAction = createAction({
   audience: 'both',
@@ -102,7 +107,8 @@ export const extractStructuredDataAction = createAction({
 		}),
 	},
 	async run(context) {
-		const { model, text } = context.propsValue;
+		const model = resolveModelId(context.propsValue.model);
+		const { text } = context.propsValue;
 		const paramInputArray = context.propsValue.params as ParamInput[];
 		const functionParams: Record<string, unknown> = {};
 		const requiredFunctionParams: string[] = [];
@@ -120,8 +126,43 @@ export const extractStructuredDataAction = createAction({
 			apiKey: context.auth.secret_text,
 		});
 
+		const schema = {
+			type: 'object',
+			properties: functionParams,
+			required: requiredFunctionParams,
+		};
+
+		if (rejectsFunctionTools(model)) {
+			const response = await openai.chat.completions.create({
+				model: model,
+				messages: [
+					{ role: 'system', content: prompt },
+					{ role: 'user', content: text },
+				],
+				response_format: {
+					type: 'json_schema',
+					json_schema: {
+						name: 'extract_structured_data',
+						schema,
+						strict: false,
+					},
+				},
+			});
+			const message = response.choices[0].message;
+			if (!message.content) {
+				throw new Error(JSON.stringify({
+					message: "OpenAI couldn't extract the fields from the above text.",
+					refusal: message.refusal ?? undefined,
+					finishReason: response.choices[0].finish_reason,
+				}));
+			}
+			const content = message.content;
+			return parseExtraction(content);
+		}
+
 		const response = await openai.chat.completions.create({
 			model: model,
+			...functionToolParams(model),
 			messages: [{ role: 'user', content: text }],
 			tools: [
 				{
@@ -129,11 +170,7 @@ export const extractStructuredDataAction = createAction({
 					function: {
 						name: 'extract_structured_data',
 						description: prompt,
-						parameters: {
-							type: 'object',
-							properties: functionParams,
-							required: requiredFunctionParams,
-						},
+						parameters: schema,
 					},
 				},
 			],
@@ -145,19 +182,20 @@ export const extractStructuredDataAction = createAction({
 				message: "OpenAI couldn't extract the fields from the above text."
 			}));
 		}
-		const rawArgs = toolCallsResponse[0].function.arguments;
-		try {
-			return JSON.parse(rawArgs);
-		} catch (parseError) {
-			// The model returned a non-JSON string in the function arguments — surface the raw payload
-			// so users can inspect it rather than getting a vague "Unexpected token" error.
-			throw new Error(JSON.stringify({
-				message: 'OpenAI returned invalid JSON for the extracted fields.',
-				raw: rawArgs,
-			}));
-		}
+		return parseExtraction(toolCallsResponse[0].function.arguments);
 	},
 });
+
+function parseExtraction(raw: string): unknown {
+	try {
+		return JSON.parse(raw);
+	} catch {
+		throw new Error(JSON.stringify({
+			message: 'OpenAI returned invalid JSON for the extracted fields.',
+			raw,
+		}));
+	}
+}
 
 interface ParamInput {
 	propName: string;
