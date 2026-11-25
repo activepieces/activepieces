@@ -92,8 +92,8 @@ services:
       replicas: ${WORKER_REPLICAS:-2}
       resources:
         limits:
-          cpus: '0.5'
-          memory: 1G
+          cpus: ${WORKER_CPUS:-0.5}
+          memory: ${WORKER_MEMORY:-1G}
     networks:
       - bench
 

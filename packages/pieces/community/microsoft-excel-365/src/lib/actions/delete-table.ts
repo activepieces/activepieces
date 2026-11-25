@@ -29,7 +29,7 @@ export const deleteTableAction = createAction({
     const drivePath = getDrivePath(storageSource, siteId as string, documentId as string);
 
     const client = createMSGraphClient(auth['access_token'], cloud);
-    await client.api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}`).delete();
+    await client.api(`${drivePath}/items/${workbookId}/workbook/worksheets/${encodeURIComponent(worksheetId)}/tables/${tableId}`).delete();
     return { success: true };
   },
 });

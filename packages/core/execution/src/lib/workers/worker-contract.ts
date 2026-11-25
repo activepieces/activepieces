@@ -85,6 +85,7 @@ export type WorkerToApiContract = {
     uploadFlowBundle(input: UploadFlowBundleRequest): Promise<void>
     recordTriggerRun(input: RecordTriggerRunRequest): Promise<void>
     extendLock(input: { jobId: string, token: string, queueName: string }): Promise<void>
+    beginShutdown(): Promise<void>
     disableFlow(input: DisableFlowRequest): Promise<void>
     sendAgentEvent(input: SendAgentEventRequest): Promise<void>
     getAgentConfig(input: GetAgentConfigRequest): Promise<AgentConfigResponse>
@@ -367,6 +368,7 @@ export type ResumeFlowStepRequest = {
 
 export type ExecuteAgentToolResponse = {
     result: unknown
+    cancelReason?: string
 }
 
 export type SendAgentEmailRequest = {

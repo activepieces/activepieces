@@ -103,6 +103,7 @@ const flowVersionWithBranching: FlowVersion = {
                             code: 'test',
                             packageJson: '{}',
                         },
+                        useDeno: true,
                     },
                     displayName: 'Code',
                 },
@@ -185,6 +186,63 @@ const emptyScheduleFlowVersion: FlowVersion = {
     state: FlowVersionState.DRAFT,
     connectionIds: [],
 }
+
+describe('useDeno enforcement (SRE-342)', () => {
+    function codeActionWithUseDeno(name: string, useDeno: boolean | undefined): FlowAction {
+        const action = createCodeAction(name)
+        return { ...action, settings: { ...action.settings, useDeno } as never }
+    }
+    function findStep(version: FlowVersion, name: string): CodeAction {
+        return flowStructureUtil.getAllSteps(version.trigger).find((step) => step.name === name) as CodeAction
+    }
+
+    it('forces useDeno to true when a code step is added with useDeno=false', () => {
+        const result = flowOperations.apply(emptyScheduleFlowVersion, {
+            type: FlowOperationType.ADD_ACTION,
+            request: { parentStep: 'trigger', action: codeActionWithUseDeno('step_1', false) },
+        })
+        expect(findStep(result, 'step_1').settings.useDeno).toBe(true)
+    })
+
+    it('forces useDeno to true when a code step is added with useDeno omitted', () => {
+        const result = flowOperations.apply(emptyScheduleFlowVersion, {
+            type: FlowOperationType.ADD_ACTION,
+            request: { parentStep: 'trigger', action: codeActionWithUseDeno('step_1', undefined) },
+        })
+        expect(findStep(result, 'step_1').settings.useDeno).toBe(true)
+    })
+
+    it('forces useDeno to true when a code step is updated to useDeno=false', () => {
+        const withStep = flowOperations.apply(emptyScheduleFlowVersion, {
+            type: FlowOperationType.ADD_ACTION,
+            request: { parentStep: 'trigger', action: codeActionWithUseDeno('step_1', true) },
+        })
+        const result = flowOperations.apply(withStep, {
+            type: FlowOperationType.UPDATE_ACTION,
+            request: codeActionWithUseDeno('step_1', false),
+        })
+        expect(findStep(result, 'step_1').settings.useDeno).toBe(true)
+    })
+
+    it('forces useDeno to true on every code step of an imported flow', () => {
+        const result = flowOperations.apply(emptyScheduleFlowVersion, {
+            type: FlowOperationType.IMPORT_FLOW,
+            request: {
+                displayName: 'imported',
+                trigger: {
+                    name: 'trigger',
+                    type: FlowTriggerType.PIECE,
+                    valid: true,
+                    displayName: 'Cron',
+                    settings: { input: {}, pieceName: 'schedule', pieceVersion: '0.0.2', propertySettings: {}, triggerName: 'cron_expression' },
+                    nextAction: codeActionWithUseDeno('step_1', false),
+                },
+                schemaVersion: emptyScheduleFlowVersion.schemaVersion,
+            } as never,
+        })
+        expect(findStep(result, 'step_1').settings.useDeno).toBe(true)
+    })
+})
 
 describe('Flow Helper', () => {
     it('should lock a flow', () => {
@@ -337,6 +395,7 @@ describe('Flow Helper', () => {
                             code: 'test',
                             packageJson: '{}',
                         },
+                        useDeno: true,
                     },
                 },
                 nextAction: {
@@ -351,6 +410,7 @@ describe('Flow Helper', () => {
                             code: 'test',
                             packageJson: '{}',
                         },
+                        useDeno: true,
                     },
                 },
             },
@@ -554,6 +614,7 @@ test('Duplicate Flow With Loops using Import', () => {
                             code: 'test',
                             packageJson: '{}',
                         },
+                        useDeno: true,
                     },
                     displayName: 'Code',
                 },
@@ -568,6 +629,7 @@ test('Duplicate Flow With Loops using Import', () => {
                             code: 'test',
                             packageJson: '{}',
                         },
+                        useDeno: true,
                     },
                     displayName: 'Code',
                 },
@@ -610,6 +672,7 @@ test('Duplicate Flow With Loops using Import', () => {
                             code: 'test',
                             packageJson: '{}',
                         },
+                        useDeno: true,
                     },
                     displayName: 'Code',
                 },
@@ -630,6 +693,7 @@ test('Duplicate Flow With Loops using Import', () => {
                             code: 'test',
                             packageJson: '{}',
                         },
+                        useDeno: true,
                     },
                     displayName: 'Code',
                 },
