@@ -1,7 +1,8 @@
 import { t } from 'i18next';
-import { Suspense, useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useLocation, useMatches, useNavigate } from 'react-router-dom';
 
+import { chatScrollAnchor } from '@/features/chat/lib/chat-scroll-anchor';
 import {
   ChatWidth,
   chatLayoutUtils,
@@ -10,7 +11,7 @@ import {
   chatPanelUtils,
   useChatPanel,
 } from '@/features/workspace/lib/chat-panel-open';
-import { useRailOpenState } from '@/features/workspace/lib/rail-collapsed';
+import { useRailOpen } from '@/features/workspace/lib/rail-collapsed';
 import { useChatOn } from '@/features/workspace/lib/use-chat-on';
 import { windowSizeHooks } from '@/features/workspace/lib/window-size-hooks';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
@@ -22,7 +23,7 @@ const loadChatChrome = () =>
 const ChatChrome = lazyWithRetry(loadChatChrome, 'chat-chrome');
 
 function useCardWidth(): number {
-  const railOpen = useRailOpenState().open;
+  const railOpen = useRailOpen();
   const viewportWidth = windowSizeHooks.useViewportWidth();
   const builder = useShellHandle().shell === 'builder';
   return chatLayoutUtils.cardInnerWidth({
@@ -74,9 +75,36 @@ export function ChatPanel() {
   const side = full ? 'left' : mode;
   const width = useDockWidth(dragWidth);
   const cardWidth = useCardWidth();
+  const overlay =
+    useShellHandle().shell === 'builder' &&
+    !full &&
+    chatLayoutUtils.overlaysPage({ cardWidth });
+  const layoutKey = chatWidth;
+  const committedLayout = useRef(layoutKey);
+
+  if (committedLayout.current !== layoutKey && pendingCapture !== layoutKey) {
+    pendingCapture = layoutKey;
+    chatScrollAnchor.capture();
+  }
+
+  useLayoutEffect(() => {
+    if (committedLayout.current === layoutKey) return;
+    committedLayout.current = layoutKey;
+    pendingCapture = null;
+    chatScrollAnchor.restore();
+  }, [layoutKey]);
+
   if (visible && !mounted) {
     setMounted(true);
   }
+
+  useEffect(() => {
+    if (mounted) return;
+    const prewarm = setTimeout(() => {
+      loadChatChrome().catch(() => undefined);
+    }, PREWARM_MS);
+    return () => clearTimeout(prewarm);
+  }, [mounted]);
 
   useEffect(() => {
     useChatPanel.getState().setPanelMounted(true);
@@ -119,9 +147,11 @@ export function ChatPanel() {
         inert={!visible}
         style={{ width: full ? '100%' : visible ? width : 0 }}
         className={cn(
-          'relative flex shrink-0 flex-col overflow-hidden bg-gray-1',
+          'relative flex shrink-0 flex-col overflow-hidden bg-gray-1 [view-transition-name:ap-chat]',
           side === 'right' && 'order-last',
           visible && !full && (side === 'left' ? 'border-r' : 'border-l'),
+          overlay && 'absolute inset-y-0 z-50 shadow-lg',
+          overlay && (side === 'left' ? 'left-0' : 'right-0'),
         )}
       >
         <ChatRouterBinding />
@@ -196,6 +226,8 @@ function ChatRouterBinding() {
   const fullPage = useShellHandle().chat === 'full';
   const latest = useRef({ location, fullPage });
   latest.current = { location, fullPage };
+
+  useLayoutEffect(() => chatPanelUtils.routeCommitted(), [location.key]);
 
   useEffect(
     () =>
@@ -281,4 +313,6 @@ function focusComposerWhenReady(panel: HTMLElement): (() => void) | undefined {
 
 const HANDOFF_STOP_EVENTS = ['focusin', 'pointerdown', 'keydown'] as const;
 const HANDOFF_MAX_MS = 5000;
+const PREWARM_MS = 800;
 const BUILDER_CARD_CHROME = 14;
+let pendingCapture: string | null = null;

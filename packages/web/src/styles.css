@@ -414,7 +414,7 @@
 @keyframes chat-stream-block-in {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
@@ -423,7 +423,7 @@
 }
 
 [data-stream-animate] > * {
-  animation: chat-stream-block-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: chat-stream-block-in var(--dur-base) var(--ease-ap-out) both;
 }
 
 /*
@@ -436,16 +436,14 @@
 @keyframes chat-word-in {
   from {
     opacity: 0;
-    filter: blur(5px);
   }
   to {
     opacity: 1;
-    filter: blur(0);
   }
 }
 
 .chat-word {
-  animation: chat-word-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: chat-word-in var(--dur-base) var(--ease-ap-out) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1273,6 +1271,95 @@
     --admin-page: var(--gray-1);
     --admin-surface: var(--panel);
     --admin-card-border: var(--gray-6);
+  }
+}
+
+:root[data-chat-move] [data-slot='sidebar-gap'],
+:root[data-chat-move] [data-slot='sidebar-container'],
+:root[data-chat-move] #ap-chat-panel {
+  transition: none;
+}
+
+::view-transition-group(*) {
+  animation-duration: var(--dur-move);
+  animation-timing-function: var(--ease-ap-out);
+}
+
+::view-transition-group(ap-chat) {
+  z-index: 3;
+}
+
+::view-transition-group(ap-rail) {
+  z-index: 2;
+}
+
+::view-transition-group(ap-page) {
+  z-index: 1;
+}
+
+::view-transition-group(ap-chat),
+::view-transition-group(ap-rail),
+::view-transition-group(ap-card),
+::view-transition-image-pair(ap-chat),
+::view-transition-image-pair(ap-rail),
+::view-transition-image-pair(ap-card) {
+  overflow: clip;
+}
+
+::view-transition-old(ap-chat),
+::view-transition-new(ap-chat),
+::view-transition-old(ap-rail),
+::view-transition-new(ap-rail),
+::view-transition-old(ap-card),
+::view-transition-new(ap-card),
+::view-transition-old(ap-page),
+::view-transition-new(ap-page) {
+  width: auto;
+  height: 100%;
+  object-fit: none;
+  object-position: left top;
+}
+
+::view-transition-old(ap-chat) {
+  animation: ap-view-fade-out calc(var(--dur-move) * 0.4) var(--ease-ap-out) both;
+}
+
+::view-transition-new(ap-chat) {
+  animation: ap-view-fade-in var(--dur-move) var(--ease-ap-out) both;
+}
+
+::view-transition-old(ap-page),
+::view-transition-new(ap-page),
+::view-transition-old(ap-rail),
+::view-transition-new(ap-rail),
+::view-transition-old(ap-card),
+::view-transition-new(ap-card) {
+  animation-duration: var(--dur-move);
+  animation-timing-function: var(--ease-ap-out);
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+
+@keyframes ap-view-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes ap-view-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
   }
 }
 

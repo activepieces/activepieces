@@ -7,7 +7,7 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { RefreshCw, X } from 'lucide-react';
-import { Suspense, useLayoutEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 
@@ -30,6 +30,7 @@ import {
 import { projectCollectionUtils } from '@/features/projects';
 import { templatesHooks } from '@/features/templates';
 import { useChatPanel } from '@/features/workspace/lib/chat-panel-open';
+import { layoutMove } from '@/features/workspace/lib/layout-move';
 import { useChatOn } from '@/features/workspace/lib/use-chat-on';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -40,7 +41,10 @@ import { RouteHandle, useShellMatch } from '@/lib/shell-handle';
 import { cn } from '@/lib/utils';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from './allow-logged-in-user-only-guard';
-import { ChatContentColumn } from './chat-panel/chat-content-column';
+import {
+  ChatContentColumn,
+  PageSkeleton,
+} from './chat-panel/chat-content-column';
 import { ChatNotch } from './chat-panel/chat-notch';
 import { ChatPanel, useChatWidth } from './chat-panel/chat-window';
 import { GlobalSearchProvider } from './global-search/global-search-context';
@@ -105,6 +109,7 @@ function AppShell({ handle }: { handle: RouteHandle }) {
   const isPlatform = handle.shell === 'platform';
   const isBuilder = handle.shell === 'builder';
   const chatWidth = useChatWidth();
+  useEffect(() => layoutMove.watchKeyPresses(), []);
   const tightInset = isBuilder && chatWidth !== 'left' && chatWidth !== 'right';
   const headerProjectId =
     handle.projectHeader === true && !isNil(projectId) && projectId !== ''
@@ -132,6 +137,7 @@ function AppShell({ handle }: { handle: RouteHandle }) {
         <div
           className={cn(
             'flex h-svh flex-1 min-w-0',
+            !isPlatform && 'md:will-change-transform',
             !embedded && 'max-md:h-auto max-md:min-h-0',
           )}
         >
@@ -147,7 +153,7 @@ function AppShell({ handle }: { handle: RouteHandle }) {
             >
               <div
                 className={cn(
-                  'relative flex h-full overflow-clip',
+                  'relative flex h-full overflow-clip [view-transition-name:ap-card]',
                   isPlatform ? 'bg-(--admin-page)' : 'bg-gray-1',
                   !embedded && 'rounded-xl shadow-panel border',
                   embedded && isBuilder && 'border-l',
@@ -181,8 +187,11 @@ function AppShell({ handle }: { handle: RouteHandle }) {
                     <ProjectHeader projectId={headerProjectId} />
                   )}
                   {handle.shell === 'project' && <ProjectCreditsAlert />}
-                  <div ref={pageRef} className={PAGE_CLASS[handle.shell]}>
-                    <Suspense fallback={<RouteLoadingBar />}>
+                  <div
+                    ref={pageRef}
+                    className={cn('relative', PAGE_CLASS[handle.shell])}
+                  >
+                    <Suspense fallback={<PageFallback />}>
                       <Outlet />
                     </Suspense>
                   </div>
@@ -258,6 +267,17 @@ export function ChatPanelError({
         </Button>
       </div>
     </div>
+  );
+}
+
+function PageFallback() {
+  const chatWidth = useChatWidth();
+  const besideChat = chatWidth === 'left' || chatWidth === 'right';
+  return (
+    <>
+      <RouteLoadingBar />
+      {besideChat && <PageSkeleton />}
+    </>
   );
 }
 
