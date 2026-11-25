@@ -7,6 +7,19 @@ import { aiSearchProjects } from '../src/lib/actions/ai/ai-search-projects';
 import { aiCreateProject } from '../src/lib/actions/ai/ai-create-project';
 import { aiCreateOpportunity } from '../src/lib/actions/ai/ai-create-opportunity';
 import { capsuleCrm } from '../src/index';
+import { aiDeleteParty } from '../src/lib/actions/ai/ai-delete-party';
+import { aiCompleteTask } from '../src/lib/actions/ai/ai-complete-task';
+import { aiListEntries } from '../src/lib/actions/ai/ai-list-entries';
+import { aiListTasks } from '../src/lib/actions/ai/ai-list-tasks';
+import { aiGetOpportunity } from '../src/lib/actions/ai/ai-get-opportunity';
+import { aiSearchOpportunities } from '../src/lib/actions/ai/ai-search-opportunities';
+import { findContactAction } from '../src/lib/actions/find-contact';
+import { findProjectAction } from '../src/lib/actions/find-project';
+import { newTaskTrigger } from '../src/lib/triggers/new-task';
+import { newCaseTrigger } from '../src/lib/triggers/new-case';
+import { newOpportunityTrigger } from '../src/lib/triggers/new-opportunity';
+import { newProjectTrigger } from '../src/lib/triggers/new-project';
+import { capsuleCrmProps } from '../src/lib/common/props';
 import { aiUpdateOpportunity } from '../src/lib/actions/ai/ai-update-opportunity';
 import { aiUpdateParty } from '../src/lib/actions/ai/ai-update-party';
 import { aiCreatePerson } from '../src/lib/actions/ai/ai-create-person';
@@ -128,7 +141,7 @@ describe('capsule-crm client', () => {
 
   it('rejects non-numeric IDs before any request', async () => {
     respondWith({ responses: [{ body: {} }] });
-    await expect(capsuleCrmClient.getParty({ auth, partyId: '../users' })).rejects.toThrow('numeric');
+    await expect(capsuleCrmClient.getParty({ auth, partyId: '../users' })).rejects.toThrow('positive whole numbers');
     expect(calls).toHaveLength(0);
   });
 });
@@ -188,7 +201,7 @@ describe('capsule-crm piece metadata', () => {
 describe('capsule-crm edge cases', () => {
   it('treats stringified empty objects as empty text and tags', async () => {
     respondWith({ responses: [{ body: { opportunity: { id: 1 } } }] });
-    await expect(runAction({ action: aiUpdateOpportunity, propsValue: { opportunity_id: '1', description: '{}', name: ' null ' } })).rejects.toThrow('at least one field');
+    await expect(runAction({ action: aiUpdateOpportunity, propsValue: { opportunity_id: '1', description: '{}', name: ' [] ' } })).rejects.toThrow('at least one field');
     expect(capsuleCrmClient.splitList('[]')).toEqual([]);
     expect(capsuleCrmClient.optionalText('[]')).toBeUndefined();
     respondWith({ responses: [{ body: { party: { id: 2 } } }] });
@@ -281,5 +294,164 @@ describe('capsule-crm required ids', () => {
     await expect(runAction({ action: aiCreateOpportunity, propsValue: { party_id: '1', name: 'D' } })).rejects.toThrow('Milestone ID is required.');
     await expect(runAction({ action: aiAddNote, propsValue: { content: 'x', party_id: '' } })).rejects.toThrow('Give one of Party ID');
     expect(calls).toHaveLength(0);
+  });
+});
+
+function memoryStore({ failPut }: { failPut: boolean }) {
+  const data = new Map<string, unknown>();
+  return {
+    data,
+    put: async (key: string, value: unknown) => {
+      if (failPut) {
+        throw new Error('store down');
+      }
+      data.set(key, value);
+      return value;
+    },
+    get: async (key: string) => data.get(key) ?? null,
+    delete: async (key: string) => {
+      data.delete(key);
+    },
+  };
+}
+
+function callHook({ hook, context }: { hook: unknown; context: unknown }) {
+  if (typeof hook !== 'function') {
+    throw new Error('hook missing');
+  }
+  return Reflect.apply(hook, undefined, [context]);
+}
+
+describe('capsule-crm preflight follow-ups', () => {
+  it('ai_delete_party maps 202 to async and 204 to completed', async () => {
+    respondWith({ responses: [{ status: 202, body: '' }] });
+    expect(await runAction({ action: aiDeleteParty, propsValue: { party_id: '9' } })).toEqual({ id: 9, accepted: true, completed: false, async: true, httpStatus: 202 });
+    expect(calls[0].method).toBe(HttpMethod.DELETE);
+    respondWith({ responses: [{ status: 204, body: '' }] });
+    expect(await runAction({ action: aiDeleteParty, propsValue: { party_id: '9' } })).toMatchObject({ completed: true, async: false });
+  });
+
+  it('ai_complete_task PUTs status COMPLETED', async () => {
+    respondWith({ responses: [{ body: { task: { id: 4, status: 'COMPLETED' } } }] });
+    expect(await runAction({ action: aiCompleteTask, propsValue: { task_id: '4' } })).toEqual({ id: 4, status: 'COMPLETED' });
+    expect(calls[0].method).toBe(HttpMethod.PUT);
+    expect(calls[0].url).toBe('https://api.capsulecrm.com/api/v2/tasks/4');
+    expect(calls[0].body).toEqual({ task: { status: 'COMPLETED' } });
+  });
+
+  it('ai_update_opportunity refuses an empty update', async () => {
+    respondWith({ responses: [{ body: {} }] });
+    await expect(runAction({ action: aiUpdateOpportunity, propsValue: { opportunity_id: '1' } })).rejects.toThrow('at least one field');
+    expect(calls).toHaveLength(0);
+  });
+
+  it('ai_list_entries maps project to kases path and caps per page at 50', async () => {
+    respondWith({ responses: [{ body: { entries: [{ id: 1 }] } }] });
+    const result = await runAction({ action: aiListEntries, propsValue: { entity_type: 'project', entity_id: '6' } });
+    expect(calls[0].url).toBe('https://api.capsulecrm.com/api/v2/kases/6/entries');
+    expect(result).toEqual({ entries: [{ id: 1 }], page: 1, hasMore: false });
+    await expect(runAction({ action: aiListEntries, propsValue: { entity_type: 'party', entity_id: '6', per_page: 51 } })).rejects.toThrow('between 1 and 50');
+  });
+
+  it('ai_list_tasks defaults status to open', async () => {
+    respondWith({ responses: [{ body: { tasks: [] } }] });
+    await runAction({ action: aiListTasks, propsValue: {} });
+    expect(calls[0].queryParams).toMatchObject({ status: 'open', page: '1', perPage: '50' });
+  });
+
+  it('ai_get_opportunity embeds tags and fields; ai_search_opportunities hits /search', async () => {
+    respondWith({ responses: [{ body: { opportunity: { id: 3 } } }] });
+    expect(await runAction({ action: aiGetOpportunity, propsValue: { opportunity_id: '3' } })).toEqual({ id: 3 });
+    expect(calls[0].queryParams).toMatchObject({ embed: 'tags,fields' });
+    respondWith({ responses: [{ body: { opportunities: [{ id: 3 }] }, headers: { link: '<x>; rel="next"' } }] });
+    expect(await runAction({ action: aiSearchOpportunities, propsValue: { query: 'deal', page: '2' } })).toEqual({ opportunities: [{ id: 3 }], page: 2, hasMore: true });
+    expect(calls[1].url).toBe('https://api.capsulecrm.com/api/v2/opportunities/search');
+  });
+
+  it('find_contact follows pages; find_project POSTs filter with paging', async () => {
+    respondWith({ responses: [
+      { body: { parties: [{ id: 1, type: 'person' }] }, headers: { link: '<x>; rel="next"' } },
+      { body: { parties: [{ id: 2, type: 'person' }, { id: 3, type: 'organisation' }] } },
+    ] });
+    expect(await runAction({ action: findContactAction, propsValue: { term: 'a' } })).toEqual([{ id: 1, type: 'person' }, { id: 2, type: 'person' }]);
+    expect(calls).toHaveLength(2);
+    respondWith({ responses: [{ body: { kases: [{ id: 5 }] } }] });
+    const filter = { conditions: [{ field: 'name', operator: 'is', value: 'x' }] };
+    expect(await runAction({ action: findProjectAction, propsValue: { filter } })).toEqual([{ id: 5 }]);
+    expect(calls[2].method).toBe(HttpMethod.POST);
+    expect(calls[2].body).toEqual({ filter });
+    expect(calls[2].queryParams).toMatchObject({ page: '1', perPage: '100' });
+  });
+
+  it('human update_opportunity keeps amount 0 and drops blank tag names', async () => {
+    respondWith({ responses: [{ body: { opportunity: { id: 4 } } }] });
+    await runAction({ action: updateOpportunityAction, propsValue: { opportunityId: 4, amount: 0, currency: 'USD', tags: { tags: [{ id: 7, name: '' }, { name: 'New' }] } } });
+    expect(calls[0].body).toEqual({ opportunity: { value: { currency: 'USD', amount: 0 }, tags: [{ id: 7 }, { name: 'New' }] } });
+  });
+
+  it('client edge nits', () => {
+    expect(() => capsuleCrmClient.segment('0')).toThrow('positive whole numbers');
+    expect(() => capsuleCrmClient.segment('9007199254740993')).toThrow('positive whole numbers');
+    expect(capsuleCrmClient.dayFromDateTime({ value: '2026-12-31 09:30', label: 'D' })).toBe('2026-12-31');
+    expect(() => capsuleCrmClient.dayFromDateTime({ value: '2026-12-31T99:99', label: 'D' })).toThrow('valid date-time');
+    expect(capsuleCrmClient.pageArgs({ page: '3', perPage: '20' })).toEqual({ page: 3, perPage: 20 });
+    expect(capsuleCrmClient.optionalText('null')).toBe('null');
+    expect(capsuleCrmClient.optionalText(' {} ')).toBeUndefined();
+  });
+
+  it('human create actions do not send whitespace-only text', async () => {
+    respondWith({ responses: [{ status: 201, body: { kase: { id: 1 } } }] });
+    await runAction({ action: createProjectAction, propsValue: { partyId: 1, name: 'P', description: '   ' } });
+    expect(calls[0].body).toEqual({ kase: { party: { id: 1 }, name: 'P' } });
+  });
+
+  it('create_opportunity custom fields return {} without auth', async () => {
+    const props = createOpportunityAction.props['customFields'];
+    const result = await callHook({ hook: Reflect.get(props, 'props'), context: { auth: undefined } });
+    expect(result).toEqual({});
+  });
+
+  it('contact dropdown searches and flags truncation', async () => {
+    const dropdown = capsuleCrmProps.contact_id();
+    expect(dropdown.refreshOnSearch).toBe(true);
+    respondWith({ responses: [{ body: { parties: [{ id: 1, type: 'organisation', name: 'Acme' }] }, headers: { link: '<x>; rel="next"' } }] });
+    const result = await callHook({ hook: dropdown.options, context: { auth, searchValue: 'acme' } });
+    expect(calls[0].url).toBe('https://api.capsulecrm.com/api/v2/parties/search');
+    expect(calls).toHaveLength(10);
+    expect(result).toMatchObject({ placeholder: 'Showing the first 1,000, type to search' });
+  });
+});
+
+describe('capsule-crm trigger lifecycle', () => {
+  it('sampleData is the bare record for every trigger', () => {
+    for (const trigger of [newTaskTrigger, newCaseTrigger, newOpportunityTrigger, newProjectTrigger]) {
+      expect(trigger.sampleData).toHaveProperty('id');
+      expect(trigger.sampleData).not.toHaveProperty('payload');
+      expect(trigger.description).toContain('at most 20 webhooks');
+    }
+  });
+
+  it('onEnable cleans up the hook and rethrows the original error when store.put fails', async () => {
+    respondWith({ responses: [{ status: 201, body: { restHook: { id: 31 } } }, { status: 500, body: 'boom' }] });
+    const store = memoryStore({ failPut: true });
+    await expect(callHook({ hook: newTaskTrigger.onEnable, context: { auth, webhookUrl: 'https://hook.test', store } })).rejects.toThrow('store down');
+    expect(calls[1].method).toBe(HttpMethod.DELETE);
+    expect(calls[1].url).toBe('https://api.capsulecrm.com/api/v2/resthooks/31');
+  });
+
+  it('onDisable deletes the hook and clears the store', async () => {
+    respondWith({ responses: [{ status: 201, body: { restHook: { id: 32 } } }, { status: 204, body: '' }] });
+    const store = memoryStore({ failPut: false });
+    await callHook({ hook: newTaskTrigger.onEnable, context: { auth, webhookUrl: 'https://hook.test', store } });
+    expect(store.data.size).toBe(1);
+    await callHook({ hook: newTaskTrigger.onDisable, context: { auth, store } });
+    expect(calls[1].method).toBe(HttpMethod.DELETE);
+    expect(store.data.size).toBe(0);
+  });
+
+  it('run returns payload records and [] for malformed bodies', async () => {
+    expect(await callHook({ hook: newTaskTrigger.run, context: { payload: { body: { event: 'task/created', payload: [{ id: 1 }] } } } })).toEqual([{ id: 1 }]);
+    expect(await callHook({ hook: newTaskTrigger.run, context: { payload: { body: { event: 'ping' } } } })).toEqual([]);
+    expect(await callHook({ hook: newTaskTrigger.run, context: { payload: { body: 'x' } } })).toEqual([]);
   });
 });

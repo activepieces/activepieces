@@ -163,7 +163,7 @@ export const createTaskAction = createAction({
     const taskData: CreateTaskParams = {
       description: propsValue.description,
       dueOn: capsuleCrmClient.dayFromDateTime({ value: propsValue.dueOn, label: 'Due Date' }) ?? '',
-      detail: propsValue.detail,
+      detail: capsuleCrmClient.optionalText(propsValue.detail),
       dueTime: propsValue.dueTime,
     };
 

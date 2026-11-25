@@ -11,7 +11,7 @@ export const aiListStages = createAction({
   description: 'Lists project stages.',
   audience: 'ai',
   aiMetadata: {
-    description: 'Lists the project board stages with their numeric IDs. Use an id as Stage ID when creating projects. Read-only.',
+    description: 'Lists the active project board stages with their numeric IDs; inactive stages are not returned. Use an id as Stage ID when creating projects. Read-only.',
     idempotent: true,
   },
   outputSchema: stagesOutputSchema,

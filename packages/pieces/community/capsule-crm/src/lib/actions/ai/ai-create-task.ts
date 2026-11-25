@@ -25,7 +25,7 @@ export const aiCreateTask = createAction({
     opportunity_id: Property.ShortText({ displayName: 'Opportunity ID', description: 'Numeric ID of an opportunity to link.', required: false }),
     project_id: Property.ShortText({ displayName: 'Project ID', description: 'Numeric ID of a project to link.', required: false }),
     owner_id: Property.ShortText({ displayName: 'Owner User ID', description: 'Numeric user ID from List Users.', required: false }),
-    category_id: Property.ShortText({ displayName: 'Category ID', description: 'Numeric task category ID.', required: false }),
+    category_id: Property.ShortText({ displayName: 'Category ID', description: 'Optional numeric task category ID. Categories are managed in Capsule settings; there is no tool to list them, so leave empty unless you know the ID.', required: false }),
   },
   async run({ auth, propsValue }) {
     const dueOn = capsuleCrmClient.isoDate({ value: propsValue.due_on, label: 'Due Date' });

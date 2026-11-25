@@ -56,6 +56,7 @@ export const createOpportunityAction = createAction({
     milestoneId: Property.Dropdown({
       auth: capsuleCrmAuth,
       displayName: 'Milestone',
+      description: 'Only milestones of the oldest active pipeline are listed (Capsule API limit); for other pipelines enter the milestone ID by hand.',
       required: true,
       refreshers: [],
       options: async ({ auth }) => {
@@ -167,7 +168,7 @@ export const createOpportunityAction = createAction({
       refreshers: [],
       props: async ({ auth }) => {
         const fields: DynamicPropsValue = {};
-        if (!auth) return { options: [], disabled: true, placeholder: "Please connect your Capsule CRM account first" };
+        if (!auth) return fields;
         const customFields = await capsuleCrmClient.listCustomFields({ auth, entity: 'opportunity' });
         for (const field of customFields) {
           switch (field.type) {
@@ -214,7 +215,7 @@ export const createOpportunityAction = createAction({
       party: { id: propsValue.partyId },
       name: propsValue.name,
       milestone: { id: propsValue.milestoneId },
-      description: propsValue.description,
+      description: capsuleCrmClient.optionalText(propsValue.description),
       expectedCloseOn: capsuleCrmClient.dayFromDateTime({ value: propsValue.expectedCloseOn, label: 'Expected Close Date' }),
       probability: propsValue.probability,
       durationBasis: propsValue.durationBasis,

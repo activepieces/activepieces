@@ -1,6 +1,6 @@
 import { Property } from '@activepieces/pieces-framework';
 import { capsuleCrmAuth } from './auth';
-import { capsuleCrmClient } from './client';
+import { capsuleCrmClient, CAPSULE_DROPDOWN_MAX_ITEMS } from './client';
 
 export const capsuleCrmProps = {
   contact_id: (required = true) =>
@@ -9,6 +9,7 @@ export const capsuleCrmProps = {
       description: 'The contact (Person or Organisation) to select.',
       required: required,
       refreshers: [],
+      refreshOnSearch: true,
       auth: capsuleCrmAuth,
       options: async (props) => {
         const { auth } = props;
@@ -23,7 +24,7 @@ export const capsuleCrmProps = {
         const rawSearch: unknown = props['searchValue'];
         const searchTerm = typeof rawSearch === 'string' ? rawSearch : '';
 
-        const contacts = await capsuleCrmClient.searchContacts({ auth, searchTerm });
+        const { items: contacts, truncated } = await capsuleCrmClient.searchContactsForDropdown({ auth, searchTerm });
 
         const options = contacts.map((contact) => {
           const label =
@@ -39,6 +40,7 @@ export const capsuleCrmProps = {
         return {
           disabled: false,
           options: options,
+          placeholder: truncated ? `Showing the first ${CAPSULE_DROPDOWN_MAX_ITEMS.toLocaleString('en-US')}, type to search` : undefined,
         };
       },
     }),

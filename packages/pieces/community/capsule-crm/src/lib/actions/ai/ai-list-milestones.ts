@@ -8,10 +8,10 @@ export const aiListMilestones = createAction({
   name: 'ai_list_milestones',
   classification: 'READ',
   displayName: 'List Milestones',
-  description: 'Lists pipeline milestones.',
+  description: 'Lists milestones of the oldest active pipeline.',
   audience: 'ai',
   aiMetadata: {
-    description: 'Lists the sales pipeline milestones with their numeric IDs, probability and pipeline. Use an id as Milestone ID when creating or updating opportunities. Read-only.',
+    description: 'Lists the milestones of the oldest active sales pipeline only (a Capsule API limit; other pipelines are not returned), with numeric IDs, probability and pipeline. Use an id as Milestone ID when creating or updating opportunities. Read-only.',
     idempotent: true,
   },
   outputSchema: milestonesOutputSchema,

@@ -240,7 +240,7 @@ export const createProjectAction = createAction({
     const projectData: CreateProjectParams = {
       party: { id: propsValue.partyId },
       name: propsValue.name,
-      description: propsValue.description,
+      description: capsuleCrmClient.optionalText(propsValue.description),
       status: propsValue.status === 'OPEN' || propsValue.status === 'CLOSED' ? propsValue.status : undefined,
       expectedCloseOn: capsuleCrmClient.dayFromDateTime({ value: propsValue.expectedCloseOn, label: 'Expected Close Date' }),
     };

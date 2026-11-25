@@ -8,7 +8,7 @@ export const findProjectAction = createAction({
   name: 'find_project',
   classification: 'SEARCH',
   displayName: 'Find Project',
-  description: 'Find a Project by search criteria.',
+  description: 'Find a Project by search criteria. Returns up to 1,000 matches (10 pages); narrow the search if you need more.',
   audience: 'human',
   aiMetadata: {
     description:

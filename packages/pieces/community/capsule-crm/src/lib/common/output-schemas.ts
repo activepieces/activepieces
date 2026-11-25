@@ -7,6 +7,7 @@ const refFields: OutputSchemaField[] = [
 
 const userRefFields: OutputSchemaField[] = [
   { key: 'id', label: 'User ID', format: 'number' },
+  { key: 'deleted', label: 'Deleted', format: 'boolean' },
   { key: 'username', label: 'Username' },
   { key: 'name', label: 'Name' },
 ];
@@ -214,6 +215,7 @@ export const milestonesOutputSchema: OutputSchema = {
     { key: 'description', label: 'Description' },
     { key: 'probability', label: 'Probability (%)', format: 'number' },
     { key: 'complete', label: 'Complete', format: 'boolean' },
+    { key: 'daysUntilStale', label: 'Days Until Stale', format: 'number' },
     { key: 'pipeline', label: 'Pipeline', children: refFields },
   ] }],
 };
@@ -223,5 +225,6 @@ export const stagesOutputSchema: OutputSchema = {
     { key: 'name', label: 'Name' },
     { key: 'description', label: 'Description' },
     { key: 'board', label: 'Board', children: refFields },
+    { key: 'displayOrder', label: 'Display Order', format: 'number' },
   ] }],
 };

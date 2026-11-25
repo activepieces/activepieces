@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { capsuleCrmAuth } from '../../common/auth';
 import { capsuleCrmClient } from '../../common/client';
 import { opportunityOutputSchema } from '../../common/output-schemas';
-import { CreateOpportunityParams, OpportunityValue } from '../../common/types';
+import { CreateOpportunityParams } from '../../common/types';
 
 export const aiCreateOpportunity = createAction({
   auth: capsuleCrmAuth,
@@ -12,7 +12,7 @@ export const aiCreateOpportunity = createAction({
   description: 'Creates an opportunity.',
   audience: 'ai',
   aiMetadata: {
-    description: 'Creates a new Capsule CRM opportunity (deal) for a party and returns it with its id. Party ID comes from Search Contacts, Milestone ID from List Milestones. Amount and Currency must be given together. If Party ID is a person who belongs to an organisation, Capsule saves the organisation as the opportunity party (check party in the result). Not idempotent: each call creates another opportunity.',
+    description: 'Creates a new Capsule CRM opportunity (deal) for a party and returns it with its id. Party ID comes from Search Contacts, Milestone ID from List Milestones. Amount and Currency must be given together. If Party ID is a person who belongs to an organisation, Capsule saves the organisation as the opportunity party (check party in the result). Capsule needs an owner and/or team; leave Owner User ID empty to let Capsule apply its default (assumed to be the connected user, unverified). Not idempotent: each call creates another opportunity.',
     idempotent: false,
   },
   outputSchema: opportunityOutputSchema,
@@ -34,9 +34,9 @@ export const aiCreateOpportunity = createAction({
       milestone: { id: capsuleCrmClient.requiredId({ value: propsValue.milestone_id, label: 'Milestone ID' }) },
       description: capsuleCrmClient.optionalText(propsValue.description),
       expectedCloseOn: capsuleCrmClient.isoDate({ value: propsValue.expected_close_on, label: 'Expected Close Date' }),
-      probability: probabilityOf(propsValue.probability),
+      probability: capsuleCrmClient.probability(propsValue.probability),
     };
-    const value = valueOf({ amount: propsValue.amount, currency: propsValue.currency });
+    const value = capsuleCrmClient.opportunityValue({ amount: propsValue.amount, currency: propsValue.currency });
     if (value) params.value = value;
     const ownerId = capsuleCrmClient.optionalId(propsValue.owner_id);
     if (ownerId !== undefined) params.owner = { id: ownerId };
@@ -44,27 +44,3 @@ export const aiCreateOpportunity = createAction({
   },
 });
 
-function valueOf({ amount, currency }: { amount: unknown; currency: unknown }): OpportunityValue | undefined {
-  const code = capsuleCrmClient.optionalText(currency);
-  const hasAmount = typeof amount === 'number' && Number.isFinite(amount);
-  if (!hasAmount && code === undefined) {
-    return undefined;
-  }
-  if (typeof amount !== 'number' || !Number.isFinite(amount) || code === undefined) {
-    throw new Error('Give Amount and Currency together.');
-  }
-  if (!/^[A-Za-z]{3}$/.test(code)) {
-    throw new Error('Currency must be a 3-letter ISO 4217 code, for example USD.');
-  }
-  return { amount, currency: code.toUpperCase() };
-}
-
-function probabilityOf(value: unknown): number | undefined {
-  if (value === undefined || value === null) {
-    return undefined;
-  }
-  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 100) {
-    throw new Error('Probability must be a number from 0 to 100.');
-  }
-  return value;
-}

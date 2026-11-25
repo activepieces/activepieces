@@ -37,19 +37,9 @@ export const aiCreatePerson = createAction({
       organisationId: capsuleCrmClient.optionalId(propsValue.organisation_id),
       ownerId: capsuleCrmClient.optionalId(propsValue.owner_id),
       tags: capsuleCrmClient.splitList(propsValue.tags),
-      ...contactLists({ email: propsValue.email, phone: propsValue.phone }),
+      ...capsuleCrmClient.contactLists({ email: propsValue.email, phone: propsValue.phone }),
     };
     return capsuleCrmClient.createContact({ auth, params });
   },
 });
 
-function contactLists({ email, phone, website }: { email: unknown; phone: unknown; website?: unknown }): Pick<CreatePartyParams, 'emailAddresses' | 'phoneNumbers' | 'websites'> {
-  const emailText = capsuleCrmClient.optionalText(email);
-  const phoneText = capsuleCrmClient.optionalText(phone);
-  const websiteText = capsuleCrmClient.optionalText(website);
-  return {
-    emailAddresses: emailText === undefined ? undefined : [{ type: 'Work', address: emailText }],
-    phoneNumbers: phoneText === undefined ? undefined : [{ type: 'Work', number: phoneText }],
-    websites: websiteText === undefined ? undefined : [{ type: 'Work', service: 'URL', address: websiteText }],
-  };
-}

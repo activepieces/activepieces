@@ -317,7 +317,7 @@ export const createContactAction = createAction({
       type,
       title: textOf(contactFields['title']),
       jobTitle: textOf(contactFields['jobTitle']),
-      about: propsValue.about,
+      about: capsuleCrmClient.optionalText(propsValue.about),
       organisationId: organisationIdOf(contactFields['organisationId']),
       ownerId: propsValue.ownerId,
       teamId: propsValue.teamId,

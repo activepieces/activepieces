@@ -8,7 +8,7 @@ export const findOpportunityAction = createAction({
   name: 'find_opportunity',
   classification: 'SEARCH',
   displayName: 'Find Opportunity',
-  description: 'Find an Opportunity by search criteria.',
+  description: 'Find an Opportunity by search criteria. Returns up to 1,000 matches (10 pages); narrow the search if you need more.',
   audience: 'human',
   aiMetadata: {
     description:

@@ -12,7 +12,7 @@ export const aiCreateProject = createAction({
   description: 'Creates a project.',
   audience: 'ai',
   aiMetadata: {
-    description: 'Creates a new Capsule CRM project (case) for a party and returns it with its id. Optional Stage ID comes from List Stages and Opportunity ID from Search Opportunities. Not idempotent: each call creates another project.',
+    description: 'Creates a new Capsule CRM project (case) for a party and returns it with its id. Optional Stage ID comes from List Stages and Opportunity ID from Search Opportunities. Capsule needs an owner and/or team; leave Owner User ID empty to let Capsule apply its default (assumed to be the connected user, unverified). Not idempotent: each call creates another project.',
     idempotent: false,
   },
   outputSchema: projectOutputSchema,

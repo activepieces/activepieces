@@ -30,7 +30,7 @@ export const capsuleCrmCreateTrigger = ({
     name: name,
     classification: 'READ',
     displayName: displayName,
-    description: description,
+    description: `${description} Capsule allows at most 20 webhooks per account.`,
     aiMetadata: aiMetadata,
     props: {},
     type: TriggerStrategy.WEBHOOK,
@@ -50,7 +50,7 @@ export const capsuleCrmCreateTrigger = ({
           hookId: hook.id,
         });
       } catch (error) {
-        await capsuleCrmClient.unsubscribeRestHook({ auth: context.auth, hookId: hook.id });
+        await capsuleCrmClient.unsubscribeRestHook({ auth: context.auth, hookId: hook.id }).catch(() => undefined);
         throw error;
       }
     },

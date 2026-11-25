@@ -17,6 +17,7 @@ import {
   Entry,
   Filter,
   Milestone,
+  OpportunityValue,
   Opportunity,
   Party,
   Project,
@@ -100,10 +101,10 @@ function hasNextPage(headers: Record<string, string | string[] | undefined> | un
 
 function segment(value: number | string): string {
   const text = String(value).trim();
-  if (!/^\d+$/.test(text)) {
-    throw new Error(`Capsule CRM IDs are numeric; got "${text.slice(0, 50)}".`);
+  if (!/^\d+$/.test(text) || !Number.isSafeInteger(Number(text)) || Number(text) < 1) {
+    throw new Error(`Capsule CRM IDs are positive whole numbers; got "${text.slice(0, 50)}".`);
   }
-  return text;
+  return String(Number(text));
 }
 
 async function request<T>({
@@ -164,35 +165,45 @@ async function listPage<T>({
   query,
   page,
   perPage,
+  method = HttpMethod.GET,
+  body,
 }: ListPageParams): Promise<PageResult<T>> {
   const response = await request<Record<string, T[] | undefined>>({
     auth,
     operation,
-    method: HttpMethod.GET,
+    method,
     path,
     query: { ...query, page, perPage },
+    body,
   });
   const items = response.body?.[key];
   return { items: Array.isArray(items) ? items : [], hasMore: response.hasMore };
 }
 
-async function listAll<T>({
+async function listAllWithFlag<T>({
   auth,
   operation,
   path,
   key,
   query,
+  method,
+  body,
   maxPages = DROPDOWN_MAX_PAGES,
-}: ListAllParams): Promise<T[]> {
+}: ListAllParams): Promise<{ items: T[]; truncated: boolean }> {
   const items: T[] = [];
   for (let page = 1; page <= maxPages; page++) {
-    const result = await listPage<T>({ auth, operation, path, key, query, page, perPage: MAX_PER_PAGE });
+    const result = await listPage<T>({ auth, operation, path, key, query, method, body, page, perPage: MAX_PER_PAGE });
     items.push(...result.items);
     if (!result.hasMore) {
-      break;
+      return { items, truncated: false };
     }
   }
-  return items;
+  return { items, truncated: true };
+}
+
+async function listAll<T>(params: ListAllParams): Promise<T[]> {
+  const result = await listAllWithFlag<T>(params);
+  return result.items;
 }
 
 function buildPartyBody(params: CreatePartyParams): Record<string, unknown> {
@@ -288,6 +299,16 @@ function optionalText(value: unknown): string | undefined {
   return EMPTY_TEXT_VALUES.has(trimmed) ? undefined : trimmed;
 }
 
+function numberArg(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === 'string' && /^\s*-?\d+(\.\d+)?\s*$/.test(value)) {
+    return Number(value);
+  }
+  return undefined;
+}
+
 function requiredText({ value, label }: { value: unknown; label: string }): string {
   const text = optionalText(value);
   if (text === undefined) {
@@ -304,8 +325,10 @@ function splitList(value: unknown): string[] {
 }
 
 function pageArgs({ page, perPage, max = MAX_PER_PAGE }: { page: unknown; perPage: unknown; max?: number }): { page: number; perPage: number } {
-  const pageNumber = typeof page === 'number' && Number.isFinite(page) ? Math.floor(page) : 1;
-  const size = typeof perPage === 'number' && Number.isFinite(perPage) ? Math.floor(perPage) : Math.min(50, max);
+  const pageValue = numberArg(page);
+  const sizeValue = numberArg(perPage);
+  const pageNumber = pageValue === undefined ? 1 : Math.floor(pageValue);
+  const size = sizeValue === undefined ? Math.min(50, max) : Math.floor(sizeValue);
   if (pageNumber < 1) {
     throw new Error('Page must be 1 or greater.');
   }
@@ -333,11 +356,48 @@ function dayFromDateTime({ value, label }: { value: unknown; label: string }): s
   if (text === undefined) {
     return undefined;
   }
-  const match = /^(\d{4}-\d{2}-\d{2})(T[\d:.]+(Z|[+-]\d{2}:?\d{2})?)?$/.exec(text);
+  const match = /^(\d{4}-\d{2}-\d{2})(?:[T ]([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d)(?:\.\d+)?)?(?:Z|[+-](?:[01]\d|2[0-3]):?[0-5]\d)?)?$/.exec(text);
   if (!match) {
-    throw new Error(`${label} must be a date (YYYY-MM-DD) or ISO date-time.`);
+    throw new Error(`${label} must be a date (YYYY-MM-DD) or a valid date-time such as 2026-12-31T09:30:00Z.`);
   }
   return isoDate({ value: match[1], label });
+}
+
+function opportunityValue({ amount, currency }: { amount: unknown; currency: unknown }): OpportunityValue | undefined {
+  const code = optionalText(currency);
+  const amountNumber = numberArg(amount);
+  if (amountNumber === undefined && code === undefined) {
+    return undefined;
+  }
+  if (amountNumber === undefined || code === undefined) {
+    throw new Error('Give Amount and Currency together.');
+  }
+  if (!/^[A-Za-z]{3}$/.test(code)) {
+    throw new Error('Currency must be a 3-letter ISO 4217 code, for example USD.');
+  }
+  return { amount: amountNumber, currency: code.toUpperCase() };
+}
+
+function probability(value: unknown): number | undefined {
+  if (value === undefined || value === null || value === '') {
+    return undefined;
+  }
+  const parsed = numberArg(value);
+  if (parsed === undefined || parsed < 0 || parsed > 100) {
+    throw new Error('Probability must be a number from 0 to 100.');
+  }
+  return parsed;
+}
+
+function contactLists({ email, phone, website }: { email: unknown; phone: unknown; website?: unknown }): Pick<CreatePartyParams, 'emailAddresses' | 'phoneNumbers' | 'websites'> {
+  const emailText = optionalText(email);
+  const phoneText = optionalText(phone);
+  const websiteText = optionalText(website);
+  return {
+    emailAddresses: emailText === undefined ? undefined : [{ type: 'Work', address: emailText }],
+    phoneNumbers: phoneText === undefined ? undefined : [{ type: 'Work', number: phoneText }],
+    websites: websiteText === undefined ? undefined : [{ type: 'Work', service: 'URL', address: websiteText }],
+  };
 }
 
 function exactlyOneLink({ partyId, opportunityId, projectId, required }: { partyId: unknown; opportunityId: unknown; projectId: unknown; required: boolean }): LinkTarget | undefined {
@@ -368,6 +428,10 @@ export const capsuleCrmClient = {
   pageArgs,
   isoDate,
   dayFromDateTime,
+  numberArg,
+  opportunityValue,
+  probability,
+  contactLists,
   exactlyOneLink,
   partyLabel,
   toFilter,
@@ -453,17 +517,19 @@ export const capsuleCrmClient = {
     });
   },
 
-  async findContact({ auth, term }: { auth: CapsuleCrmAuthType; term: string }): Promise<Party[]> {
-    const result = await listPage<Party>({
+  async searchContactsForDropdown({ auth, searchTerm }: { auth: CapsuleCrmAuthType; searchTerm?: string }): Promise<{ items: Party[]; truncated: boolean }> {
+    const term = searchTerm?.trim() ?? '';
+    return listAllWithFlag<Party>({
       auth,
-      operation: 'search parties',
-      path: '/parties/search',
+      operation: 'list parties',
+      path: term === '' ? '/parties' : '/parties/search',
       key: 'parties',
-      query: { q: term },
-      page: 1,
-      perPage: MAX_PER_PAGE,
+      query: { q: term === '' ? undefined : term },
     });
-    return result.items;
+  },
+
+  async findContact({ auth, term }: { auth: CapsuleCrmAuthType; term: string }): Promise<Party[]> {
+    return listAll<Party>({ auth, operation: 'search parties', path: '/parties/search', key: 'parties', query: { q: term } });
   },
 
   async listTeams({ auth }: AuthOnly): Promise<Team[]> {
@@ -561,14 +627,14 @@ export const capsuleCrmClient = {
   },
 
   async filterOpportunities({ auth, filter }: { auth: CapsuleCrmAuthType; filter: Filter }): Promise<Opportunity[]> {
-    const response = await request<{ opportunities?: Opportunity[] }>({
+    return listAll<Opportunity>({
       auth,
       operation: 'filter opportunities',
       method: HttpMethod.POST,
       path: '/opportunities/filters/results',
+      key: 'opportunities',
       body: { filter },
     });
-    return response.body?.opportunities ?? [];
   },
 
   async listProjects({ auth }: AuthOnly): Promise<Project[]> {
@@ -619,14 +685,14 @@ export const capsuleCrmClient = {
   },
 
   async filterProjects({ auth, filter }: { auth: CapsuleCrmAuthType; filter: Filter }): Promise<Project[]> {
-    const response = await request<{ kases?: Project[] }>({
+    return listAll<Project>({
       auth,
       operation: 'filter projects',
       method: HttpMethod.POST,
       path: '/kases/filters/results',
+      key: 'kases',
       body: { filter },
     });
-    return response.body?.kases ?? [];
   },
 
   async createEntry({ auth, params }: { auth: CapsuleCrmAuthType; params: CreateEntryParams }): Promise<Entry> {
@@ -732,9 +798,11 @@ export const ENTITY_PATHS: Record<CapsuleEntity, string> = {
   project: 'kases',
 };
 
-const EMPTY_TEXT_VALUES = new Set(['', '{}', '[]', 'null', 'undefined']);
+const EMPTY_TEXT_VALUES = new Set(['', '{}', '[]']);
 
 export const CAPSULE_MAX_PER_PAGE = MAX_PER_PAGE;
+
+export const CAPSULE_DROPDOWN_MAX_ITEMS = MAX_PER_PAGE * DROPDOWN_MAX_PAGES;
 
 export type CapsuleEntity = 'party' | 'opportunity' | 'project';
 
@@ -763,6 +831,8 @@ type ListPageParams = {
   query?: CapsuleQuery;
   page: number;
   perPage: number;
+  method?: HttpMethod;
+  body?: unknown;
 };
 
 type ListAllParams = {
@@ -771,6 +841,8 @@ type ListAllParams = {
   path: string;
   key: string;
   query?: CapsuleQuery;
+  method?: HttpMethod;
+  body?: unknown;
   maxPages?: number;
 };
 

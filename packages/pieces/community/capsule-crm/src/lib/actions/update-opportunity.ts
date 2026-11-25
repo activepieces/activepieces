@@ -9,7 +9,7 @@ import { opportunityOutputSchema } from '../common/output-schemas';
 import {
   UpdateOpportunityParams,
   OpportunityCustomField,
-  OpportunityTag,
+  OpportunityTagInput,
 } from '../common/types';
 
 export const updateOpportunityAction = createAction({
@@ -53,6 +53,7 @@ export const updateOpportunityAction = createAction({
     milestoneId: Property.Dropdown({
       auth: capsuleCrmAuth,
       displayName: 'Milestone',
+      description: 'Only milestones of the oldest active pipeline are listed (Capsule API limit); for other pipelines enter the milestone ID by hand.',
       required: false,
       refreshers: [],
       options: async ({ auth }) => {
@@ -240,20 +241,21 @@ export const updateOpportunityAction = createAction({
     if (propsValue.milestoneId) {
       opportunityData.milestone = { id: propsValue.milestoneId };
     }
-    if (propsValue.currency && propsValue.amount) {
+    const currency = capsuleCrmClient.optionalText(propsValue.currency);
+    if (typeof propsValue.amount === 'number' && currency !== undefined) {
       opportunityData.value = {
-        currency: propsValue.currency,
+        currency,
         amount: propsValue.amount,
       };
     }
 
-    const tags: OpportunityTag[] = recordsOf(propsValue.tags?.['tags']).flatMap((tag) => {
+    const tags: OpportunityTagInput[] = recordsOf(propsValue.tags?.['tags']).flatMap((tag) => {
       const id = idOf(tag['id']);
       const name = typeof tag['name'] === 'string' ? tag['name'].trim() : '';
       if (id === undefined && name === '') {
         return [];
       }
-      return [{ ...(id === undefined ? {} : { id }), name, ...(tag['delete'] === true ? { _delete: true } : {}) }];
+      return [{ ...(id === undefined ? {} : { id }), ...(name === '' ? {} : { name }), ...(tag['delete'] === true ? { _delete: true } : {}) }];
     });
     if (tags.length > 0) {
       opportunityData.tags = tags;

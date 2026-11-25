@@ -126,6 +126,12 @@ export interface OpportunityCustomField {
   _delete?: boolean;
 }
 
+export interface OpportunityTagInput {
+  id?: number;
+  name?: string;
+  _delete?: boolean;
+}
+
 export interface OpportunityTag {
   id?: number;
   name: string;
@@ -197,7 +203,7 @@ export interface UpdateOpportunityParams {
   probability?: number;
   durationBasis?: string;
   duration?: number;
-  tags?: OpportunityTag[];
+  tags?: OpportunityTagInput[];
   fields?: OpportunityCustomField[];
 }
 
