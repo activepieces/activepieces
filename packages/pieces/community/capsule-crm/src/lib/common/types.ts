@@ -1,6 +1,8 @@
 export interface Party {
   id: number;
   type: 'person' | 'organisation';
+  jobTitle?: string;
+  title?: string;
   firstName?: string;
   lastName?: string;
   name?: string;
@@ -64,9 +66,12 @@ export interface UpdatePartyParams {
   lastName?: string;
   name?: string;
   title?: string;
+  jobTitle?: string;
   about?: string;
+  organisationId?: number | null;
   ownerId?: number;
   teamId?: number;
+  tags?: string[];
   addresses?: {
     id?: number;
     type?: string;
@@ -275,38 +280,6 @@ export interface Entry extends CreateEntryParams {
   updatedAt: string;
 }
 
-export interface Note {
-  id: number;
-  type: 'Note';
-  content: string;
-}
-
-export interface CreateNoteParams {
-  content: string;
-  partyId?: number;
-  opportunityId?: number;
-  caseId?: number;
-  projectId?: number;
-}
-
-export interface FindContactParams {
-  email?: string;
-  searchTerm?: string;
-}
-
-export interface FindProjectParams {
-  searchTerm: string;
-}
-
-export interface FindOpportunityParams {
-  searchTerm: string;
-}
-
-export interface Webhook {
-  id: number;
-  url: string;
-  event: string;
-}
 
 export interface Category {
   id: number;

@@ -1,4 +1,5 @@
 import { capsuleCrmCreateTrigger } from '../common/trigger';
+import { opportunityOutputSchema } from '../common/output-schemas';
 
 export const newOpportunityTrigger = capsuleCrmCreateTrigger({
   name: 'new_opportunity',
@@ -8,6 +9,7 @@ export const newOpportunityTrigger = capsuleCrmCreateTrigger({
     description:
       'Fires when a new opportunity (deal) is created in Capsule CRM, delivering the created opportunity record. Use to react to newly added deals entering the pipeline.',
   },
+  outputSchema: opportunityOutputSchema,
   event: 'opportunity/created',
   sampleData: {
     event: 'opportunity/created',

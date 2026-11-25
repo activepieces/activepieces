@@ -2,10 +2,10 @@ import {
   createAction,
   Property,
   DynamicPropsValue,
-  OAuth2PropertyValue,
 } from '@activepieces/pieces-framework';
-import { capsuleCrmAuth, CapsuleCrmAuthType } from '../common/auth';
+import { capsuleCrmAuth } from '../common/auth';
 import { capsuleCrmClient } from '../common/client';
+import { partyOutputSchema } from '../common/output-schemas';
 import { capsuleCrmProps } from '../common/props';
 
 export const updateContactAction = createAction({
@@ -14,12 +14,13 @@ export const updateContactAction = createAction({
   classification: 'WRITE',
   displayName: 'Update Contact',
   description: 'Update fields on an existing Person or Organisation.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
-      'Updates fields on an existing Capsule CRM contact identified by its contact ID. Editable fields depend on whether the contact is a person or an organisation, and nested email, phone, address, and website entries can be added or removed (each supports a delete flag). Use when you already know the target contact ID; only provided fields are changed. Not idempotent because it issues a mutating update on each call.',
+      'Updates fields on an existing Capsule CRM contact. Editable fields depend on whether the contact is a person or an organisation, and nested email, phone, address, and website entries can be added or removed. Only provided fields are changed.',
     idempotent: false,
   },
+  outputSchema: partyOutputSchema,
   props: {
     contact_id: capsuleCrmProps.contact_id(),
     contactFields: Property.DynamicProperties({
@@ -31,10 +32,7 @@ export const updateContactAction = createAction({
         const fields: DynamicPropsValue = {};
         if (!auth || !contact_id) return fields;
 
-        const contact = await capsuleCrmClient.getContact(
-          auth,
-          contact_id as unknown as number
-        );
+        const contact = await capsuleCrmClient.getContact({ auth, contactId: contact_id });
 
         if (contact?.type === 'person') {
           fields['firstName'] = Property.ShortText({
@@ -49,7 +47,7 @@ export const updateContactAction = createAction({
           });
           fields['title'] = Property.ShortText({
             displayName: 'Title',
-            description: "Update the person's job title.",
+            description: "Update the person's job title (sent to Capsule as jobTitle).",
             required: false,
           });
         } else if (contact?.type === 'organisation') {
@@ -78,10 +76,7 @@ export const updateContactAction = createAction({
         const fields: DynamicPropsValue = {};
         if (!auth || !contact_id) return fields;
 
-        const contact = await capsuleCrmClient.getContact(
-          auth,
-          contact_id as unknown as number
-        );
+        const contact = await capsuleCrmClient.getContact({ auth, contactId: contact_id });
         const addressOptions =
           contact?.addresses?.map((address) => ({
             label: `${address.street}, ${address.city}`,
@@ -151,10 +146,7 @@ export const updateContactAction = createAction({
         const fields: DynamicPropsValue = {};
         if (!auth || !contact_id) return fields;
 
-        const contact = await capsuleCrmClient.getContact(
-          auth,
-          contact_id as unknown as number
-        );
+        const contact = await capsuleCrmClient.getContact({ auth, contactId: contact_id });
         const websiteOptions =
           contact?.websites?.map((website) => ({
             label: website.address,
@@ -226,10 +218,7 @@ export const updateContactAction = createAction({
         const fields: DynamicPropsValue = {};
         if (!auth || !contact_id) return fields;
 
-        const contact = await capsuleCrmClient.getContact(
-          auth,
-          contact_id as unknown as number
-        );
+        const contact = await capsuleCrmClient.getContact({ auth, contactId: contact_id });
         const emailOptions =
           contact?.emailAddresses?.map((email) => ({
             label: email.address,
@@ -280,10 +269,7 @@ export const updateContactAction = createAction({
         const fields: DynamicPropsValue = {};
         if (!auth || !contact_id) return fields;
 
-        const contact = await capsuleCrmClient.getContact(
-          auth,
-          contact_id as unknown as number
-        );
+        const contact = await capsuleCrmClient.getContact({ auth, contactId: contact_id });
         const phoneOptions =
           contact?.phoneNumbers?.map((phone) => ({
             label: phone.number,
@@ -331,45 +317,53 @@ export const updateContactAction = createAction({
   },
   async run(context) {
     const { auth, propsValue } = context;
-    const contactId = propsValue.contact_id as number;
-    const contactFields = propsValue.contactFields as DynamicPropsValue;
+    const contactFields = propsValue.contactFields ?? {};
 
-    return await capsuleCrmClient.updateContact(auth, contactId, {
-      firstName: contactFields['firstName'] as string | undefined,
-      lastName: contactFields['lastName'] as string | undefined,
-      name: contactFields['organisationName'] as string | undefined,
-      title: contactFields['title'] as string | undefined,
-      about: propsValue.about,
-      ownerId: propsValue.ownerId,
-      teamId: propsValue.teamId,
-      addresses: (
-        (propsValue.addresses as DynamicPropsValue)?.['addresses'] as any[]
-      )?.map((address) => ({
-        ...address,
-        _delete: address.delete,
-      })),
-      websites: (
-        (propsValue.websites as DynamicPropsValue)?.['websites'] as any[]
-      )?.map((website) => ({
-        ...website,
-        _delete: website.delete,
-      })),
-      emailAddresses: (
-        (propsValue.emailAddresses as DynamicPropsValue)?.[
-          'emailAddresses'
-        ] as any[]
-      )?.map((email) => ({
-        ...email,
-        _delete: email.delete,
-      })),
-      phoneNumbers: (
-        (propsValue.phoneNumbers as DynamicPropsValue)?.[
-          'phoneNumbers'
-        ] as any[]
-      )?.map((phone) => ({
-        ...phone,
-        _delete: phone.delete,
-      })),
+    return await capsuleCrmClient.updateContact({
+      auth,
+      partyId: capsuleCrmClient.segment(String(propsValue.contact_id)),
+      params: {
+        firstName: optionalText(contactFields['firstName']),
+        lastName: optionalText(contactFields['lastName']),
+        name: optionalText(contactFields['organisationName']),
+        jobTitle: optionalText(contactFields['title']),
+        about: optionalText(propsValue.about),
+        ownerId: propsValue.ownerId,
+        teamId: propsValue.teamId,
+        addresses: nestedItems({ value: propsValue.addresses, key: 'addresses' }),
+        websites: nestedItems({ value: propsValue.websites, key: 'websites' }),
+        emailAddresses: nestedItems({ value: propsValue.emailAddresses, key: 'emailAddresses' }),
+        phoneNumbers: nestedItems({ value: propsValue.phoneNumbers, key: 'phoneNumbers' }),
+      },
     });
   },
 });
+
+function optionalText(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() !== '' ? value : undefined;
+}
+
+function nestedItems({ value, key }: { value: unknown; key: string }): Record<string, unknown>[] | undefined {
+  if (typeof value !== 'object' || value === null || !(key in value)) {
+    return undefined;
+  }
+  const list: unknown = Object.entries(value).find(([entryKey]) => entryKey === key)?.[1];
+  if (!Array.isArray(list)) {
+    return undefined;
+  }
+  return list
+    .filter((item): item is Record<string, unknown> => typeof item === 'object' && item !== null)
+    .map((item) => {
+      const result: Record<string, unknown> = {};
+      for (const [field, fieldValue] of Object.entries(item)) {
+        if (field === 'delete' || fieldValue === undefined || fieldValue === null || fieldValue === '') {
+          continue;
+        }
+        result[field] = fieldValue;
+      }
+      if (item['delete'] === true) {
+        result['_delete'] = true;
+      }
+      return result;
+    });
+}

@@ -1,13 +1,15 @@
 import { capsuleCrmCreateTrigger } from '../common/trigger';
+import { projectOutputSchema } from '../common/output-schemas';
 
 export const newCaseTrigger = capsuleCrmCreateTrigger({
   name: 'new_case',
   displayName: 'New Case',
-  description: 'Fires when a new case (project) is created in Capsule CRM.',
+  description: 'Fires when a new case (project) is created in Capsule CRM. Same event as New Project; kept for existing flows.',
   aiMetadata: {
     description:
       'Fires when a new case (project) is created in Capsule CRM, delivering the created case record. Use to react to newly opened cases.',
   },
+  outputSchema: projectOutputSchema,
   event: 'kase/created',
   sampleData: {
     event: 'kase/created',

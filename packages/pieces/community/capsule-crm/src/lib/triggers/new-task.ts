@@ -1,4 +1,5 @@
 import { capsuleCrmCreateTrigger } from '../common/trigger';
+import { taskOutputSchema } from '../common/output-schemas';
 
 export const newTaskTrigger = capsuleCrmCreateTrigger({
   name: 'new_task',
@@ -8,6 +9,7 @@ export const newTaskTrigger = capsuleCrmCreateTrigger({
     description:
       'Fires when a new task is created in Capsule CRM, delivering the created task record. Use to react to newly scheduled to-dos or follow-ups.',
   },
+  outputSchema: taskOutputSchema,
   event: 'task/created',
   sampleData: {
     event: 'task/created',

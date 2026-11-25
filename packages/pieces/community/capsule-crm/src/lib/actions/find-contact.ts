@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { capsuleCrmAuth } from '../common/auth';
 import { capsuleCrmClient } from '../common/client';
+import { partyListOutputSchema } from '../common/output-schemas';
 
 export const findContactAction = createAction({
   auth: capsuleCrmAuth,
@@ -8,12 +9,13 @@ export const findContactAction = createAction({
   classification: 'SEARCH',
   displayName: 'Find Contact',
   description: 'Find a Person by search criteria.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Searches Capsule CRM contacts by a free-text term (such as a name or email) and returns only matches of type person, filtering out organisations. Use to look up an existing person before creating or referencing one. Idempotent: it is a read-only search that does not modify any data.',
     idempotent: true,
   },
+  outputSchema: partyListOutputSchema,
   props: {
     term: Property.ShortText({
       displayName: 'Search Term',
@@ -23,7 +25,7 @@ export const findContactAction = createAction({
   },
   async run(context) {
     const { auth, propsValue } = context;
-    const parties = await capsuleCrmClient.findContact(auth, propsValue.term);
+    const parties = await capsuleCrmClient.findContact({ auth, term: propsValue.term });
     return parties.filter((party) => party.type === 'person');
   },
 });

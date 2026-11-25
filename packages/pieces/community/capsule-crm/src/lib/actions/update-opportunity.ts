@@ -3,8 +3,9 @@ import {
   Property,
   DynamicPropsValue,
 } from '@activepieces/pieces-framework';
-import { capsuleCrmAuth, CapsuleCrmAuthType } from '../common/auth';
+import { capsuleCrmAuth } from '../common/auth';
 import { capsuleCrmClient } from '../common/client';
+import { opportunityOutputSchema } from '../common/output-schemas';
 import {
   UpdateOpportunityParams,
   OpportunityCustomField,
@@ -17,12 +18,13 @@ export const updateOpportunityAction = createAction({
   classification: 'WRITE',
   displayName: 'Update Opportunity',
   description: 'Update an existing Opportunity in Capsule CRM.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
-      'Updates an existing Capsule CRM opportunity identified by its opportunity ID, changing fields such as name, milestone, value, probability, duration, owner, team, tags, and custom fields. Tags and custom-field entries each support a delete flag for removal. Use when you already know the target opportunity ID; only provided fields are changed. Not idempotent because it issues a mutating update on each call.',
-    idempotent: false,
+      'Updates an existing Capsule CRM opportunity identified by its opportunity ID, changing fields such as name, milestone, value, probability, duration, owner, team, tags, and custom fields. Tags and custom-field entries each support a delete flag for removal. Use when you already know the target opportunity ID; only provided fields are changed. Repeating the same call leaves the opportunity unchanged.',
+    idempotent: true,
   },
+  outputSchema: opportunityOutputSchema,
   props: {
     opportunityId: Property.Dropdown({
       auth: capsuleCrmAuth,
@@ -31,9 +33,7 @@ export const updateOpportunityAction = createAction({
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) return { options: [], disabled: true, placeholder: "Please connect your Capsule CRM account first" };
-        const opportunities = await capsuleCrmClient.searchOpportunities(
-          auth
-        );
+        const opportunities = await capsuleCrmClient.searchOpportunities({ auth });
         return {
           options: opportunities.map((opportunity) => ({
             label: opportunity.name,
@@ -57,9 +57,7 @@ export const updateOpportunityAction = createAction({
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) return { options: [], disabled: true, placeholder: "Please connect your Capsule CRM account first" };
-        const milestones = await capsuleCrmClient.listMilestones(
-          auth
-        );
+        const milestones = await capsuleCrmClient.listMilestones({ auth });
         return {
           options: milestones.map((milestone) => ({
             label: milestone.name,
@@ -110,9 +108,7 @@ export const updateOpportunityAction = createAction({
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) return { options: [], disabled: true, placeholder: "Please connect your Capsule CRM account first" };
-        const users = await capsuleCrmClient.listUsers(
-          auth
-        );
+        const users = await capsuleCrmClient.listUsers({ auth });
         return {
           options: users.map((user) => ({
             label: user.name,
@@ -128,9 +124,7 @@ export const updateOpportunityAction = createAction({
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) return { options: [], disabled: true, placeholder: "Please connect your Capsule CRM account first" };
-        const teams = await capsuleCrmClient.listTeams(
-          auth
-        );
+        const teams = await capsuleCrmClient.listTeams({ auth });
         return {
           options: teams.map((team) => ({
             label: team.name,
@@ -146,12 +140,9 @@ export const updateOpportunityAction = createAction({
       refreshers: ['opportunityId'],
       props: async ({ auth, opportunityId }) => {
         const fields: DynamicPropsValue = {};
-        if (!auth || !opportunityId) return { options: [], disabled: true, placeholder: "Please connect your Capsule CRM account first or select an opportunity" };
+        if (!auth || !opportunityId) return fields;
 
-        const opportunity = await capsuleCrmClient.getOpportunity(
-          auth,
-          opportunityId as unknown as number
-        );
+        const opportunity = await capsuleCrmClient.getOpportunity({ auth, opportunityId });
         const tagOptions =
           opportunity.tags?.map((tag) => ({
             label: tag.name,
@@ -191,15 +182,9 @@ export const updateOpportunityAction = createAction({
       refreshers: ['opportunityId'],
       props: async ({ auth, opportunityId }) => {
         const fields: DynamicPropsValue = {};
-        if (!auth || !opportunityId) return { options: [], disabled: true, placeholder: "Please connect your Capsule CRM account first or select an opportunity" };
+        if (!auth || !opportunityId) return fields;
 
-       await capsuleCrmClient.getOpportunity(
-          auth,
-          opportunityId as unknown as number
-        );
-        const allCustomFields = await capsuleCrmClient.listCustomFields(
-          auth
-        );
+        const allCustomFields = await capsuleCrmClient.listCustomFields({ auth, entity: 'opportunity' });
 
         const customFieldOptions =
           allCustomFields?.map((field) => ({
@@ -238,9 +223,9 @@ export const updateOpportunityAction = createAction({
     const { opportunityId } = propsValue;
 
     const opportunityData: UpdateOpportunityParams = {
-      name: propsValue.name,
-      description: propsValue.description,
-      expectedCloseOn: propsValue.expectedCloseOn,
+      name: capsuleCrmClient.optionalText(propsValue.name),
+      description: capsuleCrmClient.optionalText(propsValue.description),
+      expectedCloseOn: capsuleCrmClient.dayFromDateTime({ value: propsValue.expectedCloseOn, label: 'Expected Close Date' }),
       probability: propsValue.probability,
       durationBasis: propsValue.durationBasis,
       duration: propsValue.duration,
@@ -262,32 +247,46 @@ export const updateOpportunityAction = createAction({
       };
     }
 
-    const tags = (propsValue.tags as { tags: OpportunityTag[] })?.tags;
-    if (tags) {
-      opportunityData.tags = tags.map((tag) => ({
-        id: tag.id,
-        name: tag.name,
-        _delete: tag._delete,
-      }));
-    }
-
-    const customFields = (
-      propsValue.customFields as {
-        customFields: { definitionId: number; value: unknown; delete: boolean }[];
+    const tags: OpportunityTag[] = recordsOf(propsValue.tags?.['tags']).flatMap((tag) => {
+      const id = idOf(tag['id']);
+      const name = typeof tag['name'] === 'string' ? tag['name'].trim() : '';
+      if (id === undefined && name === '') {
+        return [];
       }
-    )?.customFields;
-    if (customFields) {
-      opportunityData.fields = customFields.map((field) => ({
-        definition: { id: field.definitionId },
-        value: field.value,
-        _delete: field.delete,
-      }));
+      return [{ ...(id === undefined ? {} : { id }), name, ...(tag['delete'] === true ? { _delete: true } : {}) }];
+    });
+    if (tags.length > 0) {
+      opportunityData.tags = tags;
     }
 
-    return await capsuleCrmClient.updateOpportunity(
-      auth,
-      opportunityId,
-      opportunityData
-    );
+    const fields: OpportunityCustomField[] = recordsOf(propsValue.customFields?.['customFields']).flatMap((field) => {
+      const definitionId = idOf(field['definitionId']);
+      if (definitionId === undefined) {
+        return [];
+      }
+      return [{ definition: { id: definitionId }, value: field['value'], ...(field['delete'] === true ? { _delete: true } : {}) }];
+    });
+    if (fields.length > 0) {
+      opportunityData.fields = fields;
+    }
+
+    return await capsuleCrmClient.updateOpportunity({ auth, opportunityId, params: opportunityData });
   },
 });
+
+function idOf(value: unknown): number | undefined {
+  if (typeof value === 'number') {
+    return value;
+  }
+  if (typeof value === 'string' && /^\d+$/.test(value.trim())) {
+    return Number(value.trim());
+  }
+  return undefined;
+}
+
+function recordsOf(value: unknown): Record<string, unknown>[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value.filter((item): item is Record<string, unknown> => typeof item === 'object' && item !== null);
+}

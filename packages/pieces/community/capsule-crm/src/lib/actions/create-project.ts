@@ -3,12 +3,11 @@ import {
   Property,
   DynamicPropsValue,
 } from '@activepieces/pieces-framework';
-import { capsuleCrmAuth, CapsuleCrmAuthType } from '../common/auth';
+import { capsuleCrmAuth } from '../common/auth';
 import { capsuleCrmClient } from '../common/client';
+import { projectOutputSchema } from '../common/output-schemas';
 import {
   CreateProjectParams,
-  OpportunityCustomField,
-  OpportunityTag,
 } from '../common/types';
 
 export const createProjectAction = createAction({
@@ -17,12 +16,13 @@ export const createProjectAction = createAction({
   classification: 'WRITE',
   displayName: 'Create Project',
   description: 'Create a new Project in Capsule CRM.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Creates a new project (case) in Capsule CRM tied to a required party (contact), with optional links to an opportunity, stage, owner, team, tags, and custom fields. Use to open a new piece of work for a contact. Not idempotent: each call creates a separate project, so repeating it produces duplicates.',
     idempotent: false,
   },
+  outputSchema: projectOutputSchema,
   props: {
     partyId: Property.Dropdown({
       auth: capsuleCrmAuth,
@@ -37,10 +37,7 @@ export const createProjectAction = createAction({
             disabled: true,
             placeholder: 'Please connect your Capsule CRM account first',
           };
-        const contacts = await capsuleCrmClient.searchContacts(
-          auth,
-          ''
-        );
+        const contacts = await capsuleCrmClient.searchContacts({ auth });
         return {
           options: contacts.map((contact) => ({
             label:
@@ -76,9 +73,7 @@ export const createProjectAction = createAction({
             disabled: true,
             placeholder: 'Please connect your Capsule CRM account first',
           };
-        const opportunities = await capsuleCrmClient.searchOpportunities(
-          auth
-        );
+        const opportunities = await capsuleCrmClient.searchOpportunities({ auth });
         return {
           options: opportunities.map((opportunity) => ({
             label: opportunity.name,
@@ -100,9 +95,7 @@ export const createProjectAction = createAction({
             disabled: true,
             placeholder: 'Please connect your Capsule CRM account first',
           };
-        const stages = await capsuleCrmClient.listStages(
-            auth
-        );
+        const stages = await capsuleCrmClient.listStages({ auth });
         return {
           options: stages.map((stage) => ({
             label: stage.name,
@@ -140,9 +133,7 @@ export const createProjectAction = createAction({
             disabled: true,
             placeholder: 'Please connect your Capsule CRM account first',
           };
-        const users = await capsuleCrmClient.listUsers(
-          auth
-        );
+        const users = await capsuleCrmClient.listUsers({ auth });
         return {
           options: users.map((user) => ({
             label: user.name,
@@ -164,9 +155,7 @@ export const createProjectAction = createAction({
             disabled: true,
             placeholder: 'Please connect your Capsule CRM account first',
           };
-        const teams = await capsuleCrmClient.listTeams(
-          auth
-        );
+        const teams = await capsuleCrmClient.listTeams({ auth });
         return {
           options: teams.map((team) => ({
             label: team.name,
@@ -188,7 +177,7 @@ export const createProjectAction = createAction({
             disabled: true,
             placeholder: 'Please connect your Capsule CRM account first',
           };
-        const tags = await capsuleCrmClient.listTags(auth);
+        const tags = await capsuleCrmClient.listTags({ auth, entity: 'project' });
         return {
           options: tags.map((tag) => ({
             label: tag.name,
@@ -206,9 +195,7 @@ export const createProjectAction = createAction({
       props: async ({ auth }) => {
         const fields: DynamicPropsValue = {};
         if (!auth) return fields;
-        const customFields = await capsuleCrmClient.listCustomFields(
-          auth
-        );
+        const customFields = await capsuleCrmClient.listCustomFields({ auth, entity: 'project' });
         for (const field of customFields) {
           switch (field.type) {
             case 'list':
@@ -254,8 +241,8 @@ export const createProjectAction = createAction({
       party: { id: propsValue.partyId },
       name: propsValue.name,
       description: propsValue.description,
-      status: propsValue.status as 'OPEN' | 'CLOSED' | undefined,
-      expectedCloseOn: propsValue.expectedCloseOn,
+      status: propsValue.status === 'OPEN' || propsValue.status === 'CLOSED' ? propsValue.status : undefined,
+      expectedCloseOn: capsuleCrmClient.dayFromDateTime({ value: propsValue.expectedCloseOn, label: 'Expected Close Date' }),
     };
 
     if (propsValue.opportunityId) {
@@ -272,24 +259,17 @@ export const createProjectAction = createAction({
     }
 
     if (propsValue.tags) {
-      projectData.tags = propsValue.tags.map(
-        (tag) => ({ name: tag } as OpportunityTag)
-      );
+      projectData.tags = propsValue.tags.map((tag) => ({ name: tag }));
     }
 
-    const customFields = propsValue.customFields as DynamicPropsValue;
-    if (customFields) {
-      projectData.fields = Object.entries(customFields)
-        .filter(([, value]) => value !== undefined && value !== null)
-        .map(
-          ([id, value]) =>
-            ({
-              definition: { id: Number(id) },
-              value: value,
-            } as OpportunityCustomField)
-        );
+    const customFields = propsValue.customFields ?? {};
+    const fieldValues = Object.entries(customFields)
+      .filter(([, value]) => value !== undefined && value !== null && value !== '')
+      .map(([id, value]) => ({ definition: { id: Number(id) }, value }));
+    if (fieldValues.length > 0) {
+      projectData.fields = fieldValues;
     }
 
-    return await capsuleCrmClient.createProject(auth, projectData);
+    return await capsuleCrmClient.createProject({ auth, params: projectData });
   },
 });
