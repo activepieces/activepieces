@@ -108,14 +108,14 @@ const DOCS_ROOT = 'docs'
 const docCache = new Map<string, PlatformDoc>()
 const FRONTMATTER = /^---\n([\s\S]*?)\n---\n/
 const MAX_RESPONSE_CHARS = 20_000
-const ADMIN_PATH = /^\/api\/v1(\/[A-Za-z0-9_-]+)+$/
+const ADMIN_PATH = /^\/api\/v1(\/(?:[A-Za-z0-9_-]|%(?!2[EeFf]|5[Cc])[0-9A-Fa-f]{2})+)+$/
 
 const guideInput = z.object({
     page: z.string().optional().describe('A page from the list returned without a page, e.g. "admin-guide/guides/sso"'),
 })
 
 const readInput = z.object({
-    path: z.string().regex(ADMIN_PATH).describe('Endpoint path with parameters filled in, e.g. /api/v1/api-keys'),
+    path: z.string().regex(ADMIN_PATH).describe('Endpoint path with parameters filled in and URL-encoded, e.g. /api/v1/api-keys or /api/v1/project-roles/Run%20viewer'),
     query: z.record(z.string(), z.string()).optional(),
 })
 

@@ -52,6 +52,8 @@ describe('platform admin MCP tools', () => {
     it('rejects paths outside /api/v1 before calling anything', async () => {
         await expect(run({ userId: ctx.user.id, tool: 'ap_platform_read', args: { path: '/api/v1/../v1/api-keys' } })).rejects.toThrow()
         await expect(run({ userId: ctx.user.id, tool: 'ap_platform_read', args: { path: '/api/v1/api-keys%2F..' } })).rejects.toThrow()
+        await expect(run({ userId: ctx.user.id, tool: 'ap_platform_read', args: { path: '/api/v1/api-keys%2e%2e' } })).rejects.toThrow()
+        expect(await run({ userId: ctx.user.id, tool: 'ap_platform_read', args: { path: '/api/v1/project-roles/Run%20viewer' } })).toContain('HTTP')
     })
 
     it('lists the admin pages and explains one with its endpoints', async () => {
