@@ -21,8 +21,10 @@ export const projectRoleApi = {
   async update(id: string, requestBody: UpdateProjectRoleRequestBody) {
     return await api.post<ProjectRole>(`/v1/project-roles/${id}`, requestBody);
   },
-  async delete(id: string) {
-    return await api.delete<void>(`/v1/project-roles/${id}`);
+  async delete(name: string) {
+    return await api.delete<void>(
+      `/v1/project-roles/${encodeURIComponent(name)}`,
+    );
   },
   async listProjectMembers(
     id: string,
