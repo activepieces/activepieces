@@ -55,7 +55,7 @@ function readPlatformDoc(doc: string): PlatformDoc {
         body: raw.replace(FRONTMATTER, '')
             .replace(/^import .*$/gm, '')
             .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
-            .replace(/<\/?[A-Za-z][^>]*>/g, '')
+            .replace(PAGE_TAG, '')
             .replace(/\n{3,}/g, '\n\n')
             .trim(),
     }
@@ -107,6 +107,7 @@ function textResult(text: string): McpToolResult {
 const DOCS_ROOT = 'docs'
 const docCache = new Map<string, PlatformDoc>()
 const FRONTMATTER = /^---\n([\s\S]*?)\n---\n/
+const PAGE_TAG = /<\/?(?:[A-Z][\w.]*|video|iframe|img|br|u|div|span)\b[^>]*>/g
 const MAX_RESPONSE_CHARS = 20_000
 const ADMIN_PATH = /^\/api\/v1(\/(?:[A-Za-z0-9_-]|%(?!2[EeFf]|5[Cc])[0-9A-Fa-f]{2})+)+$/
 

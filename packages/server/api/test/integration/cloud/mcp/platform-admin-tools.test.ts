@@ -64,6 +64,9 @@ describe('platform admin MCP tools', () => {
         expect(page).toContain('# API Keys')
         expect(page).toContain('GET /api/v1/api-keys')
         expect(page).not.toContain('POST /api/v1/api-keys')
+
+        const streaming = await run({ userId: ctx.user.id, tool: 'ap_platform_guide', args: { page: 'admin-guide/guides/event-streaming' } })
+        expect(streaming).toContain('http://<agent-host>:4318/v1/logs')
     })
 })
 
