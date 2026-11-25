@@ -34,7 +34,10 @@ export function LockedWorkerGroups({
         description={modelSentence()}
         resources={adminPageResources.workerGroups}
       />
-      <div className={cn(adminSurface.card, '@container shrink-0 p-5')}>
+      <div
+        data-testid="worker-groups-locked"
+        className={cn(adminSurface.card, '@container shrink-0 p-5')}
+      >
         <div className="flex flex-col gap-4 @3xl:flex-row @3xl:items-center @3xl:gap-8">
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">

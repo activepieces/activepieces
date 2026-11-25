@@ -53,6 +53,7 @@ const NoteDragOverlay = () => {
   return (
     <div
       className={'absolute !cursor-grabbing note-drag-overlay'}
+      data-testid="note-drag-overlay"
       ref={containerRef}
       onClick={() => {
         if (noteDragOverlayMode === NoteDragOverlayMode.CREATE) {

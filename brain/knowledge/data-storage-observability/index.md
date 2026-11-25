@@ -30,9 +30,9 @@ Resolve flow/connection secrets from external vaults (HashiCorp, AWS Secrets Man
 
 Security-relevant actions persisted to `audit_event`, queryable by platform admins (filter user/action/project/date). Captured transparently via listeners on the `applicationEvents` bus (userEvent + workerEvent) — no caller coupling. 27 `ApplicationEventName` values (flow CRUD/lifecycle, run lifecycle, auth, connections, roles, releases). Gated by `platform.plan.auditLogEnabled`. EE/Cloud only.
 
-### Analytics / Impact (EE)
+### Analytics / Impact
 
-Platform reporting: daily runs, active flows/users, time-saved estimates. `PlatformAnalyticsReport` cached (5-min TTL) refreshed under a distributed lock; separate daily cron (12:00 UTC) tallies per-piece usage into `pieceMetadata.usage`. minutesSaved = runs × flow.timeSavedPerRun. Powers `/impact` (Summary/Trends/Details). Gated by `analyticsEnabled` — NOT in CE. Frontend queries carry `enabled: platform.plan.analyticsEnabled`.
+Platform reporting: daily runs, active flows/users, time-saved estimates. `PlatformAnalyticsReport` cached (5-min TTL) refreshed under a distributed lock; separate daily cron (12:00 UTC) tallies per-piece usage into `pieceMetadata.usage`. Time saved = runs × flow.timeSavedPerRun, where `timeSavedPerRun` is in seconds. Powers `/impact` (Summary/Trends/Details). Gated by `analyticsEnabled`, which is on in every edition: `OPEN_SOURCE_PLAN` and `AUTUMN_FREE_PLAN` set it, and the flag still gates the page and the API. Frontend queries carry `enabled: platform.plan.analyticsEnabled`.
 
 ### Logging & Metrics (evlog)
 

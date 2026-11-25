@@ -62,6 +62,12 @@ export const aiProviderApi = {
       {},
     );
   },
+  refreshModels(providerId: string) {
+    return api.post<AIProviderModel[]>(
+      `/v1/ai-providers/${providerId}/refresh-models`,
+      {},
+    );
+  },
   update(providerId: string, request: UpdateAIProviderRequest): Promise<void> {
     return api.post(`/v1/ai-providers/${providerId}`, request);
   },

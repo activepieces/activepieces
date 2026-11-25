@@ -30,7 +30,7 @@ export const convertToRangeAction = createAction({
 
     const client = createMSGraphClient(auth['access_token'], cloud);
     const response = await client
-      .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}/convertToRange`)
+      .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${encodeURIComponent(worksheetId)}/tables/${tableId}/convertToRange`)
       .post({});
 
     return response;

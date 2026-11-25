@@ -10,16 +10,15 @@ import { SquareArrowOutUpRight } from 'lucide-react';
 import React, { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
+import { StatusBadge } from '@/components/custom/status-badge';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { flowRunUtils } from '@/features/flow-runs/utils/flow-run-utils';
 import { projectCollectionUtils } from '@/features/projects';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { cn } from '@/lib/utils';
+import { CreditsSeverity } from '@/lib/statuses';
 
 import { billingQueries } from '../hooks/billing-hooks';
 import { useCreditsUsage } from '../hooks/use-credits-usage';
@@ -44,7 +43,7 @@ export const SidebarUsageLimits = React.memo(() => {
   const { platform } = platformHooks.useCurrentPlatform();
   const noticeLine = resolveNoticeLine(platform.selfServeTrial);
 
-  const inWarning = !isUnlimited && severity !== 'default';
+  const inWarning = !isUnlimited && severity !== CreditsSeverity.DEFAULT;
   const canManage = isPlatformAdmin && inWarning;
   const needsSubscription = canManage && isPaid;
 
@@ -97,14 +96,10 @@ export const SidebarUsageLimits = React.memo(() => {
           <span className="text-sm font-semibold truncate">{creditsText}</span>
           <span className="text-xs text-gray-11">{t('credits')}</span>
         </div>
-        <Badge
-          className={cn(
-            'shrink-0',
-            flowRunUtils.getStatusContainerClassName({ variant: severity }),
-          )}
-        >
-          {t('{percent}% used', { percent: percentUsed })}
-        </Badge>
+        <StatusBadge
+          status={severity}
+          text={t('{percent}% used', { percent: percentUsed })}
+        />
       </div>
       <div className="flex h-5 items-center gap-2">
         {!isNil(resetLine) && (
