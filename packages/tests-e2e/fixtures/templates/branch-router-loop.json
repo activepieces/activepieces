@@ -1,0 +1,159 @@
+{
+  "name": "Branch router loop",
+  "flows": [
+    {
+      "displayName": "Branch router loop",
+      "schemaVersion": null,
+      "notes": null,
+      "trigger": {
+        "name": "trigger",
+        "type": "PIECE_TRIGGER",
+        "valid": true,
+        "displayName": "Catch Webhook",
+        "settings": {
+          "pieceName": "@activepieces/piece-webhook",
+          "pieceVersion": "0.1.43",
+          "triggerName": "catch_webhook",
+          "input": {
+            "authType": "none"
+          },
+          "propertySettings": {}
+        },
+        "nextAction": {
+          "name": "step_1",
+          "type": "ROUTER",
+          "valid": true,
+          "displayName": "Router",
+          "settings": {
+            "executionType": "EXECUTE_FIRST_MATCH",
+            "branches": [
+              {
+                "branchName": "Big",
+                "branchType": "CONDITION",
+                "conditions": [
+                  [
+                    {
+                      "operator": "NUMBER_IS_GREATER_THAN",
+                      "firstValue": "{{trigger['output']['queryParams']['n']}}",
+                      "secondValue": "10"
+                    }
+                  ]
+                ]
+              },
+              {
+                "branchName": "Otherwise",
+                "branchType": "FALLBACK"
+              }
+            ]
+          },
+          "children": [
+            {
+              "name": "step_2",
+              "type": "CODE",
+              "valid": true,
+              "displayName": "Big",
+              "settings": {
+                "sourceCode": {
+                  "code": "export const code = async () => {\n  return { size: 'big' };\n};",
+                  "packageJson": "{}"
+                },
+                "input": {},
+                "errorHandlingOptions": {
+                  "continueOnFailure": {
+                    "value": false
+                  },
+                  "retryOnFailure": {
+                    "value": false
+                  }
+                }
+              },
+              "lastUpdatedDate": "2026-11-18T00:00:00.000Z"
+            },
+            {
+              "name": "step_3",
+              "type": "CODE",
+              "valid": true,
+              "displayName": "Small",
+              "settings": {
+                "sourceCode": {
+                  "code": "export const code = async () => {\n  return { size: 'small' };\n};",
+                  "packageJson": "{}"
+                },
+                "input": {},
+                "errorHandlingOptions": {
+                  "continueOnFailure": {
+                    "value": false
+                  },
+                  "retryOnFailure": {
+                    "value": false
+                  }
+                }
+              },
+              "lastUpdatedDate": "2026-11-18T00:00:00.000Z"
+            }
+          ],
+          "nextAction": {
+            "name": "step_4",
+            "type": "CODE",
+            "valid": true,
+            "displayName": "Split the items",
+            "settings": {
+              "sourceCode": {
+                "code": "export const code = async (inputs) => {\n  return { items: String(inputs.items).split(',') };\n};",
+                "packageJson": "{}"
+              },
+              "input": {
+                "items": "{{trigger['output']['queryParams']['items']}}"
+              },
+              "errorHandlingOptions": {
+                "continueOnFailure": {
+                  "value": false
+                },
+                "retryOnFailure": {
+                  "value": false
+                }
+              }
+            },
+            "lastUpdatedDate": "2026-11-18T00:00:00.000Z",
+            "nextAction": {
+              "name": "step_5",
+              "type": "LOOP_ON_ITEMS",
+              "valid": true,
+              "displayName": "Loop on items",
+              "settings": {
+                "items": "{{step_4['output']['items']}}"
+              },
+              "firstLoopAction": {
+                "name": "step_6",
+                "type": "CODE",
+                "valid": true,
+                "displayName": "Double the item",
+                "settings": {
+                  "sourceCode": {
+                    "code": "export const code = async (inputs) => {\n  return { doubled: Number(inputs.item) * 2 };\n};",
+                    "packageJson": "{}"
+                  },
+                  "input": {
+                    "item": "{{step_5['output']['item']}}"
+                  },
+                  "errorHandlingOptions": {
+                    "continueOnFailure": {
+                      "value": false
+                    },
+                    "retryOnFailure": {
+                      "value": false
+                    }
+                  }
+                },
+                "lastUpdatedDate": "2026-11-18T00:00:00.000Z"
+              },
+              "lastUpdatedDate": "2026-11-18T00:00:00.000Z"
+            }
+          },
+          "lastUpdatedDate": "2026-11-18T00:00:00.000Z"
+        },
+        "lastUpdatedDate": "2026-11-18T00:00:00.000Z"
+      }
+    }
+  ]
+}

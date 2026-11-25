@@ -42,7 +42,7 @@ export const getRangeAction = createAction({
 
     const client = createMSGraphClient(access_token, cloud);
     const response = await client
-      .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='${range}')`)
+      .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${encodeURIComponent(worksheetId)}/range(address='${range}')`)
       .get();
 
     // The response body contains the workbookRange object with details

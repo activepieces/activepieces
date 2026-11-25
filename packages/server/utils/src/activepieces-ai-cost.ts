@@ -241,7 +241,7 @@ function openRouterCostOf(providerMetadata: SharedV4ProviderMetadata | undefined
 }
 
 function gatewayHeaderCostOf({ provider, headers }: { provider: AIProviderName, headers: ResponseHeaders }): number | undefined {
-    if (provider !== AIProviderName.CUSTOM || isNil(headers)) {
+    if (!LITELLM_COST_HEADER_PROVIDERS.has(provider) || isNil(headers)) {
         return undefined
     }
     const cost = Number(headers[LITELLM_COST_HEADER])
@@ -324,6 +324,7 @@ const OpenRouterUsage = z.object({
 
 let reporter: ActivepiecesAiCostReporter | undefined
 const LITELLM_COST_HEADER = 'x-litellm-response-cost'
+const LITELLM_COST_HEADER_PROVIDERS: ReadonlySet<AIProviderName> = new Set([AIProviderName.CUSTOM, AIProviderName.LITELLM])
 let unbilledCalls: UnbilledCall[] = []
 
 const FIXED_CREDITS_PER_MODEL_CALL = 1
@@ -339,6 +340,7 @@ export const activepiecesAiCost = {
     reportUsageOnly,
     reportProviderCost,
     openRouterCostOf,
+    gatewayHeaderCostOf,
 }
 
 type BillingContext = {

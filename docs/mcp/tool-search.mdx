@@ -42,7 +42,7 @@ When the flag is off, `ap_search_actions` and `ap_search_triggers` are not regis
 Semantic mode needs two more things:
 
 - **An OpenAI API key** to fund the embeddings — either set `AP_OPENAI_API_KEY`, or configure OpenAI as an [AI provider](/admin-guide/guides/setup-ai-providers) in the platform admin. The environment variable takes precedence and is the simplest path for single-tenant deployments.
-- **The pgvector extension** available in your Postgres server. Activepieces creates the extension automatically at startup when the server supports it (for example the official `pgvector/pgvector` images and most managed Postgres offerings).
+- **The pgvector extension** in the Activepieces database before the database migrations run. Run `CREATE EXTENSION IF NOT EXISTS vector;` in that database before the first start of a new install, or before the upgrade that adds tool search. The migration that creates the search index skips it when the extension is missing. Activepieces also creates the extension at startup when the server supports it (for example the official `pgvector/pgvector` images), but only after the migrations, so that alone does not create the index.
 
 If either is missing, tool search serves keyword mode instead of failing. The search index is built automatically on startup and kept in sync with the piece catalog — there is nothing to maintain by hand.
 

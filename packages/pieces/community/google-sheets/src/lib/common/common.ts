@@ -113,12 +113,7 @@ async function getGoogleSheetRows({
 		},
 	});
 
-	if (!headerResponse.body.values) {
-		throw new Error(`Unable to read headers from row ${headerRow} in sheet "${sheetName}". The row appears to be empty or inaccessible.`);
-	}
-
-	const headers = headerResponse.body.values[0] ?? [];
-	const headerCount = headers.length;
+	const headerCount = headerResponse.body.values?.[0]?.length ?? 0;
 
 	const startingRow = rowIndex_s ? rowIndex_s - 1 : 0;
 
@@ -169,14 +164,23 @@ export const columnToLabel = (columnIndex: number) => {
 };
 export const labelToColumn = (label: string) => {
 	const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+	const normalized = normalizeColumnLabel(label);
+	if (isNil(normalized)) {
+		return -1;
+	}
 	let column = 0;
 
-	for (let i = 0; i < label.length; i++) {
-		column += (alphabet.indexOf(label[i]) + 1) * Math.pow(26, label.length - i - 1);
+	for (let i = 0; i < normalized.length; i++) {
+		column += (alphabet.indexOf(normalized[i]) + 1) * Math.pow(26, normalized.length - i - 1);
 	}
 
 	return column - 1;
 };
+
+export function normalizeColumnLabel(label: string): string | undefined {
+	const normalized = String(label).trim().toUpperCase();
+	return /^[A-Z]{1,3}$/.test(normalized) ? normalized : undefined;
+}
 
 export function objectToArray(obj: { [x: string]: any }) {
 	const maxIndex = Math.max(...Object.keys(obj).map((key) => labelToColumn(key)));
@@ -214,6 +218,7 @@ export async function mapRowsToHeaderNames(
 		sheetId,
 		rowIndex_s: headerRow,
 		rowIndex_e: headerRow,
+		headerRow,
 	});
 
 	if (headerRows.length === 0) {

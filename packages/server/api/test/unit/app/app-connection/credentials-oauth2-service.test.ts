@@ -152,3 +152,98 @@ describe('credentialsOauth2Service.refresh', () => {
         expect(result.resource).toBe(RESOURCE)
     })
 })
+
+describe('credentialsOauth2Service client credentials scope', () => {
+    beforeEach(() => {
+        mockPost.mockReset()
+        mockPost.mockResolvedValue(tokenResponseBody())
+        mockResolveString.mockReset()
+        mockResolveString.mockImplementation(({ key }: { key: string }) => Promise.resolve(key))
+    })
+
+    async function claimBody(props: Record<string, unknown> | undefined): Promise<URLSearchParams> {
+        await service.claim({
+            projectId: undefined,
+            platformId: 'platform',
+            pieceName: 'http-oauth2',
+            request: {
+                clientId: 'client-id',
+                clientSecret: 'client-secret',
+                tokenUrl: 'https://as.example.com/token',
+                grantType: OAuth2GrantType.CLIENT_CREDENTIALS,
+                scope: '{scopes}',
+                props,
+            },
+        } as never)
+        const [, body] = mockPost.mock.calls[0]
+        return body as URLSearchParams
+    }
+
+    async function refreshBody(props: Record<string, unknown> | undefined): Promise<URLSearchParams> {
+        await service.refresh({
+            pieceName: 'http-oauth2',
+            platformId: 'platform',
+            projectId: undefined,
+            connectionValue: {
+                type: AppConnectionType.OAUTH2,
+                access_token: 'stale-token',
+                claimed_at: 0,
+                expires_in: 3600,
+                client_id: 'client-id',
+                client_secret: 'client-secret',
+                token_url: 'https://as.example.com/token',
+                grant_type: OAuth2GrantType.CLIENT_CREDENTIALS,
+                scope: '{scopes}',
+                props,
+                data: {},
+            } as never,
+        })
+        const [, body] = mockPost.mock.calls[0]
+        return body as URLSearchParams
+    }
+
+    it('sends no scope on claim when the scopes prop is missing', async () => {
+        const body = await claimBody({ authUrl: 'https://as.example.com/auth' })
+        expect(body.has('scope')).toBe(false)
+        expect(body.has('scopes')).toBe(false)
+    })
+
+    it('sends no scope on claim when the scopes prop is blank', async () => {
+        const body = await claimBody({ scopes: '   ' })
+        expect(body.has('scope')).toBe(false)
+        expect(body.has('scopes')).toBe(false)
+    })
+
+    it('drops a scope part whose placeholder could not be resolved instead of sending a broken value', async () => {
+        await service.claim({
+            projectId: undefined,
+            platformId: 'platform',
+            pieceName: 'http-oauth2',
+            request: {
+                clientId: 'client-id',
+                clientSecret: 'client-secret',
+                tokenUrl: 'https://as.example.com/token',
+                grantType: OAuth2GrantType.CLIENT_CREDENTIALS,
+                scope: 'https://{resource}/.default read',
+                props: {},
+            },
+        } as never)
+        const [, body] = mockPost.mock.calls[0]
+        expect((body as URLSearchParams).get('scope')).toBe('read')
+    })
+
+    it('sends the filled scopes unchanged on claim', async () => {
+        const body = await claimBody({ scopes: 'read write' })
+        expect(body.get('scope')).toBe('read write')
+    })
+
+    it('sends no scope on refresh when the scopes prop is missing', async () => {
+        const body = await refreshBody(undefined)
+        expect(body.has('scope')).toBe(false)
+    })
+
+    it('sends the filled scopes unchanged on refresh', async () => {
+        const body = await refreshBody({ scopes: 'read write' })
+        expect(body.get('scope')).toBe('read write')
+    })
+})

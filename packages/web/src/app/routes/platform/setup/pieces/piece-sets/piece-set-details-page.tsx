@@ -113,6 +113,7 @@ const PieceSetDetailsPage = () => {
             >
               <Switch
                 {...adminControl(AdminControl.PIECE_SETS_NEW_PIECES_TOGGLE)}
+                data-testid="piece-set-include-new-pieces"
                 aria-label={t('Include new pieces')}
                 checked={
                   pieceSet.config.pieces.mode === PieceSelectionMode.INCLUDE_ALL
