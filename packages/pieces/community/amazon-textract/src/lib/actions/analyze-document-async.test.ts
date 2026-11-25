@@ -1,14 +1,14 @@
 import { Readable } from 'node:stream';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { s3Send, textractSend, s3ClientConstructor, uploadDone, uploadClients, uploadOptions, uploadState } = vi.hoisted(() => ({
+const { s3Send, textractSend, s3ClientConstructor, uploadDone, uploadClients, uploadOptions, uploadIds } = vi.hoisted(() => ({
   s3Send: vi.fn<(command: AwsCommand) => Promise<unknown>>(),
   textractSend: vi.fn<(command: AwsCommand) => Promise<unknown>>(),
   s3ClientConstructor: vi.fn(),
   uploadDone: vi.fn<(params: UploadParams) => Promise<unknown>>(),
   uploadClients: new Array<unknown>(),
   uploadOptions: new Array<Record<string, unknown>>(),
-  uploadState: { uploadId: undefined as string | undefined },
+  uploadIds: new Array<string>(),
 }));
 
 vi.mock('@aws-sdk/client-s3', () => ({
@@ -31,7 +31,7 @@ vi.mock('@aws-sdk/lib-storage', () => ({
     return {
       done: () => uploadDone(params),
       get uploadId() {
-        return uploadState.uploadId;
+        return uploadIds.at(0);
       },
     };
   }),
@@ -66,7 +66,7 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
     uploadDone.mockReset();
     uploadClients.length = 0;
     uploadOptions.length = 0;
-    uploadState.uploadId = undefined;
+    uploadIds.length = 0;
     uploadedBodies.length = 0;
     s3Send.mockResolvedValue({});
     uploadDone.mockImplementation(async (params) => {
@@ -192,7 +192,7 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
     });
 
     it('keeps the cause of a failed multipart upload and removes the parts already sent', async () => {
-      uploadState.uploadId = 'upload-1';
+      uploadIds.push('upload-1');
       uploadDone.mockRejectedValueOnce(Object.assign(new Error('terminated'), { name: 'TypeError' }));
 
       await expect(
@@ -206,7 +206,7 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
     });
 
     it('keeps the cause and says so when the parts already sent cannot be removed', async () => {
-      uploadState.uploadId = 'upload-1';
+      uploadIds.push('upload-1');
       uploadDone.mockRejectedValueOnce(Object.assign(new Error('terminated'), { name: 'TypeError' }));
       s3Send.mockRejectedValueOnce(awsError({ name: 'AccessDenied', message: 'Access Denied' }));
 
