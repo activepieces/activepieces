@@ -1,4 +1,8 @@
-import { DropdownState, Property } from '@activepieces/pieces-framework';
+import {
+  DropdownState,
+  Property,
+  tryCatch,
+} from '@activepieces/pieces-framework';
 import { youformAuth } from '../auth';
 import { youformApi } from './api';
 
@@ -20,11 +24,27 @@ function formId<R extends boolean>({
         });
       }
 
-      const response = await youformApi.listForms({ auth });
+      const { data: forms, error } = await tryCatch(() =>
+        youformApi.listAllForms({ auth })
+      );
+
+      if (error) {
+        return disabledOptions({
+          placeholder: "Couldn't load forms. Check connection.",
+        });
+      }
+
+      if (forms.length === 0) {
+        return {
+          disabled: false,
+          options: [],
+          placeholder: 'No forms yet. Create one in Youform.',
+        };
+      }
 
       return {
         disabled: false,
-        options: response.data.data.map((form) => ({
+        options: forms.map((form) => ({
           label: form.name,
           value: form.slug,
         })),

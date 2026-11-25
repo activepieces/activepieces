@@ -8,7 +8,7 @@ import { youformApi } from './common/api';
 
 export const youformAuth = PieceAuth.SecretText({
   displayName: 'API Token',
-  description: `You can obtain API token from [Account Settings](https://app.youform.com/account).`,
+  description: `Find your API token in Youform under [Account Settings](https://app.youform.com/account).`,
   required: true,
   validate: async ({ auth }) => {
     const { error } = await tryCatch(() =>
@@ -19,7 +19,7 @@ export const youformAuth = PieceAuth.SecretText({
     return error
       ? {
           valid: false,
-          error: 'Invalid API Token',
+          error: 'Invalid API token. Copy it again from Account Settings.',
         }
       : {
           valid: true,

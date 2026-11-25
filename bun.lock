@@ -10418,7 +10418,7 @@
     },
     "packages/pieces/community/youform": {
       "name": "@activepieces/piece-youform",
-      "version": "0.2.1",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10427,6 +10427,7 @@
       },
       "devDependencies": {
         "tslib": "^2.3.0",
+        "vitest": "5.0.5",
       },
     },
     "packages/pieces/community/youtrack": {
