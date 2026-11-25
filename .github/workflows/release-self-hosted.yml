@@ -32,6 +32,7 @@ jobs:
       tag: ${{ steps.cloud.outputs.tag || steps.build.outputs.tag }}
       sha: ${{ steps.cloud.outputs.sha || steps.build.outputs.sha }}
       image: ${{ steps.cloud.outputs.image }}
+      cloud_image_tag: ${{ steps.cloud.outputs.cloud_image_tag }}
     steps:
       # Weeks are counted from the Unix epoch, so the parity never skips a week at a year boundary.
       - name: Check the schedule
@@ -55,74 +56,33 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # The Cloud gate's approve job logs "Approved <image tag> <digest>", a rollback logs
-      # "Rolling back prod from <image tag> to <image tag>", and an emergency deploy ships an image the gate never approved.
-      # An image is never picked when a rollback, a .pick hotfix or an emergency deploy replaced it, or a rollback went past it.
-      # A failed lookup stops the run, so a missed rollback can never let its image through.
+      - uses: actions/checkout@v5
+        if: steps.schedule.outputs.skip != 'true' && !inputs.tag && !inputs.cloud_image_tag
+        with:
+          sparse-checkout: .github/actions
+
+      - name: Read the Cloud deploy history
+        id: history
+        if: steps.schedule.outputs.skip != 'true' && !inputs.tag && !inputs.cloud_image_tag
+        uses: ./.github/actions/pick-cloud-image
+        with:
+          token: ${{ github.token }}
+
       - name: Pick the Cloud image
         id: cloud
         if: steps.schedule.outputs.skip != 'true' && !inputs.tag
         env:
-          GH_TOKEN: ${{ github.token }}
-          CLOUD_IMAGE_TAG: ${{ inputs.cloud_image_tag }}
+          CLOUD_IMAGE_TAG: ${{ inputs.cloud_image_tag || steps.history.outputs.tag }}
+          DIGEST: ${{ steps.history.outputs.digest }}
+          DEPLOYED: ${{ steps.history.outputs.deployed }}
         run: |
-          set -o pipefail
-          TAG_RE='[0-9]+\.[0-9]+\.[0-9]+\.[a-f0-9]{40}\.(beta|pick)'
-          job_log() {
-            gh api "repos/$GITHUB_REPOSITORY/actions/jobs/$1/logs" | tr -d '\r'
-          }
-          DIGEST=""
-          if [ -n "$CLOUD_IMAGE_TAG" ]; then
-            if ! [[ "$CLOUD_IMAGE_TAG" =~ ^$TAG_RE$ ]]; then
-              echo "::error::$CLOUD_IMAGE_TAG is not a Cloud image tag like 0.95.0.<sha>.beta"
-              exit 1
-            fi
+          if [ -n "$DEPLOYED" ]; then
+            echo "Cloud image \`$CLOUD_IMAGE_TAG\`, the newest that the Cloud gate deployed 7 or more days ago (on $DEPLOYED)" >> "$GITHUB_STEP_SUMMARY"
+          elif [[ "$CLOUD_IMAGE_TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[a-f0-9]{40}\.(beta|pick)$ ]]; then
             echo "Cloud image \`$CLOUD_IMAGE_TAG\`, named by hand" >> "$GITHUB_STEP_SUMMARY"
           else
-            SINCE=$(date -u -d '-45 days' +%Y-%m-%d)
-            CUTOFF=$(date -u -d '-7 days' +%Y-%m-%dT%H:%M:%SZ)
-            EVENTS="$RUNNER_TEMP/cloud-events"
-            : > "$EVENTS"
-            RUNS=$(gh run list -R "$GITHUB_REPOSITORY" --workflow continuous-delivery-cloud.yml --status completed --created ">=$SINCE" -L 200 --json databaseId --jq '.[].databaseId')
-            for RUN in $RUNS; do
-              JOBS=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN/jobs?per_page=100" \
-                --jq '[(.jobs[] | select(.name == "deploy" and .conclusion == "success") | .completed_at), (.jobs[] | select(.name == "approve") | .id)] | map(tostring) | join(" ")')
-              read -r DEPLOYED APPROVE <<< "$JOBS"
-              if [ -n "${DEPLOYED:-}" ] && [ -n "${APPROVE:-}" ]; then
-                LOG=$(job_log "$APPROVE")
-                sed -nE "s/^[^ ]+ Approved ($TAG_RE)( (sha256:[a-f0-9]{64}))?$/$DEPLOYED deploy \1 \4/p" <<< "$LOG" | head -1 >> "$EVENTS"
-              fi
-            done
-            RUNS=$(gh run list -R "$GITHUB_REPOSITORY" --workflow continuous-delivery-rollback.yml --status completed --created ">=$SINCE" -L 100 --json databaseId --jq '.[].databaseId')
-            for RUN in $RUNS; do
-              JOBS=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN/jobs" \
-                --jq '.jobs[] | select(.name == "rollback" and any(.steps[]?; .name == "Get current tag" and .conclusion == "success")) | "\(.completed_at) \(.id)"')
-              read -r AT JOB <<< "$JOBS"
-              if [ -n "${JOB:-}" ]; then
-                LOG=$(job_log "$JOB")
-                sed -nE "s/^[^ ]+ Rolling back prod from ($TAG_RE) to ($TAG_RE)$/$AT rollback \3 \1/p" <<< "$LOG" | head -1 >> "$EVENTS"
-              fi
-            done
-            gh run list -R "$GITHUB_REPOSITORY" --workflow emergency-cloud-deploy.yml --created ">=$SINCE" -L 100 --json createdAt --jq '.[] | "\(.createdAt) emergency"' >> "$EVENTS"
-            PICK=$(LC_ALL=C sort "$EVENTS" | awk -v cutoff="$CUTOFF" '
-              {
-                at[NR] = $1; kind[NR] = $2; tag[NR] = $3; digest[NR] = $4
-                if ($2 == "rollback") {
-                  replaced[$4] = 1
-                  for (j = NR - 1; j > 0 && tag[j] != $3; j--) ;
-                  if (j > 0) for (k = j + 1; k < NR; k++) if (kind[k] == "deploy") replaced[tag[k]] = 1
-                } else if ($2 == "emergency" || $3 ~ /\.pick$/) {
-                  replaced[prod] = 1
-                }
-                prod = $3
-              }
-              END { for (i = NR; i > 0; i--) if (kind[i] == "deploy" && at[i] <= cutoff && !replaced[tag[i]]) { print at[i], tag[i], digest[i]; exit } }')
-            read -r DEPLOYED CLOUD_IMAGE_TAG DIGEST <<< "$PICK"
-            if [ -z "$CLOUD_IMAGE_TAG" ]; then
-              echo "::error::The Cloud gate deployed no image between $SINCE and $CUTOFF that a rollback, a hotfix or an emergency deploy did not replace. Name one in cloud_image_tag."
-              exit 1
-            fi
-            echo "Cloud image \`$CLOUD_IMAGE_TAG\`, the newest that the Cloud gate deployed 7 or more days ago (on $DEPLOYED)" >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::$CLOUD_IMAGE_TAG is not a Cloud image tag like 0.95.0.<sha>.beta"
+            exit 1
           fi
           SOURCE="ghcr.io/activepieces/activepieces-cloud:$CLOUD_IMAGE_TAG"
           if [ -z "$DIGEST" ]; then
@@ -138,6 +98,7 @@ jobs:
             echo "tag=$TAG"
             echo "sha=$(echo "$CLOUD_IMAGE_TAG" | cut -d. -f4)"
             echo "image=ghcr.io/activepieces/activepieces-cloud@$DIGEST"
+            echo "cloud_image_tag=$CLOUD_IMAGE_TAG"
           } >> "$GITHUB_OUTPUT"
           echo "Release \`$TAG\`, digest \`$DIGEST\`" >> "$GITHUB_STEP_SUMMARY"
 
@@ -248,7 +209,7 @@ jobs:
     needs: [cut, preflight, e2e-matrix, tickets]
     runs-on: ubuntu-24.04
     outputs:
-      digest: ${{ steps.build.outputs.digest || steps.copy.outputs.digest || steps.published.outputs.digest }}
+      digest: ${{ steps.build.outputs.digest || steps.copy.outputs.digest }}
     concurrency:
       group: release-self-hosted-${{ needs.cut.outputs.tag }}
       cancel-in-progress: false
@@ -265,6 +226,20 @@ jobs:
       - uses: actions/checkout@v5
         with:
           ref: ${{ needs.cut.outputs.sha }}
+
+      # cut read the Cloud history before the tests and the approval wait, and Cloud can drop the image in that time.
+      # Only Cloud mode checks out the tools this early: a build copies the whole workspace into the image.
+      - uses: actions/checkout@v5
+        if: needs.cut.outputs.image && !inputs.cloud_image_tag
+        with:
+          path: .release-tools
+
+      - name: Check that Cloud still keeps the image
+        if: needs.cut.outputs.image && !inputs.cloud_image_tag
+        uses: ./.release-tools/.github/actions/pick-cloud-image
+        with:
+          token: ${{ github.token }}
+          check-tag: ${{ needs.cut.outputs.cloud_image_tag }}
 
       - name: Create GitHub App token
         id: app-token
@@ -311,12 +286,29 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # With one source, imagetools copies the index byte for byte, so the digest stays the Cloud digest.
-      - name: Publish the Cloud image
-        id: copy
-        if: needs.cut.outputs.image
+      # cut stops when the tag exists, so a published image here means a re-run: a new build would change its digest.
+      # The copy below then also publishes it to the registry an earlier attempt missed.
+      - name: Read the published image
+        id: published
+        if: ${{ !needs.cut.outputs.image }}
         env:
-          SOURCE: ${{ needs.cut.outputs.image }}
+          TAG: ${{ needs.cut.outputs.tag }}
+        run: |
+          for REPO in docker.io/activepieces/activepieces ghcr.io/activepieces/activepieces; do
+            DIGEST=$(docker buildx imagetools inspect "$REPO:$TAG" --format '{{json .Manifest}}' 2>/dev/null | jq -r .digest) || true
+            if [[ "$DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]; then
+              echo "image=$REPO@$DIGEST" >> "$GITHUB_OUTPUT"
+              echo "\`$TAG\` is already published with the digest \`$DIGEST\`, so this attempt does not build it again." >> "$GITHUB_STEP_SUMMARY"
+              break
+            fi
+          done
+
+      # With one source, imagetools copies the index byte for byte, so the digest stays the source digest.
+      - name: Publish the image
+        id: copy
+        if: needs.cut.outputs.image || steps.published.outputs.image
+        env:
+          SOURCE: ${{ needs.cut.outputs.image || steps.published.outputs.image }}
           TAG: ${{ needs.cut.outputs.tag }}
         run: |
           DIGEST="${SOURCE#*@}"
@@ -324,32 +316,19 @@ jobs:
           for TARGET in docker.io/activepieces/activepieces ghcr.io/activepieces/activepieces; do
             PUBLISHED=$(docker buildx imagetools inspect "$TARGET:$TAG" --format '{{json .Manifest}}' | jq -r .digest)
             if [ "$PUBLISHED" != "$DIGEST" ]; then
-              echo "::error::$TARGET:$TAG has the digest $PUBLISHED, not the Cloud digest $DIGEST"
+              echo "::error::$TARGET:$TAG has the digest $PUBLISHED, not the source digest $DIGEST"
               exit 1
             fi
           done
           echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
-          echo "Published \`$TAG\` with the Cloud digest \`$DIGEST\`" >> "$GITHUB_STEP_SUMMARY"
-
-      # cut stops when the tag exists, so a published image here means a re-run: a new build would change its digest.
-      - name: Read the published image
-        id: published
-        if: ${{ !needs.cut.outputs.image }}
-        env:
-          TAG: ${{ needs.cut.outputs.tag }}
-        run: |
-          DIGEST=$(docker buildx imagetools inspect "docker.io/activepieces/activepieces:$TAG" --format '{{json .Manifest}}' 2>/dev/null | jq -r .digest) || true
-          if [[ "$DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]; then
-            echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
-            echo "\`$TAG\` is already published with the digest \`$DIGEST\`, so this attempt does not build it again." >> "$GITHUB_STEP_SUMMARY"
-          fi
+          echo "Published \`$TAG\` with the digest \`$DIGEST\` of \`$SOURCE\`" >> "$GITHUB_STEP_SUMMARY"
 
       - uses: depot/setup-action@v1
-        if: ${{ !needs.cut.outputs.image && !steps.published.outputs.digest }}
+        if: ${{ !needs.cut.outputs.image && !steps.published.outputs.image }}
 
       - name: Build and push
         id: build
-        if: ${{ !needs.cut.outputs.image && !steps.published.outputs.digest }}
+        if: ${{ !needs.cut.outputs.image && !steps.published.outputs.image }}
         uses: depot/build-push-action@v1
         with:
           project: du7O4b0e8P

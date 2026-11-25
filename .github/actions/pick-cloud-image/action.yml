@@ -1,0 +1,104 @@
+name: Pick the Cloud image
+description: Reads the Cloud deploy history and picks the newest image the Cloud gate deployed 7 or more days ago that Cloud never dropped, or checks that Cloud never dropped a given image.
+
+inputs:
+  token:
+    description: Token that can read the Actions runs and job logs of this repository.
+    required: true
+  check-tag:
+    description: A Cloud image tag. Instead of a pick, fail when Cloud dropped this image.
+    required: false
+    default: ''
+
+outputs:
+  tag:
+    description: The picked Cloud image tag.
+    value: ${{ steps.pick.outputs.tag }}
+  digest:
+    description: The digest the approval recorded for the picked image, or empty for an approval older than the digest log.
+    value: ${{ steps.pick.outputs.digest }}
+  deployed:
+    description: When the Cloud gate deployed the picked image.
+    value: ${{ steps.pick.outputs.deployed }}
+
+runs:
+  using: composite
+  steps:
+    # The Cloud gate's approve job logs "Approved <image tag> <digest>", a rollback logs
+    # "Rolling back prod from <image tag> to <image tag>", and an emergency deploy ships an image the gate never approved.
+    # Cloud dropped an image when a rollback, a .pick hotfix or an emergency deploy replaced it, or a rollback went past it.
+    # A failed lookup stops the run, so a missed rollback can never let its image through.
+    - id: pick
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        CHECK_TAG: ${{ inputs.check-tag }}
+      run: |
+        TAG_RE='[0-9]+\.[0-9]+\.[0-9]+\.[a-f0-9]{40}\.(beta|pick)'
+        job_log() {
+          gh api "repos/$GITHUB_REPOSITORY/actions/jobs/$1/logs" | tr -d '\r'
+        }
+        SINCE=$(date -u -d '-45 days' +%Y-%m-%d)
+        CUTOFF=$(date -u -d '-7 days' +%Y-%m-%dT%H:%M:%SZ)
+        EVENTS="$RUNNER_TEMP/cloud-events"
+        : > "$EVENTS"
+        RUNS=$(gh run list -R "$GITHUB_REPOSITORY" --workflow continuous-delivery-cloud.yml --status completed --created ">=$SINCE" -L 200 --json databaseId --jq '.[].databaseId')
+        for RUN in $RUNS; do
+          JOBS=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN/jobs?per_page=100" \
+            --jq '[(.jobs[] | select(.name == "deploy" and .conclusion == "success") | .completed_at), (.jobs[] | select(.name == "approve") | .id)] | map(tostring) | join(" ")')
+          read -r DEPLOYED APPROVE <<< "$JOBS"
+          if [ -n "${DEPLOYED:-}" ] && [ -n "${APPROVE:-}" ]; then
+            LOG=$(job_log "$APPROVE")
+            sed -nE "s/^[^ ]+ Approved ($TAG_RE)( (sha256:[a-f0-9]{64}))?$/$DEPLOYED deploy \1 \4/p" <<< "$LOG" | head -1 >> "$EVENTS"
+          fi
+        done
+        RUNS=$(gh run list -R "$GITHUB_REPOSITORY" --workflow continuous-delivery-rollback.yml --status completed --created ">=$SINCE" -L 100 --json databaseId --jq '.[].databaseId')
+        for RUN in $RUNS; do
+          JOBS=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN/jobs" \
+            --jq '.jobs[] | select(.name == "rollback" and any(.steps[]?; .name == "Get current tag" and .conclusion == "success")) | "\(.completed_at) \(.id)"')
+          read -r AT JOB <<< "$JOBS"
+          if [ -n "${JOB:-}" ]; then
+            LOG=$(job_log "$JOB")
+            sed -nE "s/^[^ ]+ Rolling back prod from ($TAG_RE) to ($TAG_RE)$/$AT rollback \3 \1/p" <<< "$LOG" | head -1 >> "$EVENTS"
+          fi
+        done
+        # An emergency run counts once a deploy step ran: a run that failed or stopped before them left Cloud as it was.
+        RUNS=$(gh run list -R "$GITHUB_REPOSITORY" --workflow emergency-cloud-deploy.yml --created ">=$SINCE" -L 100 --json databaseId --jq '.[].databaseId')
+        for RUN in $RUNS; do
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN/jobs" \
+            --jq '[.jobs[].steps[]? | select((.name == "Deploy App" or .name == "Deploy Workers") and .status != "queued" and .status != "pending" and .conclusion != "skipped")] | first | select(.) | "\(.started_at) emergency"' >> "$EVENTS"
+        done
+        PICK=$(LC_ALL=C sort "$EVENTS" | awk -v cutoff="$CUTOFF" -v want="$CHECK_TAG" '
+          {
+            at[NR] = $1; kind[NR] = $2; tag[NR] = $3; digest[NR] = $4
+            if ($2 == "rollback") {
+              replaced[$4] = 1
+              for (j = NR - 1; j > 0 && tag[j] != $3; j--) ;
+              if (j > 0) for (k = j + 1; k < NR; k++) if (kind[k] == "deploy") replaced[tag[k]] = 1
+            } else if ($2 == "emergency" || $3 ~ /\.pick$/) {
+              replaced[prod] = 1
+            }
+            prod = $3
+          }
+          END {
+            if (want != "") { print (replaced[want] ? "dropped" : "kept"); exit }
+            for (i = NR; i > 0; i--) if (kind[i] == "deploy" && at[i] <= cutoff && !replaced[tag[i]]) { print at[i], tag[i], digest[i]; exit }
+          }')
+        if [ -n "$CHECK_TAG" ]; then
+          if [ "$PICK" != kept ]; then
+            echo "::error::Cloud dropped $CHECK_TAG after this run picked it: a rollback, a hotfix or an emergency deploy replaced it. Run the release again to pick another image."
+            exit 1
+          fi
+          echo "Cloud still keeps \`$CHECK_TAG\`: no rollback, hotfix or emergency deploy replaced it." >> "$GITHUB_STEP_SUMMARY"
+          exit 0
+        fi
+        read -r DEPLOYED TAG DIGEST <<< "$PICK"
+        if [ -z "$TAG" ]; then
+          echo "::error::The Cloud gate deployed no image between $SINCE and $CUTOFF that a rollback, a hotfix or an emergency deploy did not replace. Name one in cloud_image_tag."
+          exit 1
+        fi
+        {
+          echo "tag=$TAG"
+          echo "digest=$DIGEST"
+          echo "deployed=$DEPLOYED"
+        } >> "$GITHUB_OUTPUT"

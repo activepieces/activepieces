@@ -65,7 +65,7 @@ jobs:
             exit 1
           fi
           echo "sha=$SHA" >> $GITHUB_OUTPUT
-          # release-self-hosted.yml reads this line and never releases the image a prod rollback replaced.
+          # .github/actions/pick-cloud-image reads this line, and release-self-hosted.yml never releases the image a prod rollback replaced.
           echo "Rolling back ${{ inputs.target }} from $CURRENT to $ROLLBACK_TO"
 
       - uses: actions/checkout@v5

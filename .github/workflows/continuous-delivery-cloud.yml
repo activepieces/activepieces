@@ -457,7 +457,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # release-self-hosted.yml reads this line to find the images Cloud ran, and ships the digest it names:
+      # .github/actions/pick-cloud-image reads this line to find the images Cloud ran, and the self-hosted release ships the digest it names:
       # a later build of the same commit can move the tag. A digest that cannot be read never blocks the deploy.
       - env:
           IMAGE_TAG: ${{ needs.cut.outputs.image_tag }}
