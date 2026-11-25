@@ -7,12 +7,17 @@ import {
   GetDocumentAnalysisCommandOutput,
   FeatureType,
   JobStatus,
-  Block,
   TextractClient,
 } from '@aws-sdk/client-textract';
 import { randomUUID } from 'node:crypto';
 import { amazonTextractAuth, TextractAuth } from '../auth';
-import { createS3Client, createTextractClient, parseAnalysisBlocks, formatTextractError } from '../common';
+import {
+  QueryResult,
+  createS3Client,
+  createTextractClient,
+  parseAnalysisBlocks,
+  formatTextractError,
+} from '../common';
 
 export const analyzeDocumentAsync = createAction({
   auth: amazonTextractAuth,
@@ -24,7 +29,7 @@ export const analyzeDocumentAsync = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Analyze a multi-page or single-page PDF, TIFF, JPEG or PNG with AWS Textract and return its text, forms, tables, signatures, layout and answers to optional questions. Use it for multi-page documents, which the synchronous Analyze Document action cannot handle. Set source to "file" and pass the file, or to "s3" and pass the path of an object already in the bucket. With a file, the step uploads it to the bucket under activepieces-textract-uploads/, analyzes it, then deletes it. It waits up to 5 minutes for the job. Safe to retry: it changes nothing lasting. For an S3 file, reusing the same deduplication token within 7 days returns the first job; the token cannot be combined with a file upload.',
+      'Analyze a multi-page or single-page PDF, TIFF, JPEG or PNG with AWS Textract and return its text, forms, tables, signatures and answers to optional questions, one queryResults row per question. Use it for multi-page documents, which the synchronous Analyze Document action cannot handle. Set source to "file" and pass the file, or to "s3" and pass the path of an object already in the bucket. With a file, the step uploads a temporary copy to the bucket under activepieces-textract-uploads/, analyzes it, then deletes the copy; if the delete fails, the copy stays and warnings names it. It waits up to 5 minutes for the job. Safe to retry. For an S3 file, the same deduplication token with the same inputs within 7 days returns the first job; the token cannot be combined with a file upload.',
     idempotent: true,
   },
   props: {
@@ -47,7 +52,7 @@ export const analyzeDocumentAsync = createAction({
     }),
     file: Property.File({
       displayName: 'File to Upload',
-      description: 'Used when the source is a file. Deleted after the analysis.',
+      description: 'Used when the source is a file. Its S3 copy is deleted after use.',
       required: false,
       streaming: true,
     }),
@@ -77,21 +82,23 @@ export const analyzeDocumentAsync = createAction({
     }),
     clientRequestToken: Property.ShortText({
       displayName: 'Deduplication Token (Optional)',
-      description: 'S3 files only. Reused within 7 days, it returns the first job.',
+      description: 'S3 files only. Same token and inputs within 7 days give the same job.',
       required: false,
     }),
   },
   async run(context) {
+    const startedAt = Date.now();
     const { s3Bucket, source, s3Key, file, featureTypes, queries, clientRequestToken } = context.propsValue;
-    const bucket = validateBucket(s3Bucket);
     const analysis: AnalysisOptions = {
       featureTypes: [...featureTypes],
       queries: queries ?? [],
       clientRequestToken: clientRequestToken || undefined,
+      startedAt,
     };
-    const documentSource = source ?? (file ? 'file' : 's3');
+    const documentSource = source || (file ? 'file' : 's3');
 
     try {
+      const bucket = validateBucket(s3Bucket);
       if (documentSource === 'file') {
         if (!file) {
           throw new TextractStepError(
@@ -113,16 +120,26 @@ export const analyzeDocumentAsync = createAction({
       }
       if (!s3Key) {
         throw new TextractStepError(
-          'Enter the S3 File Path of a document in the bucket, or set Document Source to "Upload a file".'
+          source
+            ? 'Enter the S3 File Path of a document in the bucket, or set Document Source to "Upload a file".'
+            : 'No file was received and S3 File Path is empty. Give a file to upload, or the S3 File Path of a document in the bucket.'
         );
       }
       const client = await createTextractClient({ auth: context.auth.props, server: context.server });
       return await analyzeS3Document({ client, bucket, key: s3Key, analysis });
     } catch (e) {
       throw toStepError(e);
+    } finally {
+      releaseFile(file);
     }
   },
 });
+
+function releaseFile(file: ApFile | ApStreamingFile | undefined): void {
+  if (file && 'body' in file) {
+    file.body.destroy();
+  }
+}
 
 function validateBucket(value: unknown): string {
   const bucket = typeof value === 'string' ? value.trim() : '';
@@ -161,7 +178,11 @@ async function analyzeUploadedFile({
       warnings: [result.warnings, cleanupWarning].filter(Boolean).join(' '),
     };
   } catch (e) {
-    const error = toStepError(e);
+    const error = isAwsError(e, 'InvalidS3ObjectException')
+      ? new TextractStepError(
+          `Textract could not read the uploaded copy from the bucket (${describeAwsError(e)}). The connection needs s3:GetObject on this bucket.`
+        )
+      : toStepError(e);
     const cleanupWarning = await deleteUploadedDocument({ s3, bucket, upload });
     if (!cleanupWarning) {
       throw error;
@@ -190,9 +211,25 @@ async function uploadDocument({
     }).done();
     return { key, versionId: response.VersionId };
   } catch (e) {
-    throw new TextractStepError(
-      `Could not upload the file to S3 bucket "${bucket}" (${describeAwsError(e)}). The connection needs s3:PutObject on this bucket, and the bucket must be in the same AWS region as the connection.`
-    );
+    throw new TextractStepError(uploadErrorMessage({ bucket, error: e }));
+  }
+}
+
+function uploadErrorMessage({ bucket, error }: { bucket: string; error: unknown }): string {
+  const reason = describeAwsError(error);
+  if (!isAwsError(error)) {
+    return `Could not read the file to upload (${reason}). Check the File to Upload field and try again.`;
+  }
+  switch (error.name) {
+    case 'AccessDenied':
+      return `S3 refused the upload to bucket "${bucket}" (${reason}). The connection needs s3:PutObject, s3:GetObject and s3:DeleteObject on this bucket.`;
+    case 'NoSuchBucket':
+      return `The S3 bucket "${bucket}" does not exist (${reason}). Check the S3 Bucket field.`;
+    case 'PermanentRedirect':
+    case 'AuthorizationHeaderMalformed':
+      return `The S3 bucket "${bucket}" is in another AWS region (${reason}). Use a bucket in the connection's region.`;
+    default:
+      return `Could not upload the file to S3 bucket "${bucket}" (${reason}).`;
   }
 }
 
@@ -215,6 +252,10 @@ async function deleteUploadedDocument({
   }
 }
 
+function isAwsError(error: unknown, name?: string): error is Error {
+  return error instanceof Error && '$metadata' in error && (name === undefined || error.name === name);
+}
+
 function describeAwsError(error: unknown): string {
   if (!(error instanceof Error)) {
     return String(error);
@@ -226,7 +267,21 @@ function toStepError(error: unknown): TextractStepError {
   if (error instanceof TextractStepError) {
     return error;
   }
-  return new TextractStepError(formatTextractError(error));
+  const name = error instanceof Error ? error.name : '';
+  return new TextractStepError(asyncErrorMessage(name) ?? formatTextractError(error));
+}
+
+function asyncErrorMessage(name: string): string | undefined {
+  switch (name) {
+    case 'UnsupportedDocumentException':
+      return 'Textract cannot read this file type. Use a PDF, TIFF, JPEG or PNG file.';
+    case 'DocumentTooLargeException':
+      return 'The file is too large for Textract. PDF and TIFF files can be up to 500 MB, JPEG and PNG files up to 10 MB.';
+    case 'IdempotentParameterMismatchException':
+      return 'This Deduplication Token was used in the last 7 days with other inputs. Use a new token, or clear it.';
+    default:
+      return undefined;
+  }
 }
 
 async function analyzeS3Document({
@@ -266,74 +321,92 @@ async function analyzeS3Document({
     throw new TextractStepError('Could not start the document analysis job. Please try again.');
   }
 
-  const timeoutAt = Date.now() + TIMEOUT_MS;
+  const firstPage = await waitForJob({ client, jobId, deadline: analysis.startedAt + JOB_WAIT_MS });
+  const pages = [firstPage];
+  let nextToken = firstPage.NextToken;
+  while (nextToken) {
+    if (Date.now() >= analysis.startedAt + RESULTS_WAIT_MS) {
+      throw new TextractStepError(
+        'Textract finished, but reading all of its results took longer than 8 minutes. Try splitting the document into smaller parts and running this action on each part.'
+      );
+    }
+    const page = await getAnalysisPage({ client, jobId, nextToken });
+    pages.push(page);
+    nextToken = page.NextToken;
+  }
 
+  const pageWarnings = pages.flatMap((page) =>
+    (page.Warnings ?? [])
+      .filter((warning) => warning.ErrorCode)
+      .map((warning) => `${warning.ErrorCode} on page(s): ${warning.Pages?.join(', ') ?? 'unknown'}`)
+  );
+  const result = parseAnalysisBlocks(pages.flatMap((page) => page.Blocks ?? []));
+  return {
+    ...result,
+    queryResults: oneResultPerQuestion(result.queryResults),
+    pageCount: firstPage.DocumentMetadata?.Pages || result.pageCount,
+    status: firstPage.JobStatus === JobStatus.PARTIAL_SUCCESS ? 'PARTIAL_SUCCESS' : 'SUCCEEDED',
+    warnings: pageWarnings.length > 0
+      ? `Some pages could not be fully processed: ${pageWarnings.join('; ')}.`
+      : undefined,
+  };
+}
+
+async function waitForJob({
+  client,
+  jobId,
+  deadline,
+}: {
+  client: TextractClient;
+  jobId: string;
+  deadline: number;
+}): Promise<GetDocumentAnalysisCommandOutput> {
   do {
     await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
-
-    const allBlocks: Block[] = [];
-    const allWarnings: string[] = [];
-    let totalPages = 0;
-    let nextToken: string | undefined = undefined;
-
-    do {
-      const pollResponse: GetDocumentAnalysisCommandOutput = await client.send(
-        new GetDocumentAnalysisCommand({
-          JobId: jobId,
-          MaxResults: 1000,
-          NextToken: nextToken,
-        })
+    const response = await getAnalysisPage({ client, jobId, nextToken: undefined });
+    if (response.JobStatus === JobStatus.FAILED) {
+      throw new TextractStepError(
+        `Document analysis failed: ${response.StatusMessage ?? 'AWS could not process this document. Check that the file is a valid, non-password-protected PDF, TIFF, JPEG, or PNG.'}`
       );
-
-      const status = pollResponse.JobStatus;
-
-      if (status === JobStatus.FAILED) {
-        throw new TextractStepError(
-          `Document analysis failed: ${pollResponse.StatusMessage ?? 'AWS could not process this document. Check that the file is a valid, non-password-protected PDF, TIFF, JPEG, or PNG.'}`
-        );
-      }
-
-      if (status === JobStatus.IN_PROGRESS) {
-        break;
-      }
-
-      if (totalPages === 0 && pollResponse.DocumentMetadata?.Pages) {
-        totalPages = pollResponse.DocumentMetadata.Pages;
-      }
-
-      for (const warning of pollResponse.Warnings ?? []) {
-        if (warning.ErrorCode) {
-          const pages = warning.Pages?.join(', ') ?? 'unknown';
-          allWarnings.push(`${warning.ErrorCode} on page(s): ${pages}`);
-        }
-      }
-
-      allBlocks.push(...(pollResponse.Blocks ?? []));
-      nextToken = pollResponse.NextToken;
-
-      if (!nextToken) {
-        const result = parseAnalysisBlocks(allBlocks);
-        return {
-          ...result,
-          pageCount: totalPages || result.pageCount,
-          status: status === JobStatus.PARTIAL_SUCCESS ? 'PARTIAL_SUCCESS' : 'SUCCEEDED',
-          warnings: allWarnings.length > 0
-            ? `Some pages could not be fully processed: ${allWarnings.join('; ')}`
-            : undefined,
-        };
-      }
-    } while (nextToken && Date.now() < timeoutAt);
-  } while (Date.now() < timeoutAt);
+    }
+    if (response.JobStatus !== JobStatus.IN_PROGRESS) {
+      return response;
+    }
+  } while (Date.now() < deadline);
 
   throw new TextractStepError(
     'Document analysis is taking longer than expected (5 minutes). This can happen with very large documents. Try splitting the document into smaller parts and running this action on each part.'
   );
 }
 
+function getAnalysisPage({
+  client,
+  jobId,
+  nextToken,
+}: {
+  client: TextractClient;
+  jobId: string;
+  nextToken: string | undefined;
+}): Promise<GetDocumentAnalysisCommandOutput> {
+  return client.send(new GetDocumentAnalysisCommand({ JobId: jobId, MaxResults: 1000, NextToken: nextToken }));
+}
+
+function oneResultPerQuestion(results: QueryResult[]): QueryResult[] {
+  const byQuestion = new Map<string, QueryResult>();
+  for (const result of results) {
+    const kept = byQuestion.get(result.query);
+    if (!kept || (!kept.answer && result.answer)) {
+      byQuestion.set(result.query, result);
+    }
+  }
+  return [...byQuestion.values()];
+}
+
 class TextractStepError extends Error {}
 
 const POLL_INTERVAL_MS = 5000;
-const TIMEOUT_MS = 5 * 60 * 1000;
+const JOB_WAIT_MS = 5 * 60 * 1000;
+const RESULTS_WAIT_MS = 8 * 60 * 1000;
 const UPLOAD_KEY_PREFIX = 'activepieces-textract-uploads';
 const BUCKET_NAME_REGEX = /^[a-zA-Z0-9._-]{3,255}$/;
 
@@ -341,6 +414,7 @@ type AnalysisOptions = {
   featureTypes: FeatureType[];
   queries: unknown[];
   clientRequestToken: string | undefined;
+  startedAt: number;
 };
 
 type UploadedDocument = {

@@ -9,7 +9,7 @@ vi.mock('@aws-sdk/client-sts', () => ({
 
 import { PieceServerContextError } from '@activepieces/pieces-framework';
 import { amazonTextractOidcAuth } from './auth';
-import { createTextractClient } from './common';
+import { createS3Client, createTextractClient } from './common';
 
 const mintOidcToken = vi.fn();
 
@@ -232,5 +232,40 @@ describe('createTextractClient', () => {
       }),
     ).rejects.toThrow('Failed to get OIDC token: the response did not include a token');
     expect(sendMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('createS3Client', () => {
+  const fetchMock = vi.fn();
+
+  beforeEach(() => {
+    sendMock.mockReset();
+    fetchMock.mockReset();
+    vi.stubGlobal('fetch', fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('gives the S3 client the assumed role credentials for an OIDC connection', async () => {
+    fetchMock.mockResolvedValue({ ok: true, json: async () => ({ token: 'engine-oidc-token' }) });
+    sendMock.mockResolvedValue(stsCredentials);
+
+    const s3 = await createS3Client({
+      auth: { roleArn: 'arn:aws:iam::123456789012:role/textract-uploads', region: 'eu-north-1' },
+      server: runtimeServer,
+    });
+
+    expect(sendMock.mock.calls[0][0].input).toMatchObject({
+      RoleArn: 'arn:aws:iam::123456789012:role/textract-uploads',
+      WebIdentityToken: 'engine-oidc-token',
+    });
+    await expect(s3.config.credentials()).resolves.toMatchObject({
+      accessKeyId: 'ASIATEMP',
+      secretAccessKey: 'temp-secret',
+      sessionToken: 'temp-session',
+    });
+    await expect(s3.config.region()).resolves.toBe('eu-north-1');
   });
 });

@@ -141,7 +141,7 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
 
     it('names s3:DeleteObjectVersion when the version cannot be deleted', async () => {
       uploadDone.mockResolvedValue({ VersionId: 'version-7' });
-      s3Send.mockRejectedValueOnce(Object.assign(new Error('Access Denied'), { name: 'AccessDenied' }));
+      s3Send.mockRejectedValueOnce(awsError('AccessDenied', 'Access Denied'));
 
       const result = await runAction({ source: 'file', file: new ApFile('contract.pdf', Buffer.from('%PDF'), 'pdf') });
 
@@ -167,15 +167,37 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
     });
 
     it('names the missing permission when S3 refuses the upload, and never starts a job', async () => {
-      uploadDone.mockRejectedValueOnce(Object.assign(new Error('Access Denied'), { name: 'AccessDenied' }));
+      uploadDone.mockRejectedValueOnce(awsError('AccessDenied', 'Access Denied'));
 
       await expect(
         runAction({ source: 'file', file: new ApFile('contract.pdf', Buffer.from('%PDF'), 'pdf') })
       ).rejects.toThrow(
-        'Could not upload the file to S3 bucket "docs-bucket" (AccessDenied: Access Denied). The connection needs s3:PutObject on this bucket, and the bucket must be in the same AWS region as the connection.'
+        'S3 refused the upload to bucket "docs-bucket" (AccessDenied: Access Denied). The connection needs s3:PutObject, s3:GetObject and s3:DeleteObject on this bucket.'
       );
       expect(textractSend).not.toHaveBeenCalled();
       expect(s3Send).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      [
+        awsError('NoSuchBucket', 'The specified bucket does not exist'),
+        'The S3 bucket "docs-bucket" does not exist (NoSuchBucket: The specified bucket does not exist). Check the S3 Bucket field.',
+      ],
+      [
+        awsError('PermanentRedirect', 'The bucket you are attempting to access must be addressed using the specified endpoint.'),
+        'The S3 bucket "docs-bucket" is in another AWS region (PermanentRedirect: The bucket you are attempting to access must be addressed using the specified endpoint.). Use a bucket in the connection\'s region.',
+      ],
+      [
+        Object.assign(new Error('terminated'), { name: 'TypeError' }),
+        'Could not read the file to upload (TypeError: terminated). Check the File to Upload field and try again.',
+      ],
+    ])('explains an upload failure by its cause: %s', async (error, message) => {
+      uploadDone.mockRejectedValueOnce(error);
+
+      await expect(
+        runAction({ source: 'file', file: new ApFile('contract.pdf', Buffer.from('%PDF'), 'pdf') })
+      ).rejects.toThrow(message);
+      expect(textractSend).not.toHaveBeenCalled();
     });
 
     it('still deletes the uploaded file when the analysis fails', async () => {
@@ -189,14 +211,31 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
       expect(deleteInputs()).toHaveLength(1);
     });
 
-    it('keeps the friendly Textract message and still deletes when AWS rejects the job', async () => {
+    it('names s3:GetObject and still deletes when Textract cannot read the uploaded copy', async () => {
       textractSend.mockRejectedValueOnce(
-        Object.assign(new Error('Unable to get object metadata from S3'), { name: 'InvalidS3ObjectException' })
+        awsError('InvalidS3ObjectException', 'Unable to get object metadata from S3')
       );
 
       await expect(
         runAction({ source: 'file', file: new ApFile('contract.pdf', Buffer.from('%PDF'), 'pdf') })
-      ).rejects.toThrow(/^The specified S3 object could not be read\. Check the bucket name, key, and permissions\.$/);
+      ).rejects.toThrow(
+        /^Textract could not read the uploaded copy from the bucket \(InvalidS3ObjectException: Unable to get object metadata from S3\)\. The connection needs s3:GetObject on this bucket\.$/
+      );
+      expect(deleteInputs()).toHaveLength(1);
+    });
+
+    it.each([
+      ['UnsupportedDocumentException', 'Textract cannot read this file type. Use a PDF, TIFF, JPEG or PNG file.'],
+      [
+        'DocumentTooLargeException',
+        'The file is too large for Textract. PDF and TIFF files can be up to 500 MB, JPEG and PNG files up to 10 MB.',
+      ],
+    ])('explains %s for the uploaded file and still deletes it', async (name, message) => {
+      textractSend.mockRejectedValueOnce(awsError(name, 'rejected'));
+
+      await expect(
+        runAction({ source: 'file', file: new ApFile('notes.docx', Buffer.from('PK'), 'docx') })
+      ).rejects.toThrow(message);
       expect(deleteInputs()).toHaveLength(1);
     });
 
@@ -204,7 +243,7 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
       textractSend.mockImplementation(async (command: AwsCommand) =>
         command.kind === 'start' ? { JobId: 'job-1' } : { JobStatus: 'FAILED', StatusMessage: 'Unsupported document' }
       );
-      s3Send.mockRejectedValueOnce(Object.assign(new Error('Access Denied'), { name: 'AccessDenied' }));
+      s3Send.mockRejectedValueOnce(awsError('AccessDenied', 'Access Denied'));
 
       const error = await runAction({
         source: 'file',
@@ -218,7 +257,7 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
     });
 
     it('returns the results with a warning when the uploaded file cannot be deleted', async () => {
-      s3Send.mockRejectedValueOnce(Object.assign(new Error('Access Denied'), { name: 'AccessDenied' }));
+      s3Send.mockRejectedValueOnce(awsError('AccessDenied', 'Access Denied'));
 
       const result = await runAction({ source: 'file', file: new ApFile('contract.pdf', Buffer.from('%PDF'), 'pdf') });
 
@@ -230,7 +269,41 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
       });
     });
 
-    it('stops paging at the 5-minute limit and still deletes the upload', async () => {
+    it('keeps the page warning and the cleanup warning apart', async () => {
+      textractSend.mockImplementation(async (command: AwsCommand) =>
+        command.kind === 'start'
+          ? { JobId: 'job-1' }
+          : { ...threePageResult(), JobStatus: 'PARTIAL_SUCCESS', Warnings: [{ ErrorCode: 'UNSUPPORTED_PAGE', Pages: [2] }] }
+      );
+      s3Send.mockRejectedValueOnce(awsError('AccessDenied', 'Access Denied'));
+
+      const result = await runAction({ source: 'file', file: new ApFile('contract.pdf', Buffer.from('%PDF'), 'pdf') });
+
+      expect(result).toMatchObject({
+        status: 'PARTIAL_SUCCESS',
+        warnings: expect.stringMatching(
+          /^Some pages could not be fully processed: UNSUPPORTED_PAGE on page\(s\): 2\. The uploaded file could not be deleted from s3:\/\/docs-bucket\//
+        ),
+      });
+    });
+
+    it('counts the upload in the 5-minute wait for the job, and still deletes the upload', async () => {
+      uploadDone.mockImplementation(async () => {
+        vi.setSystemTime(Date.now() + 120_000);
+        return {};
+      });
+      textractSend.mockImplementation(async (command: AwsCommand) =>
+        command.kind === 'start' ? { JobId: 'job-1' } : { JobStatus: 'IN_PROGRESS' }
+      );
+
+      await expect(
+        runAction({ source: 'file', file: new ApFile('contract.pdf', Buffer.from('%PDF'), 'pdf') })
+      ).rejects.toThrow('Document analysis is taking longer than expected (5 minutes).');
+      expect(getCalls().length).toBeLessThanOrEqual(36);
+      expect(deleteInputs()).toHaveLength(1);
+    });
+
+    it('stops reading results at the 8-minute limit and still deletes the upload', async () => {
       textractSend.mockImplementation(async (command: AwsCommand) => {
         if (command.kind === 'start') {
           return { JobId: 'job-1' };
@@ -241,8 +314,8 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
 
       await expect(
         runAction({ source: 'file', file: new ApFile('contract.pdf', Buffer.from('%PDF'), 'pdf') })
-      ).rejects.toThrow('Document analysis is taking longer than expected (5 minutes).');
-      expect(textractSend.mock.calls.length).toBeLessThan(10);
+      ).rejects.toThrow('Textract finished, but reading all of its results took longer than 8 minutes.');
+      expect(getCalls().length).toBeLessThan(10);
       expect(deleteInputs()).toHaveLength(1);
     });
   });
@@ -267,6 +340,19 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
       expect(startInput()).toMatchObject({ DocumentLocation: { S3Object: { Name: 'reports/contract.pdf' } } });
     });
 
+    it('closes a streaming file it does not upload', async () => {
+      const file: ApStreamingFile = {
+        filename: 'other.pdf',
+        extension: 'pdf',
+        body: Readable.from([Buffer.from('%PDF')]),
+      };
+
+      await runAction({ source: 's3', s3Key: 'reports/contract.pdf', file });
+
+      expectNoS3Calls();
+      expect(file.body.destroyed).toBe(true);
+    });
+
     it('passes the Deduplication Token to Textract', async () => {
       await runAction({ source: 's3', s3Key: 'reports/contract.pdf', clientRequestToken: 'invoice-001' });
 
@@ -278,6 +364,34 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
         'Enter the S3 File Path of a document in the bucket, or set Document Source to "Upload a file".'
       );
       expectNoAwsCalls();
+    });
+
+    it('explains a Deduplication Token already used with other inputs', async () => {
+      textractSend.mockRejectedValueOnce(
+        awsError('IdempotentParameterMismatchException', 'ClientRequestToken reused with different parameters')
+      );
+
+      await expect(
+        runAction({ source: 's3', s3Key: 'reports/contract.pdf', clientRequestToken: 'invoice-001' })
+      ).rejects.toThrow('This Deduplication Token was used in the last 7 days with other inputs. Use a new token, or clear it.');
+    });
+
+    it('reads every result page of a job that finishes just before the 5-minute wait ends', async () => {
+      const startedAt = Date.now();
+      textractSend.mockImplementation(async (command: AwsCommand) => {
+        if (command.kind === 'start') {
+          return { JobId: 'job-1' };
+        }
+        if (Date.now() < startedAt + 290_000) {
+          return { JobStatus: 'IN_PROGRESS' };
+        }
+        vi.setSystemTime(Date.now() + 20_000);
+        return resultPage(command.input['NextToken']);
+      });
+
+      const result = await runAction({ source: 's3', s3Key: 'reports/contract.pdf' });
+
+      expect(result).toMatchObject({ status: 'SUCCEEDED', lines: [{ pageNumber: 1 }, { pageNumber: 2 }, { pageNumber: 3 }] });
     });
   });
 
@@ -293,6 +407,19 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
       await runAction({ file: new ApFile('contract.pdf', Buffer.from('%PDF'), 'pdf') });
 
       expect(uploadParams().Key).toMatch(UPLOAD_KEY);
+    });
+
+    it('uploads a file when Document Source arrives empty', async () => {
+      await runAction({ source: '', file: new ApFile('contract.pdf', Buffer.from('%PDF'), 'pdf') });
+
+      expect(uploadParams().Key).toMatch(UPLOAD_KEY);
+    });
+
+    it('names both fields when neither a file nor an S3 File Path arrived', async () => {
+      await expect(runAction({})).rejects.toThrow(
+        'No file was received and S3 File Path is empty. Give a file to upload, or the S3 File Path of a document in the bucket.'
+      );
+      expectNoAwsCalls();
     });
   });
 
@@ -327,8 +454,24 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
     });
   });
 
+  it('returns one row per question, from the first page with an answer', async () => {
+    textractSend.mockImplementation(async (command: AwsCommand) =>
+      command.kind === 'start' ? { JobId: 'job-1' } : answeredQuestions()
+    );
+
+    const result = await runAction({ source: 's3', s3Key: 'contract.pdf', queries: ['Total Due', 'Invoice Number', 'Due Date'] });
+
+    expect(result).toMatchObject({
+      queryResults: [
+        { query: 'Total Due', answer: '$1,250.00', pageNumber: 3 },
+        { query: 'Invoice Number', answer: 'INV-7', pageNumber: 1 },
+        { query: 'Due Date', answer: '', pageNumber: 1 },
+      ],
+    });
+  });
+
   it('explains LimitExceededException as too many running jobs', async () => {
-    textractSend.mockRejectedValueOnce(Object.assign(new Error('limit'), { name: 'LimitExceededException' }));
+    textractSend.mockRejectedValueOnce(awsError('LimitExceededException', 'limit'));
 
     await expect(runAction({ source: 's3', s3Key: 'contract.pdf' })).rejects.toThrow(
       'Too many Textract jobs are running in this AWS account.'
@@ -416,6 +559,14 @@ function expectNoAwsCalls() {
   expect(textractSend).not.toHaveBeenCalled();
 }
 
+function getCalls(): AwsCommand[] {
+  return textractSend.mock.calls.map(([command]) => command).filter((command) => command.kind === 'get');
+}
+
+function awsError(name: string, message: string): Error {
+  return Object.assign(new Error(message), { name, $metadata: { httpStatusCode: 400 } });
+}
+
 function startInput(): Record<string, unknown> {
   const start = textractSend.mock.calls
     .map(([command]) => command)
@@ -444,6 +595,43 @@ function threePageResult() {
       ...pages.map((page) => ({ BlockType: 'WORD', Id: `word-${page}`, Page: page, Text: `Page marker ${page}` })),
     ],
   };
+}
+
+function resultPage(nextToken: unknown) {
+  const page = nextToken === 'page-3' ? 3 : nextToken === 'page-2' ? 2 : 1;
+  return {
+    JobStatus: 'SUCCEEDED',
+    DocumentMetadata: { Pages: 3 },
+    NextToken: page < 3 ? `page-${page + 1}` : undefined,
+    Blocks: [
+      { BlockType: 'PAGE', Id: `page-${page}`, Page: page },
+      { BlockType: 'LINE', Id: `line-${page}`, Page: page, Text: `Page marker ${page}`, Confidence: 99 },
+    ],
+  };
+}
+
+function answeredQuestions() {
+  const questions = ['Total Due', 'Invoice Number', 'Due Date'];
+  const answers = new Map([
+    ['Total Due@3', '$1,250.00'],
+    ['Invoice Number@1', 'INV-7'],
+    ['Invoice Number@2', 'INV-8'],
+  ]);
+  const blocks = [1, 2, 3].flatMap((page) =>
+    questions.flatMap((question, index): Record<string, unknown>[] => {
+      const id = `query-${page}-${index}`;
+      const answer = answers.get(`${question}@${page}`);
+      const query = { BlockType: 'QUERY', Id: id, Page: page, Query: { Text: question } };
+      if (answer === undefined) {
+        return [query];
+      }
+      return [
+        { ...query, Relationships: [{ Type: 'ANSWER', Ids: [`${id}-answer`] }] },
+        { BlockType: 'QUERY_RESULT', Id: `${id}-answer`, Page: page, Text: answer, Confidence: 90 },
+      ];
+    })
+  );
+  return { JobStatus: 'SUCCEEDED', DocumentMetadata: { Pages: 3 }, Blocks: blocks };
 }
 
 type AwsCommand = { kind: string; input: Record<string, unknown> };
