@@ -34,7 +34,7 @@ export const ConfigurationsPage = () => {
   const {
     data: configuration,
     isLoading,
-    isError,
+    isLoadingError,
     refetch,
   } = platformConfigurationHooks.useCurrentPlatformConfiguration({
     refetchOnMount: 'always',
@@ -45,7 +45,7 @@ export const ConfigurationsPage = () => {
     return <Navigate to="/platform/workers" replace />;
   }
 
-  if (isError && isNil(configuration)) {
+  if (isLoadingError) {
     return (
       <AdminPage width="content">
         <ConfigurationsHeader />

@@ -55,7 +55,6 @@ function AccessContent() {
   const {
     data: mcpServer,
     isLoading,
-    isError,
     refetch,
   } = platformMcpHooks.usePlatformMcpServer();
   const { mutate: updateTools } = platformMcpHooks.useUpdatePlatformMcpTools();
@@ -68,7 +67,7 @@ function AccessContent() {
     );
   }
 
-  if (isError || !mcpServer) {
+  if (!mcpServer) {
     return (
       <DataFetchErrorState entity={t('the MCP server')} onRetry={refetch} />
     );

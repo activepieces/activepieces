@@ -20,6 +20,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { adminLayout } from '@/app/components/admin';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -166,7 +167,11 @@ function CapabilityForm({
   });
   const source = form.watch('source');
   const selectedAiProvider = aiProviders.find((p) => p.id === source);
-  const { data: models = [] } = aiProviderQueries.useConfigModels(
+  const {
+    data: models = [],
+    isLoadingError: isModelsError,
+    refetch: refetchModels,
+  } = aiProviderQueries.useConfigModels(
     needsModel && !isEmbeddings ? selectedAiProvider?.id : undefined,
   );
   const modelOptions = isNil(selectedAiProvider)
@@ -299,7 +304,15 @@ function CapabilityForm({
             />
           )}
 
-          {selectedAiProvider && needsModel && (
+          {selectedAiProvider && needsModel && isModelsError && (
+            <DataFetchErrorState
+              entity={t('models')}
+              onRetry={refetchModels}
+              className="py-4"
+            />
+          )}
+
+          {selectedAiProvider && needsModel && !isModelsError && (
             <FormField
               control={form.control}
               name="modelId"

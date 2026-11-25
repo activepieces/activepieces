@@ -1,6 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
+/* eslint-disable jest-dom/prefer-in-document -- @testing-library/jest-dom is not a dependency of packages/web */
 import { AIProviderName } from '@activepieces/core-utils';
 import {
   AIProviderModel,
@@ -63,6 +64,8 @@ const renderList = (
       tiersByModel={new Map([['gpt-main', ['Smart']]])}
       selection={{ modelScope: 'selected', modelIds: ['gpt-main'] }}
       isLoading={false}
+      isError={false}
+      onRetry={vi.fn()}
       onChange={onChange}
       {...props}
     />,
@@ -206,5 +209,12 @@ describe('KeyModelList', () => {
     const next = onChange.mock.calls[0][0];
     expect(next.modelScope).toBe('selected');
     expect(next.modelIds).toHaveLength(5);
+  });
+
+  it('shows a retry, not an empty list, when the models fail to load', () => {
+    renderList({ models: [], isError: true });
+
+    expect(screen.getByTestId('data-fetch-error-retry')).toBeDefined();
+    expect(screen.queryByText('No models found')).toBeNull();
   });
 });

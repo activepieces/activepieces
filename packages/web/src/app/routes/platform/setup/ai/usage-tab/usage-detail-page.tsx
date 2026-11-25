@@ -52,12 +52,13 @@ export function UsageDetailPage() {
   const { dimension: param, id } = useParams();
   const dimension = AI_USAGE_DIMENSIONS.find((item) => item === param);
   const view = useUsageView();
-  const { data, isLoading, isError, refetch } = aiUsageHooks.useUsageDetail({
-    dimension,
-    id,
-    period: view.period,
-    scope: view.scope,
-  });
+  const { data, isLoading, isLoadingError, refetch } =
+    aiUsageHooks.useUsageDetail({
+      dimension,
+      id,
+      period: view.period,
+      scope: view.scope,
+    });
   if (isNil(dimension)) {
     return <Navigate to={`/platform/ai/usage${view.search}`} replace />;
   }
@@ -94,7 +95,7 @@ export function UsageDetailPage() {
         dimension={dimension}
         data={data}
         isLoading={isLoading}
-        isError={isError}
+        isError={isLoadingError}
         onRetry={refetch}
       />
     </>

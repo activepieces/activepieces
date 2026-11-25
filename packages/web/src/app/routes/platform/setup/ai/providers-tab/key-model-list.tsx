@@ -15,6 +15,7 @@ import {
 import { ReactNode, useId, useState } from 'react';
 
 import { adminSurface } from '@/app/components/admin';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { DataTableSelectPopover } from '@/components/custom/data-table/data-table-select-popover';
 import { InputWithIcon } from '@/components/custom/input-with-icon';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
@@ -50,6 +51,8 @@ export function KeyModelList({
   tiersByModel,
   selection,
   isLoading,
+  isError,
+  onRetry,
   action,
   onChange,
 }: KeyModelListProps) {
@@ -106,6 +109,8 @@ export function KeyModelList({
           <span className="text-sm tabular-nums text-gray-11">
             {isLoading
               ? t('Loading models…')
+              : isError
+              ? null
               : t('{count} of {total}', {
                   count: onCount,
                   total: models.length,
@@ -124,7 +129,7 @@ export function KeyModelList({
           <Switch
             id={switchId}
             checked={allModels}
-            disabled={isLoading}
+            disabled={isLoading || isError}
             onCheckedChange={(on) =>
               onChange(
                 keyModelSelection.setAutoAdd({ on, listedIds, lockedIds }),
@@ -220,7 +225,10 @@ export function KeyModelList({
               <Skeleton className="h-3.5 w-40" />
             </div>
           ))}
-        {!isLoading && filtered.length === 0 && (
+        {!isLoading && isError && (
+          <DataFetchErrorState entity={t('models')} onRetry={onRetry} />
+        )}
+        {!isLoading && !isError && filtered.length === 0 && (
           <p className="px-4 py-6 text-center text-sm text-gray-11">
             {models.length === 0
               ? t('No models found')
@@ -230,6 +238,7 @@ export function KeyModelList({
           </p>
         )}
         {!isLoading &&
+          !isError &&
           page.map((model) => {
             const tierNames = tiersByModel.get(model.id);
             const locked = tierNames !== undefined;
@@ -426,6 +435,8 @@ type KeyModelListProps = {
   tiersByModel: Map<string, string[]>;
   selection: KeyModelSelection;
   isLoading: boolean;
+  isError: boolean;
+  onRetry: () => void;
   action?: ReactNode;
   onChange: (selection: KeyModelSelection) => void;
 };

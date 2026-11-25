@@ -50,7 +50,7 @@ vi.mock('@/features/platform-admin', () => {
       useAiProviderConfigs: () => ({
         data: state.providers,
         isLoading: false,
-        isError: false,
+        isLoadingError: false,
         refetch: vi.fn(),
       }),
     },

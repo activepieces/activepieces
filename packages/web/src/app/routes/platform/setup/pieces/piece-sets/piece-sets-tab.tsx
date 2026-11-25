@@ -57,7 +57,7 @@ export const PieceSetsTab = () => {
   const {
     data: pieceSetsPage,
     isLoading,
-    isError,
+    isLoadingError: isError,
     refetch,
   } = pieceSetQueries.usePieceSets({ cursor, limit, name });
   const { mutate: deleteSet } = pieceSetMutations.useDeletePieceSet();

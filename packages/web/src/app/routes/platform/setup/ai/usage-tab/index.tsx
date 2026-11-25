@@ -33,10 +33,11 @@ import { UsageTopList } from './usage-top-list';
 
 export function UsageTab() {
   const view = useUsageView();
-  const { data, isLoading, isError, refetch } = aiUsageHooks.useUsageOverview({
-    period: view.period,
-    scope: view.scope,
-  });
+  const { data, isLoading, isLoadingError, refetch } =
+    aiUsageHooks.useUsageOverview({
+      period: view.period,
+      scope: view.scope,
+    });
   return (
     <>
       <AdminPageHeader
@@ -52,7 +53,7 @@ export function UsageTab() {
         view={view}
         data={data}
         isLoading={isLoading}
-        isError={isError}
+        isError={isLoadingError}
         onRetry={refetch}
       />
     </>

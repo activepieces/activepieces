@@ -6,7 +6,7 @@ import {
   tryCatch,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, RefreshCw } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -33,6 +33,7 @@ import {
 import { pieceSetMutations, pieceSetQueries } from '@/features/piece-sets';
 import { projectHooks } from '@/features/projects';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { cn } from '@/lib/utils';
 
 type PieceSetProjectsDialogProps = {
   pieceSet: PieceSet;
@@ -197,8 +198,13 @@ export const PieceSetProjectsDialog = ({
   pieceSet,
 }: PieceSetProjectsDialogProps) => {
   const [open, setOpen] = useState(false);
-  const { data: platformsData, isLoading } =
-    projectHooks.useProjectsForPlatforms();
+  const {
+    data: platformsData,
+    isLoading,
+    isLoadingError,
+    isFetching,
+    refetch,
+  } = projectHooks.useProjectsForPlatforms();
 
   const allProjects = useMemo<ProjectWithLimits[]>(
     () => platformsData?.flatMap((p) => p.projects) ?? [],
@@ -215,6 +221,24 @@ export const PieceSetProjectsDialog = ({
     () => assignedProjects.map((project) => project.id),
     [assignedProjects],
   );
+
+  if (isLoadingError) {
+    return (
+      <span className="flex items-center gap-2 text-sm text-gray-11">
+        {t('Trouble loading {entity}', { entity: t('projects') })}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          aria-label={t('Retry')}
+          disabled={isFetching}
+          onClick={() => refetch()}
+        >
+          <RefreshCw className={cn('size-3', isFetching && 'animate-spin')} />
+        </Button>
+      </span>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

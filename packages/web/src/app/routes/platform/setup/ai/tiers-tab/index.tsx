@@ -39,13 +39,13 @@ export function TiersTab() {
   const {
     data: tiers,
     isLoading: tiersLoading,
-    isError: tiersError,
+    isLoadingError: tiersError,
     refetch: refetchTiers,
   } = platformModelTierQueries.useAdminList();
   const {
     data: configs,
     isLoading: configsLoading,
-    isError: configsError,
+    isLoadingError: configsError,
     refetch: refetchConfigs,
   } = aiProviderQueries.useAiProviderConfigs();
   const { data: configuration, isLoading: configurationLoading } =
@@ -92,9 +92,7 @@ export function TiersTab() {
     return <TiersSkeleton />;
   }
 
-  const isError =
-    (tiersError && tiers === undefined) ||
-    (configsError && configs === undefined);
+  const isError = tiersError || configsError;
   const noKeys = ownKeys.length === 0 && liveTiers.length === 0;
   const retry = () => Promise.all([refetchTiers(), refetchConfigs()]);
 

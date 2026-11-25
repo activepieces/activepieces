@@ -48,7 +48,7 @@ const SecretManagersPage = () => {
   const {
     data: connections,
     isLoading: isLoadingConnections,
-    isError: isConnectionsError,
+    isLoadingError: isConnectionsError,
     refetch: refetchConnections,
   } = secretManagersHooks.useListSecretManagerConnections({
     listForPlatform: true,

@@ -61,7 +61,7 @@ export const platformModelTierQueries = {
                     }),
               isLoading: results[index].isLoading,
               isFetching: results[index].isFetching,
-              isError: results[index].isError,
+              isError: results[index].isLoadingError,
               refetch: results[index].refetch,
             },
           ]),
@@ -397,6 +397,6 @@ type KeyModelsQueryResult = {
     | undefined;
   isLoading: boolean;
   isFetching: boolean;
-  isError: boolean;
+  isLoadingError: boolean;
   refetch: () => unknown;
 };

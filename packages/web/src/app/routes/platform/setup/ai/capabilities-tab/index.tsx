@@ -48,12 +48,12 @@ import {
 export function CapabilitiesTab() {
   const {
     data: configs,
-    isError: configsFailed,
+    isLoadingError: configsFailed,
     refetch: refetchConfigs,
   } = aiToolConfigQueries.useAiToolConfigs();
   const {
     data: providers,
-    isError: providersFailed,
+    isLoadingError: providersFailed,
     refetch: refetchProviders,
   } = aiProviderQueries.useAiProviderConfigs();
   const isError = configsFailed || providersFailed;

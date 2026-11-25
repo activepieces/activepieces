@@ -1,7 +1,9 @@
+import { ErrorCode } from '@activepieces/core-utils';
 import { PieceMetadataModel } from '@activepieces/pieces-framework';
 import { useMemo } from 'react';
 
 import { piecesHooks } from '@/features/pieces';
+import { api } from '@/lib/api';
 
 export function useRequiredActionsGroupedByPiece({
   actions,
@@ -11,6 +13,11 @@ export function useRequiredActionsGroupedByPiece({
   const pieceNames = useMemo(() => Object.keys(actions), [actions]);
   const pieceQueries = piecesHooks.useMultiplePieces({ names: pieceNames });
   const isLoading = pieceQueries.some((query) => query.isLoading);
+  const failedQueries = pieceQueries.filter(
+    (query) =>
+      query.isLoadingError &&
+      !api.isApError(query.error, ErrorCode.ENTITY_NOT_FOUND),
+  );
 
   const requiredActionsGroupedByPiece = useMemo(() => {
     const allPieces = pieceNames.map((pieceName, index) =>
@@ -32,6 +39,8 @@ export function useRequiredActionsGroupedByPiece({
     requiredActionsGroupedByPiece,
     actionsInLatestPieceVersionCount,
     isLoading,
+    isError: failedQueries.length > 0,
+    refetch: () => Promise.all(failedQueries.map((query) => query.refetch())),
   };
 }
 

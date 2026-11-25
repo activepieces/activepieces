@@ -54,7 +54,7 @@ export const PiecesListTab = () => {
     pieces,
     refetch: refetchPieces,
     isLoading,
-    isError,
+    isLoadingError: isError,
   } = piecesHooks.usePieces({
     searchQuery,
     includeHidden: true,

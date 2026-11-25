@@ -84,7 +84,7 @@ export default function TriggerHealthPage() {
   const {
     data: report,
     isLoading,
-    isError,
+    isLoadingError: isError,
     refetch,
   } = triggerRunHooks.useStatusReport();
 

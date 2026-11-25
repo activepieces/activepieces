@@ -22,13 +22,13 @@ const state = vi.hoisted(() => ({
   tiers: {
     data: undefined as PlatformModelTier[] | undefined,
     isLoading: false,
-    isError: false,
+    isLoadingError: false,
     refetch: () => Promise.resolve(),
   },
   configs: {
     data: undefined as AIProviderWithoutSensitiveData[] | undefined,
     isLoading: false,
-    isError: false,
+    isLoadingError: false,
     refetch: () => Promise.resolve(),
   },
   keyModels: {} as KeyModelsById,
@@ -108,13 +108,13 @@ beforeEach(() => {
   state.tiers = {
     data: [],
     isLoading: false,
-    isError: false,
+    isLoadingError: false,
     refetch: () => Promise.resolve(),
   };
   state.configs = {
     data: [key('k1')],
     isLoading: false,
-    isError: false,
+    isLoadingError: false,
     refetch: () => Promise.resolve(),
   };
   state.keyModels = {
@@ -144,25 +144,9 @@ describe('TiersTab states', () => {
   });
 
   it('shows the fetch error placeholder when the tiers list fails', () => {
-    state.tiers = { ...state.tiers, data: undefined, isError: true };
+    state.tiers = { ...state.tiers, data: undefined, isLoadingError: true };
     renderTab();
     expect(screen.getByText('Trouble loading tiers')).toBeDefined();
-  });
-
-  it('keeps the cards when a refetch fails after data loaded', () => {
-    state.tiers = {
-      ...state.tiers,
-      isError: true,
-      data: [
-        tier('expert', {
-          name: 'Expert',
-          entries: [{ configId: 'k1', modelId: 'sonnet' }],
-        }),
-      ],
-    };
-    renderTab();
-    expect(screen.getByText('Expert')).toBeDefined();
-    expect(screen.queryByText('Trouble loading tiers')).toBeNull();
   });
 
   it('still shows existing tiers when the platform has no own keys left', () => {

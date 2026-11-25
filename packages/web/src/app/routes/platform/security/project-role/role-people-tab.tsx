@@ -16,7 +16,7 @@ export function RolePeopleTab({ projectRole }: RolePeopleTabProps) {
   const {
     data,
     isLoading,
-    isError,
+    isLoadingError,
     refetch,
     fetchNextPage,
     hasNextPage,
@@ -31,7 +31,7 @@ export function RolePeopleTab({ projectRole }: RolePeopleTabProps) {
     );
   }
 
-  if (isError) {
+  if (isLoadingError) {
     return (
       <div className="flex h-full items-center justify-center px-6">
         <DataFetchErrorState entity={t('people')} onRetry={refetch} />

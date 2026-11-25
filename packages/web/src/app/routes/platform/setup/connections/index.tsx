@@ -206,7 +206,7 @@ const GlobalConnectionsTable = () => {
   const {
     data: globalConnections,
     isLoading: isLoadingGlobalConnections,
-    isError: isGlobalConnectionsError,
+    isLoadingError: isGlobalConnectionsError,
     refetch: refetchGlobalConnections,
   } = globalConnectionsQueries.useGlobalConnections({
     request: {

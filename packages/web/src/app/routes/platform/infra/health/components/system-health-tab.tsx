@@ -15,6 +15,7 @@ import React from 'react';
 import semver from 'semver';
 
 import { SettingsPanel, SettingsRow, StatusDot } from '@/app/components/admin';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { healthQueries } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -42,7 +43,12 @@ type SystemHealthTabProps = {
 export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const isCloud = edition === ApEdition.CLOUD;
-  const { data: systemHealth, isPending } = healthQueries.useSystemHealth();
+  const {
+    data: systemHealth,
+    isPending,
+    isLoadingError,
+    refetch,
+  } = healthQueries.useSystemHealth();
   const latestVersion = systemHealth?.latestVersion;
   const release = systemHealth?.release;
   const currentVersion = release?.current;
@@ -184,20 +190,26 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
           </a>
         </AlertDescription>
       </Alert>
-      <HealthCard
-        title={t('App')}
-        description={t('API server, UI and webhook routing')}
-        icon={<Server className="size-4" />}
-        rows={appRows}
-        loading={isPending}
-      />
-      <HealthCard
-        title={t('Workers')}
-        description={t('Machines that execute your flows')}
-        icon={<Boxes className="size-4" />}
-        rows={workerRows}
-        loading={isPending}
-      />
+      {isLoadingError ? (
+        <DataFetchErrorState entity={t('system health')} onRetry={refetch} />
+      ) : (
+        <>
+          <HealthCard
+            title={t('App')}
+            description={t('API server, UI and webhook routing')}
+            icon={<Server className="size-4" />}
+            rows={appRows}
+            loading={isPending}
+          />
+          <HealthCard
+            title={t('Workers')}
+            description={t('Machines that execute your flows')}
+            icon={<Boxes className="size-4" />}
+            rows={workerRows}
+            loading={isPending}
+          />
+        </>
+      )}
       <DailyHealthStrip onSeeRuns={onSeeRuns} />
     </>
   );

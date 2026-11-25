@@ -78,7 +78,7 @@ export function ProvidersTab() {
   const {
     data: providers,
     isLoading,
-    isError: isProvidersError,
+    isLoadingError: isProvidersError,
     refetch,
   } = aiProviderQueries.useAiProviderConfigs();
   const { data: projects } = projectCollectionUtils.useAllPlatformProjects();

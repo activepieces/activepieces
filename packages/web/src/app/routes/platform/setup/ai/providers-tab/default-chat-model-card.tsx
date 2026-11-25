@@ -12,6 +12,7 @@ import { MessageSquare, TriangleAlert } from 'lucide-react';
 import { useMemo } from 'react';
 
 import { SettingsPanel, SettingsRow } from '@/app/components/admin';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -36,8 +37,11 @@ export function DefaultChatModelCard({
   tiers: PlatformModelTier[];
   projectIds: string[];
 }) {
-  const { data: configuration } =
-    platformConfigurationHooks.useCurrentPlatformConfiguration();
+  const {
+    data: configuration,
+    isLoadingError,
+    refetch,
+  } = platformConfigurationHooks.useCurrentPlatformConfiguration();
   const { data: options } = aiModelHooks.useModelOptions({ surface: 'chat' });
   const { data: toolConfigs } = aiToolConfigQueries.useAiToolConfigs();
   const { mutate: save, isPending } =
@@ -62,6 +66,18 @@ export function DefaultChatModelCard({
         projectIds,
         hasEmbeddingsKey,
       });
+
+  if (isLoadingError) {
+    return (
+      <SettingsPanel flush>
+        <DataFetchErrorState
+          entity={t('default chat model')}
+          onRetry={refetch}
+          className="py-4"
+        />
+      </SettingsPanel>
+    );
+  }
 
   return (
     <SettingsPanel flush>

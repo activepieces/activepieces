@@ -125,7 +125,12 @@ export function ConfigDetail({
         );
       },
     });
-  const { data: models = [], isLoading: isLoadingModels } = useQuery({
+  const {
+    data: models = [],
+    isLoading: isLoadingModels,
+    isLoadingError: isModelsError,
+    refetch: refetchModels,
+  } = useQuery({
     queryKey: aiProviderKeys.configModels(config.id),
     queryFn: () => aiProviderApi.listModelsForConfig(config.id),
     enabled: !manualModels,
@@ -313,6 +318,8 @@ export function ConfigDetail({
                 modelIds: draft.modelIds,
               }}
               isLoading={isLoadingModels || isRefreshing}
+              isError={isModelsError}
+              onRetry={refetchModels}
               action={
                 syncsModels && (
                   <Button

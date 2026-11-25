@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import { Key, MoreHorizontal, Trash } from 'lucide-react';
 
 import { AdminEmpty, SettingsRow } from '@/app/components/admin';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,10 +23,12 @@ import { StepShell } from '../stepper';
 export const SigningKeysStep = ({
   signingKeys,
   isLoading,
+  isError,
   refetch,
 }: {
   signingKeys: SigningKey[];
   isLoading: boolean;
+  isError: boolean;
   refetch: () => void;
 }) => {
   return (
@@ -49,6 +52,7 @@ export const SigningKeysStep = ({
       <SigningKeysList
         signingKeys={signingKeys}
         isLoading={isLoading}
+        isError={isError}
         refetch={refetch}
       />
     </StepShell>
@@ -58,10 +62,12 @@ export const SigningKeysStep = ({
 const SigningKeysList = ({
   signingKeys,
   isLoading,
+  isError,
   refetch,
 }: {
   signingKeys: SigningKey[];
   isLoading: boolean;
+  isError: boolean;
   refetch: () => void;
 }) => {
   if (isLoading) {
@@ -70,6 +76,10 @@ const SigningKeysList = ({
         <SkeletonList numberOfItems={3} className="w-full h-[72px]" />
       </div>
     );
+  }
+
+  if (isError) {
+    return <DataFetchErrorState entity={t('signing keys')} onRetry={refetch} />;
   }
 
   if (signingKeys.length === 0) {
