@@ -40,7 +40,12 @@ const PlatformTemplatesPage = () => {
   const [searchParams] = useSearchParams();
   const { platform } = platformHooks.useCurrentPlatform();
   const isSample = !platform.plan.manageTemplatesEnabled;
-  const { data, isLoading, isError, refetch } = useQuery({
+  const {
+    data,
+    isLoading,
+    isLoadingError: isError,
+    refetch,
+  } = useQuery({
     queryKey: ['templates', searchParams.toString()],
     staleTime: 0,
     queryFn: () => {

@@ -250,6 +250,7 @@ export const piecesHooks = {
       pieces: query.data,
       isLoading: query.isLoading,
       isError: query.isError,
+      isLoadingError: query.isLoadingError,
       error: query.error,
       refetch: query.refetch,
     };

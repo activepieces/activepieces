@@ -43,7 +43,7 @@ export function SearchResults({
     cursor: flowPages.cursor,
   });
   if (!projects.data || !flows.data) {
-    if (projects.isError || flows.isError) {
+    if (projects.isLoadingError || flows.isLoadingError) {
       return (
         <DataFetchErrorState
           entity={t('search results')}

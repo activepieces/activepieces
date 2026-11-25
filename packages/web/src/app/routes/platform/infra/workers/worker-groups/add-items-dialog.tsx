@@ -200,14 +200,14 @@ function AddItemsForm({
         )}
         style={{ height: Math.max(loadingRows, MIN_ROWS) * ROW_PX + 2 }}
       >
-        {!page && pageQuery.isError && (
+        {pageQuery.isLoadingError && (
           <DataFetchErrorState
             entity={kind === 'project' ? t('projects') : t('flows')}
             onRetry={() => pageQuery.refetch()}
           />
         )}
         {!page &&
-          !pageQuery.isError &&
+          !pageQuery.isLoadingError &&
           Array.from({ length: loadingRows }, (_, i) => (
             <div key={i} className="flex h-12 shrink-0 items-center gap-3 px-3">
               <Skeleton className="size-4 rounded" />

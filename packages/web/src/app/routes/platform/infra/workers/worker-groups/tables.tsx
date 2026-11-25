@@ -111,7 +111,7 @@ export function ProjectsTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {query.isError && (
+            {query.isLoadingError && (
               <ErrorRow
                 columns={columns}
                 entity={t('projects')}
@@ -267,7 +267,7 @@ export function FlowsTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {query.isError && (
+              {query.isLoadingError && (
                 <ErrorRow
                   columns={columns}
                   entity={t('flows')}

@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import { Activity, Loader2 } from 'lucide-react';
 
 import { StatCard, StatGrid } from '@/app/components/admin';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { formatUtils } from '@/lib/format-utils';
 
 import { StuckJobsTable } from './stuck-jobs-table';
@@ -10,9 +11,17 @@ import { StuckJobsTable } from './stuck-jobs-table';
 type QueueTabProps = {
   live: PlatformMetricsLive | undefined;
   isLoading: boolean;
+  isError: boolean;
+  onRetry: () => void;
 };
 
-export function QueueTab({ live, isLoading }: QueueTabProps) {
+export function QueueTab({ live, isLoading, isError, onRetry }: QueueTabProps) {
+  if (isError) {
+    return (
+      <DataFetchErrorState entity={t('queue metrics')} onRetry={onRetry} />
+    );
+  }
+
   return (
     <>
       <StatGrid columns={2}>

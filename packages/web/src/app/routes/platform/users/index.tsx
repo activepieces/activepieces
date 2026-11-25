@@ -59,14 +59,14 @@ export default function UsersPage() {
   const {
     data: usersData,
     isLoading: usersLoading,
-    isError: usersError,
+    isLoadingError: usersError,
     refetch: refetchUsers,
   } = platformUserHooks.useUsers();
 
   const {
     data: invitationsData,
     isLoading: invitationsLoading,
-    isError: invitationsError,
+    isLoadingError: invitationsError,
     refetch: refetchInvitations,
   } = platformUserHooks.usePlatformInvitations();
 
@@ -210,11 +210,15 @@ export default function UsersPage() {
         emptyStateTextDescription={t('Start inviting users to your project')}
         emptyStateIcon={<User />}
         columns={columns}
-        page={{
-          data: combinedData,
-          next: usersData?.next || null,
-          previous: usersData?.previous || null,
-        }}
+        page={
+          isError
+            ? undefined
+            : {
+                data: combinedData,
+                next: usersData?.next || null,
+                previous: usersData?.previous || null,
+              }
+        }
         hidePagination={true}
         isLoading={isLoading}
         isError={isError}

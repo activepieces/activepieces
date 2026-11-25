@@ -17,7 +17,7 @@ import { RolesCard } from './roles-card';
 const ProjectRolePage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
 
-  const { data, isLoading, isError, refetch } =
+  const { data, isLoading, isLoadingError, refetch } =
     projectRoleQueries.useProjectRoles(platform.plan.projectRolesEnabled);
   const isSample = !platform.plan.projectRolesEnabled;
   const roles = isSample ? sampleData.projectRolesPage() : data;
@@ -32,7 +32,7 @@ const ProjectRolePage = () => {
       <RolesCard
         projectRoles={roles}
         isLoading={isSample ? false : isLoading}
-        isError={isSample ? false : isError}
+        isError={isSample ? false : isLoadingError}
         refetch={refetch}
       />
       <PersonalProjectsSection />

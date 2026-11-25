@@ -35,7 +35,12 @@ import { BulkPieceSetActions } from './piece-set-bulk-actions';
 import { pieceSetInclusionUtils } from './piece-set-inclusion-utils';
 
 export const PieceSetPiecesTable = ({ pieceSet }: PieceSetPiecesTableProps) => {
-  const { pieces, isLoading, isError, refetch } = piecesHooks.usePieces({
+  const {
+    pieces,
+    isLoading,
+    isLoadingError: isError,
+    refetch,
+  } = piecesHooks.usePieces({
     includeHidden: true,
     isTableQuery: true,
     skipProjectFilter: true,

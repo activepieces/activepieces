@@ -42,12 +42,13 @@ const EmbedPage = () => {
   const {
     subdomain,
     isLoading: isSubdomainLoading,
-    isError: isSubdomainError,
+    isLoadingError: isSubdomainError,
     refetch: refetchSubdomain,
   } = embedSubdomainQueries.useCurrentEmbedSubdomain();
   const {
     data,
     isLoading: isKeysLoading,
+    isLoadingError: isKeysError,
     refetch,
   } = signingKeyQueries.useSigningKeys();
   const isSample = !platform.plan.embeddingEnabled;
@@ -193,6 +194,7 @@ const EmbedPage = () => {
             <SigningKeysStep
               signingKeys={signingKeys}
               isLoading={isKeysLoading}
+              isError={isKeysError}
               refetch={refetch}
             />
           ) : null}

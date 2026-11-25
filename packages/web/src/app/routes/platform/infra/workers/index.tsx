@@ -27,6 +27,7 @@ import {
   adminPageResources,
   adminSurface,
 } from '@/app/components/admin';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -51,7 +52,12 @@ export default function WorkersPage({ section }: WorkersPageProps) {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { platform } = platformHooks.useCurrentPlatform();
   const isCloud = edition === ApEdition.CLOUD;
-  const { data: workersData, isLoading } = workersQueries.useWorkerMachines();
+  const {
+    data: workersData,
+    isLoading,
+    isLoadingError,
+    refetch,
+  } = workersQueries.useWorkerMachines();
 
   const fleetType = workersData?.[0]?.type;
 
@@ -125,8 +131,13 @@ export default function WorkersPage({ section }: WorkersPageProps) {
         </div>
       )}
 
+      {section === 'health' && isLoadingError && (
+        <DataFetchErrorState entity={t('workers')} onRetry={refetch} />
+      )}
+
       {section === 'health' &&
         !isLoading &&
+        !isLoadingError &&
         (workersData ?? []).length === 0 && (
           <AdminEmpty
             icon={<Server />}

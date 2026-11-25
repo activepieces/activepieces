@@ -23,6 +23,7 @@ import {
   adminSurface,
   adminLayout,
 } from '@/app/components/admin';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -64,6 +65,8 @@ export function RequiredActionsTab({ pieceSet }: { pieceSet: PieceSet }) {
     requiredActionsGroupedByPiece,
     actionsInLatestPieceVersionCount,
     isLoading,
+    isError,
+    refetch,
   } = useRequiredActionsGroupedByPiece({
     actions: requiredActions.actions,
   });
@@ -121,7 +124,7 @@ export function RequiredActionsTab({ pieceSet }: { pieceSet: PieceSet }) {
         className="min-h-0 flex-1"
         title={t('Required actions')}
         description={
-          requiredActionsGroupedByPiece.length > 0
+          requiredActionsGroupedByPiece.length > 0 && !isError
             ? t('requiredActionsAcrossPieces', {
                 actionCount: actionsInLatestPieceVersionCount,
                 pieceCount: requiredActionsGroupedByPiece.length,
@@ -142,6 +145,11 @@ export function RequiredActionsTab({ pieceSet }: { pieceSet: PieceSet }) {
           <div className="flex justify-center py-10">
             <Loader2 className="size-6 animate-spin text-gray-11" />
           </div>
+        ) : isError ? (
+          <DataFetchErrorState
+            entity={t('required actions')}
+            onRetry={refetch}
+          />
         ) : requiredActionsGroupedByPiece.length > 0 ? (
           <ScrollArea className="flex-1 min-h-0">
             <div className="flex flex-col gap-4 pr-3">

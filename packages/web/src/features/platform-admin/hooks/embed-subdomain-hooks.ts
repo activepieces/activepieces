@@ -34,9 +34,9 @@ export const embedSubdomainQueries = {
     });
   },
   useCurrentEmbedSubdomain: () => {
-    const { data, isLoading, isError, refetch } =
+    const { data, isLoading, isLoadingError, refetch } =
       embedSubdomainQueries.useEmbedSubdomain();
-    return { subdomain: data ?? undefined, isLoading, isError, refetch };
+    return { subdomain: data ?? undefined, isLoading, isLoadingError, refetch };
   },
 };
 

@@ -86,7 +86,7 @@ export function WorkerGroupsPage() {
         description={groupParam && !searching ? undefined : modelSentence()}
         resources={adminPageResources.workerGroups}
       />
-      {overviewQuery.isError && !overview ? (
+      {overviewQuery.isLoadingError ? (
         <DataFetchErrorState
           entity={t('worker groups')}
           onRetry={() => overviewQuery.refetch()}

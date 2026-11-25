@@ -1,3 +1,4 @@
+import { ErrorCode } from '@activepieces/core-utils';
 import {
   PieceSelection,
   PieceSelectionMode,
@@ -5,7 +6,9 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Loader2 } from 'lucide-react';
+import { useEffect } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import {
   AdminPage,
@@ -14,6 +17,7 @@ import {
   SettingsRow,
   adminPageResources,
 } from '@/app/components/admin';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -21,6 +25,7 @@ import { pieceSetMutations, pieceSetQueries } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { api } from '@/lib/api';
 
 import { PieceSetPiecesTable } from './piece-set-pieces-table';
 import { PieceSetProjectsDialog } from './piece-set-projects-dialog';
@@ -30,13 +35,26 @@ import { useRequiredActionsGroupedByPiece } from './use-required-actions-grouped
 const PieceSetDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
   const { platform } = platformHooks.useCurrentPlatform();
-  const { data: pieceSet, isLoading } = pieceSetQueries.usePieceSet(id ?? '');
+  const {
+    data: pieceSet,
+    isLoading,
+    isLoadingError,
+    error,
+    refetch,
+  } = pieceSetQueries.usePieceSet(id ?? '');
   const { pieces, isLoading: piecesLoading } = piecesHooks.usePieces({
     includeHidden: true,
     isTableQuery: true,
     skipProjectFilter: true,
   });
   const { mutate: updateSet } = pieceSetMutations.useUpdatePieceSet();
+  const isNotFound = api.isApError(error, ErrorCode.ENTITY_NOT_FOUND);
+
+  useEffect(() => {
+    if (isNotFound) {
+      toast.error(t('Piece set not found'), { id: 'piece-set-not-found' });
+    }
+  }, [isNotFound]);
 
   const handleToggle = (value: boolean) => {
     if (!pieceSet || !pieces) return;
@@ -52,8 +70,23 @@ const PieceSetDetailsPage = () => {
     });
   };
 
-  if (!platform.plan.managePiecesEnabled) {
+  if (!platform.plan.managePiecesEnabled || isNotFound) {
     return <Navigate to="/platform/pieces/piece-sets" replace />;
+  }
+
+  const back = { label: t('Piece Sets'), to: '/platform/pieces/piece-sets' };
+
+  if (isLoadingError) {
+    return (
+      <AdminPage fill>
+        <AdminPageHeader back={back} title={t('Piece Set')} />
+        <DataFetchErrorState
+          entity={t('piece set')}
+          onRetry={refetch}
+          className="flex-1"
+        />
+      </AdminPage>
+    );
   }
 
   if (isLoading || !pieceSet) {
@@ -67,7 +100,7 @@ const PieceSetDetailsPage = () => {
   return (
     <AdminPage fill>
       <AdminPageHeader
-        back={{ label: t('Piece Sets'), to: '/platform/pieces/piece-sets' }}
+        back={back}
         title={pieceSet.name}
         badge={
           pieceSet.isDefault && (
@@ -156,11 +189,11 @@ function flipSelectionMode({
 }
 
 function RequiredActionsCountBadge({ pieceSet }: { pieceSet: PieceSet }) {
-  const { actionsInLatestPieceVersionCount: count } =
+  const { actionsInLatestPieceVersionCount: count, isError } =
     useRequiredActionsGroupedByPiece({
       actions: pieceSet.config.requiredActions.actions,
     });
-  if (count === 0) {
+  if (count === 0 || isError) {
     return null;
   }
   return (

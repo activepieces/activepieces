@@ -4,6 +4,7 @@ import { t } from 'i18next';
 import { ArrowUpRight } from 'lucide-react';
 
 import { SettingsPanel } from '@/app/components/admin';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -24,7 +25,8 @@ type DailyHealthStripProps = {
 };
 
 export function DailyHealthStrip({ onSeeRuns }: DailyHealthStripProps) {
-  const { data, isLoading } = healthMetricsQueries.useHealthHistory();
+  const { data, isLoading, isLoadingError, refetch } =
+    healthMetricsQueries.useHealthHistory();
   const days = data?.days ?? [];
 
   return (
@@ -49,6 +51,12 @@ export function DailyHealthStrip({ onSeeRuns }: DailyHealthStripProps) {
     >
       {isLoading ? (
         <Skeleton className="h-10 w-full" />
+      ) : isLoadingError ? (
+        <DataFetchErrorState
+          entity={t('daily job health')}
+          onRetry={refetch}
+          className="py-4"
+        />
       ) : (
         <div className="flex items-end gap-1 h-10">
           {days.map((day) => {

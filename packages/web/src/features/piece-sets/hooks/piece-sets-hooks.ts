@@ -1,3 +1,4 @@
+import { ErrorCode } from '@activepieces/core-utils';
 import {
   CreatePieceSetRequestBody,
   PieceSet,
@@ -17,6 +18,7 @@ import { z } from 'zod';
 import { pieceCacheUtils } from '@/features/pieces';
 import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { api } from '@/lib/api';
 
 import { pieceSetsApi } from '../api/piece-sets-api';
 
@@ -57,6 +59,8 @@ export const pieceSetQueries = {
       queryKey: pieceSetKeys.one(id),
       queryFn: () => pieceSetsApi.get(id),
       enabled: platform.plan.managePiecesEnabled && !!id,
+      retry: (failureCount, error) =>
+        !api.isApError(error, ErrorCode.ENTITY_NOT_FOUND) && failureCount < 3,
     });
     const pendingUpdates = useMutationState({
       filters: { mutationKey: pieceSetKeys.update, status: 'pending' },

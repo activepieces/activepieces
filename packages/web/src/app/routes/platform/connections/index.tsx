@@ -50,7 +50,7 @@ export default function PlatformConnectionsPage() {
   const {
     data: connections,
     isLoading,
-    isError,
+    isLoadingError: isError,
     refetch,
   } = platformAppConnectionsQueries.useList();
   const { data: owners } = platformAppConnectionsQueries.useOwners();

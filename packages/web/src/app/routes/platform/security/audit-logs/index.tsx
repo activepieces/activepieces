@@ -134,7 +134,7 @@ export default function AuditLogsPage() {
   const {
     data: auditLogsData,
     isLoading,
-    isError,
+    isLoadingError: isError,
     refetch,
   } = auditLogQueries.useAuditLogs();
   const isSample = !platform.plan.auditLogEnabled;
