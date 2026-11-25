@@ -54,6 +54,12 @@ describe('resolveModelId', () => {
       expect(isRetiredModel(id)).toBe(false);
     }
   });
+  it('ignores inherited object keys', () => {
+    for (const id of ['constructor', 'toString', '__proto__']) {
+      expect(resolveModelId(id)).toBe(id);
+      expect(isRetiredModel(id)).toBe(false);
+    }
+  });
   it('gives retired ids and their replacements the large context limit', () => {
     for (const [retired, replacement] of RETIRED) {
       expect(modelTokenLimit(retired)).toBe(400000);
@@ -63,12 +69,16 @@ describe('resolveModelId', () => {
     expect(modelTokenLimit('gpt-4')).toBe(8192);
     expect(modelTokenLimit('gpt-5.4')).toBe(2048);
     expect(modelTokenLimit('o3-mini')).toBe(2048);
+    expect(modelTokenLimit('gpt-6.1-sol-2026-10-01')).toBe(400000);
   });
-  it('drops sampling params only for retired ids', () => {
+  it('drops sampling params for retired ids and the gpt-6 replacements', () => {
+    for (const id of [...RETIRED.map(([retired]) => retired), 'gpt-6.1-sol', 'gpt-6-luna', 'gpt-6.1-sol-2026-10-01']) {
+      expect(samplingParams({ selectedModel: id, temperature: 0.2, topP: 1, frequencyPenalty: 0 })).toEqual({});
+    }
     for (const [retired] of RETIRED) {
       expect(samplingParams({ selectedModel: retired, temperature: 1, topP: 1, frequencyPenalty: 0 })).toEqual({});
     }
-    for (const id of ['gpt-5.4', 'o3-mini', 'gpt-4o', 'gpt-6.1-sol']) {
+    for (const id of ['gpt-5.4', 'o3-mini', 'gpt-4o']) {
       expect(samplingParams({ selectedModel: id, temperature: 0.2, topP: 1, frequencyPenalty: 0, presencePenalty: null })).toEqual({
         temperature: 0.2,
         top_p: 1,
@@ -151,6 +161,13 @@ describe('actions send the replacement model', () => {
       },
     });
     expect(result).toEqual({ name: 'Ann' });
+  });
+
+  it('extract structured data reports the refusal on the json_schema path', async () => {
+    create.mockResolvedValue({ choices: [{ finish_reason: 'stop', message: { role: 'assistant', content: null, refusal: 'I cannot help with that.' } }] });
+    await expect(
+      extractStructuredDataAction.run({ ...createMockActionContext({ propsValue: { model: 'gpt-5', text: 'x', params: [{ propName: 'name', propDataType: 'string', propIsRequired: true }] } }), auth }),
+    ).rejects.toThrow('I cannot help with that.');
   });
 
   it('extract structured data returns the same shape on the tools path', async () => {

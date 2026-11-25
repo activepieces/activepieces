@@ -148,12 +148,15 @@ export const extractStructuredDataAction = createAction({
 					},
 				},
 			});
-			const content = response.choices[0].message.content;
-			if (!content) {
+			const message = response.choices[0].message;
+			if (!message.content) {
 				throw new Error(JSON.stringify({
-					message: "OpenAI couldn't extract the fields from the above text."
+					message: "OpenAI couldn't extract the fields from the above text.",
+					refusal: message.refusal ?? undefined,
+					finishReason: response.choices[0].finish_reason,
 				}));
 			}
+			const content = message.content;
 			return parseExtraction(content);
 		}
 

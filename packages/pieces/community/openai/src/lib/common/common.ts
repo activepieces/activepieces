@@ -152,7 +152,11 @@ export const exceedsHistoryLimit = (
 export const tokenLimit = 32000;
 
 export const modelTokenLimit = (model: string) => {
-  switch (resolveModelId(model)) {
+  const resolved = resolveModelId(model);
+  if (isReplacementModel(resolved)) {
+    return 400000;
+  }
+  switch (resolved) {
     case 'gpt-4-1106-preview':
       return 128000;
     case 'gpt-4-vision-preview':
@@ -201,14 +205,6 @@ export const modelTokenLimit = (model: string) => {
       return 400000;
     case 'gpt-5-nano':
       return 400000;
-    case 'gpt-6.1-sol':
-      return 400000;
-    case 'gpt-6.1-terra':
-      return 400000;
-    case 'gpt-6-luna':
-      return 400000;
-    case 'gpt-6-sol':
-      return 400000;
     default:
       return 2048;
   }
@@ -218,17 +214,23 @@ export const isLLM = (modelId: string): boolean =>
   aiProviderUtils.isChatModelId({ modelId });
 
 export function resolveModelId(model: string): string {
-  return RETIRED_MODEL_REPLACEMENTS[model] ?? model;
+  return isRetiredModel(model) ? RETIRED_MODEL_REPLACEMENTS[model] : model;
 }
 
 export function isRetiredModel(model: string): boolean {
-  return model in RETIRED_MODEL_REPLACEMENTS;
+  return Object.hasOwn(RETIRED_MODEL_REPLACEMENTS, model);
 }
 
 export function rejectsFunctionTools(model: string): boolean {
   const resolved = resolveModelId(model);
   return NO_FUNCTION_TOOL_MODELS.some(
     (id) => resolved === id || resolved.startsWith(`${id}-`)
+  );
+}
+
+export function isReplacementModel(model: string): boolean {
+  return REPLACEMENT_MODELS.some(
+    (id) => model === id || model.startsWith(`${id}-`)
   );
 }
 
@@ -252,7 +254,7 @@ export function samplingParams({
   frequencyPenalty?: number | null;
   presencePenalty?: number | null;
 }): SamplingParams {
-  if (isRetiredModel(selectedModel)) {
+  if (isRetiredModel(selectedModel) || isReplacementModel(selectedModel)) {
     return {};
   }
   return {
@@ -262,6 +264,8 @@ export function samplingParams({
     presence_penalty: presencePenalty ?? undefined,
   };
 }
+
+const REPLACEMENT_MODELS = ['gpt-6.1-sol', 'gpt-6.1-terra', 'gpt-6-luna', 'gpt-6-sol'];
 
 const RETIRED_MODEL_REPLACEMENTS: Record<string, string> = {
   'gpt-5': 'gpt-6.1-sol',
