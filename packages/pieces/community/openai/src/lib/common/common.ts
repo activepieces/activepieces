@@ -1,24 +1,6 @@
 import { aiProviderUtils } from '@activepieces/pieces-framework';
 import { encoding_for_model } from 'tiktoken';
 
-const RETIRED_MODEL_REPLACEMENTS: Record<string, string> = {
-  'gpt-5': 'gpt-6.1-sol',
-  'gpt-5-2025-08-07': 'gpt-6.1-sol',
-  'gpt-5-pro': 'gpt-6.1-sol',
-  'gpt-5-pro-2025-10-06': 'gpt-6.1-sol',
-  'gpt-5-mini': 'gpt-6.1-terra',
-  'gpt-5-mini-2025-08-07': 'gpt-6.1-terra',
-  'gpt-5-nano': 'gpt-6-luna',
-  'gpt-5-nano-2025-08-07': 'gpt-6-luna',
-  'gpt-5.4-nano': 'gpt-6-luna',
-  'gpt-5.4-nano-2026-03-17': 'gpt-6-luna',
-  'gpt-5.1': 'gpt-6-sol',
-  'gpt-5.1-2025-11-13': 'gpt-6-sol',
-  'gpt-5.3-codex': 'gpt-6-sol',
-};
-
-const NO_FUNCTION_TOOL_MODELS = ['gpt-6.1-sol'];
-
 export const baseUrl = 'https://api.openai.com/v1';
 
 export const Languages = [
@@ -280,6 +262,24 @@ export function samplingParams({
     presence_penalty: presencePenalty ?? undefined,
   };
 }
+
+const RETIRED_MODEL_REPLACEMENTS: Record<string, string> = {
+  'gpt-5': 'gpt-6.1-sol',
+  'gpt-5-2025-08-07': 'gpt-6.1-sol',
+  'gpt-5-pro': 'gpt-6.1-sol',
+  'gpt-5-pro-2025-10-06': 'gpt-6.1-sol',
+  'gpt-5-mini': 'gpt-6.1-terra',
+  'gpt-5-mini-2025-08-07': 'gpt-6.1-terra',
+  'gpt-5-nano': 'gpt-6-luna',
+  'gpt-5-nano-2025-08-07': 'gpt-6-luna',
+  'gpt-5.4-nano': 'gpt-6-luna',
+  'gpt-5.4-nano-2026-03-17': 'gpt-6-luna',
+  'gpt-5.1': 'gpt-6-sol',
+  'gpt-5.1-2025-11-13': 'gpt-6-sol',
+  'gpt-5.3-codex': 'gpt-6-sol',
+};
+
+const NO_FUNCTION_TOOL_MODELS = ['gpt-6.1-sol'];
 
 export type SamplingParams = {
   temperature?: number;
