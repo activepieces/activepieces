@@ -226,6 +226,7 @@ export function createSandbox(
                     ...options.env,
                     AP_SANDBOX_WS_PORT: String(port),
                     AP_SANDBOX_WS_TOKEN: wsRpcToken,
+                    AP_SANDBOX_REUSABLE: String(options.reusable),
                     ...(denoCacheMount ? { AP_DENO_CACHE_MOUNTED: 'true' } : {}),
                     ...(customPieceMounts.length > 0
                         ? { AP_CUSTOM_PIECES_PATHS: '/root/custom_pieces' }

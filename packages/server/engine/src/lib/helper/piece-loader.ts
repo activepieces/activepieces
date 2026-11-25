@@ -1,5 +1,6 @@
 import fs from 'fs/promises'
 import { createRequire } from 'node:module'
+import v8 from 'node:v8'
 import path from 'path'
 import { ActivepiecesError, ErrorCode, isNil, tryCatchSync } from '@activepieces/core-utils'
 import { Action, Piece, PiecePropertyMap, Trigger } from '@activepieces/pieces-framework'
@@ -18,6 +19,7 @@ export const pieceLoader = {
                 devPieces,
             })
             const piecePath = await pieceLoader.getPiecePath({ packageName, devPieces })
+            evictLoadedModulesOnHeapPressure()
             const module = await requireWithReinstallRetry({ piecePath, pieceName, pieceVersion })
 
             const piece = extractPieceFromModule<Piece>({
@@ -130,6 +132,33 @@ export const pieceLoader = {
         }
         return piecePath
     },
+}
+
+const HEAP_PRESSURE_RATIO = 0.8
+const moduleCache = createRequire(__filename).cache
+const baselineModuleIds = new Set(Object.keys(moduleCache))
+
+function evictLoadedModulesOnHeapPressure(): void {
+    if (process.env.AP_SANDBOX_REUSABLE !== 'true') {
+        return
+    }
+    const { used_heap_size: usedHeapSize, heap_size_limit: heapSizeLimit } = v8.getHeapStatistics()
+    if (usedHeapSize < heapSizeLimit * HEAP_PRESSURE_RATIO) {
+        return
+    }
+    const evictedIds = Object.keys(moduleCache).filter((id) => !baselineModuleIds.has(id) && !id.endsWith('.node'))
+    if (evictedIds.length === 0) {
+        return
+    }
+    for (const id of evictedIds) {
+        Reflect.deleteProperty(moduleCache, id)
+    }
+    for (const survivor of Object.values(moduleCache)) {
+        if (!isNil(survivor)) {
+            survivor.children = survivor.children.filter((child) => !isNil(moduleCache[child.id]))
+        }
+    }
+    global.gc?.()
 }
 
 const MODULE_RESOLUTION_ERROR_CODES = ['MODULE_NOT_FOUND', 'ERR_MODULE_NOT_FOUND']
