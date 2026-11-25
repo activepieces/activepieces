@@ -152,7 +152,7 @@ describe('connection-resolver service', () => {
 
         const resolver = createConnectionResolver(RESOLVER_PARAMS)
         await expect(drainRetries(resolver.obtain('my-connection'))).rejects.toThrow(ConnectionLoadingError)
-        expect(fetchSpy).toHaveBeenCalledTimes(4)
+        expect(fetchSpy).toHaveBeenCalledTimes(8)
     })
 
     it('throws FetchError when the network failure outlives the retries', async () => {
@@ -160,7 +160,7 @@ describe('connection-resolver service', () => {
 
         const resolver = createConnectionResolver(RESOLVER_PARAMS)
         await expect(drainRetries(resolver.obtain('my-connection'))).rejects.toThrow(FetchError)
-        expect(fetchSpy).toHaveBeenCalledTimes(4)
+        expect(fetchSpy).toHaveBeenCalledTimes(8)
     })
 
     describe('AP_ENFORCE_CONNECTION_PIECE_BINDING', () => {
