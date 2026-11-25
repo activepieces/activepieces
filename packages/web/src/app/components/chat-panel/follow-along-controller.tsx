@@ -24,6 +24,7 @@ import {
   useFollowHold,
 } from '@/features/chat/lib/follow/follow-hold';
 import { pageFocus } from '@/features/chat/lib/follow/page-focus';
+import { useAiFieldHighlights } from '@/features/chat/lib/follow/use-ai-highlight';
 import { resourceRegistry } from '@/features/chat/lib/resources/registry';
 import {
   chatPanelUtils,
@@ -36,6 +37,7 @@ export function FollowAlongController({
 }: {
   chatVisible: boolean;
 }) {
+  useAiFieldHighlights();
   const navigate = useNavigate();
   const { pathname, hash } = useLocation();
   const queryClient = useQueryClient();
@@ -78,6 +80,7 @@ export function FollowAlongController({
         .forEach((queryKey) =>
           queryClient.invalidateQueries({ queryKey }).catch(() => undefined),
         );
+      followAlong.noteWrite({ kind, id });
       const event = ++eventCount;
       const key = resourceRegistry.keyOf({ kind, id });
       if (op === ResourceChangeOp.DELETE) {
