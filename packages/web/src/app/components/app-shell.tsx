@@ -9,7 +9,7 @@ import { t } from 'i18next';
 import { RefreshCw, X } from 'lucide-react';
 import { Suspense, useLayoutEffect, useRef, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
-import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
 import { useEmbedding } from '@/components/providers/embed-provider';
@@ -41,6 +41,7 @@ import { cn } from '@/lib/utils';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from './allow-logged-in-user-only-guard';
 import { ChatContentColumn } from './chat-panel/chat-content-column';
+import { ChatNotch } from './chat-panel/chat-notch';
 import { ChatPanel, useChatWidth } from './chat-panel/chat-window';
 import { GlobalSearchProvider } from './global-search/global-search-context';
 import { ProjectDashboardLayoutHeader } from './project-layout/project-dashboard-layout-header';
@@ -111,6 +112,10 @@ function AppShell({ handle }: { handle: RouteHandle }) {
       : null;
   const pageRef = usePageScrollReset();
 
+  if (handle.chat === 'full' && !chatOn) {
+    return <Navigate to="/" replace />;
+  }
+
   if (isPlatform && !isPlatformAdmin) {
     return <Navigate to="/" replace />;
   }
@@ -148,7 +153,7 @@ function AppShell({ handle }: { handle: RouteHandle }) {
                   embedded && isBuilder && 'border-l',
                 )}
               >
-                {chatOn && handle.chat !== 'full' && (
+                {chatOn && (
                   <ErrorBoundary
                     fallbackRender={({ resetErrorBoundary }) => (
                       <ChatPanelError
@@ -183,6 +188,13 @@ function AppShell({ handle }: { handle: RouteHandle }) {
                   </div>
                 </ChatContentColumn>
               </div>
+              {chatOn && (
+                <ChatNotch
+                  className={
+                    isBuilder ? 'bottom-1.5 left-1.5' : 'bottom-3 left-0'
+                  }
+                />
+              )}
             </div>
           </SidebarInset>
         </div>
@@ -202,7 +214,7 @@ function usePageScrollReset() {
   return pageRef;
 }
 
-function ChatPanelError({
+export function ChatPanelError({
   onRetry,
   onClose,
 }: {
@@ -210,7 +222,18 @@ function ChatPanelError({
   onClose: () => void;
 }) {
   const chatWidth = useChatWidth();
+  const navigate = useNavigate();
+  const { key } = useLocation();
   if (chatWidth === 'closed') return null;
+  const close = () => {
+    onClose();
+    if (chatWidth !== 'full') return;
+    if (key === 'default') {
+      navigate('/');
+    } else {
+      navigate(-1);
+    }
+  };
   return (
     <div
       role="alert"
@@ -229,7 +252,7 @@ function ChatPanelError({
           <RefreshCw className="size-4" />
           {t('Try again')}
         </Button>
-        <Button variant="ghost" size="sm" onClick={onClose}>
+        <Button variant="ghost" size="sm" onClick={close}>
           <X className="size-4" />
           {t('Close')}
         </Button>
