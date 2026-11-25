@@ -247,7 +247,7 @@ async function abortPartialUpload({
 function uploadErrorMessage({ bucket, error }: { bucket: string; error: unknown }): string {
   const reason = describeAwsError(error);
   if (!isAwsError(error)) {
-    return `Could not upload the file to S3 bucket "${bucket}" before reaching S3 (${reason}). Check the File to Upload field and the S3 Bucket name.`;
+    return `Could not upload the file to S3 bucket "${bucket}" (${reason}). Check the File to Upload field and the S3 Bucket name.`;
   }
   switch (error.name) {
     case 'AccessDenied':
@@ -334,20 +334,25 @@ async function analyzeS3Document({
     ClientRequestToken: analysis.clientRequestToken,
   };
 
-  const queryStrings = analysis.queries.filter(
-    (q): q is string => typeof q === 'string' && q.trim().length > 0
-  );
+  const queryStrings = [
+    ...new Set(
+      analysis.queries
+        .filter((q): q is string => typeof q === 'string')
+        .map((q) => q.trim())
+        .filter((q) => q.length > 0)
+    ),
+  ];
   if (queryStrings.length > 0) {
     resolvedFeatureTypes.push(FeatureType.QUERIES);
     startInput.QueriesConfig = {
-      Queries: queryStrings.map((text) => ({ Text: text.trim(), Pages: ['*'] })),
+      Queries: queryStrings.map((text) => ({ Text: text, Pages: ['*'] })),
     };
   }
 
   const lastJobWait = analysis.startedAt + STEP_JOB_WAIT_MS;
-  if (Date.now() >= lastJobWait) {
+  if (Date.now() + MIN_JOB_WAIT_MS > lastJobWait) {
     throw new TextractStepError(
-      'Uploading the file took over 7 minutes, so this step has no time left to analyze it. Upload it to S3 first and set Document Source to "File already in S3", or use a smaller file.'
+      'Uploading the file took over 6 minutes, so this step has too little time left to wait for the analysis. Upload it to S3 first and set Document Source to "File already in S3", or use a smaller file.'
     );
   }
 
@@ -455,6 +460,7 @@ class TextractStepError extends Error {}
 const POLL_INTERVAL_MS = 5000;
 const JOB_WAIT_MS = 5 * 60 * 1000;
 const STEP_JOB_WAIT_MS = 7 * 60 * 1000;
+const MIN_JOB_WAIT_MS = 60 * 1000;
 const STEP_RESULTS_WAIT_MS = 8 * 60 * 1000;
 const UPLOAD_KEY_PREFIX = 'activepieces-textract-uploads';
 const BUCKET_NAME_REGEX = /^[a-zA-Z0-9._-]{3,255}$/;

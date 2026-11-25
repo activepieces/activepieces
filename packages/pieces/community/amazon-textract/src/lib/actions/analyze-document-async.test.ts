@@ -198,7 +198,7 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
       await expect(
         runAction({ source: 'file', file: new ApFile('contract.pdf', Buffer.from('%PDF'), 'pdf') })
       ).rejects.toThrow(
-        /^Could not upload the file to S3 bucket "docs-bucket" before reaching S3 \(TypeError: terminated\)\. Check the File to Upload field and the S3 Bucket name\.$/
+        /^Could not upload the file to S3 bucket "docs-bucket" \(TypeError: terminated\)\. Check the File to Upload field and the S3 Bucket name\.$/
       );
       expect(uploadOptions).toEqual([{ leavePartsOnError: true }]);
       expect(abortInputs()).toEqual([{ Bucket: BUCKET, Key: expect.stringMatching(UPLOAD_KEY), UploadId: 'upload-1' }]);
@@ -217,7 +217,7 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
 
       expect(error).toBeInstanceOf(Error);
       const message = error instanceof Error ? error.message : '';
-      expect(message).toMatch(/^Could not upload the file to S3 bucket "docs-bucket" before reaching S3 \(TypeError: terminated\)\. /);
+      expect(message).toMatch(/^Could not upload the file to S3 bucket "docs-bucket" \(TypeError: terminated\)\. /);
       expect(message).toMatch(
         /The parts already sent could not be removed from s3:\/\/docs-bucket\/activepieces-textract-uploads\/[0-9a-f-]{36}\.pdf \(AccessDenied: Access Denied\)\. Give the connection s3:AbortMultipartUpload on this bucket, or add a lifecycle rule that aborts incomplete multipart uploads\.$/
       );
@@ -242,11 +242,11 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
       ],
       [
         Object.assign(new Error('terminated'), { name: 'TypeError' }),
-        'Could not upload the file to S3 bucket "docs-bucket" before reaching S3 (TypeError: terminated). Check the File to Upload field and the S3 Bucket name.',
+        'Could not upload the file to S3 bucket "docs-bucket" (TypeError: terminated). Check the File to Upload field and the S3 Bucket name.',
       ],
       [
         Object.assign(new Error('Unrecognized S3Express bucket name format.'), { name: 'EndpointError' }),
-        'Could not upload the file to S3 bucket "docs-bucket" before reaching S3 (EndpointError: Unrecognized S3Express bucket name format.). Check the File to Upload field and the S3 Bucket name.',
+        'Could not upload the file to S3 bucket "docs-bucket" (EndpointError: Unrecognized S3Express bucket name format.). Check the File to Upload field and the S3 Bucket name.',
       ],
     ])('explains an upload failure by its cause: %s', async (error, message) => {
       uploadDone.mockRejectedValueOnce(error);
@@ -401,15 +401,15 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
       expect(deleteInputs()).toHaveLength(1);
     });
 
-    it('starts no job when the upload took over 7 minutes, and still deletes the upload', async () => {
+    it('starts no job when the upload leaves under a minute of the 7, and still deletes the upload', async () => {
       uploadDone.mockImplementation(async () => {
-        vi.setSystemTime(Date.now() + 421_000);
+        vi.setSystemTime(Date.now() + 365_000);
         return {};
       });
 
       await expect(
         runAction({ source: 'file', file: new ApFile('contract.pdf', Buffer.from('%PDF'), 'pdf') })
-      ).rejects.toThrow('Uploading the file took over 7 minutes, so this step has no time left to analyze it.');
+      ).rejects.toThrow('Uploading the file took over 6 minutes, so this step has too little time left to wait for the analysis.');
       expect(textractSend).not.toHaveBeenCalled();
       expect(deleteInputs()).toHaveLength(1);
     });
@@ -575,6 +575,14 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
 
     expect(startInput()).toMatchObject({
       FeatureTypes: ['TABLES', 'FORMS', 'QUERIES'],
+      QueriesConfig: { Queries: [{ Text: 'What is the total due?', Pages: ['*'] }] },
+    });
+  });
+
+  it('asks a repeated question once', async () => {
+    await runAction({ source: 's3', s3Key: 'contract.pdf', queries: ['What is the total due?', ' What is the total due? '] });
+
+    expect(startInput()).toMatchObject({
       QueriesConfig: { Queries: [{ Text: 'What is the total due?', Pages: ['*'] }] },
     });
   });
