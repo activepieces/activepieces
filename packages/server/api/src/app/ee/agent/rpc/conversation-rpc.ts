@@ -11,7 +11,7 @@ import { filesService } from '../../../file/files-service'
 import { rejectedPromiseHandler } from '../../../helper/promise-handler'
 import { creditsLeftAfter } from '../../../platform/billing-provider'
 
-import { updateConversationForRun } from './rpc-shared'
+import { markTurnAsHavingRead, updateConversationForRun } from './rpc-shared'
 
 
 export const conversationRpc = (log: FastifyBaseLogger) => ({
@@ -45,7 +45,10 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
             throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityType: 'conversation', entityId: input.conversationId } })
         }
         const projects = await agentHelpers.getUserProjects({ platformId: input.platformId, userId: conversation.userId, log })
-        const file = await readConversationFile({ platformId: input.platformId, conversationId: input.conversationId, accessibleProjectIds: projects.map((project) => project.id), fileId: input.fileId, log })
+        const file = await readConversationFile({ platformId: input.platformId, conversationId: input.conversationId, userId: conversation.userId, accessibleProjectIds: projects.map((project) => project.id), fileId: input.fileId, log })
+        if (!isNil(input.markReadForRunId)) {
+            await markTurnAsHavingRead({ conversationId: input.conversationId, runId: input.markReadForRunId })
+        }
         return {
             data: file.data,
             ...spreadIfDefined('mimeType', file.metadata?.['mimetype']),
