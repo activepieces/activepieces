@@ -437,6 +437,7 @@ describe('agentCompaction with reserved tokens', () => {
             provider: AIProviderName.OPENROUTER,
             reservedTokens: 66_000,
             model: summaryModel,
+            summarizer: SUMMARIZER,
             log: silentLog,
         })
         const prompt = String(vi.mocked(generateText).mock.calls.at(-1)?.[0]?.prompt)
