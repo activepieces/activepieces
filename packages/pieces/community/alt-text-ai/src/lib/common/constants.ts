@@ -1,1 +1,1 @@
-export const BASE_URL = 'https://alttext.ai/api/v1'
+export const BASE_URL = 'https://alttext.ai/api/v1';
