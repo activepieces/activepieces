@@ -19,6 +19,15 @@ const DEFAULT_AGENT_MAX_STEPS = 20
 
 const MAX_AGENT_TURN_WALL_CLOCK_MS = 2 * 60 * 60 * 1_000
 
+enum AgentAbortReason {
+    USER_CANCEL = 'user_cancel',
+    PREEMPTED = 'preempted',
+    CONVERSATION_DELETED = 'conversation_deleted',
+    WALL_CLOCK = 'wall_clock',
+}
+
+const AgentAbortReasonSchema = z.enum(AgentAbortReason)
+
 enum AgentVisibility {
     PROJECT = 'PROJECT',
     RESTRICTED = 'RESTRICTED',
@@ -171,6 +180,8 @@ export {
     AgentSummary,
     agentUtils,
     AgentConfig,
+    AgentAbortReason,
+    AgentAbortReasonSchema,
     AgentIcon,
     AgentVisibility,
     CreateAgentRequest,

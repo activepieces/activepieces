@@ -6,6 +6,7 @@ import { jsonProcessor } from './json'
 import { multiSelectProcessor } from './multi-select'
 import { numberProcessor } from './number'
 import { objectProcessor } from './object'
+import { staticDropdownProcessor } from './static-dropdown'
 import { textProcessor } from './text'
 import { ProcessorFn } from './types'
 
@@ -19,6 +20,7 @@ export const processors: Partial<Record<PropertyType, ProcessorFn>> = {
     DATE_TIME: dateTimeProcessor,
     FILE: fileProcessor,
     MULTI_SELECT_DROPDOWN: multiSelectProcessor,
-    STATIC_MULTI_SELECT_DROPDOWN: multiSelectProcessor,
+    STATIC_DROPDOWN: staticDropdownProcessor,
+    STATIC_MULTI_SELECT_DROPDOWN: staticDropdownProcessor,
     CHECKBOX: checkboxProcessor,
 }

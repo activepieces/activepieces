@@ -1,6 +1,6 @@
 ---
 title: "AI Router"
-description: "Ask one question and Jev, an evaluation model, picks the route"
+description: "Ask one question and a decision model picks the route"
 icon: "shuffle"
 ---
 
@@ -18,8 +18,9 @@ Routes
   Otherwise    Anything that fits none of the routes above
 ```
 
-One request decides. Jev, an evaluation model built to judge text rather than generate it, makes
-the call. By default exactly one route runs; switch **Match** to run every route that applies.
+One request decides. A decision model built to judge text rather than generate it makes the call:
+TypeSafe Jev by default, or the one you pick under **Model**. By default exactly one route runs;
+switch **Match** to run every route that applies.
 
 ## Which router do you want?
 
@@ -57,6 +58,7 @@ Never ask the model whether 500 is bigger than 499.
 | **Otherwise** | Always present, always last. Edit its description like any other route. |
 | **Match** | Take the best route, or every route that applies. |
 | **Confidence floor** | Optional. Below it, the flow takes the Otherwise route, and the run detail says so. |
+| **Model** | Optional. The decision model that picks the route: TypeSafe Jev 1.13 (the default), TypeSafe Jev 1.14, Cloudflare Clef, Cloudflare Clef Flash, Cloudflare Clef Omni or Google Gemini Decision 1. |
 
 ## One route, or every route that applies
 
@@ -116,18 +118,20 @@ Billing     If the customer seems to be talking about anything financial in natu
 ## Otherwise is a real route (best-route mode)
 
 Give it a description. It is sent to the model as a genuine option, not used as a leftover bucket,
-and that is what lets the router decline rather than guess.
+and that is what lets the router decline rather than guess. A new AI Router starts with
+*"Anything that fits none of the routes above"*; if you clear it, a generic sentence like it is sent
+instead.
 
-The difference is large. With `Billing / Technical / Sales` and no Otherwise description, the input
-`"hi"` is routed to **Sales** — confidently, and past any threshold you would have set. Add
-*"Anything that fits none of the routes above"* and `"hi"` goes to **Otherwise** instead, while a
-clear billing message still goes to Billing.
+The difference is large. Asked to choose only between `Billing / Technical / Sales`, the model
+routes the input `"hi"` to **Sales** — confidently, and past any threshold you would have set. With
+Otherwise as an option, `"hi"` goes to **Otherwise** instead, while a clear billing message still
+goes to Billing.
 
 ## Reading a run
 
-In a published flow the step pauses the run while the decision is made, usually a second or two, so
-you may see it as Paused before it turns green. Test runs from the builder wait for the answer
-instead.
+When the flow runs, the step pauses the run while the decision is made, usually a second or two, so
+you may see it as Paused before it turns green. When you test the step on its own in the builder,
+it waits for the answer instead.
 
 The run detail shows how sure the model was across every route, not just the one it picked:
 
@@ -162,10 +166,10 @@ nothing is charged. If no answer arrives within ten minutes, the step fails too.
 
 ## Self-hosting
 
-The AI Router runs on the platform's OpenRouter key, the same way every AI step does, and reaches Jev
-through OpenRouter's Decisions API. On Cloud, and on Enterprise instances with billing, that is the
-built-in Activepieces provider, and each decision is billed at the cost OpenRouter reports, about
-0.03 credit. With your own OpenRouter key, added under **AI Center** → **Providers** in the platform admin, each
+The AI Router runs on the platform's OpenRouter key, the same way every AI step does, and reaches
+the decision model through OpenRouter's Decisions API. On Cloud, and on Enterprise instances with
+billing, that is the built-in Activepieces provider, and each decision is billed at the cost
+OpenRouter reports for the model, a fraction of a credit. With your own OpenRouter key, added under **AI Center** → **Providers** in the platform admin, each
 decision costs one AI credit, and nothing on Community Edition, which has no credits. The step
 appears in the step list as soon as the project can reach one of those keys, and is hidden otherwise.
-There is nothing to configure on the step itself.
+There is no key to configure on the step itself.
