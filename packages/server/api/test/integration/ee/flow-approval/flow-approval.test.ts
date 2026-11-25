@@ -9,6 +9,7 @@ import {
     FlowStatus,
     FlowVersion,
     FlowVersionState,
+    ResourceChangeOp,
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -375,7 +376,7 @@ describe('flow-approval — withdraw', () => {
             expect(response.statusCode).toBe(StatusCodes.NO_CONTENT)
             expect(pushes).toEqual([{
                 room: ctx.project.id,
-                payload: { flowId: flow.id, editorSessionId },
+                payload: { flowId: flow.id, editorSessionId, op: ResourceChangeOp.UPDATE },
             }])
             expect(await Promise.all(versionStatesAtPush)).toEqual([FlowVersionState.DRAFT])
         })
@@ -393,7 +394,7 @@ describe('flow-approval — withdraw', () => {
             expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
             expect(pushes).toEqual([{
                 room: ctx.project.id,
-                payload: { flowId: flow.id, editorSessionId: null },
+                payload: { flowId: flow.id, editorSessionId: null, op: ResourceChangeOp.UPDATE },
             }])
         })
 
