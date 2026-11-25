@@ -26,6 +26,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePersonalization } from '@/features/chat/lib/use-personalization';
 import { DEFAULT_USE_CASES } from '@/features/chat/use-cases/default-use-cases';
+import { useCaseArtIds } from '@/features/chat/use-cases/use-case-art-ids';
 import {
   ResolvedUseCase,
   UseCaseCard,
@@ -673,13 +674,15 @@ function resolveCards({
   researched: PersonalizationUseCase[] | null;
 }): ResolvedUseCase[] {
   if (researched && researched.length > 0) {
-    return researched.map((card) => ({
-      key: card.id,
-      imageId: card.imageId,
-      title: card.title,
-      prompt: card.prompt,
-      ...(card.kind ? { kind: card.kind } : {}),
-    }));
+    return useCaseArtIds.withUniqueArt(
+      researched.map((card) => ({
+        key: card.id,
+        imageId: card.imageId,
+        title: card.title,
+        prompt: card.prompt,
+        ...(card.kind ? { kind: card.kind } : {}),
+      })),
+    );
   }
   return DEFAULT_USE_CASES.map((card) => ({
     key: card.id,

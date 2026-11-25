@@ -51,11 +51,11 @@ export const lookupTableColumnAction = createAction({
     const client = createMSGraphClient(auth['access_token'], cloud);
 
     const rowsResponse = await client
-      .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}/rows`)
+      .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${encodeURIComponent(worksheetId)}/tables/${tableId}/rows`)
       .get();
 
     const columnsResponse = await client
-      .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}/columns`)
+      .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${encodeURIComponent(worksheetId)}/tables/${tableId}/columns`)
       .get();
 
     const columns = columnsResponse.value;

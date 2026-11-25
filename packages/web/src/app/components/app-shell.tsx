@@ -1,5 +1,10 @@
 import { isNil } from '@activepieces/core-utils';
-import { ApEdition, ApFlagId, TemplateType } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  InviteRewardSurface,
+  TemplateType,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { RefreshCw, X } from 'lucide-react';
 import { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
@@ -17,6 +22,11 @@ import {
   SelfServeTrialDialog,
   SelfServeTrialEndingAlert,
 } from '@/features/billing';
+import {
+  InviteRewardButton,
+  InviteRewardNotifier,
+  useInviteOffer,
+} from '@/features/members';
 import { projectCollectionUtils } from '@/features/projects';
 import { templatesHooks } from '@/features/templates';
 import { useChatPanel } from '@/features/workspace/lib/chat-panel-open';
@@ -182,7 +192,7 @@ function AppShell({ handle }: { handle: RouteHandle }) {
                   {!isNil(headerProjectId) && (
                     <ProjectHeader projectId={headerProjectId} />
                   )}
-                  {handle.shell === 'project' && <CreditsUsageAlert />}
+                  {handle.shell === 'project' && <ProjectCreditsAlert />}
                   <div
                     ref={pageRef}
                     className={cn('relative', PAGE_CLASS[handle.shell])}
@@ -275,6 +285,19 @@ function PageFallback() {
     <>
       <RouteLoadingBar />
       {besideChat && <PageSkeleton />}
+    </>
+  );
+}
+
+function ProjectCreditsAlert() {
+  const inviteOffer = useInviteOffer(InviteRewardSurface.CREDITS_ALERT);
+  return (
+    <>
+      <CreditsUsageAlert
+        extraAction={<InviteRewardButton offer={inviteOffer} />}
+      />
+      {inviteOffer.dialog}
+      <InviteRewardNotifier />
     </>
   );
 }

@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/select';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { TestEventStatus } from '@/lib/statuses';
 
 import { destinationErrors } from '../lib/destination-errors';
 import { destinationFormUtils } from '../lib/destination-form-utils';
@@ -136,7 +137,7 @@ export const TestEventCard = ({
 
       {isCurrent && !isNil(testError) && (
         <div className="flex flex-col gap-2 border-t pt-4">
-          <StatusDot tone="danger">{t('Failed')}</StatusDot>
+          <StatusDot status={TestEventStatus.FAILED}>{t('Failed')}</StatusDot>
           <p className="text-xs text-danger-11">
             {destinationErrors.describe(testError)}
           </p>
@@ -148,17 +149,19 @@ export const TestEventCard = ({
           <div className="flex items-center gap-2.5">
             {!isNil(testResult.status) && (
               <StatusDot
-                tone={
+                status={
                   testResult.status < SUCCESS_STATUS_CEILING
-                    ? 'success'
-                    : 'danger'
+                    ? TestEventStatus.SUCCEEDED
+                    : TestEventStatus.FAILED
                 }
               >
                 {testResult.status}
               </StatusDot>
             )}
             {!isNil(testResult.errorCode) && (
-              <StatusDot tone="danger">{t('Failed')}</StatusDot>
+              <StatusDot status={TestEventStatus.FAILED}>
+                {t('Failed')}
+              </StatusDot>
             )}
             <span className="text-sm text-gray-11">
               {t('{duration} ms', { duration: testResult.durationMs })}

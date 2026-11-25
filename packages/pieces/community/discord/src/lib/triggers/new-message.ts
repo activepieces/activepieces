@@ -59,7 +59,7 @@ export const newMessage = createTrigger({
   type: TriggerStrategy.POLLING,
   outputSchema: discordMessageOutputSchema,
   props: {
-    channel: discordCommon.channel,
+    channel: discordCommon.messageChannel,
     limit: Property.Number({
       displayName: 'Limit',
       description: 'Most recent messages checked each poll, up to 100.',

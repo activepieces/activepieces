@@ -31,6 +31,7 @@ const ApAddButton = React.memo((props: ApButtonData) => {
   });
 
   const showDropIndicator = !isNil(activeDraggingStep);
+  const slotAttributes = flowCanvasUtils.slotAttributesFromAddButtonData(props);
 
   useDndMonitor({
     onDragMove(event: DragMoveEvent) {
@@ -81,6 +82,8 @@ const ApAddButton = React.memo((props: ApButtonData) => {
             }}
             className={cn(' absolute    rounded-md box-content ')}
             ref={setNodeRef}
+            data-testid="step-drop-zone"
+            {...slotAttributes}
           ></div>
         </div>
       )}
@@ -117,7 +120,7 @@ const ApAddButton = React.memo((props: ApButtonData) => {
                   },
                 )}
                 data-testid="add-action-button"
-                data-parent-step={props.parentStepName}
+                {...slotAttributes}
               >
                 {!isPieceSelectorOpen && (
                   <Plus className="w-3 h-3 stroke-[3px] text-gray-12" />
