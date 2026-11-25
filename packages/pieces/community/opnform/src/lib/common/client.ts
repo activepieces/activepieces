@@ -9,7 +9,7 @@ import {
 import type { OpnformAuthValue } from './types';
 
 function baseUrl({ auth }: { auth?: OpnformAuthValue }): string {
-	return auth?.props.baseApiUrl || API_URL_DEFAULT;
+	return (auth?.props.baseApiUrl || API_URL_DEFAULT).replace(/\/+$/, '');
 }
 
 async function request<T>({

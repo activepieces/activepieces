@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, MarkdownVariant, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { opnformAuth } from '../auth';
 import { opnformApi } from '../common/api';
 import { opnformProps } from '../common/props';
@@ -11,13 +11,20 @@ export const newSubmissionTrigger = createTrigger({
     outputSchema: newSubmissionOutputSchema,
     classification: 'READ',
     displayName: 'New Submission',
-    description: 'Triggers when Opnform receives a new submission.',
+    description: 'Triggers when someone submits the selected form.',
     aiMetadata: {
         description: 'Fires whenever the specified OpnForm form receives a new submission (someone fills out and submits the form). The event payload contains the form title, slug, and the submitted answers keyed by field id, each with its value and field name. Use it to react to incoming form responses such as contact requests, signups, or survey answers.',
     },
     props: {
         workspaceId: opnformProps.workspaceId({ required: true }),
-        formId: opnformProps.formId({ required: true }),
+        formId: opnformProps.formId({
+            required: true,
+            description: 'Form whose new submissions start this flow.',
+        }),
+        integrationNote: Property.MarkDown({
+            variant: MarkdownVariant.INFO,
+            value: 'Testing or turning on this flow connects it to this form in Opnform. Turning the flow off removes the connection.',
+        }),
     },
     type: TriggerStrategy.WEBHOOK,
     sampleData: {
