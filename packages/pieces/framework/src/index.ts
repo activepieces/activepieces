@@ -33,6 +33,7 @@ export {
   AgentToolType,
   // agents / tools
   AgentTool,
+  AgentAgentTool,
   AgentFlowTool,
   AgentMcpTool,
   AgentKnowledgeBaseTool,

@@ -94,6 +94,21 @@ describe('chatToolBilling.countBillableToolCallsInLatestTurn', () => {
         expect(chatToolBilling.countBillableToolCallsInLatestTurn({ messages })).toBe(2)
     })
 
+    it('bills the paid calls an agent called as a tool made inside its run, when the worker names that tool', () => {
+        const calledPart: PersistedAgentPart = {
+            type: PersistedAgentPartType.TOOL_CALL,
+            toolCallId: 'agent-1',
+            toolName: 'researcher',
+            input: {},
+            status: PersistedToolCallStatus.COMPLETED,
+            output: { status: 'done', billedToolCalls: [{ toolName: 'ap_web_search', output: {} }, { toolName: 'ap_scrape_url', output: {} }] },
+        }
+        const messages = [user('research it'), assistant([calledPart])]
+
+        expect(chatToolBilling.countBillableToolCallsInLatestTurn({ messages, calledAgentToolNames: ['researcher'] })).toBe(2)
+        expect(chatToolBilling.countBillableToolCallsInLatestTurn({ messages })).toBe(0)
+    })
+
     it('never bills inner calls reported by a tool that is not a task', () => {
         const connectedPart: PersistedAgentPart = {
             type: PersistedAgentPartType.TOOL_CALL,

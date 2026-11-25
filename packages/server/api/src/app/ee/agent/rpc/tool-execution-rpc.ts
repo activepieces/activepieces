@@ -18,7 +18,7 @@ import { byteLengthOf, CONFIGURED_TOOL_SOURCES, configuredToolConversationOrThro
 
 export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
     async executePieceTool(input: ExecutePieceToolRequest): Promise<ExecutePieceToolResponse> {
-        const configuredRun = await configuredToolConversationOrThrow({ conversationId: input.conversationId })
+        const configuredRun = await configuredToolConversationOrThrow({ conversationId: input.conversationId, calledAgentId: input.calledAgentId })
         const { projectId, platformId } = configuredRun
         const model = await pieceToolModel({ configuredRun, input, log })
         const piece = { pieceName: input.piece.pieceName, actionName: input.piece.actionName, ...spreadIfDefined('pieceVersion', input.piece.pieceVersion) }
@@ -113,7 +113,7 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
     },
 
     async executeFlowTool(input: ExecuteFlowToolRequest): Promise<ExecuteFlowToolResponse> {
-        const configuredRun = await configuredToolConversationOrThrow({ conversationId: input.conversationId })
+        const configuredRun = await configuredToolConversationOrThrow({ conversationId: input.conversationId, calledAgentId: input.calledAgentId })
         const ranInside = isNil(input.flowRunId) ? undefined : await flowOfRun({ flowRunId: input.flowRunId, projectId: configuredRun.projectId, log })
         const flow = await flowService(log).getOnePopulated({ id: input.flowId, projectId: configuredRun.projectId, ...spreadIfDefined('versionId', input.flowVersionId) })
         if (isNil(flow)) {

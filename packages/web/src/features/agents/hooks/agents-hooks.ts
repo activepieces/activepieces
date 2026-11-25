@@ -4,6 +4,7 @@ import {
   AgentConversationStatus,
   AgentRunListItem,
   AgentListSort,
+  AgentSummary,
   CreateAgentRequest,
   MoveAgentRequest,
   Permission,
@@ -21,6 +22,7 @@ import {
 import { internalErrorToast } from '@/components/ui/sonner';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 
 import { agentsApi } from '../api/agents';
 
@@ -35,6 +37,20 @@ export const useAgentsNavVisible = (): boolean => {
   const available = useAgentsAvailable();
   const { checkAccess } = useAuthorization();
   return available && checkAccess(Permission.READ_AGENT);
+};
+
+export const useProjectAgents = (): {
+  agents: AgentSummary[];
+  complete: boolean;
+} => {
+  const { data, hasNextPage } = agentsQueries.useAgents({
+    projectId: authenticationSession.getProjectId() ?? undefined,
+    enabled: useAgentsAvailable(),
+  });
+  return {
+    agents: (data?.pages ?? []).flatMap((page) => page.data),
+    complete: !!data && !hasNextPage,
+  };
 };
 
 const AGENTS_PAGE_SIZE = 100;

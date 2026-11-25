@@ -7,6 +7,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest
 import { aiModelCandidates } from '../../../../src/app/ai/ai-model-candidates'
 import { accessTokenManager } from '../../../../src/app/authentication/lib/access-token-manager'
 import { agentRpcHandlers } from '../../../../src/app/ee/agent/agent-rpc-handlers'
+import { configuredToolConversationOrThrow } from '../../../../src/app/ee/agent/rpc/rpc-shared'
 import * as jobQueueModule from '../../../../src/app/workers/job-queue/job-queue'
 import { db } from '../../../helpers/db'
 import { createMockProject, mockAndSaveAIProvider } from '../../../helpers/mocks'
@@ -230,6 +231,21 @@ describe('an agent on a platform tier', () => {
         expect(response.statusCode).toBe(StatusCodes.OK)
         const job = add.mock.calls.map(([call]) => call).find((call) => call.data.jobType === WorkerJobType.EXECUTE_AGENT_RUN)
         expect(job.data.modelTierId).toBe(tier.id)
+    })
+
+    it('runs the tools of an agent called as a tool on its own tier, and records them under its name', async () => {
+        const { ctx, tier, keyId } = await tierOnKey({ servesOwnProject: true })
+        const callerTierResponse = await ctx.post('/v1/platform-model-tiers', { name: 'Quick', emoji: '⚡', description: null, entries: [{ configId: keyId, modelId: TIER_MODEL }] })
+        expect(callerTierResponse.statusCode).toBe(StatusCodes.OK)
+        const callerTier = callerTierResponse.json()
+        const called = await createAgent({ ctx, draft: { modelTierId: tier.id } })
+        await db.update('agent', called.id, { published: called.draft })
+        const caller = await createAgent({ ctx, draft: { modelTierId: callerTier.id } })
+        const conversation = await createConversation({ ctx, body: { agentId: caller.id } })
+
+        const run = await configuredToolConversationOrThrow({ conversationId: conversation.id, calledAgentId: called.id })
+
+        expect(run).toMatchObject({ modelTierId: tier.id, agent: { id: called.id, displayName: 'Inbox sorter' } })
     })
 
     it('records the tier a flow step ran on, so its tools are granted the same keys', async () => {

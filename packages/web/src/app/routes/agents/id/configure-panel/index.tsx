@@ -215,12 +215,14 @@ const ConfigureBehaviorTab = ({
   form,
   needsModel,
   projectId,
+  agentExternalId,
 }: {
   form: ReturnType<
     typeof useForm<ConfigureAgentInput, unknown, ConfigureAgentValues>
   >;
   needsModel: boolean;
   projectId: string;
+  agentExternalId: string;
 }) => {
   const tools = form.watch('draft.tools') ?? [];
   const draft = form.watch('draft');
@@ -308,7 +310,7 @@ const ConfigureBehaviorTab = ({
         name="draft.tools"
         render={({ field }) => (
           <FormItem className="flex flex-col gap-2">
-            <AgentTools toolsField={field} />
+            <AgentTools toolsField={field} ownerExternalId={agentExternalId} />
             <FormMessage />
           </FormItem>
         )}
@@ -717,6 +719,7 @@ const AgentConfigurePanel = forwardRef<
                   form={form}
                   needsModel={formNeedsModel}
                   projectId={agent.projectId}
+                  agentExternalId={agent.externalId}
                 />
               </TabsContent>
               <TabsContent

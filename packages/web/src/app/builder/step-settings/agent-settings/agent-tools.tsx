@@ -1,5 +1,6 @@
 import { AgentToolType } from '@activepieces/shared';
 import type {
+  AgentAgentTool,
   AgentKnowledgeBaseTool,
   AgentPieceTool,
   AgentTool,
@@ -12,6 +13,8 @@ import { Accordion } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import {
   AddToolDropdown,
+  AgentAgentToolComponent,
+  AgentAgentToolDialog,
   AgentFlowToolComponent,
   AgentMcpToolComponent,
   AgentPieceToolComponent,
@@ -33,6 +36,7 @@ const icons = [
 
 interface AgentToolsProps {
   toolsField: AgentFormField;
+  ownerExternalId?: string;
   disabled?: boolean;
   layout?: 'card' | 'rows';
 }
@@ -46,6 +50,7 @@ export const AgentTools = ({
   disabled,
   toolsField: agentToolsField,
   layout = 'card',
+  ownerExternalId,
 }: AgentToolsProps) => {
   const tools = Array.isArray(agentToolsField.value)
     ? (agentToolsField.value as AgentTool[])
@@ -59,6 +64,9 @@ export const AgentTools = ({
 
   const flowTools = tools.filter((tool) => tool.type === AgentToolType.FLOW);
   const mcpTools = tools.filter((tool) => tool.type === AgentToolType.MCP);
+  const agentTools = tools.filter(
+    (tool): tool is AgentAgentTool => tool.type === AgentToolType.AGENT,
+  );
   const kbTools = tools.filter(
     (tool): tool is AgentKnowledgeBaseTool =>
       tool.type === AgentToolType.KNOWLEDGE_BASE,
@@ -83,6 +91,7 @@ export const AgentTools = ({
       <div className={cn(!asRows && 'mt-2')}>
         {flowTools.length +
           mcpTools.length +
+          agentTools.length +
           Object.keys(pieceToToolMap).length >
         0 ? (
           <>
@@ -110,6 +119,13 @@ export const AgentTools = ({
                 <AgentMcpToolComponent
                   disabled={disabled}
                   tools={mcpTools}
+                  removeTool={removeTool}
+                />
+              )}
+              {agentTools.length > 0 && (
+                <AgentAgentToolComponent
+                  disabled={disabled}
+                  tools={agentTools}
                   removeTool={removeTool}
                 />
               )}
@@ -183,6 +199,11 @@ export const AgentTools = ({
       <AgentFlowToolDialog onToolsUpdate={onToolsUpdate} tools={tools} />
       <AgentPieceDialog tools={tools} onToolsUpdate={onToolsUpdate} />
       <AgentMcpDialog tools={tools} onToolsUpdate={onToolsUpdate} />
+      <AgentAgentToolDialog
+        tools={tools}
+        onToolsUpdate={onToolsUpdate}
+        ownerExternalId={ownerExternalId}
+      />
     </div>
   );
 };

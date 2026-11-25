@@ -1,6 +1,6 @@
 import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, ActivepiecesError, AIProviderName, ErrorCode, isFallbackWorthy, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { agentAiUtils, aiProviderSignal, aiUtils, modelCatalog } from '@activepieces/server-utils'
-import { AgentConfigResponse, AgentConversation, AgentRunSource, aiProviderUtils, GetAgentConfigRequest, GetEnabledAiToolsResponse, GetProviderConfigResponse, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole } from '@activepieces/shared'
+import { AgentConfigResponse, AgentConversation, AgentRunSource, aiProviderUtils, CalledAgentConfigResponse, GetAgentConfigRequest, GetCalledAgentConfigRequest, GetEnabledAiToolsResponse, GetProviderConfigResponse, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
 import { LanguageModel, ModelMessage, UserContent } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { agentApprovalGate } from '.././agent-approval-gate'
@@ -9,6 +9,7 @@ import { agentCompaction } from '.././agent-compaction'
 import { buildAttachmentNote, buildUserContentWithFiles, dropImagesForTextOnlyModels, persistAgentAttachments } from '.././agent-file-utils'
 import { agentHelpers } from '.././agent-helpers'
 import { agentModelTier, agentTierCandidates, AgentTierRun } from '.././agent-model-tier'
+import { agentToolRules } from '.././agent-tool-rules'
 import { agentMcp } from '.././mcp/agent-mcp'
 import { chatPersonalizationService } from '.././personalization/chat-personalization-service'
 import { agentPrompt } from '.././prompt/agent-prompt'
@@ -373,6 +374,45 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         }
     },
 
+    async getCalledAgentConfig({ platformId, conversationId, agentId }: GetCalledAgentConfigRequest): Promise<CalledAgentConfigResponse> {
+        const conversation = await agentHelpers.conversationRepo().findOneByOrFail({ id: conversationId, platformId })
+        if (isNil(conversation.projectId)) {
+            return { unavailableReason: 'This conversation has no project yet, so it cannot call other agents.' }
+        }
+        const projectId = conversation.projectId
+        const [target] = await agentToolRules.findTargets({ projectId, ids: [agentId] })
+        if (isNil(target) || isNil(target.published) || !agentToolRules.isCallable(target)) {
+            return { unavailableReason: agentToolRules.unavailableReason({ target }) }
+        }
+        const config = target.published
+        const scope = agentHelpers.runScopeOrThrow({ projectId })
+        const surface = agentHelpers.surfaceOf({ source: AgentRunSource.AGENT })
+        const tierRun = isNil(config.modelTierId) ? null : await agentModelTier(log).resolveRun({ platformId, tierId: config.modelTierId, surface, scope })
+        const providerConfig = !isNil(tierRun)
+            ? tierRun.candidates[0].config
+            : await agentHelpers.resolveRunProvider({ platformId, log, scope, ...spreadIfDefined('provider', config.provider ?? undefined), ...spreadIfDefined('providerConfigId', config.providerConfigId ?? undefined) })
+        const tier = agentHelpers.resolveRunTier({ provider: providerConfig.provider, modelName: config.modelName ?? null, selectedModel: null, surface })
+        const modelId = !isNil(tierRun)
+            ? tierRun.candidates[0].modelId
+            : !isNil(config.modelName)
+                ? agentHelpers.resolveNamedModelId({ provider: providerConfig.provider, modelName: config.modelName, surface, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds, log })
+                : await agentHelpers.resolveModelId({ platformId, providerConfig, selectedModel: null, surface, scope, log })
+        const tools = config.tools.filter((tool) => !agentToolRules.isAgentTool(tool))
+        const flowTools = await agentHelpers.resolveFlowTools({ projectId, tools, log })
+        log.info({ agent: { id: target.id }, model: { id: modelId }, provider: providerConfig.provider, toolCount: tools.length }, '[agentRpc#getCalledAgentConfig] Loaded a called agent')
+        return {
+            displayName: target.displayName,
+            systemPrompt: `${config.instructions}\n\n${CALLED_AGENT_NOTE}`,
+            credentials: providerConfig,
+            providerConfigId: providerConfig.configId,
+            modelId,
+            thinkingBudget: tierRun?.candidates[0].thinkingBudget ?? tier.thinkingBudget,
+            ...spreadIfDefined('candidates', tierFieldsOf({ tierRun }).candidates),
+            tools,
+            flowTools,
+            maxSteps: config.maxSteps,
+        }
+    },
 })
 
 function withLeadingNote({ content, note }: { content: UserContent, note: string }): UserContent {
@@ -418,5 +458,7 @@ function tierFieldsOf({ tierRun }: { tierRun: AgentTierRun | null }): Pick<Agent
 }
 
 const TOOL_SCHEMA_TOKEN_ESTIMATE = 12_000
+
+const CALLED_AGENT_NOTE = `Another agent handed you the task in the next message. Do it with your own tools. Nobody can answer questions while you work: when only a person can unblock you, finish as blocked and say exactly what is needed. When you are done, call ${TASK_COMPLETION_TOOL_NAME} once with your result.`
 
 type CompactionCandidate = { config: GetProviderConfigResponse, modelId: string }

@@ -3,7 +3,7 @@ import { ExecuteAgentRunJobData } from '@activepieces/core-execution'
 import { AGENT_STEP_TIMEOUT_MS, AgentResult, AgentTaskStatus } from '@activepieces/core-piece-types'
 import { ActivepiecesAiBilling, ActivepiecesError, AiCallContext, AIProviderName, AiUsageEnvironment, apId, assertNotNullOrUndefined, ErrorCode, isNil, spreadIfDefined, tryCatch, tryCatchSync, unique } from '@activepieces/core-utils'
 import { aiUtils, modelTierCatalog, ModelTierSurface } from '@activepieces/server-utils'
-import { AGENT_RUN_USAGE_ORIGIN, AgentConfig, AgentConversation, AgentConversationStatus, AgentFlowTool, AgentRunSource, AgentTool, AgentToolType, AI_PROVIDER_CAPABILITIES, AI_PROVIDER_ENTITY_TYPES, AIProviderModelType, FlowVersionState, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, ResolvedAgentFlowTool, UserMemory } from '@activepieces/shared'
+import { AGENT_RUN_USAGE_ORIGIN, AgentConfig, AgentConversation, AgentConversationStatus, AgentFlowTool, AgentRunSource, AgentTool, AgentToolType, AI_PROVIDER_CAPABILITIES, AI_PROVIDER_ENTITY_TYPES, AIProviderModelType, FlowVersionState, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, ResolvedAgentAgentTool, ResolvedAgentFlowTool, UserMemory } from '@activepieces/shared'
 import { LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { IsNull, Repository } from 'typeorm'
@@ -23,6 +23,7 @@ import { platformPlanService } from '../platform/platform-plan/platform-plan.ser
 import { AgentConversationEntity, AgentConversationWithRelations } from './agent-conversation-entity'
 import { agentModelResolution } from './agent-model-resolution'
 import { agentModelTier } from './agent-model-tier'
+import { agentToolRules } from './agent-tool-rules'
 import { flowStepRpc } from './rpc/flow-step-rpc'
 import { UserMemoryEntity } from './user-memory-entity'
 
@@ -536,6 +537,27 @@ async function resolveFlowTools({ projectId, tools, log }: { projectId: string, 
     })
 }
 
+async function resolveAgentTools({ projectId, tools, log }: { projectId: string, tools: AgentTool[], log: FastifyBaseLogger }): Promise<ResolvedAgentAgentTool[]> {
+    const agentToolRequests = tools.filter(agentToolRules.isAgentTool)
+    if (agentToolRequests.length === 0) {
+        return []
+    }
+    const targets = await agentToolRules.findTargets({ projectId, externalIds: agentToolRequests.map((tool) => tool.externalAgentId) })
+    const targetByExternalId = new Map(targets.map((target) => [target.externalId, target]))
+    return agentToolRequests.map((toolRequest) => {
+        const target = targetByExternalId.get(toolRequest.externalAgentId)
+        if (isNil(target) || !agentToolRules.isCallable(target)) {
+            log.warn({ tool: { name: toolRequest.toolName } }, '[agentHelpers#resolveAgentTools] Offering an agent tool as unavailable, its agent is missing, private, unpublished or calls agents itself')
+            return { toolName: toolRequest.toolName, unavailableReason: agentToolRules.unavailableReason({ target }) }
+        }
+        return {
+            toolName: toolRequest.toolName,
+            agentId: target.id,
+            description: target.description?.trim() || `Ask the agent "${target.displayName}" to do a task`,
+        }
+    })
+}
+
 async function agentsSurfaceAvailable({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<boolean> {
     const { data: plan, error } = await tryCatch(() => platformPlanService(log).getOrCreateForPlatform(platformId))
     if (!isNil(error) || isNil(plan)) {
@@ -561,6 +583,7 @@ export const agentHelpers = {
     acquireStreamingLock,
     handLockToRedelivery,
     resolveFlowTools,
+    resolveAgentTools,
     agentsSurfaceAvailable,
     assertAgentsSurfaceAvailable,
     getConversationOrThrow,

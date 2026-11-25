@@ -209,7 +209,7 @@ export function buildMessageBlocks({
         }
         continue;
       }
-      if (toolName === 'ap_run_task' || toolName === 'ap_deep_research') {
+      if (isSubagentCall({ part: p, toolName, toolCallMeta })) {
         endSegment();
         const tasks = taskRows({ part: p, toolName });
         const previous = result[result.length - 1];
@@ -273,6 +273,29 @@ export function buildMessageBlocks({
     hasContent: hasText,
     sources,
   };
+}
+
+function isSubagentCall({
+  part,
+  toolName,
+  toolCallMeta,
+}: {
+  part: AnyToolPart;
+  toolName: string;
+  toolCallMeta: Record<string, ToolCallMeta>;
+}): boolean {
+  if (toolName === 'ap_run_task' || toolName === 'ap_deep_research') {
+    return true;
+  }
+  if (toolCallMeta[chatPartUtils.getToolCallId(part)]?.subagent) {
+    return true;
+  }
+  const parsed = chatPartUtils.parseToolOutput(part);
+  return (
+    parsed.state === 'success' &&
+    isObject(parsed.data) &&
+    isObject(parsed.data['activity'])
+  );
 }
 
 function taskRows({

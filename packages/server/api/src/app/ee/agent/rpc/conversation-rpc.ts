@@ -119,7 +119,7 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
             const conversation = await agentHelpers.conversationRepo().findOneBy({ id: input.conversationId })
             if (conversation) {
                 chatAnalyticsTelemetry(log).sendConversationUpdate({ conversation })
-                rejectedPromiseHandler(chatToolBilling.chargeForLatestTurn({ conversation, runId: input.runId, log, ...spreadIfDefined('answeredBy', input.answeredBy) }), log)
+                rejectedPromiseHandler(chatToolBilling.chargeForLatestTurn({ conversation, runId: input.runId, log, calledAgentToolNames: input.calledAgentToolNames ?? [], ...spreadIfDefined('answeredBy', input.answeredBy) }), log)
             }
         }
     },

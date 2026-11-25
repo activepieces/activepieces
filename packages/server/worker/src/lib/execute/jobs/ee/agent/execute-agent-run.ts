@@ -8,14 +8,14 @@ import { agentAbort } from './agent-abort'
 import { agentMcpClient, McpConnection } from './agent-mcp-client'
 import { stepResultFrom } from './agent-step-result'
 import { agentTitle } from './agent-title'
-import { agentToolPolicy } from './agent-tool-policy'
-import { agentWorkerTools, GateDecision, TaintState } from './agent-worker-tools'
+import { agentToolPolicy, UNATTENDED_WEB_TOOLS } from './agent-tool-policy'
+import { AgentEventEmitter, agentWorkerTools, GateDecision, TaintState } from './agent-worker-tools'
 import { creditLedger } from './credit-ledger'
 import { declinedActions } from './declined-actions'
 import { classifyAgentRunError, delayWithJitter, drainOf, firstStepUsesFastModel, isTransientFailureText, NO_STEP_CONTENT, runAgentTurn, StreamDrain, trackStepContent, TurnModel } from './run-agent-turn'
 import { displayToolUtils } from './tools/display-tools'
 import { taskContext } from './tools/task-context'
-import { createTaskSubagentTools, taskTokensOf } from './tools/task-subagent-tools'
+import { createCalledAgentTools, createTaskSubagentTools, StartCalledAgent, taskTokensOf } from './tools/task-subagent-tools'
 
 const BATCH_SIZE = 10
 const BATCH_FLUSH_MS = 50
@@ -52,8 +52,10 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
         const { conversationId, runId, projectId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun, discoveryOnly, source: jobSource, flowRunId, waitpointId } = data
         const log = ctx.log.child({ conversation: { id: conversationId }, agentRun: { source: jobSource ?? AgentRunSource.CHAT }, ...spreadIfDefined('run', isNil(runId) ? undefined : { id: runId }) })
 
-        const configuredTools = agentToolPolicy.withValidNames({ tools: data.tools ?? [] })
+        const configuredTools = agentToolPolicy.withValidNames({ tools: (data.tools ?? []).filter((tool) => tool.type !== AgentToolType.AGENT) })
         const configuredFlowTools = agentToolPolicy.withValidNames({ tools: data.flowTools ?? [], reserved: configuredTools.map((tool) => tool.toolName) })
+        const configuredAgentTools = agentToolPolicy.withValidNames({ tools: data.agentTools ?? [], reserved: [...configuredTools, ...configuredFlowTools].map((tool) => tool.toolName) })
+        const calledAgentToolNames = configuredAgentTools.flatMap((tool) => 'unavailableReason' in tool ? [] : [tool.toolName])
         const configuredPieceTools = configuredTools.filter(isPieceTool)
         const configuredKnowledgeBaseTools = configuredTools.filter(isKnowledgeBaseTool)
         const reportedTools = [...configuredPieceTools, ...configuredKnowledgeBaseTools]
@@ -279,7 +281,14 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 skip: (dryRun ?? false) || (discoveryOnly ?? false),
                 log,
                 run: (stepMcpToolSet) => {
-                    const baseTools = agentWorkerTools.wrapToolsWithUserWaitBarrier({ tools: { ...allTools, ...agentWorkerTools.wrapToolsWithTaint({ tools: stepMcpToolSet, taintState }) } })
+                    const calledAgentTools = createCalledAgentTools({
+                        tools: dryRun || discoveryOnly ? [] : configuredAgentTools,
+                        startAgent: calledAgentStarter({ ctx, platformId, conversationId, runId, flowRunId, billing, metadata, webTools, taintState, eventEmitter, log }),
+                        tier: config.tier, creditsLeftFor, eventEmitter, abortSignal: abortController.signal, log,
+                        beginTask: (input) => ctx.apiClient.beginAgentTask({ platformId, conversationId, ...input }),
+                        finishTask: (input) => ctx.apiClient.finishAgentTask({ platformId, conversationId, ...input }),
+                    })
+                    const baseTools = agentWorkerTools.wrapToolsWithUserWaitBarrier({ tools: { ...allTools, ...agentWorkerTools.wrapToolsWithTaint({ tools: stepMcpToolSet, taintState }), ...calledAgentTools } })
                     const taskTools = createTaskSubagentTools({
                         tools: baseTools, guides: config.guides, models: turnModels, researchModels: isNil(fastTurnModel) ? turnModels : [fastTurnModel], tier: config.tier,
                         taskPrompt: config.taskSystemPrompt, creditsLeftFor, eventEmitter, abortSignal: abortController.signal, log,
@@ -375,6 +384,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                         ...(uiParts.length > 0 ? [{ role: PersistedAgentRole.ASSISTANT, parts: uiParts, thinkingDurationMs, tainted: taintState.readInThisReply() }] : []),
                     ],
                     ...answeredByOf({ answeredBy: turn.answeredBy }),
+                    calledAgentToolNames,
                 }
                 const { error: cancelSaveError } = await tryCatch(() => ctx.apiClient.saveAgentMessages(cancelSavePayload))
                 if (cancelSaveError) {
@@ -431,6 +441,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 ...spreadIfDefined('title', autoTitle),
                 ...spreadIfDefined('modelName', isNil(data.modelName) && isNil(config.platformTier) ? config.tier.id : undefined),
                 ...answeredByOf({ answeredBy: turn.answeredBy }),
+                calledAgentToolNames,
             }
             await retryWithBackoff({ fn: () => ctx.apiClient.saveAgentMessages(savePayload), description: 'Saving the transcript', throwOnExhausted: true, log })
 
@@ -540,7 +551,7 @@ function usageContextOf({ source, data, agentId }: { source: AgentRunSource, dat
     return { origin, environment, ...spreadIfDefined('agentId', agentId), ...spreadIfDefined('flowId', data.flowId), ...spreadIfDefined('flowRunId', data.flowRunId) }
 }
 
-function turnModelsFor({ config, model, billing, metadata }: { config: AgentConfigResponse, model: LanguageModel, billing: ActivepiecesAiBilling, metadata: ModelMetadata }): [TurnModel, ...TurnModel[]] {
+function turnModelsFor({ config, model, billing, metadata }: { config: Pick<AgentConfigResponse, 'credentials' | 'modelId' | 'candidates'> & { tier: { thinkingBudget: number } }, model: LanguageModel, billing: ActivepiecesAiBilling, metadata: ModelMetadata }): [TurnModel, ...TurnModel[]] {
     const single: TurnModel = { model, provider: config.credentials.provider, modelId: config.modelId, thinkingBudget: config.tier.thinkingBudget }
     if (isNil(config.candidates) || config.candidates.length === 0) {
         return [single]
@@ -604,6 +615,67 @@ async function releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, ou
 function skillsFor({ source, guides }: { source: AgentRunSource, guides: Record<string, string> }): { surface: SkillSurface, guides: Record<string, string> } | undefined {
     const surface = agentToolSkills.surfaceFor({ source })
     return isNil(surface) ? undefined : { surface, guides }
+}
+
+function calledAgentStarter({ ctx, platformId, conversationId, runId, flowRunId, billing, metadata, webTools, taintState, eventEmitter, log }: {
+    ctx: JobContext
+    platformId: string
+    conversationId: string
+    runId: string | undefined
+    flowRunId: string | undefined
+    billing: ActivepiecesAiBilling
+    metadata: ModelMetadata
+    webTools: ToolSet
+    taintState: TaintState
+    eventEmitter: AgentEventEmitter
+    log: JobContext['log']
+}): StartCalledAgent {
+    return async ({ agentId }) => {
+        const agent = await ctx.apiClient.getCalledAgentConfig({ platformId, conversationId, agentId })
+        if ('unavailableReason' in agent) {
+            return agent
+        }
+        const agentBilling: ActivepiecesAiBilling = isNil(billing.context) ? billing : { ...billing, context: { ...billing.context, agentId } }
+        const model = aiUtils.createModel({ credentials: agent.credentials, modelId: agent.modelId, metadata, billing: agentBilling, turnAlreadyCharged: true, providerConfigId: agent.providerConfigId })
+        const models = turnModelsFor({ config: { ...agent, tier: { thinkingBudget: agent.thinkingBudget } }, model, billing: agentBilling, metadata })
+        const agentKey = { provider: agent.credentials.provider, providerConfigId: agent.providerConfigId, modelId: agent.modelId }
+        const tools = agentToolPolicy.withValidNames({ tools: agent.tools })
+        const flowTools = agentToolPolicy.withValidNames({ tools: agent.flowTools, reserved: tools.map((configured) => configured.toolName) })
+        const toolSet: ToolSet = {
+            ...Object.fromEntries(Object.entries(webTools).filter(([name]) => UNATTENDED_WEB_TOOLS.includes(name))),
+            ...agentWorkerTools.createConfiguredPieceTools({
+                tools: tools.filter(isPieceTool),
+                runPieceTool: ({ toolName, instruction, piece }) => ctx.apiClient.executePieceTool({ conversationId, ...spreadIfDefined('runId', runId), toolName, instruction, piece, ...agentKey, ...spreadIfDefined('flowRunId', flowRunId), calledAgentId: agentId }),
+                taintState,
+                eventEmitter,
+                log,
+            }),
+            ...agentWorkerTools.createConfiguredFlowTools({
+                tools: flowTools,
+                runFlowTool: ({ toolName, flowId, flowVersionId, returnsResponse, toolInput }) => ctx.apiClient.executeFlowTool({ conversationId, ...spreadIfDefined('runId', runId), ...spreadIfDefined('flowRunId', flowRunId), toolName, flowId, ...spreadIfDefined('flowVersionId', flowVersionId), toolInput, returnsResponse, calledAgentId: agentId }),
+                taintState,
+                log,
+            }),
+            ...agentWorkerTools.createConfiguredKnowledgeBaseTools({
+                tools: tools.filter(isKnowledgeBaseTool),
+                runKnowledgeBaseTool: ({ toolName, knowledgeBaseFileId, query }) => ctx.apiClient.executeKnowledgeBaseTool({ conversationId, ...spreadIfDefined('runId', runId), toolName, knowledgeBaseFileId, query, provider: agentKey.provider, providerConfigId: agentKey.providerConfigId }),
+                taintState,
+                log,
+            }),
+        }
+        return {
+            displayName: agent.displayName,
+            systemPrompt: agent.systemPrompt,
+            maxSteps: agent.maxSteps,
+            models,
+            withTools: (run) => agentMcpClient.withStepMcpTools({
+                tools: tools.filter(isMcpTool),
+                skip: false,
+                log,
+                run: (mcpTools) => run({ ...toolSet, ...agentWorkerTools.wrapToolsWithTaint({ tools: mcpTools, taintState }) }),
+            }),
+        }
+    }
 }
 
 function isPieceTool(tool: AgentTool): tool is AgentPieceTool {

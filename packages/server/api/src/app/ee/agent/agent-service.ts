@@ -27,6 +27,7 @@ import { AgentConversationEntity } from './agent-conversation-entity'
 import { AgentEntity, AgentWithRelations } from './agent-entity'
 import { agentHelpers } from './agent-helpers'
 import { agentModelTier } from './agent-model-tier'
+import { agentToolRules } from './agent-tool-rules'
 
 const DEFAULT_PAGE_SIZE = 20
 const MAX_NAMED_FLOWS_IN_USE = 3
@@ -42,20 +43,25 @@ export const agentService = (log: FastifyBaseLogger) => ({
     async create({ platformId, projectId, ownerId, request }: CreateParams): Promise<Agent> {
         const visibility = request.visibility ?? AgentVisibility.PROJECT
         const draft = await withPinnedKey({ draft: await withDefaultModel({ draft: await withTierOrModel({ draft: request.draft, platformId, projectId, log }), platformId, projectId, log }), platformId, projectId, log })
-        return agentRepo().save({
-            id: apId(),
-            projectId,
-            ownerId,
-            externalId: apId(),
-            displayName: request.displayName,
-            description: request.description ?? null,
-            folderId: await getFolderIdFromRequest({ projectId, folderId: request.folderId ?? undefined, folderName: undefined, log }),
-            icon: request.icon,
-            color: request.color,
-            visibility,
-            sharedWithUserIds: await resolveShare({ visibility, requested: request.sharedWithUserIds, stored: [], projectId, log }),
-            draft: sanitizeObjectForPostgresql(draft),
-            published: null,
+        const sharedWithUserIds = await resolveShare({ visibility, requested: request.sharedWithUserIds, stored: [], projectId, log })
+        const folderId = await getFolderIdFromRequest({ projectId, folderId: request.folderId ?? undefined, folderName: undefined, log })
+        return transaction(async (entityManager) => {
+            await agentToolRules.validate({ entityManager, projectId, tools: draft.tools })
+            return entityManager.getRepository(AgentEntity).save({
+                id: apId(),
+                projectId,
+                ownerId,
+                externalId: apId(),
+                displayName: request.displayName,
+                description: request.description ?? null,
+                folderId,
+                icon: request.icon,
+                color: request.color,
+                visibility,
+                sharedWithUserIds,
+                draft: sanitizeObjectForPostgresql(draft),
+                published: null,
+            })
         })
     },
 
@@ -129,6 +135,9 @@ export const agentService = (log: FastifyBaseLogger) => ({
         await transaction(async (entityManager) => {
             const locked = await lockedAgentInProjectOrThrow({ entityManager, id, projectId })
             const draft = requestedDraft ?? locked.draft
+            if (!isNil(requestedDraft)) {
+                await agentToolRules.validate({ entityManager, projectId, ownerExternalId: locked.externalId, tools: requestedDraft.tools, previousTools: locked.draft.tools })
+            }
             const visibility = request.visibility ?? locked.visibility
             const sharedWithUserIds = await resolveShare({ visibility, requested: request.sharedWithUserIds, stored: locked.sharedWithUserIds, projectId, log })
             const goingLive = goLive && agentUtils.isPublishable(draft)
@@ -229,6 +238,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
                     params: { message: `That tool change leaves the agent outside what an agent may hold: ${draft.error.issues.map((issue) => issue.message).join(', ')}` },
                 })
             }
+            await agentToolRules.validate({ entityManager, projectId, ownerExternalId: agent.externalId, tools: draft.data.tools, previousTools: agent.draft.tools })
             await repo.save({ id, draft: sanitizeObjectForPostgresql(draft.data) })
             return this.getOneOrThrow({ id, projectId, userId })
         })

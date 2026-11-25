@@ -9,12 +9,13 @@ import { agentHelpers } from './agent-helpers'
 import { agentModelTier } from './agent-model-tier'
 import { agentHistory } from './history/agent-history'
 
-function latestTurnToolCalls({ messages }: { messages: PersistedAgentMessage[] }): ChatToolCall[] {
+function latestTurnToolCalls({ messages, calledAgentToolNames = [] }: { messages: PersistedAgentMessage[], calledAgentToolNames?: string[] }): ChatToolCall[] {
+    const runsSubAgents = (toolName: string): boolean => SUB_AGENT_TOOLS.includes(toolName) || calledAgentToolNames.includes(toolName)
     const lastUserIndex = messages.map((message) => message.role).lastIndexOf(PersistedAgentRole.USER)
     const turn = lastUserIndex === -1 ? messages : messages.slice(lastUserIndex + 1)
     return turn.flatMap((message) => message.parts.flatMap((part) =>
         part.type === PersistedAgentPartType.TOOL_CALL && part.status === PersistedToolCallStatus.COMPLETED
-            ? [{ toolName: part.toolName, output: part.output }, ...(SUB_AGENT_TOOLS.includes(part.toolName) ? taskToolCalls(part.output) : [])]
+            ? [{ toolName: part.toolName, output: part.output }, ...(runsSubAgents(part.toolName) ? taskToolCalls(part.output) : [])]
             : [],
     ))
 }
@@ -26,11 +27,11 @@ function taskToolCalls(output: unknown): ChatToolCall[] {
     return output['billedToolCalls'].flatMap((call) => isObject(call) && typeof call['toolName'] === 'string' ? [{ toolName: call['toolName'], output: call['output'] }] : [])
 }
 
-function countBillableToolCallsInLatestTurn({ messages }: { messages: PersistedAgentMessage[] }): number {
-    return latestTurnToolCalls({ messages }).filter(chatBilling.isFlatBilledToolCall).length
+function countBillableToolCallsInLatestTurn({ messages, calledAgentToolNames }: { messages: PersistedAgentMessage[], calledAgentToolNames?: string[] }): number {
+    return latestTurnToolCalls({ messages, calledAgentToolNames }).filter(chatBilling.isFlatBilledToolCall).length
 }
 
-async function chargeForLatestTurn({ conversation, runId, answeredBy, log }: ChargeForLatestTurnParams): Promise<void> {
+async function chargeForLatestTurn({ conversation, runId, answeredBy, calledAgentToolNames, log }: ChargeForLatestTurnParams): Promise<void> {
     const messages = agentHistory.resolveMessages({ conversation, log })
     const turnIndex = messages.filter((message) => message.role === PersistedAgentRole.USER).length
     const idempotencyScope = runId ?? turnIndex
@@ -46,7 +47,7 @@ async function chargeForLatestTurn({ conversation, runId, answeredBy, log }: Cha
     const tier = agentHelpers.resolveTier({ tierId: conversation.modelName ?? null, surface })
     const platformPlan = await platformPlanService(log).getOrCreateForPlatform(conversation.platformId)
 
-    const { messageCredits, billedToolCalls, total } = chatBilling.creditsForTurn({ provider, toolCalls: latestTurnToolCalls({ messages }) })
+    const { messageCredits, billedToolCalls, total } = chatBilling.creditsForTurn({ provider, toolCalls: latestTurnToolCalls({ messages, calledAgentToolNames }) })
     const charge = total === 0 ? undefined : {
         platformId: conversation.platformId,
         value: total,
@@ -104,6 +105,7 @@ type ChargeForLatestTurnParams = {
     conversation: AgentConversation
     runId?: string
     answeredBy?: AgentTurnModel
+    calledAgentToolNames?: string[]
     log: FastifyBaseLogger
 }
 
