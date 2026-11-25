@@ -32,10 +32,14 @@ describe('evalSeed.create', () => {
         expect(seeded.tables).toEqual([{ name: 'Leads', id: 'tab-1', records: 51 }])
     })
 
-    it('seeds tables first, keeps empty values empty, and builds flows sharing a folder one at a time', async () => {
+    it('creates each folder once, seeds tables first, keeps empty values empty, and builds flows sharing a folder one at a time', async () => {
         const order: string[] = []
         const running = { now: 0, most: 0 }
         const { mcp, calls } = mcpWith({
+            ap_create_folder: async (input) => {
+                order.push(`folder ${String(input['folderName'])}`)
+                return result({ text: '✅ Folder is ready', structured: { folderId: 'fold-1', folderName: input['folderName'] } })
+            },
             ap_create_table: async () => {
                 order.push('table')
                 return result({ text: '✅ Table created', structured: { id: 'tab-1' } })
@@ -51,9 +55,10 @@ describe('evalSeed.create', () => {
             },
         })
 
-        const seeded = await evalSeed.create({ mcp, seed: { flows: [{ flowName: 'A', folderName: 'Sales' }, { flowName: 'B', folderName: 'Sales' }], tables: [{ name: 'Leads', records: [{ Name: 'Ann', Note: null }] }] }, answers: NO_ANSWERS })
+        const seeded = await evalSeed.create({ mcp, seed: { flows: [{ flowName: 'A', folderName: 'Sales' }, { flowName: 'B', folderName: 'Sales' }], tables: [{ name: 'Leads', folderName: 'Sales', records: [{ Name: 'Ann', Note: null }] }] }, answers: NO_ANSWERS })
 
-        expect(order).toEqual(['table', 'A', 'B'])
+        expect(order).toEqual(['folder Sales', 'table', 'A', 'B'])
+        expect(calls.filter((call) => call.toolName === 'ap_create_folder').map((call) => call.input)).toEqual([{ folderName: 'Sales' }])
         expect(running.most).toBe(1)
         expect(calls.find((call) => call.toolName === 'ap_insert_records')?.input).toEqual({ tableId: 'tab-1', records: [{ Name: 'Ann', Note: '' }] })
         expect(seeded.flows).toEqual([{ name: 'A', id: 'id-A' }, { name: 'B', id: 'id-B' }])

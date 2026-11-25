@@ -38,7 +38,7 @@ async function connect({ conversationId, projectId, projectName, ...mcpCredentia
 function build({ mcp, caseReplay, auth, mode, user, onNote = ignoreNote }: { mcp: McpTools, caseReplay: Replay, auth: Record<string, unknown>, mode: ReplayMode, user: ScriptedUser | null, onNote?: (note: string) => void }): ToolSet {
     const taintState = agentWorkerTools.createTaintState({ carried: false })
     const eventEmitter = agentWorkerTools.createEventEmitter({ sendEvent: async () => {}, userId: EVAL_USER_ID, conversationId: mcp.conversationId })
-    const declaredReadOnly = replay.cachedReadOnlyLookup(({ pieceName, actionName }) => executeOnDevServer({ toolName: ACTION_READ_ONLY_TOOL, toolInput: { pieceName, actionName }, conversationId: mcp.conversationId }))
+    const declaredReadOnly = readOnlyLookup({ mcp })
     const executeTool = async (toolName: string, toolInput: Record<string, unknown>): Promise<unknown> => replay.resolveCall({
         caseReplay,
         mode,
@@ -158,6 +158,10 @@ function resultText(output: unknown): string {
     return texts.length === 0 ? JSON.stringify(output ?? null) : texts.join('\n')
 }
 
+function readOnlyLookup({ mcp }: { mcp: McpTools }): DeclaredReadOnlyLookup {
+    return replay.cachedReadOnlyLookup(({ pieceName, actionName }) => executeOnDevServer({ toolName: ACTION_READ_ONLY_TOOL, toolInput: { pieceName, actionName }, conversationId: mcp.conversationId }))
+}
+
 async function executeOnDevServer({ toolName, toolInput, conversationId }: { toolName: string, toolInput: Record<string, unknown>, conversationId: string }): Promise<unknown> {
     const res = await devServer.request({ path: '/v1/agents/eval/execute-tool', method: 'POST', body: { toolName, toolInput, conversationId } })
     if (!res.ok) {
@@ -196,6 +200,7 @@ export const evalToolSet = {
     connectMcp,
     connect,
     build,
+    readOnlyLookup,
     projectOf,
     call,
     readResult,

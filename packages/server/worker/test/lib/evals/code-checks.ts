@@ -5,20 +5,20 @@ import { evalAgentTurn, TurnOutcome, TurnToolCall } from './agent-turn'
 import { RunVerdict } from './checks'
 import { declinedSteps } from './declined-steps'
 import { CodeChecks } from './eval-case'
-import { replay } from './replay'
+import { DeclaredReadOnlyLookup, replay } from './replay'
 import { evalToolSet, McpTools } from './tool-set'
 
-async function run({ checks, outcome, mcp, declinedPieces = [] }: { checks: CodeChecks, outcome: CheckedOutcome, mcp: McpTools, declinedPieces?: string[] }): Promise<CodeCheckResult> {
+async function run({ checks, outcome, mcp, declaredReadOnly, declinedPieces = [] }: { checks: CodeChecks, outcome: CheckedOutcome, mcp: McpTools, declaredReadOnly: DeclaredReadOnlyLookup, declinedPieces?: string[] }): Promise<CodeCheckResult> {
     const deletedFlows = new Set(succeededCalls(outcome).filter((call) => call.toolName === DELETE_FLOW_TOOL && landed(call)).flatMap(flowIdOf))
     const flowIds = evalAgentTurn.changedFlowIds(outcome.toolCalls).filter((flowId) => !deletedFlows.has(flowId))
     const flowProblems = checks.skipFlowValidates === true ? [] : await invalidFlows({ mcp, flowIds, declined: new Set(declinedPieces) })
-    return resultOf([...declaredProblems({ checks, outcome }), ...flowProblems])
+    return resultOf([...await declaredProblems({ checks, outcome, declaredReadOnly }), ...flowProblems])
 }
 
-function declaredProblems({ checks, outcome }: { checks: CodeChecks, outcome: CheckedOutcome }): string[] {
+async function declaredProblems({ checks, outcome, declaredReadOnly }: { checks: CodeChecks, outcome: CheckedOutcome, declaredReadOnly: DeclaredReadOnlyLookup }): Promise<string[]> {
     const calls = succeededCalls(outcome)
     const cards = new Set([...outcome.cardsShown, ...calls.flatMap((call) => call.toolName.startsWith(CARD_PREFIX) ? [call.toolName] : [])])
-    const writes = unique([...calls.filter(landed), ...effectiveCalls(outcome).filter(rollbackFailed)].flatMap(writesOf))
+    const writes = unique((await Promise.all([...calls.filter(landed), ...effectiveCalls(outcome).filter(rollbackFailed)].map((call) => writesOf({ call, declaredReadOnly })))).flat())
     const deletes = unique(calls.filter(landed).flatMap(deletesOf))
     return [
         checks.noQuestionCards === true && cards.has(QUESTIONS_CARD) ? `showed a questions card (${QUESTIONS_CARD}), the case expects none` : null,
@@ -51,11 +51,16 @@ async function invalidFlows({ mcp, flowIds, declined }: { mcp: McpTools, flowIds
             return [`could not validate flow ${flowId}: ${error.message}`]
         }
         const { failed, text, structured } = evalToolSet.readResult(data)
+        const validated = { mcp, flowId, issues: issuesOf(structured), invalidSteps: structured['invalidSteps'], declined }
         if (structured['valid'] === false) {
-            const issues = await realIssues({ mcp, flowId, issues: issuesOf(structured), invalidSteps: structured['invalidSteps'], declined })
+            const issues = await realIssues(validated)
             return issues.length === 0 ? [] : [`flow ${flowId} is not valid: ${describeIssues(issues)}`]
         }
-        return structured['valid'] === true && !failed ? [] : [`could not validate flow ${flowId}: ${text}`]
+        if (structured['valid'] !== true || failed) {
+            return [`could not validate flow ${flowId}: ${text}`]
+        }
+        const trigger = await invalidTrigger(validated)
+        return trigger.length === 0 ? [] : [`flow ${flowId} is not valid: ${describeIssues(trigger)}`]
     }))
     return problems.flat()
 }
@@ -77,15 +82,28 @@ async function realIssues({ mcp, flowId, issues, invalidSteps, declined }: { mcp
         return invalidSteps === 1 && await declinedSteps.onlyMissesConnection({ mcp, flowId, stepName: TRIGGER_STEP, declined }) ? [] : [{ message: 'ap_validate_flow reported it invalid' }]
     }
     const checked = await Promise.all(issues.map(async (issue) => issue.category === STEP_VALIDITY && !isNil(issue.stepName) && await declinedSteps.onlyMissesConnection({ mcp, flowId, stepName: issue.stepName, declined }) ? [] : [issue]))
-    return checked.flat()
+    return [...checked.flat(), ...await invalidTrigger({ mcp, flowId, issues, invalidSteps, declined })]
 }
 
-function writesOf(call: TurnToolCall): string[] {
+async function invalidTrigger({ mcp, flowId, issues, invalidSteps, declined }: { mcp: McpTools, flowId: string, issues: ValidationIssue[], invalidSteps: unknown, declined: Set<string> }): Promise<ValidationIssue[]> {
+    const reportedSteps = issues.filter((issue) => issue.category === STEP_VALIDITY).length
+    if (typeof invalidSteps !== 'number' || invalidSteps <= reportedSteps) {
+        return []
+    }
+    return await declinedSteps.onlyMissesConnection({ mcp, flowId, stepName: TRIGGER_STEP, declined }) ? [] : [{ stepName: TRIGGER_STEP, message: INVALID_TRIGGER_MESSAGE }]
+}
+
+async function writesOf({ call, declaredReadOnly }: { call: TurnToolCall, declaredReadOnly: DeclaredReadOnlyLookup }): Promise<string[]> {
     if (call.toolName === EXECUTE_ACTION_TOOL) {
         const action = actionOf(call)
-        return isNil(action) || agentToolClassification.isReadOnlyActionCall({ actionName: action.name, input: action.input }) ? [] : [describeAction({ call, action })]
+        return isNil(action) || await isReadOnlyAction({ action, declaredReadOnly }) ? [] : [describeAction({ call, action })]
     }
     return WRITE_TOOLS.has(call.toolName) ? [call.toolName] : []
+}
+
+async function isReadOnlyAction({ action, declaredReadOnly }: { action: ActionCall, declaredReadOnly: DeclaredReadOnlyLookup }): Promise<boolean> {
+    const declared = action.pieceName === '' ? { data: false, error: null } : await tryCatch(() => declaredReadOnly({ pieceName: action.pieceName, actionName: action.name }))
+    return agentToolClassification.isReadOnlyActionCall({ actionName: action.name, input: action.input, declaredReadOnly: isNil(declared.error) && declared.data === true })
 }
 
 function deletesOf(call: TurnToolCall): string[] {
@@ -118,7 +136,7 @@ function actionOf(call: TurnToolCall): ActionCall | null {
     if (!isObject(call.input) || typeof call.input['actionName'] !== 'string') {
         return null
     }
-    return { name: call.input['actionName'], input: isObject(call.input['input']) ? call.input['input'] : undefined }
+    return { name: call.input['actionName'], pieceName: typeof call.input['pieceName'] === 'string' ? call.input['pieceName'] : '', input: isObject(call.input['input']) ? call.input['input'] : undefined }
 }
 
 function describeAction({ call, action }: { call: TurnToolCall, action: ActionCall }): string {
@@ -166,6 +184,7 @@ const SIDE_EFFECT_TOOLS = [
     'ap_update_agent',
 ]
 const TRIGGER_STEP = 'trigger'
+const INVALID_TRIGGER_MESSAGE = 'the trigger is invalid'
 const WRITE_TOOLS = new Set([...replay.workspaceWriteTools, ...SIDE_EFFECT_TOOLS])
 const NOT_RUN: CodeCheckResult = { verdict: 'pass', reason: 'No code checks: they run on live cases only' }
 
@@ -179,7 +198,7 @@ type CheckedOutcome = Pick<TurnOutcome, 'toolCalls' | 'cardsShown'>
 
 type ValidationIssue = z.infer<typeof ValidationIssue>
 
-type ActionCall = { name: string, input: Record<string, unknown> | undefined }
+type ActionCall = { name: string, pieceName: string, input: Record<string, unknown> | undefined }
 
 export type CodeCheckResult = {
     verdict: RunVerdict

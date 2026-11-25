@@ -8,13 +8,21 @@ async function create({ mcp, seed, answers }: { mcp: McpTools, seed: LiveSetting
     if (resolved.unmet.length > 0) {
         throw new Error(`seed failed: ${resolved.unmet.join('; ')}`)
     }
+    const folderNames = new Set([...seed.tables, ...resolved.flows].flatMap((item) => {
+        const folder = folderOf(item)
+        return isNil(folder) ? [] : [folder]
+    }))
+    await Promise.all([...folderNames].map((folderName) => callTool({ mcp, toolName: CREATE_FOLDER_TOOL, input: { folderName }, label: `folder "${folderName}"` })))
     const tables = await Promise.all(seed.tables.map((table) => seedTable({ mcp, table })))
     const folders = await Promise.all(byFolder(resolved.flows).map((flows) => seedInOrder({ mcp, flows })))
     return { flows: folders.flat(), tables }
 }
 
+function folderOf(item: Record<string, unknown>): string | null {
+    return typeof item['folderName'] === 'string' ? item['folderName'] : null
+}
+
 function byFolder(flows: SeedFlow[]): SeedFlow[][] {
-    const folderOf = (flow: SeedFlow): string | null => typeof flow['folderName'] === 'string' ? flow['folderName'] : null
     const unfiled = flows.filter((flow) => isNil(folderOf(flow))).map((flow) => [flow])
     const folders = [...new Set(flows.flatMap((flow) => {
         const folder = folderOf(flow)
@@ -73,6 +81,7 @@ function textOf(value: unknown): string {
     return typeof value === 'string' ? value : JSON.stringify(value)
 }
 
+const CREATE_FOLDER_TOOL = 'ap_create_folder'
 const BUILD_FLOW_TOOL = 'ap_build_flow'
 const CREATE_TABLE_TOOL = 'ap_create_table'
 const INSERT_RECORDS_TOOL = 'ap_insert_records'
