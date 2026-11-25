@@ -18,10 +18,18 @@ import {
 
 import { api } from '@/lib/api';
 
-async function createConversation(
-  request: CreateAgentConversationRequest,
-): Promise<AgentConversation> {
-  return api.post<AgentConversation>('/v1/agents/conversations', request);
+async function createConversation({
+  request,
+  signal,
+}: {
+  request: CreateAgentConversationRequest;
+  signal?: AbortSignal;
+}): Promise<AgentConversation> {
+  return api.any<AgentConversation>('/v1/agents/conversations', {
+    method: 'POST',
+    data: request,
+    signal,
+  });
 }
 
 async function listConversations({

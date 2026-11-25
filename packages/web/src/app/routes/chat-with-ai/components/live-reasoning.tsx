@@ -2,6 +2,7 @@ import { motion, useReducedMotion, useSpring } from 'motion/react';
 import { useEffect, useRef } from 'react';
 
 import { StreamingText } from '@/components/prompt-kit/streaming-text';
+import { MOTION } from '@/features/workspace/lib/chat-layout';
 
 export function LiveReasoning({ text }: { text: string }) {
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -27,18 +28,15 @@ export function LiveReasoning({ text }: { text: string }) {
 
   return (
     <motion.div
-      initial={{ height: 0, opacity: 0 }}
-      animate={{ height: 'auto', opacity: 1 }}
-      exit={{ height: 0, opacity: 0 }}
-      transition={
-        prefersReducedMotion
-          ? { duration: 0.12 }
-          : {
-              height: { duration: 0.3, ease: [0.32, 0.72, 0, 1] },
-              opacity: { duration: 0.2, ease: 'easeOut' },
-            }
-      }
-      style={{ overflow: 'hidden' }}
+      initial={{ opacity: 0 }}
+      animate={{
+        opacity: 1,
+        transition: { duration: MOTION.base, ease: MOTION.easeOut },
+      }}
+      exit={{
+        opacity: 0,
+        transition: { duration: MOTION.fast, ease: MOTION.easeOut },
+      }}
     >
       <div
         ref={viewportRef}

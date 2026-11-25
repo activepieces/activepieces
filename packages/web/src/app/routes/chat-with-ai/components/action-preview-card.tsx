@@ -6,6 +6,7 @@ import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { PieceIconWithPieceName } from '@/features/pieces/components/piece-icon-from-name';
+import { MOTION } from '@/features/workspace/lib/chat-layout';
 
 import { normalizePieceName } from '../lib/message-parsers';
 
@@ -125,7 +126,7 @@ function ExpandableParamRow({ param }: { param: RichInputParam }) {
         onClick={() => setOpen((prev) => !prev)}
       >
         <ParamLabel>{param.key}</ParamLabel>
-        <span className="ml-auto flex shrink-0 items-center gap-1 text-xs text-gray-11 hover:text-gray-12 transition-colors">
+        <span className="ml-auto flex shrink-0 items-center gap-1 text-xs text-gray-11 hover:text-gray-12 transition-colors duration-(--dur-micro) ease-[ease]">
           {t('Preview')}
           {open ? (
             <ChevronUp className="size-3" />
@@ -137,10 +138,15 @@ function ExpandableParamRow({ param }: { param: RichInputParam }) {
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2, ease: 'easeInOut' }}
+            initial={{ opacity: 0 }}
+            animate={{
+              opacity: 1,
+              transition: { duration: MOTION.base, ease: MOTION.easeOut },
+            }}
+            exit={{
+              opacity: 0,
+              transition: { duration: MOTION.fast, ease: MOTION.easeOut },
+            }}
             className="overflow-hidden"
           >
             {param.kind === 'html' ? (
