@@ -8,9 +8,8 @@ import { useEmbedding } from '@/components/providers/embed-provider';
 import { ApTableStateProvider } from '@/features/tables';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { routesThatRequireProjectId } from '@/lib/route-utils';
+import { shellHandles } from '@/lib/shell-handle';
 
-import { BuilderLayout } from '../components/builder-layout';
-import { ProjectDashboardLayout } from '../components/project-layout';
 import { AfterImportFlowRedirect } from '../guards/after-import-flow-redirect';
 import { AgentsFlagGuard } from '../guards/agents-flag-guard';
 import { RoutePermissionGuard } from '../guards/permission-guard';
@@ -94,120 +93,117 @@ const automationsPagePermissions = [
 
 const agentEditorElement = (
   <AgentsFlagGuard>
-    <ProjectDashboardLayout>
-      <RoutePermissionGuard requiredPermissions={[Permission.READ_AGENT]}>
-        <PageTitle title="Agent">
-          <SuspenseWrapper>
-            <AgentEditorPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </RoutePermissionGuard>
-    </ProjectDashboardLayout>
+    <RoutePermissionGuard requiredPermissions={[Permission.READ_AGENT]}>
+      <PageTitle title="Agent">
+        <SuspenseWrapper>
+          <AgentEditorPage />
+        </SuspenseWrapper>
+      </PageTitle>
+    </RoutePermissionGuard>
   </AgentsFlagGuard>
 );
 
 export const projectRoutes = [
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.singleAgent,
+    handle: shellHandles.project,
     element: agentEditorElement,
   }),
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.singleAgentRuns,
+    handle: shellHandles.project,
     element: agentEditorElement,
   }),
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.automations,
+    handle: shellHandles.projectWithHeader,
     element: (
-      <ProjectDashboardLayout>
-        <RoutePermissionGuard requiredPermissions={automationsPagePermissions}>
-          <PageTitle title="Flows">
-            <SuspenseWrapper>
-              <AutomationsPage />
-            </SuspenseWrapper>
-          </PageTitle>
-        </RoutePermissionGuard>
-      </ProjectDashboardLayout>
+      <RoutePermissionGuard requiredPermissions={automationsPagePermissions}>
+        <PageTitle title="Flows">
+          <SuspenseWrapper>
+            <AutomationsPage />
+          </SuspenseWrapper>
+        </PageTitle>
+      </RoutePermissionGuard>
     ),
   }),
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.flows,
+    handle: shellHandles.projectWithHeader,
     element: <Navigate to={routesThatRequireProjectId.automations} replace />,
   }),
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.singleFlow,
+    handle: shellHandles.builder,
     element: (
       <RoutePermissionGuard requiredPermissions={Permission.READ_FLOW}>
         <PageTitle title="Builder">
-          <BuilderLayout>
-            <SuspenseWrapper>
-              <FlowBuilderPage />
-            </SuspenseWrapper>
-          </BuilderLayout>
+          <SuspenseWrapper>
+            <FlowBuilderPage />
+          </SuspenseWrapper>
         </PageTitle>
       </RoutePermissionGuard>
     ),
   }),
   ...ProjectRouterWrapper({
     path: '/flow-import-redirect/:flowId',
+    handle: shellHandles.builder,
     element: <AfterImportFlowRedirect></AfterImportFlowRedirect>,
   }),
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.singleRun,
+    handle: shellHandles.builder,
     element: (
       <RoutePermissionGuard requiredPermissions={Permission.READ_RUN}>
         <PageTitle title="Flow Run">
-          <BuilderLayout>
-            <SuspenseWrapper>
-              <FlowRunPage />
-            </SuspenseWrapper>
-          </BuilderLayout>
+          <SuspenseWrapper>
+            <FlowRunPage />
+          </SuspenseWrapper>
         </PageTitle>
       </RoutePermissionGuard>
     ),
   }),
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.runs,
+    handle: shellHandles.projectWithHeader,
     element: (
-      <ProjectDashboardLayout>
-        <RoutePermissionGuard requiredPermissions={Permission.READ_RUN}>
-          <PageTitle title="Runs">
-            <SuspenseWrapper>
-              <RunsPage />
-            </SuspenseWrapper>
-          </PageTitle>
-        </RoutePermissionGuard>
-      </ProjectDashboardLayout>
+      <RoutePermissionGuard requiredPermissions={Permission.READ_RUN}>
+        <PageTitle title="Runs">
+          <SuspenseWrapper>
+            <RunsPage />
+          </SuspenseWrapper>
+        </PageTitle>
+      </RoutePermissionGuard>
     ),
   }),
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.singleRelease,
+    handle: shellHandles.projectWithHeader,
     element: (
-      <ProjectDashboardLayout>
-        <PageTitle title="Releases">
-          <SuspenseWrapper>
-            <ViewRelease />
-          </SuspenseWrapper>
-        </PageTitle>
-      </ProjectDashboardLayout>
+      <PageTitle title="Releases">
+        <SuspenseWrapper>
+          <ViewRelease />
+        </SuspenseWrapper>
+      </PageTitle>
     ),
   }),
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.tables,
+    handle: shellHandles.projectWithHeader,
     element: <Navigate to={routesThatRequireProjectId.automations} replace />,
   }),
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.singleTable,
+    handle: shellHandles.builder,
     element: (
       <HideTablesGuard>
         <RoutePermissionGuard requiredPermissions={Permission.READ_TABLE}>
           <PageTitle title="Table">
-            <BuilderLayout>
-              <ApTableStateProvider>
-                <SuspenseWrapper>
-                  <ApTableEditorPage />
-                </SuspenseWrapper>
-              </ApTableStateProvider>
-            </BuilderLayout>
+            <ApTableStateProvider>
+              <SuspenseWrapper>
+                <ApTableEditorPage />
+              </SuspenseWrapper>
+            </ApTableStateProvider>
           </PageTitle>
         </RoutePermissionGuard>
       </HideTablesGuard>
@@ -215,96 +211,88 @@ export const projectRoutes = [
   }),
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.connections,
+    handle: shellHandles.projectWithHeader,
     element: (
-      <ProjectDashboardLayout>
-        <RoutePermissionGuard
-          requiredPermissions={Permission.READ_APP_CONNECTION}
-        >
-          <PageTitle title="Connections">
-            <SuspenseWrapper>
-              <AppConnectionsPage />
-            </SuspenseWrapper>
-          </PageTitle>
-        </RoutePermissionGuard>
-      </ProjectDashboardLayout>
+      <RoutePermissionGuard
+        requiredPermissions={Permission.READ_APP_CONNECTION}
+      >
+        <PageTitle title="Connections">
+          <SuspenseWrapper>
+            <AppConnectionsPage />
+          </SuspenseWrapper>
+        </PageTitle>
+      </RoutePermissionGuard>
     ),
   }),
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.variables,
+    handle: shellHandles.projectWithHeader,
     element: (
-      <ProjectDashboardLayout>
-        <RoutePermissionGuard requiredPermissions={Permission.READ_VARIABLE}>
-          <PageTitle title="Variables">
-            <SuspenseWrapper>
-              <VariablesPage />
-            </SuspenseWrapper>
-          </PageTitle>
-        </RoutePermissionGuard>
-      </ProjectDashboardLayout>
+      <RoutePermissionGuard requiredPermissions={Permission.READ_VARIABLE}>
+        <PageTitle title="Variables">
+          <SuspenseWrapper>
+            <VariablesPage />
+          </SuspenseWrapper>
+        </PageTitle>
+      </RoutePermissionGuard>
     ),
   }),
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.releases,
+    handle: shellHandles.projectWithHeader,
     element: (
-      <ProjectDashboardLayout>
-        <PageTitle title="Releases">
-          <SuspenseWrapper>
-            <ProjectReleasesPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </ProjectDashboardLayout>
+      <PageTitle title="Releases">
+        <SuspenseWrapper>
+          <ProjectReleasesPage />
+        </SuspenseWrapper>
+      </PageTitle>
     ),
   }),
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.approvals,
+    handle: shellHandles.projectWithHeader,
     element: (
-      <ProjectDashboardLayout>
-        <RoutePermissionGuard requiredPermissions={Permission.READ_FLOW}>
-          <PageTitle title="Pending approvals">
-            <SuspenseWrapper>
-              <ApprovalsPage />
-            </SuspenseWrapper>
-          </PageTitle>
-        </RoutePermissionGuard>
-      </ProjectDashboardLayout>
+      <RoutePermissionGuard requiredPermissions={Permission.READ_FLOW}>
+        <PageTitle title="Pending approvals">
+          <SuspenseWrapper>
+            <ApprovalsPage />
+          </SuspenseWrapper>
+        </PageTitle>
+      </RoutePermissionGuard>
     ),
   }),
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.settings,
-    element: (
-      <ProjectDashboardLayout>
-        <SettingsRerouter></SettingsRerouter>
-      </ProjectDashboardLayout>
-    ),
+    handle: shellHandles.projectWithHeader,
+    element: <SettingsRerouter></SettingsRerouter>,
   }),
   {
     path: '/impact',
+    handle: shellHandles.project,
     element: (
-      <ProjectDashboardLayout>
-        <PageTitle title="Impact">
-          <SuspenseWrapper>
-            <AnalyticsPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </ProjectDashboardLayout>
+      <PageTitle title="Impact">
+        <SuspenseWrapper>
+          <AnalyticsPage />
+        </SuspenseWrapper>
+      </PageTitle>
     ),
   },
   {
     path: '/mcp-server/pieces',
+    handle: shellHandles.project,
     element: <LegacyPiecesRedirect />,
   },
   {
     path: '/mcp-server/:tab?',
+    handle: shellHandles.project,
     element: (
-      <ProjectDashboardLayout>
-        <McpReachGuard>
-          <PageTitle title="MCP Server">
-            <SuspenseWrapper>
-              <McpServerPage />
-            </SuspenseWrapper>
-          </PageTitle>
-        </McpReachGuard>
-      </ProjectDashboardLayout>
+      <McpReachGuard>
+        <PageTitle title="MCP Server">
+          <SuspenseWrapper>
+            <McpServerPage />
+          </SuspenseWrapper>
+        </PageTitle>
+      </McpReachGuard>
     ),
   },
 ];

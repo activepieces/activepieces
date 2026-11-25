@@ -3,7 +3,6 @@ import { TemplateType } from '@activepieces/shared';
 import { Navigate, useParams, useLocation } from 'react-router-dom';
 
 import { PageTitle } from '@/app/components/page-title';
-import { ProjectDashboardLayout } from '@/app/components/project-layout';
 import { TemplateDetailsPage } from '@/app/routes/templates/id';
 import { LoadingScreen } from '@/components/custom/loading-screen';
 import { ShareTemplate, templatesHooks } from '@/features/templates';
@@ -36,14 +35,12 @@ const TemplateDetailsWrapper = () => {
     );
   }
 
-  const content = (
-    <PageTitle title={template.name}>
-      <TemplateDetailsPage template={template} />
-    </PageTitle>
-  );
-
   if (useProjectLayout) {
-    return <ProjectDashboardLayout>{content}</ProjectDashboardLayout>;
+    return (
+      <PageTitle title={template.name}>
+        <TemplateDetailsPage template={template} />
+      </PageTitle>
+    );
   }
 
   return <ShareTemplate template={template} />;
