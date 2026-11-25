@@ -275,10 +275,10 @@ const TOOL_SEARCH_TOOL_NAMES = ['ap_search_actions', 'ap_search_triggers'];
 
 export function getToolCategories({
   toolSearchEnabled,
-  scope,
+  scope = 'project',
 }: {
   toolSearchEnabled: boolean;
-  scope: 'platform' | 'project';
+  scope?: 'platform' | 'project';
 }): ToolCategory[] {
   const categories = TOOL_CATEGORIES.filter(
     (category) => scope === 'platform' || category.platformOnly !== true,

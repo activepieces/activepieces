@@ -59,7 +59,6 @@ export function ToolsTab({
     () =>
       getToolCategories({
         toolSearchEnabled: toolSearchEnabled ?? false,
-        scope: 'project',
       }).reduce((total, category) => total + category.tools.length, 0),
     [toolSearchEnabled],
   );
