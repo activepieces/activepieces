@@ -133,6 +133,7 @@ const agentEvalController: FastifyPluginAsyncZod = async (app) => {
             platformId: platform.id,
             userId: platform.ownerId,
             source: AgentRunSource.CHAT,
+            confineToConversationProject: true,
         })
         return reply.status(StatusCodes.OK).send(response)
     })
