@@ -1,6 +1,6 @@
 import { ActivepiecesAiConsumerSource } from '@activepieces/core-utils'
 import { createLogger } from 'evlog'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { agentAiUtils } from '../src/agent-ai-utils'
 import { aiObservability } from '../src/ai-observability'
 import { wideEvent } from '../src/wide-event'
@@ -8,10 +8,20 @@ import { wideEvent } from '../src/wide-event'
 describe('aiObservability', () => {
     afterEach(() => {
         aiObservability.reset()
+        vi.unstubAllEnvs()
     })
 
     it('adds no PostHog integration when not on Cloud', () => {
         aiObservability.init({ enabled: false })
+
+        expect(aiObservability.integration()).toBeUndefined()
+        expect(agentAiUtils.buildTelemetry({ functionId: 'agent-turn' })).toEqual({})
+    })
+
+    it('adds no PostHog integration when AP_POSTHOG_PROJECT_TOKEN is empty', () => {
+        vi.stubEnv('AP_POSTHOG_PROJECT_TOKEN', '')
+
+        aiObservability.init({ enabled: true })
 
         expect(aiObservability.integration()).toBeUndefined()
         expect(agentAiUtils.buildTelemetry({ functionId: 'agent-turn' })).toEqual({})

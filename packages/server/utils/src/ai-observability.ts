@@ -6,18 +6,20 @@ import { BasicTracerProvider, BatchSpanProcessor } from '@opentelemetry/sdk-trac
 import { Telemetry } from 'ai'
 import { aiTraceScrubber } from './ai-trace-scrubber'
 import { apVersionUtil } from './ap-version'
+import { posthogConfig } from './posthog-config'
 import { wideEvent } from './wide-event'
 
 let tracing: { processor: BatchSpanProcessor, integration: Telemetry } | undefined
 
 function init({ enabled }: { enabled: boolean }): void {
-    if (!enabled || !isNil(tracing)) {
+    const projectToken = posthogConfig.projectToken()
+    if (!enabled || isNil(projectToken) || !isNil(tracing)) {
         return
     }
     const exporter = aiTraceScrubber.wrapExporter({
         exporter: new OTLPTraceExporter({
-            url: `${POSTHOG_HOST}/i/v0/ai/otel`,
-            headers: { Authorization: `Bearer ${POSTHOG_PROJECT_TOKEN}` },
+            url: `${posthogConfig.host}/i/v0/ai/otel`,
+            headers: { Authorization: `Bearer ${projectToken}` },
         }),
     })
     const processor = new BatchSpanProcessor(exporter, { maxExportBatchSize: 8, maxQueueSize: 128 })
@@ -119,8 +121,6 @@ export const aiObservability = {
     runtimeContextOf,
 }
 
-export const POSTHOG_PROJECT_TOKEN = 'phc_7F92HoXJPeGnTKmYv0eOw62FurPMRW9Aqr0TPrDzvHh'
-export const POSTHOG_HOST = 'https://us.i.posthog.com'
 export const AI_TRACE_RUNTIME_CONTEXT = { distinctId: true, sessionId: true, groups: true, runSource: true, tierId: true, tierModel: true, functionId: true }
 
 export type AiTraceContext = {
