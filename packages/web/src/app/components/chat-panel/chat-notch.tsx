@@ -1,6 +1,7 @@
 import { t } from 'i18next';
 
 import { Dot } from '@/components/custom/dot';
+import { Shortcut } from '@/components/custom/shortcut';
 import { ChatSparkIcon } from '@/components/icons/chat-spark';
 import { Button } from '@/components/ui/button';
 import {
@@ -47,6 +48,7 @@ export function ChatNotch({ className }: { className?: string }) {
               aria-label={
                 needsYou ? t('Chat is waiting for your answer') : t('Chat')
               }
+              aria-keyshortcuts="Meta+J Control+J"
               aria-hidden={hidden || undefined}
               tabIndex={hidden ? -1 : 0}
               onClick={() => useChatPanel.getState().setOpen(true)}
@@ -73,6 +75,7 @@ export function ChatNotch({ className }: { className?: string }) {
           </TooltipTrigger>
           <TooltipContent side="right" className="flex items-center gap-2">
             {t('Chat')}
+            <Shortcut variant="compact" shortcutKey="J" withCtrl />
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

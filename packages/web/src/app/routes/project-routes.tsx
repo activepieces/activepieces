@@ -19,6 +19,7 @@ import { ApprovalsPage } from './approvals';
 import { AutomationsPage } from './automations';
 import { LegacyPiecesRedirect } from './mcp-server/legacy-pieces-redirect';
 import { McpReachGuard } from './mcp-server/mcp-reach-guard';
+import { RedirectKeepingHash } from './redirect-keeping-hash';
 
 const AgentEditorPage = lazyWithRetry(
   () => import('./agents/id').then((m) => ({ default: m.AgentEditorPage })),
@@ -130,7 +131,9 @@ export const projectRoutes = [
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.flows,
     handle: shellHandles.projectWithHeader,
-    element: <Navigate to={routesThatRequireProjectId.automations} replace />,
+    element: (
+      <RedirectKeepingHash to={routesThatRequireProjectId.automations} />
+    ),
   }),
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.singleFlow,
@@ -190,7 +193,9 @@ export const projectRoutes = [
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.tables,
     handle: shellHandles.projectWithHeader,
-    element: <Navigate to={routesThatRequireProjectId.automations} replace />,
+    element: (
+      <RedirectKeepingHash to={routesThatRequireProjectId.automations} />
+    ),
   }),
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.singleTable,

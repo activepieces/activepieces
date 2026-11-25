@@ -11,6 +11,7 @@ vi.mock('i18next', () => ({ t: (key: string) => key }));
 vi.mock('@/app/components/chat-panel/chat-window', () => ({
   ChatPanel: () => null,
   useChatWidth: () => layout.width,
+  useChatSheet: () => ({ hide: vi.fn() }),
 }));
 
 afterEach(cleanup);
