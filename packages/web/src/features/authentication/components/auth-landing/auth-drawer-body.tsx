@@ -868,7 +868,6 @@ function CodeStep({
   const { mutate: resend, isPending: isResending } =
     authMutations.useRequestEmailCode({
       onSuccess: () => {
-        onCaptchaSpent();
         setCooldown(RESEND_COOLDOWN_SECONDS);
         capture({
           name: TelemetryEventName.EMAIL_CODE_RESEND_REQUESTED,
@@ -876,7 +875,6 @@ function CodeStep({
         });
       },
       onError: (error) => {
-        onCaptchaSpent();
         setErrorMessage(requestErrorMessage(error));
       },
     });
@@ -927,7 +925,10 @@ function CodeStep({
             isResending ||
             (captchaRequired && isNil(captchaToken))
           }
-          onClick={() => resend({ email, captchaToken })}
+          onClick={() => {
+            resend({ email, captchaToken });
+            onCaptchaSpent();
+          }}
           className="text-xs text-gray-11 transition-colors hover:text-gray-12 disabled:opacity-50"
         >
           {cooldown > 0
