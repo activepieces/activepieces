@@ -8,8 +8,8 @@ import { AgentEventEmitter, extractUserFacingError, isSuccessResult, TaintState,
 export const MAX_BATCH_SIZE = 100
 const MAX_CONFIGURED_TOOL_CALLS = 50
 export const MAX_IDENTICAL_ACTION_FAILURES = 2
-export async function executeBatchAction({ executeWithTimeout, eventEmitter, toolCallId, pieceName, actionName, items, description }: {
-    executeWithTimeout: (toolName: string, toolInput: Record<string, unknown>) => Promise<unknown>
+export async function executeBatchAction({ executeTool, eventEmitter, toolCallId, pieceName, actionName, items, description }: {
+    executeTool: (toolName: string, toolInput: Record<string, unknown>) => Promise<unknown>
     eventEmitter: AgentEventEmitter
     toolCallId: string
     pieceName: string
@@ -52,7 +52,7 @@ export async function executeBatchAction({ executeWithTimeout, eventEmitter, too
         const batchResults = await Promise.all(
             batch.map(async (item, offset) => {
                 const idx = itemOffset + offset
-                const { data: result, error } = await tryCatch(() => executeWithTimeout('ap_execute_action', {
+                const { data: result, error } = await tryCatch(() => executeTool('ap_execute_action', {
                     pieceName, actionName, input: item,
                 }))
                 if (error) return { index: idx, success: false as const, error: truncateForCard(error.message) }

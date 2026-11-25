@@ -28,6 +28,7 @@ describe('aiObservability', () => {
             distinctId: 'user-1',
             sessionId: 'conversation-1',
             groups: JSON.stringify({ platform: 'platform-1', project: 'project-1' }),
+            functionId: 'agent-turn',
         })
     })
 
@@ -43,6 +44,39 @@ describe('aiObservability', () => {
             distinctId: 'user-1',
             sessionId: 'conversation-1',
             groups: JSON.stringify({ platform: 'platform-1' }),
+            functionId: 'agent-compaction',
+        })
+    })
+
+    it('tags the turn with its run source and tier from the wide event', () => {
+        aiObservability.init({ enabled: true })
+        const logger = createLogger({ user: { id: 'user-1' }, agentRun: { source: 'CHAT', tierId: 'smart', tierModel: 'model-1' } })
+
+        const { runtimeContext } = wideEvent.run({ logger, fn: () => agentAiUtils.buildTelemetry({ functionId: 'agent-turn' }) })
+
+        expect(runtimeContext).toMatchObject({ runSource: 'CHAT', tierId: 'smart', tierModel: 'model-1' })
+    })
+
+    it('keeps the run labels from the wide event when billing names the ids', () => {
+        aiObservability.init({ enabled: true })
+        const logger = createLogger({ agentRun: { source: 'CHAT', tierId: 'smart', tierModel: 'model-1' } })
+
+        const { runtimeContext } = wideEvent.run({
+            logger,
+            fn: () => agentAiUtils.buildTelemetry({
+                functionId: 'web-search',
+                billing: { source: ActivepiecesAiConsumerSource.CHAT, platformId: 'platform-1', projectId: null, conversationId: 'conversation-1', chat: { userId: 'user-1', turnIndex: 0, tier: 'smart' } },
+            }),
+        })
+
+        expect(runtimeContext).toEqual({
+            distinctId: 'user-1',
+            sessionId: 'conversation-1',
+            groups: JSON.stringify({ platform: 'platform-1' }),
+            runSource: 'CHAT',
+            tierId: 'smart',
+            tierModel: 'model-1',
+            functionId: 'web-search',
         })
     })
 })

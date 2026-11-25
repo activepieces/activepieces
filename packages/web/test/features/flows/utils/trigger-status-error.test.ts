@@ -176,6 +176,21 @@ describe('describeStandardError never leaks the http envelope it falls back to',
     expect(describeStandardError(standardError)).toBe('Invalid auth token');
   });
 
+  it('reads the message that an engine error wraps as json', () => {
+    const standardError = serializeEngineError({
+      name: 'InvalidCronExpressionError',
+      message: JSON.stringify(
+        { message: 'Invalid cron expression: not a cron' },
+        null,
+        2,
+      ),
+    });
+
+    expect(describeStandardError(standardError)).toBe(
+      'Invalid cron expression: not a cron',
+    );
+  });
+
   it('keeps a message that merely starts with a brace but is not json', () => {
     const standardError = JSON.stringify({
       __apErrorVersion: 1,

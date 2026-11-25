@@ -37,6 +37,7 @@ import {
   EnterprisePlanIndicator,
   SidebarUsageLimits,
 } from '@/features/billing';
+import { InviteRewardCard } from '@/features/members';
 import { PlatformSwitcher } from '@/features/projects';
 import { useRailOpenState } from '@/features/workspace/lib/rail-collapsed';
 import { useChatEnabled } from '@/features/workspace/lib/use-chat-on';
@@ -307,7 +308,8 @@ function AppFooterExtras() {
         )}
       >
         <div className="min-h-0 overflow-hidden">
-          <div className="w-[calc(var(--sidebar-width)-1rem)]">
+          <div className="flex flex-col gap-2 w-[calc(var(--sidebar-width)-1rem)]">
+            <InviteRewardCard />
             <SidebarUsageLimits />
           </div>
         </div>

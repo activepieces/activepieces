@@ -4,6 +4,7 @@ import {
   CreditsBillableFeature,
   PlanName,
   PlatformBillingInformation,
+  PlatformPlan,
   InvitationStatus,
   UserStatus,
 } from '@activepieces/shared';
@@ -11,6 +12,7 @@ import dayjs from 'dayjs';
 import { t } from 'i18next';
 
 import { formatUtils } from '@/lib/format-utils';
+import { CreditsSeverity } from '@/lib/statuses';
 
 const DAILY_RESET_INTERVAL = 'day';
 
@@ -30,6 +32,13 @@ function isPaidPlan(planName: string | null | undefined): planName is string {
   return !isNil(planName) && planName !== PlanName.FREE;
 }
 
+function planDisplayName(info: PlanDisplayNameInfo | undefined): string {
+  return (
+    info?.autumnPlanName ??
+    (info && isPaidPlan(info.plan.plan) ? info.plan.plan : t('Free'))
+  );
+}
+
 function isYearlyPlan(info: IsYearlyPlanInfo): boolean {
   if (info.planInterval === 'one_off') {
     return info.creditsResetInterval === 'year';
@@ -46,12 +55,12 @@ function percentUsed({ used, total }: PercentUsedParams): number {
 
 function creditsSeverity(percent: number): CreditsSeverity {
   if (percent >= CREDITS_DANGER_PERCENT) {
-    return 'error';
+    return CreditsSeverity.ERROR;
   }
   if (percent >= CREDITS_WARNING_PERCENT) {
-    return 'warning';
+    return CreditsSeverity.WARNING;
   }
-  return 'default';
+  return CreditsSeverity.DEFAULT;
 }
 
 function formatCredits(credits: number): string {
@@ -73,10 +82,14 @@ function shouldShowCreditsAlert({
   if (isEmbedded || !isProjectRoute || edition === ApEdition.COMMUNITY) {
     return false;
   }
-  if (isUnlimited || !isBillingEnforced || severity === 'default') {
+  if (
+    isUnlimited ||
+    !isBillingEnforced ||
+    severity === CreditsSeverity.DEFAULT
+  ) {
     return false;
   }
-  return severity === 'error' || !isDismissalActive;
+  return severity === CreditsSeverity.ERROR || !isDismissalActive;
 }
 
 function resolveCreditsAction({
@@ -203,6 +216,7 @@ const RESERVING_STATUSES = [
 export const billingUtils = {
   formatDate,
   isPaidPlan,
+  planDisplayName,
   isYearlyPlan,
   percentUsed,
   creditsSeverity,
@@ -227,12 +241,17 @@ export const enterpriseMotion = {
   swap: 'animate-in fade-in-0 duration-200 ease-expand-out motion-reduce:animate-none',
 };
 
+export type PlanDisplayNameInfo = Pick<
+  PlatformBillingInformation,
+  'autumnPlanName'
+> & {
+  plan: Pick<PlatformPlan, 'plan'>;
+};
+
 export type IsYearlyPlanInfo = Pick<
   PlatformBillingInformation,
   'planInterval' | 'creditsResetInterval'
 >;
-
-export type CreditsSeverity = 'default' | 'warning' | 'error';
 
 export type ShouldShowCreditsAlertParams = {
   edition: ApEdition | null | undefined;
