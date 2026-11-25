@@ -4049,7 +4049,7 @@
     },
     "packages/pieces/community/google-gemini": {
       "name": "@activepieces/piece-google-gemini",
-      "version": "0.5.3",
+      "version": "0.5.4",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4065,6 +4065,7 @@
         "@types/mime-types": "2.1.1",
         "@types/wav": "^1.0.4",
         "tslib": "2.6.2",
+        "vitest": "5.0.5",
       },
     },
     "packages/pieces/community/google-my-business": {
