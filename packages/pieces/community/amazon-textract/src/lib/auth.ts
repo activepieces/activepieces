@@ -34,7 +34,7 @@ Activepieces acts as an OIDC identity provider. AWS trusts this provider and iss
 }
 \`\`\`
    For an AWS GovCloud (US) region, use \`arn:aws-us-gov:iam::\` instead of \`arn:aws:iam::\` in the \`Federated\` principal.
-3. Attach Textract permissions to the role (e.g. the \`AmazonTextractFullAccess\` policy), plus \`s3:GetObject\` on any bucket you read documents from (and \`s3:PutObject\` + \`s3:DeleteObject\` on the bucket if the Multi-Page action uploads files for you), and paste the **Role ARN** below.
+3. Attach Textract permissions to the role (e.g. the \`AmazonTextractFullAccess\` policy), plus \`s3:GetObject\` on any bucket you read documents from (and \`s3:PutObject\` + \`s3:DeleteObject\`, plus \`s3:DeleteObjectVersion\` on a versioned bucket, if the Multi-Page action uploads files for you), and paste the **Role ARN** below. A lifecycle rule that expires \`activepieces-textract-uploads/\` after 1 day removes any upload left by a run that stopped early.
 `;
 
 const TEXTRACT_AWS_REGIONS = [
@@ -83,7 +83,7 @@ const TEXTRACT_AWS_REGIONS = [
 export const amazonTextractAccessKeyAuth = PieceAuth.CustomAuth({
   displayName: 'AWS Textract (Access Key)',
   description:
-    'Authenticate with AWS using your Access Key ID and Secret Access Key. The IAM user or role must have permissions for AWS Textract (e.g., the `AmazonTextractFullAccess` managed policy), plus `s3:GetObject` on any bucket you read documents from (and `s3:PutObject` + `s3:DeleteObject` on the bucket if the Multi-Page action uploads files for you).',
+    'Authenticate with AWS using your Access Key ID and Secret Access Key. The IAM user or role must have permissions for AWS Textract (e.g., the `AmazonTextractFullAccess` managed policy), plus `s3:GetObject` on any bucket you read documents from (and `s3:PutObject` + `s3:DeleteObject`, plus `s3:DeleteObjectVersion` on a versioned bucket, if the Multi-Page action uploads files for you). A lifecycle rule that expires `activepieces-textract-uploads/` after 1 day removes any upload left by a run that stopped early.',
   props: {
     accessKeyId: Property.ShortText({
       displayName: 'Access Key ID',

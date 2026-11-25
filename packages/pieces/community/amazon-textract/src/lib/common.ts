@@ -147,8 +147,8 @@ async function resolveAwsCredentials({
     return () => getTemporaryCredentials({ auth, server });
   }
   return {
-    accessKeyId: auth.accessKeyId,
-    secretAccessKey: auth.secretAccessKey,
+    accessKeyId: auth.accessKeyId.trim(),
+    secretAccessKey: auth.secretAccessKey.trim(),
   };
 }
 
@@ -594,7 +594,7 @@ export function formatTextractError(error: unknown): string {
     case 'ProvisionedThroughputExceededException':
       return 'You have exceeded your AWS Textract throughput quota. Please try again later.';
     case 'LimitExceededException':
-      return 'You have reached the AWS Textract page limit for this document.';
+      return 'Too many Textract jobs are running in this AWS account. Wait a few minutes and try again, or ask AWS to raise the limit.';
     case 'InvalidJobIdException':
       return 'The specified job ID does not exist or belongs to a different account.';
     case 'InvalidKMSKeyException':
