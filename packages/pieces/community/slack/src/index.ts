@@ -46,6 +46,7 @@ import { inviteUserToChannelAction } from './lib/actions/invite-user-to-channel'
 import { listUsers } from './lib/actions/list-users';
 import { deleteMessageAction } from './lib/actions/delete-message';
 import { newModalInteractionTrigger } from './lib/triggers/new-modal-interaction';
+import { newButtonClickTrigger } from './lib/triggers/new-button-click';
 import { slackAuth } from './lib/auth';
 import { getBotToken, getUserToken } from './lib/common/auth-helpers';
 import type { SlackAuthValue } from './lib/common/auth-helpers';
@@ -101,12 +102,15 @@ export { slackAuth, slackOAuth2Auth } from './lib/auth';
 export const slack = createPiece({
   displayName: 'Slack',
   description: 'Channel-based messaging platform',
-  minimumSupportedRelease: '0.88.2',
+  minimumSupportedRelease: '0.94.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/slack.png',
   categories: [PieceCategory.COMMUNICATION],
   auth: slackAuth,
   events: {
     parseAndReply: ({ payload, server }) => {
+      if (!isFreshSlackRequest({ headers: payload.headers })) {
+        return { reply: { headers: {}, body: {} } };
+      }
       if (payload.headers['content-type'] === 'application/x-www-form-urlencoded') {
         if (payload.body && typeof payload.body == 'object' && 'payload' in payload.body) {
           const interactionPayloadBody = JSON.parse(
@@ -128,6 +132,14 @@ export const slack = createPiece({
                 .catch((error: unknown) => {
                   console.error('[Slack#parseAndReply] failed to forward button click to resume url', error);
                 });
+            } else {
+              const teamId = interactionPayloadBody.team?.id ?? interactionPayloadBody.user?.team_id;
+              if (teamId) {
+                return {
+                  event: interactionPayloadBody.type,
+                  identifierValue: teamId,
+                };
+              }
             }
           } else if (
             interactionPayloadBody.type === 'view_submission' ||
@@ -309,8 +321,16 @@ export const slack = createPiece({
     newSavedMessageTrigger,
     newTeamCustomEmojiTrigger,
     newModalInteractionTrigger,
+    newButtonClickTrigger,
   ],
 });
+
+function isFreshSlackRequest({ headers }: { headers: Record<string, string> }): boolean {
+  const ageSeconds = Math.abs(Date.now() / 1000 - Number(headers['x-slack-request-timestamp']));
+  return !Number.isNaN(ageSeconds) && ageSeconds <= SLACK_MAX_REQUEST_AGE_SECONDS;
+}
+
+const SLACK_MAX_REQUEST_AGE_SECONDS = 5 * 60;
 
 type EventPayloadBody = {
   // Event payload
@@ -323,6 +343,12 @@ type EventPayloadBody = {
 type InteractionPayloadBody = {
   // Interaction payload
   type?: string;
+  team?: {
+    id?: string;
+  };
+  user?: {
+    team_id?: string;
+  };
   actions?: {
     type: string;
     value: string;

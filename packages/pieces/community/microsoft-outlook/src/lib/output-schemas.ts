@@ -166,6 +166,7 @@ export const newEmailTriggerOutputSchema: OutputSchema = { fields: messageFields
 export const newAttachmentTriggerOutputSchema: OutputSchema = {
   fields: [
     ...attachmentFields,
+    { key: 'fileError', label: 'File Error' },
     { key: 'messageId', label: 'Message ID' },
     { key: 'messageSubject', label: 'Message Subject' },
     { key: 'messageSender', label: 'Message Sender', children: emailAddressFields },

@@ -7,3 +7,11 @@ export type ViewSubmissionPayload = {
     token: string;
     trigger_id: string;
 };
+
+export type BlockAction = {
+    type: string;
+    action_id: string;
+    block_id?: string;
+    value?: string;
+    action_ts?: string;
+};

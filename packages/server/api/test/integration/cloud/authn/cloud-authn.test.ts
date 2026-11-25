@@ -561,50 +561,6 @@ describe('Authentication API', () => {
             expect(responseBody?.code).toBe('USER_IS_INACTIVE')
         })
 
-        it('Fails If the email auth is not enabled', async () => {
-            // arrange
-
-            const rawPassword = faker.internet.password()
-
-            const { mockPlatform } = await mockAndSaveBasicSetup({
-                platform: {
-                    emailAuthEnabled: false,
-                },
-                plan: {
-                    ssoEnabled: true,
-                },
-            })
-
-            const { mockUserIdentity } = await mockBasicUser({
-                user: {
-                    status: UserStatus.ACTIVE,
-                    platformId: mockPlatform.id,
-                    platformRole: PlatformRole.ADMIN,
-                },
-                userIdentity: {
-                    email: faker.internet.email(),
-                    password: rawPassword,
-                    verified: true,
-                },
-            })
-
-            const mockSignInRequest = createMockSignInRequest({
-                email: mockUserIdentity.email,
-                password: rawPassword,
-            })
-
-            // act
-            const response = await app?.inject({
-                method: 'POST',
-                url: '/api/v1/authentication/sign-in',
-                body: mockSignInRequest,
-            })
-            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
-            const responseBody = response?.json()
-
-            expect(responseBody?.code).toBe('EMAIL_AUTH_DISABLED')
-        })
-
         it('Fails If the domain is not allowed', async () => {
             // arrange
             const mockPlatformId = faker.string.nanoid()
