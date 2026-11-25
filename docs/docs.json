@@ -379,6 +379,7 @@
                     "group": "Setup",
                     "pages": [
                       "admin-guide/guides/general",
+                      "admin-guide/guides/configurations",
                       {
                         "group": "AI Center",
                         "icon": "sparkles",
@@ -393,7 +394,10 @@
                       "admin-guide/guides/manage-pieces",
                       "admin-guide/guides/templates",
                       "admin-guide/guides/usage",
-                      "admin-guide/guides/embedding"
+                      "admin-guide/guides/billing",
+                      "admin-guide/guides/embedding",
+                      "admin-guide/guides/api-keys",
+                      "admin-guide/guides/mcp-server"
                     ]
                   },
                   {
