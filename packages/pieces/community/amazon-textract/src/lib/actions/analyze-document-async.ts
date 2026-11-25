@@ -167,7 +167,12 @@ async function analyzeUploadedFile({
 }) {
   const client = await createTextractClient({ auth, server });
   const s3 = await createS3Client({ auth, server });
-  const upload = await uploadDocument({ s3, bucket, file });
+  const upload = await uploadDocument({
+    s3,
+    bucket,
+    file,
+    deadline: analysis.startedAt + STEP_JOB_WAIT_MS - MIN_JOB_WAIT_MS,
+  });
   try {
     const result = await analyzeS3Document({ client, bucket, key: upload.key, analysis });
     const cleanupWarning = await deleteUploadedDocument({ s3, bucket, upload });
@@ -196,26 +201,36 @@ async function uploadDocument({
   s3,
   bucket,
   file,
+  deadline,
 }: {
   s3: S3Client;
   bucket: string;
   file: ApFile | ApStreamingFile;
+  deadline: number;
 }): Promise<UploadedDocument> {
   const extension = file.extension?.replace(/[^a-zA-Z0-9]/g, '');
   const key = `${UPLOAD_KEY_PREFIX}/${randomUUID()}${extension ? `.${extension}` : ''}`;
   const storage = await import('@aws-sdk/lib-storage');
   let upload: Upload | undefined;
+  let tooSlow = false;
   try {
     const { body } = streamUtils.toStreamingBody(file);
-    upload = new storage.Upload({
+    const started = new storage.Upload({
       client: s3,
       params: { Bucket: bucket, Key: key, Body: body },
       leavePartsOnError: true,
     });
-    const response = await upload.done();
+    upload = started;
+    started.on('httpUploadProgress', () => {
+      if (!tooSlow && started.uploadId && Date.now() > deadline) {
+        tooSlow = true;
+        void started.abort();
+      }
+    });
+    const response = await started.done();
     return { key, versionId: response.VersionId };
   } catch (e) {
-    const message = uploadErrorMessage({ bucket, error: e });
+    const message = tooSlow ? SLOW_UPLOAD_MESSAGE : uploadErrorMessage({ bucket, error: e });
     const abortWarning = await abortPartialUpload({ s3, bucket, key, uploadId: upload?.uploadId });
     throw new TextractStepError(abortWarning ? `${message} ${abortWarning}` : message);
   }
@@ -351,9 +366,7 @@ async function analyzeS3Document({
 
   const lastJobWait = analysis.startedAt + STEP_JOB_WAIT_MS;
   if (Date.now() + MIN_JOB_WAIT_MS > lastJobWait) {
-    throw new TextractStepError(
-      'Uploading the file took over 6 minutes, so this step has too little time left to wait for the analysis. Upload it to S3 first and set Document Source to "File already in S3", or use a smaller file.'
-    );
+    throw new TextractStepError(SLOW_UPLOAD_MESSAGE);
   }
 
   const startResponse = await client.send(new StartDocumentAnalysisCommand(startInput));
@@ -461,6 +474,8 @@ const POLL_INTERVAL_MS = 5000;
 const JOB_WAIT_MS = 5 * 60 * 1000;
 const STEP_JOB_WAIT_MS = 7 * 60 * 1000;
 const MIN_JOB_WAIT_MS = 60 * 1000;
+const SLOW_UPLOAD_MESSAGE =
+  'Uploading the file took over 6 minutes, so this step has too little time left to wait for the analysis. Upload it to S3 first and set Document Source to "File already in S3", or use a smaller file.';
 const STEP_RESULTS_WAIT_MS = 8 * 60 * 1000;
 const UPLOAD_KEY_PREFIX = 'activepieces-textract-uploads';
 const BUCKET_NAME_REGEX = /^[a-zA-Z0-9._-]{3,255}$/;

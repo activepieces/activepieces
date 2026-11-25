@@ -1,7 +1,7 @@
 import { Readable } from 'node:stream';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { s3Send, textractSend, s3ClientConstructor, uploadDone, uploadClients, uploadOptions, uploadIds } = vi.hoisted(() => ({
+const { s3Send, textractSend, s3ClientConstructor, uploadDone, uploadClients, uploadOptions, uploadIds, uploadEvents } = vi.hoisted(() => ({
   s3Send: vi.fn<(command: AwsCommand) => Promise<unknown>>(),
   textractSend: vi.fn<(command: AwsCommand) => Promise<unknown>>(),
   s3ClientConstructor: vi.fn(),
@@ -9,6 +9,7 @@ const { s3Send, textractSend, s3ClientConstructor, uploadDone, uploadClients, up
   uploadClients: new Array<unknown>(),
   uploadOptions: new Array<Record<string, unknown>>(),
   uploadIds: new Array<string>(),
+  uploadEvents: { progress: undefined as (() => void) | undefined, aborted: false },
 }));
 
 vi.mock('@aws-sdk/client-s3', () => ({
@@ -30,6 +31,12 @@ vi.mock('@aws-sdk/lib-storage', () => ({
     uploadOptions.push(options);
     return {
       done: () => uploadDone(params),
+      on: (_event: string, listener: () => void) => {
+        uploadEvents.progress = listener;
+      },
+      abort: async () => {
+        uploadEvents.aborted = true;
+      },
       get uploadId() {
         return uploadIds.at(0);
       },
@@ -67,6 +74,8 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
     uploadClients.length = 0;
     uploadOptions.length = 0;
     uploadIds.length = 0;
+    uploadEvents.progress = undefined;
+    uploadEvents.aborted = false;
     uploadedBodies.length = 0;
     s3Send.mockResolvedValue({});
     uploadDone.mockImplementation(async (params) => {
@@ -404,14 +413,42 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
     it('starts no job when the upload leaves under a minute of the 7, and still deletes the upload', async () => {
       uploadDone.mockImplementation(async () => {
         vi.setSystemTime(Date.now() + 365_000);
+        uploadEvents.progress?.();
         return {};
       });
 
       await expect(
         runAction({ source: 'file', file: new ApFile('contract.pdf', Buffer.from('%PDF'), 'pdf') })
       ).rejects.toThrow('Uploading the file took over 6 minutes, so this step has too little time left to wait for the analysis.');
+      expect(uploadEvents.aborted).toBe(false);
       expect(textractSend).not.toHaveBeenCalled();
       expect(deleteInputs()).toHaveLength(1);
+    });
+
+    it('stops a multipart upload still running after 6 minutes and removes the parts already sent', async () => {
+      uploadIds.push('upload-1');
+      let partsSent = 0;
+      uploadDone.mockImplementation(async () => {
+        while (partsSent < 4) {
+          vi.setSystemTime(Date.now() + 150_000);
+          partsSent += 1;
+          uploadEvents.progress?.();
+          if (uploadEvents.aborted) {
+            throw Object.assign(new Error('Upload aborted.'), { name: 'AbortError' });
+          }
+        }
+        return {};
+      });
+
+      await expect(
+        runAction({ source: 'file', file: new ApFile('contract.pdf', Buffer.from('%PDF'), 'pdf') })
+      ).rejects.toThrow(
+        /^Uploading the file took over 6 minutes, so this step has too little time left to wait for the analysis\. Upload it to S3 first and set Document Source to "File already in S3", or use a smaller file\.$/
+      );
+      expect(partsSent).toBe(3);
+      expect(abortInputs()).toEqual([{ Bucket: BUCKET, Key: expect.stringMatching(UPLOAD_KEY), UploadId: 'upload-1' }]);
+      expect(textractSend).not.toHaveBeenCalled();
+      expect(deleteInputs()).toHaveLength(0);
     });
 
     it('stops reading results at the 8-minute limit and still deletes the upload', async () => {
