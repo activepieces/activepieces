@@ -82,7 +82,10 @@ export function GrantsTab() {
   ) {
     return (
       <PageBand className="py-8">
-        <Empty className="border border-dashed py-20">
+        <Empty
+          className="border border-dashed py-20"
+          data-testid="mcp-grants-empty"
+        >
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <Plug />

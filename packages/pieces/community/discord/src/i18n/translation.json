@@ -315,6 +315,5 @@
   "Fires when a member joins a server.": "Fires when a member joins a server.",
   "Server ID": "Server ID",
   "Most recent messages checked each poll, up to 100.": "Most recent messages checked each poll, up to 100.",
-  "Right-click the server and choose Copy Server ID in Developer Mode.": "Right-click the server and choose Copy Server ID in Developer Mode.",
-  "Most recent members checked each poll, up to 1000.": "Most recent members checked each poll, up to 1000."
+  "Right-click the server and choose Copy Server ID in Developer Mode.": "Right-click the server and choose Copy Server ID in Developer Mode."
 }

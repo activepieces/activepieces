@@ -174,6 +174,7 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         globalConnectionsEnabled: platformPlan?.globalConnectionsEnabled ?? false,
         customRolesEnabled: platformPlan?.customRolesEnabled ?? false,
         managePiecesEnabled: platformPlan?.managePiecesEnabled ?? false,
+        customPiecesEnabled: platformPlan?.customPiecesEnabled ?? false,
         manageTemplatesEnabled: platformPlan?.manageTemplatesEnabled ?? false,
         customAppearanceEnabled: platformPlan?.customAppearanceEnabled ?? false,
         apiKeysEnabled: platformPlan?.apiKeysEnabled ?? false,

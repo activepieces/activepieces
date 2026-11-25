@@ -1,4 +1,4 @@
-import { ApId, ApMultipartFile, Nullable, OptionalArrayFromQuery, OptionalBooleanFromQuery, SAFE_STRING_PATTERN, tryCatchSync } from '@activepieces/core-utils'
+import { ApId, ApMultipartFile, formErrors, Nullable, OptionalArrayFromQuery, OptionalBooleanFromQuery, SAFE_STRING_PATTERN, tryCatchSync } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { FederatedAuthnProviderConfig } from '../../core/federated-authn'
 import { PieceSelectorConfig, PlatformThemeColors } from './platform.model'
@@ -9,7 +9,7 @@ const ALLOWED_EMBED_ORIGIN_PROTOCOLS = new Set(['http:', 'https:'])
 const WILDCARD_EMBED_ORIGIN_PATTERN = /^https?:\/\/\*\.[^*\s/?#]+$/
 
 export const allowedEmbedOriginSchema = z.string()
-    .max(MAX_EMBED_ORIGIN_LENGTH, 'invalidEmbedOrigin')
+    .max(MAX_EMBED_ORIGIN_LENGTH, formErrors.invalidEmbedOrigin)
     .refine((value) => {
         const isWildcard = WILDCARD_EMBED_ORIGIN_PATTERN.test(value)
         const probe = isWildcard ? value.replace('://*.', '://wildcard.') : value
@@ -20,7 +20,7 @@ export const allowedEmbedOriginSchema = z.string()
         catch {
             return false
         }
-    }, 'invalidEmbedOrigin')
+    }, formErrors.invalidEmbedOrigin)
 
 export const Base64EncodedFile = z.object({
     base64: z.string(),
@@ -95,7 +95,7 @@ export type IncreaseAICreditsForPlatformRequestBody = z.infer<typeof IncreaseAIC
 
 export const AddAllowedEmbedOriginsRequestBody = z.object({
     allowedEmbedOrigins: z.array(allowedEmbedOriginSchema)
-        .min(1, 'invalidEmbedOrigin'),
+        .min(1, formErrors.invalidEmbedOrigin),
 })
 
 export type AddAllowedEmbedOriginsRequestBody = z.infer<typeof AddAllowedEmbedOriginsRequestBody>

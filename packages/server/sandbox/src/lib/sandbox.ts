@@ -31,9 +31,21 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
     const managers: SandboxManager[] = Array.from({ length: concurrency }, (_, index) =>
         createSandboxManager({ boxId: index + 1, basePath, getSettings }),
     )
+    let shutDown = false
+    const assertNotShutDown = (): void => {
+        if (!shutDown) {
+            return
+        }
+        const reason = 'Sandbox runtime was shut down, refusing to run on it'
+        throw new ActivepiecesError({
+            code: ErrorCode.SANDBOX_INTERNAL_ERROR,
+            params: { reason, standardOutput: '', standardError: '' },
+        }, reason)
+    }
 
     return {
         async execute({ workerIndex, log, operationType, operation, timeoutInSeconds, expiresAt, provision }: ExecuteParams): Promise<RuntimeExecutionResult> {
+            assertNotShutDown()
             const manager = managers[workerIndex]
             if (isNil(manager)) {
                 throw new ActivepiecesError({
@@ -57,6 +69,7 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
             const provisionMs = Date.now() - provisionStartedAt
 
             try {
+                assertNotShutDown()
                 let bootMs = 0
                 let runMs = 0
                 // Break the engine timeline into its two worker-observable phases:
@@ -158,6 +171,7 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
             }
         },
         async shutdown(shutdownLog: ApLogger): Promise<void> {
+            shutDown = true
             await Promise.all(managers.map((manager) => manager.shutdown(shutdownLog)))
         },
     }
