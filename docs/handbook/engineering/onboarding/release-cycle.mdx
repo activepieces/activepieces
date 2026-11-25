@@ -35,7 +35,7 @@ Each merge to `main` builds a `version.sha.beta` image and deploys it to staging
 
 `release-self-hosted.yml` runs every other Tuesday at 6 AM UTC. It takes the newest image the Cloud gate deployed 7 or more days ago, runs the smoke test and the E2E matrix on it, and lists the tickets in the release. The release captain approves in the `release` environment, and the same image, with the same digest, is published to Docker Hub and GHCR. The version is the one in the image's `package.json`. The automated sync PR then moves `main` to the next minor. See [Releases](/handbook/engineering/playbooks/releases).
 
-**Why**: Self-hosters get the exact image that Cloud ran for a week.
+**Why**: Self-hosters get the exact image, with the same digest, that Cloud deployed at least 7 days before.
 
 ## Putting It Together
 

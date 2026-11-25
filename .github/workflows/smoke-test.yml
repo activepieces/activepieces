@@ -92,14 +92,15 @@ jobs:
           chmod +x smoke-test/verify.sh
           smoke-test/verify.sh "${{ steps.setup.outputs.flow_id }}"
 
+      # The release can test a commit older than this file, so a step skips when that commit lacks its script.
       - name: Run memory stability test
-        if: matrix.executionMode == 'SANDBOX_CODE_ONLY'
+        if: matrix.executionMode == 'SANDBOX_CODE_ONLY' && hashFiles('smoke-test/verify-memory.sh') != ''
         run: |
           chmod +x smoke-test/verify-memory.sh
           smoke-test/verify-memory.sh "${{ steps.setup.outputs.flow_id }}"
 
       - name: Run delay flow smoke test
-        if: matrix.executionMode == 'SANDBOX_CODE_ONLY'
+        if: matrix.executionMode == 'SANDBOX_CODE_ONLY' && hashFiles('smoke-test/verify-delay.sh') != ''
         run: |
           chmod +x smoke-test/verify-delay.sh
           smoke-test/verify-delay.sh
@@ -107,7 +108,7 @@ jobs:
       # A worker stopped mid-run (SIGTERM) must finish its flow before it exits, not hand it
       # back to start over from the first step.
       - name: Run graceful stop smoke test (worker)
-        if: matrix.executionMode == 'SANDBOX_CODE_ONLY'
+        if: matrix.executionMode == 'SANDBOX_CODE_ONLY' && hashFiles('smoke-test/verify-graceful-stop.sh') != ''
         run: |
           chmod +x smoke-test/verify-graceful-stop.sh
           SERVICE=worker smoke-test/verify-graceful-stop.sh
@@ -130,7 +131,7 @@ jobs:
           echo "Flow ID: $FLOW_ID"
 
       - name: Run memory-limit smoke test
-        if: matrix.executionMode == 'SANDBOX_CODE_ONLY'
+        if: matrix.executionMode == 'SANDBOX_CODE_ONLY' && hashFiles('smoke-test/verify-memory-limit.sh') != ''
         run: |
           chmod +x smoke-test/verify-memory-limit.sh
           smoke-test/verify-memory-limit.sh "${{ steps.setup-oom.outputs.flow_id }}"
@@ -164,7 +165,7 @@ jobs:
           echo "Flow ID: $FLOW_ID"
 
       - name: Run S3 smoke test (no signed URLs)
-        if: matrix.executionMode == 'SANDBOX_CODE_ONLY'
+        if: matrix.executionMode == 'SANDBOX_CODE_ONLY' && hashFiles('smoke-test/verify-s3.sh') != ''
         run: |
           chmod +x smoke-test/verify.sh smoke-test/verify-s3.sh
           smoke-test/verify.sh "${{ steps.setup-s3.outputs.flow_id }}"
@@ -199,7 +200,7 @@ jobs:
           echo "Flow ID: $FLOW_ID"
 
       - name: Run S3 smoke test (signed URLs)
-        if: matrix.executionMode == 'SANDBOX_CODE_ONLY'
+        if: matrix.executionMode == 'SANDBOX_CODE_ONLY' && hashFiles('smoke-test/verify-s3.sh') != ''
         run: |
           chmod +x smoke-test/verify.sh smoke-test/verify-s3.sh
           smoke-test/verify.sh "${{ steps.setup-s3-signed.outputs.flow_id }}"

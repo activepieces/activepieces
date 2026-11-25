@@ -450,8 +450,21 @@ jobs:
       group: ${{ inputs.hotfix_prs && format('cloud-approval-hotfix-{0}', github.run_id) || 'cloud-approval' }}
       cancel-in-progress: true
     steps:
-      # release-self-hosted.yml reads this line to find the images Cloud ran.
-      - run: echo "Approved ${{ needs.cut.outputs.image_tag }}"
+      - uses: docker/login-action@v4
+        continue-on-error: true
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # release-self-hosted.yml reads this line to find the images Cloud ran, and ships the digest it names:
+      # a later build of the same commit can move the tag. A digest that cannot be read never blocks the deploy.
+      - env:
+          IMAGE_TAG: ${{ needs.cut.outputs.image_tag }}
+        run: |
+          DIGEST=$(docker buildx imagetools inspect "ghcr.io/activepieces/activepieces-cloud:$IMAGE_TAG" --format '{{json .Manifest}}' | jq -r .digest) || true
+          [[ "$DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]] || DIGEST=""
+          echo "Approved $IMAGE_TAG${DIGEST:+ $DIGEST}"
 
   # One job holds the production lock from the Cloud re-read through the fleet deploy, because
   # GitHub keeps only one pending job per group: a lock per job lets a later run slip between the
