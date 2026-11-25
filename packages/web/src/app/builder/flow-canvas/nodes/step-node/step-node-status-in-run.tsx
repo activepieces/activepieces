@@ -1,6 +1,5 @@
 import { isNil } from '@activepieces/core-utils';
 import { FlowActionType, FlowTriggerType } from '@activepieces/shared';
-import { t } from 'i18next';
 
 import { batchUtils } from '@/app/builder/run-details/batch-utils';
 import { useStepOutputInRun } from '@/app/builder/run-details/use-step-output-in-run';
@@ -32,14 +31,12 @@ const ApStepNodeStatusInRun = ({
   ) {
     return <SkippedBadge />;
   }
-  const { variant, text } = stepStatusInRun
-    ? flowRunUtils.getStatusIconForStep(stepStatusInRun)
-    : ({ variant: 'default', text: t('Testing...') } as const);
+  const { text } = flowRunUtils.getStatusIconForStep(stepStatusInRun);
   return (
     <StepNodeBadgeContainer>
       <div
         className={flowRunUtils.getStatusContainerClassName({
-          variant,
+          status: stepStatusInRun,
           withPaddingAndAnimation: true,
         })}
       >

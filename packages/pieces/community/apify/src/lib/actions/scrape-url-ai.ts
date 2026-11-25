@@ -68,7 +68,7 @@ export const apifyScrapeUrl = createAction({
 
     let run;
     try {
-      run = await client.actor(WEBSITE_CONTENT_CRAWLER_ACTOR_ID).call(input);
+      run = await client.actor(WEBSITE_CONTENT_CRAWLER_ACTOR_ID).call(input, { log: null });
     } catch (error: any) {
       if (error.statusCode === 429) {
         throw new Error('Apify rate limit exceeded. Retry after a short delay.');

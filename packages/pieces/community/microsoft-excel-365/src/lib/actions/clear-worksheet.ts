@@ -34,7 +34,7 @@ export const clearWorksheetAction = createAction({
     }
     const drivePath = getDrivePath(storageSource, siteId as string, documentId as string);
 
-    let url = `${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/`;
+    let url = `${drivePath}/items/${workbookId}/workbook/worksheets/${encodeURIComponent(worksheetId)}/`;
 
     // If range is not provided, clear the entire worksheet
     if (!range) {

@@ -112,7 +112,7 @@ Below, `INSTANCE_URL` is your Activepieces address (like `https://app.your-compa
     const authRequestId = new URL(location).searchParams.get('authRequestId');
     ```
 
-    <Warning>The `authRequestId` only lasts 10 minutes. Get it right before showing the popup.</Warning>
+    <Warning>The `authRequestId` only lasts 30 minutes. Get it right before showing the popup.</Warning>
   </Step>
 
   <Step title="4. Show the Authorize popup">
@@ -149,7 +149,7 @@ Below, `INSTANCE_URL` is your Activepieces address (like `https://app.your-compa
     const { access_token, refresh_token } = await res.json();
     ```
 
-    Save the `refresh_token` for this user. The `access_token` works for 15 minutes; the `refresh_token` gets you new ones and can be turned off anytime.
+    Save the `refresh_token` for this user. The `access_token` works for 15 minutes. The `code` works for 10 minutes and only once. The `refresh_token` gets you new access tokens for 30 days and can be turned off anytime.
   </Step>
 
   <Step title="6. Use the token">
@@ -191,9 +191,15 @@ Add a button so users can see their connection and turn tools on or off — insi
 await activepieces.mcpSettings();
 ```
 
+The dialog opens for the embedded user's project and has two tabs:
+- **Connection**: the MCP server URL and a JSON configuration to copy into an MCP client.
+- **Tools**: switches for each group of built-in tools, and the list of the project's published flows that start with an MCP trigger. Each of those flows is a tool, shown as On or Off.
+
+The promise resolves when the user closes the dialog.
+
 ## Good to know
 
 - **Use the same `redirect_uri` everywhere** (register, `/authorize`, `/token`). If it differs, it's rejected.
-- **`authRequestId` lasts 10 minutes** — make it right before the popup.
+- **`authRequestId` lasts 30 minutes** — make it right before the popup.
 - **The token is only for that one user's project** — that's how users stay separate.
 - **Cursor and Claude Desktop are different.** Those are tools a user installs and connects themselves, so they don't use this popup. Embeddable MCP is for the AI **your app** runs for the user.

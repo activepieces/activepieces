@@ -20,6 +20,7 @@ export function StatCard({
   tone = 'default',
   className,
   children,
+  valueTestId,
 }: StatCardProps) {
   return (
     <div
@@ -49,6 +50,7 @@ export function StatCard({
         )}
       </div>
       <div
+        data-testid={valueTestId}
         className={cn(
           'text-3xl font-semibold tracking-tight tabular-nums text-gray-12',
           tone === 'danger' && 'text-danger-11',
@@ -88,6 +90,7 @@ type StatCardProps = {
   tone?: 'default' | 'success' | 'warning' | 'danger';
   className?: string;
   children?: ReactNode;
+  valueTestId?: string;
 };
 
 type StatGridProps = {
