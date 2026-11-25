@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { evalCase } from './eval-case'
+import { DatasetItem, evalCase } from './eval-case'
 
 describe('evalCase.fromDatasetItem', () => {
     it('splits history, the graded user message and the recorded tool results', () => {
@@ -34,5 +34,50 @@ describe('evalCase.fromDatasetItem', () => {
             [{ toolName: 'ap_web_search', rejected: false }],
         ])
         expect(converted.recordedToolCalls).toEqual([{ toolName: 'ap_web_search', input: { query: 'x' }, output: { answer: 'found it' } }])
+        expect(converted.live).toBeNull()
+    })
+
+    it('keeps the live metadata and accepts a plain user message with no trace', () => {
+        const item = DatasetItem.parse({
+            id: 'item-2',
+            version_id: 'version-2',
+            expected_output: { checks: ['Builds the flow'], problem_type: 'build' },
+            metadata: {
+                case: 2,
+                problem_type: 'build',
+                mode: 'live',
+                tier: 'hard',
+                seed: { flows: [{ flowName: 'Old', trigger: { pieceName: 'webhook', triggerName: 'catch_webhook' }, steps: [] }] },
+                answers: { questions: 'every Monday', connections: { slack: 'none' } },
+                codeChecks: { noQuestionCards: true, cardShown: 'ap_show_connection_picker' },
+                faults: [{ toolName: 'ap_build_flow', error: 'Validation failed', times: 2 }],
+                timeoutMs: 60_000,
+            },
+            input: 'post new leads to #sales',
+        })
+        const converted = evalCase.fromDatasetItem(item)
+
+        expect(converted.userMessage).toBe('post new leads to #sales')
+        expect(converted.recordedToolCalls).toEqual([])
+        expect(converted.live).toEqual({
+            tier: 'hard',
+            seed: { flows: [{ flowName: 'Old', trigger: { pieceName: 'webhook', triggerName: 'catch_webhook' }, steps: [] }], tables: [] },
+            answers: { questions: 'every Monday', connections: { slack: 'none' } },
+            codeChecks: { noQuestionCards: true, cardShown: 'ap_show_connection_picker' },
+            faults: [{ toolName: 'ap_build_flow', error: 'Validation failed', times: 2 }],
+            timeoutMs: 60_000,
+        })
+    })
+
+    it('defaults a live case to the 15 minute build limit', () => {
+        const converted = evalCase.fromDatasetItem(DatasetItem.parse({
+            id: 'item-3',
+            version_id: 'version-3',
+            expected_output: { checks: ['Builds the flow'], problem_type: 'build' },
+            metadata: { case: 3, problem_type: 'build', mode: 'live' },
+            input: JSON.stringify([{ role: 'user', parts: [{ type: 'text', content: 'build it' }] }]),
+        }))
+
+        expect(converted.live?.timeoutMs).toBe(15 * 60_000)
     })
 })

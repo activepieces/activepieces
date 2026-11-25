@@ -141,7 +141,7 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
         return { result }
     },
 
-    async executeAgentTool(input: ExecuteAgentToolRequest): Promise<ExecuteAgentToolResponse> {
+    async executeAgentTool(input: ExecuteAgentToolRequest & { confineToConversationProject?: boolean }): Promise<ExecuteAgentToolResponse> {
         if (ATTENDED_STATE_TOOLS.includes(input.toolName) && input.source === AgentRunSource.FLOW_STEP) {
             log.error({ tool: { name: input.toolName }, source: input.source }, '[agentRpc#executeAgentTool] Rejected an attended-only tool for an unattended run — the worker should not have called it')
             throw new ActivepiecesError({
@@ -268,7 +268,7 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
 
         log.debug({ tool: { name: input.toolName, input: input.toolInput } }, '[agentRpc#executeAgentTool] Tool invoke')
         const startedAt = Date.now()
-        const confined = input.source === AgentRunSource.CHAT
+        const confined = input.source === AgentRunSource.CHAT && input.confineToConversationProject !== true
             ? null
             : await confinedRunFor({ conversationId: input.conversationId })
         const result = await executeCrossProjectTool({

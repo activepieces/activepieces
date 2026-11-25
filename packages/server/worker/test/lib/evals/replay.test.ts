@@ -5,11 +5,120 @@ import { RecordedToolCall } from './eval-case'
 import { replay } from './replay'
 
 describe('replay.resolveCall', () => {
+    it('fails a tool with the case fault the given number of times, then runs it', async () => {
+        const caseReplay = replay.create({ recordedToolCalls: [], faults: [{ toolName: 'ap_build_flow', error: 'Validation failed', times: 1 }] })
+        const live = vi.fn(async () => ({ flowId: 'f1' }))
+
+        const first = await replay.resolveCall({ caseReplay, mode: 'live', toolName: 'ap_build_flow', input: {}, live })
+        const second = await replay.resolveCall({ caseReplay, mode: 'live', toolName: 'ap_build_flow', input: {}, live })
+
+        expect(first).toEqual({ content: [{ type: 'text', text: 'Validation failed' }], isError: true })
+        expect(second).toEqual({ flowId: 'f1' })
+        expect(live).toHaveBeenCalledOnce()
+    })
+
+    it.each([
+        { toolName: 'ap_test_flow', input: {} },
+        { toolName: 'ap_test_step', input: {} },
+        { toolName: 'ap_run_action', input: {} },
+        { toolName: 'ap_change_flow_status', input: {} },
+        { toolName: 'ap_execute_action', input: { actionName: 'send_channel_message', input: {} } },
+        { toolName: 'ap_execute_action', input: { actionName: 'custom_api_call', input: { method: 'POST' } } },
+        { toolName: 'ap_lock_and_publish', input: {} },
+        { toolName: 'ap_retry_run', input: {} },
+        { toolName: 'ap_brand_new_capability', input: {} },
+    ])('fakes $toolName in live mode because only allowlisted tools run for real', async ({ toolName, input }) => {
+        const caseReplay = replay.create({ recordedToolCalls: [] })
+        const live = vi.fn(async () => ({ ran: true }))
+
+        const output = await replay.resolveCall({ caseReplay, mode: 'live', toolName, input, live })
+
+        expect(output).toEqual(expect.objectContaining({ structuredContent: { status: 'SUCCEEDED' } }))
+        expect(live).not.toHaveBeenCalled()
+    })
+
+    it('gives faked code runs and agent changes results shaped like the real tool', async () => {
+        const caseReplay = replay.create({ recordedToolCalls: [] })
+        const live = vi.fn(async () => ({ ran: true }))
+
+        const code = await replay.resolveCall({ caseReplay, mode: 'live', toolName: 'ap_run_code', input: { code: 'export const code = async () => 1' }, live })
+        const created = await replay.resolveCall({ caseReplay, mode: 'live', toolName: 'ap_create_agent', input: { displayName: 'Lead triager', instructions: 'Sort leads' }, live })
+        const updated = await replay.resolveCall({ caseReplay, mode: 'live', toolName: 'ap_update_agent', input: { agentId: 'a1', publish: true }, live })
+
+        expect(code).toEqual({ text: expect.stringContaining('Code ran'), producedFiles: [], stubbed: true })
+        expect(created).toEqual(expect.objectContaining({ agentId: expect.any(String), displayName: 'Lead triager', published: false, stubbed: true }))
+        expect(updated).toEqual(expect.objectContaining({ agentId: 'a1', published: true }))
+        expect(live).not.toHaveBeenCalled()
+    })
+
+    it('runs allowlisted workspace writes and reads for real in live mode', async () => {
+        const caseReplay = replay.create({ recordedToolCalls: [] })
+        const live = vi.fn(async () => ({ ok: true }))
+        const toolNames = ['ap_update_step', 'ap_insert_records', 'ap_list_flows', 'ap_flow_structure']
+
+        const outputs = await Promise.all(toolNames.map((toolName) => replay.resolveCall({ caseReplay, mode: 'live', toolName, input: {}, live })))
+
+        expect(outputs).toEqual(Array(toolNames.length).fill({ ok: true }))
+        expect(live).toHaveBeenCalledTimes(toolNames.length)
+        expect(caseReplay.stops()).toEqual([])
+    })
+
+    it('runs actions declared read-only and GET custom API calls for real in live mode', async () => {
+        const caseReplay = replay.create({ recordedToolCalls: [] })
+        const live = vi.fn(async () => ({ channels: [{ id: 'C1', name: 'general' }] }))
+        const declaredReadOnly = vi.fn(async () => true)
+        const calls = [
+            { pieceName: '@activepieces/piece-slack', actionName: 'slack_find_channel', input: {} },
+            { pieceName: '@activepieces/piece-slack', actionName: 'custom_api_call', input: { method: 'GET' } },
+        ]
+
+        const outputs = await Promise.all(calls.map((input) => replay.resolveCall({ caseReplay, mode: 'live', toolName: 'ap_execute_action', input, live, declaredReadOnly })))
+
+        expect(outputs).toEqual([{ channels: [{ id: 'C1', name: 'general' }] }, { channels: [{ id: 'C1', name: 'general' }] }])
+        expect(live).toHaveBeenCalledTimes(2)
+        expect(declaredReadOnly).toHaveBeenCalledTimes(1)
+        expect(declaredReadOnly).toHaveBeenCalledWith({ pieceName: '@activepieces/piece-slack', actionName: 'slack_find_channel' })
+    })
+
+    it('stubs an action in live mode unless the piece declares it read-only', async () => {
+        const caseReplay = replay.create({ recordedToolCalls: [] })
+        const live = vi.fn(async () => ({ ok: true }))
+        const lookups = [
+            async () => false,
+            async () => null,
+            async () => undefined,
+            async () => {
+                throw new Error('dev server down')
+            },
+        ]
+        const input = { pieceName: '@activepieces/piece-slack', actionName: 'slack_mark_conversation_read', input: {} }
+
+        const outputs = await Promise.all(lookups.map((declaredReadOnly) => replay.resolveCall({ caseReplay, mode: 'live', toolName: 'ap_execute_action', input, live, declaredReadOnly })))
+        const withoutLookup = await replay.resolveCall({ caseReplay, mode: 'live', toolName: 'ap_execute_action', input: { ...input, actionName: 'slack_find_channel' }, live })
+
+        expect([...outputs, withoutLookup].every((output) => JSON.stringify(output).includes('Finished successfully.'))).toBe(true)
+        expect(live).not.toHaveBeenCalled()
+    })
+
+    it('asks the piece once per action across a run', async () => {
+        const caseReplay = replay.create({ recordedToolCalls: [] })
+        const live = vi.fn(async () => ({ ok: true }))
+        const lookup = vi.fn(async () => true)
+        const declaredReadOnly = replay.cachedReadOnlyLookup(lookup)
+        const input = { pieceName: 'slack', actionName: 'find_channel', input: {} }
+
+        await replay.resolveCall({ caseReplay, mode: 'live', toolName: 'ap_execute_action', input, live, declaredReadOnly })
+        await replay.resolveCall({ caseReplay, mode: 'live', toolName: 'ap_execute_action', input: { ...input, pieceName: '@activepieces/piece-slack' }, live, declaredReadOnly })
+
+        expect(lookup).toHaveBeenCalledTimes(1)
+        expect(live).toHaveBeenCalledTimes(2)
+    })
+
     it('never runs a write live in record mode when it has no recording', async () => {
         const caseReplay = replay.create({ recordedToolCalls: [] })
         const live = vi.fn(async () => ({ created: true }))
 
-        const output = await replay.resolveCall({ caseReplay, recordMode: true, toolName: 'ap_create_agent', input: { name: 'x' }, live })
+        const output = await replay.resolveCall({ caseReplay, mode: 'record', toolName: 'ap_create_agent', input: { name: 'x' }, live })
 
         expect(live).not.toHaveBeenCalled()
         expect(output).toEqual({ error: 'This tool is unavailable right now.' })
@@ -21,7 +130,7 @@ describe('replay.resolveCall', () => {
         const caseReplay = replay.create({ recordedToolCalls: [] })
         const live = vi.fn(async () => ({ ok: true }))
 
-        await replay.resolveCall({ caseReplay, recordMode: true, toolName: 'ap_some_new_tool', input: {}, live })
+        await replay.resolveCall({ caseReplay, mode: 'record', toolName: 'ap_some_new_tool', input: {}, live })
 
         expect(live).not.toHaveBeenCalled()
         expect(caseReplay.stops().map((stop) => stop.kind)).toEqual(['unrecorded_write'])
@@ -31,7 +140,7 @@ describe('replay.resolveCall', () => {
         const caseReplay = replay.create({ recordedToolCalls: [] })
         const live = vi.fn(async () => ({ flows: [] }))
 
-        const output = await replay.resolveCall({ caseReplay, recordMode: true, toolName: 'ap_list_flows', input: { limit: 5 }, live })
+        const output = await replay.resolveCall({ caseReplay, mode: 'record', toolName: 'ap_list_flows', input: { limit: 5 }, live })
 
         expect(live).toHaveBeenCalledOnce()
         expect(output).toEqual({ flows: [] })
@@ -43,7 +152,7 @@ describe('replay.resolveCall', () => {
         const caseReplay = replay.create({ recordedToolCalls: [] })
         const live = vi.fn(async () => ({ error: 'The dev server could not run it' }))
 
-        const output = await replay.resolveCall({ caseReplay, recordMode: true, toolName: 'ap_list_flows', input: {}, live })
+        const output = await replay.resolveCall({ caseReplay, mode: 'record', toolName: 'ap_list_flows', input: {}, live })
 
         expect(output).toEqual({ error: 'The dev server could not run it' })
         expect(caseReplay.newFixtures()).toEqual([])
@@ -53,7 +162,7 @@ describe('replay.resolveCall', () => {
         const caseReplay = replay.create({ recordedToolCalls: [] })
         const live = vi.fn(async () => ({ flows: [] }))
 
-        await replay.resolveCall({ caseReplay, recordMode: false, toolName: 'ap_list_flows', input: {}, live })
+        await replay.resolveCall({ caseReplay, mode: 'replay', toolName: 'ap_list_flows', input: {}, live })
 
         expect(live).not.toHaveBeenCalled()
         expect(caseReplay.stops().map((stop) => stop.kind)).toEqual(['missing_fixture'])
@@ -63,7 +172,7 @@ describe('replay.resolveCall', () => {
         const recordedToolCalls: RecordedToolCall[] = [{ toolName: 'ap_add_step', input: { flowId: 'f1', stepName: 'step_1' }, output: { success: true } }]
         const caseReplay = replay.create({ recordedToolCalls })
 
-        const output = await replay.resolveCall({ caseReplay, recordMode: true, toolName: 'ap_add_step', input: { flowId: 'f1', stepName: 'step_1' }, live: undefined })
+        const output = await replay.resolveCall({ caseReplay, mode: 'record', toolName: 'ap_add_step', input: { flowId: 'f1', stepName: 'step_1' }, live: undefined })
 
         expect(output).toEqual({ success: true })
         expect(caseReplay.stops()).toEqual([])
@@ -75,7 +184,7 @@ describe('replay live tools', () => {
         const caseReplay = replay.create({ recordedToolCalls: [{ toolName: 'ap_web_search', input: { query: 'crm' }, output: 'old answer' }] })
         const live = vi.fn(async () => 'fresh answer')
 
-        const output = await replay.resolveCall({ caseReplay, recordMode: true, toolName: 'ap_web_search', input: { query: 'crm' }, live })
+        const output = await replay.resolveCall({ caseReplay, mode: 'record', toolName: 'ap_web_search', input: { query: 'crm' }, live })
 
         expect(output).toBe('fresh answer')
         expect(live).toHaveBeenCalledOnce()
@@ -87,7 +196,7 @@ describe('replay live tools', () => {
         const caseReplay = replay.create({ recordedToolCalls: [] })
         const live = vi.fn(async () => ({ actions: [] }))
 
-        await replay.resolveCall({ caseReplay, recordMode: false, toolName: 'ap_search_actions', input: { query: 'send email' }, live })
+        await replay.resolveCall({ caseReplay, mode: 'replay', toolName: 'ap_search_actions', input: { query: 'send email' }, live })
 
         expect(live).toHaveBeenCalledOnce()
         expect(caseReplay.stops()).toEqual([])
@@ -97,7 +206,7 @@ describe('replay live tools', () => {
         const caseReplay = replay.create({ recordedToolCalls: [{ toolName: 'ap_list_flows', input: { limit: 5 }, output: ['recorded flow'] }] })
         const live = vi.fn(async () => [])
 
-        const output = await replay.resolveCall({ caseReplay, recordMode: false, toolName: 'ap_list_flows', input: { limit: 5 }, live })
+        const output = await replay.resolveCall({ caseReplay, mode: 'replay', toolName: 'ap_list_flows', input: { limit: 5 }, live })
 
         expect(output).toEqual(['recorded flow'])
         expect(live).not.toHaveBeenCalled()
@@ -117,7 +226,7 @@ describe('replay matching for writes', () => {
     it('stops a write whose input differs from the recording instead of answering it', async () => {
         const caseReplay = replay.create({ recordedToolCalls })
 
-        const output = await replay.resolveCall({ caseReplay, recordMode: false, toolName: 'ap_add_step', input: { flowId: 'f2', stepName: 'step_1' }, live: undefined })
+        const output = await replay.resolveCall({ caseReplay, mode: 'replay', toolName: 'ap_add_step', input: { flowId: 'f2', stepName: 'step_1' }, live: undefined })
 
         expect(output).toEqual({ error: 'This tool is unavailable right now.' })
         expect(caseReplay.stops()).toEqual([expect.objectContaining({ toolName: 'ap_add_step', kind: 'write_input_differs', reason: expect.stringContaining('input differs from the recording') })])
@@ -128,15 +237,15 @@ describe('replay matching for writes', () => {
         const caseReplay = replay.create({ recordedToolCalls })
         const input = { flowId: 'f1', stepName: 'step_1' }
 
-        await replay.resolveCall({ caseReplay, recordMode: false, toolName: 'ap_add_step', input, live: undefined })
-        await replay.resolveCall({ caseReplay, recordMode: false, toolName: 'ap_add_step', input, live: undefined })
+        await replay.resolveCall({ caseReplay, mode: 'replay', toolName: 'ap_add_step', input, live: undefined })
+        await replay.resolveCall({ caseReplay, mode: 'replay', toolName: 'ap_add_step', input, live: undefined })
 
         expect(caseReplay.stops().map((stop) => stop.kind)).toEqual(['unrecorded_write'])
     })
 
     it('answers the same read twice from one recording', async () => {
         const caseReplay = replay.create({ recordedToolCalls: [{ toolName: 'ap_list_flows', input: { limit: 5 }, output: { flows: [] } }] })
-        const call = () => replay.resolveCall({ caseReplay, recordMode: false, toolName: 'ap_list_flows', input: { limit: 5 }, live: undefined })
+        const call = () => replay.resolveCall({ caseReplay, mode: 'replay', toolName: 'ap_list_flows', input: { limit: 5 }, live: undefined })
 
         expect(await call()).toEqual({ flows: [] })
         expect(await call()).toEqual({ flows: [] })
@@ -148,7 +257,7 @@ describe('replay matching for writes', () => {
             { toolName: 'ap_list_flows', input: { limit: 5 }, output: 'before' },
             { toolName: 'ap_list_flows', input: { limit: 5 }, output: 'after' },
         ] })
-        const call = () => replay.resolveCall({ caseReplay, recordMode: false, toolName: 'ap_list_flows', input: { limit: 5 }, live: undefined })
+        const call = () => replay.resolveCall({ caseReplay, mode: 'replay', toolName: 'ap_list_flows', input: { limit: 5 }, live: undefined })
 
         expect([await call(), await call(), await call()]).toEqual(['before', 'after', 'after'])
     })
@@ -156,7 +265,7 @@ describe('replay matching for writes', () => {
     it('does not end the turn for a read with no recording', async () => {
         const caseReplay = replay.create({ recordedToolCalls: [{ toolName: 'ap_list_flows', input: { limit: 5 }, output: [] }] })
 
-        await replay.resolveCall({ caseReplay, recordMode: false, toolName: 'ap_list_flows', input: { limit: 10 }, live: undefined })
+        await replay.resolveCall({ caseReplay, mode: 'replay', toolName: 'ap_list_flows', input: { limit: 10 }, live: undefined })
 
         expect(caseReplay.stops().map((stop) => stop.kind)).toEqual(['missing_fixture'])
         expect(caseReplay.stops().some(replay.endsTurn)).toBe(false)

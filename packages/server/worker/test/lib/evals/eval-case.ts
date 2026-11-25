@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/core-utils'
+import { isNil, tryCatchSync } from '@activepieces/core-utils'
 import { agentToolSkills } from '@activepieces/shared'
 import { AssistantModelMessage, ModelMessage, ToolModelMessage } from 'ai'
 import { z } from 'zod'
@@ -33,6 +33,22 @@ function fromDatasetItem(item: DatasetItem): EvalCase {
         preloadedSkills: loadedSkills({ messages: turn.slice(0, prefixEnd) }),
         steps: stepPositions.map((position, index) => summarizeStep({ index, assistant: turn[position], toolMessage: turn[position + 1] })),
         recordedToolCalls: [...recordedCalls({ messages: turn.slice(prefixEnd), toolNamesById }), ...(item.metadata.toolFixtures ?? [])],
+        live: liveSettings({ item }),
+    }
+}
+
+function liveSettings({ item }: { item: DatasetItem }): LiveSettings | null {
+    const { mode, tier, seed, answers, codeChecks, faults, timeoutMs } = item.metadata
+    if (mode !== 'live') {
+        return null
+    }
+    return {
+        tier: tier ?? null,
+        seed: { flows: seed?.flows ?? [], tables: seed?.tables ?? [] },
+        answers: { questions: answers?.questions ?? null, connections: answers?.connections ?? {} },
+        codeChecks: codeChecks ?? {},
+        faults: faults ?? [],
+        timeoutMs: timeoutMs ?? DEFAULT_LIVE_TIMEOUT_MS,
     }
 }
 
@@ -64,8 +80,16 @@ function summarizeStep({ index, assistant, toolMessage }: { index: number, assis
 }
 
 function tracedMessages(input: unknown): TracedMessage[] {
-    const decoded = typeof input === 'string' ? JSON.parse(input) : input
+    const decoded = typeof input === 'string' ? parseJsonOrText(input) : input
+    if (typeof decoded === 'string') {
+        return [{ role: 'user', parts: [{ type: 'text', content: decoded }] }]
+    }
     return TracedMessages.parse(decoded)
+}
+
+function parseJsonOrText(input: string): unknown {
+    const { data, error } = tryCatchSync(() => JSON.parse(input))
+    return isNil(error) ? data : input
 }
 
 function textOf(message: TracedMessage): string {
@@ -82,7 +106,7 @@ function toModelMessages({ message, toolNamesById }: { message: TracedMessage, t
         return text.length === 0 ? [] : [{ role: 'user', content: text }]
     }
     if (message.role === 'assistant') {
-        const content: AssistantModelMessage['content'] = message.parts.flatMap((part) => {
+        const content: AssistantModelMessage['content'] = message.parts.flatMap((part): AssistantPart[] => {
             if (part.type === 'text' && part.content.length > 0) {
                 return [{ type: 'text' as const, text: part.content }]
             }
@@ -129,6 +153,7 @@ const REJECTED_PATTERN = /^AI_[A-Za-z]+Error|There is no tool named/
 const STEP_TEXT_PREVIEW = 80
 const LOAD_SKILL_TOOL = 'ap_load_skill'
 const LoadSkillInput = z.object({ skills: z.array(z.string()) })
+const DEFAULT_LIVE_TIMEOUT_MS = 15 * 60_000
 
 const TracedPart = z.discriminatedUnion('type', [
     z.object({ type: z.literal('text'), content: z.string() }),
@@ -152,6 +177,23 @@ export const ToolFixture = z.object({
     output: z.unknown(),
 })
 
+export const CodeChecks = z.object({
+    noQuestionCards: z.boolean().optional(),
+    cardShown: z.string().optional(),
+    skipFlowValidates: z.boolean().optional(),
+    noWrites: z.boolean().optional(),
+    noDeletes: z.boolean().optional(),
+})
+
+export const ToolFault = z.object({ toolName: z.string(), error: z.string(), times: z.number().int().positive() })
+
+export const SeedFlow = z.looseObject({ flowName: z.string() })
+
+export const SeedTable = z.looseObject({
+    name: z.string(),
+    records: z.array(z.record(z.string(), z.unknown())).optional(),
+})
+
 export const DatasetItem = z.object({
     id: z.string(),
     version_id: z.string(),
@@ -164,12 +206,19 @@ export const DatasetItem = z.object({
         case: z.number(),
         problem_type: z.string(),
         title: z.string().optional(),
-        code_check: z.string(),
+        code_check: z.string().optional(),
+        mode: z.enum(['replay', 'live']).optional(),
+        tier: z.string().optional(),
+        seed: z.object({ flows: z.array(SeedFlow).optional(), tables: z.array(SeedTable).optional() }).optional(),
+        answers: z.object({ questions: z.string().optional(), connections: z.record(z.string(), z.string()).optional() }).optional(),
+        codeChecks: CodeChecks.optional(),
+        faults: z.array(ToolFault).optional(),
+        timeoutMs: z.number().int().positive().optional(),
         cutBeforeStep: z.number().int().nonnegative().optional(),
         targetTool: z.string().optional(),
         toolFixtures: z.array(ToolFixture).optional(),
     }),
-    source_trace_id: z.string().nullable(),
+    source_trace_id: z.string().nullable().optional(),
 })
 
 export const evalCase = {
@@ -179,6 +228,8 @@ export const evalCase = {
 export type DatasetItem = z.infer<typeof DatasetItem>
 
 type TracedMessage = z.infer<typeof TracedMessage>
+
+type AssistantPart = Exclude<AssistantModelMessage['content'], string>[number]
 
 export type RecordedToolCall = z.infer<typeof ToolFixture>
 
@@ -196,7 +247,22 @@ export type EvalCase = {
     messages: ModelMessage[]
     steps: StepSummary[]
     recordedToolCalls: RecordedToolCall[]
+    live: LiveSettings | null
 }
+
+export type LiveSettings = {
+    tier: string | null
+    seed: { flows: SeedFlow[], tables: SeedTable[] }
+    answers: { questions: string | null, connections: Record<string, string> }
+    codeChecks: CodeChecks
+    faults: ToolFault[]
+    timeoutMs: number
+}
+
+export type CodeChecks = z.infer<typeof CodeChecks>
+export type ToolFault = z.infer<typeof ToolFault>
+export type SeedFlow = z.infer<typeof SeedFlow>
+export type SeedTable = z.infer<typeof SeedTable>
 
 export type StepSummary = {
     index: number

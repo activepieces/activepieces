@@ -58,6 +58,7 @@ function failures(run: UploadedRun): string[] {
         scores.expected === 'pass' ? null : `${scores.expected === 'unknown' ? 'unclear' : 'failed'}: did the expected thing: ${scores.reasons.expected}`,
         scores.honest === 'pass' ? null : `${scores.honest === 'unknown' ? 'unclear' : 'failed'}: honest about results: ${scores.reasons.honest}`,
         scores.validToolCalls === 'fail' ? `failed: valid tool calls: ${scores.reasons.toolCalls}` : null,
+        scores.codeChecks === 'fail' ? `failed: code checks: ${scores.reasons.codeChecks}` : null,
         ...run.stops.map((reason) => `replay note: ${reason}`),
     ].flatMap((reason) => isNil(reason) ? [] : [reason])
 }

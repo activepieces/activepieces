@@ -13,14 +13,18 @@ describe('posthogExperiments.baseline', () => {
         request.mockReset()
     })
 
-    function mockBaseline({ items, cells, payload }: { items: unknown[], cells: unknown[], payload: unknown }): void {
+    function mockBaseline({ items, cells, payload, codeCheckCells }: { items: unknown[], cells: unknown[], payload: unknown, codeCheckCells?: unknown[] }): void {
+        const names = codeCheckCells === undefined ? scorerNames : [...scorerNames, 'Code checks']
         request.mockImplementation(async ({ path, query }) => {
             if (path === '/ai_observability/offline_experiments/') {
                 return { results: [{ id: 'exp-1', application_version: 'abc' }] }
             }
             if (path === '/llm_analytics/score_definitions/') {
-                const name = scorerNames.find((candidate) => candidate === query?.['search'])
-                return { results: [{ id: `def-${name}`, name, archived: false, current_version_id: `ver-${name}` }] }
+                const name = names.find((candidate) => candidate === query?.['search'])
+                return { results: name === undefined ? [] : [{ id: `def-${name}`, name, archived: false, current_version_id: `ver-${name}` }] }
+            }
+            if (query?.['scorer_version_ids'] === 'ver-Code checks') {
+                return { results: codeCheckCells ?? [] }
             }
             if (path.endsWith('/items/')) {
                 return { next_cursor: null, results: items }
@@ -76,6 +80,22 @@ describe('posthogExperiments.baseline', () => {
         const found = await posthogExperiments.baseline({ suiteKey: 'chat-core', modelVersion: 'm' })
 
         expect(found?.counts.get('case-1')).toEqual({ pass: 1, fail: 0 })
+    })
+
+    it('fails a run whose code checks failed, and still reads baselines saved before that gate existed', async () => {
+        const items = [{ id: 'i1', case_key: 'case-1' }, { id: 'i2', case_key: 'case-1' }]
+        const cells = ['i1', 'i2'].flatMap((itemId) => [1, 2, 3].map(() => ({ item_id: itemId, status: 'ok', value: true })))
+        mockBaseline({ items, cells, payload: null, codeCheckCells: [{ item_id: 'i1', status: 'ok', value: true }, { item_id: 'i2', status: 'ok', value: false }] })
+
+        const withGate = await posthogExperiments.baseline({ suiteKey: 'chat-core', modelVersion: 'm' })
+
+        expect(withGate?.counts.get('case-1')).toEqual({ pass: 1, fail: 1 })
+
+        mockBaseline({ items, cells, payload: null })
+
+        const before = await posthogExperiments.baseline({ suiteKey: 'chat-core', modelVersion: 'm' })
+
+        expect(before?.counts.get('case-1')).toEqual({ pass: 2, fail: 0 })
     })
 
     it('reads which dataset item version each case ran on', async () => {
@@ -135,8 +155,8 @@ describe('posthogExperiments.upload', () => {
         request.mockImplementation(async ({ path, query }) => path === '/llm_analytics/score_definitions/'
             ? { results: [{ id: 'def', name: query?.['search'], archived: false, current_version_id: `ver-${query?.['search']}` }] }
             : {})
-        const candidate = { id: 'item-1', versionId: 'v3', caseNumber: 1, title: 't', problemType: 'core', checks: ['c'], cutBeforeStep: undefined, targetTool: undefined, preloadedSkills: [], userMessage: 'u', messages: [], steps: [], recordedToolCalls: [] }
-        const scores = { expected: 'pass' as const, honest: 'pass' as const, validToolCalls: 'pass' as const, rejectedToolCalls: 0, costUsd: 0, stepsToDecision: 1, problemTypes: [], reasons: { expected: '', honest: '', toolCalls: '' } }
+        const candidate = { id: 'item-1', versionId: 'v3', caseNumber: 1, title: 't', problemType: 'core', checks: ['c'], cutBeforeStep: undefined, targetTool: undefined, preloadedSkills: [], userMessage: 'u', messages: [], steps: [], recordedToolCalls: [], live: null }
+        const scores = { expected: 'pass' as const, honest: 'pass' as const, validToolCalls: 'pass' as const, codeChecks: 'pass' as const, rejectedToolCalls: 0, costUsd: 0, stepsToDecision: 1, speed: null, problemTypes: [], reasons: { expected: '', honest: '', toolCalls: '', codeChecks: '' }, judge: null }
 
         await posthogExperiments.upload({ runs: [{ candidate, trial: 0, verdict: 'pass', scores, stops: [], transcript: '' }], suiteKey: 'chat-core', runSource: 'local', applicationVersion: 'sha', modelVersion: 'm', promptVersion: 'p', toolFingerprints: {} })
 

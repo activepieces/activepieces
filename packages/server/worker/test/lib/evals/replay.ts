@@ -1,10 +1,12 @@
-import { isNil, isObject } from '@activepieces/core-utils'
+import { isNil, isObject, tryCatch } from '@activepieces/core-utils'
+import { agentToolClassification, AppConnectionStatus, FlowRunStatus } from '@activepieces/shared'
 import { asSchema, ToolSet } from 'ai'
 import { agentWorkerTools } from '../../../src/lib/execute/jobs/ee/agent/agent-worker-tools'
-import { RecordedToolCall } from './eval-case'
+import { RecordedToolCall, ToolFault } from './eval-case'
 
-function create({ recordedToolCalls }: { recordedToolCalls: RecordedToolCall[] }): Replay {
+function create({ recordedToolCalls, faults = [] }: { recordedToolCalls: RecordedToolCall[], faults?: ToolFault[] }): Replay {
     const used = new Set<number>()
+    const faultsLeft = new Map(faults.map((fault) => [fault.toolName, { error: fault.error, left: fault.times }]))
     const stops: ReplayStop[] = []
     const recorded: RecordedToolCall[] = []
 
@@ -26,9 +28,19 @@ function create({ recordedToolCalls }: { recordedToolCalls: RecordedToolCall[] }
         return { error: REPLAY_ENDED_MESSAGE }
     }
 
+    const fault = (toolName: string): string | null => {
+        const pending = faultsLeft.get(toolName)
+        if (isNil(pending) || pending.left === 0) {
+            return null
+        }
+        faultsLeft.set(toolName, { error: pending.error, left: pending.left - 1 })
+        return pending.error
+    }
+
     return {
         take,
         stop,
+        fault,
         record: (call) => {
             recorded.push(call)
         },
@@ -37,7 +49,10 @@ function create({ recordedToolCalls }: { recordedToolCalls: RecordedToolCall[] }
     }
 }
 
-async function resolveCall({ caseReplay, recordMode, toolName, input, live }: { caseReplay: Replay, recordMode: boolean, toolName: string, input: unknown, live: (() => Promise<unknown>) | undefined }): Promise<unknown> {
+async function resolveCall({ caseReplay, mode, toolName, input, live, declaredReadOnly }: { caseReplay: Replay, mode: ReplayMode, toolName: string, input: unknown, live: (() => Promise<unknown>) | undefined, declaredReadOnly?: DeclaredReadOnlyLookup }): Promise<unknown> {
+    if (mode === 'live') {
+        return resolveLiveCall({ caseReplay, toolName, input, live, declaredReadOnly })
+    }
     if (isLive(toolName) && !isNil(live)) {
         return live()
     }
@@ -49,7 +64,7 @@ async function resolveCall({ caseReplay, recordMode, toolName, input, live }: { 
     if (!read) {
         return caseReplay.stop({ toolName, input, kind: fixture.sameToolRecorded ? 'write_input_differs' : 'unrecorded_write' })
     }
-    if (!recordMode || isNil(live)) {
+    if (mode !== 'record' || isNil(live)) {
         return caseReplay.stop({ toolName, input, kind: 'missing_fixture' })
     }
     const output = await live()
@@ -57,6 +72,79 @@ async function resolveCall({ caseReplay, recordMode, toolName, input, live }: { 
         caseReplay.record({ toolName, input, output })
     }
     return output
+}
+
+async function resolveLiveCall({ caseReplay, toolName, input, live, declaredReadOnly }: { caseReplay: Replay, toolName: string, input: unknown, live: (() => Promise<unknown>) | undefined, declaredReadOnly: DeclaredReadOnlyLookup | undefined }): Promise<unknown> {
+    const injected = caseReplay.fault(toolName)
+    if (!isNil(injected)) {
+        return { content: [{ type: 'text', text: injected }], isError: true }
+    }
+    if (await isStubbed({ toolName, input, declaredReadOnly })) {
+        return stubbedResult({ toolName, input })
+    }
+    if (isNil(live)) {
+        throw new Error(`${toolName} has nothing to run in live mode`)
+    }
+    return live()
+}
+
+async function isStubbed({ toolName, input, declaredReadOnly }: { toolName: string, input: unknown, declaredReadOnly: DeclaredReadOnlyLookup | undefined }): Promise<boolean> {
+    if (toolName !== EXECUTE_ACTION_TOOL) {
+        return !runsLive(toolName)
+    }
+    const actionName = isObject(input) && typeof input['actionName'] === 'string' ? input['actionName'] : ''
+    const actionInput = isObject(input) && isObject(input['input']) ? input['input'] : undefined
+    if (actionName === CUSTOM_API_CALL_ACTION) {
+        return agentToolClassification.requiresActionPreview({ actionName, input: actionInput })
+    }
+    const pieceName = isObject(input) && typeof input['pieceName'] === 'string' ? input['pieceName'] : ''
+    if (isNil(declaredReadOnly) || pieceName === '' || actionName === '') {
+        return true
+    }
+    const { data: declared, error } = await tryCatch(() => declaredReadOnly({ pieceName, actionName }))
+    return !isNil(error) || declared !== true
+}
+
+function cachedReadOnlyLookup(lookup: DeclaredReadOnlyLookup): DeclaredReadOnlyLookup {
+    const answers = new Map<string, Promise<unknown>>()
+    return ({ pieceName, actionName }) => {
+        const key = `${agentWorkerTools.normalizePieceName(pieceName.trim())}:${actionName}`
+        const cached = answers.get(key)
+        if (!isNil(cached)) {
+            return cached
+        }
+        const answer = lookup({ pieceName, actionName })
+        answers.set(key, answer)
+        return answer
+    }
+}
+
+function stubbedResult({ toolName, input }: { toolName: string, input: unknown }): unknown {
+    const fields = isObject(input) ? input : {}
+    switch (toolName) {
+        case 'ap_run_code': return { text: '✅ Code ran (no output returned).', producedFiles: [], stubbed: true }
+        case 'ap_remember': return { remembered: true, stubbed: true }
+        case 'ap_revalidate_connection': return { connectionExternalId: fields['connectionExternalId'], status: AppConnectionStatus.ACTIVE, working: true, note: 'This connection is valid — safe to build on.', stubbed: true }
+        case 'ap_create_agent':
+        case 'ap_update_agent':
+        case 'ap_add_agent_tool':
+        case 'ap_remove_agent_tool': return stubbedAgent({ fields, created: toolName === 'ap_create_agent' })
+        default: return STUBBED_SUCCESS
+    }
+}
+
+function stubbedAgent({ fields, created }: { fields: Record<string, unknown>, created: boolean }): unknown {
+    const agentId = !created && typeof fields['agentId'] === 'string' ? fields['agentId'] : STUBBED_AGENT_ID
+    const displayName = typeof fields['displayName'] === 'string' ? fields['displayName'] : STUBBED_AGENT_NAME
+    const published = fields['publish'] === true
+    return {
+        agentId,
+        displayName,
+        published,
+        url: `${STUBBED_AGENT_URL}/${agentId}`,
+        note: published ? `"${displayName}" is live: new runs use this version.` : 'Saved to the draft. Nothing runs this agent until it is published.',
+        stubbed: true,
+    }
 }
 
 async function splitStale({ tools, recordedToolCalls }: { tools: ToolSet, recordedToolCalls: RecordedToolCall[] }): Promise<{ fresh: RecordedToolCall[], stale: StaleRecording[] }> {
@@ -134,6 +222,10 @@ function isRead(toolName: string): boolean {
     return READ_TOOLS.has(toolName)
 }
 
+function runsLive(toolName: string): boolean {
+    return READ_TOOLS.has(toolName) || WORKSPACE_WRITE_TOOLS.has(toolName)
+}
+
 function isLive(toolName: string): boolean {
     return LIVE_TOOLS.has(toolName)
 }
@@ -176,6 +268,12 @@ const LIVE_TOOLS = new Set([
     'ap_setup_guide',
     'ap_web_search',
 ])
+const EXECUTE_ACTION_TOOL = 'ap_execute_action'
+const CUSTOM_API_CALL_ACTION = 'custom_api_call'
+const STUBBED_AGENT_ID = 'evalStubbedAgent'
+const STUBBED_AGENT_NAME = 'Eval agent'
+const STUBBED_AGENT_URL = 'https://eval.invalid/agents'
+const STUBBED_SUCCESS = { content: [{ type: 'text', text: 'Finished successfully.' }], structuredContent: { status: FlowRunStatus.SUCCEEDED } }
 const READ_TOOLS = new Set([
     ...LIVE_TOOLS,
     'ap_discover_action_auth',
@@ -199,21 +297,69 @@ const READ_TOOLS = new Set([
     'ap_validate_flow',
     'ap_validate_step_config',
 ])
+const WORKSPACE_WRITE_TOOLS = new Set([
+    'ap_add_branch',
+    'ap_add_step',
+    'ap_apply_flow_operations',
+    'ap_build_flow',
+    'ap_create_flow',
+    'ap_create_folder',
+    'ap_create_table',
+    'ap_delete_branch',
+    'ap_delete_flow',
+    'ap_delete_records',
+    'ap_delete_step',
+    'ap_delete_table',
+    'ap_duplicate_flow',
+    'ap_insert_records',
+    'ap_manage_fields',
+    'ap_manage_notes',
+    'ap_move_flow_to_folder',
+    'ap_rename_flow',
+    'ap_update_branch',
+    'ap_update_record',
+    'ap_update_step',
+    'ap_update_trigger',
+])
+const STUBBED_TOOLS = [
+    'ap_add_agent_tool',
+    'ap_change_flow_status',
+    'ap_create_agent',
+    'ap_lock_and_publish',
+    'ap_remember',
+    'ap_remove_agent_tool',
+    'ap_retry_run',
+    'ap_revalidate_connection',
+    'ap_run_action',
+    'ap_run_code',
+    'ap_test_flow',
+    'ap_test_step',
+    'ap_update_agent',
+]
+const STUBBED_TOOLS_NOTE = 'any other tool that is not a read or a flow, table or folder change'
 
 export const replay = {
     create,
     resolveCall,
+    cachedReadOnlyLookup,
     isRead,
     isLive,
     endsTurn,
     isStopOutput,
     splitStale,
+    stubbedTools: STUBBED_TOOLS,
+    stubbedToolsNote: STUBBED_TOOLS_NOTE,
+    workspaceWriteTools: WORKSPACE_WRITE_TOOLS,
 }
+
+export type DeclaredReadOnlyLookup = (params: { pieceName: string, actionName: string }) => Promise<unknown>
 
 export type StaleRecording = {
     toolName: string
     reason: string
 }
+
+export type ReplayMode = 'replay' | 'record' | 'live'
 
 export type ReplayStop = {
     toolName: string
@@ -226,6 +372,7 @@ type RecordedLookup = { found: true, output: unknown } | { found: false, sameToo
 export type Replay = {
     take: (params: { toolName: string, input: unknown }) => RecordedLookup
     stop: (params: { toolName: string, input: unknown, kind: ReplayStop['kind'] }) => unknown
+    fault: (toolName: string) => string | null
     record: (call: RecordedToolCall) => void
     stops: () => ReplayStop[]
     newFixtures: () => RecordedToolCall[]

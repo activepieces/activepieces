@@ -1,5 +1,5 @@
-import { aiProviderCredentials, AIProviderName, isNil } from '@activepieces/core-utils'
-import { AgentRunSource } from '@activepieces/shared'
+import { aiProviderCredentials, AIProviderName, isNil, isObject, tryCatch } from '@activepieces/core-utils'
+import { AgentRunSource, agentToolClassification } from '@activepieces/shared'
 import { aiUtils } from '@activepieces/server-utils'
 import { ToolExecutionOptions, ToolSet } from 'ai'
 import Fastify from 'fastify'
@@ -7,47 +7,68 @@ import { z } from 'zod'
 import { agentMcpClient } from '../../../src/lib/execute/jobs/ee/agent/agent-mcp-client'
 import { agentToolPolicy } from '../../../src/lib/execute/jobs/ee/agent/agent-tool-policy'
 import { agentWorkerTools, GateDecision } from '../../../src/lib/execute/jobs/ee/agent/agent-worker-tools'
-import { EVAL_PROJECT } from './prompts'
-import { replay, Replay } from './replay'
+import { devServer } from './dev-server'
+import { EVAL_PROJECT, PromptProject } from './prompts'
+import { DeclaredReadOnlyLookup, replay, Replay, ReplayMode } from './replay'
+import { ProjectConnection, ScriptedUser } from './scripted-user'
 
 async function connectMcp(): Promise<McpTools> {
-    const baseUrl = devServerUrl()
-    const res = await fetch(`${baseUrl}/v1/agents/eval/mcp-credentials`, { method: 'POST', headers: { 'api-key': devServerApiKey() } })
+    const res = await devServer.request({ path: '/v1/agents/eval/mcp-credentials', method: 'POST' })
     if (!res.ok) {
-        throw new Error(`Could not get MCP credentials from the dev server at ${baseUrl} (${res.status}). Is it running? ${await res.text()}`)
+        throw new Error(`Could not get MCP credentials from the dev server at ${devServer.url()} (${res.status}). Is it running? ${await res.text()}`)
     }
-    const { conversationId, projectName, ...mcpCredentials } = McpCredentials.parse(await res.json())
+    return connect(McpCredentials.parse(await res.json()))
+}
+
+async function connect({ conversationId, projectId, projectName, ...mcpCredentials }: McpCredentials): Promise<McpTools> {
     const connection = await agentMcpClient.connect({ mcpCredentials, conversationId, log: silentLog })
     if (isNil(connection.mcpClient)) {
         throw new Error(`Could not connect to the dev server MCP at ${mcpCredentials.mcpServerUrl}`)
     }
     const client = connection.mcpClient
     return {
-        toolSet: Object.fromEntries(Object.entries(connection.mcpToolSet).flatMap(([name, tool]) => isTool(tool) ? [[name, tool]] : [])),
+        toolSet: onlyTools(connection.mcpToolSet),
         close: () => client.close(),
+        projectId,
         projectName,
         conversationId,
     }
 }
 
-function build({ mcp, caseReplay, auth, recordMode }: { mcp: McpTools, caseReplay: Replay, auth: Record<string, unknown>, recordMode: boolean }): ToolSet {
+function build({ mcp, caseReplay, auth, mode, user, onNote = ignoreNote }: { mcp: McpTools, caseReplay: Replay, auth: Record<string, unknown>, mode: ReplayMode, user: ScriptedUser | null, onNote?: (note: string) => void }): ToolSet {
     const taintState = agentWorkerTools.createTaintState({ carried: false })
     const eventEmitter = agentWorkerTools.createEventEmitter({ sendEvent: async () => {}, userId: EVAL_USER_ID, conversationId: mcp.conversationId })
+    const declaredReadOnly = readOnlyLookup({ mcp })
     const executeTool = async (toolName: string, toolInput: Record<string, unknown>): Promise<unknown> => replay.resolveCall({
         caseReplay,
-        recordMode,
+        mode,
         toolName,
         input: toolInput,
         live: () => executeOnDevServer({ toolName, toolInput, conversationId: mcp.conversationId }),
+        declaredReadOnly,
     })
     const approve = async (): Promise<GateDecision> => ({ outcome: 'approved' })
     const dismissCard = async (): Promise<GateDecision> => ({ outcome: 'declined' })
     const noop = async (): Promise<void> => {}
+    const storeSelectedConnection = async (toolInput: { pieceName: string, connectionExternalId: string, label: string, projectId: string }): Promise<void> => {
+        const { data, error } = await tryCatch(() => executeOnDevServer({ toolName: STORE_SELECTED_CONNECTION_TOOL, toolInput, conversationId: mcp.conversationId }))
+        const failure = !isNil(error) ? error.message : failureOf(data)
+        if (!isNil(failure)) {
+            onNote(`could not save the scripted connection pick "${toolInput.label}" for ${toolInput.pieceName}, later steps may not see it: ${failure}`)
+        }
+    }
+    const project = projectOf({ mcp, mode })
+    const buildPlanTools = agentWorkerTools.createBuildPlanTools({ eventEmitter, getProjectId: () => project.id })
+    const mcpTools = agentMcpClient.withToolTimeouts({
+        mcpToolSet: replayed({ tools: mcp.toolSet, caseReplay, mode, declaredReadOnly }),
+        brokenConnectors: new Set(),
+        taintState,
+    })
     return agentToolPolicy.selectToolsForSource({
         source: AgentRunSource.CHAT,
         groups: {
-            local: agentWorkerTools.createLocalTools({ onSetProjectContext: async () => ({ success: true }), projects: [EVAL_PROJECT] }),
-            display: agentWorkerTools.createDisplayTools({ waitForApproval: dismissCard, displayToolTimeoutMs: DISPLAY_TOOL_TIMEOUT_MS, onConnectionSelected: noop, onGateOpened: noop }),
+            local: agentWorkerTools.createLocalTools({ onSetProjectContext: async () => ({ success: true }), projects: [project] }),
+            display: agentWorkerTools.createDisplayTools({ waitForApproval: user?.waitForApproval ?? dismissCard, displayToolTimeoutMs: DISPLAY_TOOL_TIMEOUT_MS, onConnectionSelected: storeSelectedConnection, onGateOpened: user?.onGateOpened ?? noop }),
             crossProject: agentWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: approve, onGateOpened: noop, taintState }),
             web: replayed({
                 tools: {
@@ -55,13 +76,13 @@ function build({ mcp, caseReplay, auth, recordMode }: { mcp: McpTools, caseRepla
                     ...agentWorkerTools.createProviderSearchTools({ search: (request) => searchWeb({ request, auth }), billedAtCost: false, taintState }),
                 },
                 caseReplay,
-                recordMode,
+                mode,
             }),
             thinking: agentWorkerTools.createThinkingTools(),
-            buildPlan: agentWorkerTools.createBuildPlanTools({ eventEmitter, getProjectId: () => EVAL_PROJECT.id }),
+            buildPlan: buildPlanTools,
             email: {},
             agentSurface: agentWorkerTools.createAgentSurfaceTools({ executeTool, taintState, eventEmitter, waitForApproval: approve, onGateOpened: noop }),
-            mcp: replayed({ tools: mcp.toolSet, caseReplay, recordMode }),
+            mcp: onlyTools(mcpTools),
             configuredPiece: {},
             configuredFlow: {},
             knowledgeBase: {},
@@ -70,74 +91,134 @@ function build({ mcp, caseReplay, auth, recordMode }: { mcp: McpTools, caseRepla
     })
 }
 
-function replayed({ tools, caseReplay, recordMode }: { tools: ToolSet, caseReplay: Replay, recordMode: boolean }): ToolSet {
+function failureOf(result: unknown): string | null {
+    if (!isObject(result)) {
+        return null
+    }
+    if (!isNil(result['error'])) {
+        return typeof result['error'] === 'string' ? result['error'] : JSON.stringify(result['error'])
+    }
+    return result['success'] === false ? JSON.stringify(result) : null
+}
+
+function ignoreNote(): void {
+    return undefined
+}
+
+function projectOf({ mcp, mode }: { mcp: McpTools, mode: ReplayMode }): PromptProject {
+    return mode === 'live' ? { id: mcp.projectId, displayName: mcp.projectName, type: EVAL_PROJECT.type } : EVAL_PROJECT
+}
+
+function replayed({ tools, caseReplay, mode, declaredReadOnly }: { tools: ToolSet, caseReplay: Replay, mode: ReplayMode, declaredReadOnly?: DeclaredReadOnlyLookup }): ToolSet {
     return Object.fromEntries(Object.entries(tools).map(([toolName, tool]) => {
         const liveExecute = tool.execute
         return [toolName, {
             ...tool,
-            execute: async (input: unknown, options: ToolExecutionOptions) => replay.resolveCall({
+            execute: async (input: unknown, options: ToolExecutionOptions<unknown>) => replay.resolveCall({
                 caseReplay,
-                recordMode,
+                mode,
                 toolName,
                 input,
                 live: isNil(liveExecute) ? undefined : async () => liveExecute(input, options),
+                declaredReadOnly,
             }),
         }]
     }))
 }
 
+async function listConnections({ mcp, pieceName }: { mcp: McpTools, pieceName: string }): Promise<ProjectConnection[]> {
+    const execute = mcp.toolSet[LIST_CONNECTIONS_TOOL]?.execute
+    if (isNil(execute)) {
+        throw new Error(`The dev server MCP does not offer ${LIST_CONNECTIONS_TOOL}`)
+    }
+    return ListConnectionsOutput.parse(await execute({ pieceName }, { toolCallId: LIST_CONNECTIONS_TOOL, messages: [], context: {} })).structuredContent.connections
+}
+
+async function call({ mcp, toolName, input }: { mcp: McpTools, toolName: string, input: Record<string, unknown> }): Promise<unknown> {
+    const execute = mcp.toolSet[toolName]?.execute
+    if (isNil(execute)) {
+        throw new Error(`the dev server MCP does not offer ${toolName}`)
+    }
+    return execute(input, { toolCallId: toolName, messages: [], context: {} })
+}
+
+function readResult(output: unknown): ToolResult {
+    const structured = isObject(output) && isObject(output['structuredContent']) ? output['structuredContent'] : {}
+    const text = resultText(output)
+    const failed = (isObject(output) && output['isError'] === true) || agentToolClassification.hasFailureTextPrefix(text.trim())
+    return { failed, text, structured }
+}
+
+function resultText(output: unknown): string {
+    if (typeof output === 'string') {
+        return output
+    }
+    const content = isObject(output) ? output['content'] : null
+    const texts = Array.isArray(content) ? content.flatMap((item) => isObject(item) && typeof item['text'] === 'string' ? [item['text']] : []) : []
+    return texts.length === 0 ? JSON.stringify(output ?? null) : texts.join('\n')
+}
+
+function readOnlyLookup({ mcp }: { mcp: McpTools }): DeclaredReadOnlyLookup {
+    return replay.cachedReadOnlyLookup(({ pieceName, actionName }) => executeOnDevServer({ toolName: ACTION_READ_ONLY_TOOL, toolInput: { pieceName, actionName }, conversationId: mcp.conversationId }))
+}
+
 async function executeOnDevServer({ toolName, toolInput, conversationId }: { toolName: string, toolInput: Record<string, unknown>, conversationId: string }): Promise<unknown> {
-    const res = await fetch(`${devServerUrl()}/v1/agents/eval/execute-tool`, {
-        method: 'POST',
-        headers: { 'api-key': devServerApiKey(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ toolName, toolInput, conversationId }),
-    })
+    const res = await devServer.request({ path: '/v1/agents/eval/execute-tool', method: 'POST', body: { toolName, toolInput, conversationId } })
     if (!res.ok) {
         return { error: `The dev server could not run ${toolName}: ${res.status} ${await res.text()}` }
     }
     return ExecuteToolResponse.parse(await res.json()).result
 }
 
-function devServerUrl(): string {
-    return (process.env[BASE_URL_ENV] ?? DEFAULT_BASE_URL).replace(/\/$/, '')
-}
-
-function devServerApiKey(): string {
-    const apiKey = process.env[API_KEY_ENV]
-    if (isNil(apiKey) || apiKey.length === 0) {
-        throw new Error(`${API_KEY_ENV} is not set. It must match the running dev server's AP_API_KEY.`)
-    }
-    return apiKey
-}
-
 function searchWeb({ request, auth }: { request: { system: string, prompt: string, abortSignal: AbortSignal }, auth: Record<string, unknown> }): ReturnType<typeof aiUtils.searchWeb> {
     return aiUtils.searchWeb({ ...request, credentials: aiProviderCredentials({ provider: AIProviderName.OPENROUTER, auth, config: {} }), modelId: SEARCH_MODEL_ID, billing: null })
+}
+
+function onlyTools(tools: Record<string, unknown>): ToolSet {
+    return Object.fromEntries(Object.entries(tools).flatMap(([name, tool]) => isTool(tool) ? [[name, tool]] : []))
 }
 
 function isTool(value: unknown): value is ToolSet[string] {
     return typeof value === 'object' && value !== null && 'inputSchema' in value
 }
 
-const API_KEY_ENV = 'AP_API_KEY'
-const BASE_URL_ENV = 'AP_EVAL_BASE_URL'
-const DEFAULT_BASE_URL = 'http://localhost:3000/api'
 const DISPLAY_TOOL_TIMEOUT_MS = 1_000
 const SEARCH_MODEL_ID = 'google/gemini-2.5-flash'
 const EVAL_USER_ID = 'eval-user'
 
-const McpCredentials = z.object({ mcpServerUrl: z.string(), mcpToken: z.string(), conversationId: z.string(), projectName: z.string() })
 const ExecuteToolResponse = z.object({ result: z.unknown() })
+const LIST_CONNECTIONS_TOOL = 'ap_list_connections'
+const STORE_SELECTED_CONNECTION_TOOL = '__store_selected_connection'
+const ACTION_READ_ONLY_TOOL = '__action_read_only'
+const ListConnectionsOutput = z.object({ structuredContent: z.object({ connections: z.array(ProjectConnection) }) })
 
 const silentLog = Fastify({ logger: false }).log
 
+export const McpCredentials = z.object({ mcpServerUrl: z.string(), mcpToken: z.string(), conversationId: z.string(), projectId: z.string(), projectName: z.string() })
+
 export const evalToolSet = {
     connectMcp,
+    connect,
     build,
+    readOnlyLookup,
+    projectOf,
+    call,
+    readResult,
+    listConnections,
 }
+
+export type ToolResult = {
+    failed: boolean
+    text: string
+    structured: Record<string, unknown>
+}
+
+export type McpCredentials = z.infer<typeof McpCredentials>
 
 export type McpTools = {
     toolSet: ToolSet
     close: () => Promise<void>
+    projectId: string
     projectName: string
     conversationId: string
 }

@@ -53,10 +53,17 @@ export const platformProjectBackgroundJobs = (log: FastifyBaseLogger) => ({
         await deleteProjectLinkedEntities({ projectId })
 
         await transaction(async (entityManager) => {
-            await appConnectionsRepo(entityManager).delete({
-                scope: AppConnectionScope.PROJECT,
-                projectIds: ArrayContains([projectId]),
-            })
+            await appConnectionsRepo(entityManager).createQueryBuilder()
+                .delete()
+                .where({ scope: AppConnectionScope.PROJECT, projectIds: ArrayContains([projectId]) })
+                .andWhere('cardinality("projectIds") = 1')
+                .execute()
+            await appConnectionsRepo(entityManager).createQueryBuilder()
+                .update()
+                .set({ projectIds: () => 'array_remove("projectIds", :projectId)' })
+                .where({ scope: AppConnectionScope.PROJECT, projectIds: ArrayContains([projectId]) })
+                .setParameter('projectId', projectId)
+                .execute()
             await userInvitationsService(log).detachProjectFromPlatformInvites({ projectId, entityManager })
             await projectRepo(entityManager).delete({
                 id: projectId,

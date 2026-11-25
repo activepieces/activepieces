@@ -411,3 +411,7 @@ type ScheduleHardDeleteProjectJobParams = {
     platformId: PlatformId
     log: FastifyBaseLogger
 }
+
+export const platformProjectJobs = {
+    scheduleHardDeleteProjectJob,
+}
