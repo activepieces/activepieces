@@ -1,8 +1,9 @@
 import { assertNotNullOrUndefined } from '@activepieces/core-utils'
-import { PrincipalType, TelemetryEventName, UserIdentityProvider } from '@activepieces/shared'
+import { CaptchaToken, PrincipalType, TelemetryEventName, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import { authenticationSideEffects } from '../../../authentication/authentication-side-effects'
+import { turnstile } from '../../../authentication/lib/turnstile'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { networkUtils } from '../../../helper/network-utils'
 import { rejectedPromiseHandler } from '../../../helper/promise-handler'
@@ -53,6 +54,7 @@ export const authnSsoSamlController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.post('/discover', DiscoverRequest, async (req) => {
+        await turnstile.assertSolved({ token: req.body.captchaToken, remoteIp: networkUtils.clientIp(req), log: req.log })
         return authnSsoSamlService(req.log).discoverByDomain(req.body.domain)
     })
 
@@ -104,6 +106,7 @@ const DiscoverRequest = {
     schema: {
         body: z.object({
             domain: z.string().min(1).max(253),
+            captchaToken: CaptchaToken,
         }),
         response: {
             200: z.object({

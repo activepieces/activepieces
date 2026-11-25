@@ -19,6 +19,9 @@ import { formatUtils } from '@/lib/format-utils';
 
 import { useStartSamlLogin } from '../hooks/use-start-saml-login';
 
+import { TurnstileWidget } from './auth-landing/turnstile-widget';
+import { useCaptcha } from './auth-landing/use-captcha';
+
 const FormValues = z.object({
   email: z.string().regex(formatUtils.emailRegex, t('Email is invalid')),
 });
@@ -37,6 +40,7 @@ export const SamlLoginForm = ({
   showBackButton = true,
 }: SamlLoginFormProps) => {
   const startSamlLogin = useStartSamlLogin();
+  const captcha = useCaptcha({ surface: 'saml-discover' });
   const form = useForm<FormValues>({
     resolver: zodResolver(FormValues),
     defaultValues: { email: '' },
@@ -44,9 +48,12 @@ export const SamlLoginForm = ({
   });
 
   const { mutate, isPending } = useMutation({
-    mutationFn: async (values: FormValues) => {
+    mutationFn: async (values: FormValues & { captchaToken?: string }) => {
       const domain = values.email.trim().toLowerCase().split('@')[1];
-      const { platformId } = await samlSsoApi.discover(domain);
+      const { platformId } = await samlSsoApi.discover({
+        domain,
+        captchaToken: values.captchaToken,
+      });
       if (!platformId) {
         throw new Error(t('No SAML provider found for this domain'));
       }
@@ -65,7 +72,7 @@ export const SamlLoginForm = ({
         className="flex flex-col gap-4"
         onSubmit={form.handleSubmit((data) => {
           form.clearErrors('root.serverError');
-          mutate(data);
+          mutate({ ...data, captchaToken: captcha.take() });
         })}
       >
         <p className="text-sm text-gray-11">
@@ -91,10 +98,11 @@ export const SamlLoginForm = ({
             {form.formState.errors.root.serverError.message}
           </FormMessage>
         )}
+        <TurnstileWidget {...captcha.widgetProps} />
         <Button
           type="submit"
           loading={isPending}
-          disabled={!form.formState.isValid}
+          disabled={!form.formState.isValid || captcha.blocked}
         >
           {t('Continue')}
         </Button>

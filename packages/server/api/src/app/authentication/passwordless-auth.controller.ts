@@ -9,6 +9,7 @@ import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { telemetry } from '../helper/telemetry.utils'
 import { platformUtils } from '../platform/platform.utils'
 import { authenticationSideEffects } from './authentication-side-effects'
+import { turnstile } from './lib/turnstile'
 import { passwordlessAuthService } from './passwordless-auth.service'
 
 export const passwordlessAuthController: FastifyPluginAsyncZod = async (
@@ -26,6 +27,7 @@ export const passwordlessAuthController: FastifyPluginAsyncZod = async (
     })
 
     app.post('/otp/verify', VerifyEmailCodeRequestOptions, async (request) => {
+        await turnstile.assertSolved({ token: request.body.captchaToken, remoteIp: networkUtils.clientIp(request), log: request.log })
         const platformId = await platformUtils.getPlatformIdForRequest(request)
         const { response, signedUp } = await passwordlessAuthService(request.log).verifyCode({
             email: request.body.email,

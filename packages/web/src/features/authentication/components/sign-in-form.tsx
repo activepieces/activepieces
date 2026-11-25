@@ -33,6 +33,8 @@ import {
   useRedirectAfterLogin,
 } from '@/lib/navigation-utils';
 
+import { TurnstileWidget } from './auth-landing/turnstile-widget';
+import { useCaptcha } from './auth-landing/use-captcha';
 import { CheckEmailNote } from './check-email-note';
 
 const SignInSchema = z.object({
@@ -60,6 +62,7 @@ const SignInForm = ({ onForgotPassword }: SignInFormProps) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { capture } = useTelemetry();
+  const captcha = useCaptcha({ surface: 'password-sign-in' });
 
   const { mutate, isPending } = useMutation<
     AuthenticationResponse,
@@ -155,7 +158,11 @@ const SignInForm = ({ onForgotPassword }: SignInFormProps) => {
     });
     // On Cloud a password sign-up is only provisioned on this first sign-in
     // (after the verification email), so the stashed attribution rides along.
-    mutate({ ...data, attribution: acquisitionUtils.getAcquisitionParams() });
+    mutate({
+      ...data,
+      captchaToken: captcha.take(),
+      attribution: acquisitionUtils.getAcquisitionParams(),
+    });
   };
 
   return (
@@ -248,8 +255,10 @@ const SignInForm = ({ onForgotPassword }: SignInFormProps) => {
               {form.formState.errors.root.serverError.message}
             </FormMessage>
           )}
+          <TurnstileWidget {...captcha.widgetProps} />
           <Button
             loading={isPending}
+            disabled={captcha.blocked}
             onClick={(e) => form.handleSubmit(onSubmit)(e)}
             tabIndex={3}
             data-testid="sign-in-button"

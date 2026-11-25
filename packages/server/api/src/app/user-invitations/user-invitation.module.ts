@@ -1,9 +1,10 @@
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, Permission, ProjectRole, RoleType, SeekPage } from '@activepieces/core-utils'
-import { ApplicationEventName, INVITATION_EXPIRY_SECONDS, InvitationStatus, InvitationType, ListUserInvitationsRequest, PlatformRole, Principal, PrincipalType, ProjectType, RemoveProjectFromInvitationResponse, SendUserInvitationRequest, SERVICE_KEY_SECURITY_OPENAPI, ServicePrincipal, TelemetryEvent, TelemetryEventName, UserInvitation, UserInvitationEvent, UserInvitationPreview, UserInvitationWithLink, UserPrincipal } from '@activepieces/shared'
+import { ApplicationEventName, CaptchaToken, INVITATION_EXPIRY_SECONDS, InvitationStatus, InvitationType, ListUserInvitationsRequest, PlatformRole, Principal, PrincipalType, ProjectType, RemoveProjectFromInvitationResponse, SendUserInvitationRequest, SERVICE_KEY_SECURITY_OPENAPI, ServicePrincipal, TelemetryEvent, TelemetryEventName, UserInvitation, UserInvitationEvent, UserInvitationPreview, UserInvitationWithLink, UserPrincipal } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
+import { turnstile } from '../authentication/lib/turnstile'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { transaction } from '../core/db/transaction'
 import { ProjectResourceType } from '../core/security/authorization/common'
@@ -123,6 +124,7 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.post('/accept', AcceptUserInvitationRequestParams, async (request, reply) => {
+        await turnstile.assertSolved({ token: request.body.captchaToken, remoteIp: networkUtils.clientIp(request), log: request.log })
         const invitation = await userInvitationsService(request.log).getOneByInvitationTokenOrThrow(request.body.invitationToken)
         const { registered, firstAcceptance } = await userInvitationsService(request.log).accept({
             invitationId: invitation.id,
@@ -384,6 +386,7 @@ const AcceptUserInvitationRequestParams = {
     schema: {
         body: z.object({
             invitationToken: z.string(),
+            captchaToken: CaptchaToken,
         }),
     },
 }

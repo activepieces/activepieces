@@ -1,10 +1,12 @@
 import { z } from 'zod'
 import { AttributionParams } from '../../common/attribution'
 import { EmailType, PasswordType } from '../../user/user'
+import { CaptchaToken } from './passwordless-request'
 
 export const SignInRequest = z.object({
     email: EmailType,
     password: PasswordType,
+    captchaToken: CaptchaToken,
     attribution: AttributionParams.optional(),
 })
 

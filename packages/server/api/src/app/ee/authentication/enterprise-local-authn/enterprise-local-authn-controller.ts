@@ -2,17 +2,21 @@ import {
     ResetPasswordRequestBody,
     VerifyEmailRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { turnstile } from '../../../authentication/lib/turnstile'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
+import { networkUtils } from '../../../helper/network-utils'
 import { enterpriseLocalAuthnService } from './enterprise-local-authn-service'
 
 export const enterpriseLocalAuthnController: FastifyPluginAsyncZod = async (
     app,
 ) => {
     app.post('/verify-email', VerifyEmailRequest, async (req) => {
+        await turnstile.assertSolved({ token: req.body.captchaToken, remoteIp: networkUtils.clientIp(req), log: req.log })
         await enterpriseLocalAuthnService(req.log).verifyEmail(req.body)
     })
 
     app.post('/reset-password', ResetPasswordRequest, async (req) => {
+        await turnstile.assertSolved({ token: req.body.captchaToken, remoteIp: networkUtils.clientIp(req), log: req.log })
         await enterpriseLocalAuthnService(req.log).resetPassword(req.body)
     }) 
 }
