@@ -1484,7 +1484,7 @@
   "Opened the upgrade options from a locked feature": "Opened the upgrade options from a locked feature",
   "Started a sales enquiry from a locked feature": "Started a sales enquiry from a locked feature",
   "Reached a plan limit": "Reached a plan limit",
-  "Clicked a button on a platform administration page": "Clicked a button on a platform administration page",
+  "Clicked an administration or billing button": "Clicked an administration or billing button",
   "Chose an option when switching a step's connection": "Chose an option when switching a step's connection",
   "Opened the replace connection dialog": "Opened the replace connection dialog",
   "Replaced a connection": "Replaced a connection",

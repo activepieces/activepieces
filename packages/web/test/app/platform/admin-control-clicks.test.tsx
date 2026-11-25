@@ -7,7 +7,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen } from '@testing-library/react';
 import * as React from 'react';
 import { createPortal } from 'react-dom';
-import { MemoryRouter, useRoutes } from 'react-router-dom';
+import { Link, MemoryRouter, useRoutes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const capture = vi.fn();
@@ -70,6 +70,7 @@ vi.mock(
   }),
 );
 
+import { AdminControlClicksLayout } from '@/app/components/admin-control-clicks-layout';
 import { platformRoutes } from '@/app/routes/platform-routes';
 import {
   ADMIN_CONTROL_ATTRIBUTE,
@@ -77,7 +78,18 @@ import {
   adminControl,
 } from '@/lib/admin-control';
 
-const PlatformRoutes = () => useRoutes(platformRoutes);
+const routes = [
+  ...platformRoutes,
+  {
+    path: '/projects/:projectId/connections',
+    element: <Link to="/platform/projects">Open platform</Link>,
+  },
+];
+
+const AppRoutes = () =>
+  useRoutes([
+    { element: <AdminControlClicksLayout routes={routes} />, children: routes },
+  ]);
 
 const visit = (url: string) =>
   render(
@@ -87,7 +99,7 @@ const visit = (url: string) =>
       }
     >
       <MemoryRouter initialEntries={[url]}>
-        <PlatformRoutes />
+        <AppRoutes />
       </MemoryRouter>
     </QueryClientProvider>,
   );
@@ -108,6 +120,21 @@ beforeEach(() => {
 describe('admin control click telemetry', () => {
   it('reports the control id with the route pattern of the page', async () => {
     visit('/platform/projects');
+    fireEvent.click(await screen.findByText('New Project'));
+    expect(capturedClicks()).toEqual([
+      { control: AdminControl.PROJECTS_NEW_OPEN, page: '/platform/projects' },
+    ]);
+  });
+
+  it('reports a click on a platform page exactly once', async () => {
+    visit('/platform/projects');
+    fireEvent.click(await screen.findByText('New Project'));
+    expect(capturedClicks()).toHaveLength(1);
+  });
+
+  it('keeps a single listener when moving from another page to a platform page', async () => {
+    visit('/projects/p_42/connections');
+    fireEvent.click(await screen.findByText('Open platform'));
     fireEvent.click(await screen.findByText('New Project'));
     expect(capturedClicks()).toEqual([
       { control: AdminControl.PROJECTS_NEW_OPEN, page: '/platform/projects' },

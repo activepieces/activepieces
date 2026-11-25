@@ -6,12 +6,18 @@ import { useLatest } from 'react-use';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { ADMIN_CONTROL_ATTRIBUTE } from '@/lib/admin-control';
 
-export function useAdminControlClicks(page: string) {
+export function useAdminControlClicks({
+  page,
+  enabled,
+}: AdminControlClicksParams) {
   const { capture } = useTelemetry();
   const latestCapture = useLatest(capture);
   const latestPage = useLatest(page);
 
   useEffect(() => {
+    if (!enabled) {
+      return;
+    }
     const reportClick = (event: MouseEvent) => {
       const control = controlIdOf(event.target);
       if (isNil(control)) {
@@ -24,7 +30,7 @@ export function useAdminControlClicks(page: string) {
     };
     document.addEventListener('click', reportClick, true);
     return () => document.removeEventListener('click', reportClick, true);
-  }, [latestCapture, latestPage]);
+  }, [enabled, latestCapture, latestPage]);
 }
 
 function controlIdOf(target: EventTarget | null): string | null {
@@ -38,3 +44,8 @@ function controlIdOf(target: EventTarget | null): string | null {
 }
 
 const CONTROL_SELECTOR = `[${ADMIN_CONTROL_ATTRIBUTE}]`;
+
+type AdminControlClicksParams = {
+  page: string;
+  enabled: boolean;
+};
