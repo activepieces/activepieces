@@ -30,7 +30,7 @@ export const analyzeDocumentAsync = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Analyze a multi-page or single-page PDF, TIFF, JPEG or PNG with AWS Textract and return its text, forms, tables, signatures and answers to optional questions, one queryResults row per question. Use it for multi-page documents, which the synchronous Analyze Document action cannot handle. Set source to "file" and pass the file, or to "s3" and pass the path of an object already in the bucket. With a file, the step uploads a temporary copy to the bucket under activepieces-textract-uploads/, analyzes it, then deletes the copy; if the delete fails, the copy stays and warnings names it. It waits up to 5 minutes for the job. Safe to retry. For an S3 file, the same deduplication token with the same inputs within 7 days returns the first job; the token cannot be combined with a file upload.',
+      'Analyze a multi-page or single-page PDF, TIFF, JPEG or PNG with AWS Textract and return its text, forms, tables, signatures and answers to optional questions: one queryResults row per question with the most confident answer, and the answers from all pages in its answers list. Use it for multi-page documents, which the synchronous Analyze Document action cannot handle. Set source to "file" and pass the file, or to "s3" and pass the path of an object already in the bucket. With a file, the step uploads a temporary copy to the bucket under activepieces-textract-uploads/, analyzes it, then deletes the copy; if the delete fails, the copy stays and warnings names it. It waits up to 5 minutes for the job. Safe to retry. For an S3 file, the same deduplication token with the same inputs within 7 days returns the first job; the token cannot be combined with a file upload.',
     idempotent: true,
   },
   props: {
@@ -247,11 +247,11 @@ async function abortPartialUpload({
 function uploadErrorMessage({ bucket, error }: { bucket: string; error: unknown }): string {
   const reason = describeAwsError(error);
   if (!isAwsError(error)) {
-    return `Could not read the file to upload (${reason}). Check the File to Upload field and try again.`;
+    return `Could not upload the file to S3 bucket "${bucket}" before reaching S3 (${reason}). Check the File to Upload field and the S3 Bucket name.`;
   }
   switch (error.name) {
     case 'AccessDenied':
-      return `S3 refused the upload to bucket "${bucket}" (${reason}). The connection needs s3:PutObject, s3:GetObject and s3:DeleteObject on this bucket, plus s3:DeleteObjectVersion if it is versioned.`;
+      return `S3 refused the upload to bucket "${bucket}" (${reason}). The connection needs s3:PutObject, s3:GetObject, s3:DeleteObject and s3:AbortMultipartUpload on this bucket, plus s3:DeleteObjectVersion if it is versioned.`;
     case 'NoSuchBucket':
       return `The S3 bucket "${bucket}" does not exist (${reason}). Check the S3 Bucket field.`;
     case 'PermanentRedirect':
@@ -296,18 +296,19 @@ function toStepError(error: unknown): TextractStepError {
   if (error instanceof TextractStepError) {
     return error;
   }
-  const name = error instanceof Error ? error.name : '';
-  return new TextractStepError(asyncErrorMessage(name) ?? formatTextractError(error));
+  return new TextractStepError(asyncErrorMessage(error) ?? formatTextractError(error));
 }
 
-function asyncErrorMessage(name: string): string | undefined {
+function asyncErrorMessage(error: unknown): string | undefined {
+  const name = error instanceof Error ? error.name : '';
+  const reason = describeAwsError(error);
   switch (name) {
     case 'UnsupportedDocumentException':
-      return 'Textract cannot read this file type. Use a PDF, TIFF, JPEG or PNG file.';
+      return `Textract cannot read this file type (${reason}). Use a PDF, TIFF, JPEG or PNG file.`;
     case 'DocumentTooLargeException':
-      return 'The file is too large for Textract. PDF and TIFF files can be up to 500 MB, JPEG and PNG files up to 10 MB.';
+      return `The file is too large for Textract (${reason}). PDF and TIFF files can be up to 500 MB, JPEG and PNG files up to 10 MB.`;
     case 'IdempotentParameterMismatchException':
-      return 'This Deduplication Token was used in the last 7 days with other inputs. Use a new token, or clear it.';
+      return `This Deduplication Token was used in the last 7 days with other inputs (${reason}). Use a new token, or clear it.`;
     default:
       return undefined;
   }
@@ -343,6 +344,13 @@ async function analyzeS3Document({
     };
   }
 
+  const lastJobWait = analysis.startedAt + STEP_JOB_WAIT_MS;
+  if (Date.now() >= lastJobWait) {
+    throw new TextractStepError(
+      'Uploading the file took over 7 minutes, so this step has no time left to analyze it. Upload it to S3 first and set Document Source to "File already in S3", or use a smaller file.'
+    );
+  }
+
   const startResponse = await client.send(new StartDocumentAnalysisCommand(startInput));
 
   const jobId = startResponse.JobId;
@@ -350,13 +358,17 @@ async function analyzeS3Document({
     throw new TextractStepError('Could not start the document analysis job. Please try again.');
   }
 
-  const firstPage = await waitForJob({ client, jobId, deadline: analysis.startedAt + JOB_WAIT_MS });
+  const firstPage = await waitForJob({
+    client,
+    jobId,
+    deadline: Math.min(Date.now() + JOB_WAIT_MS, lastJobWait),
+  });
   const pages = [firstPage];
   let nextToken = firstPage.NextToken;
   while (nextToken) {
-    if (Date.now() >= analysis.startedAt + RESULTS_WAIT_MS) {
+    if (Date.now() >= analysis.startedAt + STEP_RESULTS_WAIT_MS) {
       throw new TextractStepError(
-        'Textract finished, but reading all of its results took longer than 8 minutes. Try splitting the document into smaller parts and running this action on each part.'
+        `Textract finished job ${jobId}, but this step reached its 8-minute limit while reading the results. Try splitting the document into smaller parts and running this action on each part.`
       );
     }
     const page = await getAnalysisPage({ client, jobId, nextToken });
@@ -404,7 +416,7 @@ async function waitForJob({
   } while (Date.now() < deadline);
 
   throw new TextractStepError(
-    'Document analysis is taking longer than expected (5 minutes). This can happen with very large documents. Try splitting the document into smaller parts and running this action on each part.'
+    `Textract job ${jobId} did not finish in time. The step waits up to 5 minutes for the job, less after a slow upload. This can happen with very large documents. Try splitting the document into smaller parts and running this action on each part.`
   );
 }
 
@@ -420,22 +432,30 @@ function getAnalysisPage({
   return client.send(new GetDocumentAnalysisCommand({ JobId: jobId, MaxResults: 1000, NextToken: nextToken }));
 }
 
-function oneResultPerQuestion(results: QueryResult[]): QueryResult[] {
-  const byQuestion = new Map<string, QueryResult>();
+function oneResultPerQuestion(results: QueryResult[]): QuestionResult[] {
+  const byQuestion = new Map<string, QuestionResult>();
   for (const result of results) {
     const kept = byQuestion.get(result.query);
-    if (!kept || (!kept.answer && result.answer)) {
-      byQuestion.set(result.query, result);
+    const answers = kept?.answers ?? [];
+    if (result.answer) {
+      answers.push({ answer: result.answer, confidence: result.confidence, pageNumber: result.pageNumber });
     }
+    const best = kept && !isBetterAnswer({ candidate: result, current: kept }) ? kept : result;
+    byQuestion.set(result.query, { ...best, answers });
   }
   return [...byQuestion.values()];
+}
+
+function isBetterAnswer({ candidate, current }: { candidate: QueryResult; current: QueryResult }): boolean {
+  return candidate.answer.length > 0 && (!current.answer || candidate.confidence > current.confidence);
 }
 
 class TextractStepError extends Error {}
 
 const POLL_INTERVAL_MS = 5000;
 const JOB_WAIT_MS = 5 * 60 * 1000;
-const RESULTS_WAIT_MS = 8 * 60 * 1000;
+const STEP_JOB_WAIT_MS = 7 * 60 * 1000;
+const STEP_RESULTS_WAIT_MS = 8 * 60 * 1000;
 const UPLOAD_KEY_PREFIX = 'activepieces-textract-uploads';
 const BUCKET_NAME_REGEX = /^[a-zA-Z0-9._-]{3,255}$/;
 
@@ -444,6 +464,16 @@ type AnalysisOptions = {
   queries: unknown[];
   clientRequestToken: string | undefined;
   startedAt: number;
+};
+
+type QuestionResult = QueryResult & {
+  answers: PageAnswer[];
+};
+
+type PageAnswer = {
+  answer: string;
+  confidence: number;
+  pageNumber: number;
 };
 
 type UploadedDocument = {

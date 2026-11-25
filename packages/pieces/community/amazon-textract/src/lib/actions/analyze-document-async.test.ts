@@ -185,7 +185,7 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
       await expect(
         runAction({ source: 'file', file: new ApFile('contract.pdf', Buffer.from('%PDF'), 'pdf') })
       ).rejects.toThrow(
-        'S3 refused the upload to bucket "docs-bucket" (AccessDenied: Access Denied). The connection needs s3:PutObject, s3:GetObject and s3:DeleteObject on this bucket, plus s3:DeleteObjectVersion if it is versioned.'
+        'S3 refused the upload to bucket "docs-bucket" (AccessDenied: Access Denied). The connection needs s3:PutObject, s3:GetObject, s3:DeleteObject and s3:AbortMultipartUpload on this bucket, plus s3:DeleteObjectVersion if it is versioned.'
       );
       expect(textractSend).not.toHaveBeenCalled();
       expect(s3Send).not.toHaveBeenCalled();
@@ -198,7 +198,7 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
       await expect(
         runAction({ source: 'file', file: new ApFile('contract.pdf', Buffer.from('%PDF'), 'pdf') })
       ).rejects.toThrow(
-        /^Could not read the file to upload \(TypeError: terminated\)\. Check the File to Upload field and try again\.$/
+        /^Could not upload the file to S3 bucket "docs-bucket" before reaching S3 \(TypeError: terminated\)\. Check the File to Upload field and the S3 Bucket name\.$/
       );
       expect(uploadOptions).toEqual([{ leavePartsOnError: true }]);
       expect(abortInputs()).toEqual([{ Bucket: BUCKET, Key: expect.stringMatching(UPLOAD_KEY), UploadId: 'upload-1' }]);
@@ -217,7 +217,7 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
 
       expect(error).toBeInstanceOf(Error);
       const message = error instanceof Error ? error.message : '';
-      expect(message).toMatch(/^Could not read the file to upload \(TypeError: terminated\)\. /);
+      expect(message).toMatch(/^Could not upload the file to S3 bucket "docs-bucket" before reaching S3 \(TypeError: terminated\)\. /);
       expect(message).toMatch(
         /The parts already sent could not be removed from s3:\/\/docs-bucket\/activepieces-textract-uploads\/[0-9a-f-]{36}\.pdf \(AccessDenied: Access Denied\)\. Give the connection s3:AbortMultipartUpload on this bucket, or add a lifecycle rule that aborts incomplete multipart uploads\.$/
       );
@@ -233,8 +233,20 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
         'The S3 bucket "docs-bucket" is in another AWS region (PermanentRedirect: The bucket you are attempting to access must be addressed using the specified endpoint.). Use a bucket in the connection\'s region.',
       ],
       [
+        awsError({ name: 'AuthorizationHeaderMalformed', message: "the region 'us-east-1' is wrong; expecting 'eu-north-1'" }),
+        'The S3 bucket "docs-bucket" is in another AWS region (AuthorizationHeaderMalformed: the region \'us-east-1\' is wrong; expecting \'eu-north-1\'). Use a bucket in the connection\'s region.',
+      ],
+      [
+        awsError({ name: 'SlowDown', message: 'Please reduce your request rate.' }),
+        'Could not upload the file to S3 bucket "docs-bucket" (SlowDown: Please reduce your request rate.).',
+      ],
+      [
         Object.assign(new Error('terminated'), { name: 'TypeError' }),
-        'Could not read the file to upload (TypeError: terminated). Check the File to Upload field and try again.',
+        'Could not upload the file to S3 bucket "docs-bucket" before reaching S3 (TypeError: terminated). Check the File to Upload field and the S3 Bucket name.',
+      ],
+      [
+        Object.assign(new Error('Unrecognized S3Express bucket name format.'), { name: 'EndpointError' }),
+        'Could not upload the file to S3 bucket "docs-bucket" before reaching S3 (EndpointError: Unrecognized S3Express bucket name format.). Check the File to Upload field and the S3 Bucket name.',
       ],
     ])('explains an upload failure by its cause: %s', async (error, message) => {
       uploadDone.mockRejectedValueOnce(error);
@@ -270,10 +282,13 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
     });
 
     it.each([
-      ['UnsupportedDocumentException', 'Textract cannot read this file type. Use a PDF, TIFF, JPEG or PNG file.'],
+      [
+        'UnsupportedDocumentException',
+        'Textract cannot read this file type (UnsupportedDocumentException: rejected). Use a PDF, TIFF, JPEG or PNG file.',
+      ],
       [
         'DocumentTooLargeException',
-        'The file is too large for Textract. PDF and TIFF files can be up to 500 MB, JPEG and PNG files up to 10 MB.',
+        'The file is too large for Textract (DocumentTooLargeException: rejected). PDF and TIFF files can be up to 500 MB, JPEG and PNG files up to 10 MB.',
       ],
     ])('explains %s for the uploaded file and still deletes it', async (name, message) => {
       textractSend.mockRejectedValueOnce(awsError({ name, message: 'rejected' }));
@@ -332,9 +347,9 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
       });
     });
 
-    it('counts the upload in the 5-minute wait for the job, and still deletes the upload', async () => {
+    it('gives the job its full 5 minutes after a short upload, and still deletes the upload', async () => {
       uploadDone.mockImplementation(async () => {
-        vi.setSystemTime(Date.now() + 120_000);
+        vi.setSystemTime(Date.now() + 60_000);
         return {};
       });
       textractSend.mockImplementation(async (command: AwsCommand) =>
@@ -343,8 +358,59 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
 
       await expect(
         runAction({ source: 'file', file: new ApFile('contract.pdf', Buffer.from('%PDF'), 'pdf') })
-      ).rejects.toThrow('Document analysis is taking longer than expected (5 minutes).');
-      expect(getCalls().length).toBeLessThanOrEqual(36);
+      ).rejects.toThrow(
+        'Textract job job-1 did not finish in time. The step waits up to 5 minutes for the job, less after a slow upload.'
+      );
+      expect(getCalls()).toHaveLength(60);
+      expect(deleteInputs()).toHaveLength(1);
+    });
+
+    it('waits for the job after a slow upload until 7 minutes into the step', async () => {
+      uploadDone.mockImplementation(async () => {
+        vi.setSystemTime(Date.now() + 290_000);
+        return {};
+      });
+      textractSend.mockImplementation(async (command: AwsCommand) =>
+        command.kind === 'start' ? { JobId: 'job-1' } : { JobStatus: 'IN_PROGRESS' }
+      );
+
+      await expect(
+        runAction({ source: 'file', file: new ApFile('contract.pdf', Buffer.from('%PDF'), 'pdf') })
+      ).rejects.toThrow('Textract job job-1 did not finish in time.');
+      expect(getCalls()).toHaveLength(26);
+      expect(deleteInputs()).toHaveLength(1);
+    });
+
+    it('returns the results of a job that finishes after a slow upload', async () => {
+      uploadDone.mockImplementation(async () => {
+        vi.setSystemTime(Date.now() + 290_000);
+        return {};
+      });
+      let polls = 0;
+      textractSend.mockImplementation(async (command: AwsCommand) => {
+        if (command.kind === 'start') {
+          return { JobId: 'job-1' };
+        }
+        polls += 1;
+        return polls < 6 ? { JobStatus: 'IN_PROGRESS' } : threePageResult();
+      });
+
+      const result = await runAction({ source: 'file', file: new ApFile('contract.pdf', Buffer.from('%PDF'), 'pdf') });
+
+      expect(result).toMatchObject({ status: 'SUCCEEDED', pageCount: 3 });
+      expect(deleteInputs()).toHaveLength(1);
+    });
+
+    it('starts no job when the upload took over 7 minutes, and still deletes the upload', async () => {
+      uploadDone.mockImplementation(async () => {
+        vi.setSystemTime(Date.now() + 421_000);
+        return {};
+      });
+
+      await expect(
+        runAction({ source: 'file', file: new ApFile('contract.pdf', Buffer.from('%PDF'), 'pdf') })
+      ).rejects.toThrow('Uploading the file took over 7 minutes, so this step has no time left to analyze it.');
+      expect(textractSend).not.toHaveBeenCalled();
       expect(deleteInputs()).toHaveLength(1);
     });
 
@@ -359,7 +425,7 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
 
       await expect(
         runAction({ source: 'file', file: new ApFile('contract.pdf', Buffer.from('%PDF'), 'pdf') })
-      ).rejects.toThrow('Textract finished, but reading all of its results took longer than 8 minutes.');
+      ).rejects.toThrow('Textract finished job job-1, but this step reached its 8-minute limit while reading the results.');
       expect(getCalls().length).toBeLessThan(10);
       expect(deleteInputs()).toHaveLength(1);
     });
@@ -418,7 +484,9 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
 
       await expect(
         runAction({ source: 's3', s3Key: 'reports/contract.pdf', clientRequestToken: 'invoice-001' })
-      ).rejects.toThrow('This Deduplication Token was used in the last 7 days with other inputs. Use a new token, or clear it.');
+      ).rejects.toThrow(
+        'This Deduplication Token was used in the last 7 days with other inputs (IdempotentParameterMismatchException: ClientRequestToken reused with different parameters). Use a new token, or clear it.'
+      );
     });
 
     it('reads every result page of a job that finishes just before the 5-minute wait ends', async () => {
@@ -476,6 +544,18 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
       expectNoAwsCalls();
     });
 
+    it('closes a streaming file when the bucket name is refused', async () => {
+      const file: ApStreamingFile = {
+        filename: 'contract.pdf',
+        extension: 'pdf',
+        body: Readable.from([Buffer.from('%PDF')]),
+      };
+
+      await expect(runAction({ source: 'file', s3Bucket: 'a', file })).rejects.toThrow('is not a valid S3 bucket name.');
+      expect(file.body.destroyed).toBe(true);
+      expectNoAwsCalls();
+    });
+
     it('trims spaces around the bucket name', async () => {
       await runAction({ source: 'file', s3Bucket: '  docs-bucket \n', file: new ApFile('c.pdf', Buffer.from('%PDF'), 'pdf') });
 
@@ -499,7 +579,7 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
     });
   });
 
-  it('returns one row per question, from the first page with an answer', async () => {
+  it('returns one row per question with the most confident answer, and every page\'s answer', async () => {
     textractSend.mockImplementation(async (command: AwsCommand) =>
       command.kind === 'start' ? { JobId: 'job-1' } : answeredQuestions()
     );
@@ -508,9 +588,18 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
 
     expect(result).toMatchObject({
       queryResults: [
-        { query: 'Total Due', answer: '$1,250.00', pageNumber: 3 },
-        { query: 'Invoice Number', answer: 'INV-7', pageNumber: 1 },
-        { query: 'Due Date', answer: '', pageNumber: 1 },
+        { query: 'Total Due', answer: '$1,250.00', pageNumber: 3, answers: [{ answer: '$1,250.00', confidence: 90, pageNumber: 3 }] },
+        {
+          query: 'Invoice Number',
+          answer: 'INV-8',
+          confidence: 95,
+          pageNumber: 2,
+          answers: [
+            { answer: 'INV-7', confidence: 40, pageNumber: 1 },
+            { answer: 'INV-8', confidence: 95, pageNumber: 2 },
+          ],
+        },
+        { query: 'Due Date', answer: '', pageNumber: 1, answers: [] },
       ],
     });
   });
@@ -665,9 +754,9 @@ function resultPage(nextToken: unknown) {
 function answeredQuestions() {
   const questions = ['Total Due', 'Invoice Number', 'Due Date'];
   const answers = new Map([
-    ['Total Due@3', '$1,250.00'],
-    ['Invoice Number@1', 'INV-7'],
-    ['Invoice Number@2', 'INV-8'],
+    ['Total Due@3', { text: '$1,250.00', confidence: 90 }],
+    ['Invoice Number@1', { text: 'INV-7', confidence: 40 }],
+    ['Invoice Number@2', { text: 'INV-8', confidence: 95 }],
   ]);
   const blocks = [1, 2, 3].flatMap((page) =>
     questions.flatMap((question, index): Record<string, unknown>[] => {
@@ -679,7 +768,7 @@ function answeredQuestions() {
       }
       return [
         { ...query, Relationships: [{ Type: 'ANSWER', Ids: [`${id}-answer`] }] },
-        { BlockType: 'QUERY_RESULT', Id: `${id}-answer`, Page: page, Text: answer, Confidence: 90 },
+        { BlockType: 'QUERY_RESULT', Id: `${id}-answer`, Page: page, Text: answer.text, Confidence: answer.confidence },
       ];
     })
   );
