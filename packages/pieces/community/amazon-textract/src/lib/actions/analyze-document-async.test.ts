@@ -6,7 +6,7 @@ const { s3Send, textractSend, s3ClientConstructor, uploadDone, uploadClients } =
   textractSend: vi.fn<(command: AwsCommand) => Promise<unknown>>(),
   s3ClientConstructor: vi.fn(),
   uploadDone: vi.fn<(params: UploadParams) => Promise<unknown>>(),
-  uploadClients: [] as unknown[],
+  uploadClients: new Array<unknown>(),
 }));
 
 vi.mock('@aws-sdk/client-s3', () => ({
@@ -90,10 +90,11 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
     });
 
     it('creates the S3 client in the connection region with trimmed access keys', async () => {
-      await runAction(
-        { source: 'file', file: new ApFile('contract.pdf', Buffer.from('%PDF'), 'pdf') },
-        { accessKeyId: ' AKIATEST\n', secretAccessKey: '\ttest-secret ', region: 'eu-north-1' }
-      );
+      await runAction({
+        source: 'file',
+        file: new ApFile('contract.pdf', Buffer.from('%PDF'), 'pdf'),
+        auth: { accessKeyId: ' AKIATEST\n', secretAccessKey: '\ttest-secret ', region: 'eu-north-1' },
+      });
 
       expect(s3ClientConstructor).toHaveBeenCalledWith({
         credentials: { accessKeyId: 'AKIATEST', secretAccessKey: 'test-secret' },
@@ -211,7 +212,7 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
       }).catch((e: unknown) => e);
 
       expect(error).toBeInstanceOf(Error);
-      expect((error as Error).message).toMatch(
+      expect(error instanceof Error ? error.message : error).toMatch(
         /^Document analysis failed: Unsupported document The uploaded file could not be deleted from s3:\/\/docs-bucket\/activepieces-textract-uploads\/[0-9a-f-]{36}\.pdf \(AccessDenied: Access Denied\)\. Delete it yourself, or give the connection s3:DeleteObject on this bucket\.$/
       );
     });
@@ -335,21 +336,18 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
   });
 });
 
-async function runAction(
-  props: {
-    s3Bucket?: string;
-    source?: string;
-    file?: ApFile | ApStreamingFile;
-    s3Key?: string;
-    queries?: unknown[];
-    clientRequestToken?: string;
-  },
-  authProps: { accessKeyId: string; secretAccessKey: string; region: string } = {
-    accessKeyId: 'AKIATEST',
-    secretAccessKey: 'test-secret',
-    region: 'us-east-1',
-  }
-) {
+async function runAction({
+  auth = { accessKeyId: 'AKIATEST', secretAccessKey: 'test-secret', region: 'us-east-1' },
+  ...props
+}: {
+  s3Bucket?: string;
+  source?: string;
+  file?: ApFile | ApStreamingFile;
+  s3Key?: string;
+  queries?: unknown[];
+  clientRequestToken?: string;
+  auth?: { accessKeyId: string; secretAccessKey: string; region: string };
+}) {
   const run = analyzeDocumentAsync.run({
     ...createMockActionContext<typeof analyzeDocumentAsync.props>({
       propsValue: {
@@ -363,7 +361,7 @@ async function runAction(
         ...props,
       },
     }),
-    auth: { type: AppConnectionType.CUSTOM_AUTH, props: authProps },
+    auth: { type: AppConnectionType.CUSTOM_AUTH, props: auth },
   });
   const state: { outcome?: { value: unknown } | { error: unknown } } = {};
   run.then(
