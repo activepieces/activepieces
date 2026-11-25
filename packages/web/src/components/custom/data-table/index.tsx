@@ -160,6 +160,8 @@ export function DataTable<
     header: ({ table }) => (
       <div className="flex items-center h-full">
         <Checkbox
+          data-testid="data-table-select-all"
+          aria-label={t('Select all')}
           checked={table.getIsAllPageRowsSelected()}
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
         />
@@ -657,7 +659,10 @@ export function DataTable<
                   colSpan={visibleColumnCount}
                   className="h-[350px] text-center"
                 >
-                  <div className="flex flex-col items-center justify-center gap-2">
+                  <div
+                    className="flex flex-col items-center justify-center gap-2"
+                    data-testid="data-table-empty-state"
+                  >
                     {emptyStateIcon ? emptyStateIcon : <></>}
                     <p className="text-lg font-semibold">
                       {emptyStateTextTitle}

@@ -205,6 +205,7 @@ export function LockedFeatureCard({
     <Card
       role="status"
       data-slot="locked-feature-card"
+      data-testid="locked-feature-card"
       className={cn('@container shrink-0 p-5', enterpriseMotion.appear)}
     >
       <div className="flex flex-col gap-4 @3xl:flex-row @3xl:items-center @3xl:gap-8">

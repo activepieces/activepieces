@@ -141,9 +141,10 @@ export const CreateTemplateDialog = ({
                     {...field}
                     required
                     id="name"
+                    data-testid="create-template-name-input"
                     placeholder={t('Template Name')}
                   />
-                  <FormMessage />
+                  <FormMessage data-testid="create-template-name-error" />
                 </FormItem>
               )}
             />
@@ -218,6 +219,7 @@ export const CreateTemplateDialog = ({
                     }}
                     required
                     id="template"
+                    data-testid="create-template-file-input"
                     placeholder={t('Template')}
                   />
                   <FormMessage />
