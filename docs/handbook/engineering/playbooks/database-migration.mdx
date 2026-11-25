@@ -147,7 +147,7 @@ A background migration often leaves temporary code behind: a fallback read from 
   </Step>
 
   <Step title="Drop the schema in release N+5 or later">
-    Drop the column, table or index in release N+5 or later, and always at least one release after the code removal, in a blocking migration guarded the same way, with `breaking = true`. For `release = '0.93.0'` that is `0.98.0` or later. A dropped column is a technical breaking change: it needs the `⛓️‍💥 breaking-change` label and an entry in `docs/install/reference/breaking-changes-unreleased.mdx`.
+    Drop the column, table or index in release N+5 or later, and always at least one release after the code removal, in a blocking migration guarded the same way, with `breaking = true`. For `release = '0.93.0'` that is `0.98.0` or later. A dropped column is a technical breaking change: it needs the `⛓️‍💥 breaking-change` label and an entry file in `docs/install/reference/breaking-changes/entries/`.
   </Step>
 </Steps>
 

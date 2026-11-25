@@ -21,7 +21,7 @@ Fixes ENG-
 
 ### Breaking change?  (required — CI fails if this is left unedited)
 
-<!-- Tick exactly one box. If either "yes", apply the "⛓️‍💥 breaking-change" label AND add an entry at the top of docs/install/reference/breaking-changes-unreleased.mdx (what changed + the action self-hosters must take). The release moves it onto the public Breaking Changes page; never write a version heading by hand. -->
+<!-- Tick exactly one box. If either "yes", apply the "⛓️‍💥 breaking-change" label AND add an entry file to docs/install/reference/breaking-changes/entries/ (front-matter with id, title, added, impact and affects, then what changed + the action self-hosters must take), then run: bun tools/scripts/breaking-changes-render.ts. The release sets its release field; never write one by hand. -->
 
 - [ ] no — reviewed, not breaking
 - [ ] yes — technical (removed/renamed API field or endpoint, dropped column, new required field, removed/required env var)

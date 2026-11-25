@@ -162,7 +162,7 @@ jobs:
           fi
           BRANCH="automated/sync-main-$TAG"
           git checkout -b "$BRANCH"
-          git add docs/install/reference/breaking-changes.mdx docs/install/reference/breaking-changes-unreleased.mdx
+          git add docs/install/reference/breaking-changes.mdx docs/install/reference/breaking-changes-unreleased.mdx docs/install/reference/breaking-changes/entries
           git commit -m "chore(release): sync main after $TAG"
           git push -f origin "$BRANCH"
           echo "branch=$BRANCH" >> $GITHUB_OUTPUT
