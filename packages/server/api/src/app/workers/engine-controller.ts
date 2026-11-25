@@ -15,6 +15,13 @@ import { pieceBundle } from '../pieces/piece-bundle'
 
 export const flowEngineWorker: FastifyPluginAsyncZod = async (app) => {
 
+    app.removeContentTypeParser('application/json')
+    app.addContentTypeParser(
+        'application/json',
+        { parseAs: 'string' },
+        app.getDefaultJsonParser('ignore', 'ignore'),
+    )
+
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
 
     app.get('/populated-flows', GetAllFlowsByProjectParams, async (request) => {
