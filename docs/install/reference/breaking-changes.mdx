@@ -507,46 +507,74 @@ Two license-key endpoints are removed: `GET /v1/license-keys/:licenseKey` and `P
 
 Four feature flags no longer appear in `GET /v1/flags`: `SHOW_BILLING_PAGE`, `CAN_BUY_ACTIVE_FLOWS`, `CAN_BUY_AI_CREDITS` and `SHOW_BILLING_LIMITS_ON_SIDEBAR`. Whether the billing page appears is now decided from the edition and plan instead.
 
+#### What you need to do
+
+- Only if you call `GET /v1/license-keys/:licenseKey` or `POST /v1/license-keys/verify`. Both are removed — use `POST /v1/platform-billing/activate` instead.
+- Only if you read `SHOW_BILLING_PAGE`, `CAN_BUY_ACTIVE_FLOWS`, `CAN_BUY_AI_CREDITS` or `SHOW_BILLING_LIMITS_ON_SIDEBAR` from `GET /v1/flags`. They no longer exist.
+- No database action is required. The migration only adds columns and leaves the existing ones in place.
+
 #### Enterprise instances without a license key are placed on the free plan
+
 An Enterprise-edition instance with no license key previously ran with no credit enforcement. It is now enrolled on the free plan, so credit limits apply to it. Entering your license key restores your contracted limits.
 
+#### What you need to do
+
+Only if you run the Enterprise edition without a license key. Enter your key so your contracted limits apply instead of the free plan's.
+
 #### Running out of credits now stops production flow runs
+
 When a platform has no credits left, new production runs are recorded with the `QUOTA_EXCEEDED` status instead of executing, and synchronous webhooks respond with HTTP 402. Such a run keeps its trigger payload, so it can be retried once credits are available. Test runs are unaffected.
 
 #### The AI piece offers only the named model tiers for Activepieces-provided AI
+
 In the AI piece, picking the Activepieces-provided AI now lists only the named tiers (Fast, Expert, Heavy) rather than the full upstream model catalogue. Existing steps keep running on the model they already have, but that model no longer appears in the dropdown, so re-saving the step moves it onto one of the tiers.
 
-### Do you need to take action?
-- Only if you run the Enterprise edition without a license key. Enter your key so your contracted limits apply instead of the free plan's.
-- Only if you call `GET /v1/license-keys/:licenseKey` or `POST /v1/license-keys/verify`. Both are removed — use `POST /v1/platform-billing/activate` instead.
-- Only if you read `SHOW_BILLING_PAGE`, `CAN_BUY_ACTIVE_FLOWS`, `CAN_BUY_AI_CREDITS` or `SHOW_BILLING_LIMITS_ON_SIDEBAR` from `GET /v1/flags`. They no longer exist.
-- Only if a flow uses Activepieces-provided AI on a model outside the Fast/Expert/Heavy tiers. Choose a tier the next time you edit that step.
-- No database action is required. The migration only adds columns and leaves the existing ones in place.
+#### What you need to do
+
+Only if a flow uses Activepieces-provided AI on a model outside the Fast/Expert/Heavy tiers. Choose a tier the next time you edit that step.
 
 #### Official piece bundles are served from the Activepieces CDN by default
-`AP_USE_CDN_FOR_BUNDLES` now defaults to `true`. When an official piece bundle is not already cached in your own S3 bucket, the engine is redirected to `cdn.activepieces.com` for the tarball instead of `registry.npmjs.org`. If the CDN does not have that piece version, the download falls back to npm automatically, so installs keep working either way. Custom pieces and pieces from a private registry never use the CDN and are unaffected.
 
-### Do you need to take action?
-- Only if your network policy restricts outbound traffic. Allow `cdn.activepieces.com`, or set `AP_USE_CDN_FOR_BUNDLES=false` to keep serving official bundles from npm.
+`AP_USE_CDN_FOR_BUNDLES` now defaults to `true`. When an official piece bundle is not already cached in your own S3 bucket, the engine is redirected to `cdn.activepieces.com` for the tarball instead of `registry.npmjs.org`. If the CDN does not have that piece version, the download falls back to npm automatically, so installs keep working either way. Custom pieces and pieces from a private registry never use the CDN and are unaffected.
 
 <Note>
 Reverted in 0.88.2: `AP_USE_CDN_FOR_BUNDLES` defaults to `false` again, so official bundles are served from npm by default. Set it to `true` to opt back into the CDN. The S3 cache mentioned above was removed in the same release.
 </Note>
+
+#### What you need to do
+
+Only if your network policy restricts outbound traffic. Allow `cdn.activepieces.com`, or set `AP_USE_CDN_FOR_BUNDLES=false` to keep serving official bundles from npm.
 
 ## 0.86.0
 
 ### What has changed?
 
 #### Log fields are now grouped by entity
+
 Log fields are now grouped under the entity they belong to, so each thing has one name. A flow run id is `flowRun.id` (it used to appear as `runId`, `flowRunId`, or a bare `id`), and other ids follow the same shape (`flow.id`, `project.id`, `job.id`, …). Errors are logged under `error`. This only changes how logs look — nothing about the API, database, or flows changes.
 
+#### What you need to do
+
+Only if you build dashboards or alerts on Activepieces logs. Update them to the new grouped names, e.g. `runId` → `flowRun.id` and `err` → `error`.
+
 #### Google SSO is configured via environment variables only
+
 "Sign in with Google" can no longer be enabled from the SSO page in the admin panel — that setting has been removed. It is now controlled solely by the `AP_GOOGLE_CLIENT_ID` and `AP_GOOGLE_CLIENT_SECRET` environment variables. The button only appears when both are set (and the platform's Google auth toggle is enabled).
 
+#### What you need to do
+
+Only if you set up Google SSO from the admin panel. Move your Google OAuth2 credentials into the `AP_GOOGLE_CLIENT_ID` and `AP_GOOGLE_CLIENT_SECRET` environment variables.
+
 #### Pieces are now self-contained bundles
+
 Each piece is now built into a single self-contained bundle — its own code, the Activepieces framework, and its third-party dependencies are inlined into one artifact, so the engine provisions a piece by downloading one file instead of installing a dependency tree at runtime. As part of this, the shared libraries (`@activepieces/shared`, `@activepieces/pieces-framework`, `@activepieces/pieces-common`, `@activepieces/core-*`) are no longer published to npm, and pieces import only from `@activepieces/pieces-framework` (which re-exports the foundation symbols that used to come from `@activepieces/shared`). Built-in pieces are unaffected — this only matters for custom pieces.
 
+#### What you need to do
+
+Only if you maintain **custom pieces** (in a fork or built outside the repo). Migrate each one to the bundle model — run `npm run cli -- pieces migrate <piece-name>` (or `--all`), or follow the [migration guide](/build-pieces/misc/migrate-pieces-to-bundles). Pieces that still import `@activepieces/shared` or depend on the now-unpublished libraries will fail to build.
+
 #### `AP_PRE_WARM_CACHE` removed
+
 The `AP_PRE_WARM_CACHE` environment variable no longer exists. It used to make a worker install pieces into its cache on startup. The worker is now its own sandbox and fills its cache lazily on first use, so the flag has no effect and setting it does nothing. Cache warmth now comes from running long-lived worker replicas rather than an up-front install step.
 
 The up-front install is no longer needed because piece installs are now fast: each piece is a self-contained bundle fetched as a single file. If you have S3 enabled, official piece bundles are cached to your S3 bucket on first use and served from there via signed links — so when your bucket is co-located in the same region as your workers, subsequent installs are a low-latency download from a nearby object store instead of a registry round-trip.
@@ -555,50 +583,64 @@ The up-front install is no longer needed because piece installs are now fast: ea
 Removed in 0.88.2: bundles are no longer mirrored into your S3 bucket. Every download goes to npm or, with `AP_USE_CDN_FOR_BUNDLES=true`, to the CDN.
 </Note>
 
-### Do you need to take action?
-- Only if you set up Google SSO from the admin panel. Move your Google OAuth2 credentials into the `AP_GOOGLE_CLIENT_ID` and `AP_GOOGLE_CLIENT_SECRET` environment variables.
-- Only if you build dashboards or alerts on Activepieces logs. Update them to the new grouped names, e.g. `runId` → `flowRun.id` and `err` → `error`.
-- Only if you maintain **custom pieces** (in a fork or built outside the repo). Migrate each one to the bundle model — run `npm run cli -- pieces migrate <piece-name>` (or `--all`), or follow the [migration guide](/build-pieces/misc/migrate-pieces-to-bundles). Pieces that still import `@activepieces/shared` or depend on the now-unpublished libraries will fail to build.
-- Only if your deployment sets `AP_PRE_WARM_CACHE`. Remove it from your environment — it is no longer read. Nothing else is required.
+#### What you need to do
+
+Only if your deployment sets `AP_PRE_WARM_CACHE`. Remove it from your environment — it is no longer read. Nothing else is required.
 
 ## 0.85.4
 
 ### What has changed?
 
 #### Observability: OpenTelemetry replaced with evlog
+
 Logging moved from pino + OpenTelemetry to [evlog](https://evlog.dev). Logs are now one rich event per request/job instead of many small lines, so the JSON shape changed.
 
 **Traces and metrics are no longer exported.** OpenTelemetry tracing produced a huge volume of low-value spans — far more data (and cost) than it was worth — so we dropped it in favour of these wide events, which carry the same context in one place. `AP_OTEL_ENABLED=true` now sends **logs** only, over OTLP.
 
 New optional env vars: `AP_LOG_SAMPLE_RATE_INFO` (percent of info logs to keep, default `100`) and `AP_LOG_KEEP_SLOW_MS` (always keep requests slower than this, default `2000`). Drain settings (`AP_AXIOM_*`, `AP_BETTERSTACK_*`, `AP_LOKI_*`, `AP_HYPERDX_TOKEN`) are unchanged.
 
-**Action:** only if you ingest Activepieces telemetry — update log dashboards to the new shape, and move any trace- or metric-based monitoring to logs.
+#### What you need to do
+
+Only if you ingest Activepieces telemetry — update log dashboards to the new shape, and move any trace- or metric-based monitoring to logs.
 
 #### Referencing step outputs
+
 Previously if you had a step called step_1 you would had to reference it "step_1['the_property_you_want']" but now you must reference it as "step_1['output']['the_property_you_want']", there is already a migration that will take care of this for you, but if you must abide by this new syntax if you are writing/editing step references manually not through the builder.
 You can now also reference the step error via "step_1['error']", these changes come with the error handling feature.
 Also step names there were shown on hover in the builder are now removed, you can right click the step and copy its reference instead.
 
 #### Enforcing same version of docker image on both worker and app servers
+
 Previously if your worker was on a different version of your app server, the worker would work fine most of the time, but because some changes we do will require both of them to be on the same version we added this safeguard.
 
 ## 0.84.0
 
 ### What has changed?
 
-#### Flow Run Log Size Enforcement
+#### Flow run logs have a size cap enforced per run
+
 This is an important behavior change in how flow run logs are stored and capped, but **no action is required** — the existing default (`AP_MAX_FLOW_RUN_LOG_SIZE_MB=50`) is preserved.
 
 - Large step outputs are now offloaded to object storage instead of sitting inline in worker memory, controlled by the new `AP_FLOW_RUN_LOG_SLICE_THRESHOLD_KB` env var (default `32`).
 - Large step input values are replaced with a `(truncated, original size <N>)` placeholder in the log via the new `AP_FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB` env var (default `2`). The step still receives the full value at runtime.
 - Runs whose combined step inputs and outputs exceed `AP_MAX_FLOW_RUN_LOG_SIZE_MB` now terminate with the new `LOG_SIZE_EXCEEDED` status instead of silently trimming inputs. Offloaded outputs still count their original size against the cap.
 - See [Limits → Files & flow run logs](/install/reference/limits#files-flow-run-logs) for the full behavior, environment variables, and defaults.
-- Embedding now requires setting allowed embed origins, which means only the domains listed in the field can embed the app (wildcards are supported). There is also a new env variable `AP_ALLOWED_EMBED_ORIGINS` for setting pre-allowed origins, and a new endpoint for adding these origins — [check docs](/endpoints/embedding/add-allowed-embed-origins).
-- "Sign in with Google" can no longer be enabled from the SSO page in the admin panel — that setting has been removed. It is now controlled solely by the `AP_GOOGLE_CLIENT_ID` and `AP_GOOGLE_CLIENT_SECRET` environment variables. The button only appears when both are set (and the platform's Google auth toggle is enabled).
 
-### Do you need to take action?
-- **Embedding** — if you are embedding your self-hosted activepieces somewhere make sure it's on the allow list
-- Only if you set up Google SSO from the admin panel. Move your Google OAuth2 credentials into the `AP_GOOGLE_CLIENT_ID` and `AP_GOOGLE_CLIENT_SECRET` environment variables.
+#### Embedding requires allowed embed origins
+
+Embedding now requires setting allowed embed origins, which means only the domains listed in the field can embed the app (wildcards are supported). There is also a new env variable `AP_ALLOWED_EMBED_ORIGINS` for setting pre-allowed origins, and a new endpoint for adding these origins — [check docs](/endpoints/embedding/add-allowed-embed-origins).
+
+#### What you need to do
+
+If you are embedding your self-hosted activepieces somewhere make sure it's on the allow list.
+
+#### Sign in with Google is set by environment variables, not the SSO page
+
+"Sign in with Google" can no longer be enabled from the SSO page in the admin panel — that setting has been removed. It is now controlled solely by the `AP_GOOGLE_CLIENT_ID` and `AP_GOOGLE_CLIENT_SECRET` environment variables. The button only appears when both are set (and the platform's Google auth toggle is enabled).
+
+#### What you need to do
+
+Only if you set up Google SSO from the admin panel. Move your Google OAuth2 credentials into the `AP_GOOGLE_CLIENT_ID` and `AP_GOOGLE_CLIENT_SECRET` environment variables.
 
 ## 0.83.0
 
@@ -609,47 +651,75 @@ When creating a project now, the platform owner email doesn't automatically get 
 
 ### What has changed?
 
-#### Piece Versions Are Now Pinned
+#### Piece versions are now pinned
+
 - Piece versions are no longer stored with wildcards (`~1.2.0`, `^1.2.0`). All piece steps now use exact versions (e.g. `1.2.0`).
 - A migration automatically strips wildcard prefixes from all existing flow versions on upgrade.
 - The `LOCK_AND_PUBLISH` operation no longer resolves piece versions at publish time — steps run with the exact version stored in the flow.
 - A new **version switcher** UI in the builder lets users upgrade or downgrade piece versions manually.
 
-#### REST API
+In the REST API:
+
 - `ADD_ACTION`, `UPDATE_ACTION`, and `UPDATE_TRIGGER` now strip wildcard prefixes (`~`, `^`) from `pieceVersion` before saving. If you were relying on wildcard versions to auto-resolve on publish, your steps will now be pinned to the base version (e.g. `~1.2.0` becomes `1.2.0`).
 - `LOCK_AND_PUBLISH` no longer modifies `pieceVersion` on any step. The version in the draft is the version that will run.
 - A new endpoint `GET /v1/pieces/:name/versions` is available to list all versions of a piece, useful for building custom version selection.
 
-#### Concurrent Jobs Env Var Renamed
-- `AP_MAX_CONCURRENT_JOBS_PER_PROJECT` → `AP_DEFAULT_CONCURRENT_JOBS_LIMIT`. Default drops from `100` to `5`.
+#### What you need to do
+
+If you create or update flows via the REST API with wildcard versions (`~` or `^`), switch to exact versions; wildcards are silently stripped. If your publish flow relied on `LOCK_AND_PUBLISH` resolving wildcards, set the exact version on each step before publishing. Use `GET /v1/pieces/:name/versions` to list available versions.
+
+#### `AP_MAX_CONCURRENT_JOBS_PER_PROJECT` is renamed and its default drops to 5
+
+`AP_MAX_CONCURRENT_JOBS_PER_PROJECT` → `AP_DEFAULT_CONCURRENT_JOBS_LIMIT`. Default drops from `100` to `5`.
+
+#### What you need to do
+
+Rename `AP_MAX_CONCURRENT_JOBS_PER_PROJECT` to `AP_DEFAULT_CONCURRENT_JOBS_LIMIT`. To keep the old cap, set `AP_DEFAULT_CONCURRENT_JOBS_LIMIT=100`.
 
 #### Outbound HTTP is SSRF-filtered
-- Server-side HTTP (OAuth, Vault, Conjur, event destinations, on-call pager, MCP validator) now blocks private, loopback, and cloud-metadata IPs. Reach internal hosts by adding their IP/CIDR to `AP_SSRF_ALLOW_LIST`.
 
-### Do you need to take action?
-- **Pinned piece versions** — if you create or update flows via the REST API with wildcard versions (`~` or `^`), switch to exact versions; wildcards are silently stripped. If your publish flow relied on `LOCK_AND_PUBLISH` resolving wildcards, set the exact version on each step before publishing. Use `GET /v1/pieces/:name/versions` to list available versions.
-- **Concurrent jobs** — rename `AP_MAX_CONCURRENT_JOBS_PER_PROJECT` to `AP_DEFAULT_CONCURRENT_JOBS_LIMIT`. To keep the old cap, set `AP_DEFAULT_CONCURRENT_JOBS_LIMIT=100`.
-- **SSRF filter** — if you self-host Vault, Conjur, an OAuth2 token endpoint, or any internal webhook on a private IP, set `AP_SSRF_ALLOW_LIST` (comma-separated IPs or CIDRs, e.g. `10.0.5.12,192.168.10.0/24`) before upgrading.
+Server-side HTTP (OAuth, Vault, Conjur, event destinations, on-call pager, MCP validator) now blocks private, loopback, and cloud-metadata IPs. Reach internal hosts by adding their IP/CIDR to `AP_SSRF_ALLOW_LIST`.
+
+#### What you need to do
+
+If you self-host Vault, Conjur, an OAuth2 token endpoint, or any internal webhook on a private IP, set `AP_SSRF_ALLOW_LIST` (comma-separated IPs or CIDRs, e.g. `10.0.5.12,192.168.10.0/24`) before upgrading.
 
 ## 0.80.0
 
 ### What has changed?
 
-#### Infrastructure
-- A new environment variable `AP_MAX_WEBHOOK_PAYLOAD_SIZE_MB` has been introduced to control the maximum allowed webhook payload size. The default is `25` MB. Webhooks exceeding this limit will be rejected with a `413 Request Too Long` response.
-- Nginx has been removed from the Docker image. Fastify now serves both the API and the React frontend directly. All API routes are now under the `/api` prefix natively. If you were using `/v1/health` as a health check endpoint (e.g. in Kubernetes probes or load balancer checks), update it to `/api/v1/health`.
-- Secret managers has been refactored, the version in **0.79.0** no longer is supported, it was not used by anyone but it's worth to mention to upgrade to **0.80.0** before considering using the feature
+#### Webhook payloads over 25 MB are rejected
 
-#### API
+A new environment variable `AP_MAX_WEBHOOK_PAYLOAD_SIZE_MB` has been introduced to control the maximum allowed webhook payload size. The default is `25` MB. Webhooks exceeding this limit will be rejected with a `413 Request Too Long` response.
+
+#### What you need to do
+
+If you want to restrict webhook payload sizes below the new `25` MB default, set `AP_MAX_WEBHOOK_PAYLOAD_SIZE_MB` to your desired limit.
+
+#### Nginx is removed and API routes move under `/api`
+
+Nginx has been removed from the Docker image. Fastify now serves both the API and the React frontend directly. All API routes are now under the `/api` prefix natively. If you were using `/v1/health` as a health check endpoint (e.g. in Kubernetes probes or load balancer checks), update it to `/api/v1/health`.
+
+#### What you need to do
+
+If you have custom health checks pointing to `/v1/health`, update them to `/api/v1/health`.
+
+#### Secret managers from 0.79.0 are no longer supported
+
+Secret managers has been refactored, the version in **0.79.0** no longer is supported, it was not used by anyone but it's worth to mention to upgrade to **0.80.0** before considering using the feature
+
+#### Sample data is updated with `UPDATE_SAMPLE_DATA_INFO`
+
 - A new `UPDATE_SAMPLE_DATA_INFO` flow operation has been introduced to handle sample data updates independently.
 - `UPDATE_ACTION` and `UPDATE_TRIGGER` no longer accept or apply changes to `sampleData` in step settings. Any `sampleData` fields sent in these requests will be ignored and the existing sample data will be preserved.
-- A new required `lastUpdatedDate` field has been added to all actions and triggers, tracked automatically by the server. It is not accepted in `UPDATE_ACTION` or `UPDATE_TRIGGER` requests.
 
+#### What you need to do
 
-### Do you need to take action?
-- If you want to restrict webhook payload sizes below the new `25` MB default, set `AP_MAX_WEBHOOK_PAYLOAD_SIZE_MB` to your desired limit.
-- If you are using the API to update sample data on steps via `UPDATE_ACTION` or `UPDATE_TRIGGER`, switch to the new `UPDATE_SAMPLE_DATA_INFO` operation instead.
-- If you have custom health checks pointing to `/v1/health`, update them to `/api/v1/health`.
+If you are using the API to update sample data on steps via `UPDATE_ACTION` or `UPDATE_TRIGGER`, switch to the new `UPDATE_SAMPLE_DATA_INFO` operation instead.
+
+#### Actions and triggers have a server-managed `lastUpdatedDate`
+
+A new required `lastUpdatedDate` field has been added to all actions and triggers, tracked automatically by the server. It is not accepted in `UPDATE_ACTION` or `UPDATE_TRIGGER` requests.
 
 ## 0.78.1
 
