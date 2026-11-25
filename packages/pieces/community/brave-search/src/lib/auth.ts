@@ -3,6 +3,7 @@ import { PieceAuth } from '@activepieces/pieces-framework';
 export const braveSearchAuth = PieceAuth.SecretText({
   displayName: 'API Key',
   required: true,
-  description:
-    'Your Brave Search API Key (get it from https://brave.com/search/api/)',
+  description: `To get your API key:
+1. Sign in to the [Brave Search API dashboard](https://api-dashboard.search.brave.com).
+2. Open **API Keys** and copy your key.`,
 });
