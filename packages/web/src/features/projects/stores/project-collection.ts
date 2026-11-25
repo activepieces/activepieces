@@ -66,8 +66,13 @@ export const projectCollection = createCollection<ProjectWithLimits, string>(
       }
     },
     onDelete: async ({ transaction }) => {
-      for (const { original } of transaction.mutations) {
-        await api.delete<void>(`/v1/projects/${original.id}`);
+      try {
+        for (const { original } of transaction.mutations) {
+          await api.delete<void>(`/v1/projects/${original.id}`);
+        }
+      } catch (error) {
+        void projectCollectionUtils.refetchProjects();
+        throw error;
       }
     },
   }),
@@ -162,8 +167,8 @@ export const projectCollectionUtils = {
       );
     });
   },
-  delete: (projectIds: string[]) => {
-    projectCollection.delete(projectIds);
+  delete: async (projectIds: string[]) => {
+    await projectCollection.delete(projectIds).isPersisted.promise;
   },
   refetchProjects: () => {
     authoritativeProjectsGeneration += 1;

@@ -55,6 +55,7 @@ export const NewSigningKeyDialog = ({
       onOpenChange={(open) => {
         setOpen(open);
         form.reset();
+        if (open) setSigningKey(undefined);
       }}
     >
       <DialogTrigger asChild>{children}</DialogTrigger>
@@ -132,13 +133,7 @@ export const NewSigningKeyDialog = ({
               </Button>
             </>
           ) : (
-            <Button
-              variant={'secondary'}
-              onClick={() => {
-                setSigningKey(undefined);
-                setOpen(false);
-              }}
-            >
+            <Button variant={'secondary'} onClick={() => setOpen(false)}>
               {t('Done')}
             </Button>
           )}

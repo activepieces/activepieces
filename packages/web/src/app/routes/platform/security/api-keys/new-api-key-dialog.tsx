@@ -66,6 +66,7 @@ export const NewApiKeyDialog = ({
       onOpenChange={(open) => {
         setOpen(open);
         form.reset();
+        if (open) setApiKey(undefined);
       }}
     >
       <DialogTrigger asChild>{children}</DialogTrigger>
@@ -107,10 +108,7 @@ export const NewApiKeyDialog = ({
             <DialogFooter>
               <Button
                 variant={'secondary'}
-                onClick={() => {
-                  setApiKey(undefined);
-                  setOpen(false);
-                }}
+                onClick={() => setOpen(false)}
                 type="button"
               >
                 {t('Done')}
