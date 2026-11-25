@@ -188,7 +188,7 @@ export const agentsMutations = {
         await queryClient.invalidateQueries({ queryKey: [AGENTS_KEY] });
         onSuccess?.(agent);
       },
-      onError: onError ?? internalErrorToast,
+      onError: onError ?? ((error) => internalErrorToast({ error })),
     });
   },
   useUpdateAgent: ({ id }: { id: string }) => {
@@ -199,7 +199,7 @@ export const agentsMutations = {
       onSuccess: async () => {
         await queryClient.invalidateQueries({ queryKey: [AGENTS_KEY] });
       },
-      onError: internalErrorToast,
+      onError: (error) => internalErrorToast({ error }),
     });
   },
   useMoveAgent: ({

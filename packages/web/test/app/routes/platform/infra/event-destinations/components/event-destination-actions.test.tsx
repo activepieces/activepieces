@@ -19,7 +19,7 @@ vi.mock('i18next', () => ({ t: (key: string) => key }));
 vi.mock('sonner', () => ({ toast: toastMock }));
 
 vi.mock('@/components/ui/sonner', () => ({
-  INTERNAL_ERROR_MESSAGE: 'internal error',
+  internalErrorMessage: () => 'internal error',
 }));
 
 vi.mock('@/lib/api', () => ({

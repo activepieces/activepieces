@@ -1,5 +1,6 @@
 'use client';
 
+import { t } from 'i18next';
 import {
   CircleCheckIcon,
   InfoIcon,
@@ -10,15 +11,20 @@ import {
 import { Toaster as Sonner, toast, type ToasterProps } from 'sonner';
 
 import { useTheme } from '@/components/providers/theme-provider';
+import { extractServerErrorMessage } from '@/lib/api-errors';
 
-export const INTERNAL_ERROR_MESSAGE =
-  'An unexpected error occurred. Please try again in a moment.';
+export function internalErrorMessage(): string {
+  return t('An unexpected error occurred. Please try again in a moment.');
+}
 
-export function internalErrorToast() {
-  console.error('internalErrorToast', INTERNAL_ERROR_MESSAGE);
-  toast.error('Something went wrong', {
-    description: INTERNAL_ERROR_MESSAGE,
-    duration: 3000,
+export function internalErrorToast({
+  error,
+  title,
+}: { error?: unknown; title?: string } = {}) {
+  console.error('internalErrorToast', error);
+  toast.error(title ?? t('Something went wrong'), {
+    description: extractServerErrorMessage(error, internalErrorMessage()),
+    duration: 5000,
   });
 }
 

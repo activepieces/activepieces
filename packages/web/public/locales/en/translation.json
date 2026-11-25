@@ -4046,5 +4046,11 @@
   "1 min ago": "1 min ago",
   "{count} mins ago": "{count} mins ago",
   "1 hour ago": "1 hour ago",
-  "{count} hours ago": "{count} hours ago"
+  "{count} hours ago": "{count} hours ago",
+  "Couldn't reach the server. Check your connection and try again.": "Couldn't reach the server. Check your connection and try again.",
+  "You don't have permission to do this.": "You don't have permission to do this.",
+  "It no longer exists. Refresh the page and try again.": "It no longer exists. Refresh the page and try again.",
+  "Your plan doesn't include this feature.": "Your plan doesn't include this feature.",
+  "Some values aren't valid. Check them and try again.": "Some values aren't valid. Check them and try again.",
+  "An unexpected error occurred. Please try again in a moment.": "An unexpected error occurred. Please try again in a moment."
 }
