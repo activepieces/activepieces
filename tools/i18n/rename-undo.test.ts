@@ -19,7 +19,7 @@ describe('renameUndo.undoRenames', () => {
     it('renames back in reverse order and approves the human translations again', async () => {
         const { crowdin, writes, state } = fakeCrowdin.create()
         const { journalEntries, appendJournalEntry } = collectJournalEntries()
-        await renameRun.renamePieces({ crowdin, pieces: [dropboxPiece()], automaticApprovers: ['robot'], dryRun: false, appendJournalEntry })
+        await renameRun.renamePieces({ crowdin, pieces: [dropboxPiece()], appendJournalEntry })
         writes.length = 0
 
         const totals = await renameUndo.undoRenames({ crowdin, journalEntries, appendJournalEntry })
@@ -37,7 +37,7 @@ describe('renameUndo.undoRenames', () => {
     it('reports an approval it could not restore', async () => {
         const renamedIn = fakeCrowdin.create()
         const { journalEntries, appendJournalEntry } = collectJournalEntries()
-        await renameRun.renamePieces({ crowdin: renamedIn.crowdin, pieces: [dropboxPiece()], automaticApprovers: ['robot'], dryRun: false, appendJournalEntry })
+        await renameRun.renamePieces({ crowdin: renamedIn.crowdin, pieces: [dropboxPiece()], appendJournalEntry })
         const refusingApprovals = fakeCrowdin.create({ strings: renamedIn.state.strings, approvals: renamedIn.state.approvals, failApprovals: true })
 
         const totals = await renameUndo.undoRenames({ crowdin: refusingApprovals.crowdin, journalEntries, appendJournalEntry })
@@ -86,7 +86,7 @@ describe('renameUndo.undoRenames', () => {
     it('restores a missing approval on a second undo when the English is already back', async () => {
         const renamedIn = fakeCrowdin.create()
         const { journalEntries, appendJournalEntry } = collectJournalEntries()
-        await renameRun.renamePieces({ crowdin: renamedIn.crowdin, pieces: [dropboxPiece()], automaticApprovers: ['robot'], dryRun: false, appendJournalEntry })
+        await renameRun.renamePieces({ crowdin: renamedIn.crowdin, pieces: [dropboxPiece()], appendJournalEntry })
         const refusingApprovals = fakeCrowdin.create({ strings: renamedIn.state.strings, approvals: renamedIn.state.approvals, failApprovals: true })
         await renameUndo.undoRenames({ crowdin: refusingApprovals.crowdin, journalEntries, appendJournalEntry })
         const acceptingApprovals = fakeCrowdin.create({ strings: refusingApprovals.state.strings, approvals: refusingApprovals.state.approvals })
@@ -101,7 +101,7 @@ describe('renameUndo.undoRenames', () => {
         const translatorIssue = { id: 7, stringId: 1, targetLanguageId: 'ja', type: 'issue', issueType: 'general_question', text: 'What does this mean?' }
         const { crowdin, writes, state } = fakeCrowdin.create({ issues: [translatorIssue] })
         const { journalEntries, appendJournalEntry } = collectJournalEntries()
-        await renameRun.renamePieces({ crowdin, pieces: [dropboxPiece()], automaticApprovers: ['robot'], dryRun: false, appendJournalEntry })
+        await renameRun.renamePieces({ crowdin, pieces: [dropboxPiece()], appendJournalEntry })
         writes.length = 0
 
         await renameUndo.undoRenames({ crowdin, journalEntries, appendJournalEntry })
@@ -111,11 +111,11 @@ describe('renameUndo.undoRenames', () => {
     })
 
     it('undoes two renames of the same string in reverse order', async () => {
-        const { crowdin, state } = fakeCrowdin.create()
+        const { crowdin, state } = fakeCrowdin.create({ approvals: { ja: [], de: fakeCrowdin.DEFAULT_APPROVALS.de } })
         const { journalEntries, appendJournalEntry } = collectJournalEntries()
-        await renameRun.renamePieces({ crowdin, pieces: [dropboxPiece()], automaticApprovers: ['robot', 'human'], dryRun: false, appendJournalEntry })
+        await renameRun.renamePieces({ crowdin, pieces: [dropboxPiece()], appendJournalEntry })
         const renamedAgain = { pieceName: 'community/dropbox', oldEnglishByJsonPath: { a: 'Send a file' }, newEnglishByJsonPath: { a: 'Send a file to Dropbox' } }
-        await renameRun.renamePieces({ crowdin, pieces: [renamedAgain], automaticApprovers: ['robot', 'human'], dryRun: false, appendJournalEntry })
+        await renameRun.renamePieces({ crowdin, pieces: [renamedAgain], appendJournalEntry })
         expect(state.strings[0].text).toBe('Send a file to Dropbox')
 
         const totals = await renameUndo.undoRenames({ crowdin, journalEntries, appendJournalEntry })
@@ -127,7 +127,7 @@ describe('renameUndo.undoRenames', () => {
     it('leaves a review issue that an earlier, merged rename opened on the same string', async () => {
         const { crowdin, state } = fakeCrowdin.create({ issues: [EARLIER_MERGED_REVIEW_ISSUE] })
         const { journalEntries, appendJournalEntry } = collectJournalEntries()
-        await renameRun.renamePieces({ crowdin, pieces: [dropboxPiece()], automaticApprovers: ['robot'], dryRun: false, appendJournalEntry })
+        await renameRun.renamePieces({ crowdin, pieces: [dropboxPiece()], appendJournalEntry })
 
         await renameUndo.undoRenames({ crowdin, journalEntries, appendJournalEntry })
 
@@ -137,7 +137,7 @@ describe('renameUndo.undoRenames', () => {
     it('deletes the review issue it opened when Crowdin lost the response', async () => {
         const { crowdin, state } = fakeCrowdin.create({ issueResponseLost: true })
         const { journalEntries, appendJournalEntry } = collectJournalEntries()
-        await renameRun.renamePieces({ crowdin, pieces: [dropboxPiece()], automaticApprovers: ['robot'], dryRun: false, appendJournalEntry })
+        await renameRun.renamePieces({ crowdin, pieces: [dropboxPiece()], appendJournalEntry })
         expect(state.issues).toHaveLength(1)
 
         const totals = await renameUndo.undoRenames({ crowdin, journalEntries, appendJournalEntry })
@@ -149,7 +149,7 @@ describe('renameUndo.undoRenames', () => {
     it('deletes the review issue it opened when the job stopped before recording its id', async () => {
         const { crowdin, state } = fakeCrowdin.create({ issues: [EARLIER_MERGED_REVIEW_ISSUE] })
         const { journalEntries, appendJournalEntry } = collectJournalEntries()
-        await renameRun.renamePieces({ crowdin, pieces: [dropboxPiece()], automaticApprovers: ['robot'], dryRun: false, appendJournalEntry })
+        await renameRun.renamePieces({ crowdin, pieces: [dropboxPiece()], appendJournalEntry })
         const journalCutBeforeIssueId = journalEntries.filter((entry) => !(entry.kind === 'review-issue' && entry.status === 'opened'))
 
         const totals = await renameUndo.undoRenames({ crowdin, journalEntries: journalCutBeforeIssueId, appendJournalEntry })

@@ -173,7 +173,7 @@ describe('renamePlan.matchCrowdinStrings at the longest renameable English', () 
         const edit = englishEdit({ oldEnglish: 'Folder', newEnglish: longestEnglish })
 
         const matches = renamePlan.matchCrowdinStrings({ edits: [edit], crowdinStrings: [{ id: 1, text: 'Folder' }] })
-        const plannedRename = renamePlan.planRename({ edit, stringId: 1, translationsByLanguage: {}, approvalsByLanguage: {}, languagesWaitingForReview: [], automaticApprovers: [] })
+        const plannedRename = renamePlan.planRename({ edit, stringId: 1, translationsByLanguage: {}, approvalsByLanguage: {}, languagesWaitingForReview: [] })
 
         expect(matches.skipped).toEqual([])
         expect(plannedRename.newIdentifier.length).toBe(512)
@@ -200,7 +200,7 @@ describe('renamePlan.planRename', () => {
     }
     const approvals: Record<string, TranslationApproval[]> = {
         ja: [{ translationId: 10, stringId: 1, user: crowdinUser('human') }],
-        de: [{ translationId: 20, stringId: 1, user: crowdinUser('robot') }],
+        de: [{ translationId: 20, stringId: 1, user: crowdinUser('abuaboud') }],
         fr: [],
     }
     const planRename = ({ oldEnglish, newEnglish, approvalsByLanguage = approvals, languagesWaitingForReview = [] }: { oldEnglish: string, newEnglish: string, approvalsByLanguage?: typeof approvals, languagesWaitingForReview?: string[] }) => renamePlan.planRename({
@@ -209,7 +209,6 @@ describe('renamePlan.planRename', () => {
         translationsByLanguage: translations,
         approvalsByLanguage,
         languagesWaitingForReview,
-        automaticApprovers: ['robot'],
     })
 
     it('keeps translations and approvals for a same-words edit', () => {
@@ -237,7 +236,7 @@ describe('renamePlan.planRename', () => {
     })
 
     it('clears everything for a rewording that no human approved', () => {
-        const approvalsByLanguage = { ...approvals, ja: [{ translationId: 11, stringId: 1, user: crowdinUser('robot') }] }
+        const approvalsByLanguage = { ...approvals, ja: [{ translationId: 11, stringId: 1, user: crowdinUser('abuaboud') }] }
 
         expect(planRename({ oldEnglish: 'Upload a file', newEnglish: 'Send a file', approvalsByLanguage })).toMatchObject({
             updateOption: 'clear_translations_and_approvals',
@@ -290,11 +289,11 @@ describe('renamePlan.automaticTranslationIdsWithoutHumanApproval', () => {
     it('picks machine translations that no human approved', () => {
         const translations = [
             { id: 10, user: crowdinUser('human') },
-            { id: 11, user: crowdinUser('robot') },
-            { id: 12, user: crowdinUser('robot') },
+            { id: 11, user: crowdinUser('abuaboud') },
+            { id: 12, user: crowdinUser('abuaboud') },
             { id: 13, user: null },
         ]
 
-        expect(renamePlan.automaticTranslationIdsWithoutHumanApproval({ translations, humanApprovedTranslationIds: [10, 12], automaticApprovers: ['robot'] })).toEqual([11])
+        expect(renamePlan.automaticTranslationIdsWithoutHumanApproval({ translations, humanApprovedTranslationIds: [10, 12] })).toEqual([11])
     })
 })

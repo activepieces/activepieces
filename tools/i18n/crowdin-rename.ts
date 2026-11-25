@@ -25,20 +25,8 @@ function commandOf({ commandLineArguments }: { commandLineArguments: string[] })
     return { kind: 'rename', previousDirectory, currentDirectory, journalFile }
 }
 
-function dryRunSettingOf({ value }: { value: string | undefined }): boolean | null {
-    const normalisedValue = (value ?? '').trim().toLowerCase()
-    if (normalisedValue === 'true') {
-        return true
-    }
-    return normalisedValue === '' || normalisedValue === 'false' ? false : null
-}
-
-function renameExitCodeOf({ totals, dryRun }: { totals: RenameTotals, dryRun: boolean }): number {
-    return !dryRun && totals.failed > 0 && totals.crowdinWrites === 0 ? 1 : 0
-}
-
-function automaticApproversOf({ value }: { value: string | undefined }): string[] {
-    return (value ?? '').split(',').map((userName) => userName.trim()).filter((userName) => userName.length > 0)
+function renameExitCodeOf({ totals }: { totals: RenameTotals }): number {
+    return totals.failed > 0 && totals.crowdinWrites === 0 ? 1 : 0
 }
 
 function publishToGithubJob({ summary, outputs }: { summary: string, outputs: Record<string, number> }): void {
@@ -58,33 +46,27 @@ async function main(): Promise<void> {
         publishToGithubJob({ summary: jobSummary.noticeSummary({ notice: 'Skipped: CROWDIN_RENAME_TOKEN or CROWDIN_PROJECT_ID is not set.' }), outputs: { renamed: 0, failed: 0 } })
         return
     }
-    const dryRun = dryRunSettingOf({ value: process.env.CROWDIN_RENAME_DRY_RUN })
-    if (dryRun === null) {
-        publishToGithubJob({ summary: jobSummary.noticeSummary({ notice: 'Stopped before any change in Crowdin: CROWDIN_RENAME_DRY_RUN must be true or false.' }), outputs: { renamed: 0, failed: 1 } })
-        process.exitCode = 1
-        return
-    }
     try {
         const command = commandOf({ commandLineArguments: process.argv.slice(2) })
         if (command.kind === 'undo') {
             await undoFromJournal({ token, projectId: Number(projectId), command })
         }
         else {
-            await renameFromDirectories({ token, projectId: Number(projectId), dryRun, command })
+            await renameFromDirectories({ token, projectId: Number(projectId), command })
         }
     }
     catch (error) {
         publishToGithubJob({
             summary: jobSummary.noticeSummary({ notice: `Stopped before any change in Crowdin: ${crowdinProjectApi.shortErrorMessageOf({ error })}` }),
-            outputs: { renamed: 0, failed: dryRun ? 0 : 1 },
+            outputs: { renamed: 0, failed: 1 },
         })
-        process.exitCode = dryRun ? 0 : 1
+        process.exitCode = 1
     }
 }
 
 async function undoFromJournal({ token, projectId, command }: { token: string, projectId: number, command: UndoCommand }): Promise<void> {
     const totals = await renameUndo.undoRenames({
-        crowdin: crowdinProjectApi.create({ token, projectId, readOnly: false }),
+        crowdin: crowdinProjectApi.create({ token, projectId }),
         journalEntries: renameJournal.readEntries({ journalFile: command.undoJournalFile }),
         appendJournalEntry: renameJournal.appenderTo({ journalFile: command.journalFile }),
     })
@@ -92,7 +74,7 @@ async function undoFromJournal({ token, projectId, command }: { token: string, p
     process.exitCode = totals.failed > 0 ? 1 : 0
 }
 
-async function renameFromDirectories({ token, projectId, dryRun, command }: { token: string, projectId: number, dryRun: boolean, command: RenameCommand }): Promise<void> {
+async function renameFromDirectories({ token, projectId, command }: { token: string, projectId: number, command: RenameCommand }): Promise<void> {
     const pieces = translatableTextByJsonPath.readPieces({ previousDirectory: command.previousDirectory, currentDirectory: command.currentDirectory })
         .filter(({ oldEnglishByJsonPath, newEnglishByJsonPath }) => renamePlan.englishEditsOf({ oldEnglishByJsonPath, newEnglishByJsonPath }).length > 0)
     if (pieces.length === 0) {
@@ -102,22 +84,20 @@ async function renameFromDirectories({ token, projectId, dryRun, command }: { to
     const appendToJournalFile = renameJournal.appenderTo({ journalFile: command.journalFile })
     const journalEntries: JournalEntry[] = []
     const totals = await renameRun.renamePieces({
-        crowdin: crowdinProjectApi.create({ token, projectId, readOnly: dryRun }),
+        crowdin: crowdinProjectApi.create({ token, projectId }),
         pieces,
-        automaticApprovers: automaticApproversOf({ value: process.env.CROWDIN_AUTO_APPROVERS }),
-        dryRun,
         appendJournalEntry: (entry) => {
             journalEntries.push(entry)
             appendToJournalFile(entry)
         },
     })
-    publishToGithubJob({ summary: jobSummary.renameSummary({ journalEntries, totals, dryRun }), outputs: { renamed: totals.renamed, failed: dryRun ? 0 : totals.failed } })
-    process.exitCode = renameExitCodeOf({ totals, dryRun })
+    publishToGithubJob({ summary: jobSummary.renameSummary({ journalEntries, totals }), outputs: { renamed: totals.renamed, failed: totals.failed } })
+    process.exitCode = renameExitCodeOf({ totals })
 }
 
 const DEFAULT_JOURNAL_FILE = 'crowdin-rename-journal.jsonl'
 
-export const crowdinRename = { commandOf, dryRunSettingOf, renameExitCodeOf, automaticApproversOf }
+export const crowdinRename = { commandOf, renameExitCodeOf }
 
 type RenameCommand = {
     kind: 'rename'

@@ -1,12 +1,9 @@
 import { HttpClient } from '@crowdin/crowdin-api-client'
 import { FetchClientJsonPayloadError } from '@crowdin/crowdin-api-client/out/core/internal/fetch/fetchClientError'
 
-function create({ readOnly, sendRequest = fetch, waitBeforeRetry = wait }: CreateCrowdinHttpClientParams): HttpClient {
+function create({ sendRequest = fetch, waitBeforeRetry = wait }: CreateCrowdinHttpClientParams): HttpClient {
     async function sendWithRetries<T>({ method, url, headers, body }: CrowdinRequest): Promise<T> {
         const resource = resourceOf({ url })
-        if (readOnly && method !== 'GET') {
-            throw new Error(`Crowdin client is read-only, refusing ${method} ${resource}`)
-        }
         for (let attempt = 0; ; attempt++) {
             const response = await sendRequest(url, {
                 method,
@@ -81,7 +78,6 @@ export type SendRequest = (url: string, init: RequestInit) => Promise<Response>
 export type WaitBeforeRetry = (milliseconds: number) => Promise<void>
 
 type CreateCrowdinHttpClientParams = {
-    readOnly: boolean
     sendRequest?: SendRequest
     waitBeforeRetry?: WaitBeforeRetry
 }

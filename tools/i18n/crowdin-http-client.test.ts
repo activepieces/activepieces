@@ -5,7 +5,7 @@ import { crowdinProjectApi } from './crowdin-project-api'
 
 const respondWith = ({ status = 200, responseBody = {} }: { status?: number, responseBody?: unknown }): Response => new Response(JSON.stringify(responseBody), { status })
 
-const queuedCrowdin = ({ responses, token = 't', readOnly = false }: { responses: (Response | Error)[], token?: string, readOnly?: boolean }) => {
+const queuedCrowdin = ({ responses, token = 't' }: { responses: (Response | Error)[], token?: string }) => {
     const sentRequests: SentRequest[] = []
     const queue = [...responses]
     const sendRequest: SendRequest = async (url, init) => {
@@ -24,7 +24,7 @@ const queuedCrowdin = ({ responses, token = 't', readOnly = false }: { responses
         }
         return nextResponse
     }
-    const crowdin = crowdinProjectApi.create({ token, projectId: 42, readOnly, sendRequest, waitBeforeRetry: async () => undefined })
+    const crowdin = crowdinProjectApi.create({ token, projectId: 42, sendRequest, waitBeforeRetry: async () => undefined })
     return { crowdin, sentRequests }
 }
 
@@ -147,32 +147,6 @@ describe('crowdinHttpClient through the Crowdin SDK', () => {
 
         expect(crowdinStrings.length).toBe(503)
         expect(sentRequests.map(({ url }) => url.split('/projects/42')[1])).toEqual(['/strings?fileId=9&limit=500&offset=0', '/strings?fileId=9&limit=500&offset=500'])
-    })
-
-    it('refuses every write before sending it when it is read-only', async () => {
-        const { crowdin, sentRequests } = queuedCrowdin({ readOnly: true, responses: [] })
-
-        const errors = [
-            await crowdin.stringTranslationsApi.deleteTranslation(42, 5).catch((thrown: unknown) => thrown),
-            await crowdin.sourceStringsApi.editString(42, 7, RENAME_TO_NEW, { updateOption: 'keep_translations' }).catch((thrown: unknown) => thrown),
-            await crowdin.stringTranslationsApi.addApproval(42, { translationId: 1 }).catch((thrown: unknown) => thrown),
-        ]
-
-        expect(errors.map(messageOf)).toEqual([
-            'Crowdin client is read-only, refusing DELETE /projects/42/translations/5',
-            'Crowdin client is read-only, refusing PATCH /projects/42/strings/7?updateOption=keep_translations',
-            'Crowdin client is read-only, refusing POST /projects/42/approvals',
-        ])
-        expect(sentRequests).toEqual([])
-    })
-
-    it('still reads when it is read-only', async () => {
-        const { crowdin, sentRequests } = queuedCrowdin({ readOnly: true, responses: [respondWith({ responseBody: { data: { id: 7 } } })] })
-
-        const crowdinString = await crowdin.sourceStringsApi.getString(42, 7)
-
-        expect(crowdinString.data.id).toBe(7)
-        expect(sentRequests.map(({ method }) => method)).toEqual(['GET'])
     })
 
     it('treats a missing resource as already deleted', async () => {

@@ -10,9 +10,9 @@ describe('jobSummary.renameSummary', () => {
         const { crowdin } = fakeCrowdin.create()
         const { journalEntries, appendJournalEntry } = collectJournalEntries()
         const pieces = [dropboxPiece(), { ...dropboxPiece(), pieceName: 'community/brand-new' }]
-        const totals = await renameRun.renamePieces({ crowdin, pieces, automaticApprovers: ['robot'], dryRun: false, appendJournalEntry })
+        const totals = await renameRun.renamePieces({ crowdin, pieces, appendJournalEntry })
 
-        const summary = jobSummary.renameSummary({ journalEntries, totals, dryRun: false })
+        const summary = jobSummary.renameSummary({ journalEntries, totals })
 
         expect(summary).toContain('1 renamed')
         expect(summary).toContain('| community/dropbox | Upload a file | Send a file | ja |')

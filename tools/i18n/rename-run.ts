@@ -6,18 +6,18 @@ import { EnglishEdit, PlannedRename, renamePlan } from './rename-plan'
 import { ReviewIssueReason, reviewIssues } from './review-issues'
 import { PieceTranslatableText } from './translatable-text-by-json-path'
 
-async function renamePieces({ crowdin, pieces, automaticApprovers, dryRun, appendJournalEntry }: RenamePiecesParams): Promise<RenameTotals> {
+async function renamePieces({ crowdin, pieces, appendJournalEntry }: RenamePiecesParams): Promise<RenameTotals> {
     const project = await crowdin.projectsGroupsApi.getProject(crowdin.projectId)
     const crowdinFiles = crowdinProjectApi.resourcesOf({ responseList: await crowdin.sourceFilesApi.withFetchAll().listProjectFiles(crowdin.projectId) })
     let totals = NO_RENAMES
     for (const piece of pieces) {
-        const pieceTotals = await renamePiece({ crowdin, piece, crowdinFiles, targetLanguages: project.data.targetLanguageIds, automaticApprovers, dryRun, appendJournalEntry })
-        totals = sumOfTotals({ left: totals, right: pieceTotals })
+        const pieceTotals = await renamePiece({ crowdin, piece, crowdinFiles, targetLanguages: project.data.targetLanguageIds, appendJournalEntry })
+        totals = sumOfTotals({ total: totals, added: pieceTotals })
     }
     return totals
 }
 
-async function renamePiece({ crowdin, piece, crowdinFiles, targetLanguages, automaticApprovers, dryRun, appendJournalEntry }: RenamePieceParams): Promise<RenameTotals> {
+async function renamePiece({ crowdin, piece, crowdinFiles, targetLanguages, appendJournalEntry }: RenamePieceParams): Promise<RenameTotals> {
     const { pieceName } = piece
     const edits = renamePlan.englishEditsOf({ oldEnglishByJsonPath: piece.oldEnglishByJsonPath, newEnglishByJsonPath: piece.newEnglishByJsonPath })
     if (edits.length === 0) {
@@ -56,10 +56,9 @@ async function renamePiece({ crowdin, piece, crowdinFiles, targetLanguages, auto
                 translationsByLanguage,
                 approvalsByLanguage,
                 languagesWaitingForReview: languagesWaitingForReview.get(stringId) ?? [],
-                automaticApprovers,
             })
-            const stringTotals = await renameString({ crowdin, pieceName, fileId, plannedRename, dryRun, appendJournalEntry })
-            totals = sumOfTotals({ left: totals, right: stringTotals })
+            const stringTotals = await renameString({ crowdin, pieceName, fileId, plannedRename, appendJournalEntry })
+            totals = sumOfTotals({ total: totals, added: stringTotals })
         }
         return totals
     }
@@ -69,7 +68,7 @@ async function renamePiece({ crowdin, piece, crowdinFiles, targetLanguages, auto
     }
 }
 
-async function renameString({ crowdin, pieceName, fileId, plannedRename, dryRun, appendJournalEntry }: RenameStringParams): Promise<RenameTotals> {
+async function renameString({ crowdin, pieceName, fileId, plannedRename, appendJournalEntry }: RenameStringParams): Promise<RenameTotals> {
     const { stringId } = plannedRename
     const textAfter = { identifier: plannedRename.newIdentifier, text: plannedRename.newEnglish }
     const renameEntry: Omit<JournalEntry, 'status'> = {
@@ -83,10 +82,6 @@ async function renameString({ crowdin, pieceName, fileId, plannedRename, dryRun,
         keptLanguages: plannedRename.keptLanguages,
         translationIdsToReapproveOnUndo: plannedRename.translationIdsToReapproveOnUndo,
         needsReview: plannedRename.needsReview,
-    }
-    if (dryRun) {
-        appendJournalEntry({ ...renameEntry, status: 'would-rename', textBefore: { identifier: plannedRename.oldEnglish, text: plannedRename.oldEnglish } })
-        return { ...NO_RENAMES, wouldRename: 1 }
     }
     const oldEnglishCheck = await checkOldEnglishStillInCrowdin({ crowdin, plannedRename })
     if (!oldEnglishCheck.ok) {
@@ -108,7 +103,7 @@ async function renameString({ crowdin, pieceName, fileId, plannedRename, dryRun,
     for (const { language, resource, sendDelete } of outdatedTranslations.deletions) {
         const deletion = await crowdinProjectApi.deleteUnlessAlreadyGone({ sendDelete })
         appendJournalEntry({ kind: 'cleanup', pieceName, fileId, stringId, language, status: deletion.ok ? 'deleted' : 'error', message: deletion.ok ? resource : `${resource}: ${deletion.message}` })
-        totals = sumOfTotals({ left: totals, right: deletion.ok ? { ...NO_RENAMES, crowdinWrites: 1 } : { ...NO_RENAMES, failed: 1 } })
+        totals = sumOfTotals({ total: totals, added: deletion.ok ? { ...NO_RENAMES, crowdinWrites: 1 } : { ...NO_RENAMES, failed: 1 } })
         if (!deletion.ok && plannedRename.clearedLanguages.includes(language)) {
             languagesWithUndeletedTranslations.push(language)
         }
@@ -128,7 +123,7 @@ async function renameString({ crowdin, pieceName, fileId, plannedRename, dryRun,
             reviewIssueId: opened.ok ? opened.reviewIssueId : undefined,
             message: opened.ok ? undefined : opened.message,
         })
-        totals = sumOfTotals({ left: totals, right: opened.ok ? { ...NO_RENAMES, crowdinWrites: 1 } : { ...NO_RENAMES, failed: 1 } })
+        totals = sumOfTotals({ total: totals, added: opened.ok ? { ...NO_RENAMES, crowdinWrites: 1 } : { ...NO_RENAMES, failed: 1 } })
     }
     return totals
 }
@@ -176,7 +171,6 @@ async function listOutdatedTranslations({ crowdin, plannedRename }: { crowdin: C
             const translationIds = renamePlan.automaticTranslationIdsWithoutHumanApproval({
                 translations,
                 humanApprovedTranslationIds: plannedRename.translationIdsToReapproveOnUndo,
-                automaticApprovers: plannedRename.automaticApprovers,
             })
             automaticTranslationDeletions.push(...translationIds.map((translationId) => ({
                 language,
@@ -199,13 +193,12 @@ async function listPerLanguage<T>({ targetLanguages, listForLanguage }: ListPerL
     return Object.fromEntries(resourcesPerLanguage)
 }
 
-function sumOfTotals({ left, right }: { left: RenameTotals, right: RenameTotals }): RenameTotals {
+function sumOfTotals({ total, added }: { total: RenameTotals, added: RenameTotals }): RenameTotals {
     return {
-        renamed: left.renamed + right.renamed,
-        wouldRename: left.wouldRename + right.wouldRename,
-        skipped: left.skipped + right.skipped,
-        failed: left.failed + right.failed,
-        crowdinWrites: left.crowdinWrites + right.crowdinWrites,
+        renamed: total.renamed + added.renamed,
+        skipped: total.skipped + added.skipped,
+        failed: total.failed + added.failed,
+        crowdinWrites: total.crowdinWrites + added.crowdinWrites,
     }
 }
 
@@ -219,13 +212,12 @@ function skipEntryOf({ pieceName, edit, reason }: { pieceName: string, edit: Eng
     }
 }
 
-const NO_RENAMES: RenameTotals = { renamed: 0, wouldRename: 0, skipped: 0, failed: 0, crowdinWrites: 0 }
+const NO_RENAMES: RenameTotals = { renamed: 0, skipped: 0, failed: 0, crowdinWrites: 0 }
 
 export const renameRun = { renamePieces }
 
 export type RenameTotals = {
     renamed: number
-    wouldRename: number
     skipped: number
     failed: number
     crowdinWrites: number
@@ -252,8 +244,6 @@ type OutdatedTranslations = {
 type RenamePiecesParams = {
     crowdin: CrowdinProjectApi
     pieces: PieceTranslatableText[]
-    automaticApprovers: string[]
-    dryRun: boolean
     appendJournalEntry: AppendJournalEntry
 }
 
@@ -268,7 +258,6 @@ type RenameStringParams = {
     pieceName: string
     fileId: number
     plannedRename: PlannedRename
-    dryRun: boolean
     appendJournalEntry: AppendJournalEntry
 }
 

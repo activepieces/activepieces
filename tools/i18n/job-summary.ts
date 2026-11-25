@@ -2,19 +2,15 @@ import { JournalEntry } from './rename-journal'
 import { RenameTotals } from './rename-run'
 import { UndoTotals } from './rename-undo'
 
-function renameSummary({ journalEntries, totals, dryRun }: RenameSummaryParams): string {
+function renameSummary({ journalEntries, totals }: RenameSummaryParams): string {
     const renameEntries = journalEntries.filter((entry) => entry.kind === 'rename')
-    const keptForReview = renameEntries.filter((entry) => entry.needsReview === true && (entry.status === 'renamed' || entry.status === 'would-rename'))
+    const keptForReview = renameEntries.filter((entry) => entry.needsReview === true && entry.status === 'renamed')
     const onlyNewInCrowdin = journalEntries.filter((entry) => entry.kind === 'skip' && entry.status === 'only-new-in-crowdin')
     const notRenamed = journalEntries.filter((entry) => (entry.kind === 'skip' && entry.status !== 'only-new-in-crowdin') || entry.status === 'error' || entry.status === 'precondition-failed')
-    const heading = dryRun ? `${RENAME_HEADING} (dry run, nothing written)` : RENAME_HEADING
-    const keptForReviewHeading = dryRun
-        ? '### Translations kept after a rewording (a Crowdin issue would ask a translator to review each)'
-        : '### Translations kept after a rewording (a Crowdin issue asks a translator to review each)'
-    const totalsSentence = `${dryRun ? totals.wouldRename : totals.renamed} ${dryRun ? 'would be renamed' : 'renamed'}, ${totals.skipped} skipped, ${totals.failed} failed.`
+    const totalsSentence = `${totals.renamed} renamed, ${totals.skipped} skipped, ${totals.failed} failed.`
     const keptForReviewTable = keptForReview.length === 0 ? [] : [
         '',
-        keptForReviewHeading,
+        '### Translations kept after a rewording (a Crowdin issue asks a translator to review each)',
         '',
         '| Piece | Old English | New English | Languages |',
         '|---|---|---|---|',
@@ -38,7 +34,7 @@ function renameSummary({ journalEntries, totals, dryRun }: RenameSummaryParams):
         '|---|---|---|',
         ...onlyNewInCrowdin.map((entry) => `| ${entry.pieceName} | ${tableCell(entry.textBefore?.text)} | ${tableCell(entry.textAfter?.text)} |`),
     ]
-    return [heading, '', totalsSentence, ...keptForReviewTable, ...notRenamedTable, ...onlyNewInCrowdinTable, ''].join('\n')
+    return [RENAME_HEADING, '', totalsSentence, ...keptForReviewTable, ...notRenamedTable, ...onlyNewInCrowdinTable, ''].join('\n')
 }
 
 function undoSummary({ totals }: { totals: UndoTotals }): string {
@@ -62,5 +58,4 @@ export const jobSummary = { renameSummary, undoSummary, noticeSummary }
 type RenameSummaryParams = {
     journalEntries: JournalEntry[]
     totals: RenameTotals
-    dryRun: boolean
 }

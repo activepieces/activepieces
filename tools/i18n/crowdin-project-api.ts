@@ -2,9 +2,9 @@ import { CrowdinError, ProjectsGroups, ResponseList, SourceFiles, SourceStrings,
 import { crowdinHttpClient, SendRequest, WaitBeforeRetry } from './crowdin-http-client'
 import { IdentifierAndText } from './rename-journal'
 
-function create({ token, projectId, readOnly, sendRequest, waitBeforeRetry }: CreateCrowdinProjectApiParams): CrowdinProjectApi {
+function create({ token, projectId, sendRequest, waitBeforeRetry }: CreateCrowdinProjectApiParams): CrowdinProjectApi {
     const credentials = { token }
-    const config = { httpClient: crowdinHttpClient.create({ readOnly, sendRequest, waitBeforeRetry }) }
+    const config = { httpClient: crowdinHttpClient.create({ sendRequest, waitBeforeRetry }) }
     return {
         projectId,
         projectsGroupsApi: new ProjectsGroups(credentials, config),
@@ -66,7 +66,6 @@ export type DeletionOutcome = { ok: true } | { ok: false, message: string }
 type CreateCrowdinProjectApiParams = {
     token: string
     projectId: number
-    readOnly: boolean
     sendRequest?: SendRequest
     waitBeforeRetry?: WaitBeforeRetry
 }

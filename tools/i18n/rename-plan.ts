@@ -50,7 +50,7 @@ function matchCrowdinStrings({ edits, crowdinStrings }: MatchCrowdinStringsParam
     }
 }
 
-function planRename({ edit, stringId, translationsByLanguage, approvalsByLanguage, languagesWaitingForReview, automaticApprovers }: PlanRenameParams): PlannedRename {
+function planRename({ edit, stringId, translationsByLanguage, approvalsByLanguage, languagesWaitingForReview }: PlanRenameParams): PlannedRename {
     const planForEveryEditKind = {
         stringId,
         oldEnglish: edit.oldEnglish,
@@ -58,14 +58,13 @@ function planRename({ edit, stringId, translationsByLanguage, approvalsByLanguag
         newIdentifier: crowdinIdentifierOf({ english: edit.newEnglish }),
         editKind: edit.editKind,
         jsonPaths: edit.jsonPaths,
-        automaticApprovers,
     }
     const translatedLanguages = Object.keys(translationsByLanguage).filter((language) => translationsByLanguage[language].some((translation) => translation.stringId === stringId))
     if (SAME_WORDS_EDIT_KINDS.includes(edit.editKind)) {
         return { ...planForEveryEditKind, updateOption: 'keep_translations_and_approvals', keptLanguages: translatedLanguages, clearedLanguages: [], translationIdsToReapproveOnUndo: [], humanApprovedLanguages: [], needsReview: false }
     }
     const humanApprovedTranslationIdsIn = (language: string): number[] => (approvalsByLanguage[language] ?? [])
-        .filter((approval) => approval.stringId === stringId && !isAutomaticApprover({ userName: approval.user?.username, automaticApprovers }))
+        .filter((approval) => approval.stringId === stringId && !isPreTranslationAccount({ userName: approval.user?.username }))
         .map(({ translationId }) => translationId)
     const keptLanguages = translatedLanguages.filter((language) => humanApprovedTranslationIdsIn(language).length > 0 || languagesWaitingForReview.includes(language))
     if (keptLanguages.length === 0) {
@@ -82,9 +81,9 @@ function planRename({ edit, stringId, translationsByLanguage, approvalsByLanguag
     }
 }
 
-function automaticTranslationIdsWithoutHumanApproval({ translations, humanApprovedTranslationIds, automaticApprovers }: AutomaticTranslationIdsParams): number[] {
+function automaticTranslationIdsWithoutHumanApproval({ translations, humanApprovedTranslationIds }: AutomaticTranslationIdsParams): number[] {
     return translations
-        .filter(({ id, user }) => isAutomaticApprover({ userName: user?.username, automaticApprovers }) && !humanApprovedTranslationIds.includes(id))
+        .filter(({ id, user }) => isPreTranslationAccount({ userName: user?.username }) && !humanApprovedTranslationIds.includes(id))
         .map(({ id }) => id)
 }
 
@@ -138,8 +137,8 @@ function crowdinIdentifierOf({ english }: { english: string }): string {
     return english.includes('.') ? `${IDENTIFIER_QUOTE}${english}${IDENTIFIER_QUOTE}` : english
 }
 
-function isAutomaticApprover({ userName, automaticApprovers }: { userName: string | undefined, automaticApprovers: string[] }): boolean {
-    return userName !== undefined && automaticApprovers.includes(userName)
+function isPreTranslationAccount({ userName }: { userName: string | undefined }): boolean {
+    return userName !== undefined && PRE_TRANSLATION_ACCOUNTS.includes(userName)
 }
 
 function wordsOf(english: string): string[] {
@@ -175,6 +174,8 @@ const OPENING_PUNCTUATION = /^['"(]+/
 const CLOSING_PUNCTUATION = /[.,;:!?'")]+$/
 const PLAIN_WORD = /^\p{L}+(?:['-]\p{L}+)*$/u
 const FIRST_LETTER = /(?<=^|['-])\p{L}/gu
+
+export const PRE_TRANSLATION_ACCOUNTS = ['abuaboud']
 
 export const renamePlan = { classifyEdit, englishEditsOf, matchCrowdinStrings, planRename, automaticTranslationIdsWithoutHumanApproval }
 
@@ -222,7 +223,6 @@ export type PlannedRename = {
     newIdentifier: string
     editKind: EditKind
     jsonPaths: string[]
-    automaticApprovers: string[]
     updateOption: SourceStringsModel.UpdateOption
     keptLanguages: string[]
     clearedLanguages: string[]
@@ -254,13 +254,11 @@ type PlanRenameParams = MatchedEdit & {
     translationsByLanguage: Record<string, LanguageTranslation[]>
     approvalsByLanguage: Record<string, TranslationApproval[]>
     languagesWaitingForReview: string[]
-    automaticApprovers: string[]
 }
 
 type AutomaticTranslationIdsParams = {
     translations: StringTranslationAuthor[]
     humanApprovedTranslationIds: number[]
-    automaticApprovers: string[]
 }
 
 type CrowdinKeyIndex = {

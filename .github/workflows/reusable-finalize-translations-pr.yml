@@ -145,8 +145,6 @@ jobs:
         env:
           CROWDIN_RENAME_TOKEN: ${{ secrets.CROWDIN_RENAME_TOKEN }}
           CROWDIN_PROJECT_ID: ${{ vars.CROWDIN_PROJECT_ID }}
-          CROWDIN_RENAME_DRY_RUN: ${{ vars.CROWDIN_RENAME_DRY_RUN }}
-          CROWDIN_AUTO_APPROVERS: ${{ vars.CROWDIN_AUTO_APPROVERS }}
         run: bun tools/i18n/crowdin-rename.ts --previous "$RUNNER_TEMP/translatable-text-by-json-path-previous" --current tools/translatable-text-by-json-path --journal "$RUNNER_TEMP/crowdin-rename-journal.jsonl"
 
       - name: Create Pull Request

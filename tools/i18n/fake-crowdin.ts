@@ -14,15 +14,14 @@ function create({
     failIssueListFor = [],
     approvals = DEFAULT_APPROVALS,
     issues = [],
-    readOnly = false,
 }: FakeCrowdinOptions = {}): FakeCrowdin {
     const state: FakeCrowdinState = {
         strings: copyOf(strings),
         translationsByLanguage: {
             ja: [{ translationId: 10, stringId: 1, user: { username: 'human' } }],
-            de: [{ translationId: 20, stringId: 1, user: { username: 'robot' } }],
+            de: [{ translationId: 20, stringId: 1, user: { username: 'abuaboud' } }],
         },
-        jaTranslationsOfStringOne: [{ id: 10, user: { username: 'human' } }, { id: 11, user: { username: 'robot' } }],
+        jaTranslationsOfStringOne: [{ id: 10, user: { username: 'human' } }, { id: 11, user: { username: 'abuaboud' } }],
         approvals: copyOf(approvals),
         issues: copyOf(issues),
     }
@@ -132,7 +131,7 @@ function create({
         return new Response(fakeResponse.responseBody === null ? null : JSON.stringify(fakeResponse.responseBody), { status: fakeResponse.status })
     }
 
-    const crowdin = crowdinProjectApi.create({ token: FAKE_TOKEN, projectId: FAKE_PROJECT_ID, readOnly, sendRequest, waitBeforeRetry: async () => undefined })
+    const crowdin = crowdinProjectApi.create({ token: FAKE_TOKEN, projectId: FAKE_PROJECT_ID, sendRequest, waitBeforeRetry: async () => undefined })
     return { crowdin, writes, state }
 }
 
@@ -190,7 +189,7 @@ const DEFAULT_PAGE_SIZE = 25
 const FILE_PATH = '/main/packages/pieces/community/dropbox/src/i18n/translation.json'
 const DEFAULT_APPROVALS: FakeApprovals = {
     ja: [{ translationId: 10, stringId: 1, user: { username: 'human' } }],
-    de: [{ translationId: 20, stringId: 1, user: { username: 'robot' } }],
+    de: [{ translationId: 20, stringId: 1, user: { username: 'abuaboud' } }],
 }
 
 export const fakeCrowdin = { create, DEFAULT_APPROVALS }
@@ -242,7 +241,6 @@ type FakeCrowdinOptions = {
     failIssueListFor?: number[]
     approvals?: FakeApprovals
     issues?: FakeIssue[]
-    readOnly?: boolean
 }
 
 type FakeCrowdin = {

@@ -86,35 +86,10 @@ describe('crowdinRename.commandOf', () => {
 
 describe('crowdinRename.renameExitCodeOf', () => {
     it('fails closed only when something failed before any write', () => {
-        const noRenames = { renamed: 0, wouldRename: 0, skipped: 0, failed: 0, crowdinWrites: 0 }
+        const noRenames = { renamed: 0, skipped: 0, failed: 0, crowdinWrites: 0 }
 
-        expect(crowdinRename.renameExitCodeOf({ totals: { ...noRenames, failed: 2 }, dryRun: false })).toBe(1)
-        expect(crowdinRename.renameExitCodeOf({ totals: { ...noRenames, failed: 1, renamed: 3, crowdinWrites: 3 }, dryRun: false })).toBe(0)
-        expect(crowdinRename.renameExitCodeOf({ totals: noRenames, dryRun: false })).toBe(0)
-    })
-
-    it('never blocks the translations PR on a dry run', () => {
-        expect(crowdinRename.renameExitCodeOf({ totals: { renamed: 0, wouldRename: 0, skipped: 0, failed: 2, crowdinWrites: 0 }, dryRun: true })).toBe(0)
-    })
-})
-
-describe('crowdinRename.dryRunSettingOf', () => {
-    it('reads true in any letter case and with spaces around it', () => {
-        expect(['true', 'True', 'TRUE', ' true '].map((value) => crowdinRename.dryRunSettingOf({ value }))).toEqual([true, true, true, true])
-    })
-
-    it('runs live when the variable is unset, empty or false', () => {
-        expect([undefined, '', 'false', 'False'].map((value) => crowdinRename.dryRunSettingOf({ value }))).toEqual([false, false, false, false])
-    })
-
-    it('does not guess at any other value', () => {
-        expect(['1', 'yes', 'on', 'dry'].map((value) => crowdinRename.dryRunSettingOf({ value }))).toEqual([null, null, null, null])
-    })
-})
-
-describe('crowdinRename.automaticApproversOf', () => {
-    it('reads a comma-separated list of Crowdin user names', () => {
-        expect(crowdinRename.automaticApproversOf({ value: ' robot , ci-bot,, ' })).toEqual(['robot', 'ci-bot'])
-        expect(crowdinRename.automaticApproversOf({ value: undefined })).toEqual([])
+        expect(crowdinRename.renameExitCodeOf({ totals: { ...noRenames, failed: 2 } })).toBe(1)
+        expect(crowdinRename.renameExitCodeOf({ totals: { ...noRenames, failed: 1, renamed: 3, crowdinWrites: 3 } })).toBe(0)
+        expect(crowdinRename.renameExitCodeOf({ totals: noRenames })).toBe(0)
     })
 })

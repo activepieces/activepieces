@@ -10,7 +10,7 @@ describe('renameRun.renamePieces', () => {
         const { crowdin, writes, state } = fakeCrowdin.create()
         const { journalEntries, appendJournalEntry } = collectJournalEntries()
 
-        const totals = await renameRun.renamePieces({ crowdin, pieces: [dropboxPiece()], automaticApprovers: ['robot'], dryRun: false, appendJournalEntry })
+        const totals = await renameRun.renamePieces({ crowdin, pieces: [dropboxPiece()], appendJournalEntry })
 
         expect(writes).toEqual([
             'PATCH /strings/1?updateOption=keep_translations',
@@ -38,16 +38,16 @@ describe('renameRun.renamePieces', () => {
         const { crowdin, writes } = fakeCrowdin.create()
         const { appendJournalEntry } = collectJournalEntries()
 
-        await renameRun.renamePieces({ crowdin, pieces: [dropboxPiece({ newEnglish: 'Upload a File.' })], automaticApprovers: ['robot'], dryRun: false, appendJournalEntry })
+        await renameRun.renamePieces({ crowdin, pieces: [dropboxPiece({ newEnglish: 'Upload a File.' })], appendJournalEntry })
 
         expect(writes).toEqual(['PATCH /strings/1?updateOption=keep_translations_and_approvals'])
     })
 
     it('opens no review issue when no human approved the translation', async () => {
-        const { crowdin, writes } = fakeCrowdin.create()
+        const { crowdin, writes } = fakeCrowdin.create({ approvals: { ja: [], de: fakeCrowdin.DEFAULT_APPROVALS.de } })
         const { appendJournalEntry } = collectJournalEntries()
 
-        await renameRun.renamePieces({ crowdin, pieces: [dropboxPiece()], automaticApprovers: ['robot', 'human'], dryRun: false, appendJournalEntry })
+        await renameRun.renamePieces({ crowdin, pieces: [dropboxPiece()], appendJournalEntry })
 
         expect(writes).toEqual(['PATCH /strings/1?updateOption=clear_translations_and_approvals'])
     })
@@ -56,19 +56,19 @@ describe('renameRun.renamePieces', () => {
         const { crowdin, state } = fakeCrowdin.create({ failIssues: true })
         const { journalEntries, appendJournalEntry } = collectJournalEntries()
 
-        const totals = await renameRun.renamePieces({ crowdin, pieces: [dropboxPiece()], automaticApprovers: ['robot'], dryRun: false, appendJournalEntry })
+        const totals = await renameRun.renamePieces({ crowdin, pieces: [dropboxPiece()], appendJournalEntry })
 
         expect(state.strings[0].text).toBe('Send a file')
         expect(totals).toMatchObject({ renamed: 1, failed: 1 })
         expect(journalEntries.find(({ kind, status }) => kind === 'review-issue' && status !== 'opening')).toMatchObject({ status: 'error', language: 'ja' })
-        expect(jobSummary.renameSummary({ journalEntries, totals, dryRun: false })).toContain('review-issue error')
+        expect(jobSummary.renameSummary({ journalEntries, totals })).toContain('review-issue error')
     })
 
     it('keeps a human translation that still waits for review when the English changes again', async () => {
         const { crowdin, writes } = fakeCrowdin.create({ approvals: { ja: [], de: fakeCrowdin.DEFAULT_APPROVALS.de }, issues: [rewordingReviewIssue({ id: 50, language: 'ja' })] })
         const { journalEntries, appendJournalEntry } = collectJournalEntries()
 
-        const totals = await renameRun.renamePieces({ crowdin, pieces: [dropboxPiece()], automaticApprovers: ['robot'], dryRun: false, appendJournalEntry })
+        const totals = await renameRun.renamePieces({ crowdin, pieces: [dropboxPiece()], appendJournalEntry })
 
         expect(writes).toEqual([
             'PATCH /strings/1?updateOption=keep_translations',
@@ -82,7 +82,7 @@ describe('renameRun.renamePieces', () => {
         const { crowdin, writes } = fakeCrowdin.create({ approvals: { ja: [], de: fakeCrowdin.DEFAULT_APPROVALS.de }, issues: [rewordingReviewIssue({ id: 50, language: 'ja' })] })
         const { appendJournalEntry } = collectJournalEntries()
 
-        await renameRun.renamePieces({ crowdin, pieces: [dropboxPiece()], automaticApprovers: ['robot'], dryRun: false, appendJournalEntry })
+        await renameRun.renamePieces({ crowdin, pieces: [dropboxPiece()], appendJournalEntry })
 
         expect(writes.filter((write) => write.startsWith('DELETE /translations/'))).toEqual([])
     })
@@ -92,7 +92,7 @@ describe('renameRun.renamePieces', () => {
         const { crowdin, writes } = fakeCrowdin.create({ approvals: { ja: [], de: fakeCrowdin.DEFAULT_APPROVALS.de }, issues: [translatorIssue] })
         const { appendJournalEntry } = collectJournalEntries()
 
-        await renameRun.renamePieces({ crowdin, pieces: [dropboxPiece()], automaticApprovers: ['robot'], dryRun: false, appendJournalEntry })
+        await renameRun.renamePieces({ crowdin, pieces: [dropboxPiece()], appendJournalEntry })
 
         expect(writes).toEqual(['PATCH /strings/1?updateOption=clear_translations_and_approvals'])
     })
@@ -101,7 +101,7 @@ describe('renameRun.renamePieces', () => {
         const { crowdin, writes, state } = fakeCrowdin.create({ failDeleteFor: ['/translations?stringId=1&languageId=de'] })
         const { journalEntries, appendJournalEntry } = collectJournalEntries()
 
-        const totals = await renameRun.renamePieces({ crowdin, pieces: [dropboxPiece()], automaticApprovers: ['robot'], dryRun: false, appendJournalEntry })
+        const totals = await renameRun.renamePieces({ crowdin, pieces: [dropboxPiece()], appendJournalEntry })
 
         expect(writes).toEqual([
             'PATCH /strings/1?updateOption=keep_translations',
@@ -118,12 +118,12 @@ describe('renameRun.renamePieces', () => {
         const { crowdin, writes } = fakeCrowdin.create({ strings: [{ id: 1, identifier: 'Send a file', text: 'Send a file' }] })
         const { journalEntries, appendJournalEntry } = collectJournalEntries()
 
-        const totals = await renameRun.renamePieces({ crowdin, pieces: [dropboxPiece()], automaticApprovers: ['robot'], dryRun: false, appendJournalEntry })
+        const totals = await renameRun.renamePieces({ crowdin, pieces: [dropboxPiece()], appendJournalEntry })
 
         expect(writes).toEqual([])
         expect(totals).toMatchObject({ renamed: 0, skipped: 1, failed: 0 })
         expect(journalEntries[0]).toMatchObject({ kind: 'skip', status: 'only-new-in-crowdin' })
-        const summary = jobSummary.renameSummary({ journalEntries, totals, dryRun: false })
+        const summary = jobSummary.renameSummary({ journalEntries, totals })
         expect(summary).toContain('### Crowdin holds only the new English')
         expect(summary).toContain('or a Crowdin sync replaced the string and its translations are gone')
         expect(summary).not.toContain('### Not renamed')
@@ -132,11 +132,11 @@ describe('renameRun.renamePieces', () => {
     it('does not treat a language whose old translations could not be removed as waiting for a human review', async () => {
         const { crowdin, state } = fakeCrowdin.create({ failDeleteFor: ['/translations?stringId=1&languageId=de'] })
         const firstRun = collectJournalEntries()
-        await renameRun.renamePieces({ crowdin, pieces: [dropboxPiece()], automaticApprovers: ['robot'], dryRun: false, appendJournalEntry: firstRun.appendJournalEntry })
+        await renameRun.renamePieces({ crowdin, pieces: [dropboxPiece()], appendJournalEntry: firstRun.appendJournalEntry })
         const secondRun = collectJournalEntries()
         const rewordedAgain = [{ pieceName: 'community/dropbox', oldEnglishByJsonPath: { 'actions.upload.description': 'Send a file' }, newEnglishByJsonPath: { 'actions.upload.description': 'Share a file' } }]
 
-        await renameRun.renamePieces({ crowdin, pieces: rewordedAgain, automaticApprovers: ['robot'], dryRun: false, appendJournalEntry: secondRun.appendJournalEntry })
+        await renameRun.renamePieces({ crowdin, pieces: rewordedAgain, appendJournalEntry: secondRun.appendJournalEntry })
 
         expect(state.issues.find(({ targetLanguageId }) => targetLanguageId === 'de')?.text).toContain('could not be removed')
         expect(secondRun.journalEntries.find(({ kind }) => kind === 'rename')).toMatchObject({ keptLanguages: ['ja'] })
@@ -147,7 +147,7 @@ describe('renameRun.renamePieces', () => {
         const { crowdin, writes } = fakeCrowdin.create({ approvals: { ja: [], de: fakeCrowdin.DEFAULT_APPROVALS.de }, issues: [wrappedIssue] })
         const { appendJournalEntry } = collectJournalEntries()
 
-        await renameRun.renamePieces({ crowdin, pieces: [dropboxPiece()], automaticApprovers: ['robot'], dryRun: false, appendJournalEntry })
+        await renameRun.renamePieces({ crowdin, pieces: [dropboxPiece()], appendJournalEntry })
 
         expect(writes[0]).toBe('PATCH /strings/1?updateOption=keep_translations')
     })
@@ -162,29 +162,18 @@ describe('renameRun.renamePieces', () => {
             newEnglishByJsonPath: { a: 'Send a file', b: 'Folder Path' },
         }]
 
-        const totals = await renameRun.renamePieces({ crowdin, pieces, automaticApprovers: ['robot'], dryRun: false, appendJournalEntry })
+        const totals = await renameRun.renamePieces({ crowdin, pieces, appendJournalEntry })
 
         expect(writes).toEqual([])
         expect(totals).toMatchObject({ renamed: 0, failed: 2, crowdinWrites: 0 })
         expect(journalEntries.map(({ kind }) => kind)).toEqual(['piece-error'])
     })
 
-    it('writes nothing on a dry run', async () => {
-        const { crowdin, writes } = fakeCrowdin.create({ readOnly: true })
-        const { journalEntries, appendJournalEntry } = collectJournalEntries()
-
-        const totals = await renameRun.renamePieces({ crowdin, pieces: [dropboxPiece()], automaticApprovers: ['robot'], dryRun: true, appendJournalEntry })
-
-        expect(writes).toEqual([])
-        expect(totals).toMatchObject({ renamed: 0, wouldRename: 1, crowdinWrites: 0 })
-        expect(journalEntries.map(({ status }) => status)).toEqual(['would-rename'])
-    })
-
     it('skips a piece that Crowdin does not hold yet', async () => {
         const { crowdin, writes } = fakeCrowdin.create()
         const { journalEntries, appendJournalEntry } = collectJournalEntries()
 
-        const totals = await renameRun.renamePieces({ crowdin, pieces: [{ ...dropboxPiece(), pieceName: 'community/brand-new' }], automaticApprovers: [], dryRun: false, appendJournalEntry })
+        const totals = await renameRun.renamePieces({ crowdin, pieces: [{ ...dropboxPiece(), pieceName: 'community/brand-new' }], appendJournalEntry })
 
         expect(writes).toEqual([])
         expect(totals).toMatchObject({ skipped: 1, failed: 0 })
@@ -195,10 +184,10 @@ describe('renameRun.renamePieces', () => {
         const { crowdin, writes } = fakeCrowdin.create({ strings: [{ id: 1, identifier: 'Upload a file', text: 'Upload a file' }, { id: 2, identifier: 'old folder', text: 'old folder' }] })
         const { appendJournalEntry } = collectJournalEntries()
         const pieces = [{ pieceName: 'community/dropbox', oldEnglishByJsonPath: { a: 'old folder' }, newEnglishByJsonPath: { a: 'Old Folder' } }]
-        await renameRun.renamePieces({ crowdin, pieces, automaticApprovers: [], dryRun: false, appendJournalEntry })
+        await renameRun.renamePieces({ crowdin, pieces, appendJournalEntry })
         const alreadyRenamed = fakeCrowdin.create({ strings: [{ id: 2, identifier: 'Old Folder', text: 'Old Folder' }] })
 
-        const totals = await renameRun.renamePieces({ crowdin: alreadyRenamed.crowdin, pieces, automaticApprovers: [], dryRun: false, appendJournalEntry })
+        const totals = await renameRun.renamePieces({ crowdin: alreadyRenamed.crowdin, pieces, appendJournalEntry })
 
         expect(writes).toEqual(['PATCH /strings/2?updateOption=keep_translations_and_approvals'])
         expect(alreadyRenamed.writes).toEqual([])
@@ -209,7 +198,7 @@ describe('renameRun.renamePieces', () => {
         const { crowdin, state } = fakeCrowdin.create({ patchLandsButErrorsFor: [1] })
         const { journalEntries, appendJournalEntry } = collectJournalEntries()
 
-        const totals = await renameRun.renamePieces({ crowdin, pieces: [dropboxPiece()], automaticApprovers: ['robot'], dryRun: false, appendJournalEntry })
+        const totals = await renameRun.renamePieces({ crowdin, pieces: [dropboxPiece()], appendJournalEntry })
 
         expect(state.strings[0].text).toBe('Send a file')
         expect(totals).toMatchObject({ renamed: 1, failed: 0 })
@@ -226,7 +215,7 @@ describe('renameRun.renamePieces', () => {
             newEnglishByJsonPath: { a: 'Send a file', b: 'Folder Path' },
         }]
 
-        const totals = await renameRun.renamePieces({ crowdin, pieces, automaticApprovers: ['robot'], dryRun: false, appendJournalEntry })
+        const totals = await renameRun.renamePieces({ crowdin, pieces, appendJournalEntry })
 
         expect(writes).toEqual(['PATCH /strings/2?updateOption=clear_translations_and_approvals'])
         expect(totals).toMatchObject({ renamed: 1, failed: 1 })
