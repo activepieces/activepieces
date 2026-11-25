@@ -25,11 +25,20 @@ export enum NetworkMode {
 }
 
 
+export const SandboxPieceUsage = z.object({
+    pieceName: z.string(),
+    pieceVersion: z.string(),
+    memoryUsageBytes: z.number(),
+})
+
+export type SandboxPieceUsage = z.infer<typeof SandboxPieceUsage>
+
 export const SandboxInformation = z.object({
     sandboxId: z.string(),
     boxId: z.number(),
     busy: z.boolean(),
     memoryUsageBytes: z.number(),
+    sandboxPiecesUsage: z.array(SandboxPieceUsage).default([]),
 })
 
 export type SandboxInformation = z.infer<typeof SandboxInformation>

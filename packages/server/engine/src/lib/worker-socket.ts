@@ -13,6 +13,7 @@ import {
 } from '@activepieces/shared'
 import { io, type ManagerOptions, type Socket, type SocketOptions } from 'socket.io-client'
 import { flowRunProgressReporter } from './helper/flow-run-progress-reporter'
+import { pieceMemorySampler } from './helper/piece-memory-sampler'
 import { execute } from './operations'
 
 const INITIAL_CONNECT_TIMEOUT_MS = 60_000
@@ -100,6 +101,7 @@ export const workerSocket = {
                     await flowRunProgressReporter.shutdown()
                 }
             },
+            getPiecesMemoryUsage: () => pieceMemorySampler.getUsage(),
         })
 
         const gc = global.gc
