@@ -1,6 +1,24 @@
 import { aiProviderUtils } from '@activepieces/pieces-framework';
 import { encoding_for_model } from 'tiktoken';
 
+const RETIRED_MODEL_REPLACEMENTS: Record<string, string> = {
+  'gpt-5': 'gpt-6.1-sol',
+  'gpt-5-2025-08-07': 'gpt-6.1-sol',
+  'gpt-5-pro': 'gpt-6.1-sol',
+  'gpt-5-pro-2025-10-06': 'gpt-6.1-sol',
+  'gpt-5-mini': 'gpt-6.1-terra',
+  'gpt-5-mini-2025-08-07': 'gpt-6.1-terra',
+  'gpt-5-nano': 'gpt-6-luna',
+  'gpt-5-nano-2025-08-07': 'gpt-6-luna',
+  'gpt-5.4-nano': 'gpt-6-luna',
+  'gpt-5.4-nano-2026-03-17': 'gpt-6-luna',
+  'gpt-5.1': 'gpt-6-sol',
+  'gpt-5.1-2025-11-13': 'gpt-6-sol',
+  'gpt-5.3-codex': 'gpt-6-sol',
+};
+
+const NO_FUNCTION_TOOL_MODELS = ['gpt-6.1-sol'];
+
 export const baseUrl = 'https://api.openai.com/v1';
 
 export const Languages = [
@@ -152,7 +170,7 @@ export const exceedsHistoryLimit = (
 export const tokenLimit = 32000;
 
 export const modelTokenLimit = (model: string) => {
-  switch (model) {
+  switch (resolveModelId(model)) {
     case 'gpt-4-1106-preview':
       return 128000;
     case 'gpt-4-vision-preview':
@@ -201,6 +219,14 @@ export const modelTokenLimit = (model: string) => {
       return 400000;
     case 'gpt-5-nano':
       return 400000;
+    case 'gpt-6.1-sol':
+      return 400000;
+    case 'gpt-6.1-terra':
+      return 400000;
+    case 'gpt-6-luna':
+      return 400000;
+    case 'gpt-6-sol':
+      return 400000;
     default:
       return 2048;
   }
@@ -208,3 +234,60 @@ export const modelTokenLimit = (model: string) => {
 
 export const isLLM = (modelId: string): boolean =>
   aiProviderUtils.isChatModelId({ modelId });
+
+export function resolveModelId(model: string): string {
+  return RETIRED_MODEL_REPLACEMENTS[model] ?? model;
+}
+
+export function isRetiredModel(model: string): boolean {
+  return model in RETIRED_MODEL_REPLACEMENTS;
+}
+
+export function rejectsFunctionTools(model: string): boolean {
+  const resolved = resolveModelId(model);
+  return NO_FUNCTION_TOOL_MODELS.some(
+    (id) => resolved === id || resolved.startsWith(`${id}-`)
+  );
+}
+
+export function functionToolParams(model: string): FunctionToolParams {
+  if (resolveModelId(model).startsWith('gpt-6')) {
+    return { reasoning_effort: 'none' };
+  }
+  return {};
+}
+
+export function samplingParams({
+  selectedModel,
+  temperature,
+  topP,
+  frequencyPenalty,
+  presencePenalty,
+}: {
+  selectedModel: string;
+  temperature?: number | null;
+  topP?: number | null;
+  frequencyPenalty?: number | null;
+  presencePenalty?: number | null;
+}): SamplingParams {
+  if (isRetiredModel(selectedModel)) {
+    return {};
+  }
+  return {
+    temperature: temperature ?? undefined,
+    top_p: topP ?? undefined,
+    frequency_penalty: frequencyPenalty ?? undefined,
+    presence_penalty: presencePenalty ?? undefined,
+  };
+}
+
+export type SamplingParams = {
+  temperature?: number;
+  top_p?: number;
+  frequency_penalty?: number;
+  presence_penalty?: number;
+};
+
+export type FunctionToolParams = {
+  reasoning_effort?: 'none';
+};

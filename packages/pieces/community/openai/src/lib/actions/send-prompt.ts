@@ -11,6 +11,8 @@ import {
   exceedsHistoryLimit,
   isLLM,
   reduceContextSize,
+  resolveModelId,
+  samplingParams,
 } from '../common/common';
 import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
@@ -137,7 +139,7 @@ export const askOpenAI = createAction({
       apiKey: auth.secret_text,
     });
     const {
-      model,
+      model: selectedModel,
       temperature,
       maxTokens,
       topP,
@@ -146,6 +148,7 @@ export const askOpenAI = createAction({
       prompt,
       memoryKey,
     } = propsValue;
+    const model = resolveModelId(selectedModel);
 
     let messageHistory: any[] | null = [];
     // If memory key is set, retrieve messages stored in history
@@ -179,10 +182,13 @@ export const askOpenAI = createAction({
     const completion = await openai.chat.completions.create({
       model: model,
       messages: [...roles, ...messageHistory],
-      temperature: temperature,
-      top_p: topP,
-      frequency_penalty: frequencyPenalty,
-      presence_penalty: presencePenalty ?? undefined,
+      ...samplingParams({
+        selectedModel,
+        temperature,
+        topP,
+        frequencyPenalty,
+        presencePenalty,
+      }),
       max_completion_tokens: maxTokens,
     });
 
