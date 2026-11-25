@@ -23,9 +23,10 @@ import {
 } from 'lucide-react';
 import { z } from 'zod';
 
-import { StatusVariant } from '@/components/custom/status-icon-with-text';
 import { flowRunUtils } from '@/features/flow-runs/utils/flow-run-utils';
 import { formatUtils } from '@/lib/format-utils';
+import { Status } from '@/lib/status-colors';
+import { BatchChildStatus } from '@/lib/statuses';
 
 function parseStepOutput(output: unknown): BatchStepRunOutput | null {
   const parsed = BatchStepRunOutput.safeParse(output);
@@ -189,26 +190,45 @@ function batchStatusBadge(
 ): BatchStatusBadge {
   switch (status) {
     case 'pending':
-      return { variant: 'secondary', Icon: Clock, label: t('Pending') };
+      return {
+        status: BatchChildStatus.PENDING,
+        Icon: Clock,
+        label: t('Pending'),
+      };
     case 'failedToDispatch':
       return {
-        variant: 'destructive',
+        status: BatchChildStatus.FAILED_TO_START,
         Icon: CircleX,
         label: t('Failed to start'),
       };
     case 'stillRunning':
-      return { variant: 'info', Icon: Timer, label: t('Still running') };
-    case 'neverStarted':
-      return { variant: 'secondary', Icon: Minus, label: t('Never started') };
-    case 'didNotRun':
-      return { variant: 'secondary', Icon: Minus, label: t('Did not run') };
-    case 'logsUnavailable':
-      return { variant: 'secondary', Icon: Archive, label: t('No logs') };
-    default: {
-      const { variant, Icon } = flowRunUtils.getStatusIcon(status);
       return {
-        variant: RUN_VARIANT_TO_BADGE[variant],
-        Icon,
+        status: BatchChildStatus.STILL_RUNNING,
+        Icon: Timer,
+        label: t('Still running'),
+      };
+    case 'neverStarted':
+      return {
+        status: BatchChildStatus.NEVER_STARTED,
+        Icon: Minus,
+        label: t('Never started'),
+      };
+    case 'didNotRun':
+      return {
+        status: BatchChildStatus.DID_NOT_RUN,
+        Icon: Minus,
+        label: t('Did not run'),
+      };
+    case 'logsUnavailable':
+      return {
+        status: BatchChildStatus.LOGS_UNAVAILABLE,
+        Icon: Archive,
+        label: t('No logs'),
+      };
+    default: {
+      return {
+        status,
+        Icon: flowRunUtils.getStatusIcon(status),
         label:
           flowRunUtils.getStatusLabelOverride(status) ??
           formatUtils.convertEnumToHumanReadable(status),
@@ -284,17 +304,6 @@ function missingLogsCopy(
 
 const TRUNCATED_FRIENDLY_ERROR =
   /^\{\s*"__apErrorVersion"\s*:\s*\d+\s*,\s*"message"\s*:\s*("(?:[^"\\]|\\.)*")/;
-
-const RUN_VARIANT_TO_BADGE: Record<StatusVariant, BatchStatusBadge['variant']> =
-  {
-    success: 'success',
-    error: 'destructive',
-    warning: 'warning',
-    primary: 'info',
-    default: 'info',
-    neutral: 'secondary',
-    secondary: 'secondary',
-  };
 
 const BatchSummaryCounts = z.object({
   succeeded: z.number().int().nonnegative(),
@@ -391,7 +400,7 @@ export type BatchJumpTarget =
   | { kind: 'index'; dispatchIndex: number };
 
 export type BatchStatusBadge = {
-  variant: 'success' | 'destructive' | 'info' | 'secondary' | 'warning';
+  status: Status;
   Icon: LucideIcon;
   label: string;
 };

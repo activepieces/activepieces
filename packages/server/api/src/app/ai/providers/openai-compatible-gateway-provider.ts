@@ -1,7 +1,33 @@
-import { ActivepiecesError, AIProviderModel, aiProviderUtils, ErrorCode, isNil, OpenAICompatibleProviderAuthConfig, OpenAICompatibleProviderConfig, tryCatchSync } from '@activepieces/shared'
+import { litellmAuth } from '@activepieces/ai-providers'
+import { ActivepiecesError, AIProviderModel, aiProviderUtils, ErrorCode, isNil, OpenAICompatibleProviderAuthConfig, OpenAICompatibleProviderConfig, spreadIfDefined, tryCatchSync } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { AIProviderStrategy } from './ai-provider'
+import { litellmDiscovery } from './litellm-discovery'
 import { fetchOpenAiModelIds } from './openai-compatible-vendor'
+
+function assertUsableBaseUrl({ baseUrl }: { baseUrl: string }): void {
+    const { data: parsed } = tryCatchSync(() => new URL(baseUrl))
+    if (!isNil(parsed) && HTTP_PROTOCOLS.includes(parsed.protocol)) {
+        return
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.VALIDATION,
+        params: { message: `"${baseUrl}" is not a valid base URL. Enter the full address of the API over http or https, for example https://api.example.com/v1` },
+    })
+}
+
+function assertUsableHeader({ name, value, field }: { name: string, value: string, field: string }): void {
+    const { error } = tryCatchSync(() => new Headers({ [name]: value }))
+    if (isNil(error)) {
+        return
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.VALIDATION,
+        params: { message: `${field} cannot be sent as written. Enter the header name on its own, for example Authorization, put its value in the API key field, and keep line breaks out of both` },
+    })
+}
+
+const HTTP_PROTOCOLS = ['http:', 'https:']
 
 export const openAICompatibleProvider: AIProviderStrategy<OpenAICompatibleProviderAuthConfig, OpenAICompatibleProviderConfig> = {
     name: 'OpenAI Compatible',
@@ -29,26 +55,23 @@ export const openAICompatibleProvider: AIProviderStrategy<OpenAICompatibleProvid
     },
 }
 
-function assertUsableBaseUrl({ baseUrl }: { baseUrl: string }): void {
-    const { data: parsed } = tryCatchSync(() => new URL(baseUrl))
-    if (!isNil(parsed) && HTTP_PROTOCOLS.includes(parsed.protocol)) {
-        return
-    }
-    throw new ActivepiecesError({
-        code: ErrorCode.VALIDATION,
-        params: { message: `"${baseUrl}" is not a valid base URL. Enter the full address of the API over http or https, for example https://api.example.com/v1` },
-    })
+export const litellmProvider: AIProviderStrategy<OpenAICompatibleProviderAuthConfig, OpenAICompatibleProviderConfig> = {
+    ...openAICompatibleProvider,
+    name: 'LiteLLM',
+    syncModels: litellmDiscovery.syncModels,
+    async listModels(_authConfig: OpenAICompatibleProviderAuthConfig, config: OpenAICompatibleProviderConfig): Promise<AIProviderModel[]> {
+        return config.models.map(m => ({
+            id: m.modelId,
+            name: m.modelName,
+            type: m.modelType,
+            ...spreadIfDefined('metadata', m.metadata),
+        }))
+    },
+    async suggestModels(authConfig: OpenAICompatibleProviderAuthConfig, config: OpenAICompatibleProviderConfig): Promise<string[]> {
+        const modelIds = await fetchOpenAiModelIds({
+            url: `${config.baseUrl.replace(/\/$/, '')}/models`,
+            headers: litellmAuth.buildHeaders({ apiKeyHeader: config.apiKeyHeader, apiKey: authConfig.apiKey, defaultHeaders: config.defaultHeaders }),
+        })
+        return modelIds.filter((modelId) => aiProviderUtils.isChatModelId({ modelId }))
+    },
 }
-
-function assertUsableHeader({ name, value, field }: { name: string, value: string, field: string }): void {
-    const { error } = tryCatchSync(() => new Headers({ [name]: value }))
-    if (isNil(error)) {
-        return
-    }
-    throw new ActivepiecesError({
-        code: ErrorCode.VALIDATION,
-        params: { message: `${field} cannot be sent as written. Enter the header name on its own, for example Authorization, put its value in the API key field, and keep line breaks out of both` },
-    })
-}
-
-const HTTP_PROTOCOLS = ['http:', 'https:']

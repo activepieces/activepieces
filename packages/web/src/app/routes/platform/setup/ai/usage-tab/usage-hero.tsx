@@ -5,7 +5,7 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChartColumn, ChartLine, Info } from 'lucide-react';
-import { ReactNode, useId, useState } from 'react';
+import { ReactNode, useId, useMemo, useState } from 'react';
 import {
   Area,
   Bar,
@@ -35,7 +35,12 @@ import { usageAdapters } from './usage-adapters';
 import { DeltaChip } from './usage-bits';
 import { UsageEstimateNote } from './usage-estimate-note';
 import { usageFormat } from './usage-format';
-import { USAGE_METRICS, UsageMetric, UsagePoint } from './usage-types';
+import {
+  USAGE_METRICS,
+  UsageChartPoint,
+  UsageMetric,
+  UsagePoint,
+} from './usage-types';
 
 export function UsageHero({
   series,
@@ -54,6 +59,10 @@ export function UsageHero({
     0,
   );
   const comparable = history?.comparable ?? true;
+  const chartPoints = useMemo(
+    () => usageAdapters.chartPointsOf({ points, ranges }),
+    [points, ranges],
+  );
 
   return (
     <section className={cn(adminSurface.card, 'flex flex-col gap-5 p-5')}>
@@ -130,7 +139,7 @@ export function UsageHero({
           chartType={chartType}
         />
         <UsageLineChart
-          points={points}
+          points={chartPoints}
           metric={metric}
           height={height}
           chartType={chartType}
@@ -213,8 +222,14 @@ export function UsageLineChart({
               ? { fill: 'var(--gray-3)' }
               : { stroke: 'var(--gray-8)', strokeWidth: 1 }
           }
-          content={
+          content={({ active, payload, label }) => (
             <ChartTooltipContent
+              active={active}
+              label={label}
+              payload={payload?.filter(
+                (entry) =>
+                  entry.dataKey !== 'live' || entry.payload?.settled === null,
+              )}
               indicator="line"
               labelFormatter={(label) =>
                 usageFormat.pointLabel({ label: String(label) })
@@ -235,7 +250,7 @@ export function UsageLineChart({
                 )
               }
             />
-          }
+          )}
         />
         {chartType === 'bar' && (
           <Bar
@@ -266,10 +281,22 @@ export function UsageLineChart({
         )}
         {chartType === 'line' && (
           <Area
-            dataKey="current"
+            dataKey="settled"
             type="monotone"
             stroke={config.current.color}
             strokeWidth={2}
+            fill={`url(#${gradientId})`}
+            dot={false}
+            activeDot={{ r: 4, strokeWidth: 0, fill: config.current.color }}
+          />
+        )}
+        {chartType === 'line' && (
+          <Area
+            dataKey="live"
+            type="monotone"
+            stroke={config.current.color}
+            strokeWidth={2}
+            strokeDasharray="2 3"
             fill={`url(#${gradientId})`}
             dot={false}
             activeDot={{ r: 4, strokeWidth: 0, fill: config.current.color }}
@@ -431,7 +458,7 @@ type UsageHeroProps = {
 };
 
 type UsageLineChartProps = {
-  points: UsagePoint[];
+  points: UsageChartPoint[];
   metric: UsageMetric;
   height: number;
   compact?: boolean;

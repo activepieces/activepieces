@@ -103,7 +103,7 @@ export const excelCommon = {
 			const tables: { id: string; name: string }[] = (
 				await httpClient.sendRequest<{ value: { id: string; name: string }[] }>({
 					method: HttpMethod.GET,
-					url: `${excelCommon.getBaseUrl(cloud)}/items/${workbook_id}/workbook/worksheets/${worksheet_id}/tables`,
+					url: `${excelCommon.getBaseUrl(cloud)}/items/${workbook_id}/workbook/worksheets/${encodeURIComponent(String(worksheet_id))}/tables`,
 					authentication: {
 						type: AuthenticationType.BEARER_TOKEN,
 						token: authProp['access_token'],
@@ -172,12 +172,12 @@ export const excelCommon = {
 		displayName: 'Values',
 		description: 'The values to insert',
 		required: true,
-		refreshers: ['storageSource','siteId','documentId','workbook_id', 'worksheet_id', 'tableId'],
-		props: async ({ auth, storageSource, siteId, documentId, workbook_id, worksheet_id, tableId }) => {
+		refreshers: ['storageSource','siteId','documentId','workbookId', 'worksheetId', 'tableId'],
+		props: async ({ auth, storageSource, siteId, documentId, workbookId, worksheetId, tableId }) => {
 			if (
 				!auth ||
-				(workbook_id ?? '').toString().length === 0 ||
-				(worksheet_id ?? '').toString().length === 0 ||
+				(workbookId ?? '').toString().length === 0 ||
+				(worksheetId ?? '').toString().length === 0 ||
 				(tableId ?? '').toString().length === 0
 			) {
 				return {};
@@ -188,13 +188,14 @@ export const excelCommon = {
 			const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
 			const drivePath = getDrivePath(storageSource as string, siteId as string, documentId as string);
 
-			const headers = await excelCommon.getTableHeaders(
+			const headers = await excelCommon.getTableHeaders({
 				drivePath,
-				workbook_id as unknown as string,
-				authProp['access_token'],
-				worksheet_id as unknown as string,
-				tableId as unknown as string
-			);
+				workbookId: String(workbookId),
+				accessToken: authProp['access_token'],
+				worksheetId: String(worksheetId),
+				tableId: String(tableId),
+				cloud: authProp.props?.['cloud'] as string | undefined,
+			});
 
 			const properties: {
 				[key: string]: any;
@@ -256,7 +257,7 @@ export const excelCommon = {
 			values: (string | number | boolean)[][];
 		}>({
 			method: HttpMethod.GET,
-			url: `${excelCommon.getBaseUrl(cloud)}/items/${workbookId}/workbook/worksheets/${worksheetId}/usedRange(valuesOnly=true)`,
+			url: `${excelCommon.getBaseUrl(cloud)}/items/${workbookId}/workbook/worksheets/${encodeURIComponent(worksheetId)}/usedRange(valuesOnly=true)`,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
 				token: accessToken,
@@ -265,24 +266,31 @@ export const excelCommon = {
 
 		return response.body.values?.[0] ?? [];
 	},
-	getTableHeaders: async function (
-		drivePath: string,
-		workbookId: string,
-		accessToken: string,
-		worksheetId: string,
-		tableId: string
-	) {
-		const response = await httpClient.sendRequest({
+	getTableHeaders: async function ({
+		drivePath,
+		workbookId,
+		accessToken,
+		worksheetId,
+		tableId,
+		cloud,
+	}: {
+		drivePath: string;
+		workbookId: string;
+		accessToken: string;
+		worksheetId: string;
+		tableId: string;
+		cloud?: string | null;
+	}): Promise<string[]> {
+		const response = await httpClient.sendRequest<{ value: { name: string }[] }>({
 			method: HttpMethod.GET,
-			url: `${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}/columns`,
+			url: `${getGraphBaseUrl(cloud)}/v1.0${drivePath}/items/${workbookId}/workbook/worksheets/${encodeURIComponent(worksheetId)}/tables/${encodeURIComponent(tableId)}/columns`,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
 				token: accessToken,
 			},
 		});
 
-		const columnNames = response.body['value'].map((column: { name: any }) => column.name);
-		return columnNames;
+		return response.body.value.map((column) => column.name);
 	},
 	getLastUsedRow: async function (
 		workbookId: string,
@@ -290,7 +298,7 @@ export const excelCommon = {
 		accessToken: string,
 		cloud?: string | null
 	): Promise<number> {
-		const url = `${excelCommon.getBaseUrl(cloud)}/items/${workbookId}/workbook/worksheets/${worksheetId}/usedRange`;
+		const url = `${excelCommon.getBaseUrl(cloud)}/items/${workbookId}/workbook/worksheets/${encodeURIComponent(worksheetId)}/usedRange`;
 
 		const request: HttpRequest = {
 			method: HttpMethod.GET,
@@ -314,7 +322,7 @@ export const excelCommon = {
 		accessToken: string,
 		cloud?: string | null
 	): Promise<string> {
-		const url = `${excelCommon.getBaseUrl(cloud)}/items/${workbookId}/workbook/worksheets/${worksheetId}/usedRange`;
+		const url = `${excelCommon.getBaseUrl(cloud)}/items/${workbookId}/workbook/worksheets/${encodeURIComponent(worksheetId)}/usedRange`;
 
 		const request: HttpRequest = {
 			method: HttpMethod.GET,
@@ -347,7 +355,7 @@ export const excelCommon = {
 			values: (string | number | boolean)[][];
 		}>({
 			method: HttpMethod.GET,
-			url: `${basePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/usedRange(valuesOnly=true)`,
+			url: `${basePath}/items/${workbookId}/workbook/worksheets/${encodeURIComponent(worksheetId)}/usedRange(valuesOnly=true)`,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
 				token: accessToken,

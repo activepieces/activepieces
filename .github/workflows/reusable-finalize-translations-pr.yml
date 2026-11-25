@@ -11,6 +11,9 @@ on:
 jobs:
   finalize:
     runs-on: ubuntu-latest
+    concurrency:
+      group: finalize-translations
+      cancel-in-progress: false
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -54,6 +57,13 @@ jobs:
           else
             git checkout -b $BRANCH_NAME origin/main
           fi
+
+      - name: Download the shards' translatable text by JSON path
+        uses: actions/download-artifact@v7
+        with:
+          pattern: translatable-text-by-json-path-shard-*
+          path: tools/translatable-text-by-json-path
+          merge-multiple: true
 
       - name: Merge latest main
         run: |
@@ -110,7 +120,35 @@ jobs:
           BRANCH_NAME: ${{ inputs.branch_name }}
         run: git push origin --delete $BRANCH_NAME
 
+      - name: Fetch the previous night's translatable text by JSON path
+        env:
+          PREVIOUS_BRANCH: i18n/translatable-text-by-json-path
+        run: |
+          PREVIOUS_DIR="$RUNNER_TEMP/translatable-text-by-json-path-previous"
+          mkdir -p "$PREVIOUS_DIR"
+          FOUND=0
+          git ls-remote --exit-code --heads origin "refs/heads/$PREVIOUS_BRANCH" > /dev/null || FOUND=$?
+          if [ "$FOUND" -eq 2 ]; then
+            echo "No $PREVIOUS_BRANCH branch yet, so there is no previous copy and nothing is renamed tonight."
+          elif [ "$FOUND" -ne 0 ]; then
+            echo "::error::Could not check the $PREVIOUS_BRANCH branch."
+            exit "$FOUND"
+          else
+            git fetch --no-tags origin "+refs/heads/$PREVIOUS_BRANCH:refs/remotes/origin/$PREVIOUS_BRANCH"
+            git archive "refs/remotes/origin/$PREVIOUS_BRANCH" | tar -x -C "$PREVIOUS_DIR"
+            echo "Previous copy has $(find "$PREVIOUS_DIR" -name '*.json' | wc -l) pieces."
+          fi
+
+      - name: Rename changed strings in Crowdin
+        id: crowdin
+        if: steps.ahead.outputs.changes == 'true'
+        env:
+          CROWDIN_RENAME_TOKEN: ${{ secrets.CROWDIN_RENAME_TOKEN }}
+          CROWDIN_PROJECT_ID: ${{ vars.CROWDIN_PROJECT_ID }}
+        run: bun tools/i18n/crowdin-rename.ts --previous "$RUNNER_TEMP/translatable-text-by-json-path-previous" --current tools/translatable-text-by-json-path --journal "$RUNNER_TEMP/crowdin-rename-journal.jsonl"
+
       - name: Create Pull Request
+        id: pr
         if: steps.ahead.outputs.changes == 'true'
         uses: actions/github-script@v8
         with:
@@ -132,17 +170,112 @@ jobs:
               issue_number: pullRequest.number,
               labels: ['skip-changelog', 'translations', 'auto-merge']
             });
-            await github.rest.pulls.merge({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: pullRequest.number,
-              merge_method: 'squash'
-            });
+            const pull = { owner: context.repo.owner, repo: context.repo.repo, pull_number: pullRequest.number };
+            const mergeAttempts = 3;
+            let merged = false;
+            for (let attempt = 1; attempt <= mergeAttempts && !merged; attempt++) {
+              try {
+                await github.rest.pulls.merge({ ...pull, merge_method: 'squash' });
+                merged = true;
+              } catch (error) {
+                core.warning(`Merge attempt ${attempt} failed: ${error.message}`);
+                const { data: current } = await github.rest.pulls.get(pull).catch(() => ({ data: { merged: false } }));
+                merged = current.merged === true;
+                if (!merged && attempt < mergeAttempts) {
+                  await new Promise((resolve) => setTimeout(resolve, 20000));
+                }
+              }
+            }
+            if (!merged) {
+              core.setFailed(`The translations PR #${pullRequest.number} did not merge after ${mergeAttempts} attempts.`);
+              return;
+            }
+            core.setOutput('merged', 'true');
 
             await github.rest.git.deleteRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
               ref: `heads/${branchName}`
-            });
+            }).catch((error) => core.warning(`Could not delete the branch: ${error.message}`));
 
+      - name: Save tonight's translatable text by JSON path for the next night
+        if: steps.pr.outputs.merged == 'true' || steps.ahead.outputs.changes == 'false'
+        env:
+          PREVIOUS_BRANCH: i18n/translatable-text-by-json-path
+        run: |
+          PREVIOUS_DIR="$RUNNER_TEMP/translatable-text-by-json-path-previous"
+          NEXT_DIR="$RUNNER_TEMP/translatable-text-by-json-path-next"
+          NEXT_INDEX="$RUNNER_TEMP/translatable-text-by-json-path-next.index"
+          rm -rf "$NEXT_DIR" "$NEXT_INDEX"
+          mkdir -p "$NEXT_DIR"
+          cp -R "$PREVIOUS_DIR/." "$NEXT_DIR/"
+          if [ -d tools/translatable-text-by-json-path ]; then
+            cp -R tools/translatable-text-by-json-path/. "$NEXT_DIR/"
+          fi
+          REPO_GIT_DIR="$(git rev-parse --absolute-git-dir)"
+          TREE=$(cd "$NEXT_DIR" && GIT_INDEX_FILE="$NEXT_INDEX" git --git-dir="$REPO_GIT_DIR" --work-tree=. add -A . && GIT_INDEX_FILE="$NEXT_INDEX" git --git-dir="$REPO_GIT_DIR" write-tree)
+          PARENT_REF="refs/remotes/origin/$PREVIOUS_BRANCH"
+          if git rev-parse --verify --quiet "$PARENT_REF" > /dev/null; then
+            if [ "$TREE" = "$(git rev-parse "$PARENT_REF^{tree}")" ]; then
+              echo "The previous copy is already up to date."
+              exit 0
+            fi
+            COMMIT=$(git commit-tree "$TREE" -p "$PARENT_REF" -m "Translatable text by JSON path after run ${{ github.run_id }}")
+          else
+            COMMIT=$(git commit-tree "$TREE" -m "Translatable text by JSON path after run ${{ github.run_id }}")
+          fi
+          if git push origin "$COMMIT:refs/heads/$PREVIOUS_BRANCH"; then
+            echo "Saved $(find "$NEXT_DIR" -name '*.json' | wc -l) pieces to $PREVIOUS_BRANCH."
+          else
+            echo "::warning::Could not push $PREVIOUS_BRANCH. The next night compares against an older copy, so strings renamed tonight show up as only the new English being in Crowdin and are skipped."
+          fi
 
+      - name: Close the translations PR when it did not merge
+        id: close
+        if: (failure() || cancelled()) && steps.ahead.outputs.changes == 'true' && steps.pr.outputs.merged != 'true'
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.CROWDIN_PRS }}
+          script: |
+            const branchName = `${{ inputs.branch_name }}`;
+            const repo = { owner: context.repo.owner, repo: context.repo.repo };
+            const listPulls = async () => (await github.rest.pulls.list({ ...repo, head: `${repo.owner}:${branchName}`, state: 'all' })).data;
+            const pulls = await listPulls();
+            for (const pull of pulls.filter((pull) => pull.state === 'open')) {
+              await github.rest.pulls.update({ ...repo, pull_number: pull.number, state: 'closed' });
+            }
+            const after = await listPulls();
+            if (after.some((pull) => pull.merged_at !== null)) {
+              core.notice('The translations PR merged after all, so the Crowdin renames stay.');
+              return;
+            }
+            if (after.some((pull) => pull.state === 'open')) {
+              core.setFailed('The translations PR is still open, so the Crowdin renames stay. Close or merge it by hand.');
+              return;
+            }
+            if (after.length > 0) {
+              await github.rest.git.deleteRef({ ...repo, ref: `heads/${branchName}` }).catch((error) => core.warning(`Could not delete the branch: ${error.message}`));
+            }
+            core.setOutput('safe_to_undo', 'true');
+
+      - name: Undo the Crowdin renames when the translations PR did not merge
+        if: (failure() || cancelled()) && steps.close.outputs.safe_to_undo == 'true' && steps.crowdin.outcome != 'skipped'
+        env:
+          CROWDIN_RENAME_TOKEN: ${{ secrets.CROWDIN_RENAME_TOKEN }}
+          CROWDIN_PROJECT_ID: ${{ vars.CROWDIN_PROJECT_ID }}
+        run: bun tools/i18n/crowdin-rename.ts --undo "$RUNNER_TEMP/crowdin-rename-journal.jsonl" --journal "$RUNNER_TEMP/crowdin-rename-undo-journal.jsonl"
+
+      - name: Keep the Crowdin rename journal
+        if: always() && steps.crowdin.outcome != 'skipped'
+        uses: actions/upload-artifact@v6
+        with:
+          name: crowdin-rename-journal
+          path: ${{ runner.temp }}/crowdin-rename-*.jsonl
+          if-no-files-found: ignore
+          retention-days: 90
+
+      - name: Fail when a Crowdin change did not go through
+        if: steps.crowdin.outputs.failed != '' && steps.crowdin.outputs.failed != '0'
+        run: |
+          echo "::error::${{ steps.crowdin.outputs.failed }} Crowdin changes did not go through. A string that was not renamed loses its translations on the next Crowdin sync. See the job summary."
+          exit 1

@@ -8,6 +8,8 @@ icon: ⏱️
 
 Nightly CI results (`.github/workflows/benchmark.yml`, scheduled runs only) are stored in ClickHouse and charted on the HyperDX [Nightly Benchmark](https://hyperdx.clickhouse.cloud/dashboards/6ab2f0392d54d4a63406098f) dashboard.
 
+The Cloud gate's `benchmark` job (`.github/workflows/benchmark-compare.yml` → `benchmark/run-compare.sh` → `benchmark/compare-results.mjs`) compares two images instead of past nights: the baseline and the candidate run in turns on one runner, each round on a fresh stack, on the light flow and on the heavy flow (`BENCH_FLOW=heavy` in `benchmark/setup.ts`). A manual run with one image on both sides measures the noise (A/A).
+
 ### How it works
 - Builds a `webhook → data-mapper → return-response` flow. Instead of a raw `--concurrency`, it **auto-discovers the deployment shape** (`GET /v1/worker-machines`) and drives load = the effective **execution slot** count, so a healthy deploy queues ~zero by construction. Any queue-wait it reports is a real finding (usually driven concurrency > slots).
 - Attributes latency from each `FlowRun.timeline` into QUEUE / PROVISION / BOOT / RUN, cross-checked against live BullMQ queue depth.
@@ -24,8 +26,10 @@ Nightly CI results (`.github/workflows/benchmark.yml`, scheduled runs only) are 
 - **App Instance Registry** (`app-machine-cache.ts`): apps have no inbound healthcheck, so each self-registers into a Redis hash `appMachines` on its `systemSnapshot` tick; `list()` drops rows untouched >120s. Kept separate from `workerMachines` so an app is never counted as an execution slot. Write gated off on Cloud.
 
 ### Gotchas
+- **Compare two images on one runner, not one image with past nights.** The `depot-ubuntu-24.04-32` label serves two hardware classes, so the nightly 14-run window mixes them (SRE-279). `benchmark-compare.yml` takes the runner out of the result.
+- **No benchmark flow step may wait for another run.** The load runs at the full slot count, so a subflow that waits for its child holds every slot with a waiting parent and no child can start.
 - **CLI identity — no `ap`, no `activepieces` package.** Applies to every CLI command, not just benchmark. Published as `@activepieces/cli` on npm (`activepieces` returns 404); bin is `pieces-cli`. All user docs should invoke it as `npx @activepieces/cli <command>`. `docs/admin-guide/guides/project-replace-cli.mdx` was shipped with `npm install -g activepieces` + `ap project replace`, both fictional; this brain page had the same slip in its opening line.
-- Auth is **platform API key only** (`AP_API_KEY`/`--api-key` + `--project-id`) — email/password login was removed; SERVICE principal gets the full diagnostic bundle.
+- Auth is a **Bearer credential in `AP_API_KEY`/`--api-key`** (+ `--project-id`) — email/password login was removed; a platform API key (SERVICE principal) gets the full diagnostic bundle. The platform owner's session token also works, because every route the CLI calls accepts a platform admin user. `run-compare.sh` uses the token (`BENCH_TOKEN_FILE` in `setup.ts`), so the gate check does not depend on `POST /api-keys`, which follows the Autumn plan and returns 402 when a new unlicensed EE platform gets no plan (SRE-347, 2026-11-22).
 - The infra round-trip block is **self-hosted only** — `/v1/health/diagnostics` returns `FEATURE_DISABLED` on `AP_EDITION=cloud` (a Cloud admin is a tenant, not the infra operator); the CLI degrades gracefully.
 
 ### Gotchas — the GKE reference rig (`benchmark/run-gke.sh`)

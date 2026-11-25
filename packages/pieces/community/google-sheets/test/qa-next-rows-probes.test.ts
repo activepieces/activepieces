@@ -139,11 +139,12 @@ describe.each(variants)('QA probe $name', ({ action, props }) => {
 		expect(rows.map((row) => row.values)).toEqual([{ name: 'r2' }]);
 	});
 
-	it('an empty header row fails the read without moving the cursor', async () => {
+	it('an empty header row reads the next row keyed by column letter (PIE-1107)', async () => {
 		sheet.values = [[], ['r2'], ['r3']];
 		const propsValue = props({ groupSize: 1 });
-		await expect(action.run(actionContext({ propsValue }))).rejects.toThrow(/Unable to read headers/);
-		expect(store.has('row_number')).toBe(false);
+		const rows = rowEvents({ value: await action.run(actionContext({ propsValue })) });
+		expect(rows.map((row) => row.values)).toEqual([{ A: 'r2' }]);
+		expect(store.get('row_number')).toBe(3);
 	});
 });
 

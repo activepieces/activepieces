@@ -137,6 +137,7 @@ function triggerFor({
     ...adminControl(locked ? undefined : AdminControl.PROJECTS_NEW_OPEN),
     'aria-haspopup': DIALOG_POPUP,
     'aria-expanded': expanded,
+    'data-testid': 'create-project-button',
     onClick,
   };
   switch (variant) {

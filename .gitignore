@@ -114,3 +114,6 @@ deploy/terraform/**/terraform-*.tfvars
 
 packages/**/bun.lock
 packages/**/package-lock.json
+
+# translatable text by JSON path, written by the translation CLI (the nightly keeps its copy on the i18n/translatable-text-by-json-path branch)
+/tools/translatable-text-by-json-path/
