@@ -1,23 +1,26 @@
 {
   "name": "@activepieces/piece-alttextify",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "type": "commonjs",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
+    "@activepieces/core-piece-types": "workspace:*",
+    "@activepieces/core-utils": "workspace:*",
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "mime-types": "2.1.35",
-    "@activepieces/core-piece-types": "workspace:*",
-    "@activepieces/core-utils": "workspace:*"
+    "undici": "7.30.1"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
     "bundle": "node ../../../../dist/packages/cli/src/index.js pieces bundle",
-    "lint": "eslint 'src/**/*.ts'"
+    "lint": "eslint 'src/**/*.ts'",
+    "test": "vitest run"
   },
   "devDependencies": {
     "@types/mime-types": "2.1.1",
-    "tslib": "^2.3.0"
+    "tslib": "^2.3.0",
+    "vitest": "5.0.5"
   }
 }
