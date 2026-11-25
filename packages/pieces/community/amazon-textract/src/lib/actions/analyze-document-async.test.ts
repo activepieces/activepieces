@@ -1,16 +1,19 @@
 import { Readable } from 'node:stream';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { s3Send, textractSend, s3ClientConstructor, uploadDone, uploadClients, uploadOptions, uploadIds, uploadEvents } = vi.hoisted(() => ({
-  s3Send: vi.fn<(command: AwsCommand) => Promise<unknown>>(),
-  textractSend: vi.fn<(command: AwsCommand) => Promise<unknown>>(),
-  s3ClientConstructor: vi.fn(),
-  uploadDone: vi.fn<(params: UploadParams) => Promise<unknown>>(),
-  uploadClients: new Array<unknown>(),
-  uploadOptions: new Array<Record<string, unknown>>(),
-  uploadIds: new Array<string>(),
-  uploadEvents: { progress: undefined as (() => void) | undefined, aborted: false },
-}));
+const { s3Send, textractSend, s3ClientConstructor, uploadDone, uploadClients, uploadOptions, uploadIds, uploadEvents } = vi.hoisted(() => {
+  const uploadEvents: { progress?: () => void; aborted: boolean } = { aborted: false };
+  return {
+    s3Send: vi.fn<(command: AwsCommand) => Promise<unknown>>(),
+    textractSend: vi.fn<(command: AwsCommand) => Promise<unknown>>(),
+    s3ClientConstructor: vi.fn(),
+    uploadDone: vi.fn<(params: UploadParams) => Promise<unknown>>(),
+    uploadClients: new Array<unknown>(),
+    uploadOptions: new Array<Record<string, unknown>>(),
+    uploadIds: new Array<string>(),
+    uploadEvents,
+  };
+});
 
 vi.mock('@aws-sdk/client-s3', () => ({
   S3Client: vi.fn(function (config: unknown) {
