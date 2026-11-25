@@ -267,8 +267,11 @@ function ChatBoxContent({
       gate === 'ready' &&
       !sentInitialPrompt.current;
     if (!shouldSendInitialPrompt) return;
-    sentInitialPrompt.current = true;
-    handleSend(initialPrompt).catch(() => undefined);
+    const timer = setTimeout(() => {
+      sentInitialPrompt.current = true;
+      handleSend(initialPrompt).catch(() => undefined);
+    }, 0);
+    return () => clearTimeout(timer);
   }, [initialPrompt, initialConversationId, handleSend, gate]);
 
   const handleRetry = useCallback(() => {
