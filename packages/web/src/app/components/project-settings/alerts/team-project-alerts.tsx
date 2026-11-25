@@ -112,7 +112,9 @@ export const TeamProjectAlerts = () => {
                   <Bell />
                 </ItemMedia>
                 <ItemContent>
-                  <ItemTitle>{alert.receiver}</ItemTitle>
+                  <ItemTitle data-testid="alert-email-receiver">
+                    {alert.receiver}
+                  </ItemTitle>
                 </ItemContent>
                 <ItemActions>
                   <Tooltip>

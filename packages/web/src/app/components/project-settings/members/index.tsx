@@ -170,6 +170,7 @@ export const MembersSettings = () => {
             icon={UserRoundPlusIcon}
             iconSize={16}
             onClick={() => setInviteOpen(true)}
+            data-testid="project-members-add-button"
           >
             {t('Add Members')}
           </AnimatedIconButton>

@@ -1,26 +1,11 @@
-import { cva } from 'class-variance-authority';
 import { ReactNode } from 'react';
 
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
+import { Status, statusColors } from '@/lib/status-colors';
 import { cn } from '@/lib/utils';
 
-const dotVariants = cva('size-2 shrink-0 rounded-full', {
-  variants: {
-    tone: {
-      success: 'bg-success-10',
-      warning: 'bg-warning-10',
-      danger: 'bg-danger-10',
-      accent: 'bg-accent-10',
-      neutral: 'bg-gray-10',
-    },
-  },
-  defaultVariants: {
-    tone: 'neutral',
-  },
-});
-
 export function StatusDot({
-  tone,
+  status,
   pulse = false,
   className,
   children,
@@ -35,7 +20,11 @@ export function StatusDot({
     >
       <span
         aria-hidden
-        className={cn(dotVariants({ tone }), pulse && 'animate-pulse')}
+        className={cn(
+          'size-2 shrink-0 rounded-full',
+          statusColors.of(status).dot,
+          pulse && 'animate-pulse',
+        )}
       />
       {typeof children === 'string' ? (
         <TextWithTooltip tooltipMessage={children}>
@@ -48,15 +37,8 @@ export function StatusDot({
   );
 }
 
-export type StatusTone =
-  | 'success'
-  | 'warning'
-  | 'danger'
-  | 'accent'
-  | 'neutral';
-
 type StatusDotProps = {
-  tone: StatusTone;
+  status: Status;
   pulse?: boolean;
   className?: string;
   children?: ReactNode;

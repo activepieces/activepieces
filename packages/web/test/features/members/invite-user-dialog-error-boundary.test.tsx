@@ -12,7 +12,7 @@ vi.mock('@/lib/error-reporting', () => ({
   errorReporting: { report: vi.fn() },
 }));
 
-vi.mock('@/features/billing', () => ({
+vi.mock('@/features/billing/hooks/use-seat-limit-guard', () => ({
   useSeatLimitGuard: () => {
     throw new TypeError("Cannot read properties of undefined (reading 'find')");
   },

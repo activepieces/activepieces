@@ -122,6 +122,7 @@ export const Property = {
   MarkDown(request: {
     value: string;
     variant?: MarkdownVariant;
+    selfHostedOnly?: boolean;
   }): MarkDownProperty {
     return {
       displayName: 'Markdown',
@@ -130,6 +131,7 @@ export const Property = {
       type: PropertyType.MARKDOWN,
       valueSchema: undefined as never,
       variant: request.variant ?? MarkdownVariant.INFO,
+      selfHostedOnly: request.selfHostedOnly,
     };
   },
   Number<R extends boolean>(

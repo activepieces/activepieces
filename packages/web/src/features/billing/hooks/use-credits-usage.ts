@@ -3,8 +3,9 @@ import { PlatformUsage } from '@activepieces/shared';
 
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { CreditsSeverity } from '@/lib/statuses';
 
-import { billingUtils, CreditsSeverity } from '../utils/billing-utils';
+import { billingUtils } from '../utils/billing-utils';
 
 export function useCreditsUsage(): CreditsUsage {
   const { platform } = platformHooks.useCurrentPlatform();

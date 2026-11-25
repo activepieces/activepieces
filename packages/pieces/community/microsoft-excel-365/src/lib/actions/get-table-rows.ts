@@ -36,7 +36,7 @@ export const getTableRowsAction = createAction({
     const drivePath = getDrivePath(storageSource, siteId as string, documentId as string);
 
     const client = createMSGraphClient(auth['access_token'], cloud);
-    let apiCall = client.api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}/rows`);
+    let apiCall = client.api(`${drivePath}/items/${workbookId}/workbook/worksheets/${encodeURIComponent(worksheetId)}/tables/${tableId}/rows`);
 
     if (limit) {
       apiCall = apiCall.top(limit);

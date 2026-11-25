@@ -17,6 +17,7 @@ import {
   RunStatusCategory,
 } from '@/features/flow-runs/hooks/flow-run-hooks';
 import { formatUtils } from '@/lib/format-utils';
+import { cn } from '@/lib/utils';
 
 const DONUT_SIZE = 20;
 const DONUT_RADIUS = 6;
@@ -59,7 +60,8 @@ function MiniDonut({
               cy={DONUT_CENTER}
               r={DONUT_RADIUS}
               fill="none"
-              stroke={cat.color}
+              stroke="currentColor"
+              className={cat.className}
               strokeWidth={DONUT_STROKE}
               strokeDasharray={`${segmentLength} ${
                 DONUT_CIRCUMFERENCE - segmentLength
@@ -132,9 +134,9 @@ function RunsStatusChart() {
                 {categories.map((cat) => (
                   <div
                     key={cat.label}
+                    className={cn('bg-current', cat.className)}
                     style={{
                       width: isVisible ? `${(cat.count / total) * 100}%` : '0%',
-                      backgroundColor: cat.color,
                       transition: 'width 600ms ease-out',
                     }}
                   />
@@ -149,8 +151,10 @@ function RunsStatusChart() {
                   >
                     <div className="flex items-center gap-2">
                       <div
-                        className="size-2.5 rounded-full"
-                        style={{ backgroundColor: cat.color }}
+                        className={cn(
+                          'size-2.5 rounded-full bg-current',
+                          cat.className,
+                        )}
                       />
                       <span>
                         {formatUtils.convertEnumToHumanReadable(cat.label)}

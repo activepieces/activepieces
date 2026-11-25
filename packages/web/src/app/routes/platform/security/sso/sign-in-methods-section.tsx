@@ -1,6 +1,6 @@
 import { PlatformWithoutSensitiveData } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ArrowUpRight, LockKeyhole, MailIcon } from 'lucide-react';
+import { ArrowUpRight, Lock, LockKeyhole, MailIcon } from 'lucide-react';
 import { ReactNode, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { ssoMutations } from '@/features/platform-admin';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { SignInMethodStatus } from '@/lib/statuses';
 import { cn } from '@/lib/utils';
 
 import GoogleIcon from '../../../../../assets/img/custom/auth/google-icon.svg';
@@ -29,10 +30,18 @@ export const SignInMethodsSection = ({
   refetch,
 }: SignInMethodsSectionProps) => {
   const samlConnected = !!platform.federatedAuthProviders?.saml;
+  const samlActionLabel = samlConnected ? t('Manage') : t('Set up');
   const [googleChange, setGoogleChange] = useState<boolean | null>(null);
   const [emailChange, setEmailChange] = useState<boolean | null>(null);
-  const { selfHosted, working, isOnlyWorkingMethod } =
-    useSignInMethods(platform);
+  const {
+    selfHosted,
+    cloud,
+    locked,
+    verifiedDomain,
+    working,
+    isOnlyWorkingMethod,
+  } = useSignInMethods(platform);
+  const googleIconOn = !locked && platform.googleAuthEnabled;
   const googleNotSetUp =
     selfHosted && platform.googleAuthEnabled && !working.google;
   const emailIsLastMethod = isOnlyWorkingMethod('email');
@@ -61,12 +70,23 @@ export const SignInMethodsSection = ({
   return (
     <AdminSection
       title={t('Sign-in methods')}
-      description={t('Choose how people at your verified domain sign in.')}
+      description={describeWhoItAppliesTo({ cloud, verifiedDomain })}
+      aside={
+        locked && (
+          <span className="flex items-center gap-1.5 text-sm text-gray-11">
+            <Lock className="size-3.5" />
+            {t('Verify your domain to unlock')}
+          </span>
+        )
+      }
     >
-      <SettingsPanel flush>
+      <SettingsPanel
+        flush
+        className={cn(locked && '**:data-[slot=settings-row]:opacity-50')}
+      >
         <SettingsRow
           media={
-            <MethodIcon on={samlConnected}>
+            <MethodIcon on={!locked && samlConnected}>
               <LockKeyhole />
             </MethodIcon>
           }
@@ -75,31 +95,37 @@ export const SignInMethodsSection = ({
               {t('Single sign-on')}
               <Badge variant="outline">{t('SAML 2.0')}</Badge>
               {samlConnected && (
-                <StatusDot tone="success" className="text-xs text-gray-11">
+                <StatusDot
+                  status={SignInMethodStatus.CONNECTED}
+                  className="text-xs text-gray-11"
+                >
                   {t('Connected')}
                 </StatusDot>
               )}
             </>
           }
         >
-          <Button asChild size="sm" variant="outline">
-            <Link
-              {...adminControl(AdminControl.SSO_SAML_OPEN)}
-              to={ssoPaths.samlSetup}
-            >
-              {samlConnected ? t('Manage') : t('Set up')}
-            </Link>
-          </Button>
+          {locked ? (
+            <Button size="sm" variant="outline" disabled>
+              {samlActionLabel}
+            </Button>
+          ) : (
+            <Button asChild size="sm" variant="outline">
+              <Link
+                {...adminControl(AdminControl.SSO_SAML_OPEN)}
+                to={ssoPaths.samlSetup}
+              >
+                {samlActionLabel}
+              </Link>
+            </Button>
+          )}
         </SettingsRow>
 
         <SettingsRow
           media={
-            <MethodIcon on={platform.googleAuthEnabled}>
+            <MethodIcon on={googleIconOn}>
               <img
-                className={cn(
-                  'size-4',
-                  !platform.googleAuthEnabled && 'grayscale',
-                )}
+                className={cn('size-4', !googleIconOn && 'grayscale')}
                 src={GoogleIcon}
                 alt=""
               />
@@ -110,7 +136,10 @@ export const SignInMethodsSection = ({
               {t('Continue with Google')}
               <Badge variant="outline">{t('OAuth 2.0')}</Badge>
               {googleNotSetUp && (
-                <StatusDot tone="warning" className="text-xs text-gray-11">
+                <StatusDot
+                  status={SignInMethodStatus.NOT_SET_UP}
+                  className="text-xs text-gray-11"
+                >
                   {t('Not set up')}
                 </StatusDot>
               )}
@@ -130,13 +159,13 @@ export const SignInMethodsSection = ({
             aria-label={t('Continue with Google')}
             checked={platform.googleAuthEnabled}
             onCheckedChange={(checked) => setGoogleChange(checked)}
-            disabled={isGoogleAuthPending}
+            disabled={locked || isGoogleAuthPending}
           />
         </SettingsRow>
 
         <SettingsRow
           media={
-            <MethodIcon on={platform.emailAuthEnabled}>
+            <MethodIcon on={!locked && platform.emailAuthEnabled}>
               <MailIcon />
             </MethodIcon>
           }
@@ -147,7 +176,7 @@ export const SignInMethodsSection = ({
             aria-label={t('Email and password')}
             checked={platform.emailAuthEnabled}
             onCheckedChange={(checked) => setEmailChange(checked)}
-            disabled={isEmailAuthPending}
+            disabled={locked || isEmailAuthPending}
           />
         </SettingsRow>
       </SettingsPanel>
@@ -226,6 +255,23 @@ export const SignInMethodsSection = ({
   );
 };
 
+function describeWhoItAppliesTo({
+  cloud,
+  verifiedDomain,
+}: DescribeWhoItAppliesToParams): string {
+  if (!cloud) {
+    return t('Applies to everyone who signs in.');
+  }
+  if (verifiedDomain) {
+    return t('Applies to people at {domain}. Guests can use any method.', {
+      domain: verifiedDomain,
+    });
+  }
+  return t(
+    'Applies to people with your company email. Guests can use any method.',
+  );
+}
+
 const LastMethodWarning = () =>
   t(
     "You can't turn this off while it's the only way to sign in. Turn on another sign-in method first.",
@@ -253,6 +299,11 @@ const MethodIcon = ({ on, children }: { on: boolean; children: ReactNode }) => (
     {children}
   </div>
 );
+
+type DescribeWhoItAppliesToParams = {
+  cloud: boolean;
+  verifiedDomain: string | null;
+};
 
 type SignInMethodsSectionProps = {
   platform: PlatformWithoutSensitiveData;
