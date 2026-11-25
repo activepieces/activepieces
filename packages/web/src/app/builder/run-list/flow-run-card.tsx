@@ -28,7 +28,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { flowRunUtils } from '@/features/flow-runs';
+import { FlowRunStatusIcon } from '@/features/flow-runs';
 import {
   flowRunMutations,
   flowRunQueries,
@@ -37,6 +37,8 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
 import { cn } from '@/lib/utils';
+
+import { useBuilderStateContext } from '../builder-hooks';
 
 type FlowRunCardProps = {
   run: FlowRun;
@@ -47,12 +49,12 @@ type FlowRunCardProps = {
 export const FLOW_CARD_HEIGHT = 70;
 const FlowRunCard = React.memo(
   ({ run, viewedRunId, refetchRuns }: FlowRunCardProps) => {
-    const { Icon, variant } = flowRunUtils.getStatusIcon(run.status);
     const userHasPermissionToRetryRun = useAuthorization().checkAccess(
       Permission.WRITE_RUN,
     );
     const projectId = authenticationSession.getProjectId();
     const navigate = useNavigate();
+    const setRun = useBuilderStateContext((state) => state.setRun);
 
     const [isRetryDropdownOpen, setIsRetryDropdownOpen] =
       useState<boolean>(false);
@@ -65,9 +67,13 @@ const FlowRunCard = React.memo(
     });
     const { mutate: retryRun, isPending: isRetryingRun } =
       flowRunMutations.useRetryRun({
-        onSuccess: ({ run }) => {
+        onSuccess: ({ run: retriedRun, populatedFlow }) => {
           refetchRuns();
-          navigate(`/runs/${run.id}`);
+          if (retriedRun.id === viewedRunId) {
+            setRun({ ...retriedRun, steps: {} }, populatedFlow.version);
+            return;
+          }
+          navigate(`/runs/${retriedRun.id}`);
         },
       });
     const retryFromFailedStep = () =>
@@ -93,26 +99,12 @@ const FlowRunCard = React.memo(
             {run.status === FlowRunStatus.CANCELED ? (
               <Tooltip>
                 <TooltipTrigger>
-                  <Icon
-                    className={cn('w-5 h-5', {
-                      'text-success-11': variant === 'success',
-                      'text-danger-11': variant === 'error',
-                      'text-warning-11': variant === 'warning',
-                      'text-accent-11': variant === 'primary',
-                    })}
-                  />
+                  <FlowRunStatusIcon status={run.status} className="w-5 h-5" />
                 </TooltipTrigger>
                 <TooltipContent>{t('Canceled')}</TooltipContent>
               </Tooltip>
             ) : (
-              <Icon
-                className={cn('w-5 h-5', {
-                  'text-success-11': variant === 'success',
-                  'text-danger-11': variant === 'error',
-                  'text-warning-11': variant === 'warning',
-                  'text-accent-11': variant === 'primary',
-                })}
-              />
+              <FlowRunStatusIcon status={run.status} className="w-5 h-5" />
             )}
           </span>
         </div>
@@ -168,6 +160,7 @@ const FlowRunCard = React.memo(
                       <Button
                         variant="ghost"
                         size={'icon'}
+                        data-testid="flow-run-card-retry"
                         aria-label={t('Retry run')}
                         className={cn(
                           'group-hover:opacity-100 opacity-0 rounded-full bg-gray-4 drop-shadow-md',

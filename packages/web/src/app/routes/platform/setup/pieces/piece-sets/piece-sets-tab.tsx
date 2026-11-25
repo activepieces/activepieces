@@ -110,7 +110,7 @@ export const PieceSetsTab = () => {
           const includesNewPieces =
             row.original.config.pieces.mode === PieceSelectionMode.INCLUDE_ALL;
           return (
-            <StatusDot tone={includesNewPieces ? 'success' : 'neutral'}>
+            <StatusDot status={row.original.config.pieces.mode}>
               {includesNewPieces ? t('Yes') : t('No')}
             </StatusDot>
           );

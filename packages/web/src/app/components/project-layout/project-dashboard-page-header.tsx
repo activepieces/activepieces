@@ -143,6 +143,7 @@ export const ProjectDashboardPageHeader = ({
         <Button
           variant="ghost"
           className="gap-2"
+          data-testid="project-members-button"
           aria-label={`View ${activeProjectMembers?.length} team member${
             activeProjectMembers?.length !== 1 ? 's' : ''
           }`}
@@ -177,6 +178,8 @@ export const ProjectDashboardPageHeader = ({
         variant="ghost"
         size="icon"
         className="h-8 w-8"
+        aria-label={t('Project settings')}
+        data-testid="project-settings-button"
         onClick={() => {
           setSettingsInitialTab(getFirstAvailableTab());
           setSettingsOpen(true);

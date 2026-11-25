@@ -24,7 +24,10 @@ export const ProjectSelector = ({
       control={control}
       name={name}
       render={({ field }) => (
-        <FormItem className="flex flex-col gap-2">
+        <FormItem
+          className="flex flex-col gap-2"
+          data-testid="project-selector"
+        >
           <Label>{t('Available for Projects')}</Label>
           <MultiSelectPieceProperty
             placeholder={t('Select projects')}

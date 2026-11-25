@@ -16,7 +16,7 @@ If you're storing credentials for a specific piece (Slack, Stripe, Google Sheets
 
 1. Go to **Variables** in the left sidebar, or open the **Variables** tab in a step's Data Selector while editing a flow.
 2. Click **New variable**.
-3. Enter a **Name**. Names can only contain letters, numbers, and underscores (e.g. `STRIPE_PROD`, `SLACK_CHANNEL_ID`).
+3. Enter a **Name**. Names can only contain letters, numbers, and underscores (e.g. `STRIPE_PROD`, `SLACK_CHANNEL_ID`). You can't rename a variable later.
 4. Enter the **Value** and click **Create**.
 
 ![Creating a project variable](/resources/screenshots/project-variables/new-variable-dialog.png)
@@ -29,9 +29,11 @@ Insert `{{variables['NAME']}}` into any step input. The easiest way is from the 
 
 You can also copy a variable's reference from the Variables page: open the row's menu and click **Copy reference**.
 
+Run details show `**REDACTED**` in place of the value in a step's input. If a step returns the value in its output, the run details show that output in plain text.
+
 ## Rotating a value
 
-A variable's value is encrypted at rest and never displayed in the variables list or the edit dialog. To change it, open the variable and click **Rotate value**, then enter the new value.
+A variable's value is encrypted at rest and never displayed in the variables list or the edit dialog. To change it, open the row's menu on the Variables page, click **Edit**, then **Rotate value**. Enter the new value and click **Save new value**. The next run of each flow uses the new value.
 
 Members with write access (Editor or Admin) can retrieve the plaintext through the reveal endpoint (`POST /v1/variables/:id/reveal`) with their signed-in session. API keys cannot reveal a value. On platforms with audit logs enabled, each reveal is recorded as a `VARIABLE_VALUE_REVEALED` event.
 
@@ -49,4 +51,4 @@ Use the [Variables API](/endpoints/variables/schema) with a platform API key to 
 
 ## Permissions
 
-Reading and writing variables are separate permissions (`READ_VARIABLE`, `WRITE_VARIABLE`) tied to your project role, same as any other resource. A member with read-only access can use existing variables in flows but can't create, edit, or delete them.
+Reading and writing variables are separate permissions (`READ_VARIABLE`, `WRITE_VARIABLE`) tied to your project role, same as any other resource. A member with read-only access can use existing variables in flows but can't create, edit, delete, or reveal them.

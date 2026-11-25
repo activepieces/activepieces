@@ -1,6 +1,6 @@
 services:
   app:
-    image: ghcr.io/activepieces/activepieces:0.93.0
+    image: ghcr.io/activepieces/activepieces:0.94.0
     container_name: activepieces-app
     restart: unless-stopped
     ports:
@@ -16,13 +16,15 @@ services:
     networks:
       - activepieces
   worker:
-    image: ghcr.io/activepieces/activepieces:0.93.0
+    image: ghcr.io/activepieces/activepieces:0.94.0
     restart: unless-stopped
     depends_on:
       - app
     env_file: .env
     environment:
       - AP_CONTAINER_TYPE=WORKER
+    # A stopping worker finishes its running flows first: AP_FLOW_TIMEOUT_SECONDS + 105 s.
+    stop_grace_period: 705s
     deploy:
       replicas: 5
     volumes:

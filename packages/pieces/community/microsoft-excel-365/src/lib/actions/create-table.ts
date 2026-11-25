@@ -68,7 +68,7 @@ export const createTableAction = createAction({
     let range: string | undefined;
     if (selectRange === 'auto') {
       const usedRangeResponse = await client
-        .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/usedRange`)
+        .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${encodeURIComponent(worksheetId)}/usedRange`)
         .select('address')
         .get();
       range = usedRangeResponse.address.split('!')[1];
@@ -77,7 +77,7 @@ export const createTableAction = createAction({
     }
 
     const result = await client
-      .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/add`)
+      .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${encodeURIComponent(worksheetId)}/tables/add`)
       .post({ address: range, hasHeaders });
 
     return result;
