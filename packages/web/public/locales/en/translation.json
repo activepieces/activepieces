@@ -1191,6 +1191,8 @@
   "Recent": "Recent",
   "All chats…": "All chats…",
   "No chats match “{query}”": "No chats match “{query}”",
+  "Opens pages the AI edits.": "Opens pages the AI edits.",
+  "Doesn’t open pages for you.": "Doesn’t open pages for you.",
   "chats": "chats",
   "Start your first chat": "Start your first chat",
   "Older": "Older",
@@ -4097,9 +4099,15 @@
   "1 hour ago": "1 hour ago",
   "{count} hours ago": "{count} hours ago",
   "Step data": "Step data",
+  "The AI is editing {name}.": "The AI is editing {name}.",
   "One message is already waiting. Cancel it to change it.": "One message is already waiting. Cancel it to change it.",
   "Moved back to the composer because the AI is waiting for your answer.": "Moved back to the composer because the AI is waiting for your answer.",
   "Remove file": "Remove file",
   "Load this chat again before you reply.": "Load this chat again before you reply.",
-  "Sends when the reply ends.": "Sends when the reply ends."
+  "Sends when the reply ends.": "Sends when the reply ends.",
+  "Follow along": "Follow along",
+  "Stop following": "Stop following",
+  "The AI deleted {name}.": "The AI deleted {name}.",
+  "The AI deleted this page.": "The AI deleted this page.",
+  "Opened {name} beside the chat.": "Opened {name} beside the chat."
 }
