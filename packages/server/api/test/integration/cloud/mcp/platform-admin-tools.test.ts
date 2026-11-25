@@ -4,6 +4,7 @@ import { FastifyInstance } from 'fastify'
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { platformAdminTools } from '../../../../src/app/mcp/platform-admin/platform-admin-tools'
 import { db } from '../../../helpers/db'
+import { mcpClientHelpers } from '../../../helpers/mcp-client'
 import { createMemberContext, createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment } from '../../../helpers/test-setup'
 
@@ -64,6 +65,29 @@ describe('platform admin MCP tools', () => {
     })
 })
 
+describe('which MCP clients get the platform admin tools', () => {
+    it('gives them to an admin on a platform grant, and drops write when the platform switches it off', async () => {
+        const tools = await toolNames({ ctx })
+        expect(tools).toEqual(expect.arrayContaining(ADMIN_TOOLS))
+
+        await ctx.post('/v1/mcp-server', { disabledTools: ['ap_platform_write'] })
+        const afterSwitchOff = await toolNames({ ctx })
+        expect(afterSwitchOff).toContain('ap_platform_read')
+        expect(afterSwitchOff).not.toContain('ap_platform_write')
+    })
+
+    it('keeps them from a member and from a project-scoped grant', async () => {
+        const member = await createMemberContext(app, ctx, { projectRole: DefaultProjectRole.ADMIN })
+        expect(await toolNames({ ctx: member })).not.toEqual(expect.arrayContaining(['ap_platform_read']))
+        expect(await toolNames({ ctx, projectId: ctx.project.id })).not.toEqual(expect.arrayContaining(['ap_platform_read']))
+    })
+})
+
+async function toolNames({ ctx: client, projectId }: { ctx: TestContext, projectId?: string }): Promise<string[]> {
+    const mcpClient = await mcpClientHelpers.connect({ app, projectId, approve: (payload) => client.post('/v1/mcp-oauth/approve', payload) })
+    return mcpClientHelpers.listToolNames({ app, mcpClient })
+}
+
 async function run({ userId, tool, args }: { userId: string, tool: string, args: Record<string, unknown> }): Promise<string> {
     const definition = platformAdminTools({ userId, log: app.log }).find((candidate: McpToolDefinition) => candidate.title === tool)
     if (isNil(definition)) {
@@ -72,3 +96,5 @@ async function run({ userId, tool, args }: { userId: string, tool: string, args:
     const result = await definition.execute(args)
     return result.content.map((part) => part.type === 'text' ? part.text : '').join('\n')
 }
+
+const ADMIN_TOOLS = ['ap_platform_guide', 'ap_platform_read', 'ap_platform_write']

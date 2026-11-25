@@ -48,6 +48,7 @@ function routes(): PlatformAdminRoute[] {
     return registeredRoutes
         .filter((route) => isCallableByUser(route) && (!isNil(route.config?.mcp) || isAdminOnly(route)))
         .flatMap((route) => (Array.isArray(route.method) ? route.method : [route.method])
+            .filter((method) => method !== 'HEAD')
             .map((method) => ({ method, url: route.url, mcp: route.config?.mcp, schema: route.schema })))
 }
 

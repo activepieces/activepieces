@@ -55,7 +55,7 @@ function readPlatformDoc(doc: string): PlatformDoc {
         body: raw.replace(FRONTMATTER, '')
             .replace(/^import .*$/gm, '')
             .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
-            .replace(/<\/?[A-Z][^>]*>/g, '')
+            .replace(/<\/?[A-Za-z][^>]*>/g, '')
             .replace(/\n{3,}/g, '\n\n')
             .trim(),
     }
