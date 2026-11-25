@@ -28,7 +28,7 @@ function estimateTokenCount({ messages, summary, summarizedUpToIndex, systemProm
 }): number {
     const unsummarized = summary ? messages.slice(summarizedUpToIndex ?? 0) : messages
     const summaryTokens = summary ? tokensIn(JSON.stringify(summaryBlockFor({ summary }))) : 0
-    return summaryTokens + tokensIn(JSON.stringify(unsummarized)) + Math.ceil(systemPromptLength / CHARS_PER_TOKEN_ESTIMATE)
+    return summaryTokens + messageTokens(unsummarized) + Math.ceil(systemPromptLength / CHARS_PER_TOKEN_ESTIMATE)
 }
 
 function contextBudget({ provider, reservedTokens }: { provider: AIProviderName, reservedTokens: number }): number {
@@ -39,7 +39,7 @@ function recentWindowSizeFor({ messages, targetTokens }: { messages: ModelMessag
     let tokens = 0
     let size = 0
     for (let i = messages.length - 1; i > 0 && tokens < targetTokens; i--) {
-        tokens += tokensIn(JSON.stringify(messages[i]))
+        tokens += messageTokens(messages[i])
         size++
     }
     return Math.min(Math.max(2, size), messages.length - 1)
@@ -178,7 +178,7 @@ function buildCompactedPayload({ messages, summary, summarizedUpToIndex, provide
 
     const budget = contextBudget({ provider, reservedTokens })
     const threshold = budget * COMPACTION_THRESHOLD
-    const recentTokens = recentMessages.map((m) => tokensIn(JSON.stringify(m)))
+    const recentTokens = recentMessages.map((m) => messageTokens(m))
 
     let runningTokens = tokensIn(JSON.stringify(summaryBlock)) + recentTokens.reduce((a, b) => a + b, 0)
     let startIdx = 0
@@ -237,6 +237,11 @@ function fairShareCap({ lengths, budget }: { lengths: number[], budget: number }
         remaining -= ascending[i]
     }
     return Number.POSITIVE_INFINITY
+}
+
+function messageTokens(value: unknown): number {
+    const { text, attachmentTokens } = agentAiUtils.textForEstimate(value)
+    return tokensIn(text) + attachmentTokens
 }
 
 function tokenCost(codePoint: string): number {
