@@ -17,6 +17,7 @@ import {
 import { askOpenAI } from '../src/lib/actions/send-prompt';
 import { analyzeSentiment } from '../src/lib/actions/analyze-sentiment';
 import { extractStructuredDataAction } from '../src/lib/actions/extract-structure-data.action';
+import { openai } from '../src/index';
 
 const RETIRED: Array<[string, string]> = [
   ['gpt-5', 'gpt-6.1-sol'],
@@ -181,5 +182,12 @@ describe('actions send the replacement model', () => {
     const body = create.mock.calls[0][0];
     expect(body.model).toBe('gpt-4o-mini');
     expect(body).not.toHaveProperty('reasoning_effort');
+  });
+});
+
+describe('piece registration', () => {
+  it('registers the actions that resolve retired models', () => {
+    const names = Object.keys(openai.actions());
+    expect(names).toEqual(expect.arrayContaining(['ask_chatgpt', 'analyze_sentiment', 'extract-structured-data']));
   });
 });
