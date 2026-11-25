@@ -455,3 +455,13 @@ describe('capsule-crm trigger lifecycle', () => {
     expect(await callHook({ hook: newTaskTrigger.run, context: { payload: { body: 'x' } } })).toEqual([]);
   });
 });
+
+describe('opportunity value on the human actions', () => {
+  it('rejects an amount without a currency and keeps 0', async () => {
+    const { capsuleCrmClient } = await import('../src/lib/common/client');
+    expect(() => capsuleCrmClient.opportunityValue({ amount: 5000, currency: '' })).toThrow('Give Amount and Currency together.');
+    expect(() => capsuleCrmClient.opportunityValue({ amount: undefined, currency: 'USD' })).toThrow('Give Amount and Currency together.');
+    expect(capsuleCrmClient.opportunityValue({ amount: 0, currency: 'usd' })).toEqual({ amount: 0, currency: 'USD' });
+    expect(capsuleCrmClient.opportunityValue({ amount: undefined, currency: undefined })).toBeUndefined();
+  });
+});

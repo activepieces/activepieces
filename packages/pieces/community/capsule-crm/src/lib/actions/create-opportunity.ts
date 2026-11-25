@@ -229,12 +229,9 @@ export const createOpportunityAction = createAction({
       opportunityData.team = { id: propsValue.teamId };
     }
 
-    const currency = capsuleCrmClient.optionalText(propsValue.currency);
-    if (typeof propsValue.amount === 'number' && currency !== undefined) {
-      opportunityData.value = {
-        currency,
-        amount: propsValue.amount,
-      };
+    const value = capsuleCrmClient.opportunityValue({ amount: propsValue.amount, currency: propsValue.currency });
+    if (value !== undefined) {
+      opportunityData.value = value;
     }
 
     if (propsValue.tags) {

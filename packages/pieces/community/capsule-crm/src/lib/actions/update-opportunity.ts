@@ -241,12 +241,9 @@ export const updateOpportunityAction = createAction({
     if (propsValue.milestoneId) {
       opportunityData.milestone = { id: propsValue.milestoneId };
     }
-    const currency = capsuleCrmClient.optionalText(propsValue.currency);
-    if (typeof propsValue.amount === 'number' && currency !== undefined) {
-      opportunityData.value = {
-        currency,
-        amount: propsValue.amount,
-      };
+    const value = capsuleCrmClient.opportunityValue({ amount: propsValue.amount, currency: propsValue.currency });
+    if (value !== undefined) {
+      opportunityData.value = value;
     }
 
     const tags: OpportunityTagInput[] = recordsOf(propsValue.tags?.['tags']).flatMap((tag) => {
