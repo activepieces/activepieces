@@ -24,6 +24,21 @@ describe('aiObservability', () => {
         expect(agentAiUtils.buildTelemetry({ functionId: 'agent-turn' })).toEqual({})
     })
 
+    it('follows a changed project token when a worker fetches its settings again', () => {
+        aiObservability.init({ enabled: true, projectToken: PROJECT_TOKEN })
+        const first = aiObservability.integration()
+
+        aiObservability.init({ enabled: true, projectToken: PROJECT_TOKEN })
+        expect(aiObservability.integration()).toBe(first)
+
+        aiObservability.init({ enabled: true, projectToken: null })
+        expect(aiObservability.integration()).toBeUndefined()
+
+        aiObservability.init({ enabled: true, projectToken: 'phc_other' })
+        expect(aiObservability.integration()).toBeDefined()
+        expect(aiObservability.integration()).not.toBe(first)
+    })
+
     it('reads the user, conversation and tenant from the job wide event', () => {
         aiObservability.init({ enabled: true, projectToken: PROJECT_TOKEN })
         const logger = createLogger({ user: { id: 'user-1' }, conversation: { id: 'conversation-1' }, platform: { id: 'platform-1' }, project: { id: 'project-1' } })

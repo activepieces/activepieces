@@ -9,21 +9,29 @@ import { apVersionUtil } from './ap-version'
 import { posthogConfig } from './posthog-config'
 import { wideEvent } from './wide-event'
 
-let tracing: { processor: BatchSpanProcessor, integration: Telemetry } | undefined
+let tracing: { processor: BatchSpanProcessor, integration: Telemetry, projectToken: string } | undefined
 
 function init({ enabled, projectToken }: { enabled: boolean, projectToken: string | null }): void {
-    if (!enabled || isNil(projectToken) || !isNil(tracing)) {
+    const activeToken = enabled ? projectToken : null
+    if (tracing?.projectToken === activeToken) {
+        return
+    }
+    if (!isNil(tracing)) {
+        tracing.processor.shutdown().catch(() => undefined)
+        tracing = undefined
+    }
+    if (isNil(activeToken)) {
         return
     }
     const exporter = aiTraceScrubber.wrapExporter({
         exporter: new OTLPTraceExporter({
             url: `${posthogConfig.host}/i/v0/ai/otel`,
-            headers: { Authorization: `Bearer ${projectToken}` },
+            headers: { Authorization: `Bearer ${activeToken}` },
         }),
     })
     const processor = new BatchSpanProcessor(exporter, { maxExportBatchSize: 8, maxQueueSize: 128 })
     const tracer = new BasicTracerProvider({ spanProcessors: [processor], spanLimits: { attributeValueLengthLimit: 100_000 } }).getTracer('activepieces-ai')
-    tracing = { processor, integration: new OpenTelemetry({ tracer, enrichSpan }) }
+    tracing = { processor, integration: new OpenTelemetry({ tracer, enrichSpan }), projectToken: activeToken }
 }
 
 function integration(): Telemetry | undefined {
