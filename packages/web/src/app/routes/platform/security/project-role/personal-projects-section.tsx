@@ -84,7 +84,7 @@ export function PersonalProjectsSection() {
     });
     setOpenDialog(null);
     if (error) {
-      internalErrorToast();
+      internalErrorToast({ error });
       return;
     }
     if (createForExistingMembers) {
@@ -98,7 +98,7 @@ export function PersonalProjectsSection() {
     );
     setOpenDialog(null);
     if (error) {
-      internalErrorToast();
+      internalErrorToast({ error });
     }
   };
 

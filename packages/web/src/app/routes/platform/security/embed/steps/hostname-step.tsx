@@ -47,12 +47,22 @@ export const HostnameStep = ({
 };
 
 const EmbedHostnameForm = () => {
-  const { mutate, isPending } = embedSubdomainMutations.useUpsert();
-
   const form = useForm<GenerateEmbedSubdomainRequest>({
     resolver: zodResolver(GenerateEmbedSubdomainRequest),
     defaultValues: { hostname: '' },
     mode: 'onChange',
+  });
+
+  const { mutate, isPending } = embedSubdomainMutations.useUpsert({
+    onError: (error) => {
+      form.setError('root.serverError', {
+        type: 'manual',
+        message: api.extractServerErrorMessage(
+          error,
+          t("Couldn't save domain"),
+        ),
+      });
+    },
   });
 
   const handleSubmit = (values: GenerateEmbedSubdomainRequest) => {
@@ -60,15 +70,6 @@ const EmbedHostnameForm = () => {
     mutate(values, {
       onSuccess: () => {
         toast.success(t('Domain saved'));
-      },
-      onError: (error) => {
-        form.setError('root.serverError', {
-          type: 'manual',
-          message: api.extractServerErrorMessage(
-            error,
-            t("Couldn't save domain"),
-          ),
-        });
       },
     });
   };
@@ -116,7 +117,12 @@ const EmbedHostnameForm = () => {
 const EmbedHostnameSummary = ({ subdomain }: { subdomain: EmbedSubdomain }) => {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const { mutateAsync, isPending } = embedSubdomainMutations.useUpsert();
+  const { mutateAsync, isPending } = embedSubdomainMutations.useUpsert({
+    onError: (error) =>
+      setErrorMessage(
+        api.extractServerErrorMessage(error, t("Couldn't update domain")),
+      ),
+  });
 
   const form = useForm<GenerateEmbedSubdomainRequest>({
     resolver: zodResolver(GenerateEmbedSubdomainRequest),
@@ -129,15 +135,8 @@ const EmbedHostnameSummary = ({ subdomain }: { subdomain: EmbedSubdomain }) => {
 
   const handleConfirm = async () => {
     setErrorMessage(null);
-    try {
-      await mutateAsync({ hostname: hostnameValue.trim() });
-      toast.success(t('Domain updated'));
-    } catch (error) {
-      setErrorMessage(
-        api.extractServerErrorMessage(error, t("Couldn't update domain")),
-      );
-      throw error;
-    }
+    await mutateAsync({ hostname: hostnameValue.trim() });
+    toast.success(t('Domain updated'));
   };
 
   return (

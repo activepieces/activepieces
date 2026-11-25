@@ -9,7 +9,6 @@ import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
 import { Item, ItemContent, ItemTitle } from '@/components/ui/item';
-import { internalErrorToast } from '@/components/ui/sonner';
 import { LockedGem, useLockedFeature } from '@/features/billing';
 import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -167,7 +166,6 @@ function RemoveDefaultProjectButton({
       entityName={projectName}
       buttonText={t('Remove')}
       mutationFn={onRemove}
-      onError={() => internalErrorToast()}
     >
       {removeIconButton({ projectName })}
     </ConfirmationDeleteDialog>

@@ -12,7 +12,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { SkeletonList } from '@/components/ui/skeleton';
-import { internalErrorToast } from '@/components/ui/sonner';
 import { NewSigningKeyDialog, signingKeyApi } from '@/features/platform-admin';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { formatUtils } from '@/lib/format-utils';
@@ -122,7 +121,6 @@ const SigningKeysList = ({
                   await signingKeyApi.delete(signingKey.id);
                   refetch();
                 }}
-                onError={() => internalErrorToast()}
                 controlId={AdminControl.EMBEDDING_SIGNING_KEY_DELETE_CONFIRM}
               >
                 <DropdownMenuItem

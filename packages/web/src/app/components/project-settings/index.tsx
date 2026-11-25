@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { INTERNAL_ERROR_MESSAGE } from '@/components/ui/sonner';
+import { internalErrorMessage } from '@/components/ui/sonner';
 import { projectCollectionUtils } from '@/features/projects';
 import { ApProjectDisplay } from '@/features/projects/components/ap-project-display';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -75,7 +75,7 @@ export function ProjectSettingsDialog({
     });
     const { error } = await tryCatch(() => transaction.isPersisted.promise);
     if (!isNil(error)) {
-      toast.error(api.extractServerErrorMessage(error, INTERNAL_ERROR_MESSAGE));
+      toast.error(api.extractServerErrorMessage(error, internalErrorMessage()));
       return;
     }
     toast.success(t('Your changes have been saved.'), {

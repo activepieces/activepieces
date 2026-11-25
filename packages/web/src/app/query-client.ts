@@ -54,8 +54,14 @@ export const queryClient = new QueryClient({
           billingDialogHooks.useManagePlanDialogStore.getState();
         openDialog();
       } else {
-        internalErrorToast();
+        internalErrorToast({ error: err, title: mutation.meta?.errorTitle });
       }
     },
   }),
 });
+
+declare module '@tanstack/react-query' {
+  interface Register {
+    mutationMeta: { errorTitle?: string };
+  }
+}

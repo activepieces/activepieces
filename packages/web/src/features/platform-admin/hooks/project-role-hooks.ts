@@ -74,11 +74,7 @@ export const projectRoleMutations = {
           duration: 3000,
         });
       },
-      onError: () => {
-        toast.error(t('Could not delete the role. Try again.'), {
-          duration: 5000,
-        });
-      },
+      meta: { errorTitle: t("Couldn't delete the role") },
     });
   },
 };

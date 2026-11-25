@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { platformApi } from '@/api/platforms-api';
+import { internalErrorToast } from '@/components/ui/sonner';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { flagsHooks } from './flags-hooks';
@@ -92,13 +93,13 @@ export const platformHooks = {
           toast.success(successMessage);
         }
       },
-      onError: () => {
+      onError: (error) => {
         const errorMessage =
           messages?.error === undefined
-            ? t('Activation failed, invalid license key')
+            ? t("Couldn't activate the license")
             : messages.error;
         if (!isNil(errorMessage)) {
-          toast.error(errorMessage);
+          internalErrorToast({ error, title: errorMessage });
         }
       },
     });

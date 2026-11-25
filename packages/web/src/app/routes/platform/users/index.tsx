@@ -139,7 +139,7 @@ export default function UsersPage() {
       onSuccess: refreshUsersAndSeats,
       onError: (error) => {
         if (!handleSeatLimitError(error)) {
-          internalErrorToast();
+          internalErrorToast({ error });
         }
       },
     });

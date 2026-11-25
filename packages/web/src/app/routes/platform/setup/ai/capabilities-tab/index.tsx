@@ -35,6 +35,7 @@ import {
   aiToolConfigQueries,
 } from '@/features/platform-admin';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 import { AiCapabilityDialog } from '../../ai-capabilities/ai-capability-dialog';
@@ -67,12 +68,10 @@ export function CapabilitiesTab() {
   const { mutateAsync: remove } = aiToolConfigMutations.useDeleteAiToolConfig({
     onSuccess: () => refetchConfigs(),
     onError: (error) => {
-      const data = error.response?.data;
       toast.error(
-        t(
-          data?.params?.message ??
-            data?.message ??
-            'Could not reset this capability',
+        api.extractServerErrorMessage(
+          error,
+          t("Couldn't reset this capability"),
         ),
       );
     },

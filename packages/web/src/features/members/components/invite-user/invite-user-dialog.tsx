@@ -45,7 +45,7 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
-import { HttpError } from '@/lib/api';
+import { api, HttpError } from '@/lib/api';
 import { errorReporting } from '@/lib/error-reporting';
 import { formatUtils } from '@/lib/format-utils';
 
@@ -222,9 +222,12 @@ const InviteUserDialogInternal = ({
       if (handleSeatLimitError(error)) {
         return;
       }
-      toast.error(error.message || t('Failed to send invitations'), {
-        duration: 4000,
-      });
+      toast.error(
+        api.extractServerErrorMessage(error, t('Failed to send invitations')),
+        {
+          duration: 4000,
+        },
+      );
     },
   });
 

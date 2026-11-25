@@ -23,6 +23,7 @@ import {
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { internalErrorMessage } from '@/components/ui/sonner';
 import { templateUtils } from '@/features/flows';
 import { templatesApi } from '@/features/templates';
 import { userHooks } from '@/hooks/user-hooks';
@@ -98,7 +99,7 @@ export const CreateTemplateDialog = ({
     onError: (error) => {
       if (api.isError(error)) {
         form.setError('template', {
-          message: error.message,
+          message: api.extractServerErrorMessage(error, internalErrorMessage()),
         });
       }
     },

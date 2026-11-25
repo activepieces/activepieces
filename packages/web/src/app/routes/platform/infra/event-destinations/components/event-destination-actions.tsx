@@ -13,7 +13,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { INTERNAL_ERROR_MESSAGE } from '@/components/ui/sonner';
+import { internalErrorMessage } from '@/components/ui/sonner';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
 
@@ -65,7 +65,7 @@ const EventDestinationActions = ({
               toast.error(t('Error'), {
                 description: api.extractServerErrorMessage(
                   error,
-                  INTERNAL_ERROR_MESSAGE,
+                  internalErrorMessage(),
                 ),
               })
             }

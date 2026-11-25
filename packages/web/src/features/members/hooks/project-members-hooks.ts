@@ -42,7 +42,7 @@ export const projectMembersMutations = {
     onError,
   }: {
     onSuccess: (variables: { memberId: string; role: string }) => void;
-    onError: () => void;
+    onError: (error: Error) => void;
   }) => {
     return useMutation({
       mutationFn: ({ memberId, role }: { memberId: string; role: string }) =>

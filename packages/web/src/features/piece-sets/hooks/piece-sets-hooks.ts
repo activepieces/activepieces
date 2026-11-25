@@ -90,9 +90,7 @@ export const pieceSetMutations = {
         toast.success(t('Piece set created'));
         queryClient.invalidateQueries({ queryKey: pieceSetKeys.all });
       },
-      onError: () => {
-        toast.error(t('Failed to create piece set. Please try again.'));
-      },
+      meta: { errorTitle: t("Couldn't create piece set") },
     });
   },
   useUpdatePieceSet: () => {
@@ -115,9 +113,7 @@ export const pieceSetMutations = {
         ]);
         toast.success(t('Your changes have been saved.'), { duration: 3000 });
       },
-      onError: () => {
-        toast.error(t('Failed to save changes. Please try again.'));
-      },
+      meta: { errorTitle: t("Couldn't save changes") },
     });
   },
   useDeletePieceSet: () => {
@@ -130,9 +126,7 @@ export const pieceSetMutations = {
         pieceCacheUtils.invalidatePieceCaches(queryClient);
         projectCollectionUtils.refetchProjects();
       },
-      onError: () => {
-        toast.error(t('Failed to delete piece set. Please try again.'));
-      },
+      meta: { errorTitle: t("Couldn't delete piece set") },
     });
   },
   useDuplicatePieceSet: () => {
@@ -144,6 +138,7 @@ export const pieceSetMutations = {
         toast.success(t('Piece set duplicated'));
         queryClient.invalidateQueries({ queryKey: pieceSetKeys.all });
       },
+      meta: { errorTitle: t("Couldn't duplicate piece set") },
     });
   },
   useAssignProjects: () => {
@@ -159,6 +154,7 @@ export const pieceSetMutations = {
         pieceCacheUtils.invalidatePieceCaches(queryClient);
         projectCollectionUtils.refetchProjects();
       },
+      meta: { errorTitle: t("Couldn't save changes") },
     });
   },
   useRemoveProject: () => {
@@ -193,6 +189,7 @@ export const pieceSetMutations = {
         pieceCacheUtils.invalidatePieceCaches(queryClient);
         projectCollectionUtils.refetchProjects();
       },
+      meta: { errorTitle: t("Couldn't save changes") },
     });
   },
 };

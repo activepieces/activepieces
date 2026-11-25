@@ -126,7 +126,7 @@ const EditProjectForm = ({
     },
     (error) => {
       console.error(error);
-      internalErrorToast();
+      internalErrorToast({ error });
     },
   );
 

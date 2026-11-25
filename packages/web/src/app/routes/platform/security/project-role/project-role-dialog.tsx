@@ -119,7 +119,10 @@ function RoleDialogBody({
         setSaveError(
           isDuplicateNameError(error)
             ? t('nameAlreadyTaken', { name: name.trim() })
-            : t('Could not save the role. Try again.'),
+            : api.extractServerErrorMessage(
+                error,
+                t('Could not save the role. Try again.'),
+              ),
         ),
     });
   const { mutateAsync: deleteRole } = projectRoleMutations.useDeleteProjectRole(

@@ -103,8 +103,8 @@ const RoleCell = ({
         }
         refetch();
       },
-      onError: () => {
-        internalErrorToast();
+      onError: (error) => {
+        internalErrorToast({ error });
       },
     });
 
@@ -259,7 +259,7 @@ const ActionsCell = ({
             refetch();
             return;
           }
-          internalErrorToast();
+          internalErrorToast({ error });
         }}
         title={
           isPlatformInvitation

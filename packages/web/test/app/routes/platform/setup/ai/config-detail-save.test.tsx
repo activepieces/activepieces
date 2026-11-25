@@ -48,7 +48,8 @@ vi.mock('i18next', () => ({
   t: (key: string) => key,
 }));
 
-vi.mock('@tanstack/react-query', () => ({
+vi.mock('@tanstack/react-query', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@tanstack/react-query')>()),
   useQuery: () => ({ data: [], isLoading: false }),
 }));
 

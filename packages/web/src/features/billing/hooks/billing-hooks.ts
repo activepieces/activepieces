@@ -175,10 +175,7 @@ export const billingMutations = {
             return;
           }
         }
-        toast.error(t('Starting checkout failed'), {
-          description: t(error.message),
-          duration: 3000,
-        });
+        internalErrorToast({ error, title: t("Couldn't start checkout") });
       },
     });
   },
@@ -208,8 +205,10 @@ export const billingMutations = {
           onSeatLimitExceeded(request);
           return;
         }
-        toast.error(t('Failed to cancel subscription'));
-        internalErrorToast();
+        internalErrorToast({
+          error,
+          title: t("Couldn't cancel the subscription"),
+        });
       },
     });
   },
@@ -222,9 +221,11 @@ export const billingMutations = {
         toast.success(t("You'll stay on your current plan"));
         setIsOpen?.(false);
       },
-      onError: () => {
-        toast.error(t('Failed to update subscription'));
-        internalErrorToast();
+      onError: (error) => {
+        internalErrorToast({
+          error,
+          title: t("Couldn't update the subscription"),
+        });
       },
     });
   },
@@ -263,9 +264,9 @@ export const billingMutations = {
         setIsOpen?.(false);
       },
       onError: (error) => {
-        toast.error(t('Starting Checkout Session failed'), {
-          description: t(error.message),
-          duration: 3000,
+        internalErrorToast({
+          error,
+          title: t("Couldn't start checkout"),
         });
       },
     });
@@ -294,10 +295,12 @@ export const billingMutations = {
         });
         toast.success(t('Auto top-up config saved'));
       },
-      onError: (_error, _params, context) => {
+      onError: (error, _params, context) => {
         restoreBillingSubscription(queryClient, context?.previous);
-        toast.error(t('Auto top-up config change failed'));
-        internalErrorToast();
+        internalErrorToast({
+          error,
+          title: t("Couldn't save the auto top-up settings"),
+        });
       },
     });
   },
@@ -310,9 +313,6 @@ export const billingMutations = {
         if (url) {
           window.open(url, '_blank');
         }
-      },
-      onError: () => {
-        internalErrorToast();
       },
     });
   },

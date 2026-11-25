@@ -30,7 +30,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { INTERNAL_ERROR_MESSAGE } from '@/components/ui/sonner';
+import { internalErrorMessage } from '@/components/ui/sonner';
 import { Textarea } from '@/components/ui/textarea';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { api } from '@/lib/api';
@@ -77,7 +77,7 @@ const ConnectGitDialog = ({ open, setOpen, showButton }: ConnectGitProps) => {
       });
     },
     onError: (error) => {
-      let message = INTERNAL_ERROR_MESSAGE;
+      let message = internalErrorMessage();
 
       if (api.isError(error)) {
         const responseData = error.response?.data as ApErrorParams;

@@ -282,7 +282,7 @@ function toastError({
   error: unknown;
   fallback: string;
 }): void {
-  toast.error(api.serverErrorMessage(error) ?? fallback, {
+  toast.error(api.extractServerErrorMessage(error, fallback), {
     duration: TOAST_ERROR_MS,
   });
 }

@@ -19,8 +19,13 @@ import { t } from 'i18next';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
+import {
+  internalErrorMessage,
+  internalErrorToast,
+} from '@/components/ui/sonner';
 import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { api } from '@/lib/api';
 
 import { workerGroupsApi } from './api';
 
@@ -107,14 +112,15 @@ export function useMover() {
   }) => {
     const changed = items.filter((item) => item.from !== to);
     if (changed.length === 0) return false;
-    const { done, waiting, failed } = await sendMovesInParts({
+    const { done, waiting, error } = await sendMovesInParts({
       items: changed,
       to,
     });
     if (done.length === 0) {
-      toast.error(t('Could not move. Nothing was changed.'));
+      internalErrorToast({ error, title: t("Couldn't move") });
       return false;
     }
+    const failed = error !== null;
     await queryClient.invalidateQueries({ queryKey: KEYS.root });
     const notify = failed ? toast.error : toast.success;
     notify(
@@ -132,12 +138,20 @@ export function useMover() {
       {
         id: MOVE_TOAST_ID,
         style: TOAST_STYLE,
+        description: failed
+          ? api.extractServerErrorMessage(error, internalErrorMessage())
+          : undefined,
         action: {
           label: t('Undo'),
           onClick: () => {
             undoMoves({ items: done })
               .then(() => toast.success(t('Move undone.')))
-              .catch(() => toast.error(t('Could not undo the move.')))
+              .catch((error) =>
+                internalErrorToast({
+                  error,
+                  title: t("Couldn't undo the move"),
+                }),
+              )
               .finally(() =>
                 queryClient.invalidateQueries({ queryKey: KEYS.root }),
               );
@@ -166,7 +180,7 @@ export function useMover() {
       }),
     );
     if (error) {
-      toast.error(t('Could not move. Nothing was changed.'));
+      internalErrorToast({ error, title: t("Couldn't move") });
       return false;
     }
     projectCollectionUtils.setWorkerGroup({
@@ -207,7 +221,12 @@ export function useMover() {
               to: from,
             })
               .then(() => toast.success(t('Move undone.')))
-              .catch(() => toast.error(t('Could not undo the move.')))
+              .catch((error) =>
+                internalErrorToast({
+                  error,
+                  title: t("Couldn't undo the move"),
+                }),
+              )
               .finally(() =>
                 queryClient.invalidateQueries({ queryKey: KEYS.root }),
               );
@@ -239,11 +258,7 @@ export function useRunLimit() {
             }),
       );
     },
-    onError: () => {
-      toast.error(
-        t('Could not save the concurrency limit. Nothing was changed.'),
-      );
-    },
+    meta: { errorTitle: t("Couldn't save the concurrency limit") },
   });
 }
 
@@ -342,8 +357,8 @@ async function sendMoves({
   items: MoveItem[];
   to: string | null;
 }) {
-  const { waiting, failed } = await sendMovesInParts({ items, to });
-  if (failed) throw new Error('move failed');
+  const { waiting, error } = await sendMovesInParts({ items, to });
+  if (error) throw error;
   return waiting;
 }
 
@@ -374,7 +389,7 @@ async function sendMovesInParts({
       const { data, error } = await tryCatch(() =>
         send(part.map((item) => item.id)),
       );
-      if (error) return { done, waiting, failed: true };
+      if (error) return { done, waiting, error };
       if (kind === 'project') {
         projectCollectionUtils.setWorkerGroup({
           projectIds: part.map((item) => item.id),
@@ -385,7 +400,7 @@ async function sendMovesInParts({
       waiting += data.movedWaitingRuns;
     }
   }
-  return { done, waiting, failed: false };
+  return { done, waiting, error: null };
 }
 
 async function undoMoves({ items }: { items: MoveItem[] }) {

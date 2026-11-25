@@ -5,7 +5,6 @@ import {
   MarkdownVariant,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AxiosError } from 'axios';
 import { t } from 'i18next';
 import {
   BookOpen,
@@ -64,6 +63,7 @@ import {
 import { AiProviderInfo, SUPPORTED_AI_PROVIDERS } from '@/features/agents';
 import { aiProviderMutations } from '@/features/platform-admin';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 import { CredentialField, providerCredentials } from './provider-credentials';
@@ -131,14 +131,11 @@ function ConnectProviderForm({
     aiProviderMutations.useUpsertAiProvider({
       providerId: editing?.id,
       onSuccess: (created) => onConnected(created?.id),
-      onError: (
-        error: AxiosError<{ message?: string; params?: { message: string } }>,
-      ) => {
-        const data = error.response?.data;
-        const message =
-          data?.params?.message ??
-          data?.message ??
-          t('The provider rejected these credentials.');
+      onError: (error) => {
+        const message = api.extractServerErrorMessage(
+          error,
+          t('The provider rejected these credentials.'),
+        );
         form.setError('root.serverError', { type: 'manual', message });
         const fieldKey = providerCredentials.fieldOfServerError({
           provider,
