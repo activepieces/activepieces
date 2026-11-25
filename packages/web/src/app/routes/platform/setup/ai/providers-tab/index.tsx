@@ -52,6 +52,7 @@ import { platformModelTierQueries } from '@/features/platform-admin/hooks/platfo
 import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 import { ConfigDetail } from './config-detail';
@@ -94,13 +95,8 @@ export function ProvidersTab() {
     aiProviderMutations.useDeleteAiProvider({
       onSuccess: () => refetch(),
       onError: (error) => {
-        const data = error.response?.data;
         toast.error(
-          t(
-            data?.params?.message ??
-              data?.message ??
-              'Could not delete this key',
-          ),
+          api.extractServerErrorMessage(error, t("Couldn't delete this key")),
         );
       },
     });
@@ -116,13 +112,8 @@ export function ProvidersTab() {
         toast.error(label ?? t('Could not reach this provider'));
       },
       onError: (error) => {
-        const data = error.response?.data;
         toast.error(
-          t(
-            data?.params?.message ??
-              data?.message ??
-              'Could not check this key',
-          ),
+          api.extractServerErrorMessage(error, t("Couldn't check this key")),
         );
       },
     });
@@ -133,11 +124,8 @@ export function ProvidersTab() {
         toast.success(t('Saved'));
       },
       onError: (error) => {
-        const data = error.response?.data;
         toast.error(
-          t(
-            data?.params?.message ?? data?.message ?? 'Could not save this key',
-          ),
+          api.extractServerErrorMessage(error, t("Couldn't save this key")),
         );
       },
     });

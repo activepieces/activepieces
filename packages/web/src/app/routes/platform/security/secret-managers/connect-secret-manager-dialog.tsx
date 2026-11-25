@@ -1,4 +1,4 @@
-import { ApErrorParams, ErrorCode } from '@activepieces/core-utils';
+import { ErrorCode } from '@activepieces/core-utils';
 import {
   ConnectSecretManagerRequest,
   ConnectSecretManagerRequestSchema,
@@ -288,22 +288,17 @@ function handleMutationError(
   error: Error,
   form: ReturnType<typeof useForm<any>>,
 ): void {
-  if (api.isError(error)) {
-    const apError = error.response?.data as ApErrorParams;
-    if (apError?.code === ErrorCode.SECRET_MANAGER_CONNECTION_FAILED) {
-      form.setError('root.serverError', {
-        type: 'manual',
-        message: t('Failed to connect to secret manager with error: "{msg}"', {
-          msg: apError.params?.message,
-        }),
-      });
-    }
-  } else {
-    form.setError('root.serverError', {
-      type: 'manual',
-      message: t('Failed to connect to secret manager, please check console'),
-    });
-  }
+  form.setError('root.serverError', {
+    type: 'manual',
+    message: api.isApError(error, ErrorCode.SECRET_MANAGER_CONNECTION_FAILED)
+      ? t('Failed to connect to secret manager with error: "{msg}"', {
+          msg: api.serverErrorMessage(error),
+        })
+      : api.extractServerErrorMessage(
+          error,
+          t("Couldn't connect the secret manager"),
+        ),
+  });
 }
 
 type AddEditSecretManagerConnectionDialogProps = {

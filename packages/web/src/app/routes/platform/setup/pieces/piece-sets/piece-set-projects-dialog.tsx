@@ -8,7 +8,6 @@ import {
 import { t } from 'i18next';
 import { ChevronDown } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { toast } from 'sonner';
 
 import { adminLayout } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
@@ -107,21 +106,21 @@ const AssignProjectsForm = ({
       return;
     }
 
-    const promises: Promise<unknown>[] = [];
-    if (added.length > 0) {
-      promises.push(
-        assignMutation.mutateAsync({ id: pieceSet.id, projectIds: added }),
-      );
-    }
-    if (removed.length > 0) {
-      promises.push(
-        removeMutation.mutateAsync({ id: pieceSet.id, projectIds: removed }),
-      );
-    }
-
-    const { error } = await tryCatch(() => Promise.all(promises));
+    const { error } = await tryCatch(async () => {
+      if (added.length > 0) {
+        await assignMutation.mutateAsync({
+          id: pieceSet.id,
+          projectIds: added,
+        });
+      }
+      if (removed.length > 0) {
+        await removeMutation.mutateAsync({
+          id: pieceSet.id,
+          projectIds: removed,
+        });
+      }
+    });
     if (error) {
-      toast.error(t('Failed to save changes. Please try again.'));
       return;
     }
     onOpenChange(false);

@@ -134,8 +134,8 @@ function DeactivateUsersForm({
       onOpenChange(false);
       onConfirmed();
     },
-    onError: async () => {
-      internalErrorToast();
+    onError: async (error) => {
+      internalErrorToast({ error });
       await refreshLists();
       refreshBillingCaches(queryClient);
     },

@@ -19,7 +19,6 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { internalErrorToast } from '@/components/ui/sonner';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
@@ -64,7 +63,6 @@ export const AllowedDomainsStep = ({
     onSuccess: () => {
       toast.success(t('Allowed domains updated'));
     },
-    onError: () => internalErrorToast(),
   });
 
   return (

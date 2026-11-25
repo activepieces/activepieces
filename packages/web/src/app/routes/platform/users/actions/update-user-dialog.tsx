@@ -33,6 +33,7 @@ import { InvitedProjectSelect } from '@/features/members/components/invite-user/
 import { ProjectRoleSelect } from '@/features/members/components/project-role-select';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { api } from '@/lib/api';
 
 export const UpdateUserDialog = ({
   children,
@@ -87,10 +88,13 @@ export const UpdateUserDialog = ({
       onUpdate(user.platformRole);
       setOpen(false);
     },
-    onError: () => {
+    onError: (error) => {
       form.setError('root.serverError', {
         type: 'manual',
-        message: t("Couldn't change the role. Try again."),
+        message: api.extractServerErrorMessage(
+          error,
+          t("Couldn't change the role. Try again."),
+        ),
       });
     },
   });

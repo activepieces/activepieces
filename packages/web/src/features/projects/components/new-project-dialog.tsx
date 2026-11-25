@@ -179,7 +179,7 @@ const NewProjectForm = ({
         return;
       }
       console.error(error);
-      internalErrorToast();
+      internalErrorToast({ error });
     },
   );
 

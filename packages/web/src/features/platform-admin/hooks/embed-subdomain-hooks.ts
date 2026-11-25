@@ -41,7 +41,7 @@ export const embedSubdomainQueries = {
 };
 
 export const embedSubdomainMutations = {
-  useUpsert: () => {
+  useUpsert: ({ onError }: { onError: (error: Error) => void }) => {
     const queryClient = useQueryClient();
     return useMutation({
       mutationFn: (request: GenerateEmbedSubdomainRequest) =>
@@ -51,6 +51,7 @@ export const embedSubdomainMutations = {
           queryKey: embedSubdomainKeys.current,
         });
       },
+      onError,
     });
   },
 };

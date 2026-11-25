@@ -58,9 +58,6 @@ export const globalConnectionsMutations = {
       onSuccess: () => {
         refetch();
       },
-      onError: () => {
-        internalErrorToast();
-      },
     }),
   useUpdateGlobalConnection: (
     refetch: () => void,
@@ -124,7 +121,7 @@ export const globalConnectionsMutations = {
             message: error.message,
           });
         } else {
-          internalErrorToast();
+          internalErrorToast({ error });
         }
       },
     }),

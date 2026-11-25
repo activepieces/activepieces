@@ -51,6 +51,7 @@ import {
   aiToolConfigMutations,
 } from '@/features/platform-admin';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { api } from '@/lib/api';
 
 import { aiCapabilitySources, AiToolCapabilityInfo } from './catalog';
 
@@ -194,10 +195,10 @@ function CapabilityForm({
     onError: (error) => {
       form.setError('root.serverError', {
         type: 'manual',
-        message:
-          error.response?.data?.params?.message ??
-          error.response?.data?.message ??
+        message: api.extractServerErrorMessage(
+          error,
           t('Failed to save. Please check the API key and try again.'),
+        ),
       });
     },
   };

@@ -61,6 +61,7 @@ import {
 } from '@/features/platform-admin/hooks/ai-provider-hooks';
 import { platformModelTierQueries } from '@/features/platform-admin/hooks/platform-model-tier-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { api } from '@/lib/api';
 import { formatUtils } from '@/lib/format-utils';
 
 import { AiCenterTrail } from '../components/ai-center-trail';
@@ -117,11 +118,11 @@ export function ConfigDetail({
         toast.success(t('Models refreshed'));
       },
       onError: (error) => {
-        const data = error.response?.data;
         toast.error(
-          data?.params?.message ??
-            data?.message ??
+          api.extractServerErrorMessage(
+            error,
             t('Could not refresh the models'),
+          ),
         );
       },
     });

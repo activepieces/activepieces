@@ -80,9 +80,10 @@ function AddDefaultProjectsContent({
   const showServerError = (error: unknown) => {
     form.setError('root.serverError', {
       type: 'manual',
-      message:
-        api.serverErrorMessage(error) ??
+      message: api.extractServerErrorMessage(
+        error,
         t('Failed to save changes. Please try again.'),
+      ),
     });
   };
 

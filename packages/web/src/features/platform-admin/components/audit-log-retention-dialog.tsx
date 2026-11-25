@@ -123,9 +123,7 @@ function AuditLogRetentionForm({
       }, RETENTION_EVENT_REFRESH_DELAY_MS);
       onClose();
     },
-    onError: () => {
-      toast.error(t('Failed to save changes. Please try again.'));
-    },
+    meta: { errorTitle: t("Couldn't save changes") },
   });
 
   return (

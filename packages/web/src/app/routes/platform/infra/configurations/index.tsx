@@ -89,9 +89,7 @@ const ConfigurationsContent = ({
       }
       toast.success(t('Your changes have been saved.'), { duration: 3000 });
     },
-    onError: () => {
-      toast.error(t('Failed to save changes. Please try again.'));
-    },
+    meta: { errorTitle: t("Couldn't save changes") },
   });
 
   return (

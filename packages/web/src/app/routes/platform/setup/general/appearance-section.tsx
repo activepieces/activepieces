@@ -47,6 +47,7 @@ import {
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { api } from '@/lib/api';
 import { brandSeed } from '@/lib/brand-seed';
 
 import { BrandImageField } from './brand-image-field';
@@ -188,10 +189,13 @@ export const AppearanceSection = ({
       clearImages();
       form.reset(form.getValues());
     },
-    onError: () => {
+    onError: (error) => {
       form.setError('root.serverError', {
         type: 'manual',
-        message: t('Failed to save changes. Please try again.'),
+        message: api.extractServerErrorMessage(
+          error,
+          t('Failed to save changes. Please try again.'),
+        ),
       });
     },
   });

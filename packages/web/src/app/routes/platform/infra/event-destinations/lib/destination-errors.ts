@@ -25,7 +25,7 @@ function describe(error: unknown): string {
       'A flow webhook accepts only JSON. Choose the JSON encoding, or send to a webhook instead.',
     );
   }
-  return api.serverErrorMessage(error) ?? t('Something went wrong');
+  return api.extractServerErrorMessage(error, t('Something went wrong'));
 }
 
 function describeTestError({
