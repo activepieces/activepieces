@@ -1,41 +1,123 @@
 name: Release Self-Hosted
 
+# Ships a Cloud image as the self-hosted release, with its digest unchanged. A scheduled run, every other Tuesday,
+# takes the newest image the Cloud gate deployed 7 or more days ago that no rollback replaced; a manual run can name
+# another Cloud image. The release version is the package.json version inside that image.
+# A manual run with `tag` instead builds the dispatched branch, for an old-line hotfix or an RC.
+# Both modes run the smoke test and the E2E matrix on the image, list the tickets, and wait for the release approval.
 on:
+  schedule:
+    - cron: '0 6 * * 2'
   workflow_dispatch:
     inputs:
-      tag:
-        description: 'Release tag (e.g., 0.79.2, 0.79.2-hotfix.1)'
-        required: true
+      cloud_image_tag:
+        description: 'Cloud image to release, e.g. 0.95.0.<sha>.beta. Empty takes the newest Cloud deploy that is 7 or more days old.'
         type: string
-      skip_smoke_test:
-        description: 'Skip preflight smoke test'
-        required: false
-        default: false
-        type: boolean
+        default: ''
+      tag:
+        description: 'Build mode: release tag for an image built from this branch (e.g., 0.94.1-hotfix.1, 0.95.0-rc.1). Empty ships a Cloud image.'
+        type: string
+        default: ''
       publish_rc_release:
-        description: 'Publish a GitHub Release for RC tags too (ignored for final tags)'
+        description: 'Build mode: publish a GitHub Release for RC tags too (ignored for final tags)'
         required: false
         default: false
         type: boolean
 
 jobs:
-  # Preflight: build the image and run functional smoke tests + the perf-regression
-  # gate (throughput / worker CPU / worker memory). Blocks the release on any
-  # regression so we never tag-and-push a build that pegs CPU or tanks throughput.
-  preflight:
-    if: ${{ !inputs.skip_smoke_test }}
-    uses: ./.github/workflows/smoke-test.yml
-
-  release:
-    needs: preflight
-    if: ${{ always() && !cancelled() && !failure() }}
+  cut:
     runs-on: ubuntu-24.04
     outputs:
-      digest: ${{ steps.build.outputs.digest }}
-    environment:
-      name: release
+      skip: ${{ steps.schedule.outputs.skip }}
+      tag: ${{ steps.cloud.outputs.tag || steps.build.outputs.tag }}
+      sha: ${{ steps.cloud.outputs.sha || steps.build.outputs.sha }}
+      image: ${{ steps.cloud.outputs.image }}
     steps:
+      # Weeks are counted from the Unix epoch, so the parity never skips a week at a year boundary.
+      - name: Check the schedule
+        id: schedule
+        if: github.event_name == 'schedule'
+        env:
+          RELEASES_PAUSED: ${{ vars.RELEASES_PAUSED }}
+        run: |
+          if [ "$RELEASES_PAUSED" = true ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "Releases are paused: the \`RELEASES_PAUSED\` repository variable is \`true\`. Nothing to release." >> "$GITHUB_STEP_SUMMARY"
+          elif [ $(( $(date -u +%s) / 604800 % 2 )) -ne 0 ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "The scheduled release runs every other week. Nothing to release this week." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - uses: docker/login-action@v4
+        if: steps.schedule.outputs.skip != 'true' && !inputs.tag
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # The Cloud gate's approve job logs "Approved <image tag>", and a rollback logs
+      # "Rolling back prod from <image tag> to <image tag>". An image a rollback replaced is never picked.
+      - name: Pick the Cloud image
+        id: cloud
+        if: steps.schedule.outputs.skip != 'true' && !inputs.tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CLOUD_IMAGE_TAG: ${{ inputs.cloud_image_tag }}
+        run: |
+          TAG_RE='[0-9]+\.[0-9]+\.[0-9]+\.[a-f0-9]{40}\.(beta|pick)'
+          job_log() {
+            gh api "repos/$GITHUB_REPOSITORY/actions/jobs/$1/logs" | tr -d '\r'
+          }
+          if [ -n "$CLOUD_IMAGE_TAG" ]; then
+            if ! [[ "$CLOUD_IMAGE_TAG" =~ ^$TAG_RE$ ]]; then
+              echo "::error::$CLOUD_IMAGE_TAG is not a Cloud image tag like 0.95.0.<sha>.beta"
+              exit 1
+            fi
+            echo "Cloud image \`$CLOUD_IMAGE_TAG\`, named by hand" >> "$GITHUB_STEP_SUMMARY"
+          else
+            SINCE=$(date -u -d '-45 days' +%Y-%m-%d)
+            CUTOFF=$(date -u -d '-7 days' +%Y-%m-%dT%H:%M:%SZ)
+            EVENTS=$(
+              for RUN in $(gh run list -R "$GITHUB_REPOSITORY" --workflow continuous-delivery-cloud.yml --status success --created ">=$SINCE" -L 200 --json databaseId --jq '.[].databaseId'); do
+                read -r DEPLOYED APPROVE <<< "$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN/jobs?per_page=100" \
+                  --jq '[(.jobs[] | select(.name == "deploy" and .conclusion == "success") | .completed_at), (.jobs[] | select(.name == "approve") | .id)] | map(tostring) | join(" ")')"
+                if [ -n "${DEPLOYED:-}" ] && [ -n "${APPROVE:-}" ]; then
+                  job_log "$APPROVE" | sed -nE "s/^[^ ]+ Approved ($TAG_RE)$/$DEPLOYED \1 -/p" | head -1
+                fi
+              done
+              for RUN in $(gh run list -R "$GITHUB_REPOSITORY" --workflow continuous-delivery-rollback.yml --status success --created ">=$SINCE" -L 100 --json databaseId --jq '.[].databaseId'); do
+                read -r AT JOB <<< "$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN/jobs" --jq '.jobs[] | select(.name == "rollback") | "\(.completed_at) \(.id)"')"
+                if [ -n "${JOB:-}" ]; then
+                  job_log "$JOB" | sed -nE "s/^[^ ]+ Rolling back prod from ($TAG_RE) to ($TAG_RE)$/$AT \3 \1/p" | head -1
+                fi
+              done
+            )
+            read -r DEPLOYED CLOUD_IMAGE_TAG <<< "$(echo "$EVENTS" | sort | awk -v cutoff="$CUTOFF" '
+              NF == 3 && $3 != "-" { replaced[$3] = 1 }
+              NF == 3 { at[NR] = $1; tag[NR] = $2 }
+              END { for (i = NR; i > 0; i--) if (at[i] != "" && at[i] <= cutoff && !replaced[tag[i]]) { print at[i], tag[i]; exit } }')"
+            if [ -z "$CLOUD_IMAGE_TAG" ]; then
+              echo "::error::The Cloud gate deployed no image between $SINCE and $CUTOFF that a rollback did not replace. Name one in cloud_image_tag."
+              exit 1
+            fi
+            echo "Cloud image \`$CLOUD_IMAGE_TAG\`, the newest that the Cloud gate deployed 7 or more days ago (on $DEPLOYED)" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          SOURCE="ghcr.io/activepieces/activepieces-cloud:$CLOUD_IMAGE_TAG"
+          DIGEST=$(docker buildx imagetools inspect "$SOURCE" --format '{{json .Manifest}}' | jq -r .digest)
+          if [ -z "$DIGEST" ] || [ "$DIGEST" = null ]; then
+            echo "::error::Could not read the digest of $SOURCE"
+            exit 1
+          fi
+          TAG=$(echo "$CLOUD_IMAGE_TAG" | cut -d. -f1-3)
+          {
+            echo "tag=$TAG"
+            echo "sha=$(echo "$CLOUD_IMAGE_TAG" | cut -d. -f4)"
+            echo "image=ghcr.io/activepieces/activepieces-cloud@$DIGEST"
+          } >> "$GITHUB_OUTPUT"
+          echo "Release \`$TAG\`, digest \`$DIGEST\`" >> "$GITHUB_STEP_SUMMARY"
+
       - uses: actions/checkout@v5
+        if: inputs.tag
 
       # package.json is the single runtime source of truth for the release version
       # (apVersionUtil.getCurrentRelease reads it), and it is baked into the image from the
@@ -45,11 +127,18 @@ jobs:
       # withholds jobs. Fail closed here. Hotfix/rc suffixes (0.79.2-hotfix.1, 0.79.2-rc.1) are
       # deploy-only and are not in package.json, so compare against the base X.Y.Z only.
       - name: Verify tag matches package.json
+        id: build
+        if: inputs.tag
         # TAG is passed via env (not inlined as ${{ inputs.tag }} in the script) to avoid shell
         # expression injection — a crafted tag would otherwise run as shell in the run block.
         env:
           TAG: ${{ inputs.tag }}
+          CLOUD_IMAGE_TAG: ${{ inputs.cloud_image_tag }}
         run: |
+          if [ -n "$CLOUD_IMAGE_TAG" ]; then
+            echo "::error::Set either tag or cloud_image_tag, not both."
+            exit 1
+          fi
           PACKAGE_VERSION="$(jq -r .version package.json)"
           TAG_BASE="${TAG%%-*}"
           if [ "$TAG_BASE" != "$PACKAGE_VERSION" ]; then
@@ -62,9 +151,92 @@ jobs:
             echo "::error::Helm chart appVersion '$CHART_APP_VERSION' does not match package.json version '$PACKAGE_VERSION'. Bump deploy/activepieces-helm/Chart.yaml."
             exit 1
           fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "sha=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+          echo "Release \`$TAG\`, built from \`$GITHUB_REF_NAME\` at \`$GITHUB_SHA\`" >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Fail if tag already exists
-        run: '! docker manifest inspect activepieces/activepieces:${{ inputs.tag }}'
+      # After a release, Cloud images keep its version until the sync PR that bumps main merges.
+      - name: Fail if the tag already exists
+        if: steps.schedule.outputs.skip != 'true'
+        env:
+          TAG: ${{ steps.cloud.outputs.tag || steps.build.outputs.tag }}
+        run: |
+          if docker manifest inspect "activepieces/activepieces:$TAG" > /dev/null; then
+            echo "::error::$TAG is already released. A Cloud image carries the version of main when staging built it: merge the open sync PR that bumps main, or name a newer image."
+            exit 1
+          fi
+
+  # In Cloud mode the smoke test and the E2E matrix pull the Cloud image by digest; in build mode they build the branch.
+  preflight:
+    needs: cut
+    if: needs.cut.outputs.skip != 'true'
+    uses: ./.github/workflows/smoke-test.yml
+    with:
+      image: ${{ needs.cut.outputs.image }}
+      ref: ${{ needs.cut.outputs.sha }}
+
+  e2e-matrix:
+    needs: cut
+    if: needs.cut.outputs.skip != 'true'
+    uses: ./.github/workflows/e2e-matrix.yml
+    with:
+      image: ${{ needs.cut.outputs.image }}
+      ref: ${{ needs.cut.outputs.sha }}
+    secrets: inherit
+
+  # Lists the tickets between the previous release and this one, so the approver sees them.
+  # Uses the path filter of the Linear release below. Never blocks the release.
+  tickets:
+    needs: cut
+    if: needs.cut.outputs.skip != 'true'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: List the tickets in the release
+        env:
+          LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
+          TAG: ${{ needs.cut.outputs.tag }}
+          SHA: ${{ needs.cut.outputs.sha }}
+        run: |
+          PREVIOUS=$(git tag | grep -E '^[0-9]+\.[0-9]+\.[0-9]+(-hotfix\.[0-9]+)?$' | grep -vx "$TAG" | { cat; echo "$TAG"; } | sort -V | grep -B1 -x "$TAG" | head -1)
+          BASE=$(git merge-base "$PREVIOUS" "$SHA")
+          echo "## Tickets in \`$TAG\` since \`$PREVIOUS\`" >> "$GITHUB_STEP_SUMMARY"
+          PRS=$(git log --first-parent --format=%s "$BASE..$SHA" -- . \
+            ':!packages/pieces/community' ':!packages/pieces/core' ':!packages/pieces/custom' ':!bun.lock' ':!tsconfig.base.json' ':!docs' \
+            | { grep -oE '\(#[0-9]+\)$' || true; } | tr -d '(#)')
+          echo "| Ticket | PR |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          for PR in $PRS; do
+            URL="https://github.com/$GITHUB_REPOSITORY/pull/$PR"
+            TICKETS=$(jq -n --arg url "$URL" '{query: "query($url: String!) { attachmentsForURL(url: $url) { nodes { issue { identifier title url } } } }", variables: {url: $url}}' \
+              | curl -sf https://api.linear.app/graphql -H "Authorization: $LINEAR_API_KEY" -H 'Content-Type: application/json' -d @- \
+              | jq -r '[.data.attachmentsForURL.nodes[].issue | "[\(.identifier)](\(.url)) \(.title | gsub("\\|"; "/"))"] | unique | join("<br>")')
+            echo "| ${TICKETS:-no ticket} | [#$PR]($URL) |" >> "$GITHUB_STEP_SUMMARY"
+          done
+
+  # The release captain approves in the `release` environment.
+  release:
+    needs: [cut, preflight, e2e-matrix, tickets]
+    runs-on: ubuntu-24.04
+    outputs:
+      digest: ${{ steps.build.outputs.digest || steps.copy.outputs.digest }}
+    environment:
+      name: release
+    steps:
+      # The flag can change while the run waits for the approval.
+      - name: Stop if releases were paused
+        if: github.event_name == 'schedule' && vars.RELEASES_PAUSED == 'true'
+        run: |
+          echo "::error::Releases were paused after this run started: the RELEASES_PAUSED repository variable is true."
+          exit 1
+
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.cut.outputs.sha }}
 
       - name: Create GitHub App token
         id: app-token
@@ -73,9 +245,24 @@ jobs:
           app-id: ${{ secrets.RELEASE_APP_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
 
+      # The Cloud commit pins the previous release, so the tag gets one commit that pins this one.
+      - name: Pin the chart and docker-compose to the release
+        if: needs.cut.outputs.image
+        env:
+          TAG: ${{ needs.cut.outputs.tag }}
+        run: |
+          sed -i -E "s|(image: ghcr.io/activepieces/activepieces:)[0-9][0-9a-zA-Z.-]*|\1$TAG|" docker-compose.yml
+          grep -q "image: ghcr.io/activepieces/activepieces:$TAG" docker-compose.yml
+          sed -i -E "s|^appVersion: .*|appVersion: \"$TAG\"|" deploy/activepieces-helm/Chart.yaml
+          if ! git diff --quiet; then
+            git config user.email "abdulyki+automatedcommits@activepieces.com"
+            git config user.name "automated-commits-ap"
+            git commit -am "chore(release): pin the chart and compose to $TAG"
+          fi
+
       - name: Create git tag
         env:
-          TAG: ${{ inputs.tag }}
+          TAG: ${{ needs.cut.outputs.tag }}
           TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           git tag "$TAG"
@@ -94,10 +281,32 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # With one source, imagetools copies the index byte for byte, so the digest stays the Cloud digest.
+      - name: Publish the Cloud image
+        id: copy
+        if: needs.cut.outputs.image
+        env:
+          SOURCE: ${{ needs.cut.outputs.image }}
+          TAG: ${{ needs.cut.outputs.tag }}
+        run: |
+          DIGEST="${SOURCE#*@}"
+          docker buildx imagetools create --tag "docker.io/activepieces/activepieces:$TAG" --tag "ghcr.io/activepieces/activepieces:$TAG" "$SOURCE"
+          for TARGET in docker.io/activepieces/activepieces ghcr.io/activepieces/activepieces; do
+            PUBLISHED=$(docker buildx imagetools inspect "$TARGET:$TAG" --format '{{json .Manifest}}' | jq -r .digest)
+            if [ "$PUBLISHED" != "$DIGEST" ]; then
+              echo "::error::$TARGET:$TAG has the digest $PUBLISHED, not the Cloud digest $DIGEST"
+              exit 1
+            fi
+          done
+          echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
+          echo "Published \`$TAG\` with the Cloud digest \`$DIGEST\`" >> "$GITHUB_STEP_SUMMARY"
+
       - uses: depot/setup-action@v1
+        if: ${{ !needs.cut.outputs.image }}
 
       - name: Build and push
         id: build
+        if: ${{ !needs.cut.outputs.image }}
         uses: depot/build-push-action@v1
         with:
           project: du7O4b0e8P
@@ -109,13 +318,13 @@ jobs:
             linux/arm64
           push: true
           tags: |
-            activepieces/activepieces:${{ inputs.tag }}
-            ghcr.io/activepieces/activepieces:${{ inputs.tag }}
+            activepieces/activepieces:${{ needs.cut.outputs.tag }}
+            ghcr.io/activepieces/activepieces:${{ needs.cut.outputs.tag }}
 
       - name: Check if this release is the newest
         id: latest
         env:
-          TAG: ${{ inputs.tag }}
+          TAG: ${{ needs.cut.outputs.tag }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if ! CURRENT="$(gh release view --json tagName --jq .tagName)"; then
@@ -126,16 +335,17 @@ jobs:
           HIGHEST="$(printf '%s\n%s\n' "$CURRENT" "$TAG" | sort -V | tail -1)"
           echo "latest=$([ "$HIGHEST" = "$TAG" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
+      # The tag ref makes release-drafter compare the previous release with this tag, not with a branch.
       - name: Create or update changelog via release-drafter
-        if: ${{ !contains(inputs.tag, '-rc') || inputs.publish_rc_release }}
+        if: ${{ !contains(needs.cut.outputs.tag, '-rc') || inputs.publish_rc_release }}
         uses: release-drafter/release-drafter@v7
         with:
-          commitish: ${{ github.ref_name }}
-          prerelease: ${{ contains(inputs.tag, '-rc') }}
-          tag: ${{ inputs.tag }}
-          name: ${{ inputs.tag }}
-          version: ${{ inputs.tag }}
-          latest: ${{ !contains(inputs.tag, '-rc') && steps.latest.outputs.latest == 'true' }}
+          commitish: refs/tags/${{ needs.cut.outputs.tag }}
+          prerelease: ${{ contains(needs.cut.outputs.tag, '-rc') }}
+          tag: ${{ needs.cut.outputs.tag }}
+          name: ${{ needs.cut.outputs.tag }}
+          version: ${{ needs.cut.outputs.tag }}
+          latest: ${{ !contains(needs.cut.outputs.tag, '-rc') && steps.latest.outputs.latest == 'true' }}
           publish: true
           token: ${{ steps.app-token.outputs.token }}
 
@@ -145,14 +355,14 @@ jobs:
       # and pass github-token: ${{ secrets.GITHUB_TOKEN }}.
       - uses: ./.github/actions/sbom
         with:
-          image: ghcr.io/activepieces/activepieces:${{ inputs.tag }}
-          version: ${{ inputs.tag }}
+          image: ghcr.io/activepieces/activepieces:${{ needs.cut.outputs.tag }}
+          version: ${{ needs.cut.outputs.tag }}
 
       - name: Notify on-call channel
-        if: ${{ !contains(inputs.tag, '-rc') || inputs.publish_rc_release }}
+        if: ${{ !contains(needs.cut.outputs.tag, '-rc') || inputs.publish_rc_release }}
         env:
           WEBHOOK: ${{ secrets.DISCORD_ON_CALL_WEBHOOK }}
-          TAG: ${{ inputs.tag }}
+          TAG: ${{ needs.cut.outputs.tag }}
         run: |
           curl -H "Content-Type: application/json" \
             -X POST \
@@ -161,20 +371,21 @@ jobs:
 
   # Records the release in the Linear "Self-hosted" release pipeline once the image is published,
   # even when a later step of the release job fails.
-  # Minor tags live on release branches, so the scan starts at the merge-base with the previous release tag.
+  # Minor tags live on release commits off main, so the scan starts at the merge-base with the previous release tag.
   linear-release:
-    needs: release
-    if: ${{ !cancelled() && needs.release.outputs.digest != '' && !contains(inputs.tag, '-rc') }}
+    needs: [cut, release]
+    if: ${{ !cancelled() && needs.release.outputs.digest != '' && !contains(needs.cut.outputs.tag, '-rc') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v5
         with:
+          ref: refs/tags/${{ needs.cut.outputs.tag }}
           fetch-depth: 0
       - name: Find the scan base
         id: base
         env:
-          TAG: ${{ inputs.tag }}
+          TAG: ${{ needs.cut.outputs.tag }}
         run: |
           PREVIOUS=$(git tag | grep -E '^[0-9]+\.[0-9]+\.[0-9]+(-hotfix\.[0-9]+)?$' | grep -vx "$TAG" | { cat; echo "$TAG"; } | sort -V | grep -B1 -x "$TAG" | head -1)
           echo "Previous release: $PREVIOUS"
@@ -182,15 +393,15 @@ jobs:
       - uses: linear/linear-release-action@30f9ae77461ec29f07fffe0c52edd1909bfbb6f5 # v0.18.1
         with:
           access_key: ${{ secrets.LINEAR_RELEASE_KEY_SELF_HOSTED }}
-          version: ${{ inputs.tag }}
-          name: ${{ inputs.tag }}
+          version: ${{ needs.cut.outputs.tag }}
+          name: ${{ needs.cut.outputs.tag }}
           base_ref: ${{ steps.base.outputs.sha }}
           include_paths: '!packages/pieces/community/**,!packages/pieces/core/**,!packages/pieces/custom/**,!bun.lock,!tsconfig.base.json,!docs/**'
           no_branch_ref_detection: 'true'
           links: Run=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
   sync-version-to-main:
-    needs: release
+    needs: [cut, release]
     if: ${{ !cancelled() && needs.release.result == 'success' }}
     runs-on: ubuntu-24.04
     permissions:
@@ -207,44 +418,46 @@ jobs:
 
       - name: Roll unreleased breaking changes under the released version
         env:
-          TAG: ${{ inputs.tag }}
+          TAG: ${{ needs.cut.outputs.tag }}
         run: |
           git fetch --no-tags --depth=1 origin "refs/tags/$TAG:refs/tags/$TAG"
           bun tools/scripts/breaking-changes-rollover.ts "$TAG"
 
-      - name: Check if main version is behind release
-        id: compare
+      # Cloud images carry main's version, so main must move past every release before the next one.
+      # An RC changes neither the version nor the pins.
+      - name: Pin the release and move main past it
         env:
-          TAG: ${{ inputs.tag }}
+          TAG: ${{ needs.cut.outputs.tag }}
         run: |
+          if [[ "$TAG" == *-rc* ]]; then
+            echo "$TAG is an RC, so main keeps its version and pins."
+            exit 0
+          fi
           TAG_BASE="${TAG%%-*}"
           MAIN_VERSION="$(jq -r .version package.json)"
-          HIGHEST="$(printf '%s\n%s\n' "$MAIN_VERSION" "$TAG_BASE" | sort -V | tail -1)"
-          if [ "$HIGHEST" = "$MAIN_VERSION" ]; then
-            echo "main version $MAIN_VERSION is not behind released $TAG_BASE, nothing to sync."
-          else
-            echo "main version $MAIN_VERSION is behind released $TAG_BASE, opening sync PR."
-            echo "tag_base=$TAG_BASE" >> $GITHUB_OUTPUT
+          if [ "$(printf '%s\n%s\n' "$MAIN_VERSION" "$TAG_BASE" | sort -V | tail -1)" = "$TAG_BASE" ]; then
+            IFS=. read -r MAJOR MINOR _ <<< "$TAG_BASE"
+            npm pkg set version="$MAJOR.$((MINOR + 1)).0"
+            echo "main version $MAIN_VERSION is not past $TAG_BASE, so main moves to $MAJOR.$((MINOR + 1)).0."
+          fi
+          PINNED="$(sed -nE 's|.*image: ghcr.io/activepieces/activepieces:([0-9][0-9a-zA-Z.-]*).*|\1|p' docker-compose.yml | head -1)"
+          if [ "$(printf '%s\n%s\n' "$PINNED" "$TAG" | sort -V | tail -1)" = "$TAG" ]; then
+            sed -i -E "s|(image: ghcr.io/activepieces/activepieces:)[0-9][0-9a-zA-Z.-]*|\1$TAG|" docker-compose.yml
+            grep -q "image: ghcr.io/activepieces/activepieces:$TAG" docker-compose.yml
+            sed -i -E "s|^appVersion: .*|appVersion: \"$TAG_BASE\"|" deploy/activepieces-helm/Chart.yaml
           fi
 
       - name: Push sync branch
         id: push
         env:
-          TAG: ${{ inputs.tag }}
-          TAG_BASE: ${{ steps.compare.outputs.tag_base }}
+          TAG: ${{ needs.cut.outputs.tag }}
         run: |
-          git config --local user.email "abdulyki+automatedcommits@activepieces.com"
-          git config --local user.name "automated-commits-ap"
-          if [ -n "$TAG_BASE" ]; then
-            npm pkg set version="$TAG_BASE"
-            sed -i -E "s|(image: ghcr.io/activepieces/activepieces:)[0-9][0-9a-zA-Z.-]*|\1$TAG|" docker-compose.yml
-            grep -q "image: ghcr.io/activepieces/activepieces:$TAG" docker-compose.yml
-            sed -i -E "s|^appVersion: .*|appVersion: \"$TAG_BASE\"|" deploy/activepieces-helm/Chart.yaml
-          fi
           if git diff --quiet; then
             echo "main already matches $TAG, nothing to sync."
             exit 0
           fi
+          git config --local user.email "abdulyki+automatedcommits@activepieces.com"
+          git config --local user.name "automated-commits-ap"
           BRANCH="automated/sync-main-$TAG"
           git checkout -b "$BRANCH"
           git add package.json docker-compose.yml deploy/activepieces-helm/Chart.yaml docs/install/reference/breaking-changes.mdx docs/install/reference/breaking-changes-unreleased.mdx
@@ -256,11 +469,11 @@ jobs:
         if: steps.push.outputs.branch != ''
         env:
           GH_TOKEN: ${{ secrets.CROWDIN_PRS }}
-          TAG: ${{ inputs.tag }}
+          TAG: ${{ needs.cut.outputs.tag }}
           BRANCH: ${{ steps.push.outputs.branch }}
         run: |
           BODY="$(printf '%s\n' \
-            "The self-hosted release \`$TAG\` was published. This PR syncs \`package.json\` and the \`docker-compose.yml\` image pin when \`main\` is behind, and moves the breaking-change entries that \`$TAG\` contains from the hidden unreleased page under \`## $TAG\` on the Breaking Changes page. Merge before the next release. See GIT-1595 and SRE-232." \
+            "The self-hosted release \`$TAG\` was published. This PR pins \`docker-compose.yml\` and the Helm chart to it, moves \`package.json\` on \`main\` to the next minor when \`main\` is not past it, and moves the breaking-change entries that \`$TAG\` contains from the hidden unreleased page under \`## $TAG\` on the Breaking Changes page. Merge it soon: until it merges, Cloud images carry \`$TAG\`'s version and the next scheduled release stops. See GIT-1595 and SRE-232." \
             "" \
             "### Breaking change?" \
             "" \

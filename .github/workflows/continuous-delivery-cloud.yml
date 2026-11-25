@@ -450,6 +450,7 @@ jobs:
       group: ${{ inputs.hotfix_prs && format('cloud-approval-hotfix-{0}', github.run_id) || 'cloud-approval' }}
       cancel-in-progress: true
     steps:
+      # release-self-hosted.yml reads this line to find the images Cloud ran.
       - run: echo "Approved ${{ needs.cut.outputs.image_tag }}"
 
   # One job holds the production lock from the Cloud re-read through the fleet deploy, because

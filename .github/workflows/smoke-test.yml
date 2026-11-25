@@ -3,6 +3,15 @@ name: Smoke Test
 on:
   workflow_dispatch:
   workflow_call:
+    inputs:
+      image:
+        description: 'Image to test, e.g. ghcr.io/activepieces/activepieces-cloud@<digest>. Empty builds the checked-out commit.'
+        type: string
+        default: ''
+      ref:
+        description: 'Commit to take the test scripts from. Empty uses the commit that triggered the run.'
+        type: string
+        default: ''
 
 jobs:
   smoke-test:
@@ -35,6 +44,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.ref }}
 
       - name: Setup Bun (for benchmark/setup.ts)
         uses: oven-sh/setup-bun@v2
@@ -42,7 +53,23 @@ jobs:
           bun-version: latest
 
       - name: Build Docker image
+        if: ${{ !inputs.image }}
         run: docker build -t activepieces-benchmark:local .
+
+      - uses: docker/login-action@v4
+        if: inputs.image
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull the image under test
+        if: inputs.image
+        env:
+          IMAGE: ${{ inputs.image }}
+        run: |
+          docker pull "$IMAGE"
+          docker tag "$IMAGE" activepieces-benchmark:local
 
       - name: Start stack
         run: |
