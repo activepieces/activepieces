@@ -82,6 +82,16 @@ vi.mock('@/features/billing', () => ({
   SelfServeTrialEndingAlert: () => null,
 }));
 
+vi.mock('@/features/members', () => ({
+  InviteRewardButton: () => null,
+  InviteRewardNotifier: () => null,
+  useInviteOffer: () => ({
+    rewards: {},
+    openInvite: () => undefined,
+    dialog: null,
+  }),
+}));
+
 vi.mock('@/features/projects', () => ({
   projectCollectionUtils: { useHasAccessToProject: () => true },
 }));
