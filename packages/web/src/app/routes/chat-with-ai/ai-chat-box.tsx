@@ -50,10 +50,11 @@ import { cn } from '@/lib/utils';
 import { AssistantMessage } from './components/assistant-message';
 import { ChatBottomBar } from './components/chat-bottom-bar';
 import {
-  EmptyState,
+  ChatEmptyState,
   MessageSkeletons,
   SetupRequiredState,
 } from './components/chat-empty-state';
+import { ComposerHandle } from './components/chat-input';
 import {
   ExposeScrollToBottom,
   KeepBottomOnFooterGrowth,
@@ -61,7 +62,6 @@ import {
 } from './components/chat-scroll-sync';
 import { MemoryImportNudgeCard } from './components/memory-import-nudge-card';
 import { OnboardingQuestionCard } from './components/onboarding-question-card';
-import { OnboardingWelcome } from './components/onboarding-welcome';
 import {
   PersonalizationChip,
   PersonalizationChipState,
@@ -97,6 +97,7 @@ function ChatBoxContent({
   onConversationCreated,
   onConversationMissing,
   compact,
+  autoFocusComposer,
 }: AIChatBoxProps) {
   const reduced = useReducedMotion();
   const credits = useCreditsState();
@@ -112,6 +113,7 @@ function ChatBoxContent({
   });
 
   const {
+    session,
     conversationId,
     conversationProjectId,
     modelPick,
@@ -249,6 +251,7 @@ function ChatBoxContent({
   }, []);
 
   const [hasInput, setHasInput] = useState(false);
+  const composerRef = useRef<ComposerHandle>(null);
   const [promptOpen, setPromptOpen] = useState(false);
   const sentInitialPrompt = useRef(false);
 
@@ -404,17 +407,16 @@ function ChatBoxContent({
               showPersonalizationDonut && 'pb-14',
             )}
           >
-            {emptyState ??
-              (showOnboardingCard ? (
-                <OnboardingWelcome />
-              ) : (
-                <EmptyState
-                  onSuggestionClick={(text) => void handleSend(text)}
-                  incognito={incognito}
-                  showFlowCards={!hasConversations}
-                  hasInput={hasInput}
-                />
-              ))}
+            {emptyState ?? (
+              <ChatEmptyState
+                incognito={incognito}
+                hasInput={hasInput}
+                onboarding={showOnboardingCard}
+                showFlowCards={!hasConversations}
+                onSend={(text) => handleSend(text).catch(() => undefined)}
+                onFill={(text) => composerRef.current?.fill(text)}
+              />
+            )}
           </div>
         ) : (
           <motion.div
@@ -580,6 +582,10 @@ function ChatBoxContent({
             onSend={handleSend}
             onStop={cancelStream}
             onInputChange={setHasInput}
+            replyStopped={wasCancelled || failed}
+            composerRef={composerRef}
+            chatSession={session}
+            autoFocus={autoFocusComposer}
             recede={showOnboardingCard}
             modelPicker={
               showsPicker && awaitingSavedPick ? (
