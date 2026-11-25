@@ -1,17 +1,38 @@
 ---
 title: "API Keys"
 icon: "key"
-description: "Create and revoke platform API keys for calling the Activepieces API"
+description: "Create and revoke the keys your scripts and services use to call the Activepieces API"
 ---
 
-Go to **Platform Admin → Developers → API Keys** to manage the keys your scripts and services use to call the [Activepieces API](/endpoints/overview).
+<Snippet file="enterprise-feature.mdx" />
 
-- **Create API Key**: give the key a name and create it. The key is shown once, in the dialog that opens. Copy it before you close the dialog, because it cannot be viewed again.
-- **Revoke**: deletes the key. Anything still using it stops working right away.
-- The list shows each key's name, when it was created and when it was last used.
+API keys let your scripts and services call the [Activepieces API](/endpoints/overview) for the whole platform, without signing in as a person.
 
-An API key acts for the whole platform, not for one user, so keep it in a secret store and give each service its own key. That way you can revoke one without breaking the others.
+### **Create an API Key**
 
-API keys need a plan with API access.
+**Step 1**: Go to **Platform Admin → Developers → API Keys**.
 
-AI assistants connected over MCP can list and revoke API keys, but cannot create them: a new key is shown only once, so it has to be created here by a person who can copy it.
+**Step 2**: Click **Create API Key**.
+
+**Step 3**: Enter a **Name** and click **Create**.
+
+**Step 4**: Copy the key from the dialog. It is shown only once, and you can't view it again after you close the dialog.
+
+### **View API Keys**
+
+For each key, the table shows:
+
+- **Name**: The name you gave the key.
+- **Created**: When the key was created.
+- **Last used**: When the key last called the API, or **Never used**.
+
+### **Revoke an API Key**
+
+Open the menu of the key, click **Revoke API Key**, then click **Revoke**. Anything still using the key stops working right away.
+
+### **Good practice**
+
+- Give each service its own key, so you can revoke one without breaking the others.
+- Keep keys in a secret store, never in code.
+
+AI assistants connected over [MCP](/admin-guide/guides/mcp-server) can list and revoke API keys, but can't create them, because a new key is shown only once.

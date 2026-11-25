@@ -4,17 +4,19 @@ icon: "sliders"
 description: "Platform-wide limits and telemetry settings for self-hosted platforms"
 ---
 
-Go to **Platform Admin → Account → Configurations** to set guardrails for every project on the platform. This page is for self-hosted platforms; on Activepieces Cloud it is not shown.
+**Configurations** holds settings that apply to every project on a self-hosted platform. It is not shown on Activepieces Cloud.
 
-## Limits
+Go to **Platform Admin → Account → Configurations**.
 
-- **Max things one step can wait on**: a step that waits on more than this number fails when it runs. Every thing a step waits on costs database rows, so raise it only as far as your database can carry.
+### **Limits**
 
-## Telemetry
+- **Max things one step can wait on**: A step that waits on more than this fails when it runs. Each thing a step waits on costs database rows, so raise it only as far as your database can handle.
+
+### **Telemetry**
 
 Telemetry helps us improve Activepieces. We never receive what your flows do, the data they process, or anything inside your connections and API keys.
 
-- **Product analytics**: shares usage events so we can see which features are used and fix what breaks. **See the events we track** lists every event.
-- **Deployment setup**: sends a snapshot of your Workers and Health pages, without IPs or hostnames, so we can answer your support questions faster.
+- **Product analytics**: Shares usage events, so we can see which features are used and fix what breaks. Click **See the events we track** for the full list.
+- **Deployment setup**: Sends a snapshot of your Workers and Health pages, without IPs or hostnames, so we can answer your support questions faster.
 
-See [Telemetry](/install/configure-operate/telemetry) for details.
+For more, see [Telemetry](/install/configure-operate/telemetry).

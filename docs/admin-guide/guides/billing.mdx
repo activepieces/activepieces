@@ -4,16 +4,36 @@ icon: "credit-card"
 description: "See your plan, seats and AI credits, and manage your subscription"
 ---
 
-Go to **Platform Admin → Account → Billing & subscription** to see and manage your subscription.
+The **Billing & subscription** page shows your plan and lets platform admins change it.
 
-- **Current subscription**: your plan, and when it renews, switches plan or ends.
-- **Seats**: how many users your plan includes and how many are in use.
-- **Credits**: AI credits left this period. You can turn on auto recharge so credits top up before they run out.
-- **Explore plans**: compare plans and upgrade.
-- **Manage subscription**: opens Stripe, where you change your payment method, see invoices or cancel.
-- **Refresh**: reloads billing information after a change made in Stripe.
-- **License key**: on a self-hosted platform, or with a trial key from our team, paste the key here to activate it.
+Go to **Platform Admin → Account → Billing & subscription**.
+
+### **Current subscription**
+
+- **Plan**: Your current plan, and when it renews, changes or ends.
+- **Seats**: How many users your plan includes.
+- **Credits**: The AI credits left in this billing period.
+
+### **Change your plan**
+
+**Step 1**: Click **Explore plans**.
+
+**Step 2**: Pick a plan and confirm it.
+
+To cancel, click **Cancel subscription**. You keep your flows, connections and data.
+
+### **Manage payment**
+
+Click **Manage subscription** to open Stripe, where you change your payment method and download invoices. After a change in Stripe, click **Refresh** to load it here.
+
+### **Auto recharge**
+
+Turn on **auto recharge** to buy more AI credits automatically before they run out.
+
+### **License and trial keys**
+
+On a self-hosted platform, or with a trial key from our team, enter the key under **License key** and click **Activate**.
 
 For how much each project uses, see [Usage](/admin-guide/guides/usage) and [AI usage](/admin-guide/guides/ai-usage).
 
-Subscription changes such as upgrading, cancelling or buying credits always happen on this page by a platform admin. AI assistants connected over MCP can read billing information but cannot change your subscription.
+AI assistants connected over [MCP](/admin-guide/guides/mcp-server) can read billing information, but can't change your plan, payment or credits.
