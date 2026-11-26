@@ -30,8 +30,14 @@ describe('sandboxPrometheusMetrics.format', () => {
                 workerId: 'w1',
                 memoryLimitKb: '1048576',
                 sandboxes: [
-                    { sandboxId: 'sb-a', boxId: 1, busy: true, memoryUsageBytes: 500 },
-                    { sandboxId: 'sb-b', boxId: 2, busy: false, memoryUsageBytes: 300 },
+                    {
+                        sandboxId: 'sb-a',
+                        boxId: 1,
+                        busy: true,
+                        memoryUsageBytes: 500,
+                        sandboxPiecesUsage: [{ pieceName: '@activepieces/piece-slack', pieceVersion: '0.9.1', memoryUsageBytes: 120 }],
+                    },
+                    { sandboxId: 'sb-b', boxId: 2, busy: false, memoryUsageBytes: 300, sandboxPiecesUsage: [] },
                 ],
             })],
         })
@@ -45,6 +51,9 @@ describe('sandboxPrometheusMetrics.format', () => {
             '# TYPE activepieces_sandbox_busy gauge',
             'activepieces_sandbox_busy{worker_id="w1",host="worker-\\"a\\"",box_id="1"} 1',
             'activepieces_sandbox_busy{worker_id="w1",host="worker-\\"a\\"",box_id="2"} 0',
+            '# HELP activepieces_sandbox_piece_memory_usage_bytes Estimated live JS heap held by each piece loaded in the sandbox',
+            '# TYPE activepieces_sandbox_piece_memory_usage_bytes gauge',
+            'activepieces_sandbox_piece_memory_usage_bytes{worker_id="w1",host="worker-\\"a\\"",box_id="1",piece="@activepieces/piece-slack",version="0.9.1"} 120',
             '# HELP activepieces_sandbox_memory_limit_bytes Heap limit configured for each sandbox on the worker',
             '# TYPE activepieces_sandbox_memory_limit_bytes gauge',
             'activepieces_sandbox_memory_limit_bytes{worker_id="w1",host="worker-\\"a\\""} 1073741824',

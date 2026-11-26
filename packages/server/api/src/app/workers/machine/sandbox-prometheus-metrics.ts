@@ -36,6 +36,14 @@ const METRICS: Metric[] = [
         })),
     },
     {
+        name: 'activepieces_sandbox_piece_memory_usage_bytes',
+        help: 'Estimated live JS heap held by each piece loaded in the sandbox',
+        collect: (worker) => (worker.information.sandboxes ?? []).flatMap((sandbox) => (sandbox.sandboxPiecesUsage ?? []).map((piece) => ({
+            labels: { ...workerLabels(worker), box_id: String(sandbox.boxId), piece: piece.pieceName, version: piece.pieceVersion },
+            value: piece.memoryUsageBytes,
+        }))),
+    },
+    {
         name: 'activepieces_sandbox_memory_limit_bytes',
         help: 'Heap limit configured for each sandbox on the worker',
         collect: (worker) => {
