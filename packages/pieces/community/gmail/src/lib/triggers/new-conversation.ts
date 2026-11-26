@@ -8,7 +8,7 @@ import {
 import { GmailProps } from '../common/props';
 import { gmailAuth, createGoogleClient } from '../auth';
 import { gmail as googleGmail } from '@googleapis/gmail';
-import { parseStream, convertAttachment } from '../common/data';
+import { parseRawMessage, convertAttachment } from '../common/data';
 
 async function enrichNewConversation({
   gmail,
@@ -44,11 +44,7 @@ async function enrichNewConversation({
     format: 'raw',
   });
 
-  const parsedFirstMessage = await parseStream(
-    Buffer.from(rawMessageResponse.data.raw as string, 'base64').toString(
-      'utf-8'
-    )
-  );
+  const parsedFirstMessage = await parseRawMessage(rawMessageResponse.data.raw);
 
   const headers = firstMessage.payload?.headers || [];
   const headerMap = headers.reduce(
@@ -273,11 +269,7 @@ export const gmailNewConversationTrigger = createTrigger({
           format: 'raw',
         });
 
-        const parsedMessage = await parseStream(
-          Buffer.from(rawResponse.data.raw as string, 'base64').toString(
-            'utf-8'
-          )
-        );
+        const parsedMessage = await parseRawMessage(rawResponse.data.raw);
 
         results.push({
           id: `conversation_${threadId}`,
@@ -379,11 +371,7 @@ export const gmailNewConversationTrigger = createTrigger({
             format: 'raw',
           });
 
-          const parsedMessage = await parseStream(
-            Buffer.from(rawResponse.data.raw as string, 'base64').toString(
-              'utf-8'
-            )
-          );
+          const parsedMessage = await parseRawMessage(rawResponse.data.raw);
 
           results.push({
             id: `test_conversation_${threadId}`,

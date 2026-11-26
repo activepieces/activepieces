@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { gmailAuth, createGoogleClient } from '../auth';
 import { gmail as googleGmail } from '@googleapis/gmail';
-import { convertAttachment, parseStream } from '../common/data';
+import { convertAttachment, parseRawMessage } from '../common/data';
 import { GmailProps } from '../common/props';
 import { gmailSearchMailActionOutputSchema } from '../output-schemas';
 
@@ -148,10 +148,6 @@ export const gmailSearchMailAction = createAction({
       );
     }
 
-    if (context.propsValue.label) {
-      const label = context.propsValue.label;
-      queryParts.push(`label:${label.name}`);
-    }
     if (context.propsValue.category?.trim()) {
       queryParts.push(`category:${context.propsValue.category.trim()}`);
     }
@@ -184,6 +180,9 @@ export const gmailSearchMailAction = createAction({
       const searchResponse = await gmail.users.messages.list({
         userId: 'me',
         ...(searchQuery.trim() ? { q: searchQuery } : {}),
+        ...(context.propsValue.label
+          ? { labelIds: [context.propsValue.label.id] }
+          : {}),
         maxResults: maxResults,
         includeSpamTrash: context.propsValue.include_spam_trash,
       });
@@ -209,11 +208,8 @@ export const gmailSearchMailAction = createAction({
               format: 'raw',
             });
 
-            const parsedMailResponse = await parseStream(
-              Buffer.from(
-                rawMailResponse.data.raw as string,
-                'base64'
-              ).toString('utf-8')
+            const parsedMailResponse = await parseRawMessage(
+              rawMailResponse.data.raw
             );
 
             return {

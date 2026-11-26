@@ -7,63 +7,9 @@ import {
 } from '@activepieces/pieces-framework';
 import { GmailProps } from '../common/props';
 import { gmailAuth, createGoogleClient } from '../auth';
-import { gmail as googleGmail } from '@googleapis/gmail';
-import { parseStream, convertAttachment } from '../common/data';
+import { gmail as googleGmail, gmail_v1 } from '@googleapis/gmail';
+import { parseRawMessage, convertAttachment } from '../common/data';
 import { newLabeledEmailTriggerOutputSchema } from '../output-schemas';
-
-function isExpiredHistoryIdError(error: unknown): boolean {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    'code' in error &&
-    Number(error.code) === 404
-  );
-}
-
-async function enrichGmailMessage({
-  gmail,
-  messageId,
-  files,
-  labelInfo,
-}: {
-  gmail: any;
-  messageId: string;
-  files: FilesService;
-  labelInfo: {
-    labelId: string;
-    labelName: string;
-  };
-}) {
-  const rawMailResponse = await gmail.users.messages.get({
-    userId: 'me',
-    id: messageId,
-    format: 'raw',
-  });
-
-  const threadResponse = await gmail.users.threads.get({
-    userId: 'me',
-    id: rawMailResponse.data.threadId!,
-  });
-
-  const parsedMailResponse = await parseStream(
-    Buffer.from(rawMailResponse.data.raw as string, 'base64').toString('utf-8')
-  );
-
-  return {
-    message: {
-      ...parsedMailResponse,
-      attachments: await convertAttachment(
-        parsedMailResponse.attachments,
-        files
-      ),
-    },
-    thread: threadResponse.data,
-    labelInfo: {
-      ...labelInfo,
-      addedAt: Date.now(),
-    },
-  };
-}
 
 export const gmailNewLabeledEmailTrigger = createTrigger({
   auth: gmailAuth,
@@ -107,21 +53,18 @@ export const gmailNewLabeledEmailTrigger = createTrigger({
     await context.store.delete('lastHistoryId');
   },
   run: async (context) => {
+    const startedAt = Date.now();
     const authClient = await createGoogleClient(context.auth);
     const gmail = googleGmail({ version: 'v1', auth: authClient });
+    const labelId = context.propsValue.label.id;
 
-    const lastHistoryId = await context.store.get('lastHistoryId');
+    const lastHistoryId = await context.store.get<string>('lastHistoryId');
 
-    const { data: historyResponse, error } = await tryCatch(() =>
-      gmail.users.history.list({
-        userId: 'me',
-        startHistoryId: lastHistoryId as string,
-        labelId: context.propsValue.label.id,
-        historyTypes: ['labelAdded', 'messageAdded'],
-      })
+    const { data: listing, error } = await tryCatch(() =>
+      listLabelHistory({ gmail, startHistoryId: lastHistoryId ?? '', labelId })
     );
     if (error) {
-      if (!isExpiredHistoryIdError(error)) {
+      if (!isNotFoundError(error)) {
         throw error;
       }
       const profile = await gmail.users.getProfile({ userId: 'me' });
@@ -129,64 +72,40 @@ export const gmailNewLabeledEmailTrigger = createTrigger({
       return [];
     }
 
-    const labeledMessages = new Map<string, string>();
     const results = [];
-
-    if (historyResponse.data.history) {
-      for (const history of historyResponse.data.history) {
-        if (history.labelsAdded) {
-          for (const labelAdded of history.labelsAdded) {
-            if (
-              labelAdded.labelIds?.includes(context.propsValue.label.id) &&
-              labelAdded.message?.id
-            ) {
-              labeledMessages.set(
-                labelAdded.message.id,
-                history.id?.toString() || ''
-              );
-            }
-          }
-        } else if (history.messagesAdded) {
-          for (const messageAdded of history.messagesAdded) {
-            if (
-              messageAdded.message?.id &&
-              messageAdded.message.labelIds?.includes(
-                context.propsValue.label.id
-              )
-            ) {
-              labeledMessages.set(
-                messageAdded.message.id,
-                history.id?.toString() || ''
-              );
-            }
-          }
+    let resumeHistoryId = listing.historyId;
+    for (const [index, entry] of listing.entries.entries()) {
+      const previous = listing.entries[index - 1];
+      const atRecordStart = !previous || previous.historyId !== entry.historyId;
+      if (
+        results.length > 0 &&
+        atRecordStart &&
+        Date.now() - startedAt > TIME_BUDGET_MS
+      ) {
+        resumeHistoryId = previous.historyId;
+        break;
+      }
+      const { data: enrichedMessage, error: enrichError } = await tryCatch(() =>
+        enrichGmailMessage({
+          gmail,
+          messageId: entry.messageId,
+          files: context.files,
+          arrivedWithLabel: entry.arrivedWithLabel,
+          labelInfo: { labelId, labelName: context.propsValue.label.name },
+        })
+      );
+      if (enrichError) {
+        if (isNotFoundError(enrichError)) {
+          continue;
         }
+        throw enrichError;
       }
+      results.push({ id: entry.messageId, data: enrichedMessage });
     }
 
-    for (const [messageId, historyId] of labeledMessages) {
-      const enrichedMessage = await enrichGmailMessage({
-        gmail,
-        messageId,
-        files: context.files,
-        labelInfo: {
-          labelId: context.propsValue.label.id,
-          labelName: context.propsValue.label.name,
-        },
-      });
-
-      if (lastHistoryId !== historyId) {
-        results.push({
-          id: historyId,
-          data: enrichedMessage,
-        });
-      }
+    if (resumeHistoryId) {
+      await context.store.put('lastHistoryId', resumeHistoryId);
     }
-
-    if (historyResponse.data.historyId) {
-      await context.store.put('lastHistoryId', historyResponse.data.historyId);
-    }
-
     return results;
   },
   test: async (context) => {
@@ -211,6 +130,7 @@ export const gmailNewLabeledEmailTrigger = createTrigger({
           gmail,
           messageId: messageId,
           files: context.files,
+          arrivedWithLabel: false,
           labelInfo: {
             labelId: context.propsValue.label.id,
             labelName: context.propsValue.label.name,
@@ -227,3 +147,117 @@ export const gmailNewLabeledEmailTrigger = createTrigger({
     return results;
   },
 });
+
+async function enrichGmailMessage({
+  gmail,
+  messageId,
+  files,
+  arrivedWithLabel,
+  labelInfo,
+}: {
+  gmail: gmail_v1.Gmail;
+  messageId: string;
+  files: FilesService;
+  arrivedWithLabel: boolean;
+  labelInfo: {
+    labelId: string;
+    labelName: string;
+  };
+}) {
+  const rawMailResponse = await gmail.users.messages.get({
+    userId: 'me',
+    id: messageId,
+    format: 'raw',
+  });
+
+  const threadResponse = await gmail.users.threads.get({
+    userId: 'me',
+    id: rawMailResponse.data.threadId ?? '',
+  });
+
+  const parsedMailResponse = await parseRawMessage(rawMailResponse.data.raw);
+
+  return {
+    message: {
+      id: messageId,
+      ...parsedMailResponse,
+      attachments: await convertAttachment(
+        parsedMailResponse.attachments,
+        files
+      ),
+    },
+    thread: threadResponse.data,
+    labelInfo: {
+      ...labelInfo,
+      addedAt: arrivedWithLabel
+        ? Number(rawMailResponse.data.internalDate)
+        : Date.now(),
+    },
+  };
+}
+
+async function listLabelHistory({
+  gmail,
+  startHistoryId,
+  labelId,
+}: {
+  gmail: gmail_v1.Gmail;
+  startHistoryId: string;
+  labelId: string;
+}): Promise<{ entries: LabelHistoryEntry[]; historyId: string | undefined }> {
+  const entries = new Map<string, LabelHistoryEntry>();
+  let historyId: string | undefined;
+  let pageToken: string | undefined;
+  do {
+    const response = await gmail.users.history.list({
+      userId: 'me',
+      startHistoryId,
+      labelId,
+      historyTypes: ['labelAdded', 'messageAdded'],
+      pageToken,
+    });
+    for (const record of response.data.history ?? []) {
+      const recordId = record.id ?? '';
+      if (recordId === startHistoryId) {
+        continue;
+      }
+      const labelled = (record.labelsAdded ?? [])
+        .filter((added) => added.labelIds?.includes(labelId))
+        .map((added) => ({ message: added.message, arrivedWithLabel: false }));
+      const arrived = (record.messagesAdded ?? [])
+        .filter((added) => added.message?.labelIds?.includes(labelId))
+        .map((added) => ({ message: added.message, arrivedWithLabel: true }));
+      for (const { message, arrivedWithLabel } of [...labelled, ...arrived]) {
+        if (!message?.id) {
+          continue;
+        }
+        const existing = entries.get(message.id);
+        entries.set(message.id, {
+          messageId: message.id,
+          historyId: existing?.historyId ?? recordId,
+          arrivedWithLabel: arrivedWithLabel || !!existing?.arrivedWithLabel,
+        });
+      }
+    }
+    historyId = response.data.historyId ?? historyId;
+    pageToken = response.data.nextPageToken ?? undefined;
+  } while (pageToken);
+  return { entries: [...entries.values()], historyId };
+}
+
+function isNotFoundError(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    Number(error.code) === 404
+  );
+}
+
+const TIME_BUDGET_MS = 40 * 1000;
+
+type LabelHistoryEntry = {
+  messageId: string;
+  historyId: string;
+  arrivedWithLabel: boolean;
+};
