@@ -9,7 +9,7 @@ export const getAccountInformationAction = createAction({
   outputSchema: humanAccountOutputSchema,
   classification: 'READ',
   displayName: 'Get Account Info',
-  description: 'Get account usage information including remaining API credits and concurrent requests.',
+  description: 'Gets your remaining API credits and concurrent requests.',
   audience: 'human',
   aiMetadata: {
     description:
