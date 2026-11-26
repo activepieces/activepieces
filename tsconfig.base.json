@@ -1371,6 +1371,9 @@
       "@activepieces/piece-supabase": [
         "packages/pieces/community/supabase/src/index.ts"
       ],
+      "@activepieces/piece-supabird": [
+        "packages/pieces/community/supabird/src/index.ts"
+      ],
       "@activepieces/piece-supadata": [
         "packages/pieces/community/supadata/src/index.ts"
       ],

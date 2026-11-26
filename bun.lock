@@ -9108,6 +9108,19 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/supabird": {
+      "name": "@activepieces/piece-supabird",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/supadata": {
       "name": "@activepieces/piece-supadata",
       "version": "0.2.1",
@@ -12931,6 +12944,8 @@
     "@activepieces/piece-subflows": ["@activepieces/piece-subflows@workspace:packages/pieces/core/subflows"],
 
     "@activepieces/piece-supabase": ["@activepieces/piece-supabase@workspace:packages/pieces/community/supabase"],
+
+    "@activepieces/piece-supabird": ["@activepieces/piece-supabird@workspace:packages/pieces/community/supabird"],
 
     "@activepieces/piece-supadata": ["@activepieces/piece-supadata@workspace:packages/pieces/community/supadata"],
 
