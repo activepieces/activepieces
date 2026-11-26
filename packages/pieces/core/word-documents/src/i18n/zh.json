@@ -1,0 +1,23 @@
+{
+  "Read Word documents (.docx) and fill Word templates in your flow, no Microsoft account needed.": "读取 Word 文档（.docx），并在你的流程中填充 Word 模板，无需 Microsoft 账户。",
+  "Extract Text": "提取文本",
+  "Fill Template": "填充模板",
+  "Get the text, headers and footers of a Word document (.docx).": "获取 Word 文档（.docx）的文本、页眉和页脚。",
+  "Fill the {{placeholders}} in a Word template (.docx) and get a new document.": "在 Word 模板（.docx）中填充 {{placeholders}} 并获取一个新文档。",
+  "Word Document": "Word 文档",
+  "Password": "密码",
+  "Markdown": "Markdown",
+  "Word Template": "Word 模板",
+  "Fields": "字段",
+  "Data (JSON)": "数据（JSON）",
+  "File Name": "文件名称",
+  "Pick a .docx file from an earlier step, such as an email attachment, or paste a URL to download.": "从前一步中选择一个 .docx 文件，例如电子邮件附件，或者粘贴一个 URL 进行下载。",
+  "Only needed when the document is password-protected.": "仅在文档受密码保护时需要。",
+  "Type placeholders in your Word template with double braces:\n- `{{name}}` is replaced by the \"name\" value. `{{customer.city}}` reads a nested value.\n- `{{#items}}` ... `{{/items}}` repeats a table row or paragraph for each entry of the \"items\" list. Inside it, use the entry's fields, like `{{description}}`.\n- `{{#paid}}` ... `{{/paid}}` shows the text only when \"paid\" is true; `{{^paid}}` ... `{{/paid}}` only when it is false or empty.": "在你的 Word 模板中使用双大括号输入占位符：\n- `{{name}}` 会被 \"name\" 值替换。`{{customer.city}}` 读取嵌套值。\n- `{{#items}}` ... `{{/items}}` 会为 \"items\" 列表中的每个条目重复一行表格或一个段落。在其中使用条目的字段，例如 `{{description}}`。\n- `{{#paid}}` ... `{{/paid}}` 仅在 \"paid\" 为 true 时显示文本；`{{^paid}}` ... `{{/paid}}` 仅在其为 false 或为空时显示。",
+  "A .docx file with {{placeholders}}, from an earlier step or a URL.": "包含 {{placeholders}} 的 .docx 文件，来自前一步或一个 URL。",
+  "One field per placeholder in the template. They appear once the template is set, or mapped from a step you have tested.": "模板中每个占位符对应一个字段。模板设置完成后会显示这些字段，或者从你已测试的步骤中映射而来。",
+  "Optional. A JSON object with values for the placeholders. It overrides the fields above, and is needed for a list inside a list.": "可选。一个包含占位符值的 JSON 对象。它会覆盖上面的字段，并且在列表嵌套列表时必需。",
+  "Name of the new document. Leave empty to use the template's name.": "新文档的名称。留空则使用模板名称。",
+  "Document": "文档",
+  "Word Documents": "Word 文档"
+}
