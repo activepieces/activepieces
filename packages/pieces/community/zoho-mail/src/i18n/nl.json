@@ -77,8 +77,8 @@
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
   "HEAD": "HOOFD",
-  "Request": "Request",
-  "Data to send": "Data to send",
+  "Request": "Verzoek",
+  "Data to send": "Gegevens om te verzenden",
   "New Email Received": "Nieuwe e-mail ontvangen",
   "Triggers when a new email is received in a specified folder (or inbox).": "Triggert wanneer een nieuwe e-mail wordt ontvangen in een opgegeven map (of inbox).",
   "Select the folder to watch. If empty, watches the inbox/all messages based on API default.": "Selecteer de te bekijken map. Indien leeg, kijk dan naar de inbox/alle berichten gebaseerd op API-standaard."
