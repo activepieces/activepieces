@@ -10,12 +10,9 @@ import { pastebinApi } from './common/api';
 import type { PastebinAuthValue } from './common/types';
 
 const markdownDescription = `
-Here are the simple steps to get your credentials:
-
-1. Make an account, If you don't have one yet.
-2. Go to **https://pastebin.com/doc_api**.
-3. Copy your unique Developer API Key and paste it.
-4. Provide your username and password if you want to create **private pastes** under your account.
+1. Sign in to pastebin.com (create a free account if needed).
+2. Open **https://pastebin.com/doc_api** and copy your Unique Developer API Key.
+3. Add your username and password only to make private pastes, use folders, or read your private pastes.
 `;
 
 export const pastebinAuth = PieceAuth.CustomAuth({
@@ -24,14 +21,17 @@ export const pastebinAuth = PieceAuth.CustomAuth({
   props: {
     token: PieceAuth.SecretText({
       displayName: 'Developer Key',
+      description: 'Shown on pastebin.com/doc_api once you are signed in.',
       required: true,
     }),
     username: Property.ShortText({
       displayName: 'Username',
+      description: 'Only needed for private pastes and folders.',
       required: false,
     }),
     password: PieceAuth.SecretText({
       displayName: 'Password',
+      description: 'Only needed with a username.',
       required: false,
     }),
   },
