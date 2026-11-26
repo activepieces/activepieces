@@ -315,6 +315,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Demandeur",
+  "Data to send": "Données à envoyer",
   "New Call": "Nouvel appel",
   "Call Ended": "Call Ended",
   "Call Analyzed": "Call Analyzed",
