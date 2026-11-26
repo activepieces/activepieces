@@ -152,13 +152,13 @@
   "HEAD": "HEAD",
   "Message": "Nachricht",
   "Settings": "Settings",
-  "Search in": "Search in",
-  "History": "History",
-  "Script": "Script",
-  "Speaker": "Speaker",
+  "Search in": "Suchen in",
+  "History": "Verlauf",
+  "Script": "Skript",
+  "Speaker": "Sprecher",
   "Video": "Video",
   "Output": "Ausgabe",
   "Content": "Inhalt",
-  "Request": "Request",
-  "Data to send": "Data to send"
+  "Request": "Anfrage",
+  "Data to send": "Zu sendende Daten"
 }
