@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { magicalApiAuth } from '../common/auth';
 import { runJob, normalizeRequestId } from '../common/poll';
 import { profileDataOutputSchema } from '../common/output-schemas';
@@ -8,7 +8,7 @@ export const getProfileData = createAction({
   name: 'get_profile_data',
   classification: 'READ',
   displayName: 'Get Profile Data',
-  description: 'Given a LinkedIn profile username, retrieve comprehensive profile data.',
+  description: 'Get public data from a LinkedIn profile.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -16,15 +16,21 @@ export const getProfileData = createAction({
     idempotent: true,
   },
   props: {
+    info: Property.MarkDown({
+      value: 'Each new job uses MagicalAPI credits. If a run times out, paste the Request ID from its error under **Advanced** to get the result.',
+      variant: MarkdownVariant.INFO,
+    }),
     profile_name: Property.ShortText({
-      displayName: 'LinkedIn Profile Username',
-      description: "Provide the username from the LinkedIn profile URL (e.g., 'williamhgates').",
+      displayName: 'LinkedIn Profile',
+      description: "The profile's username or its full LinkedIn URL.",
+      placeholder: 'williamhgates',
       required: false,
     }),
     request_id: Property.ShortText({
-      displayName: 'Request ID (for retries)',
-      description: 'If a previous run timed out, paste the Request ID here to get the result.',
+      displayName: 'Request ID',
+      description: "Gets a timed-out run's result once. Clear it to start new jobs.",
       required: false,
+      advanced: true,
     }),
   },
   outputSchema: profileDataOutputSchema,
@@ -33,7 +39,7 @@ export const getProfileData = createAction({
     const request_id = normalizeRequestId(rawRequestId);
     const slug = profile_name ? toProfileSlug(profile_name) : '';
     if (!request_id && !slug) {
-      throw new Error('To start a new request, you must provide a LinkedIn Profile Username.');
+      throw new Error('To start a new request, you must provide a LinkedIn Profile.');
     }
     return runJob({
       apiKey: context.auth.secret_text,

@@ -31,6 +31,12 @@ export const magicalApi = createPiece({
     createCustomApiCallAction({
       auth: magicalApiAuth,
       baseUrl: () => BASE_URL,
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${BASE_URL}`,
+          placeholder: '/profile-data',
+        },
+      },
       authMapping: async (auth) => {
         return {
           'api-key': auth.secret_text,

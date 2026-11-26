@@ -160,14 +160,14 @@ describe('runJob', () => {
     const url = 'https://x.io/a.pdf';
     const request_id = '   ';
     const runs = [
-      () => parseResume.run({ ...createMockActionContext<typeof parseResume.props>({ propsValue: { url, request_id } }), auth }),
-      () => reviewResume.run({ ...createMockActionContext<typeof reviewResume.props>({ propsValue: { url, request_id } }), auth }),
-      () => scoreResume.run({ ...createMockActionContext<typeof scoreResume.props>({ propsValue: { url, job_description: 'jd', request_id } }), auth }),
-      () => getProfileData.run({ ...createMockActionContext<typeof getProfileData.props>({ propsValue: { profile_name: 'satyanadella', request_id } }), auth }),
+      () => parseResume.run({ ...createMockActionContext<typeof parseResume.props>({ propsValue: { info: undefined, url, request_id } }), auth }),
+      () => reviewResume.run({ ...createMockActionContext<typeof reviewResume.props>({ propsValue: { info: undefined, url, request_id } }), auth }),
+      () => scoreResume.run({ ...createMockActionContext<typeof scoreResume.props>({ propsValue: { info: undefined, url, job_description: 'jd', request_id } }), auth }),
+      () => getProfileData.run({ ...createMockActionContext<typeof getProfileData.props>({ propsValue: { info: undefined, profile_name: 'satyanadella', request_id } }), auth }),
       () =>
         getCompanyData.run({
           ...createMockActionContext<typeof getCompanyData.props>({
-            propsValue: { company_name: 'Microsoft', company_username: undefined, company_website: undefined, request_id },
+            propsValue: { info: undefined, company_name: 'Microsoft', company_username: undefined, company_website: undefined, request_id },
           }),
           auth,
         }),
