@@ -743,9 +743,10 @@ describe('agentRpcHandlers.resumeFlowStep — only a flow-step run may release a
         expect(mockResumeFromWaitpoint).not.toHaveBeenCalled()
     })
 
-    it('refuses when the conversation does not exist', async () => {
-        await expect(resume(null)).rejects.toThrow()
+    it('does not fail the job when the conversation was deleted with its agent, and resumes nothing', async () => {
+        await expect(resume(null)).resolves.toBeUndefined()
 
+        expect(mockGetFlowRun).not.toHaveBeenCalled()
         expect(mockResumeFromWaitpoint).not.toHaveBeenCalled()
     })
 
