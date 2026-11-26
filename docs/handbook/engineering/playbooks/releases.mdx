@@ -35,11 +35,11 @@ In an emergency, run the gate with `skip_tests`: it skips the E2E matrix, the up
 
 ## Pause the Scheduled Releases
 
-For a freeze or an incident, set the `RELEASES_PAUSED` repository variable to `true`:
+For a freeze or an incident, run `pause-releases.yml` from the **Actions** tab and pick `pause`. Pick `resume` to end the pause. The workflow sets the `RELEASES_PAUSED` repository variable to `true` or `false`, and needs only write access to the repository. From a terminal:
 
 ```bash
-gh variable set RELEASES_PAUSED --body true   # pause
-gh variable delete RELEASES_PAUSED            # resume
+gh workflow run pause-releases.yml -f action=pause    # pause
+gh workflow run pause-releases.yml -f action=resume   # resume
 ```
 
 A scheduled gate run then stops in `cut` and says so in its summary. Manual runs, `hotfix_prs` runs and `emergency-cloud-deploy.yml` still run. The flag is read only in `cut`, so it does not stop a run that has passed `cut`: cancel that run before its `deploy` job starts. The scheduled self-hosted release will read the same flag (ENG-1025).
