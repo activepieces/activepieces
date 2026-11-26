@@ -511,9 +511,9 @@
   "December": "12月",
   "Input": "Input",
   "Output": "Output",
-  "Start": "Start",
+  "Start": "開始",
   "End": "終了",
-  "Shift": "Shift",
-  "When": "When",
+  "Shift": "シフト",
+  "When": "いつ",
   "Date Helper": "日付ヘルパー"
 }
