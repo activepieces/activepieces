@@ -4,7 +4,7 @@ import { advancedMapping } from './lib/actions/advanced-mapping';
 
 export const dataMapper = createPiece({
   displayName: 'Data Mapper',
-  description: 'tools to manipulate data structure',
+  description: 'Reshape data from earlier steps into a new object.',
 
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/new-core/data-mapper.svg',
