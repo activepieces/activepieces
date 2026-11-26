@@ -425,22 +425,22 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
 
     it('stops a multipart upload still running after 6 minutes and removes the parts already sent', async () => {
       uploadIds.push('upload-1');
-      let partsSent = 0;
+      let megabytesRead = 0;
       uploadDone.mockImplementation(async (params) => {
-        for await (const part of params.Body) {
-          expect(part).toHaveLength(5 * 1024 * 1024);
-          vi.setSystemTime(Date.now() + 150_000);
-          partsSent += 1;
+        for await (const chunk of params.Body) {
+          expect(chunk).toHaveLength(1024 * 1024);
+          vi.setSystemTime(Date.now() + 100_000);
+          megabytesRead += 1;
         }
         return {};
       });
 
       await expect(
-        runAction({ source: 'file', file: new ApFile('contract.pdf', Buffer.alloc(6 * 5 * 1024 * 1024), 'pdf') })
+        runAction({ source: 'file', file: new ApFile('contract.pdf', Buffer.alloc(30 * 1024 * 1024), 'pdf') })
       ).rejects.toThrow(
         /^Uploading the file took over 6 minutes, so this step has too little time left to wait for the analysis\. Upload it to S3 first and set Document Source to "File already in S3", or use a smaller file\.$/
       );
-      expect(partsSent).toBe(4);
+      expect(megabytesRead).toBe(5);
       expect(abortInputs()).toEqual([{ Bucket: BUCKET, Key: expect.stringMatching(UPLOAD_KEY), UploadId: 'upload-1' }]);
       expect(textractSend).not.toHaveBeenCalled();
       expect(deleteInputs()).toHaveLength(0);

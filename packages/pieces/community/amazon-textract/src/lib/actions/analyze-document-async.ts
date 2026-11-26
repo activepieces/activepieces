@@ -216,24 +216,29 @@ async function uploadDocument({
   const key = `${UPLOAD_KEY_PREFIX}/${randomUUID()}${extension ? `.${extension}` : ''}`;
   const storage = await import('@aws-sdk/lib-storage');
   let upload: Upload | undefined;
-  let stopped = false;
+  const reading: FileReading = { tooSlow: false, done: false };
   const stopTimer = setTimeout(() => {
-    stopped = true;
-    void upload?.abort();
+    if (!reading.done) {
+      reading.tooSlow = true;
+      void upload?.abort();
+    }
   }, Math.max(0, stopAt - Date.now()));
   try {
     const { body } = streamUtils.toStreamingBody(file);
     upload = new storage.Upload({
       client: s3,
-      params: { Bucket: bucket, Key: key, Body: Readable.from(partsUntil({ body, deadline }), { highWaterMark: 1 }) },
+      params: {
+        Bucket: bucket,
+        Key: key,
+        Body: Readable.from(readUntil({ body, deadline, reading }), { highWaterMark: 1 }),
+      },
       partSize: UPLOAD_PART_SIZE,
       leavePartsOnError: true,
     });
     const response = await upload.done();
     return { key, versionId: response.VersionId };
   } catch (e) {
-    const message =
-      stopped || e instanceof SlowUploadError ? SLOW_UPLOAD_MESSAGE : uploadErrorMessage({ bucket, error: e });
+    const message = reading.tooSlow ? SLOW_UPLOAD_MESSAGE : uploadErrorMessage({ bucket, error: e });
     const abortWarning = await abortPartialUpload({ s3, bucket, key, uploadId: upload?.uploadId });
     throw new TextractStepError(abortWarning ? `${message} ${abortWarning}` : message);
   } finally {
@@ -241,13 +246,26 @@ async function uploadDocument({
   }
 }
 
-async function* partsUntil({ body, deadline }: { body: Readable; deadline: number }): AsyncGenerator<Buffer> {
-  for await (const part of streamUtils.readChunks({ readable: body, chunkSize: UPLOAD_PART_SIZE })) {
-    if (Date.now() > deadline) {
-      throw new SlowUploadError(SLOW_UPLOAD_MESSAGE);
+async function* readUntil({
+  body,
+  deadline,
+  reading,
+}: {
+  body: Readable;
+  deadline: number;
+  reading: FileReading;
+}): AsyncGenerator<Buffer> {
+  for await (const data of body) {
+    const chunk = Buffer.isBuffer(data) ? data : Buffer.from(data);
+    for (let start = 0; start < chunk.length; start += UPLOAD_READ_SIZE) {
+      if (Date.now() > deadline) {
+        reading.tooSlow = true;
+        throw new TextractStepError(SLOW_UPLOAD_MESSAGE);
+      }
+      yield chunk.subarray(start, start + UPLOAD_READ_SIZE);
     }
-    yield part;
   }
+  reading.done = true;
 }
 
 async function abortPartialUpload({
@@ -487,8 +505,6 @@ function isEarlierAnswer({ candidate, current }: { candidate: QueryResult; curre
 
 class TextractStepError extends Error {}
 
-class SlowUploadError extends Error {}
-
 const POLL_INTERVAL_MS = 5000;
 const JOB_WAIT_MS = 5 * 60 * 1000;
 const STEP_JOB_WAIT_MS = 7 * 60 * 1000;
@@ -498,6 +514,7 @@ const SLOW_UPLOAD_MESSAGE =
 const STEP_RESULTS_WAIT_MS = 8 * 60 * 1000;
 const UPLOAD_KEY_PREFIX = 'activepieces-textract-uploads';
 const UPLOAD_PART_SIZE = 5 * 1024 * 1024;
+const UPLOAD_READ_SIZE = 1024 * 1024;
 const BUCKET_NAME_REGEX = /^[a-zA-Z0-9._-]{3,255}$/;
 
 type AnalysisOptions = {
@@ -516,6 +533,8 @@ type PageAnswer = {
   confidence: number;
   pageNumber: number;
 };
+
+type FileReading = { tooSlow: boolean; done: boolean };
 
 type UploadedDocument = {
   key: string;

@@ -1,11 +1,14 @@
 import {
   AbortMultipartUploadCommand,
+  CompleteMultipartUploadCommand,
   CreateMultipartUploadCommand,
+  PutObjectCommand,
   S3Client,
   UploadPartCommand,
 } from '@aws-sdk/client-s3';
 import { TextractClient } from '@aws-sdk/client-textract';
-import { ApFile, AppConnectionType, createMockActionContext } from '@activepieces/pieces-framework';
+import { ApFile, ApStreamingFile, AppConnectionType, createMockActionContext } from '@activepieces/pieces-framework';
+import { Readable } from 'node:stream';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { analyzeDocumentAsync } from './analyze-document-async';
 
@@ -104,9 +107,76 @@ describe('Analyze Document from S3 (Multi-Page) upload, with the real lib-storag
     expect(events.filter((event) => event === 'abort')).toHaveLength(1);
     expect(TextractClient.prototype.send).not.toHaveBeenCalled();
   });
+
+  it.each([
+    ['a one-part upload whose PutObject is still running', 1024 * 1024, PutObjectCommand],
+    ['a multipart upload whose CompleteMultipartUpload is still running', PART_SIZE * 2 + 1, CompleteMultipartUploadCommand],
+  ])('does not stop %s at 8 minutes, and deletes the copy once it lands', async (_case, size, slowCommand) => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] });
+    let land: () => void = () => undefined;
+    vi.spyOn(S3Client.prototype, 'send').mockImplementation(async (command: unknown) => {
+      events.push(command instanceof Object ? command.constructor.name : 'unknown');
+      if (command instanceof slowCommand) {
+        await new Promise<void>((resolve) => {
+          land = resolve;
+        });
+        events.push('landed');
+      }
+      if (command instanceof CreateMultipartUploadCommand) {
+        return { UploadId: 'upload-1' };
+      }
+      return { ETag: '"etag"' };
+    });
+
+    const outcome = runAction(new ApFile('doc.pdf', Buffer.alloc(size, 1), 'pdf')).catch((e: unknown) => e);
+    while (!events.includes(slowCommand.name)) {
+      await new Promise((resolve) => setImmediate(resolve));
+    }
+    await vi.advanceTimersByTimeAsync(9 * 60 * 1000);
+    const beforeLanding = [...events];
+    land();
+    const error = await outcome;
+
+    expect(beforeLanding.at(-1)).toBe(slowCommand.name);
+    expect(error instanceof Error ? error.message : '').toMatch(
+      /^Uploading the file took over 6 minutes, so this step has too little time left/
+    );
+    expect(events.slice(-2)).toEqual(['landed', 'DeleteObjectCommand']);
+    expect(events).not.toContain('AbortMultipartUploadCommand');
+    expect(TextractClient.prototype.send).not.toHaveBeenCalled();
+  });
+
+  it('stops an upload whose file stops arriving at 8 minutes, and removes the parts already sent', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] });
+    vi.spyOn(S3Client.prototype, 'send').mockImplementation(async (command: unknown) => {
+      events.push(command instanceof Object ? command.constructor.name : 'unknown');
+      if (command instanceof CreateMultipartUploadCommand) {
+        return { UploadId: 'upload-1' };
+      }
+      return { ETag: '"etag"' };
+    });
+    async function* stallsAfterSixMegabytes() {
+      yield Buffer.alloc(PART_SIZE + 1024 * 1024, 1);
+      await new Promise(() => undefined);
+    }
+    const file: ApStreamingFile = { filename: 'big.pdf', extension: 'pdf', body: Readable.from(stallsAfterSixMegabytes()) };
+
+    const outcome = runAction(file).catch((e: unknown) => e);
+    while (!events.includes('UploadPartCommand')) {
+      await new Promise((resolve) => setImmediate(resolve));
+    }
+    await vi.advanceTimersByTimeAsync(8 * 60 * 1000);
+    const error = await outcome;
+
+    expect(error instanceof Error ? error.message : '').toMatch(
+      /^Uploading the file took over 6 minutes, so this step has too little time left/
+    );
+    expect(events).toEqual(['CreateMultipartUploadCommand', 'UploadPartCommand', 'AbortMultipartUploadCommand']);
+    expect(TextractClient.prototype.send).not.toHaveBeenCalled();
+  });
 });
 
-function runAction(file: ApFile): Promise<unknown> {
+function runAction(file: ApFile | ApStreamingFile): Promise<unknown> {
   return analyzeDocumentAsync.run({
     ...createMockActionContext<typeof analyzeDocumentAsync.props>({
       propsValue: {
