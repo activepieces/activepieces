@@ -1,4 +1,4 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { MarkdownVariant, Property, createAction } from '@activepieces/pieces-framework';
 import { zohoCrmAuth } from '../auth';
 import { parseTriggers, requireApiName, requireId, stringList } from '../common/client';
 import { buildRecordPayload } from '../common/fields';
@@ -21,20 +21,29 @@ export const updateRecordAction = createAction({
   props: {
     module: moduleDropdown({ filter: 'editable' }),
     record_id: recordDropdown(),
+    changes_info: Property.MarkDown({
+      value: 'Empty fields keep their current value. Read-only, formula, subform and file fields are not listed.',
+      variant: MarkdownVariant.INFO,
+    }),
     fields: recordFieldsProp({ mode: 'update' }),
     clear_fields: Property.Array({
       displayName: 'Clear Fields',
-      description: 'Field API names to set to empty (e.g. "Phone", "Custom_Field__c").',
+      description: 'Field API names to blank, such as Phone or Custom_Field__c.',
       required: false,
     }),
     additional_fields: additionalFieldsProp(),
     skip_automation: Property.Checkbox({
       displayName: 'Skip All Automation',
-      description: 'Run no workflow, approval or blueprint for this update.',
+      description: 'Run no workflow, approval or blueprint for this record.',
       required: false,
+      advanced: true,
       defaultValue: false,
     }),
   },
+  propertyGroups: [
+    { key: 'record', display: 'section', label: 'Record to Update', icon: 'file', props: ['module', 'record_id'] },
+    { key: 'changes', display: 'section', label: 'Changes', icon: 'sliders', props: ['changes_info', 'fields', 'clear_fields'] },
+  ],
   outputSchema: recordWriteOutputSchema,
   async run({ auth, propsValue }) {
     const module = requireApiName({ value: propsValue.module, name: 'Module' });

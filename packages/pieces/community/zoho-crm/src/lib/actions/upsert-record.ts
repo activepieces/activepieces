@@ -1,4 +1,4 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { MarkdownVariant, Property, createAction } from '@activepieces/pieces-framework';
 import { zohoCrmAuth } from '../auth';
 import { parseTriggers, requireApiName, stringList } from '../common/client';
 import { buildRecordPayload } from '../common/fields';
@@ -21,14 +21,25 @@ export const upsertRecordAction = createAction({
   props: {
     module: moduleDropdown({ filter: 'creatable' }),
     duplicate_check_fields: uniqueFieldsDropdown(),
+    fields_info: Property.MarkDown({
+      value: 'Read-only, formula, subform and file fields are not listed.',
+      variant: MarkdownVariant.INFO,
+    }),
     fields: recordFieldsProp({ mode: 'upsert' }),
     additional_fields: additionalFieldsProp(),
     skip_automation: Property.Checkbox({
       displayName: 'Skip All Automation',
+      description: 'Run no workflow, approval or blueprint for this record.',
       required: false,
+      advanced: true,
       defaultValue: false,
     }),
   },
+  propertyGroups: [
+    { key: 'record', display: 'section', label: 'Record', icon: 'file', props: ['module'] },
+    { key: 'matching', display: 'section', label: 'Matching', icon: 'filter', props: ['duplicate_check_fields'] },
+    { key: 'values', display: 'section', label: 'Fields', icon: 'text', props: ['fields_info', 'fields'] },
+  ],
   outputSchema: upsertOutputSchema,
   async run({ auth, propsValue }) {
     const module = requireApiName({ value: propsValue.module, name: 'Module' });
