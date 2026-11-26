@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { chargekeepAuth } from '../auth';
 import { chargekeepOutputSchemas } from '../common/output-schemas';
 import { CURRENCY_OPTIONS } from '../common/props';
@@ -8,34 +8,48 @@ export const createProduct = createAction({
   name: 'createProduct',
   classification: 'WRITE',
   displayName: 'Create Product',
-  description: 'Creates a product in the CRM, or updates the product with the same SKU.',
+  description: 'Creates a product, or updates the one with the same SKU.',
   audience: 'both',
   aiMetadata: { description: 'Creates or updates a product in the ChargeKeep/Sperse CRM with one price option. Requires productType (General, Event, Subscription, Digital), name and SKU (code, the upsert key). General/Event/Digital products take price and unit (one-time price). Subscription products take the subscription fee and payment cycle (Monthly, Annual, LifeTime, OneTime, Custom), plus optional signup fee, cycles, trial days and grace period. Reusing the same SKU updates that product and replaces its price option. Returns the product with its price options.', idempotent: true },
   outputSchema: chargekeepOutputSchemas.product,
   auth: chargekeepAuth,
+  propertyGroups: [
+    { key: 'product', display: 'section', label: 'Product', icon: 'tag', props: ['productType', 'name', 'code', 'groupName', 'currencyId', 'description', 'descriptionHTML', 'logoURL'] },
+    { key: 'one_time', display: 'section', label: 'One-Time Price', icon: 'sliders', props: ['one_time_info', 'price', 'unit'] },
+    { key: 'subscription', display: 'section', label: 'Subscription Price', icon: 'calendar', props: ['subscription_info', 'fee', 'frequency', 'signupFee', 'cycles', 'customPeriodType', 'customPeriodCount', 'trialDayCount', 'gracePeriodDayCount'] },
+  ],
   props: {
     productType: Property.StaticDropdown({
       displayName: 'Product Type',
       required: true,
       defaultValue: 'General',
+      display: 'cards',
       options: {
         disabled: false,
         options: [
           {
             label: 'General',
             value: 'General',
+            description: 'Standard item',
+            icon: 'tag',
           },
           {
             label: 'Event',
             value: 'Event',
+            description: 'Ticketed event',
+            icon: 'calendar',
           },
           {
             label: 'Subscription',
             value: 'Subscription',
+            description: 'Recurring fee',
+            icon: 'sliders',
           },
           {
             label: 'Digital',
             value: 'Digital',
+            description: 'Online access',
+            icon: 'file',
           },
         ],
       },
@@ -43,44 +57,58 @@ export const createProduct = createAction({
     name: Property.ShortText({
       displayName: 'Product Name',
       required: true,
+      width: 'half',
     }),
     code: Property.ShortText({
       displayName: 'SKU',
       required: true,
-      description: 'Sku is the product code',
+      description: 'Your product code. Reusing it updates that product.',
+      width: 'half',
     }),
     description: Property.LongText({
       displayName: 'Description',
       required: false,
     }),
     descriptionHTML: Property.LongText({
-      displayName: 'Description HTML',
+      displayName: 'HTML Description',
       required: false,
-      description: 'Javascript and media tags are not allowed',
+      description: 'Scripts and media tags are not allowed.',
     }),
     logoURL: Property.LongText({
-      displayName: 'Logo Url',
+      displayName: 'Logo URL',
       required: false,
     }),
     groupName: Property.ShortText({
       displayName: 'Group Name',
       required: false,
+      width: 'half',
+    }),
+    one_time_info: Property.MarkDown({
+      value: 'Used for General, Event and Digital products.',
+      variant: MarkdownVariant.INFO,
+    }),
+    subscription_info: Property.MarkDown({
+      value: 'Used only for Subscription products.',
+      variant: MarkdownVariant.INFO,
     }),
     price: Property.Number({
       displayName: 'Price',
       required: false,
-      description: 'One-time price. Required for General, Digital and Event products.',
+      description: 'Required for these product types.',
+      width: 'half',
     }),
     currencyId: Property.StaticDropdown({
-      displayName: 'Currency Id',
+      displayName: 'Currency',
       required: false,
+      width: 'half',
       defaultValue: 'USD',
       options: { disabled: false, options: CURRENCY_OPTIONS },
     }),
     unit: Property.StaticDropdown({
       displayName: 'Unit',
       required: false,
-      description: 'Price unit for General, Digital and Event products. Defaults to Unit.',
+      description: 'Empty: Unit.',
+      width: 'half',
       options: {
         disabled: false,
         options: [
@@ -136,9 +164,10 @@ export const createProduct = createAction({
       },
     }),
     frequency: Property.StaticDropdown({
-      displayName: 'Payment Cycle',
+      displayName: 'Billing Period',
       required: false,
-      description: 'Payment cycle for Subscription products. Defaults to Monthly.',
+      description: 'Empty: Monthly.',
+      width: 'half',
       options: {
         disabled: false,
         options: [
@@ -151,11 +180,11 @@ export const createProduct = createAction({
             value: 'Annual',
           },
           {
-            label: 'LifeTime',
+            label: 'Lifetime',
             value: 'LifeTime',
           },
           {
-            label: 'OneTime',
+            label: 'One-time',
             value: 'OneTime',
           },
           {
@@ -166,24 +195,27 @@ export const createProduct = createAction({
       },
     }),
     fee: Property.Number({
-      displayName: 'Subscription fee',
-      description: 'Fee per cycle. Required for Subscription products.',
+      displayName: 'Subscription Fee',
+      description: 'Charged every billing period. Required.',
       required: false,
+      width: 'half',
     }),
     cycles: Property.Number({
-      displayName: 'No of cycles',
+      displayName: 'Billing Cycles',
       required: false,
-      description: 'Number of billing cycles (Subscription products). Leave empty for no limit.',
+      description: 'How many times to charge. Empty: no limit.',
+      width: 'half',
     }),
     signupFee: Property.Number({
-      displayName: 'Signup fee',
+      displayName: 'Signup Fee',
       required: false,
-      description: 'One-time signup fee (Subscription products).',
+      description: 'Charged once at signup.',
+      width: 'half',
     }),
     customPeriodType: Property.StaticDropdown({
       displayName: 'Custom Period Type',
       required: false,
-      description: 'Period type when the Payment Cycle is Custom.',
+      description: 'Period unit when Billing Period is Custom.',
       options: {
         disabled: false,
         options: [
@@ -207,18 +239,20 @@ export const createProduct = createAction({
       },
     }),
     customPeriodCount: Property.Number({
-      displayName: 'Custom No of Period',
+      displayName: 'Custom Period Count',
       required: false,
-      description: 'Number of periods when the Payment Cycle is Custom or OneTime.',
+      description: 'Number of periods when Billing Period is Custom or One-time.',
     }),
     trialDayCount: Property.Number({
       displayName: 'Trial Days',
       required: false,
-      description: 'Free trial length in days (Subscription products).',
+      description: 'Free days before the first charge.',
+      width: 'half',
     }),
     gracePeriodDayCount: Property.Number({
-      displayName: 'Grace Period Count',
-      description: 'Grace period in days after a missed payment (Subscription products).',
+      displayName: 'Grace Period Days',
+      description: 'Days to wait after a missed payment.',
+      width: 'half',
       required: false,
     }),
   },

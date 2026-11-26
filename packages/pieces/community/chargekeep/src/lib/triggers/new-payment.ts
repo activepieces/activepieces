@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, MarkdownVariant, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { chargekeepAuth } from '../auth';
 import { createChargekeepWebhookHooks, deliveryKeys } from './helpers';
 
@@ -9,11 +9,16 @@ export const newPayment = createTrigger({
   name: 'new_payment',
   classification: 'READ',
   displayName: 'New Payment',
-  description: 'Triggers when a new payment is created',
+  description: 'Fires when a payment is recorded in ChargeKeep.',
   aiMetadata: {
     description: 'Fires when a new payment is recorded in the ChargeKeep/Sperse CRM, emitting the payment transaction along with its related contact and invoice.',
   },
-  props: {},
+  props: {
+    setup_info: Property.MarkDown({
+      value: 'ChargeKeep sends new payments here once you publish the flow. Your API key needs permission to subscribe to events.',
+      variant: MarkdownVariant.INFO,
+    }),
+  },
   type: TriggerStrategy.WEBHOOK,
   sampleData: {
     contact: {

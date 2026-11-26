@@ -16,7 +16,7 @@ export const chargekeepAuth = PieceAuth.CustomAuth({
   props: {
     base_url: Property.StaticDropdown({
       displayName: 'Base URL',
-      description: 'Select the base environment URL',
+      description: 'The ChargeKeep site you sign in to.',
       required: true,
       options: {
         disabled: false,
@@ -34,7 +34,7 @@ export const chargekeepAuth = PieceAuth.CustomAuth({
     }),
     api_key: PieceAuth.SecretText({
       displayName: 'Secret API Key',
-      description: 'Enter the API Key',
+      description: 'Created on the API keys page of your ChargeKeep admin settings.',
       required: true,
     }),
   },

@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { chargekeepAuth } from '../auth';
 import { chargekeepClient } from '../common/client';
 import { chargekeepServices } from '../common/services';
@@ -9,16 +9,23 @@ export const addOrUpdateContactExtended = createAction({
   name: 'addOrUpdateContact(extended)',
   classification: 'WRITE',
   displayName: 'Add or Update Contact (Extended)',
-  description: 'Adds or updates a contact (extended version)',
+  description: 'Adds or updates a contact with every field ChargeKeep supports.',
   audience: 'human',
   aiMetadata: { description: 'Imports a contact into the ChargeKeep/Sperse CRM with the full field set (driving license, military/citizenship flags, company details, tracking/UTM data, custom fields, and up to three inline subscriptions), upserting by Contact ID, Contact XREF, or email/name match. Prefer this over the basic Add or Update Contact when you need those extra fields. Can also provision a portal user and send a welcome email when Create User / Send Welcome Email are enabled (that email is a one-time side effect); otherwise repeating with the same identifying input upserts the same contact.', idempotent: false },
   auth: chargekeepAuth,
   outputSchema: chargekeepOutputSchemas.importedContact,
   props: {
+    identity_info: Property.MarkDown({
+      value: 'Give at least a name, a company or an email, or a Contact ID or External Contact ID. Empty fields are not sent, so an update keeps what ChargeKeep already has.',
+      variant: MarkdownVariant.INFO,
+    }),
+    portal_user_info: Property.MarkDown({
+      value: 'Welcome Email and Password only apply when Create User is Yes.',
+      variant: MarkdownVariant.INFO,
+    }),
     matchExisting: Property.StaticDropdown({
       displayName: 'Match Existing Contact',
-      description:
-        'If "Yes", will try to find an existing record using Email and Full Name and update it.',
+      description: 'Yes updates the contact with the same email and name.',
       required: false,
       defaultValue: true,
       options: {
@@ -36,9 +43,8 @@ export const addOrUpdateContactExtended = createAction({
       },
     }),
     overrideLists: Property.StaticDropdown({
-      displayName: 'Override Lists',
-      description:
-        'If "Yes", will override lists of contact details in update mode instead of merging them - lists, tags, emails, phones, links, addresses, photos.',
+      displayName: 'Replace Lists',
+      description: 'Yes replaces emails, phones, tags and lists instead of adding to them.',
       required: false,
       defaultValue: false,
       options: {
@@ -57,8 +63,7 @@ export const addOrUpdateContactExtended = createAction({
     }),
     ignoreInvalidValues: Property.StaticDropdown({
       displayName: 'Ignore Invalid Values',
-      description:
-        'If "Yes", will save the record even if there are some validation errors.',
+      description: 'Yes saves the contact even when some values are invalid.',
       required: false,
       defaultValue: true,
       options: {
@@ -77,41 +82,48 @@ export const addOrUpdateContactExtended = createAction({
     }),
     contactId: Property.Number({
       displayName: 'Contact ID',
-      description: 'ChargeKeep contact ID of an existing contact to update. Leave empty to match by XREF, email and name, or to create a new contact.',
+      description: 'ChargeKeep ID of the contact to update. Empty: match or create.',
+      width: 'half',
       required: false,
     }),
     contactXref: Property.ShortText({
-      displayName: 'Contact XREF',
-      description:
-        'This is string external reference that can be passed during creation and then if sent again it will update the record.',
+      displayName: 'External Contact ID',
+      description: 'Your own ID for the contact (XREF in ChargeKeep).',
+      width: 'half',
       required: false,
     }),
     importType: Property.StaticDropdown({
       displayName: 'Contact Type',
       required: true,
       defaultValue: 'Lead',
+      display: 'cards',
       options: {
         disabled: false,
         options: [
           {
             label: 'Lead',
             value: 'Lead',
+            description: 'Potential buyer',
+            icon: 'user',
           },
           {
             label: 'Client',
             value: 'Client',
+            description: 'Paying customer',
+            icon: 'users',
           },
           {
             label: 'Partner',
             value: 'Partner',
+            description: 'Works with you',
+            icon: 'tag',
           },
         ],
       },
     }),
     createUser: Property.StaticDropdown({
       displayName: 'Create User',
-      description:
-        'If "Yes" then a portal user is created for the contact, using the personal email as user name.',
+      description: 'Yes gives the contact a portal login, using their personal email.',
       required: false,
       defaultValue: false,
       options: {
@@ -130,8 +142,6 @@ export const addOrUpdateContactExtended = createAction({
     }),
     sendWelcomeEmail: Property.StaticDropdown({
       displayName: 'Send Welcome Email',
-      description:
-        'If "Yes" then a welcome email is sent to the newly created user. Only applies when Create User is "Yes".',
       required: false,
       defaultValue: false,
       options: {
@@ -150,42 +160,44 @@ export const addOrUpdateContactExtended = createAction({
     }),
     userPassword: Property.ShortText({
       displayName: 'User Password',
-      description:
-        'If password is not passed then it will be automatically generated.',
+      description: 'Empty: a password is generated.',
       required: false,
     }),
     namePrefix: Property.ShortText({
       displayName: 'Prefix',
-      description: 'The title used to address the contact.',
+      placeholder: 'Dr.',
+      width: 'half',
       required: false,
     }),
     firstName: Property.ShortText({
       displayName: 'First Name',
-      description: 'Required if Last Name, Company Name and email fields are empty.',
+      width: 'half',
       required: false,
     }),
     middleName: Property.ShortText({
       displayName: 'Middle Name',
-      description: "The contact's middle name.",
+      width: 'half',
       required: false,
     }),
     lastName: Property.ShortText({
       displayName: 'Last Name',
-      description: 'Required if First Name, Company Name and email fields are empty.',
+      width: 'half',
       required: false,
     }),
     nickName: Property.ShortText({
-      displayName: 'Nick Name',
-      description: "The contact's nick name.",
+      displayName: 'Nickname',
+      width: 'half',
       required: false,
     }),
     nameSuffix: Property.ShortText({
       displayName: 'Suffix',
-      description: 'Additional information about the contact e.g PhD.',
+      placeholder: 'PhD',
+      width: 'half',
       required: false,
     }),
     gender: Property.StaticDropdown({
       displayName: 'Gender',
+      width: 'half',
       required: false,
       options: {
         disabled: false,
@@ -203,31 +215,35 @@ export const addOrUpdateContactExtended = createAction({
     }),
     dob: Property.ShortText({
       displayName: 'Date of Birth',
-      description: 'Valid date format YYYY-MM-DD or MM-DD-YYYY.',
+      placeholder: '1990-06-25',
+      width: 'half',
       required: false,
     }),
     bankCode: Property.ShortText({
       displayName: 'Bank Code',
       description: "The contact's 4-letter personality code.",
+      width: 'half',
       required: false,
     }),
     ssn: Property.ShortText({
       displayName: 'SSN',
       description: "The contact's social security number.",
+      width: 'half',
       required: false,
     }),
     drivingLicense: Property.ShortText({
-      displayName: 'Driving License',
+      displayName: "Driver's License",
+      width: 'half',
       required: false,
     }),
     drivingLicenseState: Property.ShortText({
-      displayName: 'Driving License State',
+      displayName: 'License State',
+      width: 'half',
       required: false,
     }),
     isActiveMilitaryDuty: Property.StaticDropdown({
-      displayName: 'Is Active Military Duty',
-      description:
-        'Possible values are: Yes, No. If nothing is chosen that means "Unknown".',
+      displayName: 'Active Military Duty',
+      description: 'Empty means unknown.',
       required: false,
       options: {
         disabled: false,
@@ -244,9 +260,8 @@ export const addOrUpdateContactExtended = createAction({
       },
     }),
     isUSCitizen: Property.StaticDropdown({
-      displayName: 'Is US Citizen',
-      description:
-        'Possible values are: Yes, No. If nothing is chosen that means "Unknown".',
+      displayName: 'US Citizen',
+      description: 'Empty means unknown.',
       required: false,
       options: {
         disabled: false,
@@ -264,7 +279,7 @@ export const addOrUpdateContactExtended = createAction({
     }),
     preferredToD: Property.StaticDropdown({
       displayName: 'Preferred Time of Day',
-      description: 'Preferred Time of Day to contact with Client',
+      description: 'Best time of day to contact them.',
       required: false,
       options: {
         disabled: false,
@@ -289,262 +304,260 @@ export const addOrUpdateContactExtended = createAction({
       },
     }),
     personAffiliateCode: Property.ShortText({
-      displayName: 'Person Affiliate Code',
-      description:
-        'Affiliate Code is used for the current person detection as a source of new leads. Alphanumeric characters, underscore and hyphen are allowed.',
+      displayName: 'Contact Affiliate Code',
+      description: "The contact's own referral code: letters, digits, _ and -.",
       required: false,
     }),
     email1: Property.LongText({
       displayName: 'Personal Email',
-      description: "The contact's personal email.",
       required: false,
     }),
     email2: Property.LongText({
-      displayName: 'Alternative Personal email',
-      description: "The contact's alternative personal email.",
+      displayName: 'Alternative Personal Email',
       required: false,
     }),
     email3: Property.LongText({
-      displayName: 'Other Personal email',
-      description: "The contact's additional email.",
+      displayName: 'Other Personal Email',
       required: false,
     }),
     workEmail1: Property.LongText({
       displayName: 'Work Email',
-      description: "The contact's work email.",
       required: false,
     }),
     workEmail2: Property.LongText({
       displayName: 'Alternative Work Email',
-      description: "The contact's alternative work email.",
       required: false,
     }),
     workEmail3: Property.LongText({
       displayName: 'Other Work Email',
-      description: "The contact's other work email.",
       required: false,
     }),
     mobilePhone: Property.ShortText({
       displayName: 'Mobile Phone',
-      description: "The contact's primary phone number.",
+      width: 'half',
       required: false,
     }),
     mobilePhoneExt: Property.ShortText({
       displayName: 'Mobile Phone Ext',
-      description: "The contact's primary phone number extension.",
+      width: 'half',
       required: false,
     }),
     homePhone: Property.ShortText({
       displayName: 'Home Phone',
-      description: "The contact's home phone number.",
+      width: 'half',
       required: false,
     }),
     homePhoneExt: Property.ShortText({
       displayName: 'Home Phone Ext',
-      description: "The contact's home phone number extension.",
+      width: 'half',
       required: false,
     }),
     workPhone1: Property.ShortText({
       displayName: 'Work Phone',
-      description: "The contact's work phone number.",
+      width: 'half',
       required: false,
     }),
     workPhone1Ext: Property.ShortText({
       displayName: 'Work Phone Ext',
-      description: "The contact's work phone number extension.",
+      width: 'half',
       required: false,
     }),
     workPhone2: Property.ShortText({
       displayName: 'Work Phone 2',
-      description: "The contact's alternative work phone number.",
+      width: 'half',
       required: false,
     }),
     workPhone2Ext: Property.ShortText({
       displayName: 'Work Phone 2 Ext',
-      description: "The contact's alternative work phone number extension.",
+      width: 'half',
       required: false,
     }),
     home_street: Property.LongText({
-      displayName: 'Home Street',
-      description:
-        "The contact's full street address (can include apartment or unit number).",
+      displayName: 'Street',
       required: false,
     }),
     home_addressLine2: Property.LongText({
-      displayName: 'Address 2',
+      displayName: 'Address Line 2',
       required: false,
     }),
     home_city: Property.LongText({
       displayName: 'City',
-      description: "The contact's city of residence.",
       required: false,
     }),
     home_stateName: Property.ShortText({
       displayName: 'State Name',
-      description: "The contact's state of residence.",
+      width: 'half',
       required: false,
     }),
     home_stateId: Property.ShortText({
       displayName: 'State Code',
-      description: "The contact's state code.",
+      description: 'Two-letter state code.',
+      placeholder: 'CA',
+      width: 'half',
       required: false,
     }),
     home_zip: Property.ShortText({
       displayName: 'ZIP Code',
-      description: "The contact's zip/postal code.",
+      width: 'half',
       required: false,
     }),
     home_countryName: Property.ShortText({
       displayName: 'Country Name',
-      description: "The contact's country of residence.",
       required: false,
     }),
     home_countryId: Property.ShortText({
       displayName: 'Country Code',
-      description: "The contact's country code.",
+      description: 'Two-letter country code.',
+      placeholder: 'US',
+      width: 'half',
       required: false,
     }),
     work_street: Property.LongText({
-      displayName: 'Work Street',
-      description: "The contact's work address.",
+      displayName: 'Street',
       required: false,
     }),
     work_addressLine2: Property.LongText({
-      displayName: 'Address 2',
+      displayName: 'Address Line 2',
       required: false,
     }),
     work_city: Property.LongText({
       displayName: 'City',
-      description: "The contact's work city.",
       required: false,
     }),
     work_stateName: Property.ShortText({
       displayName: 'State Name',
-      description: "The contact's work state.",
+      width: 'half',
       required: false,
     }),
     work_stateId: Property.ShortText({
       displayName: 'State Code',
-      description: "The contact's work state code.",
+      description: 'Two-letter state code.',
+      placeholder: 'CA',
+      width: 'half',
       required: false,
     }),
     work_zip: Property.ShortText({
       displayName: 'ZIP Code',
-      description: "The contact's work zip code.",
+      width: 'half',
       required: false,
     }),
     work_countryName: Property.ShortText({
       displayName: 'Country Name',
-      description: "The contact's work country.",
       required: false,
     }),
     work_countryId: Property.ShortText({
       displayName: 'Country Code',
-      description: "The contact's work country code.",
+      description: 'Two-letter country code.',
+      placeholder: 'US',
+      width: 'half',
       required: false,
     }),
     webSiteUrl: Property.LongText({
       displayName: 'Website',
-      description: "The contact's company website URL.",
       required: false,
     }),
     linkedInUrl: Property.LongText({
       displayName: 'LinkedIn',
-      description: "The contact's LinkedIn profile id.",
+      description: "Link to the contact's LinkedIn profile.",
       required: false,
     }),
     photoUrl: Property.LongText({
       displayName: 'Photo URL',
-      description: "The contact's person photo URL.",
       required: false,
     }),
     facebookUrl: Property.LongText({
       displayName: 'Facebook',
-      description: "The contact's Facebook profile id.",
+      description: "Link to the contact's Facebook profile.",
+      width: 'half',
       required: false,
     }),
     instagramUrl: Property.LongText({
       displayName: 'Instagram',
-      description: "The contact's Instagram profile id.",
+      description: "Link to the contact's Instagram profile.",
+      width: 'half',
       required: false,
     }),
     twitterUrl: Property.LongText({
       displayName: 'Twitter',
-      description: "The contact's Twitter profile id.",
+      description: "Link to the contact's Twitter profile.",
+      width: 'half',
       required: false,
     }),
     googlePlusUrl: Property.LongText({
       displayName: 'Google Reviews',
-      description: "The contact's Google reviews.",
+      description: "Link to the contact's Google reviews.",
+      width: 'half',
       required: false,
     }),
     angelListUrl: Property.LongText({
       displayName: 'AngelList',
-      description: "The contact's AngelList profile id.",
+      description: "Link to the contact's AngelList profile.",
+      width: 'half',
       required: false,
     }),
     zoomUrl: Property.LongText({
       displayName: 'Zoom',
-      description: "The contact's Zoom id.",
+      description: "The contact's Zoom link.",
+      width: 'half',
       required: false,
     }),
     experience: Property.LongText({
-      displayName: 'Content',
-      description: "The contact's professional experience.",
+      displayName: 'Experience',
+      description: "The contact's work history or professional background.",
       required: false,
     }),
     profileSummary: Property.LongText({
       displayName: 'Profile Summary',
-      description: "The contact's profile summary.",
       required: false,
     }),
     notes: Property.LongText({
       displayName: 'Notes',
-      description: 'Additional notes about the contact',
       required: false,
     }),
     followUpDate: Property.ShortText({
-      displayName: 'Follow Up Date',
-      description:
-        'Valid date format YYYY-MM-DD HH:MM:SS. If date is defined then new Follow Up Task will be created for this contact',
+      displayName: 'Follow-Up Date',
+      description: 'Creates a follow-up task for this date.',
+      placeholder: '2026-06-25 14:30:00',
       required: false,
     }),
     assignedUser: Property.ShortText({
       displayName: 'Assigned User',
-      description:
-        'Preferably, Sperse User Email should be passed as it is unique within Sperse account but User Name can be also passed',
+      description: 'Email or username of the ChargeKeep user who owns this contact.',
       required: false,
     }),
     leadDealAmount: Property.Number({
       displayName: 'Deal Amount',
-      description: 'Estimated deal/opportunity amount.',
+      description: 'Estimated value of the deal.',
+      width: 'half',
       required: false,
     }),
     customField1: Property.LongText({
       displayName: 'Custom Field 1',
-      description: 'Additional custom data for the contact record.',
+      advanced: true,
       required: false,
     }),
     customField2: Property.LongText({
       displayName: 'Custom Field 2',
+      advanced: true,
       required: false,
     }),
     customField3: Property.LongText({
       displayName: 'Custom Field 3',
+      advanced: true,
       required: false,
     }),
     customField4: Property.LongText({
       displayName: 'Custom Field 4',
+      advanced: true,
       required: false,
     }),
     customField5: Property.LongText({
       displayName: 'Custom Field 5',
+      advanced: true,
       required: false,
     }),
     companyName: Property.LongText({
       displayName: 'Company Name',
-      description:
-        "Name of the contact's company (This field is mandatory if the First Name and Last Name fields are empty).",
       required: false,
     }),
     organizationType: Property.StaticDropdown({
@@ -574,7 +587,7 @@ export const addOrUpdateContactExtended = createAction({
             value: 'Partnership',
           },
           {
-            label: 'Sole Proprietership',
+            label: 'Sole Proprietorship',
             value: 'Sole Proprietership',
           },
           {
@@ -593,8 +606,8 @@ export const addOrUpdateContactExtended = createAction({
       },
     }),
     isEmployed: Property.StaticDropdown({
-      displayName: 'Is Employed',
-      description: 'Pass yes if the client is employed in this Organization.',
+      displayName: 'Employed Here',
+      description: 'Whether the contact works at this company.',
       required: false,
       options: {
         disabled: false,
@@ -612,21 +625,22 @@ export const addOrUpdateContactExtended = createAction({
     }),
     jobTitle: Property.ShortText({
       displayName: 'Job Title',
-      description: "The contact's job title.",
       required: false,
     }),
     employmentStartDate: Property.ShortText({
       displayName: 'Employment Start Date',
-      description: 'Valid date format YYYY-MM-DD or MM-DD-YYYY',
+      placeholder: '2024-06-25',
       required: false,
     }),
     employeeCount: Property.ShortText({
       displayName: 'Employee Count',
+      width: 'half',
       required: false,
     }),
     dateFounded: Property.ShortText({
       displayName: 'Date Founded',
-      description: 'Valid date format YYYY-MM-DD or MM-DD-YYYY',
+      placeholder: '2024-06-25',
+      width: 'half',
       required: false,
     }),
     ein: Property.LongText({
@@ -635,23 +649,26 @@ export const addOrUpdateContactExtended = createAction({
     }),
     annualRevenue: Property.Number({
       displayName: 'Annual Revenue',
+      width: 'half',
       required: false,
     }),
     industry: Property.ShortText({
       displayName: 'Industry',
-      description: "The company's industry.",
+      width: 'half',
       required: false,
     }),
     companyPhone: Property.ShortText({
       displayName: 'Company Phone',
+      width: 'half',
       required: false,
     }),
     companyPhoneExt: Property.ShortText({
-      displayName: 'Company Phone Extension',
+      displayName: 'Company Phone Ext',
+      width: 'half',
       required: false,
     }),
     companyFaxNumber: Property.LongText({
-      displayName: 'Company Fax Number',
+      displayName: 'Company Fax',
       required: false,
     }),
     companyEmail: Property.LongText({
@@ -707,182 +724,209 @@ export const addOrUpdateContactExtended = createAction({
       required: false,
     }),
     company_street: Property.LongText({
-      displayName: 'Company Street',
+      displayName: 'Street',
       required: false,
     }),
     company_addressLine2: Property.LongText({
-      displayName: 'Address 2',
+      displayName: 'Address Line 2',
       required: false,
     }),
     company_city: Property.ShortText({
       displayName: 'City',
+      width: 'half',
       required: false,
     }),
     company_stateName: Property.ShortText({
       displayName: 'State Name',
+      width: 'half',
       required: false,
     }),
     company_stateId: Property.ShortText({
       displayName: 'State Code',
+      placeholder: 'CA',
+      width: 'half',
       required: false,
     }),
     company_zip: Property.ShortText({
-      displayName: 'Company Zip Code',
+      displayName: 'ZIP Code',
+      width: 'half',
       required: false,
     }),
     company_countryName: Property.LongText({
-      displayName: 'Company Country Name',
+      displayName: 'Country Name',
       required: false,
     }),
     company_countryId: Property.ShortText({
-      displayName: 'Company Country Code',
+      displayName: 'Country Code',
+      placeholder: 'US',
       required: false,
     }),
     leadSource: Property.ShortText({
       displayName: 'Source Code',
-      description:
-        'The first known source the contact used to find your website. You can set this automatically and update manually later.',
+      description: 'Where the contact first found you, such as google or newsletter.',
+      width: 'half',
       required: false,
     }),
     channelId: Property.ShortText({
       displayName: 'Channel Code',
-      description: 'The channel/medium the contact used to find your website.',
+      description: 'How the contact reached you, such as email or paid search.',
+      width: 'half',
       required: false,
     }),
     affiliateCode: Property.ShortText({
       displayName: 'Affiliate Code',
-      description:
-        'The affiliate/referer partner through which the contact signed up.',
+      description: 'Code of the affiliate partner who referred the contact.',
       required: false,
     }),
     campaignId: Property.ShortText({
       displayName: 'Campaign ID',
+      advanced: true,
       required: false,
     }),
     gclId: Property.ShortText({
       displayName: 'Google Click ID',
+      advanced: true,
       required: false,
     }),
     refererURL: Property.LongText({
-      displayName: 'Referer URL',
-      description:
-        'The webpage where the contact clicked a link that sent them to your website.',
+      displayName: 'Referrer URL',
+      description: 'The page whose link brought the contact to your website.',
       required: false,
     }),
     applicantId: Property.ShortText({
       displayName: 'Applicant ID',
+      advanced: true,
       required: false,
     }),
     applicationId: Property.ShortText({
       displayName: 'Application ID',
+      advanced: true,
       required: false,
     }),
     ipAddress: Property.LongText({
       displayName: 'IP Address',
+      advanced: true,
       required: false,
     }),
     userAgent: Property.ShortText({
       displayName: 'User Agent',
+      advanced: true,
       required: false,
     }),
     siteId: Property.ShortText({
       displayName: 'Site ID',
+      advanced: true,
       required: false,
     }),
     siteUrl: Property.LongText({
       displayName: 'Site URL',
+      advanced: true,
       required: false,
     }),
     dateCreated: Property.ShortText({
       displayName: 'Date Created',
-      description: 'Valid date format YYYY-MM-DD HH:MM:SS',
+      placeholder: '2026-06-25 14:30:00',
+      advanced: true,
       required: false,
     }),
     entryUrl: Property.LongText({
       displayName: 'Entry URL',
-      description:
-        'The first page of visit through which the contact visited your website.',
+      description: 'The first page the contact visited on your website.',
       required: false,
     }),
     leadStageName: Property.ShortText({
       displayName: 'Lead Stage Name',
-      description:
-        'Name of the lead pipeline stage to put the lead in.',
+      description: 'Pipeline stage to put the lead in.',
+      width: 'half',
       required: false,
     }),
     star: Property.ShortText({
       displayName: 'Star',
-      description:
-        'String Value. Supports the following items: Yellow, Blue, Green, Purple, Red. Other values will be skipped.',
+      description: 'Yellow, Blue, Green, Purple or Red. Other values are skipped.',
+      width: 'half',
       required: false,
     }),
     rating: Property.ShortText({
       displayName: 'Rating',
-      description: 'This is the static array from 1 to 10',
+      description: 'A number from 1 to 10.',
+      width: 'half',
       required: false,
     }),
     utmSource: Property.LongText({
       displayName: 'UTM Source',
+      advanced: true,
       required: false,
     }),
     utmMedium: Property.LongText({
       displayName: 'UTM Medium',
+      advanced: true,
       required: false,
     }),
     utmCampaign: Property.LongText({
       displayName: 'UTM Campaign',
+      advanced: true,
       required: false,
     }),
     utmTerm: Property.LongText({
       displayName: 'UTM Term',
+      advanced: true,
       required: false,
     }),
     utmContent: Property.LongText({
       displayName: 'UTM Content',
+      advanced: true,
       required: false,
     }),
     utmKeyword: Property.LongText({
       displayName: 'UTM Keyword',
+      advanced: true,
       required: false,
     }),
     utmAdGroup: Property.LongText({
       displayName: 'UTM AdGroup',
+      advanced: true,
       required: false,
     }),
     utmName: Property.LongText({
       displayName: 'UTM Name',
+      advanced: true,
       required: false,
     }),
     requestCustomField1: Property.LongText({
       displayName: 'Request Custom Field 1',
+      advanced: true,
       required: false,
     }),
     requestCustomField2: Property.LongText({
       displayName: 'Request Custom Field 2',
+      advanced: true,
       required: false,
     }),
     requestCustomField3: Property.LongText({
       displayName: 'Request Custom Field 3',
+      advanced: true,
       required: false,
     }),
     requestCustomField4: Property.LongText({
       displayName: 'Request Custom Field 4',
+      advanced: true,
       required: false,
     }),
     requestCustomField5: Property.LongText({
       displayName: 'Request Custom Field 5',
+      advanced: true,
       required: false,
     }),
     sub1_productCode: Property.ShortText({
       displayName: 'Product Code',
-      description:
-        'Product Code from the Sperse CRM. Either Product Code and Payment Period Type or System Type and Code are required fields within Subscription 1.',
+      description: 'Product SKU. Give it with Billing Period, or System Type and Code.',
+      width: 'half',
       required: false,
     }),
     sub1_paymentPeriodType: Property.StaticDropdown({
-      displayName: 'Product Payment Period Type',
-      description:
-        'The chosen Period Type has to be set for the Product on Sperse side',
+      displayName: 'Billing Period',
+      description: 'Must be a period set up on the product in ChargeKeep.',
+      width: 'half',
       required: false,
       options: {
         disabled: false,
@@ -896,7 +940,7 @@ export const addOrUpdateContactExtended = createAction({
             value: 'Annual',
           },
           {
-            label: 'LifeTime',
+            label: 'Lifetime',
             value: 'LifeTime',
           },
         ],
@@ -904,33 +948,34 @@ export const addOrUpdateContactExtended = createAction({
     }),
     sub1_systemType: Property.ShortText({
       displayName: 'System Type',
-      description:
-        'Either Product Code and Payment Period Type or System Type and Code are required fields within Subscription 1.',
+      width: 'half',
       required: false,
     }),
     sub1_code: Property.ShortText({
       displayName: 'Code',
-      description:
-        'Code of subscription service from the Sperse CRM. Either Product Code and Payment Period Type or System Type and Code are required fields within Subscription 1.',
+      description: 'Service code from ChargeKeep.',
+      width: 'half',
       required: false,
     }),
     sub1_name: Property.ShortText({
       displayName: 'Name',
+      width: 'half',
       required: false,
     }),
     sub1_level: Property.ShortText({
       displayName: 'Level',
-      description: 'Code of subscription service level from the Sperse CRM.',
+      description: 'Service level code from ChargeKeep.',
+      width: 'half',
       required: false,
     }),
     sub1_startDate: Property.ShortText({
       displayName: 'Start Date',
-      description: 'Valid date format YYYY-MM-DD HH:MM:SS.',
+      placeholder: '2026-06-25 00:00:00',
       required: false,
     }),
     sub1_endDate: Property.ShortText({
       displayName: 'End Date',
-      description: 'Valid date format YYYY-MM-DD HH:MM:SS.',
+      placeholder: '2026-06-25 00:00:00',
       required: false,
     }),
     sub1_amount: Property.Number({
@@ -939,14 +984,14 @@ export const addOrUpdateContactExtended = createAction({
     }),
     sub2_productCode: Property.ShortText({
       displayName: 'Product Code',
-      description:
-        'Product Code from the Sperse CRM. Either Product Code and Payment Period Type or System Type and Code are required fields within Subscription 2.',
+      description: 'Product SKU. Give it with Billing Period, or System Type and Code.',
+      width: 'half',
       required: false,
     }),
     sub2_paymentPeriodType: Property.StaticDropdown({
-      displayName: 'Product Payment Period Type',
-      description:
-        'The chosen Period Type has to be set for the Product on Sperse side',
+      displayName: 'Billing Period',
+      description: 'Must be a period set up on the product in ChargeKeep.',
+      width: 'half',
       required: false,
       options: {
         disabled: false,
@@ -960,7 +1005,7 @@ export const addOrUpdateContactExtended = createAction({
             value: 'Annual',
           },
           {
-            label: 'LifeTime',
+            label: 'Lifetime',
             value: 'LifeTime',
           },
         ],
@@ -968,33 +1013,34 @@ export const addOrUpdateContactExtended = createAction({
     }),
     sub2_systemType: Property.ShortText({
       displayName: 'System Type',
-      description:
-        'Either Product Code and Payment Period Type or System Type and Code are required fields within Subscription 2.',
+      width: 'half',
       required: false,
     }),
     sub2_code: Property.ShortText({
       displayName: 'Code',
-      description:
-        'Code of subscription service from the Sperse CRM. Either Product Code and Payment Period Type or System Type and Code are required fields within Subscription 2.',
+      description: 'Service code from ChargeKeep.',
+      width: 'half',
       required: false,
     }),
     sub2_name: Property.ShortText({
       displayName: 'Name',
+      width: 'half',
       required: false,
     }),
     sub2_level: Property.ShortText({
       displayName: 'Level',
-      description: 'Code of subscription service level from the Sperse CRM.',
+      description: 'Service level code from ChargeKeep.',
+      width: 'half',
       required: false,
     }),
     sub2_startDate: Property.ShortText({
       displayName: 'Start Date',
-      description: 'Valid date format YYYY-MM-DD HH:MM:SS.',
+      placeholder: '2026-06-25 00:00:00',
       required: false,
     }),
     sub2_endDate: Property.ShortText({
       displayName: 'End Date',
-      description: 'Valid date format YYYY-MM-DD HH:MM:SS.',
+      placeholder: '2026-06-25 00:00:00',
       required: false,
     }),
     sub2_amount: Property.Number({
@@ -1003,14 +1049,14 @@ export const addOrUpdateContactExtended = createAction({
     }),
     sub3_productCode: Property.ShortText({
       displayName: 'Product Code',
-      description:
-        'Product Code from the Sperse CRM. Either Product Code and Payment Period Type or System Type and Code are required fields within Subscription 3.',
+      description: 'Product SKU. Give it with Billing Period, or System Type and Code.',
+      width: 'half',
       required: false,
     }),
     sub3_paymentPeriodType: Property.StaticDropdown({
-      displayName: 'Product Payment Period Type',
-      description:
-        'The chosen Period Type has to be set for the Product on Sperse side',
+      displayName: 'Billing Period',
+      description: 'Must be a period set up on the product in ChargeKeep.',
+      width: 'half',
       required: false,
       options: {
         disabled: false,
@@ -1024,7 +1070,7 @@ export const addOrUpdateContactExtended = createAction({
             value: 'Annual',
           },
           {
-            label: 'LifeTime',
+            label: 'Lifetime',
             value: 'LifeTime',
           },
         ],
@@ -1032,33 +1078,34 @@ export const addOrUpdateContactExtended = createAction({
     }),
     sub3_systemType: Property.ShortText({
       displayName: 'System Type',
-      description:
-        'Either Product Code and Payment Period Type or System Type and Code are required fields within Subscription 3.',
+      width: 'half',
       required: false,
     }),
     sub3_code: Property.ShortText({
       displayName: 'Code',
-      description:
-        'Code of subscription service from the Sperse CRM. Either Product Code and Payment Period Type or System Type and Code are required fields within Subscription 3.',
+      description: 'Service code from ChargeKeep.',
+      width: 'half',
       required: false,
     }),
     sub3_name: Property.ShortText({
       displayName: 'Name',
+      width: 'half',
       required: false,
     }),
     sub3_level: Property.ShortText({
       displayName: 'Level',
-      description: 'Code of subscription service level from the Sperse CRM.',
+      description: 'Service level code from ChargeKeep.',
+      width: 'half',
       required: false,
     }),
     sub3_startDate: Property.ShortText({
       displayName: 'Start Date',
-      description: 'Valid date format YYYY-MM-DD HH:MM:SS.',
+      placeholder: '2026-06-25 00:00:00',
       required: false,
     }),
     sub3_endDate: Property.ShortText({
       displayName: 'End Date',
-      description: 'Valid date format YYYY-MM-DD HH:MM:SS.',
+      placeholder: '2026-06-25 00:00:00',
       required: false,
     }),
     sub3_amount: Property.Number({
@@ -1067,6 +1114,141 @@ export const addOrUpdateContactExtended = createAction({
     }),
   },
 
+  propertyGroups: [
+    {
+      key: 'record',
+      display: 'section',
+      label: 'Contact',
+      icon: 'user',
+      props: ['importType', 'identity_info', 'matchExisting', 'contactId', 'contactXref', 'overrideLists', 'ignoreInvalidValues'],
+    },
+    {
+      key: 'portal_user',
+      display: 'section',
+      label: 'Portal User',
+      icon: 'user',
+      props: ['portal_user_info', 'createUser', 'sendWelcomeEmail', 'userPassword'],
+    },
+    {
+      key: 'name',
+      display: 'section',
+      label: 'Name',
+      icon: 'type',
+      props: ['namePrefix', 'nameSuffix', 'firstName', 'lastName', 'middleName', 'nickName'],
+    },
+    {
+      key: 'personal',
+      display: 'section',
+      label: 'Personal Details',
+      icon: 'user',
+      props: ['gender', 'dob', 'ssn', 'bankCode', 'drivingLicense', 'drivingLicenseState', 'isActiveMilitaryDuty', 'isUSCitizen', 'preferredToD'],
+    },
+    {
+      key: 'emails',
+      display: 'section',
+      label: 'Emails',
+      icon: 'inbox',
+      props: ['email1', 'email2', 'email3', 'workEmail1', 'workEmail2', 'workEmail3'],
+    },
+    {
+      key: 'phones',
+      display: 'section',
+      label: 'Phones',
+      icon: 'send',
+      props: ['mobilePhone', 'mobilePhoneExt', 'homePhone', 'homePhoneExt', 'workPhone1', 'workPhone1Ext', 'workPhone2', 'workPhone2Ext'],
+    },
+    {
+      key: 'home_address',
+      display: 'section',
+      label: 'Home Address',
+      icon: 'location',
+      props: ['home_street', 'home_addressLine2', 'home_city', 'home_stateName', 'home_stateId', 'home_zip', 'home_countryId', 'home_countryName'],
+    },
+    {
+      key: 'work_address',
+      display: 'section',
+      label: 'Work Address',
+      icon: 'location',
+      props: ['work_street', 'work_addressLine2', 'work_city', 'work_stateName', 'work_stateId', 'work_zip', 'work_countryId', 'work_countryName'],
+    },
+    {
+      key: 'links',
+      display: 'section',
+      label: 'Profile Links',
+      icon: 'send',
+      props: ['webSiteUrl', 'linkedInUrl', 'photoUrl', 'facebookUrl', 'instagramUrl', 'twitterUrl', 'googlePlusUrl', 'angelListUrl', 'zoomUrl'],
+    },
+    {
+      key: 'profile',
+      display: 'section',
+      label: 'Profile',
+      icon: 'text',
+      props: ['experience', 'profileSummary', 'notes'],
+    },
+    {
+      key: 'company',
+      display: 'section',
+      label: 'Company',
+      icon: 'users',
+      props: ['companyName', 'organizationType', 'isEmployed', 'jobTitle', 'employmentStartDate', 'industry', 'employeeCount', 'dateFounded', 'annualRevenue', 'ein', 'companyAffiliateCode'],
+    },
+    {
+      key: 'company_contact',
+      display: 'section',
+      label: 'Company Contact',
+      icon: 'send',
+      props: ['companyEmail', 'companyPhone', 'companyPhoneExt', 'companyFaxNumber'],
+    },
+    {
+      key: 'company_links',
+      display: 'section',
+      label: 'Company Links',
+      icon: 'send',
+      props: ['companyWebSiteUrl', 'companyLogoUrl', 'companyLinkedInUrl', 'companyFacebookUrl', 'companyInstagramUrl', 'companyTwitterUrl', 'companyGooglePlusUrl', 'companyCrunchbaseUrl', 'companyBBBUrl', 'companyZoomUrl', 'companyCalendlyUrl'],
+    },
+    {
+      key: 'company_address',
+      display: 'section',
+      label: 'Company Address',
+      icon: 'location',
+      props: ['company_street', 'company_addressLine2', 'company_city', 'company_zip', 'company_stateName', 'company_stateId', 'company_countryName', 'company_countryId'],
+    },
+    {
+      key: 'crm',
+      display: 'section',
+      label: 'Sales',
+      icon: 'sliders',
+      props: ['followUpDate', 'assignedUser', 'leadStageName', 'leadDealAmount', 'star', 'rating'],
+    },
+    {
+      key: 'marketing',
+      display: 'section',
+      label: 'Marketing',
+      icon: 'tag',
+      props: ['leadSource', 'channelId', 'affiliateCode', 'personAffiliateCode', 'refererURL', 'entryUrl'],
+    },
+    {
+      key: 'subscription_1',
+      display: 'section',
+      label: 'Subscription 1',
+      icon: 'calendar',
+      props: ['sub1_productCode', 'sub1_paymentPeriodType', 'sub1_systemType', 'sub1_code', 'sub1_name', 'sub1_level', 'sub1_startDate', 'sub1_endDate', 'sub1_amount'],
+    },
+    {
+      key: 'subscription_2',
+      display: 'section',
+      label: 'Subscription 2',
+      icon: 'calendar',
+      props: ['sub2_productCode', 'sub2_paymentPeriodType', 'sub2_systemType', 'sub2_code', 'sub2_name', 'sub2_level', 'sub2_startDate', 'sub2_endDate', 'sub2_amount'],
+    },
+    {
+      key: 'subscription_3',
+      display: 'section',
+      label: 'Subscription 3',
+      icon: 'calendar',
+      props: ['sub3_productCode', 'sub3_paymentPeriodType', 'sub3_systemType', 'sub3_code', 'sub3_name', 'sub3_level', 'sub3_startDate', 'sub3_endDate', 'sub3_amount'],
+    },
+  ],
   async run(context) {
     const customer = {
       star: context.propsValue.star,

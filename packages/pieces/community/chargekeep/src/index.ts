@@ -38,6 +38,12 @@ export const chargekeep = createPiece({
     createCustomApiCallAction({
       baseUrl: (auth) => (auth ? chargekeepClient.baseUrlOf(auth) : CHARGEKEEP_BASE_URLS[0]),
       auth: chargekeepAuth,
+      props: {
+        url: {
+          description: 'A path on your ChargeKeep site, or a full URL on that same site.',
+          placeholder: '/api/services/CRM/Contact/GetContactGroups',
+        },
+      },
       authMapping: async (auth, propsValue) => {
         const base = chargekeepClient.baseUrlOf(auth);
         const urlProp = propsValue['url'];

@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, MarkdownVariant, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { chargekeepAuth } from '../auth';
 import { chargekeepOutputSchemas } from '../common/output-schemas';
 import { createChargekeepWebhookHooks, deliveryKeys } from './helpers';
@@ -10,11 +10,16 @@ export const newLead = createTrigger({
   name: 'new_lead',
   classification: 'READ',
   displayName: 'New Lead',
-  description: 'Triggers when a new lead is created',
+  description: 'Fires when a lead is added in ChargeKeep.',
   aiMetadata: {
     description: 'Fires when a new lead is created in the ChargeKeep/Sperse CRM, emitting the lead\'s full contact record (personal, business, tracking, application, and classification info).',
   },
-  props: {},
+  props: {
+    setup_info: Property.MarkDown({
+      value: 'ChargeKeep sends new leads here once you publish the flow. Your API key needs permission to subscribe to events.',
+      variant: MarkdownVariant.INFO,
+    }),
+  },
   type: TriggerStrategy.WEBHOOK,
   outputSchema: chargekeepOutputSchemas.leadTrigger,
   sampleData: {
