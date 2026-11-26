@@ -7,13 +7,19 @@ export const cohere = createPiece({
   displayName: 'Cohere',
   description: 'Generate text using Cohere AI language models',
   auth: cohereAuth,
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl:
     'https://cdn.activepieces.com/pieces/cohere.png',
   authors: ['AhmadTash'],
   actions: [generateText,
     createCustomApiCallAction({
       auth: cohereAuth,
+      props: {
+        url: {
+          description: 'Full URL, or a path relative to https://api.cohere.com/v2',
+          placeholder: '/chat',
+        },
+      },
       baseUrl: () => 'https://api.cohere.com/v2',
       authMapping: async (auth) => {
         return {
