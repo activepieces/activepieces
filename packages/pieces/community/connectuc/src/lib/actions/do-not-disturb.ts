@@ -14,11 +14,12 @@ export const doNotDisturbAction = createAction({
     aiMetadata: { description: 'Sets a ConnectUC user\'s Do Not Disturb (DND) state to on or off via the DND checkbox, for the given domain and subscriber. Use when an agent needs to silence or re-enable a user\'s incoming calls. Idempotent: it sets DND to an absolute on/off value, so repeating the same call leaves the user in the same final state.', idempotent: true },
     props: {
         domain: domainProp(),
-        user: subscriberUuidProp(),
+        user: subscriberUuidProp({ description: 'The user whose status changes.' }),
         dnd: Property.Checkbox({
             displayName: 'Do Not Disturb',
-            description: 'Enable or disable Do Not Disturb status',
-            required: true,
+            description: 'On turns Do Not Disturb on; off turns it off.',
+            required: false,
+            defaultValue: false,
         }),
     },
     async run(context) {

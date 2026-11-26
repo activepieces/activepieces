@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { connectucAuth } from '../../index';
 import { connectucApiCall, getUserId } from '../common/api-helpers';
 import { HttpMethod } from '@activepieces/pieces-common';
@@ -7,29 +7,38 @@ export const updateCdrAction = createAction({
     auth: connectucAuth,
     name: 'update-cdr',
     classification: 'WRITE',
-    displayName: 'Update CDR',
-    description: 'Update a Call Detail Record (CDR) in ConnectUC',
+    displayName: 'Update Call Record',
+    description: 'Set the note, disposition and reason on a call record.',
     audience: 'both',
     aiMetadata: { description: 'Updates the notes on an existing Call Detail Record (CDR) for the authenticated user, setting a required note plus optional disposition and reason. Use when an agent needs to annotate a known call with an outcome or comment; requires the CDR ID. Idempotent: it overwrites the same fields on the identified CDR, so repeating the call with the same input yields the same final state.', idempotent: true },
+    propertyGroups: [
+        { key: 'call', display: 'section', label: 'Call Record', icon: 'text', props: ['cdrId', 'note'] },
+        { key: 'outcome', display: 'section', label: 'Outcome', icon: 'sliders', props: ['outcome_info', 'disposition', 'reason'] },
+    ],
     props: {
         cdrId: Property.ShortText({
-            displayName: 'CDR ID',
-            description: 'The ID of the CDR to update',
+            displayName: 'Call Record ID',
+            description: 'The ID from a New Call Record trigger.',
             required: true,
         }),
         note: Property.LongText({
             displayName: 'Note',
-            description: 'Note about the call',
             required: true,
+        }),
+        outcome_info: Property.MarkDown({
+            value: 'Leave Disposition and Reason empty to keep their current values.',
+            variant: MarkdownVariant.INFO,
         }),
         disposition: Property.ShortText({
             displayName: 'Disposition',
-            description: 'The call disposition or outcome',
+            placeholder: 'Resolved',
+            width: 'half',
             required: false,
         }),
         reason: Property.ShortText({
             displayName: 'Reason',
-            description: 'The reason for the call outcome',
+            placeholder: 'Callback requested',
+            width: 'half',
             required: false,
         }),
     },

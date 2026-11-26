@@ -1,4 +1,4 @@
-import { createPiece, PieceAuth, OAuth2PropertyValue } from "@activepieces/pieces-framework";
+import { createPiece, PieceAuth, OAuth2PropertyValue, PieceCategory } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod, AuthenticationType } from "@activepieces/pieces-common";
 import { newRecording } from "./lib/triggers/new-recording";
 import { newCallTranscription } from "./lib/triggers/new-call-transcription";
@@ -58,8 +58,10 @@ export const connectucAuth = PieceAuth.OAuth2({
 
 export const connectuc = createPiece({
   displayName: "ConnectUC",
+  description: 'Business phone system for calls, texts and contacts.',
+  categories: [PieceCategory.COMMUNICATION],
   auth: connectucAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: "https://cdn.activepieces.com/pieces/connectuc.png",
   authors: ['dranes'],
   actions: [createContactAction, doNotDisturbAction, findCdrAction, initiateCallAction, sendSmsAction, updateCdrAction],
