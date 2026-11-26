@@ -1,4 +1,9 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import {
+  createTrigger,
+  MarkdownVariant,
+  Property,
+  TriggerStrategy,
+} from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { chatwootEndpoints, CHATWOOT_AUTH_HEADER } from '../common/constants';
 import {
@@ -42,29 +47,37 @@ function toWebhookList(raw: unknown): { id: number; url?: string }[] {
   return [];
 }
 
+const SAMPLE_MESSAGE: ChatwootParsedMessage = {
+  messageId: 42,
+  content: 'Hello, I need help with my order',
+  messageType: 'incoming',
+  conversationId: 7,
+  contactId: 15,
+  contactName: 'Jane Doe',
+  accountId: 1,
+  createdAt: '2024-06-15 10:30:00 UTC',
+};
+
 export const newMessage = createTrigger({
   auth: chatwootAuth,
   name: 'new_message',
   classification: 'READ',
   displayName: 'New Incoming Message',
   description:
-    'Triggers when a contact sends a new message in a Chatwoot conversation',
+    'Triggers when a contact sends a message in a Chatwoot conversation.',
   aiMetadata: {
     description:
       'Fires when a contact sends a new inbound message in a Chatwoot conversation. Only incoming, non-empty messages are emitted (outgoing agent replies and private notes are filtered out), representing a fresh customer message awaiting a response.',
   },
   type: TriggerStrategy.WEBHOOK,
-  props: {},
-  sampleData: {
-    messageId: 42,
-    content: 'Hello, I need help with my order',
-    messageType: 'incoming',
-    conversationId: 7,
-    contactId: 15,
-    contactName: 'Jane Doe',
-    accountId: 1,
-    createdAt: '2024-06-15 10:30:00 UTC',
-  } as ChatwootParsedMessage,
+  props: {
+    info: Property.MarkDown({
+      value:
+        'Only text messages from contacts start it. Agent replies, private notes and attachment-only messages are skipped.',
+      variant: MarkdownVariant.INFO,
+    }),
+  },
+  sampleData: SAMPLE_MESSAGE,
 
   async onEnable(context) {
     const authValue = getChatwootAuth(context.auth);

@@ -10,7 +10,7 @@ export const chatwoot = createPiece({
   displayName: 'Chatwoot',
   description: 'Receive and reply to customer messages with Chatwoot',
   auth: chatwootAuth,
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl:
     'https://cdn.activepieces.com/pieces/chatwoot.png',
   authors: ['AhmadTash'],
@@ -20,6 +20,12 @@ export const chatwoot = createPiece({
       baseUrl: (auth) => {
         const authValue = getChatwootAuth(auth!);
         return authValue.baseUrl;
+      },
+      props: {
+        url: {
+          description: 'Full URL, or a path relative to your Chatwoot URL.',
+          placeholder: '/api/v1/accounts/{account_id}/conversations',
+        },
       },
       authMapping: async (auth) => {
         const authValue = getChatwootAuth(auth!);

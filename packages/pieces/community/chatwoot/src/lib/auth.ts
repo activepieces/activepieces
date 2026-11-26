@@ -27,19 +27,18 @@ export const chatwootAuth = PieceAuth.CustomAuth({
     baseUrl: Property.ShortText({
       displayName: 'Chatwoot URL',
       description:
-        'Your Chatwoot instance URL (e.g. https://app.chatwoot.com)',
+        "Keep the default for Chatwoot Cloud, or enter your server's URL.",
       required: true,
       defaultValue: 'https://app.chatwoot.com',
     }),
     apiAccessToken: PieceAuth.SecretText({
       displayName: 'API Access Token',
-      description: 'Your user API access token from Profile Settings',
+      description: 'In Chatwoot: your avatar > Profile Settings > Access Token.',
       required: true,
     }),
     accountId: Property.Number({
       displayName: 'Account ID',
-      description:
-        'Your numeric account ID (visible in the dashboard URL)',
+      description: 'The number after /app/accounts/ in your dashboard URL.',
       required: true,
     }),
   },
