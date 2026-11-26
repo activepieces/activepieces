@@ -1,7 +1,7 @@
 {
   "Access Apify tools for web scraping, data extraction, and automation.": "Получите доступ к инструментам Apify для веб-скрейпинга, извлечения данных и автоматизации.",
   "API token": "API Token",
-  "Find your API token in [Apify Console](https://console.apify.com/settings/integrations?utm_source=activepieces&utm_medium=integrations) under **Settings** > **API & Integrations**.": "Найдите свой API Token в [Apify Console](https://console.apify.com/settings/integrations?utm_source=activepieces&utm_medium=integrations) в разделе **Settings** > **API & Integrations**.",
+  "Create an API token for Activepieces in [Apify Console](https://console.apify.com/settings/integrations?createApiToken=true&for=Activepieces&utm_source=activepieces&utm_medium=integrations) and copy it right after creating it — it is shown only once.": "Создайте API Token для Activepieces в [Apify Console](https://console.apify.com/settings/integrations?createApiToken=true&for=Activepieces&utm_source=activepieces&utm_medium=integrations) и скопируйте его сразу после создания — он показывается только один раз.",
   "Get Dataset Items": "Получить элементы Dataset",
   "Run Actor": "Запустить Actor",
   "Run Task": "Запустить Task",

@@ -1,7 +1,7 @@
 {
   "Access Apify tools for web scraping, data extraction, and automation.": "Accédez aux outils Apify pour le grattage web, l'extraction de données et l'automatisation.",
   "API token": "Jeton d'API",
-  "Find your API token in [Apify Console](https://console.apify.com/settings/integrations?utm_source=activepieces&utm_medium=integrations) under **Settings** > **API & Integrations**.": "Trouvez votre jeton d'API dans [Apify Console](https://console.apify.com/settings/integrations?utm_source=activepieces&utm_medium=integrations), sous **Settings** > **API & Integrations**.",
+  "Create an API token for Activepieces in [Apify Console](https://console.apify.com/settings/integrations?createApiToken=true&for=Activepieces&utm_source=activepieces&utm_medium=integrations) and copy it right after creating it — it is shown only once.": "Créez un jeton d'API pour Activepieces dans [Apify Console](https://console.apify.com/settings/integrations?createApiToken=true&for=Activepieces&utm_source=activepieces&utm_medium=integrations) et copiez-le juste après sa création : il n'est affiché qu'une seule fois.",
   "Get Dataset Items": "Récupérer les éléments du jeu de données",
   "Run Actor": "Exécuter l'acteur",
   "Run Task": "Exécuter la tâche",
