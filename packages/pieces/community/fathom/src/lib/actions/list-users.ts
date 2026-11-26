@@ -17,9 +17,10 @@ export const listUsers = createAction({
   },
   auth: fathomAuth,
   props: {
-    team: Property.ShortText({ displayName: 'Team', description: 'Exact team name to filter by (see Find Team).', required: false }),
+    team: Property.ShortText({ displayName: 'Team', description: 'Exact team name. Empty: every team.', placeholder: 'Sales', required: false }),
     status: Property.StaticDropdown({
       displayName: 'Status',
+      description: 'Only users with this status. Empty: any status.',
       required: false,
       options: {
         options: [
@@ -31,7 +32,7 @@ export const listUsers = createAction({
     }),
     settings_access: Property.StaticDropdown({
       displayName: 'Admin Level',
-      description: 'Filter by settings access. Not available together with Status = Invited.',
+      description: 'Only users with this admin level. Not with Status: Invited.',
       required: false,
       options: {
         options: [
@@ -41,7 +42,7 @@ export const listUsers = createAction({
         ],
       },
     }),
-    cursor: Property.ShortText({ displayName: 'Cursor', description: 'next_cursor from the previous call.', required: false }),
+    cursor: Property.ShortText({ displayName: 'Cursor', description: "The next page's cursor from the previous run. Empty: first page.", required: false, advanced: true }),
   },
   outputSchema: fathomOutputSchemas.users,
   async run({ auth, propsValue }) {
