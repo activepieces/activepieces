@@ -175,32 +175,36 @@ export const invoiceParserAction = createAction({
   auth: edenAiAuth,
   name: 'invoice_parser',
   classification: 'READ',
-  displayName: 'Invoice Parser',
-  description: 'Extract structured invoice data from files using Eden AI. Supports multiple providers, languages, and document types.',
+  displayName: 'Parse Invoice',
+  description: 'Extract invoice or receipt fields from a document file.',
   audience: 'both',
   aiMetadata: {
     description:
       'Parse an uploaded financial document (PDF/image) into structured fields via Eden AI financial parser, routed to a chosen provider. The document type can be fixed to invoice or receipt or left on auto-detection. Use it to extract line items, totals, and metadata from invoices or receipts; takes an actual file upload (not a URL) and optionally a password for protected PDFs. Read-only extraction with no side effect, so it is safe to repeat.',
     idempotent: true,
   },
+  propertyGroups: [
+    { key: 'document', display: 'section', label: 'Document', icon: 'file', props: ['file', 'document_type', 'language'] },
+    { key: 'ai_model', display: 'section', label: 'AI Provider', icon: 'code', props: ['provider', 'model'] },
+  ],
   props: {
     provider: Property.Dropdown({
       auth: edenAiAuth,
       displayName: 'Provider',
-      description: 'The AI provider to use for financial document parsing.',
+      description: 'The AI service that runs this step.',
       required: true,
       refreshers: [],
       options: createStaticDropdown(FINANCIAL_PARSER_PROVIDERS),
     }),
     file: Property.File({
       displayName: 'File',
-      description: 'Provide the financial document file (PDF, image, etc).',
+      description: 'PDF or image of the invoice or receipt.',
       required: true,
     }),
     document_type: Property.Dropdown({
       auth: edenAiAuth,
       displayName: 'Document Type',
-      description: 'The type of financial document to parse.',
+      description: 'Auto Detection is read as Invoice.',
       required: false,
       refreshers: [],
       options: createStaticDropdown(DOCUMENT_TYPES),
@@ -208,40 +212,45 @@ export const invoiceParserAction = createAction({
     }),
     language: Property.Dropdown({
       auth: edenAiAuth,
-      displayName: 'Document Language',
-      description: 'The language of the document. Choose "Auto Detection" if unsure.',
+      displayName: 'Language',
+      description: 'Language of the document. Leave on Auto Detection if unsure.',
       required: false,
       refreshers: [],
       options: createStaticDropdown(FINANCIAL_PARSER_LANGUAGES),
       defaultValue: 'auto-detect',
     }),
     model: Property.ShortText({
-      displayName: 'Specific Model',
-      description: 'Specific model to use (e.g., gpt-4o, gpt-4o-mini, gpt-4-turbo). Leave empty for default.',
+      displayName: 'Model',
+      description: "Leave empty to use the provider's default model.",
+      placeholder: 'gpt-4o',
       required: false,
     }),
     file_password: Property.ShortText({
       displayName: 'PDF Password',
-      description: 'Password for protected PDF files (if applicable).',
+      description: 'Only needed for password-protected PDFs.',
+      advanced: true,
       required: false,
     }),
     convert_to_pdf: Property.Checkbox({
       displayName: 'Convert to PDF',
-      description: 'Convert DOC/DOCX files to PDF format for better compatibility.',
+      description: 'Converts DOC or DOCX files to PDF before reading them.',
+      advanced: true,
       required: false,
       defaultValue: false,
     }),
     fallback_providers: Property.MultiSelectDropdown({
       auth: edenAiAuth,
       displayName: 'Fallback Providers',
-      description: 'Alternative providers to try if the main provider fails (up to 5).',
+      description: 'Tried in order if the main provider fails. Up to 5.',
+      advanced: true,
       required: false,
       refreshers: [],
       options: createStaticDropdown(FINANCIAL_PARSER_PROVIDERS),
     }),
     show_original_response: Property.Checkbox({
       displayName: 'Include Original Response',
-      description: 'Include the raw provider response in the output for debugging.',
+      description: "Adds the provider's unprocessed response to the output.",
+      advanced: true,
       required: false,
       defaultValue: false,
     }),
@@ -314,7 +323,7 @@ export const invoiceParserAction = createAction({
         throw new Error('Invalid API key. Please check your Eden AI credentials.');
       }
       if (err.response?.status === 400) {
-        throw new Error('Invalid request. Please check your file URL and parameters.');
+        throw new Error('Invalid request. Please check your file and parameters.');
       }
       throw new Error(`Failed to extract financial document data: ${err.message || err}`);
     }

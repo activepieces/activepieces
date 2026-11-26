@@ -6,14 +6,14 @@ import * as z from 'zod/mini'
 import { edenAiAuth } from '../..';
 
 const CHAT_PROVIDERS = [
-  { label: 'OpenAI GPT-4o', value: 'openai' },
-  { label: 'Anthropic Claude', value: 'anthropic' },
-  { label: 'Google Gemini', value: 'google' },
-  { label: 'Meta Llama', value: 'meta' },
+  { label: 'OpenAI', value: 'openai' },
+  { label: 'Anthropic', value: 'anthropic' },
+  { label: 'Google', value: 'google' },
+  { label: 'Meta', value: 'meta' },
   { label: 'Mistral', value: 'mistral' },
   { label: 'Cohere', value: 'cohere' },
-  { label: 'XAI Grok', value: 'xai' },
-  { label: 'Amazon Nova', value: 'amazon' },
+  { label: 'xAI', value: 'xai' },
+  { label: 'Amazon', value: 'amazon' },
   { label: 'Microsoft', value: 'microsoft' },
   { label: 'DeepSeek', value: 'deepseek' },
   { label: 'Groq', value: 'groq' }
@@ -51,57 +51,63 @@ export const generateTextAction = createAction({
   name: 'generate_text',
   classification: 'READ',
   displayName: 'Generate Text',
-  description:
-    'Generate text completions using various AI providers through Eden AI chat endpoint.',
+  description: 'Get a reply from the AI model of your choice.',
   audience: 'both',
   aiMetadata: {
     description:
       'Generate a chat/LLM completion from a prompt through Eden AI, routing to a chosen provider (OpenAI, Anthropic, Google, Meta, Mistral, and others) with optional system prompt, model override, temperature, and fallback providers. Choose it for one-shot text generation when you want provider flexibility behind a single call rather than calling a specific LLM piece directly. Requires a provider and prompt; optionally pass an image URL for vision-capable models. Generative and non-deterministic, but stateless — repeating the call creates no extra side effect.',
     idempotent: true,
   },
+  propertyGroups: [
+    { key: 'message', display: 'section', label: 'Message', icon: 'text', props: ['prompt', 'system_prompt'] },
+    { key: 'image', display: 'section', label: 'Image', icon: 'file', props: ['include_image'] },
+    { key: 'response', display: 'section', label: 'Response', icon: 'sliders', props: ['temperature', 'max_completion_tokens', 'reasoning_effort'] },
+    { key: 'ai_model', display: 'section', label: 'AI Provider', icon: 'code', props: ['provider', 'model'] },
+  ],
   props: {
     provider: Property.Dropdown({
-      auth: edenAiAuth,   
+      auth: edenAiAuth,
       displayName: 'Provider',
-      description: 'The AI provider to use for text generation.',
+      description: 'The AI service that runs this step.',
       required: true,
       refreshers: [],
-      options: createStaticDropdown(CHAT_PROVIDERS)
+      options: createStaticDropdown(CHAT_PROVIDERS),
     }),
     prompt: Property.LongText({
       displayName: 'Prompt',
-      description: 'The main prompt or question you want the AI to respond to.',
+      description: 'What you want the AI to answer or do.',
       required: true,
     }),
     system_prompt: Property.LongText({
       displayName: 'System Prompt',
-      description:
-        'System message to set the behavior and context for the AI assistant (e.g., "You are a helpful coding assistant").',
+      description: "Sets the assistant's role, tone and rules.",
+      placeholder: 'You are a helpful assistant.',
       required: false
     }),
     model: Property.ShortText({
       displayName: 'Model',
-      description:
-        'Specific model to use (e.g., gpt-4o, claude-3-sonnet-latest, gemini-2.0-flash). Leave empty for provider-specific defaults.',
-      required: false
+      description: 'Leave empty to use a default model for the provider.',
+      placeholder: 'gpt-4o',
+      required: false,
     }),
     temperature: Property.Number({
       displayName: 'Temperature',
-      description:
-        'Controls randomness (0.0-2.0). Higher values make output more creative.',
+      description: 'From 0 to 2. Higher values give more varied replies.',
       required: false,
-      defaultValue: 0.7
+      defaultValue: 0.7,
+      width: 'half',
     }),
     max_completion_tokens: Property.Number({
-      displayName: 'Max Completion Tokens',
-      description: 'Maximum number of tokens to generate in the response.',
+      displayName: 'Maximum Tokens',
+      description: 'Longest reply allowed, in tokens.',
       required: false,
-      defaultValue: 1000
+      defaultValue: 1000,
+      width: 'half',
     }),
     reasoning_effort: Property.Dropdown({
       auth: edenAiAuth,
       displayName: 'Reasoning Effort',
-      description: 'Level of reasoning depth for the response.',
+      description: 'How long the model thinks first. Only for reasoning models.',
       required: false,
       refreshers: [],
       options: createStaticDropdown(REASONING_EFFORT_OPTIONS)
@@ -109,22 +115,25 @@ export const generateTextAction = createAction({
     fallback_providers: Property.MultiSelectDropdown({
       auth: edenAiAuth,
       displayName: 'Fallback Providers',
-      description: 'Alternative providers to try if the main provider fails.',
+      description: 'Tried in order if the main provider fails.',
       required: false,
+      advanced: true,
       refreshers: [],
       options: createStaticDropdown(CHAT_PROVIDERS)
     }),
-         include_image: Property.Checkbox({
-       displayName: 'Include Image',
-       description: 'Include an image in your prompt (for vision-capable models).',
-       required: false,
-       defaultValue: false,
-     }),
-     image_url: Property.ShortText({
-       displayName: 'Image URL',
-       description: 'URL of the image to include in the prompt (only used if "Include Image" is enabled).',
-       required: false,
-     }),
+    include_image: Property.Checkbox({
+      displayName: 'Include Image',
+      description: 'Sends an image with the prompt. Needs a vision model.',
+      required: false,
+      defaultValue: false,
+      reveals: ['image_url'],
+    }),
+    image_url: Property.ShortText({
+      displayName: 'Image URL',
+      description: 'Public link to the image.',
+      placeholder: 'https://example.com/photo.jpg',
+      required: false,
+    }),
   },
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
@@ -192,8 +201,8 @@ export const generateTextAction = createAction({
     
     body['model'] = model || defaultModels[provider] || 'gpt-4o';
 
-    if (temperature !== undefined) body['temperature'] = temperature;
-    if (max_completion_tokens !== undefined) body['max_completion_tokens'] = max_completion_tokens;
+    if (typeof temperature === 'number') body['temperature'] = temperature;
+    if (typeof max_completion_tokens === 'number') body['max_completion_tokens'] = max_completion_tokens;
     if (reasoning_effort) body['reasoning_effort'] = reasoning_effort;
     if (fallback_providers && fallback_providers.length > 0) {
       body['fallback_providers'] = fallback_providers;
