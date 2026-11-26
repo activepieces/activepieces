@@ -19,9 +19,20 @@ export const everyMonthTrigger = createTrigger({
   },
   type: TriggerStrategy.POLLING,
   sampleData: {},
+  propertyGroups: [
+    {
+      key: 'schedule',
+      display: 'section',
+      label: 'Schedule',
+      icon: 'calendar',
+      props: ['day_of_the_month', 'hour_of_the_day', 'timezone'],
+    },
+  ],
   props: {
     day_of_the_month: Property.StaticDropdown({
-      displayName: 'Day of the month',
+      displayName: 'Day of Month',
+      description: 'Months without this day are skipped.',
+      width: 'half',
       options: {
         options: MONTH_DAYS.map((d, idx) => {
           return {
@@ -33,7 +44,9 @@ export const everyMonthTrigger = createTrigger({
       required: true,
     }),
     hour_of_the_day: Property.StaticDropdown({
-      displayName: 'Hour of the day',
+      displayName: 'Hour of the Day',
+      description: 'Runs at the start of this hour.',
+      width: 'half',
       options: {
         options: DAY_HOURS.map((d, idx) => {
           return {

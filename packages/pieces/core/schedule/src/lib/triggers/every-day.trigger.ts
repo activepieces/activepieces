@@ -13,9 +13,19 @@ export const everyDayTrigger = createTrigger({
   },
   type: TriggerStrategy.POLLING,
   sampleData: {},
+  propertyGroups: [
+    {
+      key: 'schedule',
+      display: 'section',
+      label: 'Schedule',
+      icon: 'calendar',
+      props: ['hour_of_the_day', 'timezone', 'run_on_weekends'],
+    },
+  ],
   props: {
     hour_of_the_day: Property.StaticDropdown({
-      displayName: 'Hour of the day',
+      displayName: 'Hour of the Day',
+      description: 'Runs at the start of this hour.',
       options: {
         options: DAY_HOURS.map((h, idx) => {
           return {
@@ -36,7 +46,8 @@ export const everyDayTrigger = createTrigger({
       defaultValue: 'UTC',
     }),
     run_on_weekends: Property.Checkbox({
-      displayName: 'Run on weekends (Sat,Sun)',
+      displayName: 'Run on Weekends',
+      description: 'Off: Monday to Friday only.',
       required: true,
       defaultValue: false,
     }),
