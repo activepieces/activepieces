@@ -3,7 +3,7 @@ import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
 import { generatedActions } from './lib/actions/generated';
 import { scrapeUrlAction } from './lib/actions/scrape-url';
 import { zenrowsAuth } from './lib/auth';
-import { ZENROWS_API_BASE_URL } from './lib/common/client';
+import { ZENROWS_API_BASE_URL, ZENROWS_API_HOSTS, zenrowsClient } from './lib/common/client';
 
 export const zenrows = createPiece({
   displayName: 'Zenrows',
@@ -20,12 +20,15 @@ export const zenrows = createPiece({
     createCustomApiCallAction({
       baseUrl: () => ZENROWS_API_BASE_URL,
       auth: zenrowsAuth,
-      authMapping: async (auth) => ({
-        'X-API-Key': auth.secret_text,
-      }),
+      authMapping: async (auth, propsValue) =>
+        zenrowsClient.apiKeyHeaderFor({
+          apiKey: auth.secret_text,
+          url: propsValue['url'],
+          followRedirects: propsValue['followRedirects'],
+        }),
       props: {
         url: {
-          description: `A full URL or a path relative to ${ZENROWS_API_BASE_URL}, e.g. /subscriptions/self/details. The API key is sent in the X-API-Key header.`,
+          description: `A path relative to ${ZENROWS_API_BASE_URL}, e.g. /subscriptions/self/details, or a full URL on ${ZENROWS_API_HOSTS.join(' or ')}. The API key is sent in the X-API-Key header, and only to those hosts.`,
         },
       },
     }),

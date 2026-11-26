@@ -131,6 +131,26 @@ async function fetchPage({
   }
 }
 
+function apiKeyHeaderFor({ apiKey, url, followRedirects }: { apiKey: string; url: unknown; followRedirects: unknown }): Record<string, string> {
+  const value = typeof url === 'object' && url !== null && 'url' in url ? url.url : url;
+  const target = typeof value === 'string' ? value.trim() : '';
+  if (/^[a-z][a-z0-9+.-]*:/i.test(target)) {
+    let parsed: URL | null = null;
+    try {
+      parsed = new URL(target);
+    } catch {
+      parsed = null;
+    }
+    if (!parsed || parsed.protocol !== 'https:' || !ZENROWS_API_HOSTS.includes(parsed.hostname)) {
+      throw new Error(`Zenrows: Custom API Call only sends your API key to https://${ZENROWS_API_HOSTS.join(' or https://')}. Use a path such as /subscriptions/self/details, or a full URL on one of those hosts.`);
+    }
+  }
+  if (followRedirects === true) {
+    throw new Error('Zenrows: turn off Follow redirects. The Zenrows API does not redirect, and a redirect could carry your API key to another host.');
+  }
+  return { 'X-API-Key': apiKey };
+}
+
 function toZenrowsError({ error }: { error: unknown }): unknown {
   if (!(error instanceof HttpError)) {
     return error;
@@ -198,11 +218,14 @@ const ERROR_HINTS: Record<string, string> = {
 
 export const ZENROWS_API_BASE_URL = "https://api.zenrows.com/v1";
 
+export const ZENROWS_API_HOSTS = [new URL(ZENROWS_API_BASE_URL).hostname, new URL("https://async.api.zenrows.com/v1").hostname];
+
 export const FETCH_PARAMS = {"type":"object","properties":{"url":{"type":"string","format":"uri","pattern":"^https?://","examples":["https://www.scrapingcourse.com/ecommerce/"],"description":"The URL of the page to retrieve. Only `http` and `https` URLs are accepted."},"mode":{"type":"string","enum":["auto"],"description":"Adaptive Stealth Mode. `auto` starts from the cheapest viable configuration and escalates to JavaScript rendering or premium proxies only when the target requires it. You are billed for the configuration that succeeds. It manages `js_render` and `premium_proxy` itself, so setting either alongside it answers 400 `REQS004`; `proxy_country` is allowed."},"js_render":{"type":"boolean","default":false,"description":"Render the page in a headless browser before returning it. Required for content that only exists after JavaScript runs. Not allowed with `mode=auto` (400 `REQS004`)."},"js_instructions":{"type":"string","description":"JSON array of browser instructions (click, fill, scroll, wait) executed on the page before the content is returned. Requires `js_render=true` or `mode=auto`; without either the request answers 400 `REQS004`."},"response_type":{"type":"string","enum":["markdown","plaintext","pdf"],"description":"Convert the page before returning it: Markdown, plaintext or PDF. `pdf` requires `js_render=true`; without it the request answers 400 `REQS004`. Any `response_type` together with `outputs` also answers 400 `REQS004`."},"screenshot":{"type":"boolean","default":false,"description":"Return an above-the-fold screenshot of the page. Requires `js_render=true` or `mode=auto`; without either the request answers 400 `REQS004`. Do not send it with `outputs`: the request answers 200 with no image and an empty `outputs` result."},"screenshot_fullpage":{"type":"boolean","default":false,"description":"Return a full-page screenshot. Requires js_render."},"screenshot_format":{"type":"string","enum":["png","jpeg"],"default":"png","description":"Screenshot image format."},"custom_headers":{"type":"boolean","default":false,"description":"Forward your own request headers (cookies, referer) to the target."}},"required":["url"]} as const;
 export type FetchParams = Partial<Record<keyof typeof FETCH_PARAMS.properties, string>>;
 export type FetchValue<P extends keyof typeof FETCH_PARAMS.properties> = (typeof FETCH_PARAMS.properties)[P] extends { enum: readonly (infer V)[] } ? V : string;
 
 export const zenrowsClient = {
+  apiKeyHeaderFor,
   callOperation,
   fetchPage,
   readHeader,
