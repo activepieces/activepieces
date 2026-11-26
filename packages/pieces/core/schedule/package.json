@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-schedule",
-  "version": "0.1.23",
+  "version": "0.1.24",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {
@@ -16,7 +16,7 @@
     "@activepieces/core-utils": "workspace:*"
   },
   "devDependencies": {
-    "vitest": "5.0.5",  
+    "vitest": "5.0.5",
     "tslib": "2.6.2"
   }
 }

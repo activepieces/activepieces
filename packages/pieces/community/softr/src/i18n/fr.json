@@ -177,6 +177,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Demande",
+  "Data to send": "Données à envoyer",
   "New Database Record": "Nouvel enregistrement de base de données",
   "Triggers when a new record is added.": "Déclenche lorsqu'un nouvel enregistrement est ajouté."
 }

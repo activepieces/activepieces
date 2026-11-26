@@ -1,0 +1,7 @@
+{
+  "Start a flow on demand with a button click.": "Start a flow on demand with a button click.",
+  "Manual Trigger": "Manual Trigger",
+  "Start the flow on demand with the Run Flow button": "Start the flow on demand with the Run Flow button",
+  "Markdown": "Markdown",
+  "Publish the flow, then click **Run Flow** on the canvas to start it.\n\nThis trigger passes no data, so later steps have nothing to map from it.": "Publish the flow, then click **Run Flow** on the canvas to start it.\n\nThis trigger passes no data, so later steps have nothing to map from it."
+}

@@ -130,8 +130,8 @@
   "Opus Audio in Ogg Container": "Opus Audio im Ogg Container",
   "Output": "Ausgabe",
   "Source": "Quelle",
-  "Match": "Match",
-  "Archive": "Archive",
+  "Match": "Zuordnen",
+  "Archive": "Archivieren",
   "Password": "Kennwort",
   "Files Helper": "Datei-Helfer"
 }

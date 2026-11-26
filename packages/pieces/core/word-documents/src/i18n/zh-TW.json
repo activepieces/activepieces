@@ -1,0 +1,23 @@
+{
+  "Read Word documents (.docx) and fill Word templates in your flow, no Microsoft account needed.": "讀取 Word 文件（.docx）並在你的流程中填入 Word 範本，無需 Microsoft 帳戶。",
+  "Extract Text": "Extract Text",
+  "Fill Template": "填入範本",
+  "Get the text, headers and footers of a Word document (.docx).": "取得 Word 文件（.docx）的文字、頁首和頁尾。",
+  "Fill the {{placeholders}} in a Word template (.docx) and get a new document.": "填入 Word 範本（.docx）中的 {{placeholders}}，並取得新文件。",
+  "Word Document": "Word Document",
+  "Password": "Password",
+  "Markdown": "Markdown",
+  "Word Template": "Word 範本",
+  "Fields": "Fields",
+  "Data (JSON)": "Data (JSON)",
+  "File Name": "File Name",
+  "Pick a .docx file from an earlier step, such as an email attachment, or paste a URL to download.": "從較早的步驟中挑選一個 .docx 檔案，例如電子郵件附件，或貼上 URL 以下載。",
+  "Only needed when the document is password-protected.": "僅在文件受密碼保護時需要。",
+  "Type placeholders in your Word template with double braces:\n- `{{name}}` is replaced by the \"name\" value. `{{customer.city}}` reads a nested value.\n- `{{#items}}` ... `{{/items}}` repeats a table row or paragraph for each entry of the \"items\" list. Inside it, use the entry's fields, like `{{description}}`.\n- `{{#paid}}` ... `{{/paid}}` shows the text only when \"paid\" is true; `{{^paid}}` ... `{{/paid}}` only when it is false or empty.": "在你的 Word 範本中使用雙大括號輸入佔位符：\n- `{{name}}` 會被 \"name\" 值取代。`{{customer.city}}` 會讀取巢狀值。\n- `{{#items}}` ... `{{/items}}` 會為 \"items\" 清單中的每個項目重複一列表格或一段文字。在其中，使用該項目的欄位，例如 `{{description}}`。\n- `{{#paid}}` ... `{{/paid}}` 只在 \"paid\" 為 true 時顯示文字；`{{^paid}}` ... `{{/paid}}` 則只在它為 false 或空白時顯示。",
+  "A .docx file with {{placeholders}}, from an earlier step or a URL.": "含有 {{placeholders}} 的 .docx 檔案，來自較早的步驟或 URL。",
+  "One field per placeholder in the template. They appear once the template is set, or mapped from a step you have tested.": "模板中每個佔位符對應一個欄位。模板設定後會出現，或從你已測試的步驟對應而來。",
+  "Optional. A JSON object with values for the placeholders. It overrides the fields above, and is needed for a list inside a list.": "選填。包含佔位符值的 JSON 物件。它會覆寫上方欄位，且在巢狀清單中清單時需要。",
+  "Name of the new document. Leave empty to use the template's name.": "新文件名稱。留空以使用範本名稱。",
+  "Document": "Document",
+  "Word Documents": "Word 文件"
+}

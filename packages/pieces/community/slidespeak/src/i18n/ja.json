@@ -63,8 +63,8 @@
   "PUT": "PUT",
   "DELETE": "削除",
   "HEAD": "頭",
-  "Request": "Request",
-  "Data to send": "Data to send",
+  "Request": "リクエスト",
+  "Data to send": "送信するデータ",
   "New Presentation": "新しいプレゼンテーション",
   "Triggers when a new presentation is created.": "新しいプレゼンテーションが作成されたときにトリガーします。"
 }

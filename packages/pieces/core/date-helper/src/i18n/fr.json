@@ -513,7 +513,7 @@
   "Output": "Sortie",
   "Start": "Début",
   "End": "Fin",
-  "Shift": "Shift",
-  "When": "When",
+  "Shift": "Décalage",
+  "When": "Quand",
   "Date Helper": "Date Helper"
 }

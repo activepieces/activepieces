@@ -56,8 +56,8 @@
   "PUT": "PUT",
   "DELETE": "削除",
   "HEAD": "頭",
-  "Request": "Request",
-  "Data to send": "Data to send",
+  "Request": "リクエスト",
+  "Data to send": "送信するデータ",
   "New Form Response": "新しいフォームの回答",
   "Triggers when a new submission is received for a selected Fillout form.": "選択した塗りつぶしフォームに対して新しい提出物が受信されたときにトリガーします。"
 }
