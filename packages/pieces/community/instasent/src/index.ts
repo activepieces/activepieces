@@ -1,28 +1,13 @@
-import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { createPiece } from "@activepieces/pieces-framework";
 import { deleteContact } from './lib/actions/delete-contact';
 import { addOrUpdateContact } from './lib/actions/add-or-update-contact';
 import { createEvent } from "./lib/actions/create-event";
-import { BASE_URL } from "./lib/common/constants";
-import { InstasentAuthType } from './lib/common/types';
 import { PieceCategory } from '@activepieces/pieces-framework';
 import { instasentAuth } from './lib/auth';
 
-export const getBaseUrl = (auth: { projectId: string, datasourceId: string }) => {
-    return `${BASE_URL}/project/${auth.projectId}/datasource/${auth.datasourceId}`;
-};
-
-const authDescriptionMarkdown = `
-## Obtain your auth data
-1. Go to https://dashboard.instasent.com
-2. Access to your project
-3. Create an Activepieces data source
-4. Copy the auth parameters and paste them in the fields below
-`;
-
 export const instasent = createPiece({
     displayName: "Instasent",
-    minimumSupportedRelease: '0.30.0',
+    minimumSupportedRelease: '0.88.2',
     logoUrl: "https://cdn.activepieces.com/pieces/instasent.jpg",
     categories:[PieceCategory.MARKETING],
     authors: ["dev-instasent", "https://github.com/dev-instasent"],
