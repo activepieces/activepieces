@@ -13,28 +13,33 @@ export const amazons3UploadFile = createAction({
   outputSchema: uploadFileOutputSchema,
   classification: 'WRITE',
   displayName: 'Upload File',
-  description: 'Upload an File to S3',
+  description: 'Upload a file to your bucket.',
   audience: 'human',
   aiMetadata: {
     description: 'Uploads a file to the configured S3 bucket, optionally setting a destination filename, content type, and canned ACL (e.g. private vs. public-read). Use to store new content in S3. Not idempotent: when no filename is given a unique timestamp-based key is generated, so each call writes a new object.',
     idempotent: false,
   },
+  propertyGroups: [
+    { key: 'file', display: 'section', label: 'File', icon: 'file', props: ['file', 'fileName'] },
+  ],
   props: {
     file: Property.File({
       displayName: 'File',
-      description: 'The file to upload to S3.',
+      description: 'The file to upload.',
       required: true,
       streaming: true,
     }),
     fileName: Property.ShortText({
-      displayName: 'File Name (Optional)',
+      displayName: 'File Path',
       required: false,
-      description: 'The name to save the file as in S3 (e.g. "report-2024.csv"). If left blank, a unique name is generated automatically.',
+      description: "Empty: a generated name. The file's extension is added if missing.",
+      placeholder: 'reports/report-2024.csv',
     }),
     acl: Property.StaticDropdown({
-      displayName: 'Access Control (ACL)',
-      description: 'Who can access this file after upload. Use "Private" for internal files, "Public Read" to make the file publicly accessible via URL.',
+      displayName: 'Access Control',
+      description: "Who can open the file. Empty: the bucket's default.",
       required: false,
+      advanced: true,
       options: {
         options: [
           {
@@ -46,7 +51,7 @@ export const amazons3UploadFile = createAction({
             value: 'public-read',
           },
           {
-            label: 'Public Read/Write (anyone can view and upload)',
+            label: 'Public Read/Write (anyone can upload)',
             value: 'public-read-write',
           },
           {
@@ -70,8 +75,10 @@ export const amazons3UploadFile = createAction({
     }),
     type: Property.ShortText({
       displayName: "Content Type",
-      description: "Content Type of the uploaded file, if not set the API will try to figure out the content type.",
-      required: false
+      description: 'MIME type of the file. Empty: detected from its extension.',
+      placeholder: 'text/csv',
+      required: false,
+      advanced: true,
     })
   },
   async run(context) {
