@@ -10997,7 +10997,7 @@
     },
     "packages/pieces/core/store": {
       "name": "@activepieces/piece-store",
-      "version": "0.6.20",
+      "version": "0.7.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
