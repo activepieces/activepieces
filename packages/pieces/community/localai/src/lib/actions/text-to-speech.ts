@@ -12,6 +12,10 @@ export const textToSpeech = createAction({
   displayName: 'Text to Speech',
   description: 'Turn text into a spoken audio file.',
   aiMetadata: { description: 'Converts text into a spoken audio file with a text-to-speech model installed on the connected self-hosted LocalAI server (for example a piper, kokoro, or bark voice), and saves it as a file in the flow, returning the file reference, name, format, and size. The model must be a speech model, not a chat model: call list_models when unsure. Voice is optional and model-specific, and only some backends honor the output format, so WAV is the safe choice. Each call writes a new file, so it is not idempotent.', idempotent: false },
+  propertyGroups: [
+    { key: 'speech', display: 'section', label: 'Speech', icon: 'text', props: ['model', 'text'] },
+    { key: 'audio', display: 'section', label: 'Audio', icon: 'file', props: ['format', 'voice', 'fileName'] },
+  ],
   props: {
     model: localaiCommon.modelDropdown({
       displayName: 'Model',
@@ -22,28 +26,31 @@ export const textToSpeech = createAction({
       description: 'The text to read aloud.',
       required: true,
     }),
-    voice: Property.ShortText({
-      displayName: 'Voice',
-      description: 'For models with several voices. Empty uses the default.',
-      required: false,
-    }),
     format: Property.StaticDropdown({
       displayName: 'Audio Format',
-      description: 'Not every LocalAI backend supports every format.',
+      description: 'Not every backend supports every format.',
       required: true,
       defaultValue: 'wav',
+      display: 'cards',
       options: {
         options: [
-          { label: 'WAV', value: 'wav' },
-          { label: 'MP3', value: 'mp3' },
-          { label: 'OGG', value: 'ogg' },
-          { label: 'FLAC', value: 'flac' },
+          { label: 'WAV', value: 'wav', description: 'Works everywhere' },
+          { label: 'MP3', value: 'mp3', description: 'Smaller files' },
+          { label: 'OGG', value: 'ogg', description: 'Open and compact' },
+          { label: 'FLAC', value: 'flac', description: 'Lossless' },
         ],
       },
     }),
+    voice: Property.ShortText({
+      displayName: 'Voice',
+      description: "Empty uses the model's default voice.",
+      required: false,
+      width: 'half',
+    }),
     fileName: Property.ShortText({
       displayName: 'File Name',
-      description: 'Name for the audio file, without the extension.',
+      description: 'Without the extension.',
+      width: 'half',
       required: false,
       defaultValue: 'speech',
     }),

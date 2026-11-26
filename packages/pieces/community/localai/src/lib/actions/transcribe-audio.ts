@@ -12,16 +12,19 @@ export const transcribeAudio = createAction({
   displayName: 'Transcribe Audio',
   description: 'Turn speech in an audio file into text.',
   aiMetadata: { description: 'Transcribes the speech in an audio file into text with a speech-recognition model installed on the connected self-hosted LocalAI server (for example a whisper model), so the audio never leaves your infrastructure. Takes a file from an earlier step (wav, mp3, ogg, m4a and other formats ffmpeg can read) and an optional language hint, and returns the full text plus timed segments. The model must be a transcription model, not a chat model: call list_models when unsure. Read-only; repeat calls on the same file return the same text.', idempotent: true },
+  propertyGroups: [
+    { key: 'recording', display: 'section', label: 'Recording', icon: 'paperclip', props: ['audio'] },
+    { key: 'settings', display: 'section', label: 'Settings', icon: 'sliders', props: ['model', 'language'] },
+  ],
   props: {
-    model: localaiCommon.modelDropdown({
-      displayName: 'Model',
-      description:
-        'A speech-recognition model (for example whisper) installed on your LocalAI server.',
-    }),
     audio: Property.File({
       displayName: 'Audio',
       description: 'The recording to transcribe.',
       required: true,
+    }),
+    model: localaiCommon.modelDropdown({
+      displayName: 'Model',
+      description: 'A speech-recognition model, such as whisper.',
     }),
     language: Property.ShortText({
       displayName: 'Language',
