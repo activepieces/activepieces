@@ -1157,6 +1157,9 @@
       "@activepieces/piece-reddit": [
         "packages/pieces/community/reddit/src/index.ts"
       ],
+      "@activepieces/piece-remove-ac": [
+        "packages/pieces/community/remove-ac/src/index.ts"
+      ],
       "@activepieces/piece-rendex": [
         "packages/pieces/community/rendex/src/index.ts"
       ],
