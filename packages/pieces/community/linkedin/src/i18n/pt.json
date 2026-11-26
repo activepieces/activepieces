@@ -83,8 +83,8 @@
   "DELETE": "EXCLUIR",
   "HEAD": "CABEÇA",
   "Post": "Publicar",
-  "Link Preview": "Link Preview",
-  "Post As": "Post As",
-  "Request": "Request",
-  "Data to send": "Data to send"
+  "Link Preview": "Prévia do link",
+  "Post As": "Publicar como",
+  "Request": "Solicitação",
+  "Data to send": "Dados a enviar"
 }
