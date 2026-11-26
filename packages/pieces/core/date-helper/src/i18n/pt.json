@@ -509,11 +509,11 @@
   "October": "outubro",
   "November": "novembro",
   "December": "dezembro",
-  "Input": "Input",
-  "Output": "Output",
-  "Start": "Start",
-  "End": "End",
-  "Shift": "Shift",
-  "When": "When",
-  "Date Helper": "Date Helper"
+  "Input": "Entrada",
+  "Output": "Saída",
+  "Start": "Iniciar",
+  "End": "Finalizar",
+  "Shift": "Turno",
+  "When": "Quando",
+  "Date Helper": "Ajudante de data"
 }
