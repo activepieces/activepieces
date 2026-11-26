@@ -24,6 +24,8 @@
   "PUT": "PUT",
   "DELETE": "LÖSCHEN",
   "HEAD": "HEAD",
+  "Request": "Anfrage",
+  "Data to send": "Zu sendende Daten",
   "New Response": "Neue Antwort",
   "Triggers when a new response is submitted": "Wird ausgelöst, wenn eine neue Antwort gesendet wird",
   "Survey": "Umfrage"
