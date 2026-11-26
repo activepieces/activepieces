@@ -4,7 +4,7 @@
   "Scopes": "Scopes",
   "Where you sign in to approve access.": "Where you sign in to approve access.",
   "Where the access token is requested.": "Where the access token is requested.",
-  "Separate scopes with spaces.": "Separate scopes with spaces.",
+  "Separate scopes with spaces. Leave empty if your provider does not use scopes; no scope is sent then.": "Separate scopes with spaces. Leave empty if your provider does not use scopes; no scope is sent then.",
   "Copy the authorize URL, token URL and scopes from the provider's API docs. When you sign in through the provider, add the Redirect URL to its app settings.": "Copy the authorize URL, token URL and scopes from the provider's API docs. When you sign in through the provider, add the Redirect URL to its app settings.",
   "Send an OAuth2 Request": "OAuth2リクエストを送信",
   "Call any URL with the OAuth2 token from your connection.": "Call any URL with the OAuth2 token from your connection.",
@@ -18,11 +18,11 @@
   "Proxy Settings": "プロキシ設定",
   "Return Error as Output": "Return Error as Output",
   "Timeout": "Timeout",
-  "The full URL to call, including https:// or http://": "The full URL to call, including https:// or http://",
-  "GET reads data, POST creates it.": "GET reads data, POST creates it.",
+  "The full URL to call, including https:// or http://": "呼び出す完全なURL。https:// または http:// を含みます",
+  "GET reads data, POST creates it.": "GET はデータを読み取り、POST はそれを作成します。",
   "Authorization headers are injected automatically from your connection.": "認証ヘッダーは、接続情報から自動で付与されます。",
   "Appended to the URL as ?key=value.": "URLの末尾に ?key=value の形で追加されます。",
-  "How to encode the request body.": "How to encode the request body.",
+  "How to encode the request body.": "リクエスト本文のエンコード方法。",
   "Route this request through an HTTP proxy.": "Route this request through an HTTP proxy.",
   "On a failed request, output the error instead of failing the step.": "リクエスト失敗時にステップを失敗させず、エラーを出力します。",
   "Seconds to wait for a response. Empty: up to the flow limit (10 min).": "応答を待つ秒数です。空欄にすると、フローの上限（10分）まで待ちます。",
@@ -31,6 +31,6 @@
   "PUT": "PUT",
   "PATCH": "PATCH",
   "DELETE": "削除",
-  "Request": "Request",
-  "Data to send": "Data to send"
+  "Request": "リクエスト",
+  "Data to send": "送信するデータ"
 }
