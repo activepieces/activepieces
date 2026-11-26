@@ -205,7 +205,19 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "New form": "Nouveau formulaire",
+  "Form content": "Contenu du formulaire",
+  "Original": "Originale",
+  "The copy": "La copie",
+  "Target": "Cible",
+  "Changes": "Modifications",
+  "Search in": "Rechercher dans",
+  "Filters": "Filtres",
+  "Results": "Résultats",
+  "Request": "Requête",
+  "Data to send": "Données à envoyer",
   "New Submission": "Nouvelle soumission",
   "Triggers when someone submits the form.": "Triggers when someone submits the form.",
-  "A webhook is added to this form in Typeform when you publish the flow, and removed when you turn it off.": "A webhook is added to this form in Typeform when you publish the flow, and removed when you turn it off."
+  "A webhook is added to this form in Typeform when you publish the flow, and removed when you turn it off.": "A webhook is added to this form in Typeform when you publish the flow, and removed when you turn it off.",
+  "Watch": "Surveiller"
 }
