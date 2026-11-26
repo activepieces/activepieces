@@ -260,6 +260,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Demande",
+  "Data to send": "Données à envoyer",
   "New Link Created": "Nouveau lien créé",
   "Fires when a new short link is created on a domain. Useful to sync newly created links to other systems.": "Se déclenche lorsqu'un nouveau lien court est créé sur un domaine. Utile pour synchroniser les liens nouvellement créés avec d'autres systèmes.",
   "Polling Interval": "Intervalle de vote",
