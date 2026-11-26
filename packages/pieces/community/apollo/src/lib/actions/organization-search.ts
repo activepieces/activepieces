@@ -1,21 +1,20 @@
+import { Property, StoreScope, createAction } from '@activepieces/pieces-framework';
 import { apolloAuth } from '../auth';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import {
-  Property,
-  StoreScope,
-  createAction,
-} from '@activepieces/pieces-framework';
+import { QueryValue, apiKeyOf, buildQuery } from '../common/client';
+import { apolloInputs } from '../common/ai-props';
+import { apolloOutputSchemas } from '../common/output-schemas';
+import { apolloRequests } from '../common/requests';
 
 export const organizationSearch = createAction({
   auth: apolloAuth,
   name: 'organizationSearch',
   classification: 'SEARCH',
   displayName: 'Organization Search',
-  description:
-    'Search for companies in the Apollo database with various filters',
-  audience: 'both',
+  description: 'Search for companies in the Apollo database with various filters. Uses 1 Apollo credit per page.',
+  audience: 'human',
   aiMetadata: {
-    description: 'Search the Apollo database for companies using filters such as name, location, employee-count range, domain, and industry tags. Use to discover organizations or to resolve a company to its Apollo organization ID for downstream actions. Read-only and idempotent.',
+    description:
+      'Searches the Apollo company database by name, location, headcount, domain and industry, one page at a time, and returns the raw Apollo response. Uses 1 Apollo credit per page.',
     idempotent: true,
   },
   props: {
@@ -46,12 +45,22 @@ export const organizationSearch = createAction({
     }),
     q_organization_domains: Property.Array({
       displayName: 'Domains',
-      description: 'Filter by organization domains',
+      description: 'Filter by organization domains, without "www." (e.g., apollo.io). Up to 1,000.',
       required: false,
     }),
     organization_industry_tag_ids: Property.Array({
       displayName: 'Industry Tag IDs',
       description: 'Filter by industry tag IDs',
+      required: false,
+    }),
+    page: Property.Number({
+      displayName: 'Page',
+      description: 'Page number, starting at 1 (default 1). Each page uses 1 credit.',
+      required: false,
+    }),
+    per_page: Property.Number({
+      displayName: 'Results Per Page',
+      description: 'Results per page, 1-100 (Apollo default 10 when empty).',
       required: false,
     }),
     cacheResponse: Property.Checkbox({
@@ -61,91 +70,32 @@ export const organizationSearch = createAction({
       defaultValue: false,
     }),
   },
+  outputSchema: apolloOutputSchemas.rawOrganizationSearch,
   async run({ propsValue, auth, store }) {
-    const queryParams = new URLSearchParams();
-
-    if (propsValue.q_organization_name) {
-      queryParams.append('q_organization_name', propsValue.q_organization_name);
-    }
-    if (
-      propsValue.organization_locations &&
-      propsValue.organization_locations.length > 0
-    ) {
-      propsValue.organization_locations.forEach((location: unknown) => {
-        queryParams.append('organization_locations[]', location as string);
-      });
-    }
-
-    if (
-      propsValue.organization_not_locations &&
-      propsValue.organization_not_locations.length > 0
-    ) {
-      propsValue.organization_not_locations.forEach((location: unknown) => {
-        queryParams.append('organization_not_locations[]', location as string);
-      });
-    }
-
-    if (
-      propsValue.organization_num_employees_ranges &&
-      propsValue.organization_num_employees_ranges.length > 0
-    ) {
-      propsValue.organization_num_employees_ranges.forEach((range: unknown) => {
-        queryParams.append(
-          'organization_num_employees_ranges[]',
-          range as string
-        );
-      });
-    }
-    if (propsValue.organization_ids && propsValue.organization_ids.length > 0) {
-      propsValue.organization_ids.forEach((id: unknown) => {
-        queryParams.append('organization_ids[]', id as string);
-      });
-    }
-
-    if (
-      propsValue.q_organization_domains &&
-      propsValue.q_organization_domains.length > 0
-    ) {
-      propsValue.q_organization_domains.forEach((domain: unknown) => {
-        queryParams.append('q_organization_domains[]', domain as string);
-      });
-    }
-
-    if (
-      propsValue.organization_industry_tag_ids &&
-      propsValue.organization_industry_tag_ids.length > 0
-    ) {
-      propsValue.organization_industry_tag_ids.forEach((tagId: unknown) => {
-        queryParams.append('organization_industry_tag_ids[]', tagId as string);
-      });
-    }
-
-    const cacheKey = `_apollo_org_search_${queryParams.toString()}`;
-
+    const domains = apolloInputs.stringList(propsValue.q_organization_domains);
+    const query: Record<string, QueryValue> = {
+      q_organization_name: apolloInputs.optionalText(propsValue.q_organization_name),
+      'organization_locations[]': apolloInputs.stringList(propsValue.organization_locations),
+      'organization_not_locations[]': apolloInputs.stringList(propsValue.organization_not_locations),
+      'organization_num_employees_ranges[]': apolloInputs.stringList(propsValue.organization_num_employees_ranges),
+      'organization_ids[]': apolloInputs.stringList(propsValue.organization_ids),
+      'q_organization_domains[]': domains,
+      'q_organization_domains_list[]': domains,
+      'organization_industry_tag_ids[]': apolloInputs.stringList(propsValue.organization_industry_tag_ids),
+      page: apolloInputs.optionalInteger({ value: propsValue.page, label: 'Page', min: 1, max: 500 }),
+      per_page: apolloInputs.optionalInteger({ value: propsValue.per_page, label: 'Results Per Page', min: 1, max: 100 }),
+    };
+    const cacheKey = `_apollo_org_search_${buildQuery(query).slice(1)}`;
     if (propsValue.cacheResponse) {
-      const cachedResult = await store.get(cacheKey, StoreScope.PROJECT);
-      if (cachedResult) {
-        return cachedResult;
+      const cached = await store.get<unknown>(cacheKey, StoreScope.PROJECT);
+      if (cached) {
+        return cached;
       }
     }
-
-    const result = await httpClient.sendRequest<{
-      organizations: Record<string, unknown>[];
-      pagination: Record<string, unknown>;
-    }>({
-      method: HttpMethod.POST,
-      url: `https://api.apollo.io/api/v1/mixed_companies/search?${queryParams.toString()}`,
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-cache',
-        'x-api-key': `${auth.secret_text}`,
-      },
-    });
-
+    const body = await apolloRequests.searchOrganizations({ apiKey: apiKeyOf(auth), query });
     if (propsValue.cacheResponse) {
-      await store.put(cacheKey, result.body, StoreScope.PROJECT);
+      await store.put(cacheKey, body, StoreScope.PROJECT);
     }
-
-    return result.body;
+    return body;
   },
 });

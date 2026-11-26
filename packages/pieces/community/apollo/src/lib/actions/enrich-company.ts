@@ -1,63 +1,52 @@
+import { Property, StoreScope, createAction } from '@activepieces/pieces-framework';
 import { apolloAuth } from '../auth';
-import {
-  Property,
-  StoreScope,
-  createAction,
-} from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { apiKeyOf, isRecord } from '../common/client';
+import { apolloOutputSchemas } from '../common/output-schemas';
+import { apolloRequests } from '../common/requests';
 
 export const enrichCompany = createAction({
   name: 'enrichCompany',
   classification: 'READ',
-  description: '',
-  audience: 'both',
+  displayName: 'Enrich Company',
+  description: 'Get firmographic details for a company from its web domain. Uses 1 Apollo credit.',
+  audience: 'human',
   aiMetadata: {
-    description: 'Look up and enrich a single company in the Apollo database by its web domain, returning the organization profile. Use when you have a company domain and need firmographic details. Read-only and idempotent; an optional project-store cache may return a previously fetched result for the same domain.',
+    description:
+      'Looks up one company in the Apollo database by web domain and returns its organization profile, or an empty object when there is no match. Uses 1 Apollo credit. With Cache Response on, a previously found company is returned from the project store without a new request.',
     idempotent: true,
   },
-  displayName: 'Enrich Company',
   props: {
     domain: Property.ShortText({
       displayName: 'Domain',
-      description: '',
+      description: 'The company web domain, without "www." or "@", e.g. apollo.io.',
       required: true,
     }),
     cacheResponse: Property.Checkbox({
       displayName: 'Cache Response',
-      description: 'Store the response in the project store for future use.',
+      description: 'Store a found company in the project store and reuse it for the same domain. Companies that were not found are never cached.',
       required: false,
       defaultValue: true,
     }),
   },
+  outputSchema: apolloOutputSchemas.rawOrganization,
   auth: apolloAuth,
   async run({ propsValue, auth, store }) {
+    const domain = String(propsValue.domain ?? '').trim();
+    if (domain === '') {
+      throw new Error('Domain is required.');
+    }
+    const cacheKey = `_apollo_org_${domain}`;
     if (propsValue.cacheResponse) {
-      const cachedResult = await store.get(
-        `_apollo_org_${propsValue.domain}`,
-        StoreScope.PROJECT
-      );
-      if (cachedResult) {
-        return cachedResult;
+      const cached = await store.get<unknown>(cacheKey, StoreScope.PROJECT);
+      if (isRecord(cached) && Object.keys(cached).length > 0) {
+        return cached;
       }
     }
-    const result = await httpClient.sendRequest<{
-      organization: Record<string, unknown>;
-    }>({
-      method: HttpMethod.GET,
-      url: `https://api.apollo.io/v1/organizations/enrich?domain=${propsValue.domain}`,
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': `${auth.secret_text}`,
-      },
-    });
-    const resultOrg = result.body.organization || {};
-    if (propsValue.cacheResponse) {
-      await store.put(
-        `_apollo_org_${propsValue.domain}`,
-        resultOrg,
-        StoreScope.PROJECT
-      );
+    const response = await apolloRequests.enrichOrganization({ apiKey: apiKeyOf(auth), query: { domain } });
+    const organization = isRecord(response['organization']) ? response['organization'] : {};
+    if (propsValue.cacheResponse && Object.keys(organization).length > 0) {
+      await store.put(cacheKey, organization, StoreScope.PROJECT);
     }
-    return resultOrg;
+    return organization;
   },
 });

@@ -7,3 +7,18 @@ hidden: true
 Entries here move to [Breaking Changes](/install/reference/breaking-changes) automatically when the release that contains them is tagged. Add new entries at the top, right under the heading below.
 
 ## What has changed?
+
+#### Apollo 0.3.0: the six original actions are no longer AI agent tools
+
+**Match Person**, **Enrich Company**, **People Search**, **Organization Search**, **News Articles Search** and **Organization Job Postings** are now shown only in the flow builder. AI agents and MCP clients get **Enrich Person**, **Enrich Organization**, **Search People**, **Search Organizations**, **Search News Articles** and **List Organization Job Postings** instead, each stating its credit cost.
+
+After you upgrade:
+
+- **Match Person** and **Enrich Company** no longer store a "not found" result in the cache, so a person or company that was missing earlier is looked up again.
+- Every action fails the step with Apollo's own message when Apollo rejects the request, and the message never contains the email, domain or API key that was sent.
+
+#### What you need to do
+
+- Agents that used any of the six actions as tools: switch to the matching AI tool listed above.
+
+Steps keep running on the version they were built with until you upgrade them.

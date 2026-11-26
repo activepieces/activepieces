@@ -1,34 +1,31 @@
+import { Property, StoreScope, createAction } from '@activepieces/pieces-framework';
 import { apolloAuth } from '../auth';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import {
-  Property,
-  StoreScope,
-  createAction,
-} from '@activepieces/pieces-framework';
+import { QueryValue, apiKeyOf, buildQuery, isRecord, recordsOf } from '../common/client';
+import { apolloInputs } from '../common/ai-props';
+import { apolloOutputSchemas } from '../common/output-schemas';
+import { apolloRequests } from '../common/requests';
 
 export const newsArticlesSearch = createAction({
   auth: apolloAuth,
   name: 'newsArticlesSearch',
   classification: 'SEARCH',
   displayName: 'News Articles Search',
-  description:
-    'Search for news articles related to companies in the Apollo database',
-  audience: 'both',
+  description: 'Search for news articles related to companies in the Apollo database. Uses 1 Apollo credit per page.',
+  audience: 'human',
   aiMetadata: {
-    description: 'Search the Apollo database for news articles about specific companies, filterable by news category and a published-date range. Use to surface recent events (hires, funding, contracts) for given organizations. Requires Apollo organization IDs (obtained from Organization Search). Read-only and idempotent.',
+    description:
+      'Searches news articles about given Apollo organization IDs, filtered by category and published-date range, one page (up to 25) at a time. Uses 1 Apollo credit per page.',
     idempotent: true,
   },
   props: {
     organization_ids: Property.Array({
       displayName: 'Organization IDs',
-      description:
-        'The Apollo IDs for the companies you want to include in your search results. To find IDs, call the Organization Search endpoint.',
+      description: 'The Apollo IDs for the companies you want to include in your search results. To find IDs, call the Organization Search endpoint.',
       required: true,
     }),
     categories: Property.Array({
       displayName: 'Categories',
-      description:
-        'Filter your search to include only certain categories or sub-categories of news (e.g., hires, investment, contract)',
+      description: 'Filter your search to include only certain categories or sub-categories of news (e.g., hires, investment, contract)',
       required: false,
     }),
     published_at_min: Property.ShortText({
@@ -41,6 +38,16 @@ export const newsArticlesSearch = createAction({
       description: 'Upper bound of the date range (YYYY-MM-DD format)',
       required: false,
     }),
+    page: Property.Number({
+      displayName: 'Page',
+      description: 'Page number, starting at 1 (default 1). Each page uses 1 credit.',
+      required: false,
+    }),
+    per_page: Property.Number({
+      displayName: 'Results Per Page',
+      description: 'Results per page, 1-25.',
+      required: false,
+    }),
     cacheResponse: Property.Checkbox({
       displayName: 'Cache Response',
       description: 'Store the response in the project store for future use.',
@@ -48,60 +55,31 @@ export const newsArticlesSearch = createAction({
       defaultValue: false,
     }),
   },
+  outputSchema: apolloOutputSchemas.rawNewsSearch,
   async run({ propsValue, auth, store }) {
-    const queryParams = new URLSearchParams();
-
-    if (propsValue.organization_ids && propsValue.organization_ids.length > 0) {
-      propsValue.organization_ids.forEach((id: unknown) => {
-        queryParams.append('organization_ids[]', id as string);
-      });
-    }
-
-    if (propsValue.categories && propsValue.categories.length > 0) {
-      propsValue.categories.forEach((category: unknown) => {
-        queryParams.append('categories[]', category as string);
-      });
-    }
-
-    if (propsValue.published_at_min) {
-      queryParams.append('published_at[min]', propsValue.published_at_min);
-    }
-
-    if (propsValue.published_at_max) {
-      queryParams.append('published_at[max]', propsValue.published_at_max);
-    }
-
-    const cacheKey = `_apollo_news_${queryParams.toString()}`;
-
+    const query: Record<string, QueryValue> = {
+      'organization_ids[]': apolloInputs.requireStringList({ value: propsValue.organization_ids, label: 'Organization IDs', max: 1000 }),
+      'categories[]': apolloInputs.stringList(propsValue.categories),
+      'published_at[min]': apolloInputs.optionalText(propsValue.published_at_min),
+      'published_at[max]': apolloInputs.optionalText(propsValue.published_at_max),
+      page: apolloInputs.optionalInteger({ value: propsValue.page, label: 'Page', min: 1, max: 500 }),
+      per_page: apolloInputs.optionalInteger({ value: propsValue.per_page, label: 'Results Per Page', min: 1, max: 25 }),
+    };
+    const cacheKey = `_apollo_news_${buildQuery(query).slice(1)}`;
     if (propsValue.cacheResponse) {
-      const cachedResult = await store.get(cacheKey, StoreScope.PROJECT);
-      if (cachedResult) {
-        return cachedResult;
+      const cached = await store.get<unknown>(cacheKey, StoreScope.PROJECT);
+      if (cached) {
+        return cached;
       }
     }
-
-    const result = await httpClient.sendRequest<{
-      news_articles: Record<string, unknown>[];
-      pagination: Record<string, unknown>;
-    }>({
-      method: HttpMethod.POST,
-      url: `https://api.apollo.io/api/v1/news_articles/search?${queryParams.toString()}`,
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-cache',
-        'x-api-key': `${auth.secret_text}`,
-      },
-    });
-
+    const body = await apolloRequests.searchNews({ apiKey: apiKeyOf(auth), query });
     const response = {
-      news_articles: result.body.news_articles || [],
-      pagination: result.body.pagination || {},
+      news_articles: recordsOf(body['news_articles']),
+      pagination: isRecord(body['pagination']) ? body['pagination'] : {},
     };
-
     if (propsValue.cacheResponse) {
       await store.put(cacheKey, response, StoreScope.PROJECT);
     }
-
     return response;
   },
 });
