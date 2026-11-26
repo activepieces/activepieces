@@ -30,30 +30,47 @@ export const reactMessage = createAction({
   name: 'reactMessage', 
   classification: 'WRITE',
   displayName: 'React to Message',
-  description: 'Add an emoji reaction to a specific message as a chosen user.',
+  description: 'Adds an emoji reaction to a message as a chosen user.',
   audience: 'both',
   aiMetadata: { description: 'Adds an emoji reaction to an existing Returning.ai message on behalf of a given user (identified by username or email), so the reaction appears as if that user added it. Use to acknowledge or react to a known message; requires the target message ID and an emoji shortcode (e.g. :sparkling_heart:). Not idempotent: the API is called on each invocation.', idempotent: false },
   props: {
     description: Property.MarkDown({
-      value:
-        'This action allows you to add an emoji reaction to a message in any accessible channel on behalf of a specific user. The reaction will appear as if the selected user added it directly to the message.',
+      value: 'The reaction is added as the sender.',
     }),
     user: Property.ShortText({
-      displayName: 'Sender (Username or email)',
-      description: 'The user account that will add the reaction',
+      displayName: 'Sender',
+      description: 'Username or email of a community member.',
+      placeholder: 'jane or jane@example.com',
       required: true,
     }),
     messageId: Property.ShortText({
-      displayName: 'React to (Message ID)', 
-      description: 'The ID of the message to react to',
+      displayName: 'Message ID',
+      description: "ID of the message, from Returning AI's Get Messages API.",
       required: true,
     }),
     emoji: Property.ShortText({
-      displayName: 'Reaction emoji',
-      description: 'The emoji to react with (e.g. :sparkling_heart:)',
+      displayName: 'Emoji',
+      description: 'Emoji shortcode to react with.',
+      placeholder: ':sparkling_heart:',
       required: true,
     }),
   },
+  propertyGroups: [
+    {
+      key: 'sender',
+      display: 'section',
+      label: 'React As',
+      icon: 'user',
+      props: ['description', 'user'],
+    },
+    {
+      key: 'reaction',
+      display: 'section',
+      label: 'Reaction',
+      icon: 'tag',
+      props: ['messageId', 'emoji'],
+    },
+  ],
   async run({ propsValue, auth }) {
     const authToken = auth.secret_text;
     const response = await httpClient.sendRequest({
