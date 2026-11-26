@@ -58,7 +58,7 @@
   "The data merged into the template, as a JSON object, e.g. {\"clientName\": \"Jane Doe\", \"total\": 120}.": "The data merged into the template, as a JSON object, e.g. {\"clientName\": \"Jane Doe\", \"total\": 120}.",
   "Optional metadata to keep with the document, as a JSON object. It is returned with the document and in triggers.": "Optional metadata to keep with the document, as a JSON object. It is returned with the document and in triggers.",
   "Name of the generated file, e.g. \"Invoice 2026-001.pdf\". Stored as the _filename meta key.": "Name of the generated file, e.g. \"Invoice 2026-001.pdf\". Stored as the _filename meta key.",
-  "Wait until the file is generated and return its download URL.": "Wait until the file is generated and return its download URL.",
+  "Wait up to 4 minutes for the file and return its download URL; if it is not ready by then, return the document ID and current status.": "Aguarde até 4 minutos pelo arquivo e retorne sua URL de download; se ele não estiver pronto até lá, retorne o ID do documento e o status atual.",
   "The document ID (a UUID), e.g. from Generate Document or List Documents.": "The document ID (a UUID), e.g. from Generate Document or List Documents.",
   "Only documents made from this template. Use List Templates to find the ID.": "Only documents made from this template. Use List Templates to find the ID.",
   "A document ID (exact match) or part of a file name.": "A document ID (exact match) or part of a file name.",
@@ -87,6 +87,8 @@
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
   "HEAD": "CABEÇA",
+  "Request": "Solicitação",
+  "Data to send": "Dados a enviar",
   "Document Generated": "Documento gerado",
   "Triggers when a document generation completes successfully.": "Aciona quando uma geração de documento é concluída com sucesso."
 }
