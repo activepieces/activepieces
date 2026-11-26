@@ -42,6 +42,13 @@ gh workflow run pause-releases.yml -f action=pause    # pause
 gh workflow run pause-releases.yml -f action=resume   # resume
 ```
 
+If the workflow cannot run, for example when it fails with a 403 because the release GitHub App lacks the Variables permission, a repository admin can set the variable directly:
+
+```bash
+gh variable set RELEASES_PAUSED --body true    # pause
+gh variable set RELEASES_PAUSED --body false   # resume
+```
+
 A scheduled gate run then stops in `cut` and says so in its summary. Manual runs, `hotfix_prs` runs and `emergency-cloud-deploy.yml` still run. The flag is read only in `cut`, so it does not stop a run that has passed `cut`: cancel that run before its `deploy` job starts. The scheduled self-hosted release will read the same flag (ENG-1025).
 
 ## Self-Hosted Release

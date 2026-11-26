@@ -10,11 +10,17 @@ on:
       action:
         description: 'pause stops scheduled release runs that have not started. Cancel a Cloud gate run that is already past cut.'
         type: choice
+        required: true
+        default: pause
         options:
           - pause
           - resume
 
 permissions: {}
+
+concurrency:
+  group: pause-releases
+  cancel-in-progress: false
 
 jobs:
   set:
