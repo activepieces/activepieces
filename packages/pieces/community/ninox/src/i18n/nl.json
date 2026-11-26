@@ -51,8 +51,8 @@
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
   "HEAD": "HOOFD",
-  "Request": "Request",
-  "Data to send": "Data to send",
+  "Request": "Verzoek",
+  "Data to send": "Gegevens om te verzenden",
   "New Record": "Nieuwe Record",
   "Triggers when a new record is created in a table.": "Triggert wanneer een nieuwe record wordt aangemaakt in een tabel."
 }
