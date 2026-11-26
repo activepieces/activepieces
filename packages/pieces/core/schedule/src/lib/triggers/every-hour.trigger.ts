@@ -1,5 +1,9 @@
 import { TriggerStrategy } from '@activepieces/pieces-framework';
-import { createTrigger, Property } from '@activepieces/pieces-framework';
+import {
+  createTrigger,
+  MarkdownVariant,
+  Property,
+} from '@activepieces/pieces-framework';
 
 export const everyHourTrigger = createTrigger({
   name: 'every_hour',
@@ -13,8 +17,13 @@ export const everyHourTrigger = createTrigger({
   type: TriggerStrategy.POLLING,
   sampleData: {},
   props: {
+    info: Property.MarkDown({
+      value: 'Runs at the start of every hour, in UTC.',
+      variant: MarkdownVariant.INFO,
+    }),
     run_on_weekends: Property.Checkbox({
-      displayName: 'Run on weekends (Sat,Sun)',
+      displayName: 'Run on Weekends',
+      description: 'Off: Monday to Friday only.',
       required: true,
       defaultValue: false,
     }),
