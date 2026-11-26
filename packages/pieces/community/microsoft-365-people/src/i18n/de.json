@@ -84,8 +84,8 @@
   "PUT": "PUT",
   "DELETE": "LÖSCHEN",
   "HEAD": "HEAD",
-  "Request": "Request",
-  "Data to send": "Data to send",
+  "Request": "Anfrage",
+  "Data to send": "Zu sendende Daten",
   "New or Updated Contact": "Neuer oder aktualisierter Kontakt",
   "Triggers when a contact is created or updated in Microsoft 365 People.": "Wird ausgelöst, wenn ein Kontakt in Microsoft 365 People erstellt oder aktualisiert wird."
 }
