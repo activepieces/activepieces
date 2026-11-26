@@ -899,3 +899,34 @@ describe('agentRpcHandlers.saveAgentMessages: a failed turn leaves a visible rep
         expect(mockAndWhere).toHaveBeenCalledWith({ streamingStatus: 'STREAMING' })
     })
 })
+
+describe('agentRpcHandlers — transcripts Postgres jsonb cannot store', () => {
+    const NUL = String.fromCharCode(0)
+    const messagesWithNul = [{ role: 'user', content: 'hi' }, { role: 'tool', content: [{ type: 'tool-result', output: { value: `a${NUL}b` } }] }]
+    const uiMessagesWithNul = [{ role: 'assistant', parts: [{ type: 'text', text: `x${NUL}y` }] }]
+
+    beforeEach(() => {
+        mockSet.mockClear()
+        mockFindOneBy.mockReset()
+        mockFindOneBy.mockResolvedValue(null)
+        mockExecute.mockReset()
+        mockExecute.mockResolvedValue({ raw: [{ id: 'conv-1' }] })
+    })
+
+    it('updateAgentProgress strips NUL characters from messages and uiMessages', async () => {
+        await callUpdateChatProgress({ conversationId: 'conv-1', runId: 'run-1', uiMessages: uiMessagesWithNul, messages: messagesWithNul })
+
+        const updates = mockSet.mock.calls[0][0]
+        expect(JSON.stringify(updates)).not.toContain('\\u0000')
+        expect(updates.messages[1].content[0].output.value).toBe('ab')
+        expect(updates.uiMessages[0].parts[0].text).toBe('xy')
+    })
+
+    it('saveAgentMessages strips NUL characters from messages', async () => {
+        await callSaveChatMessages({ conversationId: 'conv-1', runId: 'run-1', messages: messagesWithNul, uiMessages: uiMessagesWithNul })
+
+        const updates = mockSet.mock.calls[0][0]
+        expect(JSON.stringify(updates)).not.toContain('\\u0000')
+        expect(updates.messages[1].content[0].output.value).toBe('ab')
+    })
+})
