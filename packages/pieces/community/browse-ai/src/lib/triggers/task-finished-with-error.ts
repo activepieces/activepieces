@@ -1,5 +1,10 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import {
+  createTrigger,
+  MarkdownVariant,
+  Property,
+  TriggerStrategy,
+} from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/pieces-framework';
 import { browseAiAuth } from '../common/auth';
 import { browseAiApiCall } from '../common/client';
@@ -20,6 +25,11 @@ export const taskFinishedWithErrorTrigger = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   props: {
     robotId: robotIdDropdown,
+    webhookInfo: Property.MarkDown({
+      variant: MarkdownVariant.INFO,
+      value:
+        'The webhook is added to this robot in Browse AI when the flow is published, and removed when the flow is turned off.',
+    }),
   },
 
   async onEnable(context) {
@@ -100,10 +110,9 @@ export const taskFinishedWithErrorTrigger = createTrigger({
           `Warning: Failed to clean up webhook ${webhookId}:`,
           error.message
         );
-
-        // Clean up the stored webhook ID even if deletion failed
-        await context.store.delete(TRIGGER_KEY);
       }
+
+      await context.store.delete(TRIGGER_KEY);
     }
   },
 
