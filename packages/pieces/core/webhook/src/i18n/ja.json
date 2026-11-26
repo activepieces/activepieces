@@ -19,9 +19,11 @@
   "Authentication": "認証",
   "Authentication Fields": "認証フィールド",
   "**Live URL:**\n```text\n{{webhookUrl}}\n```\ngenerate sample data & triggers published flow.\n\n": "**ライブURL:**\n```text\n{{webhookUrl}}\n```\n生成サンプル データと公開されたフローをトリガーします。\n\n",
-  "**Synchronous Requests:**\n\nIf you expect a response from this webhook, add `/sync` to the end of the URL. \nIf it takes more than 30 seconds, it will return a 408 Request Timeout response.\n\nTo return data, add an Webhook step to your flow with the Return Response action.\n": "**Synchronous Requests:**\n\nIf you expect a response from this webhook, add `/sync` to the end of the URL. \nIf it takes more than 30 seconds, it will return a 408 Request Timeout response.\n\nTo return data, add an Webhook step to your flow with the Return Response action.\n",
+  "**Synchronous Requests:**\n\nIf you expect a response from this webhook, add `/sync` to the end of the URL.\nIf it takes more than {{webhookTimeoutSeconds}} seconds, it will return a 408 Request Timeout response.\n\nTo return data, add an Webhook step to your flow with the Return Response action.\n": "**同期リクエスト:**\n\nこの webhook からの応答を期待する場合は、URL の末尾に `/sync` を追加してください。\n{{webhookTimeoutSeconds}} 秒を超えると、408 Request Timeout 応答が返されます。\n\nデータを返すには、フローに Webhook ステップを追加し、Return Response アクションを使用してください。\n",
   "\n**Test URL:**\n\nif you want to generate sample data without triggering the flow, append `/test` to your webhook URL.\n\n": "\n**Test URL:**\n\nif you want to generate sample data without triggering the flow, append `/test` to your webhook URL.\n\n",
   "None": "なし",
   "Basic Auth": "ベーシック認証",
-  "Header Auth": "ヘッダー認証"
+  "Header Auth": "ヘッダー認証",
+  "HMAC Signature": "HMAC 署名",
+  "Webhook": "Webhook"
 }
