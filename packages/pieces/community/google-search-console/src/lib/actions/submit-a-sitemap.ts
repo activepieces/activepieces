@@ -20,15 +20,25 @@ export const submitSitemap = createAction({
   props: {
     siteUrl: commonProps.siteUrl,
     feedpath: Property.ShortText({
-      displayName: 'Sitemap Path',
-      description: 'The full URL of the sitemap, e.g. "https://www.example.com/sitemap.xml".',
+      displayName: 'Sitemap URL',
+      description: 'The full URL of the sitemap file.',
+      placeholder: 'https://www.example.com/sitemap.xml',
       required: true,
     }),
   },
+  propertyGroups: [
+    {
+      key: 'sitemap',
+      display: 'section',
+      label: 'Sitemap',
+      icon: 'file',
+      props: ['siteUrl', 'feedpath'],
+    },
+  ],
   outputSchema: gscOutputSchemas.sitemapChange,
   async run(context) {
     const siteUrl = gscInputs.siteUrl({ value: context.propsValue.siteUrl });
-    const feedpath = gscInputs.absoluteUrl({ value: context.propsValue.feedpath, label: 'Sitemap Path' });
+    const feedpath = gscInputs.absoluteUrl({ value: context.propsValue.feedpath, label: 'Sitemap URL' });
     await gscOps.submitSitemap({ auth: context.auth, siteUrl, feedpath });
     return { success: true, siteUrl, feedpath };
   },

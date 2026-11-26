@@ -10,7 +10,7 @@ export const listSitemaps = createAction({
   name: 'list_sitemaps',
   classification: 'SEARCH',
   displayName: 'List Sitemaps',
-  description: 'List all your sitemaps for a given site',
+  description: 'Lists the sitemaps submitted for a site.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -21,10 +21,20 @@ export const listSitemaps = createAction({
     siteUrl: commonProps.siteUrl,
     sitemapIndex: Property.ShortText({
       displayName: 'Sitemap Index URL',
-      description: 'Optional. The full URL of a sitemap index to list only the sitemaps inside it.',
+      description: 'Lists only the sitemaps inside this sitemap index. Empty: all.',
+      placeholder: 'https://www.example.com/sitemap_index.xml',
       required: false,
     }),
   },
+  propertyGroups: [
+    {
+      key: 'sitemaps',
+      display: 'section',
+      label: 'Sitemaps',
+      icon: 'file',
+      props: ['siteUrl', 'sitemapIndex'],
+    },
+  ],
   outputSchema: gscOutputSchemas.listSitemaps,
   async run(context) {
     const siteUrl = gscInputs.siteUrl({ value: context.propsValue.siteUrl });
