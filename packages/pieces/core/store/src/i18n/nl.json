@@ -22,5 +22,6 @@
   "Separator between added values, use \\n for newlines": "Scheidingsteken tussen toegevoegde waarden, gebruik \\n voor nieuwe regels",
   "Project": "Project",
   "Flow": "Stroom",
-  "Run": "Uitvoeren"
+  "Run": "Uitvoeren",
+  "Storage": "Opslagruimte"
 }
