@@ -7,7 +7,7 @@ export const addContact = createAction({
   classification: 'WRITE',
   displayName: 'Add Contact',
   auth: krispcallAuth,
-  description: 'Add contact in Krispcall',
+  description: 'Add a contact to your KrispCall account.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -17,30 +17,49 @@ export const addContact = createAction({
   props: {
     name: Property.ShortText({
       displayName: 'Name',
-      description: 'Enter your name',
+      placeholder: 'Jane Doe',
       required: false,
+      width: 'half',
     }),
     number: Property.ShortText({
-      displayName: 'Contact number',
-      description: 'Enter contact number',
+      displayName: 'Phone Number',
+      description: 'International format, with the country code.',
+      placeholder: '+14155550123',
       required: true,
     }),
     address: Property.ShortText({
       displayName: 'Address',
-      description: 'Enter your address',
+      placeholder: '221 Main St, Springfield',
       required: false,
     }),
     company: Property.ShortText({
       displayName: 'Company',
-      description: 'Enter your company',
+      placeholder: 'Acme Inc.',
       required: false,
     }),
     email: Property.ShortText({
       displayName: 'Email',
-      description: 'Enter your email',
+      placeholder: 'jane@example.com',
       required: false,
+      width: 'half',
     }),
   },
+  propertyGroups: [
+    {
+      key: 'contact',
+      display: 'section',
+      label: 'Contact',
+      icon: 'user',
+      props: ['number', 'name', 'email'],
+    },
+    {
+      key: 'details',
+      display: 'section',
+      label: 'Company and address',
+      icon: 'location',
+      props: ['company', 'address'],
+    },
+  ],
   async run({ auth, propsValue }) {
     const res = await httpClient.sendRequest<string[]>({
       method: HttpMethod.POST,

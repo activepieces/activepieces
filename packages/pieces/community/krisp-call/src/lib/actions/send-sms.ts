@@ -14,7 +14,7 @@ export const sendSms = createAction({
   classification: 'WRITE',
   displayName: 'Send SMS',
   auth: krispcallAuth,
-  description: 'Send sms in Krispcall.',
+  description: 'Send a text message from one of your KrispCall numbers.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -24,7 +24,7 @@ export const sendSms = createAction({
   props: {
     from_number: Property.Dropdown({
       displayName: 'From Number',
-      description: 'Select an Number',
+      description: 'The KrispCall number the message is sent from.',
       required: true,
       refreshers: ['auth'],
       refreshOnSearch: false,
@@ -34,21 +34,29 @@ export const sendSms = createAction({
           return {
             disabled: true,
             options: [],
-            placeholder: 'Please connect your account first',
+            placeholder: 'Connect your KrispCall account first.',
           };
         }
         try {
-          const authVaue = auth.props;
+          const authValue = auth.props;
           const res = await httpClient.sendRequest<Item[]>({
             method: HttpMethod.GET,
             url: 'https://app.krispcall.com/api/v3/platform/activepiece/get-numbers',
             headers: {
-              'X-API-KEY': authVaue.apiKey,
+              'X-API-KEY': authValue.apiKey,
             },
           });
-          const mappedOptions = res?.body?.map((item) => {
+          const numbers = res.body ?? [];
+          if (numbers.length === 0) {
             return {
-              label: item.name,
+              disabled: false,
+              options: [],
+              placeholder: 'No numbers found in your KrispCall account.',
+            };
+          }
+          const mappedOptions = numbers.map((item) => {
+            return {
+              label: item.name ? `${item.name} (${item.number})` : item.number,
               value: item.number,
             };
           });
@@ -58,23 +66,43 @@ export const sendSms = createAction({
             options: mappedOptions,
           };
         } catch (error) {
-          // Handle error
           console.error(error);
-          return { disabled: true, options: [] }; // Return empty options array or handle error accordingly
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Could not load your numbers. Check your connection.',
+          };
         }
       },
     }),
     to_number: Property.ShortText({
       displayName: 'To Number',
-      description: 'Enter the number to which you want to send sms.',
+      description: 'International format, with the country code.',
+      placeholder: '+14155550123',
       required: true,
     }),
     content: Property.ShortText({
-      displayName: 'content',
-      description: 'Enter your message here.',
+      displayName: 'Message',
+      placeholder: 'Hi Jane, your order has shipped.',
       required: true,
     }),
   },
+  propertyGroups: [
+    {
+      key: 'destination',
+      display: 'section',
+      label: 'Send to',
+      icon: 'send',
+      props: ['to_number'],
+    },
+    {
+      key: 'message',
+      display: 'section',
+      label: 'Message',
+      icon: 'text',
+      props: ['from_number', 'content'],
+    },
+  ],
   async run({ auth, propsValue }) {
     const res = await httpClient.sendRequest<string[]>({
       method: HttpMethod.POST,
