@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 
 import { robollyAuth } from '../auth';
 import { robollyApi } from '../common/api';
@@ -6,13 +6,13 @@ import { robollyProps } from '../common/props';
 import { generateImageOutputSchema } from '../output-schemas';
 
 const formatOptions = [
-	{ label: 'JPG', value: 'jpg' },
-	{ label: 'PNG', value: 'png' },
-	{ label: 'PDF', value: 'pdf' },
+	{ label: 'JPG', value: 'jpg', description: 'Compressed' },
+	{ label: 'PNG', value: 'png', description: 'Lossless' },
+	{ label: 'PDF', value: 'pdf', description: 'Printable' },
 ];
 
 export const generateImageAction = createAction({
-	description: 'Generate an image using Robolly',
+	description: 'Render a JPG, PNG or PDF from one of your templates.',
 	audience: 'human',
 	aiMetadata: {
 		description:
@@ -29,17 +29,21 @@ export const generateImageAction = createAction({
 		format: Property.StaticDropdown({
 			displayName: 'Format',
 			required: true,
-			description: 'The format of the image to generate.',
+			display: 'cards',
 			defaultValue: 'jpg',
 			options: {
 				options: formatOptions,
 			},
 		}),
+		values_info: Property.MarkDown({
+			value: "Fields left empty keep the template's own content.",
+			variant: MarkdownVariant.INFO,
+		}),
 		fields: robollyProps.templateFields({ required: true }),
 		modifications: Property.Object({
 			displayName: 'Extra Modifications',
-			description:
-				'The extra modifications to apply to the image. See "Detailed dynamic modifications" in https://robolly.com/docs/api-reference/',
+			description: 'Other element settings to override, e.g. title.color → #FF0000.',
+			advanced: true,
 			required: false,
 		}),
 	},

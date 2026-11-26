@@ -20,8 +20,14 @@ export const robolly = createPiece({
     createCustomApiCallAction({
       baseUrl: () => robollyClient.baseUrl(),
       auth: robollyAuth,
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${robollyClient.baseUrl()}`,
+          placeholder: '/v1/templates',
+        },
+      },
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       }),
     }),
   ],
