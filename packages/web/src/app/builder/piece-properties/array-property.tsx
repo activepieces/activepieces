@@ -4,13 +4,13 @@ import {
   PropertyType,
 } from '@activepieces/pieces-framework';
 import { t } from 'i18next';
-import { Plus, TrashIcon } from 'lucide-react';
+import { TrashIcon } from 'lucide-react';
 import { nanoid } from 'nanoid';
 import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
+import { AddItemButton } from '@/components/custom/add-item-button';
 import { ArrayInput } from '@/components/custom/array-input';
-import { TextWithIcon } from '@/components/custom/text-with-icon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn, GAP_SIZE_FOR_STEP_SETTINGS } from '@/lib/utils';
@@ -167,20 +167,8 @@ const ArrayPieceProperty = React.memo(
                   ></GenericPropertiesForm>
                 </div>
               ))}
+              {!disabled && <AddItemButton onClick={append} />}
             </div>
-            {!disabled && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-2"
-                onClick={() => {
-                  append();
-                }}
-                type="button"
-              >
-                <TextWithIcon icon={<Plus size={18} />} text={t('Add Item')} />
-              </Button>
-            )}
           </>
         )}
 

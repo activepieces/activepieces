@@ -1,8 +1,8 @@
 import { t } from 'i18next';
-import { Plus, TrashIcon } from 'lucide-react';
+import { TrashIcon } from 'lucide-react';
 import { useRef } from 'react';
 
-import { TextWithIcon } from '@/components/custom/text-with-icon';
+import { AddItemButton } from '@/components/custom/add-item-button';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -130,15 +130,7 @@ export const DictionaryInput = ({
           </Button>
         </div>
       ))}
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={add}
-        type="button"
-        disabled={disabled}
-      >
-        <TextWithIcon icon={<Plus size={18} />} text={t('Add Item')} />
-      </Button>
+      <AddItemButton onClick={add} disabled={disabled} />
     </div>
   );
 };

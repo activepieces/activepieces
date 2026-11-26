@@ -1,10 +1,10 @@
 import { t } from 'i18next';
-import { GripVertical, Plus, TrashIcon } from 'lucide-react';
+import { GripVertical, TrashIcon } from 'lucide-react';
 import { nanoid } from 'nanoid';
 import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { TextWithIcon } from '@/components/custom/text-with-icon';
+import { AddItemButton } from '@/components/custom/add-item-button';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -95,81 +95,70 @@ const ArrayInput = React.memo(
     const showRemoveButton = !required || fields.length > 1;
 
     return (
-      <>
-        <div className="flex w-full flex-col gap-2.5 ">
-          <Sortable
-            value={fields}
-            onMove={({ activeIndex, overIndex }) => {
-              move(activeIndex, overIndex);
-            }}
-          >
-            {fields.map((field, index) => (
-              <SortableItem key={field.id} value={field.id} asChild>
-                <div className="flex items-center gap-3">
-                  <SortableDragHandle
+      <div className="flex w-full flex-col gap-2.5">
+        <Sortable
+          value={fields}
+          onMove={({ activeIndex, overIndex }) => {
+            move(activeIndex, overIndex);
+          }}
+        >
+          {fields.map((field, index) => (
+            <SortableItem key={field.id} value={field.id} asChild>
+              <div className="flex items-center gap-3">
+                <SortableDragHandle
+                  variant="outline"
+                  size={thinInputs ? 'icon-xs' : 'icon-sm'}
+                  disabled={disabled}
+                >
+                  <GripVertical className="size-4" aria-hidden="true" />
+                </SortableDragHandle>
+
+                <div className="grow">
+                  {customInputNode ? (
+                    customInputNode(
+                      (value) => updateFieldValue(index, value),
+                      field.value,
+                      disabled,
+                    )
+                  ) : (
+                    <Input
+                      size={thinInputs ? 'sm' : 'default'}
+                      value={field.value}
+                      onChange={(e) => updateFieldValue(index, e.target.value)}
+                      disabled={disabled}
+                      className={cn('grow', thinInputs && 'h-7 px-2')}
+                    />
+                  )}
+                </div>
+
+                {showRemoveButton && (
+                  <Button
+                    type="button"
                     variant="outline"
                     size={thinInputs ? 'icon-xs' : 'icon-sm'}
                     disabled={disabled}
+                    onClick={() => {
+                      remove(index);
+                    }}
                   >
-                    <GripVertical className="size-4" aria-hidden="true" />
-                  </SortableDragHandle>
-
-                  <div className="grow">
-                    {customInputNode ? (
-                      customInputNode(
-                        (value) => updateFieldValue(index, value),
-                        field.value,
-                        disabled,
-                      )
-                    ) : (
-                      <Input
-                        size={thinInputs ? 'sm' : 'default'}
-                        value={field.value}
-                        onChange={(e) =>
-                          updateFieldValue(index, e.target.value)
-                        }
-                        disabled={disabled}
-                        className={cn('grow', thinInputs && 'h-7 px-2')}
-                      />
-                    )}
-                  </div>
-
-                  {showRemoveButton && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size={thinInputs ? 'icon-xs' : 'icon-sm'}
-                      disabled={disabled}
-                      onClick={() => {
-                        remove(index);
-                      }}
-                    >
-                      <TrashIcon
-                        className="size-4 text-danger-11"
-                        aria-hidden="true"
-                      />
-                      <span className="sr-only">{t('Remove')}</span>
-                    </Button>
-                  )}
-                </div>
-              </SortableItem>
-            ))}
-          </Sortable>
-        </div>
+                    <TrashIcon
+                      className="size-4 text-danger-11"
+                      aria-hidden="true"
+                    />
+                    <span className="sr-only">{t('Remove')}</span>
+                  </Button>
+                )}
+              </div>
+            </SortableItem>
+          ))}
+        </Sortable>
         {!disabled && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-3"
-            onClick={() => {
-              append();
-            }}
-            type="button"
-          >
-            <TextWithIcon icon={<Plus size={18} />} text={t('Add Item')} />
-          </Button>
+          <AddItemButton
+            onClick={append}
+            size={thinInputs ? 'thin' : 'default'}
+          />
         )}
-      </>
+      </div>
     );
   },
 );
