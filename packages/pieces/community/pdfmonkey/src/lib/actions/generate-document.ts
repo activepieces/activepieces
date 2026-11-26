@@ -21,37 +21,43 @@ export const generateDocumentAction = createAction({
     document_template_id: templateIdDropdown,
     payload: Property.Json({
       displayName: 'Payload',
-      description: 'Data to use for the Document generation.',
+      description: 'Data merged into the template, as a JSON object.',
       required: true,
     }),
     meta: Property.Json({
       displayName: 'Meta',
-      description: 'Meta-Data to attach to the Document.',
+      description: 'Extra data kept with the document and returned in its output.',
       required: false,
     }),
     fileName: Property.ShortText({
       displayName: 'Custom File Name',
+      description: "Name of the generated file. Empty: PDFMonkey's default name.",
+      placeholder: 'Invoice 2026-001.pdf',
       required: false,
     }),
     status: Property.StaticDropdown({
       displayName: 'Document Status',
-      description: 'Draft only saves the document; Pending generates the file right away.',
       required: false,
       defaultValue: 'draft',
+      display: 'cards',
       options: {
         options: [
-          { label: 'Draft', value: 'draft' },
-          { label: 'Pending', value: 'pending' },
+          { label: 'Draft', value: 'draft', description: 'Save only', icon: 'file' },
+          { label: 'Pending', value: 'pending', description: 'Generate now', icon: 'send' },
         ],
       },
     }),
     wait_for_completion: Property.Checkbox({
       displayName: 'Wait for Completion',
-      description: 'Generate now and wait (up to 7 minutes) until the file is ready, so the output has the download URL. Overrides Document Status.',
+      description: 'Wait up to 7 min for the download URL. Overrides Document Status.',
       required: false,
       defaultValue: false,
     }),
   },
+  propertyGroups: [
+    { key: 'template', display: 'section', label: 'Template and Data', icon: 'file', props: ['document_template_id', 'payload', 'meta'] },
+    { key: 'output', display: 'section', label: 'Output', icon: 'send', props: ['fileName', 'status', 'wait_for_completion'] },
+  ],
   async run({ auth, propsValue }) {
     const document = await pdfmonkeyOperations.createDocument({
       auth,

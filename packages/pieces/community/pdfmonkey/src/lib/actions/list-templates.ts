@@ -19,7 +19,8 @@ export const listTemplatesAction = createAction({
   props: {
     workspace_id: Property.ShortText({
       displayName: 'Workspace ID',
-      description: 'Only templates of this workspace. Leave empty to list the templates of every workspace you can access.',
+      description: "Only this workspace's templates. Empty: every workspace.",
+      placeholder: '9dd42e52-2c1f-4fde-adf1-50c12afb612e',
       required: false,
     }),
   },

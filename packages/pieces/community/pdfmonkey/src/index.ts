@@ -20,7 +20,7 @@ export const pdfmonkey = createPiece({
   displayName: 'PDFMonkey',
   description: 'Generate PDF documents from templates and JSON data.',
   auth: pdfmonkeyAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/pdfmonkey.png',
   authors: ['Sanket6652'],
   categories: [PieceCategory.CONTENT_AND_FILES],
@@ -40,6 +40,12 @@ export const pdfmonkey = createPiece({
     createCustomApiCallAction({
       auth: pdfmonkeyAuth,
       baseUrl: () => BASE_URL,
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${BASE_URL}`,
+          placeholder: '/documents',
+        },
+      },
       authMapping: async (auth) => ({
         Authorization: `Bearer ${auth.secret_text}`,
       }),

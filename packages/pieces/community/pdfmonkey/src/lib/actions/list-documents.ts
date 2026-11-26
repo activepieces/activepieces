@@ -19,11 +19,13 @@ export const listDocumentsAction = createAction({
   props: {
     template_id: Property.ShortText({
       displayName: 'Template ID',
-      description: 'Only documents made from this template. Use List Templates to find the ID.',
+      description: 'Only documents made from this template. Find IDs with List Templates.',
+      placeholder: '07fdc6bb-8eff-4d1a-9cc6-9083775905df',
       required: false,
     }),
     status: Property.StaticDropdown({
       displayName: 'Status',
+      description: 'Only documents in this state.',
       required: false,
       options: {
         options: [
@@ -38,6 +40,7 @@ export const listDocumentsAction = createAction({
     search: Property.ShortText({
       displayName: 'Search',
       description: 'A document ID (exact match) or part of a file name.',
+      placeholder: 'Invoice',
       required: false,
     }),
     updated_since: Property.DateTime({
@@ -52,6 +55,9 @@ export const listDocumentsAction = createAction({
       defaultValue: 1,
     }),
   },
+  propertyGroups: [
+    { key: 'filters', display: 'section', label: 'Filters', icon: 'filter', props: ['template_id', 'status', 'search', 'updated_since'] },
+  ],
   async run({ auth, propsValue }) {
     return pdfmonkeyOperations.listDocuments({
       auth,
