@@ -50,7 +50,7 @@ vi.mock('../../src/lib/sandbox-manager', () => ({
             return Promise.resolve()
         }),
         shutdown: vi.fn().mockResolvedValue(undefined),
-        getActiveSandbox: vi.fn(() => ({ sandboxId: `sb-${boxId}`, boxId, pid: 1000 + boxId, busy: false })),
+        getActiveSandbox: vi.fn(() => ({ sandboxId: `sb-${boxId}`, boxId, pid: 1000 + boxId, busy: false, getMemoryUsage: async () => null })),
     })),
 }))
 

@@ -1,5 +1,5 @@
 import { type ApLogger } from '@activepieces/server-utils'
-import { EngineOperation, EngineOperationType, EngineResponse, FailedStep, FlowVersion, FlowVersionState, NetworkMode, PiecePackage, SourceCode, WorkerToApiContract } from '@activepieces/shared'
+import { EngineOperation, EngineOperationType, EngineResponse, FailedStep, FlowVersion, FlowVersionState, NetworkMode, PiecePackage, SandboxMemoryUsage, SourceCode, WorkerToApiContract } from '@activepieces/shared'
 
 // Two roles:
 //   - Resolver (worker-side, owns the only apiClient): turns a job into a fully-materialized
@@ -84,6 +84,7 @@ export type RuntimeExecutorInfo = {
     boxId: number
     pid: number
     busy: boolean
+    getMemoryUsage: () => Promise<SandboxMemoryUsage | null>
 }
 
 // A code step to provision. Part of the generic provision contract (ProvisionInput.codes), so it

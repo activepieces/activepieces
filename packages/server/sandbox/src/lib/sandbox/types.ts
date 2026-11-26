@@ -1,5 +1,5 @@
 import { ChildProcess } from 'child_process'
-import { EngineOperation, EngineOperationType, EngineResponse, WorkerRpcContract } from '@activepieces/shared'
+import { EngineOperation, EngineOperationType, EngineResponse, SandboxMemoryUsage, WorkerRpcContract } from '@activepieces/shared'
 
 export type SandboxMount = {
     hostPath: string
@@ -38,6 +38,7 @@ export type Sandbox = {
     isReady: () => boolean
     getPid: () => number | null
     isBusy: () => boolean
+    getMemoryUsage: () => Promise<SandboxMemoryUsage | null>
 }
 
 export type SandboxStartOptions = {

@@ -1,4 +1,5 @@
 import { inspect } from 'node:util'
+import { getHeapStatistics } from 'node:v8'
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import {
     createNotifyClient,
@@ -8,15 +9,18 @@ import {
     EngineResponse,
     ERROR_MESSAGES_TO_REDACT,
     ForceReinstallPieceRequest,
+    SandboxHeapUsage,
     WorkerNotifyContract,
     WorkerRpcContract,
 } from '@activepieces/shared'
 import { io, type ManagerOptions, type Socket, type SocketOptions } from 'socket.io-client'
 import { flowRunProgressReporter } from './helper/flow-run-progress-reporter'
+import { pieceMemorySampler } from './helper/piece-memory-sampler'
 import { execute } from './operations'
 
 const INITIAL_CONNECT_TIMEOUT_MS = 60_000
 const PIECE_REINSTALL_RPC_TIMEOUT_MS = 120_000
+const PIECES_MEMORY_REFRESH_INTERVAL_MS = 60_000
 
 let socket: Socket | undefined
 let notifyClient: WorkerNotifyContract | undefined
@@ -100,15 +104,15 @@ export const workerSocket = {
                     await flowRunProgressReporter.shutdown()
                 }
             },
+            getMemoryUsage: async () => ({
+                pieces: pieceMemorySampler.getLatestUsage(),
+                heap: readHeapUsage(),
+            }),
         })
 
-        const gc = global.gc
-        if (typeof gc === 'function') {
-            const GC_INTERVAL_MS = 60_000
-            setInterval(() => {
-                gc()
-            }, GC_INTERVAL_MS)
-        }
+        setInterval(() => {
+            pieceMemorySampler.refreshUsage().catch(() => global.gc?.())
+        }, PIECES_MEMORY_REFRESH_INTERVAL_MS)
 
         socket.connect()
     },
@@ -136,6 +140,15 @@ export const workerSocket = {
         socket = undefined
         notifyClient = undefined
     },
+}
+
+function readHeapUsage(): SandboxHeapUsage {
+    const heap = getHeapStatistics()
+    return {
+        usedBytes: heap.used_heap_size,
+        limitBytes: heap.heap_size_limit,
+        externalBytes: heap.external_memory,
+    }
 }
 
 function buildSocketOptions(sandboxId: string): Partial<ManagerOptions & SocketOptions> {

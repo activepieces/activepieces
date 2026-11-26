@@ -6,6 +6,7 @@ import { Action, Piece, PiecePropertyMap, Trigger } from '@activepieces/pieces-f
 import { EngineGenericError, extractPieceFromModule, getPackageAliasForPiece, getPieceNameFromAlias, RequireError, trimVersionFromAlias } from '@activepieces/shared'
 import { utils } from '../utils'
 import { workerSocket } from '../worker-socket'
+import { pieceMemorySampler } from './piece-memory-sampler'
 
 export const pieceLoader = {
     loadPieceOrThrow: async (
@@ -18,6 +19,7 @@ export const pieceLoader = {
                 devPieces,
             })
             const piecePath = await pieceLoader.getPiecePath({ packageName, devPieces })
+            pieceMemorySampler.trackPiece({ pieceName, pieceVersion, piecePath })
             const module = await requireWithReinstallRetry({ piecePath, pieceName, pieceVersion })
 
             const piece = extractPieceFromModule<Piece>({

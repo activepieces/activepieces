@@ -130,6 +130,7 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
                     boxId: info.boxId,
                     pid: info.pid,
                     busy: info.busy,
+                    getMemoryUsage: info.getMemoryUsage,
                 }))
         },
         async prewarm({ log, apiClient, internalApiUrl, flow }: PreWarmSandboxParams): Promise<void> {

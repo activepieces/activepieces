@@ -1,5 +1,6 @@
 import { isNil } from '@activepieces/core-utils'
 import { flowRunProgressReporter } from './lib/helper/flow-run-progress-reporter'
+import { pieceMemorySampler } from './lib/helper/piece-memory-sampler'
 import { ssrfGuard } from './lib/network/ssrf-guard'
 import { workerSocket } from './lib/worker-socket'
 
@@ -9,6 +10,7 @@ const SANDBOX_ID = process.env.SANDBOX_ID
 process.title = `sandbox-${SANDBOX_ID}`
 
 if (!isNil(SANDBOX_ID)) {
+    pieceMemorySampler.start().catch(() => undefined)
     workerSocket.init(SANDBOX_ID)
     flowRunProgressReporter.init()
 }

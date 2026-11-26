@@ -13,6 +13,7 @@ import { assertSafeCodeNamespace, assertSafePathSegment } from '../utils/path-sa
 import { Sandbox, SandboxInitOptions, SandboxLogger, SandboxMount, SandboxOptions, SandboxProcessMaker, SandboxResult } from './types'
 
 const PING_INTERVAL_MS = 25_000
+const MEMORY_USAGE_RPC_TIMEOUT_MS = 2_000
 const MAX_NODE_TIMER_MS = 2 ** 31 - 1
 
 function heartbeatTimeoutMs(timeLimitSeconds: number): number {
@@ -360,6 +361,12 @@ export function createSandbox(
         isReady,
         getPid: () => childProcess?.pid ?? null,
         isBusy: () => busy,
+        getMemoryUsage: async () => {
+            if (!isReady() || isNil(connectedSocket)) {
+                return null
+            }
+            return createRpcClient<EngineContract>(connectedSocket, MEMORY_USAGE_RPC_TIMEOUT_MS).getMemoryUsage()
+        },
         shutdown: async () => {
             shutdownCount++
             if (!isNil(childProcess)) {
