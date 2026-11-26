@@ -260,6 +260,8 @@
   "PUT": "PUT",
   "DELETE": "削除",
   "HEAD": "頭",
+  "Request": "リクエスト",
+  "Data to send": "送信するデータ",
   "New Link Created": "新しいリンクが作成されました",
   "Fires when a new short link is created on a domain. Useful to sync newly created links to other systems.": "ドメイン上に新しいショートリンクが作成されたときに発生します。他のシステムへの新しく作成されたリンクを同期するのに便利です。",
   "Polling Interval": "ポーリング間隔",
