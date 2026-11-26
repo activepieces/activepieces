@@ -45,8 +45,8 @@
   "Continue flow on all errors": "すべてのエラーでフローを続ける",
   "Continue flow on 4xx errors": "4xxエラー時にフローを続ける",
   "Do not continue (stop the flow)": "続行しない (フローを停止する)",
-  "Request": "Request",
-  "Credentials": "Credentials",
-  "Data to send": "Data to send",
+  "Request": "リクエスト",
+  "Credentials": "認証情報",
+  "Data to send": "送信するデータ",
   "HTTP": "HTTP"
 }
