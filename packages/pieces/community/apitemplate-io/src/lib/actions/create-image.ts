@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { ApitemplateAuth } from '../common/auth';
 import { ApitemplateAuthConfig, ApitemplateRegion, makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
@@ -14,23 +14,39 @@ export const createImage = createAction({
   description: 'Creates an image from a template with provided data.',
   audience: 'both',
   aiMetadata: { description: 'Renders a new image from a saved APITemplate.io template, merging in the supplied JSON `overrides` array to fill template objects. Requires a template ID (pick from the dropdown). Not idempotent: each call generates and stores a new image with its own transaction reference.', idempotent: false },
+  propertyGroups: [
+    {
+      key: 'template',
+      display: 'section',
+      label: 'Template',
+      icon: 'file',
+      props: ['templateId', 'data', 'dataHelp'],
+    },
+  ],
   props: {
     templateId: templateIdDropdown,
-        data: Property.Json({
+    data: Property.Json({
       displayName: 'Template Data',
-      description:
-        'JSON data with overrides array to populate the template. Format: {"overrides": [{"name": "object_name", "property": "value"}]}.',
+      description: 'The overrides that fill in the template, as JSON.',
       required: true,
     }),
+    dataHelp: Property.MarkDown({
+      variant: MarkdownVariant.INFO,
+      value:
+        'Each override names a template object and the properties to change, for example `{"overrides": [{"name": "text_1", "text": "Hello"}]}`.',
+    }),
     generationDelay: Property.Number({
-      displayName: 'Generation Delay (ms)',
-      description: 'Delay in milliseconds before PDF generation',
+      displayName: 'Render Delay',
+      description: 'Milliseconds to wait before rendering the image.',
       required: false,
+      advanced: true,
     }),
     meta: Property.ShortText({
-      displayName: 'External Reference ID',
-      description: 'Specify an external reference ID for your own reference',
+      displayName: 'Your Reference',
+      description: 'Your own ID for this file, to find it in List Objects.',
+      placeholder: 'invoice-1042',
       required: false,
+      advanced: true,
     }),
   },
   async run({ auth, propsValue }) {
