@@ -53,10 +53,10 @@ GET /v1/worker-machines/sandbox-metrics/prometheus
 | `activepieces_sandbox_memory_usage_bytes` | `worker_id`, `host`, `box_id` | Resident memory of the sandbox process tree |
 | `activepieces_sandbox_busy` | `worker_id`, `host`, `box_id` | `1` while the sandbox runs a job, `0` when idle |
 | `activepieces_sandbox_piece_memory_usage_bytes` | `worker_id`, `host`, `box_id`, `piece`, `version` | Estimated live JS heap held by each piece loaded in the sandbox |
-| `activepieces_sandbox_memory_limit_bytes` | `worker_id`, `host` | Heap limit of each sandbox (`AP_SANDBOX_MEMORY_LIMIT`) |
-| `activepieces_worker_cpu_usage_percent` | `worker_id`, `host` | CPU usage of the worker machine |
-| `activepieces_worker_memory_usage_percent` | `worker_id`, `host` | RAM usage of the worker machine |
-| `activepieces_worker_memory_total_bytes` | `worker_id`, `host` | RAM available to the worker machine |
+| `activepieces_sandbox_memory_limit_bytes` | `worker_id`, `host` | V8 heap limit of each sandbox (`AP_SANDBOX_MEMORY_LIMIT`) |
+| `activepieces_worker_cpu_usage_percent` | `worker_id`, `host` | CPU usage of the worker process itself. Sandbox processes run separately and are not included, so a busy sandbox can leave this near zero |
+| `activepieces_worker_memory_usage_percent` | `worker_id`, `host` | RAM usage of the worker container |
+| `activepieces_worker_memory_total_bytes` | `worker_id`, `host` | RAM available to the worker container |
 | `activepieces_worker_disk_usage_percent` | `worker_id`, `host` | Disk usage of the worker machine |
 
 ```
@@ -65,12 +65,14 @@ GET /v1/worker-machines/sandbox-metrics/prometheus
 activepieces_sandbox_memory_usage_bytes{worker_id="aB3dE",host="worker-7",box_id="1"} 412516352
 ```
 
-`box_id` is the stable slot number on the worker (1 to `AP_WORKER_CONCURRENCY`), so the series survive sandbox restarts. To alert before a sandbox runs out of heap, compare usage to the limit:
+`box_id` is the stable slot number on the worker (1 to `AP_WORKER_CONCURRENCY`), so the series survive sandbox restarts. For a rough early warning, compare usage to the limit:
 
 ```
 activepieces_sandbox_memory_usage_bytes
   / on(worker_id, host) group_left activepieces_sandbox_memory_limit_bytes > 0.8
 ```
+
+The two sides of that ratio do not measure the same thing. Usage is the resident memory of the sandbox and its child processes, which includes `Buffer` data and native allocations; the limit caps the V8 heap only. The ratio therefore reads higher than real heap utilization and can fire while the heap still has room.
 
 The per-piece number comes from V8's sampling heap profiler. It is an estimate and covers the JS heap only, not `Buffer` data or native addons.
 

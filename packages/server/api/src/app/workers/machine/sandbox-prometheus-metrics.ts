@@ -45,7 +45,7 @@ const METRICS: Metric[] = [
     },
     {
         name: 'activepieces_sandbox_memory_limit_bytes',
-        help: 'Heap limit configured for each sandbox on the worker',
+        help: 'V8 heap limit configured for each sandbox on the worker',
         collect: (worker) => {
             const limitKb = Number(worker.information.workerProps.SANDBOX_MEMORY_LIMIT)
             if (isNil(worker.information.workerProps.SANDBOX_MEMORY_LIMIT) || !Number.isFinite(limitKb)) {
@@ -56,17 +56,17 @@ const METRICS: Metric[] = [
     },
     {
         name: 'activepieces_worker_cpu_usage_percent',
-        help: 'CPU usage of the worker machine',
+        help: 'CPU usage of the worker process itself, excluding its sandbox processes',
         collect: (worker) => [{ labels: workerLabels(worker), value: worker.information.cpuUsagePercentage }],
     },
     {
         name: 'activepieces_worker_memory_usage_percent',
-        help: 'RAM usage of the worker machine',
+        help: 'RAM usage of the worker container',
         collect: (worker) => [{ labels: workerLabels(worker), value: worker.information.ramUsagePercentage }],
     },
     {
         name: 'activepieces_worker_memory_total_bytes',
-        help: 'RAM available to the worker machine',
+        help: 'RAM available to the worker container',
         collect: (worker) => [{ labels: workerLabels(worker), value: worker.information.totalAvailableRamInBytes }],
     },
     {
