@@ -6,6 +6,7 @@ vi.mock('fs', () => ({
     default: {
         promises: {
             readFile: vi.fn(),
+            readdir: vi.fn(),
         },
     },
 }))
@@ -22,10 +23,6 @@ vi.mock('systeminformation', () => ({
     },
 }))
 
-vi.mock('pidtree', () => ({
-    default: vi.fn(),
-}))
-
 vi.mock('pidusage', () => ({
     default: vi.fn(),
 }))
@@ -36,7 +33,6 @@ vi.mock('check-disk-space', () => ({
 
 import fs from 'fs'
 import checkDiskSpace from 'check-disk-space'
-import pidtree from 'pidtree'
 import pidusage from 'pidusage'
 import si from 'systeminformation'
 import { fileSystemUtils } from '../src/file-system-utils'
@@ -44,7 +40,7 @@ import { fileSystemUtils } from '../src/file-system-utils'
 const mockFileExists = vi.mocked(fileSystemUtils.fileExists)
 const mockReadFile = vi.mocked(fs.promises.readFile)
 const mockMem = vi.mocked(si.mem)
-const mockPidtree = vi.mocked(pidtree)
+const mockReaddir = vi.mocked(fs.promises.readdir)
 const mockPidusage = vi.mocked(pidusage)
 const mockCheckDiskSpace = vi.mocked(checkDiskSpace)
 
@@ -306,8 +302,19 @@ describe('getCpuUsage', () => {
 })
 
 describe('getProcessTreeMemoryBytesByPids', () => {
+    function mockProcDirectory(list: { pid: number, ppid: number }[]) {
+        mockReaddir.mockResolvedValue([...list.map(({ pid }) => String(pid)), 'meminfo', 'self'] as never)
+        mockReadFile.mockImplementation((async (path: string) => {
+            const row = list.find(({ pid }) => path === `/proc/${pid}/stat`)
+            if (!row) {
+                throw new Error('ENOENT')
+            }
+            return `${row.pid} (node (sandbox) x) S ${row.ppid} ${row.pid} ${row.pid} 0 -1 4194560`
+        }) as never)
+    }
+
     function mockProcessTable(list: { pid: number, ppid: number, memory: number }[]) {
-        mockPidtree.mockResolvedValue(list.map(({ pid, ppid }) => ({ pid, ppid })) as never)
+        mockProcDirectory(list)
         mockPidusage.mockImplementation((async (pids: number[]) => Object.fromEntries(
             list.filter(({ pid }) => pids.includes(pid)).map(({ pid, memory }) => [pid, { memory }]),
         )) as never)
@@ -316,7 +323,7 @@ describe('getProcessTreeMemoryBytesByPids', () => {
     it('returns an empty map without scanning when given no pids', async () => {
         const result = await systemUsage.getProcessTreeMemoryBytesByPids([])
         expect(result.size).toBe(0)
-        expect(mockPidtree).not.toHaveBeenCalled()
+        expect(mockReaddir).not.toHaveBeenCalled()
     })
 
     it('sums the memory of each pid and its descendants', async () => {
@@ -337,12 +344,12 @@ describe('getProcessTreeMemoryBytesByPids', () => {
             { pid: 200, ppid: 1, memory: 20 },
         ])
         await systemUsage.getProcessTreeMemoryBytesByPids([100, 200])
-        expect(mockPidtree).toHaveBeenCalledTimes(1)
+        expect(mockReaddir).toHaveBeenCalledTimes(1)
         expect(mockPidusage).toHaveBeenCalledTimes(1)
     })
 
     it('counts a pid that exited between the scan and the read as 0', async () => {
-        mockPidtree.mockResolvedValue([{ pid: 100, ppid: 1 }, { pid: 200, ppid: 100 }] as never)
+        mockProcDirectory([{ pid: 100, ppid: 1 }, { pid: 200, ppid: 100 }])
         mockPidusage.mockResolvedValue({ 100: { memory: 10 } } as never)
         const result = await systemUsage.getProcessTreeMemoryBytesByPids([100])
         expect(result.get(100)).toBe(10)
@@ -357,8 +364,15 @@ describe('getProcessTreeMemoryBytesByPids', () => {
         expect(result.get(200)).toBe(20)
     })
 
+    it('skips a process whose stat file vanished during the scan', async () => {
+        mockProcessTable([{ pid: 100, ppid: 1, memory: 10 }])
+        mockReaddir.mockResolvedValue(['100', '200'] as never)
+        const result = await systemUsage.getProcessTreeMemoryBytesByPids([100])
+        expect(result.get(100)).toBe(10)
+    })
+
     it('maps every pid to 0 when scanning the process table fails', async () => {
-        mockPidtree.mockRejectedValue(new Error('ps failed'))
+        mockReaddir.mockRejectedValue(new Error('no /proc'))
         const result = await systemUsage.getProcessTreeMemoryBytesByPids([100, 200])
         expect(result.get(100)).toBe(0)
         expect(result.get(200)).toBe(0)
@@ -366,7 +380,7 @@ describe('getProcessTreeMemoryBytesByPids', () => {
     })
 
     it('maps every pid to 0 when reading usage fails', async () => {
-        mockPidtree.mockResolvedValue([{ pid: 100, ppid: 1 }] as never)
+        mockProcDirectory([{ pid: 100, ppid: 1 }])
         mockPidusage.mockRejectedValue(new Error('read failed'))
         const result = await systemUsage.getProcessTreeMemoryBytesByPids([100, 200])
         expect(result.get(100)).toBe(0)

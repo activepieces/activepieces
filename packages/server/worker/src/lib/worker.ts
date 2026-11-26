@@ -459,6 +459,10 @@ async function fetchAndStoreSettings(sock: Socket): Promise<void> {
                 }
                 response.SANDBOX_MEMORY_LIMIT = localSandboxMemoryLimit
             }
+            const recycleSandboxAt = system.get(WorkerSystemProp.RECYCLE_SANDBOX_AT)
+            if (!isNil(recycleSandboxAt) && recycleSandboxAt !== '' && !/^([1-9]\d?|100)$/.test(recycleSandboxAt)) {
+                throw new Error(`AP_RECYCLE_SANDBOX_AT must be an integer percentage from 1 to 100. Got: ${recycleSandboxAt}`)
+            }
             const workerGroupId = system.get(WorkerSystemProp.WORKER_GROUP_ID)
             if (!isNil(workerGroupId)) {
                 if (response.EDITION === ApEdition.CLOUD) {

@@ -53,7 +53,7 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
                     params: { message: `No sandbox manager for worker index ${workerIndex} (concurrency=${concurrency})` },
                 })
             }
-            const sandbox = manager.acquire({ log })
+            const sandbox = await manager.acquire({ log })
 
             const provisionStartedAt = Date.now()
             const { error: provisionError } = await tryCatch(() => localExecutionCache(log, basePath, getSettings).provision({

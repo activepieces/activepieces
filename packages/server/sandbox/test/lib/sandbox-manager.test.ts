@@ -1,9 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ApEnvironment, ExecutionMode, NetworkMode } from '@activepieces/shared'
 
+const { getProcessTreeMemoryBytesByPids } = vi.hoisted(() => ({ getProcessTreeMemoryBytesByPids: vi.fn() }))
+
+vi.mock('@activepieces/server-utils', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('@activepieces/server-utils')>()),
+    systemUsage: { getProcessTreeMemoryBytesByPids },
+}))
+
 vi.mock('../../src/lib/create-sandbox-for-job', () => ({
     createSandboxForJob: vi.fn().mockReturnValue({
+        id: 'sandbox-1',
         isReady: () => true,
+        getPid: () => 4242,
         shutdown: vi.fn().mockResolvedValue(undefined),
     }),
 }))
@@ -63,13 +72,13 @@ describe('sandbox-manager canReuseSandbox', () => {
         })
 
         const manager = createSandboxManager({ boxId: 1, basePath: '/tmp', getSettings: () => settings })
-        manager.acquire({ log })
+        await manager.acquire({ log })
         await manager.release(log)
 
         const { createSandboxForJob } = await import('../../src/lib/create-sandbox-for-job')
         expect(createSandboxForJob).toHaveBeenCalledTimes(1)
 
-        manager.acquire({ log })
+        await manager.acquire({ log })
         expect(createSandboxForJob).toHaveBeenCalledTimes(2)
     })
 
@@ -80,11 +89,11 @@ describe('sandbox-manager canReuseSandbox', () => {
         })
 
         const manager = createSandboxManager({ boxId: 1, basePath: '/tmp', getSettings: () => settings })
-        manager.acquire({ log })
+        await manager.acquire({ log })
         await manager.release(log)
 
         const { createSandboxForJob } = await import('../../src/lib/create-sandbox-for-job')
-        manager.acquire({ log })
+        await manager.acquire({ log })
         expect(createSandboxForJob).toHaveBeenCalledTimes(2)
     })
 
@@ -95,11 +104,11 @@ describe('sandbox-manager canReuseSandbox', () => {
         })
 
         const manager = createSandboxManager({ boxId: 1, basePath: '/tmp', getSettings: () => settings })
-        manager.acquire({ log })
+        await manager.acquire({ log })
         await manager.release(log)
 
         const { createSandboxForJob } = await import('../../src/lib/create-sandbox-for-job')
-        manager.acquire({ log })
+        await manager.acquire({ log })
         expect(createSandboxForJob).toHaveBeenCalledTimes(1)
     })
 
@@ -110,11 +119,11 @@ describe('sandbox-manager canReuseSandbox', () => {
         })
 
         const manager = createSandboxManager({ boxId: 1, basePath: '/tmp', getSettings: () => settings })
-        manager.acquire({ log })
+        await manager.acquire({ log })
         await manager.release(log)
 
         const { createSandboxForJob } = await import('../../src/lib/create-sandbox-for-job')
-        manager.acquire({ log })
+        await manager.acquire({ log })
         expect(createSandboxForJob).toHaveBeenCalledTimes(1)
     })
 
@@ -125,11 +134,11 @@ describe('sandbox-manager canReuseSandbox', () => {
         })
 
         const manager = createSandboxManager({ boxId: 1, basePath: '/tmp', getSettings: () => settings })
-        manager.acquire({ log })
+        await manager.acquire({ log })
         await manager.release(log)
 
         const { createSandboxForJob } = await import('../../src/lib/create-sandbox-for-job')
-        manager.acquire({ log })
+        await manager.acquire({ log })
         expect(createSandboxForJob).toHaveBeenCalledTimes(1)
     })
 })
@@ -147,16 +156,75 @@ describe('sandbox-manager dev pieces rebuild', () => {
         const manager = createSandboxManager({ boxId: 1, basePath: '/tmp', getSettings: () => settings })
         const { createSandboxForJob } = await import('../../src/lib/create-sandbox-for-job')
 
-        const staleSandbox = manager.acquire({ log })
+        const staleSandbox = await manager.acquire({ log })
         await manager.release(log)
         markDevPiecesRebuilt()
 
-        manager.acquire({ log })
+        await manager.acquire({ log })
         expect(createSandboxForJob).toHaveBeenCalledTimes(2)
         expect(staleSandbox.shutdown).toHaveBeenCalled()
 
         await manager.release(log)
-        manager.acquire({ log })
+        await manager.acquire({ log })
         expect(createSandboxForJob).toHaveBeenCalledTimes(2)
+    })
+})
+
+describe('sandbox-manager recycle threshold', () => {
+    const MB = 1024 * 1024
+
+    beforeEach(() => {
+        vi.clearAllMocks()
+    })
+
+    async function acquireTwice({ recycleSandboxAt, reuseSandbox, memoryBytes }: { recycleSandboxAt: string | undefined, reuseSandbox: string, memoryBytes: number }) {
+        getProcessTreeMemoryBytesByPids.mockResolvedValue(new Map([[4242, memoryBytes]]))
+        const settings = {
+            ...buildSettings({ executionMode: ExecutionMode.SANDBOX_CODE_ONLY, environment: ApEnvironment.PRODUCTION }),
+            SANDBOX_MEMORY_LIMIT: '1048576',
+            REUSE_SANDBOX: reuseSandbox,
+            RECYCLE_SANDBOX_AT: recycleSandboxAt,
+        }
+        const manager = createSandboxManager({ boxId: 1, basePath: '/tmp', getSettings: () => settings })
+        const { createSandboxForJob } = await import('../../src/lib/create-sandbox-for-job')
+        const first = await manager.acquire({ log })
+        await manager.release(log)
+        await manager.acquire({ log })
+        return { createSandboxForJob, first }
+    }
+
+    it('kills the reused sandbox and creates a fresh one when memory is above the threshold', async () => {
+        const { createSandboxForJob, first } = await acquireTwice({ recycleSandboxAt: '80', reuseSandbox: 'true', memoryBytes: 820 * MB })
+        expect(createSandboxForJob).toHaveBeenCalledTimes(2)
+        expect(first.shutdown).toHaveBeenCalledTimes(1)
+    })
+
+    it('recycles when memory is exactly at the threshold', async () => {
+        const { createSandboxForJob, first } = await acquireTwice({ recycleSandboxAt: '50', reuseSandbox: 'true', memoryBytes: 512 * MB })
+        expect(createSandboxForJob).toHaveBeenCalledTimes(2)
+        expect(first.shutdown).toHaveBeenCalledTimes(1)
+    })
+
+    it('keeps reusing the sandbox one byte below the threshold', async () => {
+        const { createSandboxForJob, first } = await acquireTwice({ recycleSandboxAt: '50', reuseSandbox: 'true', memoryBytes: 512 * MB - 1 })
+        expect(createSandboxForJob).toHaveBeenCalledTimes(1)
+        expect(first.shutdown).not.toHaveBeenCalled()
+    })
+
+    it('keeps reusing the sandbox below the threshold', async () => {
+        const { createSandboxForJob, first } = await acquireTwice({ recycleSandboxAt: '80', reuseSandbox: 'true', memoryBytes: 800 * MB })
+        expect(createSandboxForJob).toHaveBeenCalledTimes(1)
+        expect(first.shutdown).not.toHaveBeenCalled()
+    })
+
+    it('never measures memory when the threshold is unset', async () => {
+        const { createSandboxForJob } = await acquireTwice({ recycleSandboxAt: undefined, reuseSandbox: 'true', memoryBytes: 2000 * MB })
+        expect(createSandboxForJob).toHaveBeenCalledTimes(1)
+        expect(getProcessTreeMemoryBytesByPids).not.toHaveBeenCalled()
+    })
+
+    it('never measures memory when sandboxes are not reused', async () => {
+        await acquireTwice({ recycleSandboxAt: '80', reuseSandbox: 'false', memoryBytes: 2000 * MB })
+        expect(getProcessTreeMemoryBytesByPids).not.toHaveBeenCalled()
     })
 })
