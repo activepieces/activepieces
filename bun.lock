@@ -10735,7 +10735,7 @@
     },
     "packages/pieces/core/data-mapper": {
       "name": "@activepieces/piece-data-mapper",
-      "version": "0.3.23",
+      "version": "0.4.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
