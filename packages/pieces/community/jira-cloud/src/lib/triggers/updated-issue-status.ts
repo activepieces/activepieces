@@ -3,18 +3,39 @@ import {
   Property,
   TriggerStrategy,
   createTrigger,
+  isNil,
 } from '@activepieces/pieces-framework';
 import { jiraCloudAuth } from '../../auth';
-import { createJiraPolling } from '../common/polling';
+import { JiraPollingItem, createJiraPolling } from '../common/polling';
+import { ChangelogHistory } from '../common/types';
 
 import { issueOutputSchema } from '../output-schemas';
-const polling = createJiraPolling({ epochField: 'statuscategorychangedate' });
+const polling = createJiraPolling({
+  expand: ['changelog'],
+  extraScope: ({ since }) => (isNil(since) ? 'status CHANGED' : `status CHANGED AFTER '${since}'`),
+  extractItems: ({ issue }: { issue: IssueWithChangelog }): JiraPollingItem[] =>
+    (issue.changelog?.histories ?? [])
+      .filter((history) =>
+        history.items.some((item) => item.field === 'status' || item.fieldId === 'status')
+      )
+      .map((history) => ({
+        id: issue.id,
+        epochMilliSeconds: Date.parse(history.created),
+        data: {
+          expand: issue.expand,
+          id: issue.id,
+          self: issue.self,
+          key: issue.key,
+          fields: issue.fields,
+        },
+      })),
+});
 
 export const updatedIssueStatus = createTrigger({
   name: 'updated_issue_status',
   classification: 'READ',
   displayName: 'Updated Issue Status',
-  description: 'Triggers when an issue moves to another status category (To Do, In Progress, Done).',
+  description: "Triggers when an issue's status changes.",
   aiMetadata: {
     description:
       "Fires when a Jira issue's status changes (e.g. To Do -> In Progress -> Done), optionally limited to issues matching a JQL filter. Each event represents one issue whose status was updated and includes the issue's current field data. Polling-based; events arrive on the next poll, not instantly.",
@@ -184,3 +205,12 @@ export const updatedIssueStatus = createTrigger({
     return await polling.test({ context });
   },
 });
+
+type IssueWithChangelog = {
+  expand?: string;
+  id: string;
+  self?: string;
+  key: string;
+  fields: Record<string, unknown>;
+  changelog?: { histories: ChangelogHistory[] };
+};

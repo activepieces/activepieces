@@ -40,13 +40,22 @@ export const newPriority = createTrigger({
     await context.store.delete('priorityIds');
   },
   async run(context) {
+    const existingIds = await context.store.get<string>('priorityIds');
+
     const priorities = await getPriorities({ auth: context.auth });
+
+    if (isNil(existingIds)) {
+      await context.store.put(
+        'priorityIds',
+        JSON.stringify((priorities ?? []).map((p) => p.id).filter(Boolean))
+      );
+      return [];
+    }
 
     if (isNil(priorities) || priorities.length === 0) {
       return [];
     }
 
-    const existingIds = (await context.store.get<string>('priorityIds')) ?? '[]';
     const parsedExistingIds = JSON.parse(existingIds) as string[];
 
     const newPriorities = priorities.filter(
@@ -72,6 +81,8 @@ export const newPriority = createTrigger({
       return [];
     }
 
-    return priorities;
+    return [...priorities].sort((first, second) => Number(second.id) - Number(first.id)).slice(0, TEST_ITEMS_LIMIT);
   },
 });
+
+const TEST_ITEMS_LIMIT = 5;

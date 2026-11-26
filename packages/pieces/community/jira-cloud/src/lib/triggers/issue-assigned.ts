@@ -5,7 +5,9 @@ import {
   createTrigger,
   isNil,
 } from '@activepieces/pieces-framework';
-import { jiraCloudAuth } from '../../auth';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { JiraAuth, jiraCloudAuth } from '../../auth';
+import { jiraApiCall } from '../common';
 import { JiraPollingItem, JiraPollingProps, createJiraPolling } from '../common/polling';
 import { getUsersDropdown } from '../common/props';
 import { ChangelogHistory } from '../common/types';
@@ -21,6 +23,7 @@ type IssueWithChangelog = {
 type IssueAssignedProps = JiraPollingProps & {
   assignee?: string;
   assignedToMe?: boolean;
+  myAccountId?: string;
 };
 
 const polling = createJiraPolling<IssueAssignedProps>({
@@ -42,12 +45,12 @@ const polling = createJiraPolling<IssueAssignedProps>({
     issue: IssueWithChangelog;
     propsValue: IssueAssignedProps;
   }): JiraPollingItem[] => {
-    const targetAccountId = propsValue.assignedToMe ? undefined : propsValue.assignee;
+    const targetAccountId = propsValue.assignedToMe ? propsValue.myAccountId : propsValue.assignee;
     return (issue.changelog?.histories ?? []).flatMap((history) => {
       const assigneeChange = history.items.find(
         (item) => item.field === 'assignee' || item.fieldId === 'assignee'
       );
-      if (isNil(assigneeChange)) {
+      if (isNil(assigneeChange) || isNil(assigneeChange.to)) {
         return [];
       }
       if (targetAccountId && assigneeChange.to !== targetAccountId) {
@@ -327,9 +330,23 @@ export const issueAssigned = createTrigger({
     return;
   },
   async run(context) {
-    return await polling.poll({ context });
+    return await polling.poll({ context: await withMyAccountId(context) });
   },
   async test(context) {
-    return await polling.test({ context });
+    return await polling.test({ context: await withMyAccountId(context) });
   },
 });
+
+async function withMyAccountId<Context extends { auth: JiraAuth; propsValue: IssueAssignedProps }>(
+  context: Context
+): Promise<Context & { propsValue: IssueAssignedProps }> {
+  if (!context.propsValue.assignedToMe) {
+    return context;
+  }
+  const me = await jiraApiCall<{ accountId: string }>({
+    auth: context.auth,
+    method: HttpMethod.GET,
+    resourceUri: '/myself',
+  });
+  return { ...context, propsValue: { ...context.propsValue, myAccountId: me.accountId } };
+}

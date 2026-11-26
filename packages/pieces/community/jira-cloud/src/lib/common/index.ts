@@ -71,26 +71,24 @@ export async function getPriorities({ auth }: { auth: JiraAuth }) {
 }
 
 export async function sanitizeJqlQuery({ auth, jql }: { auth: JiraAuth; jql: string }): Promise<string> {
-	const sanitizeResult = (
-		await sendJiraRequest({
-			auth: auth,
-			url: 'jql/sanitize',
-			method: HttpMethod.POST,
-			body: {
-				queries: [
-					{
-						query: jql,
-					},
-				],
-			},
-		})
-	).body as {
+	const sanitizeResult = await jiraApiCall<{
 		queries: {
 			initialQuery: string;
-			sanitizedQuery: string;
+			sanitizedQuery?: string;
+			errors?: { errorMessages?: string[] };
 		}[];
-	};
-	return sanitizeResult.queries[0].sanitizedQuery;
+	}>({
+		auth,
+		method: HttpMethod.POST,
+		resourceUri: '/jql/sanitize',
+		body: { queries: [{ query: jql }] },
+	});
+	const result = sanitizeResult.queries[0];
+	if (isNil(result?.sanitizedQuery)) {
+		const reasons = result?.errors?.errorMessages ?? [];
+		throw new Error(`Invalid JQL: ${reasons.length > 0 ? reasons.join(' ') : jql}`);
+	}
+	return result.sanitizedQuery;
 }
 
 export async function executeJql({
