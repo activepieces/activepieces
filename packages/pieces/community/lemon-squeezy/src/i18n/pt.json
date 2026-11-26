@@ -281,6 +281,8 @@
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
   "HEAD": "CABEÇA",
+  "Request": "Solicitação",
+  "Data to send": "Dados a enviar",
   "Order Created": "Pedido criado",
   "Order Refunded": "Pedido reembolsado",
   "Subscription Created": "Assinatura criada",
