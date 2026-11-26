@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { manychatAuth } from '../auth';
 import { manychatClient, manychatUtils } from '../common/client';
 import { manychatData, manychatInput, manychatProps } from '../common/props';
@@ -10,43 +10,54 @@ export const updateSubscriberAction = createAction({
 	name: 'update_subscriber',
 	classification: 'WRITE',
 	displayName: 'Update Subscriber',
-	description: 'Updates the name, phone, email, gender or opt-ins of a subscriber. Empty fields are left unchanged.',
+	description: `Updates a subscriber's name, phone, email, gender or opt-ins.`,
 	audience: 'both',
 	aiMetadata: {
 		description:
-			'Updates the system fields of an existing ManyChat subscriber by subscriber ID: first and last name, phone, email, gender and SMS/email opt-in. Only the fields you give are sent. Phone needs SMS Opt-in, email needs Email Opt-in (No stores the address without opting in; an address cannot be removed), and SMS Opt-in yes needs a Consent Phrase. For custom fields use "Set Subscriber Custom Fields"; for tags use "Add Tag to User". Repeating the same update leaves the same state.',
+			'Updates the system fields of an existing ManyChat subscriber by subscriber ID: first and last name, phone, email, gender and SMS/email opt-in. Only the fields you give are sent. Phone needs SMS Opt-in, email needs Email Opt-in (No stores the address without opting in; an address cannot be removed), and SMS Opt-in yes needs a Consent Phrase. For custom fields use "Set Subscriber Custom Fields"; for tags use "Add Tag to Subscriber". Repeating the same update leaves the same state.',
 		idempotent: true,
 	},
 	outputSchema: manychatOutputSchemas.subscriber,
 	props: {
 		subscriber_id: manychatProps.subscriberIdText(),
-		first_name: Property.ShortText({ displayName: 'First Name', required: false }),
-		last_name: Property.ShortText({ displayName: 'Last Name', required: false }),
+		changes_info: Property.MarkDown({
+			value: 'Fields left empty below keep their current value.',
+			variant: MarkdownVariant.INFO,
+		}),
+		first_name: Property.ShortText({ displayName: 'First Name', required: false, width: 'half' }),
+		last_name: Property.ShortText({ displayName: 'Last Name', required: false, width: 'half' }),
 		phone: Property.ShortText({
 			displayName: 'Phone Number',
-			description: 'International format, for example +14155550123. Requires SMS Opt-in.',
+			description: 'Needs SMS Opt-in.',
+			placeholder: '+14155550123',
 			required: false,
 		}),
 		email: Property.ShortText({
 			displayName: 'Email',
-			description: 'Requires Email Opt-in. Choosing No stores the address without opting in. An address cannot be removed through the API.',
+			description: `Needs Email Opt-in. An address can't be removed once saved.`,
+			placeholder: 'jane@example.com',
 			required: false,
 		}),
 		gender: Property.ShortText({ displayName: 'Gender', required: false }),
 		has_opt_in_sms: aiProps.yesNo({
 			displayName: 'SMS Opt-in',
-			description: 'Whether the subscriber agreed to receive SMS. Required when Phone is set. Leave empty to keep the current value.',
+			description: 'Required when Phone Number is set.',
 		}),
 		has_opt_in_email: aiProps.yesNo({
 			displayName: 'Email Opt-in',
-			description: 'Whether the subscriber agreed to receive email. Required when Email is set. Leave empty to keep the current value.',
+			description: 'Required when Email is set. No saves the email without opting in.',
 		}),
 		consent_phrase: Property.ShortText({
 			displayName: 'Consent Phrase',
-			description: 'The consent phrase the subscriber accepted. Required when SMS Opt-in is Yes.',
+			description: 'Required when SMS Opt-in is Yes.',
 			required: false,
 		}),
 	},
+	propertyGroups: [
+		{ key: 'subscriber', display: 'section', label: 'Subscriber to Update', icon: 'user', props: ['subscriber_id', 'changes_info'] },
+		{ key: 'changes', display: 'section', label: 'Changes', icon: 'sliders', props: ['first_name', 'last_name', 'phone', 'email', 'gender'] },
+		{ key: 'opt_ins', display: 'section', label: 'Opt-ins', icon: 'inbox', props: ['has_opt_in_sms', 'has_opt_in_email', 'consent_phrase'] },
+	],
 	async run({ auth, propsValue }) {
 		const apiKey = manychatUtils.apiKeyOf(auth);
 		const id = manychatInput.subscriberIdText({ value: propsValue.subscriber_id });

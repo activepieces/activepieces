@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { manychatAuth } from '../auth';
 import { manychatClient, manychatUtils } from '../common/client';
 import { manychatInput } from '../common/props';
@@ -18,14 +18,20 @@ export const findSubscriberByEmailOrPhoneAction = createAction({
 	},
 	outputSchema: manychatOutputSchemas.findBySystemField,
 	props: {
+		search_info: Property.MarkDown({
+			value: 'Fill in Email or Phone Number, not both.',
+			variant: MarkdownVariant.INFO,
+		}),
 		email: Property.ShortText({
 			displayName: 'Email',
-			description: 'Full email address, matched case-insensitively. Provide this OR Phone, not both.',
+			description: 'Matched without regard to case.',
+			placeholder: 'jane@example.com',
 			required: false,
 		}),
 		phone: Property.ShortText({
-			displayName: 'Phone',
-			description: 'Exact phone number in international format, for example +14155550123. Provide this OR Email, not both.',
+			displayName: 'Phone Number',
+			description: 'Exact match, in international format.',
+			placeholder: '+14155550123',
 			required: false,
 		}),
 	},
@@ -33,10 +39,10 @@ export const findSubscriberByEmailOrPhoneAction = createAction({
 		const email = manychatInput.optionalText(propsValue.email);
 		const phone = manychatInput.optionalText(propsValue.phone);
 		if (email !== undefined && phone !== undefined) {
-			throw new Error('Provide either Email or Phone, not both.');
+			throw new Error('Provide either Email or Phone Number, not both.');
 		}
 		if (email === undefined && phone === undefined) {
-			throw new Error('Provide either Email or Phone.');
+			throw new Error('Provide either Email or Phone Number.');
 		}
 		const body = await manychatClient.request({
 			apiKey: manychatUtils.apiKeyOf(auth),

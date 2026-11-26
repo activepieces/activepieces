@@ -20,7 +20,7 @@ export const manychat = createPiece({
 	description: 'Automations for Instagram, WhatsApp, TikTok, and Messenger marketing.',
 	categories: [PieceCategory.MARKETING],
 	auth: manychatAuth,
-	minimumSupportedRelease: '0.86.4',
+	minimumSupportedRelease: '0.88.2',
 	logoUrl: 'https://cdn.activepieces.com/pieces/manychat.png',
 	authors: ['neo773', 'kishanprmr', 'OdaiAhmed99'],
 	actions: [

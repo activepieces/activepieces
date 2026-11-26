@@ -21,17 +21,19 @@ export const createCustomFieldAction = createAction({
 	props: {
 		caption: Property.ShortText({
 			displayName: 'Field Name',
+			placeholder: 'Favorite Color',
 			required: true,
 		}),
 		type: Property.StaticDropdown<string>({
 			displayName: 'Type',
 			required: true,
 			options: {
-				options: SETTABLE_FIELD_TYPES.map((value) => ({ label: value, value })),
+				options: SETTABLE_FIELD_TYPES.map((value) => ({ label: fieldTypeLabel({ value }), value })),
 			},
 		}),
 		description: Property.ShortText({
 			displayName: 'Description',
+			description: 'A note for your team, shown in ManyChat.',
 			required: false,
 		}),
 	},
@@ -56,3 +58,14 @@ export const createCustomFieldAction = createAction({
 		return field;
 	},
 });
+
+function fieldTypeLabel({ value }: { value: string }): string {
+	const labels: Record<string, string> = {
+		text: 'Text',
+		number: 'Number',
+		date: 'Date',
+		datetime: 'Date and Time',
+		boolean: 'True or False',
+	};
+	return labels[value] ?? value;
+}

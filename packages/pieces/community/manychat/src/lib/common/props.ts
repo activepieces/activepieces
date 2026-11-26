@@ -228,7 +228,7 @@ function checkContactRules({
 	consentPhrase: string | undefined;
 }): void {
 	if (phone !== undefined && smsOptIn === undefined) {
-		throw new Error('SMS Opt-in is required when Phone is set (ManyChat rule).');
+		throw new Error('SMS Opt-in is required when Phone Number is set (ManyChat rule).');
 	}
 	if (email !== undefined && emailOptIn === undefined) {
 		throw new Error('Email Opt-in is required when Email is set (ManyChat rule).');
@@ -251,8 +251,8 @@ function failed({ error }: { error: unknown }) {
 }
 
 export const subscriberId = Property.Number({
-	displayName: 'User ID',
-	description: `The ManyChat subscriber (contact) ID. Please refer [Manychat Guide](https://help.manychat.com/hc/en-us/articles/14959510331420-How-to-generate-a-token-for-the-Manychat-API-and-where-to-get-parameters#h_01JCR55RJ0B0PQW6HDW6RW0A42) to obtain user/contact ID.`,
+	displayName: 'Subscriber ID',
+	description: `Numeric subscriber ID, from a Find action or the contact's profile.`,
 	required: true,
 });
 
@@ -268,7 +268,8 @@ export const manychatProps = {
 	subscriberIdText: ({ displayName = 'Subscriber ID' }: { displayName?: string } = {}) =>
 		Property.ShortText({
 			displayName,
-			description: 'The numeric ManyChat subscriber (contact) ID, for example from "Find Subscriber by Email or Phone" or a contact profile.',
+			description: `Numeric subscriber ID, from a Find action or the contact's profile.`,
+			placeholder: '123456789',
 			required: true,
 		}),
 	customFieldDropdown: ({ allowedTypes }: { allowedTypes: readonly string[] }) =>
@@ -283,7 +284,7 @@ export const manychatProps = {
 		Property.Dropdown({
 			auth: manychatAuth,
 			displayName: 'Flow',
-			description: 'The flow to start. Its namespace (ns) is sent to ManyChat. The flow must be published in ManyChat; drafts appear in the list but can\'t be sent.',
+			description: 'Only published flows can be sent; drafts also appear in the list.',
 			refreshers: [],
 			required: true,
 			options: async ({ auth }) => flowOptions({ auth }),

@@ -13,7 +13,7 @@ export const listTagsAiAction = createAction({
 	audience: 'ai',
 	aiMetadata: {
 		description:
-			'Lists every tag in the ManyChat account (ID and name), optionally filtered by a case-insensitive name fragment. Use it to find the tag ID for "Add Tag to User" or "Remove Tag from User", or to check a tag exists before "Create Tag". Read-only.',
+			'Lists every tag in the ManyChat account (ID and name), optionally filtered by a case-insensitive name fragment. Use it to find the tag ID for "Add Tag to Subscriber" or "Remove Tag from Subscriber", or to check a tag exists before "Create Tag". Read-only.',
 		idempotent: true,
 	},
 	outputSchema: manychatOutputSchemas.listTags,

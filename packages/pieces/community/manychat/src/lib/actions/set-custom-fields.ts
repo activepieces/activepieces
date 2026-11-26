@@ -9,8 +9,7 @@ export const setCustomFieldAction = createAction({
 	name: 'setCustomField',
 	classification: 'WRITE',
 	displayName: 'Set Custom Field',
-	description:
-		'Adds or updates a custom field value for a user and returns the updated user. ManyChat returns date-time values in the account timezone (same moment, so the day may differ).',
+	description: 'Sets a custom field on a subscriber and returns the subscriber.',
 	audience: 'human',
 	aiMetadata: {
 		description:
@@ -82,7 +81,8 @@ export const setCustomFieldAction = createAction({
 					case 'datetime':
 						fields['value'] = Property.DateTime({
 							displayName: 'Value',
-							description: 'Sent to ManyChat with an explicit UTC offset. A value without an offset is treated as UTC.',
+							description: 'No UTC offset means UTC. ManyChat returns it in the account timezone.',
+							placeholder: '2026-11-11T14:30:00+02:00',
 							required: true,
 						});
 						break;
@@ -101,7 +101,7 @@ export const setCustomFieldAction = createAction({
 	},
 	async run({ auth, propsValue }) {
 		const apiKey = manychatUtils.apiKeyOf(auth);
-		const id = manychatInput.subscriberIdText({ value: propsValue.subscriber_id, label: 'User ID' });
+		const id = manychatInput.subscriberIdText({ value: propsValue.subscriber_id, label: 'Subscriber ID' });
 		const [fieldId, fieldType] = String(propsValue.field_id).split(':::');
 		if (!/^\d+$/.test(fieldId ?? '')) {
 			throw new Error('Select a custom field.');

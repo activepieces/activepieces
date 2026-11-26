@@ -14,7 +14,7 @@ export const listCustomFieldsAiAction = createAction({
 	audience: 'ai',
 	aiMetadata: {
 		description:
-			'Lists every subscriber custom field in the ManyChat account with its ID, name, type and description, optionally only one type. Use it to pick field IDs or names for "Set Subscriber Custom Fields" and "Find User by Custom Field", and to learn each field type before writing a value. Read-only.',
+			'Lists every subscriber custom field in the ManyChat account with its ID, name, type and description, optionally only one type. Use it to pick field IDs or names for "Set Subscriber Custom Fields" and "Find Subscriber by Custom Field", and to learn each field type before writing a value. Read-only.',
 		idempotent: true,
 	},
 	outputSchema: manychatOutputSchemas.listCustomFields,

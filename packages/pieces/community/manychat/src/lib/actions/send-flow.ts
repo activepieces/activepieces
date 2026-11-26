@@ -1,4 +1,4 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { manychatAuth } from '../auth';
 import { manychatClient, manychatUtils } from '../common/client';
 import { manychatInput, manychatProps } from '../common/props';
@@ -9,16 +9,19 @@ export const sendFlowAction = createAction({
 	name: 'send_flow',
 	classification: 'WRITE',
 	displayName: 'Send Flow to Subscriber',
-	description:
-		'Starts a ManyChat flow for a subscriber. The subscriber must be inside the messaging window, and ManyChat allows at most 100 flow sends per subscriber per hour. The flow must be published in ManyChat; drafts appear in the list but can\'t be sent.',
+	description: 'Starts a published ManyChat flow for a subscriber.',
 	audience: 'both',
 	aiMetadata: {
 		description:
-			'Starts a published ManyChat flow for one subscriber by subscriber ID and flow namespace (ns from "List Flows"). Use to run a prepared multi-step conversation; for a single ad-hoc message use "Send Content to User". The subscriber must be inside the 24-hour messaging window, and ManyChat caps sends at 100 per subscriber per hour. The flow must be published in ManyChat; drafts appear in the list but can\'t be sent. Each call starts the flow again.',
+			'Starts a published ManyChat flow for one subscriber by subscriber ID and flow namespace (ns from "List Flows"). Use to run a prepared multi-step conversation; for a single ad-hoc message use "Send Content to Subscriber". The subscriber must be inside the 24-hour messaging window, and ManyChat caps sends at 100 per subscriber per hour. The flow must be published in ManyChat; drafts appear in the list but can\'t be sent. Each call starts the flow again.',
 		idempotent: false,
 	},
 	outputSchema: manychatOutputSchemas.sendFlow,
 	props: {
+		window_info: Property.MarkDown({
+			value: 'The subscriber must have messaged you in the last 24 hours. ManyChat allows 100 flow sends per subscriber per hour.',
+			variant: MarkdownVariant.INFO,
+		}),
 		subscriber_id: manychatProps.subscriberIdText(),
 		flow_ns: manychatProps.flowDropdown(),
 	},

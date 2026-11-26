@@ -8,8 +8,8 @@ export const removeTagFromUserAction = createAction({
 	auth: manychatAuth,
 	name: 'removeTagFromUser',
 	classification: 'WRITE',
-	displayName: 'Remove Tag from User',
-	description: 'Removes a tag from a user and returns the updated user.',
+	displayName: 'Remove Tag from Subscriber',
+	description: 'Removes a tag from a subscriber and returns the updated subscriber.',
 	audience: 'both',
 	aiMetadata: {
 		description:
@@ -23,7 +23,7 @@ export const removeTagFromUserAction = createAction({
 	},
 	async run({ auth, propsValue }) {
 		const apiKey = manychatUtils.apiKeyOf(auth);
-		const id = manychatInput.subscriberIdText({ value: propsValue.subscriberId, label: 'User ID' });
+		const id = manychatInput.subscriberIdText({ value: propsValue.subscriberId, label: 'Subscriber ID' });
 		try {
 			await manychatClient.request({
 				apiKey,
