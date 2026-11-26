@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { alaiAuth } from '../common/auth';
 import { alaiClient } from '../common/client';
 import { alaiOutputSchemas } from '../common/output-schemas';
@@ -17,6 +17,10 @@ export const exportPresentation = createAction({
       'Starts an export of an existing Alai presentation to link, pdf and/or ppt by presentation ID. By default returns at once with generation_id; set waitForCompletion to wait (max 480 s) and get link_url, pdf_url and ppt_url (signed, valid about 24 h). Fails if a requested format failed. Not idempotent: each call starts a new export job.',
     idempotent: false,
   },
+  propertyGroups: [
+    { key: 'presentation', display: 'section', label: 'Presentation to Export', icon: 'file', props: ['presentationId'] },
+    { key: 'output', display: 'section', label: 'Output', icon: 'send', props: ['exportFormats', 'info', 'waitForCompletion'] },
+  ],
   props: {
     presentationId: presentationIdProp('The presentation to export.'),
     exportFormats: Property.StaticMultiSelectDropdown({
@@ -25,16 +29,21 @@ export const exportPresentation = createAction({
       required: true,
       options: { options: exportFormatOptions },
     }),
+    info: Property.MarkDown({
+      value: 'Alai exports in the background. Without waiting, pass the returned generation ID to **Get Generation** later.',
+      variant: MarkdownVariant.INFO,
+    }),
     waitForCompletion: Property.Checkbox({
       displayName: 'Wait for Completion',
-      description: 'Wait until Alai finishes. If off, use "Get Generation" with the returned ID later.',
+      description: 'Wait until Alai finishes; the step fails after Max Wait Time.',
       required: false,
       defaultValue: false,
     }),
     maxWaitTime: Property.Number({
-      displayName: 'Max Wait Time (seconds)',
-      description: 'How long to wait when waiting is on. Default 300, capped at 480.',
+      displayName: 'Max Wait Time',
+      description: 'Seconds to wait when waiting is on. Default 300, max 480.',
       required: false,
+      advanced: true,
       defaultValue: 300,
     }),
   },

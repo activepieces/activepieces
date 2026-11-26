@@ -18,6 +18,9 @@ export const deleteSlide = createAction({
       'Permanently deletes one slide from an Alai presentation by presentation ID and slide ID (slide_id from Add Slide or from speaker-notes transcripts); this cannot be undone. Fails with a not-found error if the slide does not exist, so a repeated call errors.',
     idempotent: false,
   },
+  propertyGroups: [
+    { key: 'slide', display: 'section', label: 'Slide to Delete', icon: 'trash', props: ['presentationId', 'slideId'] },
+  ],
   props: {
     presentationId: presentationIdProp('The presentation that contains the slide.'),
     slideId: Property.ShortText({

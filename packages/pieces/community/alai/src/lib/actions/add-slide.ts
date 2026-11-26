@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { alaiAuth } from '../common/auth';
 import { alaiClient } from '../common/client';
 import { alaiOutputSchemas } from '../common/output-schemas';
@@ -17,6 +17,12 @@ export const addSlide = createAction({
       'Generates one new AI slide from slideContext and inserts it into an existing Alai presentation. slide_order is a 0-based position; leave it empty or "end" to append. includeAiImages=false and imageStyle are passed as instructions. Uses AI credits. By default returns at once with generation_id; set waitForCompletion to wait (max 480 s) and get the new slide_id. Not idempotent: each call adds another slide.',
     idempotent: false,
   },
+  propertyGroups: [
+    { key: 'presentation', display: 'section', label: 'Presentation', icon: 'file', props: ['presentationId', 'slide_order'] },
+    { key: 'content', display: 'section', label: 'Content', icon: 'text', props: ['slide_context', 'additionalInstructions'] },
+    { key: 'design', display: 'section', label: 'Design', icon: 'sliders', props: ['slideType', 'variantsPerSlide', 'includeAiImages', 'imageStyle'] },
+    { key: 'output', display: 'section', label: 'Output', icon: 'send', props: ['info', 'waitForCompletion'] },
+  ],
   props: {
     presentationId: presentationIdProp('The presentation to add the slide to.'),
     slide_context: Property.LongText({
@@ -32,11 +38,12 @@ export const addSlide = createAction({
     slide_order: Property.ShortText({
       displayName: 'Slide Position',
       description: '0-based position for the slide. Empty or "end" adds it last.',
+      placeholder: 'end',
       required: false,
     }),
     slideType: Property.StaticDropdown({
       displayName: 'Slide Type',
-      description: 'Classic (editable text) or creative (image-led). Default: classic.',
+      description: 'Classic (editable text) or Creative (image-led). Default: Classic.',
       required: false,
       options: {
         options: [
@@ -53,23 +60,29 @@ export const addSlide = createAction({
     }),
     imageStyle: Property.ShortText({
       displayName: 'Image Style',
-      description: 'Optional image style, e.g. realistic or cartoon.',
+      description: 'Style for the slide\'s images when images are on.',
+      placeholder: 'realistic',
       required: false,
     }),
     variantsPerSlide: Property.Number({
       displayName: 'Variants',
-      description: 'How many design options to generate for this slide (1-4).',
+      description: 'Design options for this slide, 1 to 4.',
       required: false,
+    }),
+    info: Property.MarkDown({
+      value: 'Alai builds the slide in the background and uses AI credits. Without waiting, pass the returned generation ID to **Get Generation** later.',
+      variant: MarkdownVariant.INFO,
     }),
     waitForCompletion: Property.Checkbox({
       displayName: 'Wait for Completion',
-      description: 'Wait until Alai finishes. If off, use "Get Generation" with the returned ID later.',
+      description: 'Wait until Alai finishes; the step fails after Max Wait Time.',
       required: false,
       defaultValue: false,
     }),
     maxWaitTime: Property.Number({
-      displayName: 'Max Wait Time (seconds)',
-      description: 'How long to wait when waiting is on. Default 300, capped at 480.',
+      displayName: 'Max Wait Time',
+      description: 'Seconds to wait when waiting is on. Default 300, max 480.',
+      advanced: true,
       required: false,
       defaultValue: 300,
     }),
