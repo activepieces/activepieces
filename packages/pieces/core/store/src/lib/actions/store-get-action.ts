@@ -5,9 +5,8 @@ import {
   Property,
   ShortTextProperty,
   StaticDropdownProperty,
-  StoreScope,
 } from '@activepieces/pieces-framework';
-import { getScopeAndKey, PieceStoreScope } from './common';
+import { common, getScopeAndKey, PieceStoreScope } from './common';
 import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
@@ -36,7 +35,7 @@ export const storageGetAction = createAction({
   name: 'get',
   classification: 'READ',
   displayName: 'Get',
-  description: 'Get a value from storage',
+  description: 'Read the value saved under a key.',
   aiMetadata: { description: 'Reads the value stored under a key in the key/value store, falling back to an optional default value when the key is missing. Use it to load state persisted by an earlier step, run, or flow; pair it with Put, which writes the value. Requires the key (max 128 characters) and the matching Store Scope, because a key written in one scope is invisible to the others; read-only and idempotent.', idempotent: true },
   errorHandlingOptions: {
     continueOnFailure: {
@@ -49,33 +48,15 @@ export const storageGetAction = createAction({
   props: {
     key: Property.ShortText({
       displayName: 'Key',
+      description: 'Name the value is saved under, up to 128 characters.',
+      placeholder: 'last_order_id',
       required: true,
     }),
+    store_scope: common.store_scope,
     defaultValue: Property.ShortText({
       displayName: 'Default Value',
+      description: 'Returned when nothing is saved under this key.',
       required: false,
-    }),
-    store_scope: Property.StaticDropdown({
-      displayName: 'Store Scope',
-      description: 'The storage scope of the value.',
-      required: true,
-      options: {
-        options: [
-          {
-            label: 'Project',
-            value: PieceStoreScope.PROJECT,
-          },
-          {
-            label: 'Flow',
-            value: PieceStoreScope.FLOW,
-          },
-          {
-            label: 'Run',
-            value: PieceStoreScope.RUN,
-          },
-        ],
-      },
-      defaultValue: StoreScope.PROJECT,
     }),
   },
   async run(context) {

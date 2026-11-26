@@ -37,7 +37,7 @@ export const storagePutAction = createAction({
   name: 'put',
   classification: 'WRITE',
   displayName: 'Put',
-  description: 'Put a value in storage',
+  description: 'Save a value under a key, replacing what was there.',
   aiMetadata: { description: 'Writes a value under a key in the key/value store, overwriting whatever was there before. Use it to persist state across steps, runs, or flows; prefer Append to concatenate onto an existing string, or Add To List to push onto a stored array, since Put replaces the entire value. Requires the key (max 128 characters), the value, and the Store Scope the reader will use, caps the stored value at 512 KB, and is idempotent.', idempotent: true },
   errorHandlingOptions: {
     continueOnFailure: {
@@ -50,10 +50,13 @@ export const storagePutAction = createAction({
   props: {
     key: Property.ShortText({
       displayName: 'Key',
+      description: 'Name the value is saved under, up to 128 characters.',
+      placeholder: 'last_order_id',
       required: true,
     }),
     value: Property.ShortText({
       displayName: 'Value',
+      description: 'Replaces anything already saved under this key.',
       required: true,
     }),
     store_scope: common.store_scope,

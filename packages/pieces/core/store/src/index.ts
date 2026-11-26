@@ -9,7 +9,7 @@ import { storageRemoveValue } from './lib/actions/store-remove-value';
 
 export const storage = createPiece({
   displayName: 'Storage',
-  description: 'Store or retrieve data from key/value database',
+  description: 'Save values and read them back across steps, runs and flows.',
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/new-core/store.svg',
   categories: [PieceCategory.CORE],

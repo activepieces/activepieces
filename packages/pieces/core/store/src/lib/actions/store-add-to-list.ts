@@ -58,8 +58,8 @@ export const storageAddtoList = createAction({
   audience: 'both',
 	name: 'add_to_list',
 	classification: 'WRITE',
-	displayName: 'Add To List',
-	description: 'Add Items to a list.',
+	displayName: 'Add to List',
+	description: 'Add items to the end of a saved list.',
 	aiMetadata: { description: 'Pushes items onto the array stored under a key, creating the list when the key is empty; an optional ignore-if-exists mode skips items already present, matched by deep equality. Use it to accumulate records across runs; prefer Put to replace the whole array, or Append when the stored value is a string. Requires the key (max 128 characters), a list of values, and the Store Scope, fails if the existing value is not an array, caps the stored list at 512 KB, and is not idempotent unless ignore-if-exists is on.', idempotent: false },
 	errorHandlingOptions: {
 		continueOnFailure: {
@@ -72,17 +72,22 @@ export const storageAddtoList = createAction({
 	props: {
 		key: Property.ShortText({
 			displayName: 'Key',
+			description: 'Name the value is saved under, up to 128 characters.',
+			placeholder: 'last_order_id',
 			required: true,
 		}),
 		value: Property.Array({
-			displayName: 'Value',
+			displayName: 'Items',
+			description: 'Starts a new list if nothing is saved under this key yet.',
 			required: true,
 		}),
-		ignore_if_exists: Property.Checkbox({
-			displayName: 'Ignore if value exists',
-			required: false,
-		}),
 		store_scope: common.store_scope,
+		ignore_if_exists: Property.Checkbox({
+			displayName: 'Skip Items Already in List',
+			description: 'Items already in the list are not added again.',
+			required: false,
+			defaultValue: false,
+		}),
 	},
 	async run(context) {
 		return await executeStorageAddToList(context, false);

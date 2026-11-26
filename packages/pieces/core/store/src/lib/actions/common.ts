@@ -32,21 +32,25 @@ type Params = {
 export const common = {
     store_scope: Property.StaticDropdown({
         displayName: 'Store Scope',
-        description: 'The storage scope of the value.',
+        description: "A value saved in one scope can't be read from another.",
         required: true,
+        display: 'cards',
         options: {
             options: [
                 {
                     label: 'Project',
                     value: PieceStoreScope.PROJECT,
+                    description: 'All flows',
                 },
                 {
                     label: 'Flow',
                     value: PieceStoreScope.FLOW,
+                    description: 'This flow only',
                 },
                 {
                     label: 'Run',
                     value: PieceStoreScope.RUN,
+                    description: 'This run only',
                 },
             ],
         },

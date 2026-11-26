@@ -35,7 +35,7 @@ export const storageRemoveValue = createAction({
   name: 'remove_value',
   classification: 'DESTRUCTIVE',
   displayName: 'Remove',
-  description: 'Remove a value from storage',
+  description: 'Delete a saved value and its key.',
   aiMetadata: { description: 'Deletes a key and its value from the key/value store within the given scope. Use it to clear persisted state once it has been consumed or to reset a counter; use Remove from List instead to drop a single element while keeping the rest of a stored array. Requires the key (max 128 characters) and the Store Scope the value was written under; removing a key that does not exist is not an error, and the delete is idempotent.', idempotent: true },
   errorHandlingOptions: {
     continueOnFailure: {
@@ -48,6 +48,8 @@ export const storageRemoveValue = createAction({
   props: {
     key: Property.ShortText({
       displayName: 'Key',
+      description: 'Name the value is saved under, up to 128 characters.',
+      placeholder: 'last_order_id',
       required: true,
     }),
     store_scope: common.store_scope,
