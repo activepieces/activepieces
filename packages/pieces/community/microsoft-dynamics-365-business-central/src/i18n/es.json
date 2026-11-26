@@ -69,8 +69,8 @@
   "PUT": "PUT",
   "DELETE": "BORRAR",
   "HEAD": "LIMPIO",
-  "Request": "Request",
-  "Data to send": "Data to send",
+  "Request": "Solicitud",
+  "Data to send": "Datos a enviar",
   "New or Updated Record": "Registro nuevo o actualizado",
   "Triggers when a new record is added or modified.": "Dispara cuando se agrega o modifica un nuevo registro."
 }
