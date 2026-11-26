@@ -53,7 +53,11 @@ export const authenticationController: FastifyPluginAsyncZod = async (
     })
 
     app.post('/sign-in', SignInRequestOptions, async (request) => {
-
+        await turnstile.assertSolved({
+            token: request.body.captchaToken,
+            remoteIp: clientIp(request),
+            log: request.log,
+        })
         const predefinedPlatformId = await platformUtils.getPlatformIdForRequest(request)
         const { response, signedUp } = await authenticationService(request.log).signInWithPassword({
             email: request.body.email,

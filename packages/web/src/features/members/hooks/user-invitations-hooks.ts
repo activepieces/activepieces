@@ -6,7 +6,10 @@ import {
 } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 
-import { userInvitationApi } from '../api/user-invitation';
+import {
+  AcceptInvitationRequest,
+  userInvitationApi,
+} from '../api/user-invitation';
 
 const userInvitationsQueryKey = 'user-invitations';
 
@@ -69,8 +72,8 @@ export const userInvitationMutations = {
     onError: (error: unknown) => void;
   }) => {
     return useMutation({
-      mutationFn: async (token: string) => {
-        const { registered } = await userInvitationApi.accept(token);
+      mutationFn: async (request: AcceptInvitationRequest) => {
+        const { registered } = await userInvitationApi.accept(request);
         return registered;
       },
       onSuccess,

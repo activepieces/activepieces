@@ -26,12 +26,16 @@ import { passwordValidation } from '@/features/authentication/utils/password-val
 
 import { authMutations } from '../hooks/auth-hooks';
 
+import { TurnstileWidget } from './auth-landing/turnstile-widget';
+import { useCaptcha } from './auth-landing/use-captcha';
+
 const ChangePasswordForm = () => {
   const navigate = useNavigate();
   const queryParams = new URLSearchParams(window.location.search);
   const [serverError, setServerError] = useState('');
   const [isPasswordFocused, setPasswordFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const captcha = useCaptcha({ surface: 'password-reset' });
   const form = useForm<{
     otp: string;
     identityId: string;
@@ -60,7 +64,7 @@ const ChangePasswordForm = () => {
   });
 
   const onSubmit: SubmitHandler<ResetPasswordRequestBody> = (data) => {
-    mutate(data);
+    mutate({ ...data, captchaToken: captcha.take() });
   };
 
   return (
@@ -112,9 +116,11 @@ const ChangePasswordForm = () => {
               )}
             />
             {serverError && <FormMessage>{serverError}</FormMessage>}
+            <TurnstileWidget {...captcha.widgetProps} />
             <Button
               className="w-full mt-2"
               loading={isPending}
+              disabled={captcha.blocked}
               data-testid="reset-password-confirm"
               onClick={(e) => form.handleSubmit(onSubmit)(e)}
             >

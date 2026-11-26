@@ -22,6 +22,9 @@ import { Label } from '@/components/ui/label';
 import { CheckEmailNote } from '@/features/authentication/components/check-email-note';
 import { HttpError } from '@/lib/api';
 
+import { TurnstileWidget } from './auth-landing/turnstile-widget';
+import { useCaptcha } from './auth-landing/use-captcha';
+
 const FormSchema = z.object({
   email: z.string().min(1, t('Please enter your email')),
   type: CreateOtpRequestBody.shape.type,
@@ -31,6 +34,7 @@ type FormSchema = z.infer<typeof FormSchema>;
 
 const ResetPasswordForm = () => {
   const [isSent, setIsSent] = useState<boolean>(false);
+  const captcha = useCaptcha({ surface: 'password-reset-request' });
   const form = useForm<FormSchema>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -48,7 +52,7 @@ const ResetPasswordForm = () => {
   });
 
   const onSubmit: SubmitHandler<CreateOtpRequestBody> = (data) => {
-    mutate(data);
+    mutate({ ...data, captchaToken: captcha.take() });
   };
 
   return (
@@ -93,9 +97,11 @@ const ResetPasswordForm = () => {
                   </FormItem>
                 )}
               />
+              <TurnstileWidget {...captcha.widgetProps} shownClassName="pt-4" />
               <Button
                 className="w-full mt-4"
                 loading={isPending}
+                disabled={captcha.blocked}
                 data-testid="reset-password-send"
                 onClick={(e) => form.handleSubmit(onSubmit)(e)}
               >

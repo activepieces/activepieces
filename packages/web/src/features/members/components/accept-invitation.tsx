@@ -10,6 +10,8 @@ import { LogoPlate } from '@/components/custom/logo-plate';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { Button } from '@/components/ui/button';
 import { internalErrorToast } from '@/components/ui/sonner';
+import { TurnstileWidget } from '@/features/authentication/components/auth-landing/turnstile-widget';
+import { useCaptcha } from '@/features/authentication/components/auth-landing/use-captcha';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
@@ -22,6 +24,7 @@ const AcceptInvitation = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token') ?? '';
+  const captcha = useCaptcha({ surface: 'invitation-accept' });
   const {
     data: invitation,
     isLoading,
@@ -138,12 +141,19 @@ const AcceptInvitation = () => {
               className="w-full"
               data-testid="invitation-accept-button"
               loading={isPending}
-              onClick={() => mutate(token)}
+              disabled={captcha.blocked}
+              onClick={() => {
+                mutate({
+                  invitationToken: token,
+                  captchaToken: captcha.take(),
+                });
+              }}
             >
               {invitation.status === InvitationStatus.ACCEPTED
                 ? t('Continue')
                 : t('Accept invitation')}
             </Button>
+            <TurnstileWidget {...captcha.widgetProps} />
             <p className="text-center text-xs text-gray-11">
               {t('Accept, then sign in or create your account.')}
             </p>

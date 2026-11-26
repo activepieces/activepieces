@@ -34,9 +34,13 @@ export const userInvitationApi = {
       token,
     });
   },
-  accept(token: string): Promise<{ registered: boolean }> {
+  accept({
+    invitationToken,
+    captchaToken,
+  }: AcceptInvitationRequest): Promise<{ registered: boolean }> {
     return api.post<{ registered: boolean }>(`/v1/user-invitations/accept`, {
-      invitationToken: token,
+      invitationToken,
+      captchaToken,
     });
   },
 };
@@ -60,3 +64,8 @@ async function listAllPages({
     ...(await listAllPages({ request, cursor: page.next })),
   ];
 }
+
+export type AcceptInvitationRequest = {
+  invitationToken: string;
+  captchaToken?: string;
+};

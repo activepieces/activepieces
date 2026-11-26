@@ -66,6 +66,7 @@ import {
 } from '../third-party-logins';
 
 import { TurnstileWidget, useTurnstileSiteKey } from './turnstile-widget';
+import { useCaptcha } from './use-captcha';
 
 const CODE_LENGTH = 6;
 
@@ -123,7 +124,9 @@ export function AuthDrawerBody({ initialMode }: AuthDrawerBodyProps) {
   const captchaRequired = !isNil(useTurnstileSiteKey()) && !captchaUnavailable;
   const passwordlessAvailable = usePasswordlessAvailable();
   const challengeApplies =
-    passwordlessAvailable && (step === 'method' || step === 'code');
+    passwordlessAvailable &&
+    !samlOpen &&
+    (step === 'method' || step === 'code');
 
   return (
     <AutoHeight>
@@ -612,6 +615,7 @@ function EmailStep({
 
 function ResetStep() {
   const [sentTo, setSentTo] = useState<string | null>(null);
+  const captcha = useCaptcha({ surface: 'password-reset-request' });
   const form = useForm<EmailSchema>({
     resolver: zodResolver(EmailZodSchema),
     defaultValues: { email: '' },
@@ -651,6 +655,7 @@ function ResetStep() {
             mutate({
               email: data.email.trim().toLowerCase(),
               type: OtpType.PASSWORD_RESET,
+              captchaToken: captcha.take(),
             }),
           )}
         >
@@ -673,7 +678,13 @@ function ResetStep() {
               </FormItem>
             )}
           />
-          <Button type="submit" loading={isPending} className="h-11 rounded-xl">
+          <TurnstileWidget {...captcha.widgetProps} />
+          <Button
+            type="submit"
+            loading={isPending}
+            disabled={captcha.blocked}
+            className="h-11 rounded-xl"
+          >
             {t('Send reset link')}
           </Button>
         </form>
@@ -857,7 +868,6 @@ function CodeStep({
   const { mutate: resend, isPending: isResending } =
     authMutations.useRequestEmailCode({
       onSuccess: () => {
-        onCaptchaSpent();
         setCooldown(RESEND_COOLDOWN_SECONDS);
         capture({
           name: TelemetryEventName.EMAIL_CODE_RESEND_REQUESTED,
@@ -865,7 +875,6 @@ function CodeStep({
         });
       },
       onError: (error) => {
-        onCaptchaSpent();
         setErrorMessage(requestErrorMessage(error));
       },
     });
@@ -877,8 +886,10 @@ function CodeStep({
       verify({
         email,
         code: value,
+        captchaToken,
         attribution: acquisitionUtils.getAcquisitionParams(),
       });
+      onCaptchaSpent();
     }
   };
 
@@ -894,7 +905,7 @@ function CodeStep({
           maxLength={CODE_LENGTH}
           value={code}
           onChange={handleChange}
-          disabled={isVerifying}
+          disabled={isVerifying || (captchaRequired && isNil(captchaToken))}
           autoFocus
           data-testid="auth-code"
         >
@@ -914,7 +925,10 @@ function CodeStep({
             isResending ||
             (captchaRequired && isNil(captchaToken))
           }
-          onClick={() => resend({ email, captchaToken })}
+          onClick={() => {
+            resend({ email, captchaToken });
+            onCaptchaSpent();
+          }}
           className="text-xs text-gray-11 transition-colors hover:text-gray-12 disabled:opacity-50"
         >
           {cooldown > 0

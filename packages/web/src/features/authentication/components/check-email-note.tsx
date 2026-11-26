@@ -5,7 +5,11 @@ import { toast } from 'sonner';
 
 import { authMutations } from '../hooks/auth-hooks';
 
+import { TurnstileWidget } from './auth-landing/turnstile-widget';
+import { useCaptcha } from './auth-landing/use-captcha';
+
 const CheckEmailNote = ({ email, type }: CreateOtpRequestBody) => {
+  const captcha = useCaptcha({ surface: 'email-resend' });
   const { mutate: resendVerification } = authMutations.useSendOtpEmail({
     onSuccess: () => {
       toast.success(
@@ -32,17 +36,21 @@ const CheckEmailNote = ({ email, type }: CreateOtpRequestBody) => {
       <div className="flex flex-row gap-1">
         {t("Didn't receive an email or it expired?")}
         <button
-          className="cursor-pointer text-accent-11 underline"
+          type="button"
+          disabled={captcha.blocked}
+          className="cursor-pointer text-accent-11 underline disabled:opacity-50"
           onClick={() =>
             resendVerification({
               email,
               type,
+              captchaToken: captcha.take(),
             })
           }
         >
           {t('Resend')}
         </button>
       </div>
+      <TurnstileWidget {...captcha.widgetProps} />
     </div>
   );
 };

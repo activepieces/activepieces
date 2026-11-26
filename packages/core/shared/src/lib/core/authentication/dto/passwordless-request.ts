@@ -1,13 +1,13 @@
 import { z } from 'zod'
 import { AttributionParams } from '../../common/attribution'
 import { EmailType } from '../../user/user'
+import { CaptchaToken } from './captcha'
 
 export const MAX_FULL_NAME_LENGTH = 100
-export const MAX_CAPTCHA_TOKEN_LENGTH = 2048
 
 export const RequestEmailCodeRequest = z.object({
     email: EmailType,
-    captchaToken: z.string().trim().min(1).max(MAX_CAPTCHA_TOKEN_LENGTH).optional(),
+    captchaToken: CaptchaToken,
 })
 
 export type RequestEmailCodeRequest = z.infer<typeof RequestEmailCodeRequest>
@@ -15,6 +15,7 @@ export type RequestEmailCodeRequest = z.infer<typeof RequestEmailCodeRequest>
 export const VerifyEmailCodeRequest = z.object({
     email: EmailType,
     code: z.string().trim().min(1),
+    captchaToken: CaptchaToken,
     attribution: AttributionParams.optional(),
 })
 
