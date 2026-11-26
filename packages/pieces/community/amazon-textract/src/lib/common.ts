@@ -1,5 +1,6 @@
 import { ApFile, AuthValidationServerContext, ServerContext } from '@activepieces/pieces-framework';
 import { AssumeRoleWithWebIdentityCommand, STSClient } from '@aws-sdk/client-sts';
+import type { S3Client } from '@aws-sdk/client-s3';
 import {
   TextractClient,
   Block,
@@ -114,20 +115,41 @@ export async function createTextractClient({
   auth: TextractAuth;
   server: ServerContext | AuthValidationServerContext;
 }): Promise<TextractClient> {
-  if ('roleArn' in auth) {
-    await getTemporaryCredentials({ auth, server });
-    return new TextractClient({
-      credentials: () => getTemporaryCredentials({ auth, server }),
-      region: auth.region,
-    });
-  }
   return new TextractClient({
-    credentials: {
-      accessKeyId: auth.accessKeyId,
-      secretAccessKey: auth.secretAccessKey,
-    },
+    credentials: await resolveAwsCredentials({ auth, server }),
     region: auth.region,
   });
+}
+
+export async function createS3Client({
+  auth,
+  server,
+}: {
+  auth: TextractAuth;
+  server: ServerContext;
+}): Promise<S3Client> {
+  const s3 = await import('@aws-sdk/client-s3');
+  return new s3.S3Client({
+    credentials: await resolveAwsCredentials({ auth, server }),
+    region: auth.region,
+  });
+}
+
+async function resolveAwsCredentials({
+  auth,
+  server,
+}: {
+  auth: TextractAuth;
+  server: ServerContext | AuthValidationServerContext;
+}) {
+  if ('roleArn' in auth) {
+    await getTemporaryCredentials({ auth, server });
+    return () => getTemporaryCredentials({ auth, server });
+  }
+  return {
+    accessKeyId: auth.accessKeyId.trim(),
+    secretAccessKey: auth.secretAccessKey.trim(),
+  };
 }
 
 export async function getTemporaryCredentials({
@@ -572,7 +594,7 @@ export function formatTextractError(error: unknown): string {
     case 'ProvisionedThroughputExceededException':
       return 'You have exceeded your AWS Textract throughput quota. Please try again later.';
     case 'LimitExceededException':
-      return 'You have reached the AWS Textract page limit for this document.';
+      return 'Too many Textract jobs are running in this AWS account. Wait a few minutes and try again, or ask AWS to raise the limit.';
     case 'InvalidJobIdException':
       return 'The specified job ID does not exist or belongs to a different account.';
     case 'InvalidKMSKeyException':
