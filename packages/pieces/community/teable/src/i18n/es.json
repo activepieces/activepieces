@@ -141,6 +141,8 @@
   "PUT": "PUT",
   "DELETE": "BORRAR",
   "HEAD": "LIMPIO",
+  "Request": "Solicitud de datos",
+  "Data to send": "Datos a enviar",
   "New Record": "Nuevo registro",
   "Updated Record": "Updated Record",
   "Triggers when a new record is created in a table.": "Triggers when a new record is created in a table.",
