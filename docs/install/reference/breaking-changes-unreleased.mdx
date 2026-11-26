@@ -7,3 +7,14 @@ hidden: true
 Entries here move to [Breaking Changes](/install/reference/breaking-changes) automatically when the release that contains them is tagged. Add new entries at the top, right under the heading below.
 
 ## What has changed?
+
+#### Capsule CRM 0.2.0: existing actions are no longer AI agent tools, and Create/Update Contact return the contact itself
+
+The 10 existing Capsule CRM actions (Create Contact, Update Contact, Create Opportunity, Update Opportunity, Create Project, Create Task, Add Note to Entity, Find Contact, Find Opportunity, Find Project) are now shown only in the flow builder. AI agents and MCP clients get the new Capsule CRM agent tools instead (Search Contacts, Create Person, Create Organisation, Update Contact, Create Opportunity, Add Note, Create Task and others).
+
+**Create Contact** and **Update Contact** now return the contact record itself, with `id` at the top level, instead of a `{ party: { ... } }` wrapper.
+
+#### What you need to do
+
+- Agents that used the old actions as tools: switch to the new Capsule CRM agent tools.
+- Steps that read `party.id` (or any `party.*` field) from Create Contact or Update Contact: read `id` (or the field) directly instead.

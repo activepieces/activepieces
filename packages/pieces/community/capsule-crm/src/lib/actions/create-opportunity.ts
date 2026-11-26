@@ -3,12 +3,11 @@ import {
   Property,
   DynamicPropsValue,
 } from '@activepieces/pieces-framework';
-import { capsuleCrmAuth, CapsuleCrmAuthType } from '../common/auth';
+import { capsuleCrmAuth } from '../common/auth';
 import { capsuleCrmClient } from '../common/client';
+import { opportunityOutputSchema } from '../common/output-schemas';
 import {
   CreateOpportunityParams,
-  OpportunityCustomField,
-  OpportunityTag,
 } from '../common/types';
 
 export const createOpportunityAction = createAction({
@@ -17,12 +16,13 @@ export const createOpportunityAction = createAction({
   classification: 'WRITE',
   displayName: 'Create Opportunity',
   description: 'Create a new Opportunity in Capsule CRM.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Creates a new sales opportunity in Capsule CRM linked to a party (contact) and a pipeline milestone, both required. Use to log a new deal once you have the target party and milestone IDs. Not idempotent: each call creates a separate opportunity, so repeating it produces duplicates.',
     idempotent: false,
   },
+  outputSchema: opportunityOutputSchema,
   props: {
     partyId: Property.Dropdown({
       displayName: 'Party',
@@ -31,10 +31,7 @@ export const createOpportunityAction = createAction({
       auth: capsuleCrmAuth,
       options: async ({ auth }) => {
         if (!auth) return { options: [], disabled: true, placeholder: "Please connect your Capsule CRM account first" };
-        const contacts = await capsuleCrmClient.searchContacts(
-          auth,
-          ''
-        );
+        const contacts = await capsuleCrmClient.searchContacts({ auth });
         return {
           options: contacts.map((contact) => ({
             label:
@@ -59,13 +56,12 @@ export const createOpportunityAction = createAction({
     milestoneId: Property.Dropdown({
       auth: capsuleCrmAuth,
       displayName: 'Milestone',
+      description: 'Only milestones of the oldest active pipeline are listed (Capsule API limit); for other pipelines enter the milestone ID by hand.',
       required: true,
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) return { options: [], disabled: true, placeholder: "Please connect your Capsule CRM account first" };
-        const milestones = await capsuleCrmClient.listMilestones(
-          auth
-        );
+        const milestones = await capsuleCrmClient.listMilestones({ auth });
         return {
           options: milestones.map((milestone) => ({
             label: milestone.name,
@@ -123,9 +119,7 @@ export const createOpportunityAction = createAction({
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) return { options: [], disabled: true, placeholder: "Please connect your Capsule CRM account first" };
-        const users = await capsuleCrmClient.listUsers(
-          auth
-        );
+        const users = await capsuleCrmClient.listUsers({ auth });
         return {
           options: users.map((user) => ({
             label: user.name,
@@ -142,9 +136,7 @@ export const createOpportunityAction = createAction({
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) return { options: [], disabled: true, placeholder: "Please connect your Capsule CRM account first" };
-        const teams = await capsuleCrmClient.listTeams(
-          auth
-        );
+        const teams = await capsuleCrmClient.listTeams({ auth });
         return {
           options: teams.map((team) => ({
             label: team.name,
@@ -160,7 +152,7 @@ export const createOpportunityAction = createAction({
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) return { options: [], disabled: true, placeholder: "Please connect your Capsule CRM account first" };
-        const tags = await capsuleCrmClient.listTags(auth);
+        const tags = await capsuleCrmClient.listTags({ auth, entity: 'opportunity' });
         return {
           options: tags.map((tag) => ({
             label: tag.name,
@@ -176,10 +168,8 @@ export const createOpportunityAction = createAction({
       refreshers: [],
       props: async ({ auth }) => {
         const fields: DynamicPropsValue = {};
-        if (!auth) return { options: [], disabled: true, placeholder: "Please connect your Capsule CRM account first" };
-        const customFields = await capsuleCrmClient.listCustomFields(
-          auth
-        );
+        if (!auth) return fields;
+        const customFields = await capsuleCrmClient.listCustomFields({ auth, entity: 'opportunity' });
         for (const field of customFields) {
           switch (field.type) {
             case 'list':
@@ -225,8 +215,8 @@ export const createOpportunityAction = createAction({
       party: { id: propsValue.partyId },
       name: propsValue.name,
       milestone: { id: propsValue.milestoneId },
-      description: propsValue.description,
-      expectedCloseOn: propsValue.expectedCloseOn,
+      description: capsuleCrmClient.optionalText(propsValue.description),
+      expectedCloseOn: capsuleCrmClient.dayFromDateTime({ value: propsValue.expectedCloseOn, label: 'Expected Close Date' }),
       probability: propsValue.probability,
       durationBasis: propsValue.durationBasis,
       duration: propsValue.duration,
@@ -239,32 +229,23 @@ export const createOpportunityAction = createAction({
       opportunityData.team = { id: propsValue.teamId };
     }
 
-    if (propsValue.currency && propsValue.amount) {
-      opportunityData.value = {
-        currency: propsValue.currency,
-        amount: propsValue.amount,
-      };
+    const value = capsuleCrmClient.opportunityValue({ amount: propsValue.amount, currency: propsValue.currency });
+    if (value !== undefined) {
+      opportunityData.value = value;
     }
 
     if (propsValue.tags) {
-      opportunityData.tags = propsValue.tags.map(
-        (tag) => ({ name: tag } as OpportunityTag)
-      );
+      opportunityData.tags = propsValue.tags.map((tag) => ({ name: tag }));
     }
 
-    const customFields = propsValue.customFields as DynamicPropsValue;
-    if (customFields) {
-      opportunityData.fields = Object.entries(customFields)
-        .filter(([, value]) => value !== undefined && value !== null)
-        .map(
-          ([id, value]) =>
-            ({
-              definition: { id: Number(id) },
-              value: value,
-            } as OpportunityCustomField)
-        );
+    const customFields = propsValue.customFields ?? {};
+    const fieldValues = Object.entries(customFields)
+      .filter(([, value]) => value !== undefined && value !== null && value !== '')
+      .map(([id, value]) => ({ definition: { id: Number(id) }, value }));
+    if (fieldValues.length > 0) {
+      opportunityData.fields = fieldValues;
     }
 
-    return await capsuleCrmClient.createOpportunity(auth, opportunityData);
+    return await capsuleCrmClient.createOpportunity({ auth, params: opportunityData });
   },
 });

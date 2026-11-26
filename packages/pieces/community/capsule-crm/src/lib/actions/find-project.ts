@@ -1,20 +1,21 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { capsuleCrmAuth } from '../common/auth';
 import { capsuleCrmClient } from '../common/client';
-import { Filter } from '../common/types';
+import { projectListOutputSchema } from '../common/output-schemas';
 
 export const findProjectAction = createAction({
   auth: capsuleCrmAuth,
   name: 'find_project',
   classification: 'SEARCH',
   displayName: 'Find Project',
-  description: 'Find a Project by search criteria.',
-  audience: 'both',
+  description: 'Find a Project by search criteria. Returns up to 1,000 matches (10 pages); narrow the search if you need more.',
+  audience: 'human',
   aiMetadata: {
     description:
       "Finds Capsule CRM projects (cases) matching a structured filter query (a conditions array of field/operator/value clauses, per Capsule's filter API). Use to locate projects by field criteria rather than a free-text term. Idempotent: it is a read-only filter that does not modify any data.",
     idempotent: true,
   },
+  outputSchema: projectListOutputSchema,
   props: {
     filter: Property.Json({
       displayName: 'Filter',
@@ -34,9 +35,6 @@ export const findProjectAction = createAction({
   },
   async run(context) {
     const { auth, propsValue } = context;
-    return await capsuleCrmClient.filterProjects(
-      auth,
-      propsValue.filter as unknown as Filter
-    );
+    return await capsuleCrmClient.filterProjects({ auth, filter: capsuleCrmClient.toFilter(propsValue.filter) });
   },
 });

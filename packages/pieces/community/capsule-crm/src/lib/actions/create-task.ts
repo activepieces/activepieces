@@ -3,8 +3,9 @@ import {
   Property,
   DynamicPropsValue,
 } from '@activepieces/pieces-framework';
-import { capsuleCrmAuth, CapsuleCrmAuthType } from '../common/auth';
+import { capsuleCrmAuth } from '../common/auth';
 import { capsuleCrmClient } from '../common/client';
+import { taskOutputSchema } from '../common/output-schemas';
 import { CreateTaskParams } from '../common/types';
 
 export const createTaskAction = createAction({
@@ -13,12 +14,13 @@ export const createTaskAction = createAction({
   classification: 'WRITE',
   displayName: 'Create Task',
   description: 'Create a new Task in Capsule CRM.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Creates a new task in Capsule CRM with a description and due date, optionally linked to exactly one entity chosen via the Link To selector (a party/contact, an opportunity, or a project). Use to schedule a to-do or follow-up. Not idempotent: each call creates a separate task, so repeating it produces duplicates.',
     idempotent: false,
   },
+  outputSchema: taskOutputSchema,
   props: {
     description: Property.ShortText({
       displayName: 'Description',
@@ -61,14 +63,11 @@ export const createTaskAction = createAction({
       auth: capsuleCrmAuth,
       props: async ({ auth, linkTo }) => {
         const fields: DynamicPropsValue = {};
-        const linkToType = linkTo as unknown as string;
+        const linkToType: unknown = linkTo;
         if (!auth || !linkToType) return fields;
 
         if (linkToType === 'party') {
-          const contacts = await capsuleCrmClient.searchContacts(
-            auth,
-            ''
-          );
+          const contacts = await capsuleCrmClient.searchContacts({ auth });
           const contactOptions = contacts.map((contact) => ({
             label:
               contact.type === 'person'
@@ -84,9 +83,7 @@ export const createTaskAction = createAction({
             },
           });
         } else if (linkToType === 'opportunity') {
-          const opportunities = await capsuleCrmClient.searchOpportunities(
-            auth
-          );
+          const opportunities = await capsuleCrmClient.searchOpportunities({ auth });
           const opportunityOptions = opportunities.map((opportunity) => ({
             label: opportunity.name,
             value: opportunity.id,
@@ -99,9 +96,7 @@ export const createTaskAction = createAction({
             },
           });
         } else if (linkToType === 'project') {
-          const projects = await capsuleCrmClient.searchProjects(
-            auth
-          );
+          const projects = await capsuleCrmClient.searchProjects({ auth });
           const projectOptions = projects.map((project) => ({
             label: project.name,
             value: project.id,
@@ -130,9 +125,7 @@ export const createTaskAction = createAction({
             disabled: true,
             placeholder: 'Please connect your Capsule CRM account first',
           };
-        const categories = await capsuleCrmClient.listCategories(
-          auth
-        );
+        const categories = await capsuleCrmClient.listCategories({ auth });
         return {
           options: categories.map((category) => ({
             label: category.name,
@@ -154,9 +147,7 @@ export const createTaskAction = createAction({
             disabled: true,
             placeholder: 'Please connect your Capsule CRM account first',
           };
-        const users = await capsuleCrmClient.listUsers(
-          auth
-        );
+        const users = await capsuleCrmClient.listUsers({ auth });
         return {
           options: users.map((user) => ({
             label: user.name,
@@ -171,8 +162,8 @@ export const createTaskAction = createAction({
 
     const taskData: CreateTaskParams = {
       description: propsValue.description,
-      dueOn: propsValue.dueOn,
-      detail: propsValue.detail,
+      dueOn: capsuleCrmClient.dayFromDateTime({ value: propsValue.dueOn, label: 'Due Date' }) ?? '',
+      detail: capsuleCrmClient.optionalText(propsValue.detail),
       dueTime: propsValue.dueTime,
     };
 
@@ -183,17 +174,34 @@ export const createTaskAction = createAction({
       taskData.owner = { id: propsValue.ownerId };
     }
 
-    const linkedEntity = propsValue.linkedEntityId as DynamicPropsValue;
-    if (linkedEntity) {
-      if (linkedEntity['partyId']) {
-        taskData.party = { id: linkedEntity['partyId'] as number };
-      } else if (linkedEntity['opportunityId']) {
-        taskData.opportunity = { id: linkedEntity['opportunityId'] as number };
-      } else if (linkedEntity['projectId']) {
-        taskData.kase = { id: linkedEntity['projectId'] as number };
-      }
+    const linkedEntity = propsValue.linkedEntityId ?? {};
+    const partyId = strictId({ value: linkedEntity['partyId'], label: 'Party' });
+    const opportunityId = strictId({ value: linkedEntity['opportunityId'], label: 'Opportunity' });
+    const projectId = strictId({ value: linkedEntity['projectId'], label: 'Project' });
+    if (propsValue.linkTo && partyId === undefined && opportunityId === undefined && projectId === undefined) {
+      throw new Error('Link To is set but no linked record was selected.');
+    }
+    if (partyId !== undefined) {
+      taskData.party = { id: partyId };
+    } else if (opportunityId !== undefined) {
+      taskData.opportunity = { id: opportunityId };
+    } else if (projectId !== undefined) {
+      taskData.kase = { id: projectId };
     }
 
-    return await capsuleCrmClient.createTask(auth, taskData);
+    return await capsuleCrmClient.createTask({ auth, params: taskData });
   },
 });
+
+function strictId({ value, label }: { value: unknown; label: string }): number | undefined {
+  if (value === undefined || value === null || value === '') {
+    return undefined;
+  }
+  if (typeof value === 'number' && Number.isInteger(value) && value > 0) {
+    return value;
+  }
+  if (typeof value === 'string' && /^\d+$/.test(value.trim())) {
+    return Number(value.trim());
+  }
+  throw new Error(`${label} ID must be a numeric Capsule CRM ID; got "${String(value).slice(0, 50)}".`);
+}

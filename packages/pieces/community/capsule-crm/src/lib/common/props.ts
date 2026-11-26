@@ -1,6 +1,6 @@
 import { Property } from '@activepieces/pieces-framework';
-import { capsuleCrmAuth, CapsuleCrmAuthType } from './auth';
-import { capsuleCrmClient } from './client';
+import { capsuleCrmAuth } from './auth';
+import { capsuleCrmClient, CAPSULE_DROPDOWN_MAX_ITEMS } from './client';
 
 export const capsuleCrmProps = {
   contact_id: (required = true) =>
@@ -9,6 +9,7 @@ export const capsuleCrmProps = {
       description: 'The contact (Person or Organisation) to select.',
       required: required,
       refreshers: [],
+      refreshOnSearch: true,
       auth: capsuleCrmAuth,
       options: async (props) => {
         const { auth } = props;
@@ -20,12 +21,10 @@ export const capsuleCrmProps = {
           };
         }
 
-        const searchTerm = (props['searchValue'] as string) ?? '';
+        const rawSearch: unknown = props['searchValue'];
+        const searchTerm = typeof rawSearch === 'string' ? rawSearch : '';
 
-        const contacts = await capsuleCrmClient.searchContacts(
-          auth,
-          searchTerm
-        );
+        const { items: contacts, truncated } = await capsuleCrmClient.searchContactsForDropdown({ auth, searchTerm });
 
         const options = contacts.map((contact) => {
           const label =
@@ -41,6 +40,7 @@ export const capsuleCrmProps = {
         return {
           disabled: false,
           options: options,
+          placeholder: truncated ? `Showing the first ${CAPSULE_DROPDOWN_MAX_ITEMS.toLocaleString('en-US')}, type to search` : undefined,
         };
       },
     }),
@@ -60,9 +60,7 @@ export const capsuleCrmProps = {
             options: [],
           };
         }
-        const milestones = await capsuleCrmClient.listMilestones(
-          auth
-        );
+        const milestones = await capsuleCrmClient.listMilestones({ auth });
         const options = milestones.map((milestone) => {
           return {
             label: milestone.name,
@@ -91,9 +89,7 @@ export const capsuleCrmProps = {
             options: [],
           };
         }
-        const opportunities = await capsuleCrmClient.listOpportunities(
-          auth
-        );
+        const opportunities = await capsuleCrmClient.listOpportunities({ auth });
         return {
           disabled: false,
           options: opportunities.map((opportunity) => ({
@@ -119,9 +115,7 @@ export const capsuleCrmProps = {
             options: [],
           };
         }
-        const projects = await capsuleCrmClient.listProjects(
-          auth
-        );
+        const projects = await capsuleCrmClient.listProjects({ auth });
         return {
           disabled: false,
           options: projects.map((project) => ({
@@ -147,9 +141,7 @@ export const capsuleCrmProps = {
             options: [],
           };
         }
-        const cases = await capsuleCrmClient.listCases(
-          auth
-        );
+        const cases = await capsuleCrmClient.listCases({ auth });
         return {
           disabled: false,
           options: cases.map((kase) => ({ label: kase.name, value: kase.id })),
@@ -172,9 +164,7 @@ export const capsuleCrmProps = {
             options: [],
           };
         }
-        const users = await capsuleCrmClient.listUsers(
-          auth  
-        );
+        const users = await capsuleCrmClient.listUsers({ auth });
         return {
           disabled: false,
           options: users.map((user) => ({
@@ -200,9 +190,7 @@ export const capsuleCrmProps = {
             options: [],
           };
         }
-        const teams = await capsuleCrmClient.listTeams(
-          auth
-        );
+        const teams = await capsuleCrmClient.listTeams({ auth });
         return {
           disabled: false,
           options: teams.map((team) => ({

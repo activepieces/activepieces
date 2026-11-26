@@ -3,8 +3,9 @@ import {
   Property,
   DynamicPropsValue,
 } from '@activepieces/pieces-framework';
-import { capsuleCrmAuth, CapsuleCrmAuthType } from '../common/auth';
+import { capsuleCrmAuth } from '../common/auth';
 import { capsuleCrmClient } from '../common/client';
+import { entryOutputSchema } from '../common/output-schemas';
 import { CreateEntryParams } from '../common/types';
 
 export const addNoteToEntityAction = createAction({
@@ -14,12 +15,13 @@ export const addNoteToEntityAction = createAction({
   displayName: 'Add Note to Entity',
   description:
     'Add a comment/note to an entity (e.g., contact, opportunity, project).',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Appends a note entry to one Capsule CRM record, where the entity type selector chooses whether the note attaches to a party (contact), an opportunity, or a project. Use to log a comment or activity against a known record. Not idempotent: each call appends a new note, so repeating it adds duplicate notes.',
     idempotent: false,
   },
+  outputSchema: entryOutputSchema,
   props: {
     content: Property.LongText({
       displayName: 'Note Content',
@@ -45,14 +47,11 @@ export const addNoteToEntityAction = createAction({
       refreshers: ['entityType'],
       props: async ({ auth, entityType }) => {
         const fields: DynamicPropsValue = {};
-        const entityTypeStr = entityType as unknown as string;
+        const entityTypeStr: unknown = entityType;
         if (!auth || !entityTypeStr) return fields;
 
         if (entityTypeStr === 'party') {
-          const contacts = await capsuleCrmClient.searchContacts(
-            auth,
-            ''
-          );
+          const contacts = await capsuleCrmClient.searchContacts({ auth });
           fields['partyId'] = Property.StaticDropdown({
             displayName: 'Party',
             required: true,
@@ -67,9 +66,7 @@ export const addNoteToEntityAction = createAction({
             }})
         } else if (entityTypeStr === 'opportunity') {
           const opportunities =
-          await capsuleCrmClient.searchOpportunities(
-            auth
-          );
+          await capsuleCrmClient.searchOpportunities({ auth });
           fields['opportunityId'] = Property.StaticDropdown({
             displayName: 'Opportunity',
             required: true,
@@ -80,9 +77,7 @@ export const addNoteToEntityAction = createAction({
               })),
             }})
         } else if (entityTypeStr === 'project') {
-          const projects = await capsuleCrmClient.searchProjects(
-            auth
-          );
+          const projects = await capsuleCrmClient.searchProjects({ auth });
           fields['projectId'] = Property.StaticDropdown({
             displayName: 'Project',
             required: true,
@@ -109,9 +104,7 @@ export const addNoteToEntityAction = createAction({
             disabled: true,
             placeholder: 'Please connect your Capsule CRM account first',
           };
-        const activityTypes = await capsuleCrmClient.listActivityTypes(
-          auth
-        );
+        const activityTypes = await capsuleCrmClient.listActivityTypes({ auth });
         return {
           options: activityTypes.map((activityType) => ({
             label: activityType.name,
@@ -133,17 +126,30 @@ export const addNoteToEntityAction = createAction({
       entryData.activityType = { id: propsValue.activityTypeId };
     }
 
-    const entityId = propsValue.entityId as DynamicPropsValue;
-    if (entityId) {
-      if (entityId['partyId']) {
-        entryData.party = { id: entityId['partyId'] as number };
-      } else if (entityId['opportunityId']) {
-        entryData.opportunity = { id: entityId['opportunityId'] as number };
-      } else if (entityId['projectId']) {
-        entryData.kase = { id: entityId['projectId'] as number };
-      }
+    const entityId = propsValue.entityId ?? {};
+    const partyId = idOf(entityId['partyId']);
+    const opportunityId = idOf(entityId['opportunityId']);
+    const projectId = idOf(entityId['projectId']);
+    if (partyId !== undefined) {
+      entryData.party = { id: partyId };
+    } else if (opportunityId !== undefined) {
+      entryData.opportunity = { id: opportunityId };
+    } else if (projectId !== undefined) {
+      entryData.kase = { id: projectId };
+    } else {
+      throw new Error('Select the contact, opportunity or project to add the note to.');
     }
 
-    return await capsuleCrmClient.createEntry(auth, entryData);
+    return await capsuleCrmClient.createEntry({ auth, params: entryData });
   },
 });
+
+function idOf(value: unknown): number | undefined {
+  if (typeof value === 'number') {
+    return value;
+  }
+  if (typeof value === 'string' && /^\d+$/.test(value.trim())) {
+    return Number(value.trim());
+  }
+  return undefined;
+}

@@ -2,10 +2,10 @@ import {
   createAction,
   Property,
   DynamicPropsValue,
-  OAuth2PropertyValue,
 } from '@activepieces/pieces-framework';
-import { capsuleCrmAuth, CapsuleCrmAuthType } from '../common/auth';
+import { capsuleCrmAuth } from '../common/auth';
 import { capsuleCrmClient } from '../common/client';
+import { partyOutputSchema } from '../common/output-schemas';
 import { CreatePartyParams } from '../common/types';
 
 export const createContactAction = createAction({
@@ -14,12 +14,13 @@ export const createContactAction = createAction({
   classification: 'WRITE',
   displayName: 'Create Contact',
   description: 'Create a new Person or Organisation in Capsule CRM.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
-      'Creates a new contact record in Capsule CRM. Set the contact type to either a person (requires first and last name, optional linked organisation) or an organisation (requires organisation name); the type selection switches which name fields apply. Use to add a fresh contact you have confirmed does not already exist. Not idempotent: each call creates a separate record, so repeating it produces duplicate contacts.',
+      'Creates a new person or organisation in Capsule CRM and returns the created party. Each call creates a separate record.',
     idempotent: false,
   },
+  outputSchema: partyOutputSchema,
   props: {
     type: Property.StaticDropdown({
       displayName: 'Contact Type',
@@ -38,31 +39,20 @@ export const createContactAction = createAction({
       required: true,
       refreshers: ['type'],
       props: async ({ auth, type }) => {
-        const contactType = type as unknown as string;
+        const contactType: unknown = type;
         const fields: DynamicPropsValue = {};
         
         if (contactType === 'person') {
-          // Fetch organisations data ONCE at the outer level
-          let organisationOptions: { label: string; value: number }[] = [];
-          
-          if (auth) {
-            try {
-              const organisations = await capsuleCrmClient.searchContacts(
-                auth,
-                ''
-              );
-              
-              organisationOptions = organisations
-                .filter((party) => party.type === 'organisation')
-                .map((org) => ({
-                  label: org.name || 'Unnamed Organisation',
-                  value: org.id,
-                }));
-            } catch (error) {
-              console.error('Failed to load organisations:', error);
-            }
-          }
-          
+          const organisations = auth
+            ? await capsuleCrmClient.searchContacts({ auth })
+            : [];
+          const organisationOptions = organisations
+            .filter((party) => party.type === 'organisation')
+            .map((org) => ({
+              label: org.name || `Organisation ${org.id}`,
+              value: org.id,
+            }));
+
           fields['firstName'] = Property.ShortText({
             displayName: 'First Name',
             required: true,
@@ -106,9 +96,7 @@ export const createContactAction = createAction({
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) return { options: [] };
-        const users = await capsuleCrmClient.listUsers(
-          auth
-        );
+        const users = await capsuleCrmClient.listUsers({ auth });
         return {
           options: users.map((user) => ({
             label: user.name,
@@ -124,9 +112,7 @@ export const createContactAction = createAction({
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) return { options: [] };
-        const teams = await capsuleCrmClient.listTeams(
-          auth
-        );
+        const teams = await capsuleCrmClient.listTeams({ auth });
         return {
           options: teams.map((team) => ({
             label: team.name,
@@ -142,7 +128,7 @@ export const createContactAction = createAction({
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) return { options: [] };
-        const tags = await capsuleCrmClient.listTags(auth);
+        const tags = await capsuleCrmClient.listTags({ auth, entity: 'party' });
         return {
           options: tags.map((tag) => ({
             label: tag.name,
@@ -159,9 +145,7 @@ export const createContactAction = createAction({
       props: async ({ auth }) => {
         const fields: DynamicPropsValue = {};
         if (!auth) return fields;
-        const customFields = await capsuleCrmClient.listCustomFields(
-          auth
-        );
+        const customFields = await capsuleCrmClient.listCustomFields({ auth, entity: 'party' });
         for (const field of customFields) {
           switch (field.type) {
             case 'list':
@@ -325,61 +309,73 @@ export const createContactAction = createAction({
   },
   async run(context) {
     const { auth, propsValue } = context;
+    const type = propsValue.type === 'organisation' ? 'organisation' : 'person';
+    const contactFields = propsValue.contactFields ?? {};
+    const customFields = propsValue.customFields ?? {};
 
-    const type = propsValue.type as 'person' | 'organisation';
-    const contactFields = propsValue.contactFields as DynamicPropsValue;
-    const contactData: Partial<CreatePartyParams> = {
-      type: type,
-      title: contactFields['title'] as string | undefined,
-      jobTitle: contactFields['jobTitle'] as string | undefined,
-      about: propsValue.about,
-      organisationId: contactFields['organisationId'] as number | undefined,
+    const params: CreatePartyParams = {
+      type,
+      title: textOf(contactFields['title']),
+      jobTitle: textOf(contactFields['jobTitle']),
+      about: capsuleCrmClient.optionalText(propsValue.about),
+      organisationId: organisationIdOf(contactFields['organisationId']),
       ownerId: propsValue.ownerId,
       teamId: propsValue.teamId,
       tags: propsValue.tags,
-      emailAddresses: propsValue.emailAddresses as {
-        type?: string;
-        address: string;
-      }[],
-      phoneNumbers: propsValue.phoneNumbers as {
-        type?: string;
-        number: string;
-      }[],
-      addresses: propsValue.addresses as {
-        type?: string;
-        street?: string;
-        city?: string;
-        state?: string;
-        country?: string;
-        zip?: string;
-      }[],
-      websites: propsValue.websites as {
-        type?: string;
-        service: string;
-        address: string;
-      }[],
+      emailAddresses: itemsWith({ value: propsValue.emailAddresses, required: 'address' }).map((item) => ({ type: textOf(item['type']), address: String(item['address']) })),
+      phoneNumbers: itemsWith({ value: propsValue.phoneNumbers, required: 'number' }).map((item) => ({ type: textOf(item['type']), number: String(item['number']) })),
+      addresses: itemsWith({ value: propsValue.addresses }).map((item) => ({
+        type: textOf(item['type']),
+        street: textOf(item['street']),
+        city: textOf(item['city']),
+        state: textOf(item['state']),
+        country: textOf(item['country']),
+        zip: textOf(item['zip']),
+      })),
+      websites: itemsWith({ value: propsValue.websites, required: 'address' }).map((item) => ({
+        type: textOf(item['type']),
+        service: textOf(item['service']) ?? 'URL',
+        address: String(item['address']),
+      })),
+      fields: Object.entries(customFields)
+        .filter(([, value]) => value !== undefined && value !== null && value !== '')
+        .map(([id, value]) => ({ definition: { id: Number(id) }, value })),
     };
 
     if (type === 'person') {
-      contactData.firstName = contactFields['firstName'] as string;
-      contactData.lastName = contactFields['lastName'] as string;
-    } else if (type === 'organisation') {
-      contactData.name = contactFields['organisationName'] as string;
+      params.firstName = textOf(contactFields['firstName']);
+      params.lastName = textOf(contactFields['lastName']);
+    } else {
+      params.name = textOf(contactFields['organisationName']);
     }
 
-    const customFields = propsValue.customFields as DynamicPropsValue;
-    if (customFields) {
-      contactData.fields = Object.entries(customFields)
-        .filter(([, value]) => value !== undefined && value !== null)
-        .map(([id, value]) => ({
-          definition: { id: Number(id) },
-          value: value,
-        }));
-    }
-
-    return await capsuleCrmClient.createContact(
-      auth,
-      contactData as CreatePartyParams
-    );
+    return await capsuleCrmClient.createContact({ auth, params });
   },
 });
+
+function textOf(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() !== '' ? value : undefined;
+}
+
+function organisationIdOf(value: unknown): number | undefined {
+  if (value === undefined || value === null || value === '') {
+    return undefined;
+  }
+  if (typeof value === 'number' && Number.isInteger(value) && value > 0) {
+    return value;
+  }
+  if (typeof value === 'string' && /^\d+$/.test(value.trim())) {
+    return Number(value.trim());
+  }
+  throw new Error(`Organisation must be a numeric Capsule CRM organisation ID; got "${String(value).slice(0, 50)}".`);
+}
+
+function itemsWith({ value, required }: { value: unknown; required?: string }): Record<string, unknown>[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value.filter(
+    (item): item is Record<string, unknown> =>
+      typeof item === 'object' && item !== null && (required === undefined || textOf(item[required]) !== undefined)
+  );
+}
