@@ -67,5 +67,6 @@
   "Trigger when a new file is created or modified.": "Disparar quando um novo arquivo for criado ou modificado.",
   "Path": "Caminho",
   "Ignore hidden files": "Ignorar arquivos ocultos",
-  "The path to watch for new files": "O caminho para ver novos arquivos"
+  "The path to watch for new files": "O caminho para ver novos arquivos",
+  "FTP/SFTP": "FTP/SFTP"
 }
