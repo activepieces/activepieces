@@ -281,6 +281,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Requête",
+  "Data to send": "Données à envoyer",
   "Order Created": "Commande créée",
   "Order Refunded": "Commande remboursée",
   "Subscription Created": "Abonnement créé",
