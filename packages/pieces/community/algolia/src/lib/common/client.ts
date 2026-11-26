@@ -1,17 +1,34 @@
 import { httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common';
 
-import { AlgoliaAuthValue, AlgoliaBatchResponse, AlgoliaBrowseResponse, AlgoliaIndex, AlgoliaIndexListResponse, AlgoliaRecord, AlgoliaTaskStatusResponse } from './types';
+import {
+  AlgoliaAuthValue,
+  AlgoliaBatchResponse,
+  AlgoliaBrowseResponse,
+  AlgoliaDeleteByQueryResponse,
+  AlgoliaIndex,
+  AlgoliaIndexListResponse,
+  AlgoliaPartialUpdateResponse,
+  AlgoliaRecord,
+  AlgoliaSearchResponse,
+  AlgoliaTaskOutcome,
+  AlgoliaTaskStatusResponse,
+  AlgoliaWriteResult,
+} from './types';
+import { parseApplicationId } from './utils';
 
 export async function validateAlgoliaAuth(auth: AlgoliaAuthValue): Promise<void> {
-  await listAlgoliaIndices({
+  await sendRequest<AlgoliaIndexListResponse>({
     auth,
-    limit: 1,
+    operation: 'connection check',
+    method: HttpMethod.GET,
+    path: '/indexes',
+    queryParams: { page: '0', hitsPerPage: '1' },
   });
 }
 
 export async function listAlgoliaIndices({
   auth,
-  limit = 1000,
+  limit = ALGOLIA_MAX_PAGE_SIZE,
 }: {
   auth: AlgoliaAuthValue;
   limit?: number;
@@ -20,14 +37,14 @@ export async function listAlgoliaIndices({
   let page = 0;
 
   while (indices.length < limit) {
-    const remaining = limit - indices.length;
     const response = await sendRequest<AlgoliaIndexListResponse>({
       auth,
+      operation: 'list indices',
       method: HttpMethod.GET,
       path: '/indexes',
       queryParams: {
         page: String(page),
-        hitsPerPage: String(Math.min(remaining, ALGOLIA_MAX_PAGE_SIZE)),
+        hitsPerPage: String(ALGOLIA_MAX_PAGE_SIZE),
       },
     });
 
@@ -40,7 +57,7 @@ export async function listAlgoliaIndices({
     page += 1;
   }
 
-  return indices;
+  return indices.slice(0, limit);
 }
 
 export async function saveAlgoliaRecords({
@@ -51,26 +68,36 @@ export async function saveAlgoliaRecords({
   auth: AlgoliaAuthValue;
   indexName: string;
   records: AlgoliaRecord[];
-}): Promise<AlgoliaBatchResponse> {
-  const response = await sendRequest<AlgoliaBatchResponse>({
-    auth,
-    method: HttpMethod.POST,
-    path: `/indexes/${encodeURIComponent(indexName)}/batch`,
-    body: {
-      requests: records.map((record) => ({
-        action: 'addObject',
-        body: record,
-      })),
-    },
-  });
-
-  await waitForTask({
+}): Promise<AlgoliaWriteResult> {
+  return sendBatches({
     auth,
     indexName,
-    taskId: response.taskID,
+    operation: 'save records',
+    requests: records.map((record) => ({
+      action: 'addObject',
+      body: record,
+    })),
   });
+}
 
-  return response;
+export async function deleteAlgoliaRecords({
+  auth,
+  indexName,
+  objectIDs,
+}: {
+  auth: AlgoliaAuthValue;
+  indexName: string;
+  objectIDs: string[];
+}): Promise<AlgoliaWriteResult> {
+  return sendBatches({
+    auth,
+    indexName,
+    operation: 'delete records',
+    requests: objectIDs.map((objectID) => ({
+      action: 'deleteObject',
+      body: { objectID },
+    })),
+  });
 }
 
 export async function browseAlgoliaRecords({
@@ -86,11 +113,13 @@ export async function browseAlgoliaRecords({
   let cursor: string | undefined;
 
   do {
+    const hitsPerPage = Math.min(limit - records.length, ALGOLIA_MAX_PAGE_SIZE);
     const response = await sendRequest<AlgoliaBrowseResponse>({
       auth,
+      operation: 'browse records',
       method: HttpMethod.POST,
       path: `/indexes/${encodeURIComponent(indexName)}/browse`,
-      body: cursor ? { cursor } : {},
+      body: cursor ? { cursor } : { hitsPerPage },
     });
 
     records.push(...response.hits);
@@ -100,92 +129,361 @@ export async function browseAlgoliaRecords({
   return records.slice(0, limit);
 }
 
-export async function deleteAlgoliaRecords({
+export async function searchAlgoliaRecords({
   auth,
   indexName,
-  objectIDs,
+  query,
+  filters,
+  hitsPerPage,
+  page,
+  attributesToRetrieve,
 }: {
   auth: AlgoliaAuthValue;
   indexName: string;
-  objectIDs: string[];
-}): Promise<AlgoliaBatchResponse> {
-  const response = await sendRequest<AlgoliaBatchResponse>({
+  query: string;
+  filters?: string;
+  hitsPerPage: number;
+  page: number;
+  attributesToRetrieve?: string[];
+}): Promise<AlgoliaSearchResponse> {
+  return sendRequest<AlgoliaSearchResponse>({
     auth,
+    operation: 'search records',
     method: HttpMethod.POST,
-    path: `/indexes/${encodeURIComponent(indexName)}/batch`,
+    path: `/indexes/${encodeURIComponent(indexName)}/query`,
     body: {
-      requests: objectIDs.map((objectID) => ({
-        action: 'deleteObject',
-        body: {
-          objectID,
-        },
-      })),
+      query,
+      hitsPerPage,
+      page,
+      ...(filters ? { filters } : {}),
+      ...(attributesToRetrieve ? { attributesToRetrieve } : {}),
     },
   });
+}
 
-  await waitForTask({
+export async function getAlgoliaRecord({
+  auth,
+  indexName,
+  objectID,
+  attributesToRetrieve,
+}: {
+  auth: AlgoliaAuthValue;
+  indexName: string;
+  objectID: string;
+  attributesToRetrieve?: string[];
+}): Promise<AlgoliaRecord> {
+  return sendRequest<AlgoliaRecord>({
+    auth,
+    operation: 'get record',
+    method: HttpMethod.GET,
+    path: `/indexes/${encodeURIComponent(indexName)}/${encodeURIComponent(objectID)}`,
+    notFoundMessage: `Algolia get record failed: no record with objectID "${objectID}" exists in index "${indexName}" (or the index does not exist).`,
+    ...(attributesToRetrieve
+      ? { queryParams: { attributesToRetrieve: attributesToRetrieve.join(',') } }
+      : {}),
+  });
+}
+
+export async function partialUpdateAlgoliaRecord({
+  auth,
+  indexName,
+  objectID,
+  attributes,
+  createIfNotExists,
+}: {
+  auth: AlgoliaAuthValue;
+  indexName: string;
+  objectID: string;
+  attributes: AlgoliaRecord;
+  createIfNotExists: boolean;
+}): Promise<AlgoliaPartialUpdateResponse & AlgoliaTaskOutcome> {
+  const operation = 'update record attributes';
+  const response = await sendRequest<AlgoliaPartialUpdateResponse>({
+    auth,
+    operation,
+    method: HttpMethod.POST,
+    path: `/indexes/${encodeURIComponent(indexName)}/${encodeURIComponent(objectID)}/partial`,
+    queryParams: { createIfNotExists: String(createIfNotExists) },
+    body: attributes,
+    isWrite: true,
+  });
+
+  const outcome = await waitForTask({
     auth,
     indexName,
     taskId: response.taskID,
+    operation,
   });
 
-  return response;
+  return { ...response, ...outcome };
+}
+
+export async function deleteAlgoliaRecordsByFilter({
+  auth,
+  indexName,
+  filters,
+}: {
+  auth: AlgoliaAuthValue;
+  indexName: string;
+  filters: string;
+}): Promise<{ taskID: number } & AlgoliaTaskOutcome> {
+  const operation = 'delete records by filter';
+  const response = await sendRequest<AlgoliaDeleteByQueryResponse>({
+    auth,
+    operation,
+    method: HttpMethod.POST,
+    path: `/indexes/${encodeURIComponent(indexName)}/deleteByQuery`,
+    body: { filters },
+    isWrite: true,
+  });
+
+  const outcome = await waitForTask({
+    auth,
+    indexName,
+    taskId: response.taskID,
+    operation,
+  });
+
+  return { taskID: response.taskID, ...outcome };
+}
+
+export async function getAlgoliaIndexSettings({
+  auth,
+  indexName,
+}: {
+  auth: AlgoliaAuthValue;
+  indexName: string;
+}): Promise<Record<string, unknown>> {
+  return sendRequest<Record<string, unknown>>({
+    auth,
+    operation: 'get index settings',
+    method: HttpMethod.GET,
+    path: `/indexes/${encodeURIComponent(indexName)}/settings`,
+    notFoundMessage: `Algolia get index settings failed: index "${indexName}" does not exist.`,
+  });
+}
+
+export function mapAlgoliaError({
+  error,
+  operation,
+  isWrite,
+  notFoundMessage,
+}: {
+  error: unknown;
+  operation: string;
+  isWrite: boolean;
+  notFoundMessage?: string;
+}): Error {
+  const mayBeApplied = isWrite
+    ? ' The change may still have been applied; check the index before retrying.'
+    : '';
+  const response = readErrorResponse(error);
+
+  if (response === undefined) {
+    const reason = error instanceof Error ? error.message : String(error);
+    return new Error(
+      `Algolia ${operation} failed: could not get a response from Algolia (${reason}).${mayBeApplied}`,
+    );
+  }
+
+  if (response.status === 404 && notFoundMessage) {
+    return new Error(notFoundMessage);
+  }
+
+  const vendorMessage = readVendorMessage(response.body);
+  const details = [
+    vendorMessage,
+    ALGOLIA_STATUS_HINTS[response.status],
+    response.status >= 500 ? mayBeApplied.trim() : undefined,
+  ].filter((part): part is string => part !== undefined && part.length > 0);
+
+  return new Error(
+    `Algolia ${operation} failed (${response.status}): ${details.join(' — ')}`,
+  );
+}
+
+async function sendBatches({
+  auth,
+  indexName,
+  operation,
+  requests,
+}: {
+  auth: AlgoliaAuthValue;
+  indexName: string;
+  operation: string;
+  requests: Record<string, unknown>[];
+}): Promise<AlgoliaWriteResult> {
+  const objectIDs: string[] = [];
+  let lastTaskId = 0;
+
+  for (let start = 0; start < requests.length; start += ALGOLIA_MAX_BATCH_SIZE) {
+    const chunk = requests.slice(start, start + ALGOLIA_MAX_BATCH_SIZE);
+    const { data: response, error } = await tryRequest(() =>
+      sendRequest<AlgoliaBatchResponse>({
+        auth,
+        operation,
+        method: HttpMethod.POST,
+        path: `/indexes/${encodeURIComponent(indexName)}/batch`,
+        body: { requests: chunk },
+        isWrite: true,
+      }),
+    );
+
+    if (error) {
+      if (start === 0) {
+        throw error;
+      }
+      throw new Error(
+        `${error.message} The first ${start} of ${requests.length} records were already sent in earlier batches.`,
+      );
+    }
+
+    objectIDs.push(...(response.objectIDs ?? []));
+    lastTaskId = response.taskID;
+  }
+
+  const outcome = await waitForTask({
+    auth,
+    indexName,
+    taskId: lastTaskId,
+    operation,
+  });
+
+  return { taskID: lastTaskId, objectIDs, ...outcome };
 }
 
 async function waitForTask({
   auth,
   indexName,
   taskId,
+  operation,
 }: {
   auth: AlgoliaAuthValue;
   indexName: string;
   taskId: number;
-}): Promise<void> {
-  for (let attempt = 0; attempt < ALGOLIA_TASK_MAX_ATTEMPTS; attempt += 1) {
-    const response = await sendRequest<AlgoliaTaskStatusResponse>({
-      auth,
-      method: HttpMethod.GET,
-      path: `/indexes/${encodeURIComponent(indexName)}/task/${taskId}`,
-    });
+  operation: string;
+}): Promise<AlgoliaTaskOutcome> {
+  const deadline = Date.now() + ALGOLIA_TASK_DEADLINE_MILLISECONDS;
 
-    if (response.status === 'published') {
-      return;
+  while (Date.now() < deadline) {
+    const remaining = deadline - Date.now();
+    const { data: response } = await tryRequest(() =>
+      sendRequest<AlgoliaTaskStatusResponse>({
+        auth,
+        operation: `${operation} (task status)`,
+        method: HttpMethod.GET,
+        path: `/indexes/${encodeURIComponent(indexName)}/task/${taskId}`,
+        timeout: Math.max(1, Math.min(ALGOLIA_TASK_POLL_TIMEOUT_MILLISECONDS, remaining)),
+      }),
+    );
+
+    if (response === null) {
+      return {
+        status: 'notPublished',
+        note: `Algolia accepted the write (task ${taskId}) but its status could not be checked; it may still be applied. Check the index before retrying.`,
+      };
     }
 
-    await sleep(ALGOLIA_TASK_POLL_INTERVAL_MILLISECONDS);
+    if (response.status === 'published') {
+      return { status: 'published' };
+    }
+
+    const waitFor = Math.min(ALGOLIA_TASK_POLL_INTERVAL_MILLISECONDS, deadline - Date.now());
+    if (waitFor > 0) {
+      await sleep(waitFor);
+    }
   }
 
-  throw new Error('The Algolia operation is taking too long. Try again or check your Algolia dashboard for the task status.');
+  return {
+    status: 'notPublished',
+    note: `Algolia accepted the write (task ${taskId}) but it was still being applied after 30 seconds; it will still be applied. Do not retry.`,
+  };
 }
 
 async function sendRequest<TResponse>({
   auth,
+  operation,
   method,
   path,
   body,
   queryParams,
+  isWrite = false,
+  notFoundMessage,
+  timeout,
 }: {
   auth: AlgoliaAuthValue;
+  operation: string;
   method: HttpMethod;
   path: string;
   body?: Record<string, unknown>;
   queryParams?: Record<string, string>;
+  isWrite?: boolean;
+  notFoundMessage?: string;
+  timeout?: number;
 }): Promise<TResponse> {
+  const applicationId = parseApplicationId(auth.props.applicationId);
   const request: HttpRequest<Record<string, unknown>> = {
     method,
-    url: `https://${auth.props.applicationId}.algolia.net/1${path}`,
+    url: `https://${applicationId}.algolia.net/1${path}`,
     headers: {
-      'x-algolia-application-id': auth.props.applicationId,
+      'x-algolia-application-id': applicationId,
       'x-algolia-api-key': auth.props.apiKey,
       Accept: 'application/json',
       'Content-Type': 'application/json',
     },
+    timeout: timeout ?? ALGOLIA_REQUEST_TIMEOUT_MILLISECONDS,
     ...(body ? { body } : {}),
     ...(queryParams ? { queryParams } : {}),
   };
 
-  const response = await httpClient.sendRequest<TResponse>(request);
-  return response.body;
+  try {
+    const response = await httpClient.sendRequest<TResponse>(request);
+    return response.body;
+  } catch (error) {
+    throw mapAlgoliaError({ error, operation, isWrite, notFoundMessage });
+  }
+}
+
+async function tryRequest<T>(
+  fn: () => Promise<T>,
+): Promise<{ data: T; error: null } | { data: null; error: Error }> {
+  try {
+    return { data: await fn(), error: null };
+  } catch (error) {
+    return {
+      data: null,
+      error: error instanceof Error ? error : new Error(String(error)),
+    };
+  }
+}
+
+function readErrorResponse(
+  error: unknown,
+): { status: number; body: unknown } | undefined {
+  if (typeof error !== 'object' || error === null || !('response' in error)) {
+    return undefined;
+  }
+  const response = error.response;
+  if (
+    typeof response !== 'object' ||
+    response === null ||
+    !('status' in response) ||
+    typeof response.status !== 'number' ||
+    response.status === 0
+  ) {
+    return undefined;
+  }
+  return { status: response.status, body: 'body' in response ? response.body : undefined };
+}
+
+function readVendorMessage(body: unknown): string {
+  if (typeof body === 'object' && body !== null && 'message' in body && typeof body.message === 'string') {
+    return body.message;
+  }
+  if (typeof body === 'string' && body.trim().length > 0) {
+    return body.slice(0, 500);
+  }
+  return 'no error message returned';
 }
 
 function sleep(milliseconds: number): Promise<void> {
@@ -195,5 +493,14 @@ function sleep(milliseconds: number): Promise<void> {
 }
 
 const ALGOLIA_MAX_PAGE_SIZE = 1000;
-const ALGOLIA_TASK_MAX_ATTEMPTS = 30;
+const ALGOLIA_MAX_BATCH_SIZE = 1000;
+const ALGOLIA_TASK_DEADLINE_MILLISECONDS = 30_000;
+const ALGOLIA_TASK_POLL_TIMEOUT_MILLISECONDS = 5_000;
 const ALGOLIA_TASK_POLL_INTERVAL_MILLISECONDS = 1000;
+const ALGOLIA_REQUEST_TIMEOUT_MILLISECONDS = 60_000;
+const ALGOLIA_STATUS_HINTS: Record<number, string> = {
+  401: 'Check the Application ID and API key.',
+  403: 'The API key is missing the ACL needed for this operation, or the Application ID is wrong.',
+  404: 'The index or record does not exist.',
+  429: 'Algolia rate limit reached; try again later.',
+};

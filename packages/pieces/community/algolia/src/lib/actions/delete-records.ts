@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 
 import { algoliaAuth } from '../common/auth';
+import { algoliaOutputSchemas } from '../common/output-schemas';
 import { deleteAlgoliaRecords } from '../common/client';
 import { algoliaProps } from '../common/props';
 import { parseRequiredString, parseStringArray } from '../common/utils';
@@ -13,9 +14,10 @@ export const deleteRecordsAction = createAction({
   description: 'Deletes records from an Algolia index by objectID.',
   audience: 'both',
   aiMetadata: {
-    description: 'Deletes records from an Algolia index by their objectIDs. Provide an array of the exact objectIDs to remove from the selected index. Idempotent: deleting the same IDs again leaves the index in the same state (already-absent IDs are simply no-ops).',
+    description: 'Deletes records from an Algolia index by their objectIDs. Provide an array of the exact objectIDs to remove from the selected index. Idempotent: deleting the same IDs again leaves the index in the same state (already-absent IDs are simply no-ops). Returns status published, or notPublished when Algolia was still applying the delete after 30 seconds (it will still be applied). To delete by attribute values instead of IDs, use Delete Records by Filter.',
     idempotent: true,
   },
+  outputSchema: algoliaOutputSchemas.writeRecords,
   props: {
     indexName: algoliaProps.index(),
     recordIds: Property.Array({

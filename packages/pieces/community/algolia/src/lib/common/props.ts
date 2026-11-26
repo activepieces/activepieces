@@ -6,6 +6,12 @@ import { listAlgoliaIndices } from './client';
 import { isAlgoliaAuthValue } from './utils';
 
 export const algoliaProps = {
+  indexName: () =>
+    Property.ShortText({
+      displayName: 'Index Name',
+      description: 'The exact name of the Algolia index. Use List Indices to find it.',
+      required: true,
+    }),
   index: (required = true) =>
     Property.Dropdown({
       auth: algoliaAuth,
