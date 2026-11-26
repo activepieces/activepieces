@@ -4,12 +4,12 @@ import { resolve } from 'path'
 import { tryCatch } from '@activepieces/core-utils';
 import { MachineInformation } from '@activepieces/shared';
 import checkDiskSpace from 'check-disk-space'
-import pidtree from 'pidtree'
 import pidusage from 'pidusage'
 import si from 'systeminformation'
 import { fileSystemUtils } from './file-system-utils'
 
 const MAX_REASONABLE_MEMORY_BYTES = 4 * 1024 ** 4 // 4 TiB
+const PROC_PATH = '/proc'
 
 let prevCpuUsage = process.cpuUsage()
 let prevTimestamp = Date.now()
@@ -221,10 +221,11 @@ export const systemUsage = {
 
 type CpuCounters = { steal: number, total: number }
 type CfsCounters = { throttled: number, periods: number }
+type ProcessTableEntry = { pid: number, ppid: number }
 export type CpuPressure = { cpuStealPercentage?: number, cpuThrottledPercentage?: number }
 
 async function readProcessTreeMemoryBytes(rootPids: number[]): Promise<Map<number, number>> {
-    const processTable = await pidtree(-1, { advanced: true })
+    const processTable = await readProcessTable()
     const childrenByParent = new Map<number, number[]>()
     for (const { ppid, pid } of processTable) {
         const children = childrenByParent.get(ppid) ?? []
@@ -237,6 +238,16 @@ async function readProcessTreeMemoryBytes(rootPids: number[]): Promise<Map<numbe
         rootPid,
         selfAndDescendantPids.reduce((total, pid) => total + (statsByPid[pid]?.memory ?? 0), 0),
     ]))
+}
+
+async function readProcessTable(): Promise<ProcessTableEntry[]> {
+    const procEntries = await fs.promises.readdir(PROC_PATH)
+    const rows = await Promise.all(procEntries.filter((entry) => /^\d+$/.test(entry)).map(async (entry) => {
+        const { data: stat } = await tryCatch(() => fs.promises.readFile(`${PROC_PATH}/${entry}/stat`, 'utf8'))
+        const ppid = Number(stat?.slice(stat.lastIndexOf(')') + 2).split(' ')[1])
+        return Number.isInteger(ppid) ? [{ pid: Number(entry), ppid }] : []
+    }))
+    return rows.flat()
 }
 
 function collectSelfAndDescendants({ rootPid, childrenByParent }: { rootPid: number, childrenByParent: Map<number, number[]> }): number[] {
