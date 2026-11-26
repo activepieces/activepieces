@@ -1,7 +1,7 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { cognitoFormsAuth } from '../auth';
 import { deleteEntry } from '../common/delete';
-import { entryIdText, formIdDropdown } from '../common/props';
+import { entryIdInput, formIdDropdown } from '../common/props';
 import { deleteEntryOutputSchema } from '../output-schemas';
 
 export const deleteEntryAction = createAction({
@@ -17,8 +17,12 @@ export const deleteEntryAction = createAction({
   },
   outputSchema: deleteEntryOutputSchema,
   props: {
+    deleteWarning: Property.MarkDown({
+      value: 'Deleting an entry is permanent and cannot be undone.',
+      variant: MarkdownVariant.WARNING,
+    }),
     formId: formIdDropdown,
-    entryId: entryIdText('The entry number (for example 12) or the full entry ID (for example 5-12) of the entry to delete.'),
+    entryId: entryIdInput,
   },
   async run(context) {
     const { formId, entryId } = context.propsValue;

@@ -1,9 +1,9 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { cognitoFormsAuth } from '../auth';
 import { cognitoRequest, isRecord } from '../common/client';
 import { formPath, readString } from '../common/entries';
-import { formIdText } from '../common/props';
+import { formIdInput } from '../common/props';
 import { availabilityOutputSchema } from '../output-schemas';
 
 export const setFormAvailabilityAction = createAction({
@@ -19,16 +19,22 @@ export const setFormAvailabilityAction = createAction({
   },
   outputSchema: availabilityOutputSchema,
   props: {
-    form_id: formIdText,
+    form_id: formIdInput,
+    availabilityInfo: Property.MarkDown({
+      value: 'Leave both dates empty to make the form always open. Each run replaces the current settings.',
+      variant: MarkdownVariant.INFO,
+    }),
     start: Property.DateTime({
       displayName: 'Available From',
-      description: 'When the form starts accepting entries. Empty means no start limit.',
+      description: 'Empty: no limit.',
       required: false,
+      width: 'half',
     }),
     end: Property.DateTime({
       displayName: 'Available Until',
-      description: 'When the form stops accepting entries. Leave empty for no end limit.',
+      description: 'Empty: no limit.',
       required: false,
+      width: 'half',
     }),
     message: Property.LongText({
       displayName: 'Not Available Message',
@@ -36,6 +42,10 @@ export const setFormAvailabilityAction = createAction({
       required: false,
     }),
   },
+  propertyGroups: [
+    { key: 'form', display: 'section', label: 'Form to change', icon: 'file', props: ['form_id'] },
+    { key: 'availability', display: 'section', label: 'Availability', icon: 'calendar', props: ['availabilityInfo', 'start', 'end', 'message'] },
+  ],
   async run(context) {
     const { form_id, start, end, message } = context.propsValue;
     if (start && end && new Date(start).getTime() > new Date(end).getTime()) {

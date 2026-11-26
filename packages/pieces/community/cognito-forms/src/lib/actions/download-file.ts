@@ -22,6 +22,7 @@ export const downloadFileAction = createAction({
       displayName: 'File ID',
       description: 'The "Id" of an uploaded file or a signature\'s PngFile from an entry.',
       required: true,
+      placeholder: 'F-Wb5Xb2YH8YuTOBuEh83zu',
     }),
   },
   async run(context) {
