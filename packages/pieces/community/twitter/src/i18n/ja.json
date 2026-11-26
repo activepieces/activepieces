@@ -21,5 +21,8 @@
   "Up to 280 characters, or more with X Premium.": "最大 280 文字。X Premium ではそれ以上。",
   "An image, GIF or video. Add more images under Advanced.": "画像、GIF、または動画。追加の画像は「高度な設定」へ。",
   "Another image. GIFs and videos must be posted alone.": "別の画像。GIF と動画は単独で投稿する必要があります。",
-  "The number at the end of the tweet's link, after /status/.": "ツイートのリンク末尾、/status/ の後ろの数字。"
+  "The number at the end of the tweet's link, after /status/.": "ツイートのリンク末尾、/status/ の後ろの数字。",
+  "Tweet": "ツイート",
+  "Reply to": "返信先",
+  "Message": "メッセージ"
 }
