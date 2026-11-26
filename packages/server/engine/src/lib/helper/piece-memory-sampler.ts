@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import { Session } from 'node:inspector/promises'
 import path from 'node:path'
 import { isNil, tryCatch, tryCatchSync } from '@activepieces/core-utils'
-import { SandboxPieceUsage } from '@activepieces/shared'
+import { EngineGenericError, SandboxPieceUsage } from '@activepieces/shared'
 
 const SAMPLING_INTERVAL_BYTES = 32768
 
@@ -52,15 +52,9 @@ export const pieceMemorySampler = {
 
     refreshUsage: async (): Promise<void> => {
         if (isNil(session)) {
-            global.gc?.()
-            return
+            throw new EngineGenericError('PieceMemorySamplerNotStartedError', 'Piece memory sampler is not started')
         }
-        const { data, error } = await tryCatch(() => pieceMemorySampler.getUsage())
-        if (error) {
-            global.gc?.()
-            return
-        }
-        latestUsage = data
+        latestUsage = await pieceMemorySampler.getUsage()
     },
 
     getLatestUsage: (): SandboxPieceUsage[] => latestUsage,

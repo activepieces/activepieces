@@ -12,6 +12,9 @@ exports.hold = (mb) => {
         held.push({ value: ('x'.repeat(500) + i + '!'.repeat(500)).slice(1) + 'y' })
     }
 }
+exports.release = () => {
+    held = []
+}
 `
 
 function writePiece({ source }: { source: string }): string {
@@ -27,6 +30,10 @@ describe('pieceMemorySampler', () => {
 
     it('returns nothing when sampling was never started', async () => {
         expect(await pieceMemorySampler.getUsage()).toEqual([])
+    })
+
+    it('rejects a refresh when sampling was never started so the caller can fall back to gc', async () => {
+        await expect(pieceMemorySampler.refreshUsage()).rejects.toThrow()
     })
 
     it('serves the last refreshed usage without reading the profile again', async () => {
@@ -60,5 +67,28 @@ describe('pieceMemorySampler', () => {
         expect(usage[0].memoryUsageBytes).toBeGreaterThan(10 * MB)
         expect(usage[0].memoryUsageBytes).toBeLessThan(40 * MB)
         expect(usage[1].memoryUsageBytes).toBeLessThan(MB)
+    })
+
+    it('stops counting memory once the piece releases it', async () => {
+        await pieceMemorySampler.start()
+        const releasingPiecePath = writePiece({ source: HOLDING_PIECE_SOURCE })
+        const keepingPiecePath = writePiece({ source: HOLDING_PIECE_SOURCE })
+        pieceMemorySampler.trackPiece({ pieceName: '@activepieces/piece-releasing', pieceVersion: '0.1.0', piecePath: releasingPiecePath })
+        pieceMemorySampler.trackPiece({ pieceName: '@activepieces/piece-keeping', pieceVersion: '0.1.0', piecePath: keepingPiecePath })
+        const require = createRequire(__filename)
+        const releasingPiece = require(releasingPiecePath)
+        releasingPiece.hold(20)
+        require(keepingPiecePath).hold(20)
+        const bytesOf = async (pieceName: string): Promise<number> => {
+            const usage = await pieceMemorySampler.getUsage()
+            return usage.find((piece) => piece.pieceName === pieceName)?.memoryUsageBytes ?? 0
+        }
+        const heldBytes = await bytesOf('@activepieces/piece-releasing')
+
+        releasingPiece.release()
+
+        expect(heldBytes).toBeGreaterThan(10 * MB)
+        expect(await bytesOf('@activepieces/piece-releasing')).toBeLessThan(heldBytes / 4)
+        expect(await bytesOf('@activepieces/piece-keeping')).toBeGreaterThan(10 * MB)
     })
 })

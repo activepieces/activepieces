@@ -111,7 +111,7 @@ export const workerSocket = {
         })
 
         setInterval(() => {
-            pieceMemorySampler.refreshUsage().catch(() => undefined)
+            pieceMemorySampler.refreshUsage().catch(() => global.gc?.())
         }, PIECES_MEMORY_REFRESH_INTERVAL_MS)
 
         socket.connect()
