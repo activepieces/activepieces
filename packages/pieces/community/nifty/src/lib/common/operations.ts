@@ -109,7 +109,7 @@ export const niftyOps = {
     const start = niftyClient.optionalIsoDate({ value: input.start, label: 'Start date' });
     const end = niftyClient.optionalIsoDate({ value: input.end, label: 'End date' });
     if (!isList && (start === undefined || end === undefined)) {
-      throw new Error('A milestone needs both a start date and an end date. To create a plain task list without dates, turn on "Create as list".');
+      throw new Error('A milestone needs both a start date and an end date. To create a plain task list without dates, turn on "Create as List".');
     }
     if (start !== undefined && end !== undefined && Date.parse(start) > Date.parse(end)) {
       throw new Error('The start date must be on or before the end date.');
@@ -248,9 +248,9 @@ const ACCESS_TYPES = ['public', 'limited', 'workspace'] as const;
 const TASK_VIEWS = ['table', 'kanban', 'swimlane', 'timeline'] as const;
 
 export const NIFTY_ACCESS_TYPE_OPTIONS = [
-  { label: 'Public (everyone in the workspace can find and join)', value: 'public' },
-  { label: 'Workspace (every workspace member is a member)', value: 'workspace' },
-  { label: 'Limited (only invited members)', value: 'limited' },
+  { label: 'Public (any workspace member can join)', value: 'public' },
+  { label: 'Workspace (every member is in it)', value: 'workspace' },
+  { label: 'Limited (invited members only)', value: 'limited' },
 ];
 
 export const NIFTY_TASK_VIEW_OPTIONS = [

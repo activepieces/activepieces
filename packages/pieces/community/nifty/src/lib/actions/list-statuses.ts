@@ -16,8 +16,11 @@ export const listStatuses = createAction({
       'Lists every status (board column) of a Nifty project in board order. Use to get the status_id that Create Task and Update Task need. Requires project_id. Read-only and idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    { key: 'project', display: 'section', label: 'Project', icon: 'inbox', props: ['project_id', 'include_archived'] },
+  ],
   props: {
-    project_id: Property.ShortText({ displayName: 'Project ID', required: true }),
+    project_id: Property.ShortText({ displayName: 'Project ID', description: 'From Find Projects or a project trigger.', required: true }),
     include_archived: Property.Checkbox({ displayName: 'Include Archived', required: false, defaultValue: false }),
   },
   outputSchema: listStatusesOutputSchema,

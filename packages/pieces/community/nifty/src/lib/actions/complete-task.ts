@@ -16,6 +16,15 @@ export const completeTask = createAction({
       'Marks a Nifty task complete or reopens it, picked from cascading project and task dropdowns (agents: use nifty_task_update with completion). Idempotent: completing an already completed task leaves it completed.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'task',
+      display: 'section',
+      label: 'Task',
+      icon: 'inbox',
+      props: ['portfolio', 'project', 'task', 'action'],
+    },
+  ],
   props: {
     portfolio: niftyProps.portfolio({ required: false }),
     project: niftyProps.project({ required: true }),
@@ -24,10 +33,11 @@ export const completeTask = createAction({
       displayName: 'Action',
       required: true,
       defaultValue: 'complete',
+      display: 'cards',
       options: {
         options: [
-          { label: 'Mark complete', value: 'complete' },
-          { label: 'Reopen', value: 'reopen' },
+          { label: 'Mark complete', value: 'complete', description: 'Marks the task as done' },
+          { label: 'Reopen', value: 'reopen', description: 'Reopens a done task' },
         ],
       },
     }),

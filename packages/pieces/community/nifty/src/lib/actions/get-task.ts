@@ -18,7 +18,7 @@ export const getTask = createAction({
   props: {
     task_id: Property.ShortText({
       displayName: 'Task ID',
-      description: 'The task ID, e.g. from a trigger or Find Tasks (not the short key like ANP-1).',
+      description: 'From a trigger or Find Tasks, not the short key like ANP-1.',
       required: true,
     }),
   },

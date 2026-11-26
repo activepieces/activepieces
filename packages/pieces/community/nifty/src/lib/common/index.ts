@@ -7,7 +7,7 @@ export const niftyProps = {
     return Property.Dropdown<string, R, typeof niftyAuth>({
       auth: niftyAuth,
       displayName: 'Portfolio',
-      description: description ?? 'Optional. Narrows the project list to one portfolio. Leave empty to pick from all your projects.',
+      description: description ?? 'Optional. Narrows the Project list to one portfolio.',
       required,
       refreshers: [],
       options: async ({ auth }) => {
