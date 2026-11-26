@@ -14,10 +14,11 @@ import { clicksendFindContactByEmailAction } from './lib/action/search-contact-b
 import { clicksendFindContactByPhoneAction } from './lib/action/search-contact-by-phone';
 import { clicksendFindContactListAction } from './lib/action/search-contact-lists';
 import { clicksendNewIncomingSms } from './lib/trigger/new-incoming-sms';
-import { callClickSendApi } from './lib/common';
+import { callClickSendApi, clicksendCommon } from './lib/common';
 
 export const clicksendAuth = PieceAuth.BasicAuth({
-  description: `You can get your API credentials by clicking 'API Credentials' on the top right of the dashboard.`,
+  description:
+    'In the ClickSend dashboard, click API Credentials (top right) to copy your username and API key.',
   required: true,
   username: {
     displayName: 'Username',
@@ -46,7 +47,7 @@ export const clicksend = createPiece({
   displayName: 'ClickSend SMS',
   description:
     'Cloud-based messaging platform for sending SMS, MMS, voice, email, and more.',
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/clicksend.png',
   auth: clicksendAuth,
   categories: [PieceCategory.COMMUNICATION],
@@ -61,7 +62,13 @@ export const clicksend = createPiece({
     clicksendFindContactByPhoneAction,
     clicksendFindContactListAction,
     createCustomApiCallAction({
-      baseUrl: () => 'https://rest.clicksend.com/v3',
+      baseUrl: () => clicksendCommon.baseUrl,
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${clicksendCommon.baseUrl}`,
+          placeholder: '/sms/history',
+        },
+      },
       auth: clicksendAuth,
       authMapping: async (auth) => ({
         Authorization: `Basic ${Buffer.from(

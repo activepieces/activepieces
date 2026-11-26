@@ -7,7 +7,7 @@ export const clicksendSendMms = createAction({
   auth: clicksendAuth,
   name: 'send_mms',
   classification: 'WRITE',
-  description: 'Send one or more MMS messages.',
+  description: 'Send an MMS with an image to one phone number.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -15,24 +15,42 @@ export const clicksendSendMms = createAction({
     idempotent: false,
   },
   displayName: 'Send MMS',
+  propertyGroups: [
+    {
+      key: 'recipient',
+      display: 'section',
+      label: 'Send to',
+      icon: 'send',
+      props: ['to'],
+    },
+    {
+      key: 'message',
+      display: 'section',
+      label: 'Message',
+      icon: 'text',
+      props: ['from', 'subject', 'body', 'media_url'],
+    },
+  ],
   props: {
     to: Property.ShortText({
-      description: 'The phone number (with country code, e.g., +1234567890)',
+      description: 'International format, with the country code.',
+      placeholder: '+14155550123',
       displayName: 'To',
       required: true,
     }),
     body: Property.ShortText({
-      description: 'The body of the message to send',
       displayName: 'Message Body',
       required: true,
     }),
     subject: Property.ShortText({
+      description: 'Up to 20 characters.',
       displayName: 'Subject',
       required: true,
     }),
     from: clicksendCommon.sender_id,
     media_url: Property.ShortText({
-      description: 'The URL of the media file to send (image, video, etc.)',
+      description: 'Public link to a JPG or GIF, up to 250 KB.',
+      placeholder: 'https://example.com/photo.jpg',
       displayName: 'Media URL',
       required: true,
     }),
