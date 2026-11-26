@@ -122,10 +122,8 @@
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
   "HEAD": "CABEÇA",
-  "None": "Nenhuma",
-  "JSON": "JSON",
-  "Form Data": "Dados de Formulário",
-  "Raw": "RAW",
+  "Request": "Solicitação",
+  "Data to send": "Dados a enviar",
   "New Submission": "Nova Submissão",
   "Triggers when someone submits the selected form": "Triggers when someone submits the selected form"
 }
