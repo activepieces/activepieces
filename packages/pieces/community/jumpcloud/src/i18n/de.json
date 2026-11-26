@@ -131,6 +131,8 @@
   "PUT": "PUT",
   "DELETE": "LÖSCHEN",
   "HEAD": "HEAD",
+  "Request": "Anfrage",
+  "Data to send": "Daten zum Senden",
   "New Object": "New Object",
   "Triggers when a new user, device, group or application appears in JumpCloud.": "Triggers when a new user, device, group or application appears in JumpCloud.",
   "The kind of new object to watch for.": "The kind of new object to watch for."
