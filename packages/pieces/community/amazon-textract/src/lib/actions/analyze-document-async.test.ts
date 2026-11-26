@@ -1,8 +1,7 @@
 import { Readable } from 'node:stream';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { s3Send, textractSend, s3ClientConstructor, uploadDone, uploadClients, uploadOptions, uploadIds, uploadEvents } = vi.hoisted(() => {
-  const uploadEvents: { progress?: () => void; aborted: boolean } = { aborted: false };
+const { s3Send, textractSend, s3ClientConstructor, uploadDone, uploadClients, uploadOptions, uploadIds } = vi.hoisted(() => {
   return {
     s3Send: vi.fn<(command: AwsCommand) => Promise<unknown>>(),
     textractSend: vi.fn<(command: AwsCommand) => Promise<unknown>>(),
@@ -11,7 +10,6 @@ const { s3Send, textractSend, s3ClientConstructor, uploadDone, uploadClients, up
     uploadClients: new Array<unknown>(),
     uploadOptions: new Array<Record<string, unknown>>(),
     uploadIds: new Array<string>(),
-    uploadEvents,
   };
 });
 
@@ -34,12 +32,6 @@ vi.mock('@aws-sdk/lib-storage', () => ({
     uploadOptions.push(options);
     return {
       done: () => uploadDone(params),
-      on: (_event: string, listener: () => void) => {
-        uploadEvents.progress = listener;
-      },
-      abort: async () => {
-        uploadEvents.aborted = true;
-      },
       get uploadId() {
         return uploadIds.at(0);
       },
@@ -77,8 +69,6 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
     uploadClients.length = 0;
     uploadOptions.length = 0;
     uploadIds.length = 0;
-    uploadEvents.progress = undefined;
-    uploadEvents.aborted = false;
     uploadedBodies.length = 0;
     s3Send.mockResolvedValue({});
     uploadDone.mockImplementation(async (params) => {
@@ -134,9 +124,15 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
         body: Readable.from([Buffer.from('%PDF-1.7 '), Buffer.from('streamed')]),
       };
 
+      uploadDone.mockImplementationOnce(async (params) => {
+        expect(file.body.readableDidRead).toBe(false);
+        uploadedBodies.push(await readAll(params.Body));
+        return {};
+      });
+
       await runAction({ source: 'file', file });
 
-      expect(uploadParams().Body).toBe(file.body);
+      expect(uploadParams().Body).toBeInstanceOf(Readable);
       expect(uploadedBodies).toEqual([Buffer.from('%PDF-1.7 streamed')]);
     });
 
@@ -212,7 +208,7 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
       ).rejects.toThrow(
         /^Could not upload the file to S3 bucket "docs-bucket" \(TypeError: terminated\)\. Check the File to Upload field and the S3 Bucket name\.$/
       );
-      expect(uploadOptions).toEqual([{ leavePartsOnError: true }]);
+      expect(uploadOptions).toEqual([{ partSize: 5 * 1024 * 1024, leavePartsOnError: true }]);
       expect(abortInputs()).toEqual([{ Bucket: BUCKET, Key: expect.stringMatching(UPLOAD_KEY), UploadId: 'upload-1' }]);
       expect(textractSend).not.toHaveBeenCalled();
     });
@@ -416,14 +412,13 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
     it('starts no job when the upload leaves under a minute of the 7, and still deletes the upload', async () => {
       uploadDone.mockImplementation(async () => {
         vi.setSystemTime(Date.now() + 365_000);
-        uploadEvents.progress?.();
         return {};
       });
 
       await expect(
         runAction({ source: 'file', file: new ApFile('contract.pdf', Buffer.from('%PDF'), 'pdf') })
       ).rejects.toThrow('Uploading the file took over 6 minutes, so this step has too little time left to wait for the analysis.');
-      expect(uploadEvents.aborted).toBe(false);
+      expect(abortInputs()).toEqual([]);
       expect(textractSend).not.toHaveBeenCalled();
       expect(deleteInputs()).toHaveLength(1);
     });
@@ -431,24 +426,21 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
     it('stops a multipart upload still running after 6 minutes and removes the parts already sent', async () => {
       uploadIds.push('upload-1');
       let partsSent = 0;
-      uploadDone.mockImplementation(async () => {
-        while (partsSent < 4) {
+      uploadDone.mockImplementation(async (params) => {
+        for await (const part of params.Body) {
+          expect(part).toHaveLength(5 * 1024 * 1024);
           vi.setSystemTime(Date.now() + 150_000);
           partsSent += 1;
-          uploadEvents.progress?.();
-          if (uploadEvents.aborted) {
-            throw Object.assign(new Error('Upload aborted.'), { name: 'AbortError' });
-          }
         }
         return {};
       });
 
       await expect(
-        runAction({ source: 'file', file: new ApFile('contract.pdf', Buffer.from('%PDF'), 'pdf') })
+        runAction({ source: 'file', file: new ApFile('contract.pdf', Buffer.alloc(6 * 5 * 1024 * 1024), 'pdf') })
       ).rejects.toThrow(
         /^Uploading the file took over 6 minutes, so this step has too little time left to wait for the analysis\. Upload it to S3 first and set Document Source to "File already in S3", or use a smaller file\.$/
       );
-      expect(partsSent).toBe(3);
+      expect(partsSent).toBe(4);
       expect(abortInputs()).toEqual([{ Bucket: BUCKET, Key: expect.stringMatching(UPLOAD_KEY), UploadId: 'upload-1' }]);
       expect(textractSend).not.toHaveBeenCalled();
       expect(deleteInputs()).toHaveLength(0);

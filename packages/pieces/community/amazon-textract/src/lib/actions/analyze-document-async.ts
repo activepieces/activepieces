@@ -11,6 +11,7 @@ import {
   TextractClient,
 } from '@aws-sdk/client-textract';
 import { randomUUID } from 'node:crypto';
+import { Readable } from 'node:stream';
 import { amazonTextractAuth, TextractAuth } from '../auth';
 import {
   QueryResult,
@@ -172,6 +173,7 @@ async function analyzeUploadedFile({
     bucket,
     file,
     deadline: analysis.startedAt + STEP_JOB_WAIT_MS - MIN_JOB_WAIT_MS,
+    stopAt: analysis.startedAt + STEP_RESULTS_WAIT_MS,
   });
   try {
     const result = await analyzeS3Document({ client, bucket, key: upload.key, analysis });
@@ -202,37 +204,49 @@ async function uploadDocument({
   bucket,
   file,
   deadline,
+  stopAt,
 }: {
   s3: S3Client;
   bucket: string;
   file: ApFile | ApStreamingFile;
   deadline: number;
+  stopAt: number;
 }): Promise<UploadedDocument> {
   const extension = file.extension?.replace(/[^a-zA-Z0-9]/g, '');
   const key = `${UPLOAD_KEY_PREFIX}/${randomUUID()}${extension ? `.${extension}` : ''}`;
   const storage = await import('@aws-sdk/lib-storage');
   let upload: Upload | undefined;
-  let tooSlow = false;
+  let stopped = false;
+  const stopTimer = setTimeout(() => {
+    stopped = true;
+    void upload?.abort();
+  }, Math.max(0, stopAt - Date.now()));
   try {
     const { body } = streamUtils.toStreamingBody(file);
-    const started = new storage.Upload({
+    upload = new storage.Upload({
       client: s3,
-      params: { Bucket: bucket, Key: key, Body: body },
+      params: { Bucket: bucket, Key: key, Body: Readable.from(partsUntil({ body, deadline }), { highWaterMark: 1 }) },
+      partSize: UPLOAD_PART_SIZE,
       leavePartsOnError: true,
     });
-    upload = started;
-    started.on('httpUploadProgress', () => {
-      if (!tooSlow && started.uploadId && Date.now() > deadline) {
-        tooSlow = true;
-        void started.abort();
-      }
-    });
-    const response = await started.done();
+    const response = await upload.done();
     return { key, versionId: response.VersionId };
   } catch (e) {
-    const message = tooSlow ? SLOW_UPLOAD_MESSAGE : uploadErrorMessage({ bucket, error: e });
+    const message =
+      stopped || e instanceof SlowUploadError ? SLOW_UPLOAD_MESSAGE : uploadErrorMessage({ bucket, error: e });
     const abortWarning = await abortPartialUpload({ s3, bucket, key, uploadId: upload?.uploadId });
     throw new TextractStepError(abortWarning ? `${message} ${abortWarning}` : message);
+  } finally {
+    clearTimeout(stopTimer);
+  }
+}
+
+async function* partsUntil({ body, deadline }: { body: Readable; deadline: number }): AsyncGenerator<Buffer> {
+  for await (const part of streamUtils.readChunks({ readable: body, chunkSize: UPLOAD_PART_SIZE })) {
+    if (Date.now() > deadline) {
+      throw new SlowUploadError(SLOW_UPLOAD_MESSAGE);
+    }
+    yield part;
   }
 }
 
@@ -473,6 +487,8 @@ function isEarlierAnswer({ candidate, current }: { candidate: QueryResult; curre
 
 class TextractStepError extends Error {}
 
+class SlowUploadError extends Error {}
+
 const POLL_INTERVAL_MS = 5000;
 const JOB_WAIT_MS = 5 * 60 * 1000;
 const STEP_JOB_WAIT_MS = 7 * 60 * 1000;
@@ -481,6 +497,7 @@ const SLOW_UPLOAD_MESSAGE =
   'Uploading the file took over 6 minutes, so this step has too little time left to wait for the analysis. Upload it to S3 first and set Document Source to "File already in S3", or use a smaller file.';
 const STEP_RESULTS_WAIT_MS = 8 * 60 * 1000;
 const UPLOAD_KEY_PREFIX = 'activepieces-textract-uploads';
+const UPLOAD_PART_SIZE = 5 * 1024 * 1024;
 const BUCKET_NAME_REGEX = /^[a-zA-Z0-9._-]{3,255}$/;
 
 type AnalysisOptions = {
