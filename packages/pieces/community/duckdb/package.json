@@ -9,6 +9,7 @@
     "@activepieces/pieces-framework": "workspace:*",
     "@duckdb/node-api": "1.4.3-r.2",
     "csv-parse": "5.6.0",
+    "csv-stringify": "6.5.2",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*"
   },

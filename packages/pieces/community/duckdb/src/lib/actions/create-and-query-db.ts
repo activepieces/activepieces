@@ -1,8 +1,15 @@
-import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
+import {
+  ApFile,
+  createAction,
+  InputPropertyMap,
+  PieceAuth,
+  Property,
+} from '@activepieces/pieces-framework';
 
 import { DuckDBInstance } from '@duckdb/node-api';
 import { quotedIdentifier } from '@duckdb/node-api/lib/sql';
 import { parse as parseCsv } from 'csv-parse/sync';
+import { stringify as stringifyCsv } from 'csv-stringify/sync';
 
 export const createAndQueryDB = createAction({
   name: 'createAndQueryDB',
@@ -72,6 +79,69 @@ More information on data types and accepted values:
       description: 'Arguments to be used in the query',
       required: false,
     }),
+    outputFormat: Property.StaticDropdown({
+      displayName: 'Output Format',
+      description:
+        'Return the rows inline, or write them to a file and return the file instead (useful for large results).',
+      required: false,
+      defaultValue: 'rows',
+      options: {
+        options: [
+          { label: 'Rows (default)', value: 'rows' },
+          { label: 'JSON file', value: 'json' },
+          { label: 'CSV file', value: 'csv' },
+        ],
+      },
+    }),
+    formatOptions: Property.DynamicProperties({
+      displayName: 'File Options',
+      required: false,
+      auth: PieceAuth.None(),
+      refreshers: ['outputFormat'],
+      props: async (propsValue): Promise<InputPropertyMap> => {
+        const format = propsValue['outputFormat'];
+        switch (format) {
+          case 'json':
+            return {
+              jsonFileName: Property.ShortText({
+                displayName: 'File Name',
+                description: 'Name of the file to create.',
+                required: true,
+                defaultValue: 'results.json',
+              }),
+              jsonPrettyPrint: Property.Checkbox({
+                displayName: 'Pretty Print',
+                description: 'Indent the JSON so it is easier to read.',
+                required: false,
+                defaultValue: false,
+              }),
+            };
+          case 'csv':
+            return {
+              csvFileName: Property.ShortText({
+                displayName: 'File Name',
+                description: 'Name of the file to create.',
+                required: true,
+                defaultValue: 'results.csv',
+              }),
+              csvDelimiter: Property.StaticDropdown({
+                displayName: 'Delimiter',
+                description: 'The character that separates columns.',
+                required: true,
+                defaultValue: ',',
+                options: {
+                  options: [
+                    { label: 'Comma', value: ',' },
+                    { label: 'Tab', value: '\t' },
+                  ],
+                },
+              }),
+            };
+          default:
+            return {};
+        }
+      },
+    }),
   },
   async run(context) {
     const instance = await DuckDBInstance.create(':memory:');
@@ -135,7 +205,39 @@ More information on data types and accepted values:
 
     connection.closeSync();
 
-    return results;
+    const { outputFormat, formatOptions } = context.propsValue;
+    switch (outputFormat) {
+      case 'json': {
+        const fileName = formatOptions?.['jsonFileName'];
+        if (typeof fileName !== 'string') {
+          throw new Error('File Name is required.');
+        }
+        const indent = formatOptions?.['jsonPrettyPrint'] === true ? 2 : undefined;
+        return context.files.write({
+          fileName,
+          data: Buffer.from(JSON.stringify(results, null, indent)),
+        });
+      }
+      case 'csv': {
+        const fileName = formatOptions?.['csvFileName'];
+        if (typeof fileName !== 'string') {
+          throw new Error('File Name is required.');
+        }
+        const delimiter = formatOptions?.['csvDelimiter'];
+        return context.files.write({
+          fileName,
+          data: Buffer.from(
+            stringifyCsv(results, {
+              header: true,
+              columns: reader.columnNames(),
+              delimiter,
+            })
+          ),
+        });
+      }
+      default:
+        return results;
+    }
   },
 });
 

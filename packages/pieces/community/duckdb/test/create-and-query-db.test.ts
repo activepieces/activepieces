@@ -2,8 +2,29 @@ import { ApFile } from '@activepieces/pieces-framework';
 import { describe, expect, it } from 'vitest';
 import { createAndQueryDB } from '../src/lib/actions/create-and-query-db';
 
+type WrittenFile = { fileName: string; data: Buffer };
+
 function runAction(propsValue: Record<string, unknown>) {
   return createAndQueryDB.run({ propsValue } as never);
+}
+
+async function runActionWithFiles({
+  formatOptions,
+  ...rest
+}: { formatOptions?: Record<string, unknown> } & Record<string, unknown>) {
+  const propsValue = {
+    ...rest,
+    formatOptions: { jsonFileName: 'out', csvFileName: 'out', ...formatOptions },
+  };
+  const written: WrittenFile[] = [];
+  const files = {
+    write: async (file: WrittenFile) => {
+      written.push(file);
+      return `file://${file.fileName}`;
+    },
+  };
+  const result = await createAndQueryDB.run({ propsValue, files } as never);
+  return { result, written };
 }
 
 function table(overrides: Record<string, unknown>) {
@@ -211,5 +232,139 @@ describe('Schema autodetection (schema left at its default {})', () => {
     });
 
     expect(rows).toEqual([{ id: '1', name: 'a' }]);
+  });
+});
+
+describe('Output Format', () => {
+  const props = {
+    tables: [table({ data: [{ id: 1, name: 'a' }] })],
+    query: 'SELECT name FROM t',
+  };
+
+  it('returns rows inline and writes no file by default', async () => {
+    const { result, written } = await runActionWithFiles(props);
+
+    expect(result).toEqual([{ name: 'a' }]);
+    expect(written).toHaveLength(0);
+  });
+
+  it('json writes a file containing the rows and returns the file reference', async () => {
+    const { result, written } = await runActionWithFiles({
+      ...props,
+      outputFormat: 'json',
+    });
+
+    expect(result).toBe('file://out');
+    expect(written).toHaveLength(1);
+    expect(JSON.parse(written[0].data.toString('utf-8'))).toEqual([
+      { name: 'a' },
+    ]);
+  });
+});
+
+describe('File Options', () => {
+  const props = {
+    tables: [table({ data: [{ id: 1 }] })],
+    query: 'SELECT id FROM t',
+  };
+
+  it('writes the file under the chosen file name', async () => {
+    const { written } = await runActionWithFiles({
+      ...props,
+      outputFormat: 'json',
+      formatOptions: { jsonFileName: 'out.json' },
+    });
+
+    expect(written[0].fileName).toBe('out.json');
+  });
+
+  it('throws when a file format is chosen without a file name', async () => {
+    await expect(
+      runAction({ ...props, outputFormat: 'json' })
+    ).rejects.toThrow('File Name is required.');
+  });
+
+  it('exposes only the options for the chosen format', async () => {
+    const build = createAndQueryDB.props.formatOptions.props;
+    const ctx = {} as never;
+
+    expect(Object.keys(await build({ outputFormat: 'rows' }, ctx))).toEqual([]);
+    expect(Object.keys(await build({ outputFormat: 'json' }, ctx))).toEqual(
+      ['jsonFileName', 'jsonPrettyPrint']
+    );
+    expect(Object.keys(await build({ outputFormat: 'csv' }, ctx))).toEqual(
+      ['csvFileName', 'csvDelimiter']
+    );
+  });
+});
+
+describe('JSON Pretty Print', () => {
+  const props = {
+    tables: [table({ data: [{ id: 1 }] })],
+    query: 'SELECT id FROM t',
+    outputFormat: 'json',
+  };
+
+  it('writes compact JSON by default', async () => {
+    const { written } = await runActionWithFiles(props);
+
+    expect(written[0].data.toString('utf-8')).toBe('[{"id":"1"}]');
+  });
+
+  it('indents the JSON when pretty print is on', async () => {
+    const { written } = await runActionWithFiles({
+      ...props,
+      formatOptions: { jsonPrettyPrint: true },
+    });
+
+    expect(written[0].data.toString('utf-8')).toBe(
+      JSON.stringify([{ id: '1' }], null, 2)
+    );
+  });
+});
+
+describe('CSV output', () => {
+  it('csv writes a file with a header row and the rows', async () => {
+    const { result, written } = await runActionWithFiles({
+      tables: [table({ data: [{ id: 1, name: 'a' }, { id: 2, name: 'b' }] })],
+      query: 'SELECT id, name FROM t ORDER BY id',
+      outputFormat: 'csv',
+    });
+
+    expect(result).toBe('file://out');
+    expect(written[0].data.toString('utf-8')).toBe('id,name\n1,a\n2,b\n');
+  });
+
+  it('escapes commas, quotes and newlines', async () => {
+    const { written } = await runActionWithFiles({
+      tables: [table({ data: [{ v: 'a,"b"\nc' }] })],
+      query: 'SELECT v FROM t',
+      outputFormat: 'csv',
+    });
+
+    expect(written[0].data.toString('utf-8')).toBe('v\n"a,""b""\nc"\n');
+  });
+
+  it('still writes the header when the result has zero rows', async () => {
+    const { written } = await runActionWithFiles({
+      tables: [table({ data: [{ id: 1, name: 'a' }] })],
+      query: 'SELECT id, name FROM t WHERE id = 99',
+      outputFormat: 'csv',
+    });
+
+    expect(written[0].data.toString('utf-8')).toBe('id,name\n');
+  });
+});
+
+describe('CSV delimiter option', () => {
+  it('separates columns with a tab when selected', async () => {
+    const { written } = await runActionWithFiles({
+      tables: [table({ data: [{ id: 1, name: 'a' }] })],
+      query: 'SELECT id, name FROM t',
+      outputFormat: 'csv',
+      formatOptions: { csvDelimiter: '\t' },
+    });
+
+    expect(written[0].data.toString('utf-8')).toBe('id\tname\n1\ta\n');
   });
 });
