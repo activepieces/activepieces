@@ -11,32 +11,48 @@ export const askChatbotAction = createAction({
   name: 'afforai_ask_chatbot',
   classification: 'READ',
   displayName: 'Ask Chatbot',
-  description: 'Gets AI-generated completions for a given chatbot.',
+  description: 'Ask one of your Afforai chatbots a question and get its answer.',
   audience: 'both',
   aiMetadata: { description: 'Sends a conversation history to a specific Afforai chatbot (identified by its Chatbot/session ID) and returns an AI-generated reply grounded in that chatbot\'s documents. Choose this to query an existing knowledge base rather than to manage documents. Optionally enable deeper document search and/or live Google search to broaden sources. Not idempotent: each call produces a fresh, potentially different completion.', idempotent: false },
+  propertyGroups: [
+    {
+      key: 'conversation',
+      display: 'section',
+      label: 'Conversation',
+      icon: 'reply',
+      props: ['sessionID', 'history'],
+    },
+    {
+      key: 'search',
+      display: 'section',
+      label: 'Search Options',
+      icon: 'sliders',
+      props: ['powerful', 'google'],
+    },
+  ],
   props: {
     sessionID: Property.ShortText({
       displayName: 'Chatbot ID',
       required: true,
-      description: `You can find Chatbot ID by clicking settings button under **Actions** for given chatbot.`,
+      description: `Find it in Afforai under the chatbot's Actions menu > Settings.`,
     }),
     history: Property.Array({
       displayName: 'Chat History',
       required: true,
+      description: 'One row per message, oldest first.',
       properties: {
         role: Property.StaticDropdown({
           displayName: 'Role',
-          description: 'The role of the message sender.',
+          description: `User for your messages, Assistant for the chatbot's replies.`,
           required: true,
           options: {
-            disabled: false,
             options: [
               {
-                label: 'user',
+                label: 'User',
                 value: 'user',
               },
               {
-                label: 'assistant',
+                label: 'Assistant',
                 value: 'assistant',
               },
             ],
@@ -44,34 +60,35 @@ export const askChatbotAction = createAction({
         }),
         content: Property.LongText({
           displayName: 'Message',
-          description: 'The content of the message.',
           required: true,
         }),
       },
     }),
     powerful: Property.Checkbox({
-      displayName:
-        'AI should search more deeply for information in the given files ?',
-      required: true,
+      displayName: 'Deep File Search',
+      description: `Search the chatbot's files more thoroughly before answering.`,
+      required: false,
+      defaultValue: false,
     }),
     google: Property.Checkbox({
-      displayName: 'AI to search for information on Google?',
-      required: true,
+      displayName: 'Google Search',
+      description: `Also look for answers on Google, not only in the chatbot's files.`,
+      required: false,
+      defaultValue: false,
     }),
   },
   async run(context) {
-    const { sessionID, powerful, google } = context.propsValue;
-    const history = context.propsValue.history as ChatHistory[];
+    const { sessionID, history, powerful, google } = context.propsValue;
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url: 'https://api.afforai.com/api/api_completion',
       body: {
         apiKey: context.auth,
-        sessionID: sessionID,
-        history: history,
-        powerful: powerful,
-        google: google,
+        sessionID,
+        history,
+        powerful: powerful ?? false,
+        google: google ?? false,
       },
     };
 
@@ -79,8 +96,3 @@ export const askChatbotAction = createAction({
     return res.body;
   },
 });
-
-type ChatHistory = {
-  role: string;
-  content: string;
-};
