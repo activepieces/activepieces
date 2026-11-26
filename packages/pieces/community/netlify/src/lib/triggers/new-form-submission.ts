@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, MarkdownVariant, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { netlifyAuth } from '../common/auth';
 import { netlifySchemas } from '../common/output-schemas';
 import { netlifyProps } from '../common/props';
@@ -9,12 +9,13 @@ export const newFormSubmission = createTrigger({
   name: 'new_form_submission',
   classification: 'READ',
   displayName: 'New Form Submission',
-  description: 'Fires when a Netlify form submission is received.',
+  description: 'Fires when someone submits a form on your Netlify site.',
   aiMetadata: {
     description: 'Fires when a new form submission is received on the selected Netlify site (the submission_created event); the payload includes the submitted field data and submitter metadata. Use it to process or route contact/lead form entries.',
   },
   props: {
-    siteId: netlifyProps.siteDropdown({ description: 'Select the site to watch for form submissions.' }),
+    siteId: netlifyProps.siteDropdown({ description: 'The site to watch.' }),
+    scopeNote: Property.MarkDown({ value: 'Fires for every form on this site. Check **Form Name** in the output to narrow it down.', variant: MarkdownVariant.INFO }),
   },
   outputSchema: netlifySchemas.submission,
   sampleData: {

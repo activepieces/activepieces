@@ -89,7 +89,8 @@ function formDropdown() {
 function deployId({ description }: { description?: string } = {}) {
   return Property.ShortText({
     displayName: 'Deploy ID',
-    description: description ?? 'The Netlify deploy ID, e.g. 6512f0c1a2b3c40008d9e123 (from List Site Deploys or a deploy trigger).',
+    description: description ?? 'From List Site Deploys or a deploy trigger.',
+    placeholder: '6512f0c1a2b3c40008d9e123',
     required: true,
   });
 }
@@ -99,6 +100,7 @@ function page() {
     displayName: 'Page',
     description: 'Page number, starting at 1.',
     required: false,
+    advanced: true,
     defaultValue: 1,
   });
 }
@@ -106,7 +108,7 @@ function page() {
 function perPage({ defaultValue }: { defaultValue?: number } = {}) {
   return Property.Number({
     displayName: 'Per Page',
-    description: 'Items per page, 1-100.',
+    description: 'How many items to return, up to 100.',
     required: false,
     defaultValue,
   });

@@ -8,8 +8,8 @@ export const restoreDeploy = createAction({
   auth: netlifyAuth,
   name: 'restore_deploy',
   classification: 'WRITE',
-  displayName: 'Publish Deploy (Rollback)',
-  description: 'Publish an earlier deploy so it becomes the live version of its site.',
+  displayName: 'Publish Earlier Deploy',
+  description: 'Roll back by making an earlier deploy the live version of its site.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -17,7 +17,7 @@ export const restoreDeploy = createAction({
     idempotent: true,
   },
   outputSchema: netlifySchemas.deploy,
-  props: { deployId: netlifyProps.deployId({ description: 'The ID of the deploy to publish (from List Site Deploys).' }) },
+  props: { deployId: netlifyProps.deployId({ description: 'The earlier deploy to publish, from List Site Deploys.' }) },
   async run({ auth, propsValue }) {
     return netlifyOperations.restoreDeploy({ auth, deployId: propsValue.deployId });
   },

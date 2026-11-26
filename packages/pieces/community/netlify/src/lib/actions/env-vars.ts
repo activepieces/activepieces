@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { netlifyAuth } from '../common/auth';
 import { netlifyOperations } from '../common/operations';
 import { netlifySchemas } from '../common/output-schemas';
@@ -9,7 +9,7 @@ const CONTEXTS = [
   { label: 'Production', value: 'production' },
   { label: 'Deploy previews', value: 'deploy-preview' },
   { label: 'Branch deploys', value: 'branch-deploy' },
-  { label: 'Local development (netlify dev)', value: 'dev' },
+  { label: 'Local development', value: 'dev' },
 ];
 
 function listFilters() {
@@ -38,18 +38,18 @@ function listFilters() {
 
 function setFields() {
   return {
-    key: Property.ShortText({ displayName: 'Key', description: 'Variable name, e.g. API_URL (letters, digits and underscores).', required: true }),
+    key: Property.ShortText({ displayName: 'Variable Name', description: 'Letters, digits and underscores; cannot start with a digit.', placeholder: 'API_URL', required: true }),
     value: Property.LongText({ displayName: 'Value', required: true }),
     context: Property.StaticDropdown({
       displayName: 'Deploy Context',
-      description: 'Which deploys get this value. All contexts replaces any per-context values. Defaults to all contexts.',
+      description: 'Which deploys get this value; All contexts replaces the others.',
       required: false,
       defaultValue: 'all',
       options: { options: CONTEXTS },
     }),
     isSecret: Property.Checkbox({
       displayName: 'Secret',
-      description: 'Only used when the variable is created: hide its value in the Netlify UI and API. Secret variables are available to builds, functions and runtime only and need a specific deploy context.',
+      description: 'Hide the value in Netlify. Needs one deploy context; creation only.',
       required: false,
       defaultValue: false,
     }),
@@ -57,7 +57,7 @@ function setFields() {
 }
 
 function keyField() {
-  return Property.ShortText({ displayName: 'Key', description: 'The variable name to delete, e.g. API_URL.', required: true });
+  return Property.ShortText({ displayName: 'Variable Name', description: 'Letters, digits and underscores; cannot start with a digit.', placeholder: 'API_URL', required: true });
 }
 
 export const listEnvVars = createAction({
@@ -111,7 +111,15 @@ export const setEnvVar = createAction({
     idempotent: true,
   },
   outputSchema: netlifySchemas.envVarWrite,
-  props: { siteId: netlifyProps.siteDropdown({ description: 'The site to set the variable on.' }), ...setFields() },
+  props: {
+    siteId: netlifyProps.siteDropdown({ description: 'The site to set the variable on.' }),
+    ...setFields(),
+    secretNote: Property.MarkDown({ value: 'Secret variables need one deploy context, not **All contexts**.', variant: MarkdownVariant.INFO }),
+  },
+  propertyGroups: [
+    { key: 'variable', display: 'section', label: 'Variable', icon: 'tag', props: ['siteId', 'key', 'value'] },
+    { key: 'settings', display: 'section', label: 'Settings', icon: 'sliders', props: ['context', 'isSecret', 'secretNote'] },
+  ],
   async run({ auth, propsValue }) {
     return netlifyOperations.setEnvVar({ auth, siteId: propsValue.siteId, key: propsValue.key, value: propsValue.value, context: propsValue.context, isSecret: propsValue.isSecret });
   },
