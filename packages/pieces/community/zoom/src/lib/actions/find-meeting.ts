@@ -18,14 +18,16 @@ export const zoomFindMeeting = createAction({
     occurrence_id: Property.ShortText({
       displayName: 'Occurrence ID',
       description:
-        'Meeting Occurrence ID. Provide this field to view meeting details of a particular occurrence of the recurring meeting.',
+        'Recurring meetings only: one occurrence. Empty: the whole series.',
       required: false,
+      advanced: true,
     }),
     show_previous_occurrences: Property.Checkbox({
       displayName: 'Show Previous Occurrences',
       description:
-        'Set to true if you would like to view meeting details of all previous occurrences of a recurring meeting.',
+        'Recurring meetings only: include occurrences already held.',
       required: false,
+      advanced: true,
       defaultValue: false,
     }),
   },

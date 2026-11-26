@@ -17,27 +17,33 @@ const action = () => {
     outputSchema: createMeetingOutputSchema,
     props: {
       topic: Property.ShortText({
-        displayName: "Meeting's topic",
-        description: "The meeting's topic",
+        displayName: 'Topic',
+        description: 'Shown as the meeting title in Zoom and in invites.',
+        placeholder: 'Weekly team sync',
         required: true,
       }),
       start_time: Property.ShortText({
         displayName: 'Start Time',
-        description: 'Meeting start date-time, for example 2026-11-01T15:00:00 (read in the Timezone below) or 2026-11-01T15:00:00Z (UTC).',
+        description: 'Read in the Timezone field; end it with Z for UTC.',
+        placeholder: '2026-11-01T15:00:00',
         required: false,
       }),
       timezone: Property.ShortText({
         displayName: 'Timezone',
-        description: 'IANA timezone for the start time, for example America/New_York. Defaults to UTC.',
+        description: 'IANA timezone name. Defaults to UTC.',
+        placeholder: 'America/New_York',
         required: false,
+        width: 'half',
       }),
       duration: Property.Number({
-        displayName: 'Duration (in Minutes)',
-        description: 'Duration of the meeting',
+        displayName: 'Duration',
+        description: 'Length in minutes. Defaults to 30.',
         required: false,
+        width: 'half',
       }),
       auto_recording: Property.StaticDropdown({
         displayName: 'Auto Recording',
+        description: 'Record the meeting automatically, locally or to the cloud.',
         required: false,
         options: {
           disabled: false,
@@ -50,6 +56,7 @@ const action = () => {
       }),
       audio: Property.StaticDropdown({
         displayName: 'Audio',
+        description: 'How people join the audio. Defaults to Telephony only.',
         required: false,
         options: {
           disabled: false,
@@ -63,39 +70,46 @@ const action = () => {
       }),
       agenda: Property.LongText({
         displayName: 'Agenda',
-        description: "The meeting's agenda",
+        description: 'Meeting description. Defaults to "My Meeting".',
         required: false,
       }),
       password: Property.ShortText({
-        displayName: 'Password',
-        description:
-          'The password required to join the meeting. By default, a password can only have a maximum length of 10 characters and only contain alphanumeric characters and the @, -, _, and * characters.',
+        displayName: 'Passcode',
+        description: 'Up to 10 characters: letters, numbers and @ - _ *.',
         required: false,
       }),
       pre_schedule: Property.Checkbox({
-        displayName: 'Pre Schedule',
-        description:
-          'Whether the prescheduled meeting was created via the GSuite app.',
+        displayName: 'Pre-schedule',
+        description: 'Only for meetings made with the Zoom for Google Workspace app.',
         required: false,
+        advanced: true,
       }),
       schedule_for: Property.ShortText({
-        displayName: 'Schedule for',
-        description:
-          'The email address or user ID of the user to schedule a meeting for.',
+        displayName: 'Schedule For',
+        description: 'Email or user ID of the host. Needs Zoom scheduling privilege.',
+        placeholder: 'colleague@example.com',
         required: false,
+        advanced: true,
       }),
       join_url: Property.LongText({
         displayName: 'Join URL',
-        description: 'Not used by Zoom (kept for compatibility). Zoom creates the join URL and returns it in the output.',
+        description: 'Not used: Zoom creates the join URL and returns it in the output.',
         required: false,
+        advanced: true,
       }),
       require_authentication: Property.Checkbox({
         displayName: 'Require Zoom Sign-in to Join',
-        description: 'When on, only participants signed in to a Zoom account can join. Turn off to let anyone with the link join.',
+        description: 'Only people signed in to Zoom can join. Off: anyone with the link.',
         required: false,
         defaultValue: true,
       }),
     },
+    propertyGroups: [
+      { key: 'meeting', display: 'section', label: 'Meeting', icon: 'text', props: ['topic', 'agenda'] },
+      { key: 'when', display: 'section', label: 'When', icon: 'calendar', props: ['start_time', 'timezone', 'duration'] },
+      { key: 'access', display: 'section', label: 'Who Can Join', icon: 'users', props: ['password', 'require_authentication'] },
+      { key: 'in_meeting', display: 'section', label: 'In the Meeting', icon: 'sliders', props: ['audio', 'auto_recording'] },
+    ],
     async run(context) {
       const body = buildCreateMeetingBody({ propsValue: context.propsValue });
       const response = await zoomClient.requestObject({

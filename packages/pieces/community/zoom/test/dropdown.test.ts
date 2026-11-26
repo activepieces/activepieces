@@ -22,6 +22,13 @@ describe('meeting dropdown', () => {
     expect(requestOf({ fetchMock, call: 1 }).url).toContain('next_page_token=t1');
   });
 
+  it('adds the start date to the label and keeps the meeting ID as the value', async () => {
+    const fetchMock = installFetch();
+    fetchMock.mockResolvedValueOnce(jsonResponse({ body: { meetings: [{ id: 85746065432, topic: 'Weekly sync', start_time: '2026-11-01T15:00:00Z' }, { id: 3, topic: 'No date' }] } }));
+    const result = await loadOptions();
+    expect(result.options).toEqual([{ label: 'Weekly sync (2026-11-01)', value: '85746065432' }, { label: 'No date', value: '3' }]);
+  });
+
   it('names the missing scope and other failures', async () => {
     const fetchMock = installFetch();
     fetchMock.mockResolvedValueOnce(jsonResponse({ status: 400, body: { code: 4711, message: 'Invalid access token, does not contain scopes:[meeting:read:list_meetings].' } }));

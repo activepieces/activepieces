@@ -20,14 +20,14 @@ export const zoomListMeetings = createAction({
   props: {
     type: Property.StaticDropdown({
       displayName: 'Meeting Type',
-      description: 'Which meetings to list.',
+      description: 'Which meetings to list. Defaults to Scheduled.',
       required: false,
       defaultValue: 'scheduled',
       options: {
         disabled: false,
         options: [
-          { label: 'Scheduled (all valid scheduled meetings)', value: 'scheduled' },
-          { label: 'Live (in progress)', value: 'live' },
+          { label: 'Scheduled', value: 'scheduled' },
+          { label: 'Live now', value: 'live' },
           { label: 'Upcoming', value: 'upcoming' },
           { label: 'Upcoming meetings (from today)', value: 'upcoming_meetings' },
           { label: 'Previous meetings', value: 'previous_meetings' },

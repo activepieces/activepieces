@@ -5,7 +5,7 @@ import { ZoomApiError, zoomClient } from './client';
 
 export const zoomMeetingDropdown = Property.Dropdown({
   displayName: 'Meeting',
-  description: 'Select a meeting from your Zoom account.',
+  description: 'Pick one of your scheduled Zoom meetings.',
   required: true,
   auth: zoomAuth,
   refreshers: ['auth'],
@@ -33,77 +33,85 @@ export const zoomMeetingDropdown = Property.Dropdown({
 export const getRegistarantProps = () => ({
   meeting_id: Property.ShortText({
     displayName: 'Meeting ID',
-    description: 'The meeting ID.',
+    description: 'The number in the meeting link after /j/, or from List Meetings.',
+    placeholder: '85746065432',
     required: true,
   }),
   first_name: Property.ShortText({
-    displayName: 'First name',
-    description: "The registrant's first name.",
+    displayName: 'First Name',
+    placeholder: 'Jane',
     required: true,
+    width: 'half',
   }),
   last_name: Property.ShortText({
-    displayName: 'Last name',
-    description: "The registrant's last name.",
+    displayName: 'Last Name',
+    placeholder: 'Doe',
     required: false,
+    width: 'half',
   }),
   email: Property.ShortText({
     displayName: 'Email',
-    description: "The registrant's email address.",
+    placeholder: 'jane@example.com',
     required: true,
   }),
   address: Property.ShortText({
     displayName: 'Address',
-    description: "The registrant's address",
+    placeholder: '1 Main Street',
     required: false,
   }),
   city: Property.ShortText({
     displayName: 'City',
-    description: "The registrant's city",
+    placeholder: 'Springfield',
     required: false,
+    width: 'half',
   }),
   state: Property.ShortText({
     displayName: 'State',
-    description: "The registrant's state or province.",
+    description: 'State or province.',
     required: false,
+    width: 'half',
   }),
   zip: Property.ShortText({
-    displayName: 'Zip',
-    description: "The registrant's zip or postal code.",
+    displayName: 'ZIP Code',
+    description: 'ZIP or postal code.',
     required: false,
+    width: 'half',
   }),
   country: Property.ShortText({
     displayName: 'Country',
-    description: "The registrant's two-letter country code.",
+    description: 'Two-letter country code.',
+    placeholder: 'US',
     required: false,
+    width: 'half',
   }),
   phone: Property.ShortText({
     displayName: 'Phone',
-    description: "The registrant's phone number.",
+    placeholder: '+1 555 0100',
     required: false,
   }),
   comments: Property.LongText({
     displayName: 'Comments',
-    description: "The registrant's questions and comments.",
+    description: 'Questions or comments from the registrant.',
     required: false,
   }),
   custom_questions: Property.Object({
-    displayName: 'Custom questions',
-    description: 'Answers to the meeting\'s custom registration questions: use the question title as the key and the answer as the value.',
+    displayName: 'Custom Questions',
+    description: "Answers to the meeting's custom questions: question title as key.",
     required: false,
   }),
   industry: Property.ShortText({
     displayName: 'Industry',
-    description: "The registrant's industry.",
     required: false,
   }),
   job_title: Property.ShortText({
-    displayName: 'Job title',
-    description: "The registrant's job title.",
+    displayName: 'Job Title',
+    placeholder: 'Marketing Manager',
     required: false,
+    width: 'half',
   }),
   no_of_employees: Property.StaticDropdown({
-    displayName: 'No of employees',
-    description: "The registrant's number of employees.",
+    displayName: 'Number of Employees',
+    description: "Size of the registrant's company.",
     required: false,
     options: {
       disabled: false,
@@ -121,12 +129,13 @@ export const getRegistarantProps = () => ({
   }),
   org: Property.ShortText({
     displayName: 'Organization',
-    description: "The registrant's organization.",
+    placeholder: 'Acme Inc',
     required: false,
+    width: 'half',
   }),
   purchasing_time_frame: Property.StaticDropdown({
-    displayName: 'Purchasing time frame',
-    description: "The registrant's purchasing time frame.",
+    displayName: 'Purchasing Time Frame',
+    description: 'When the registrant plans to buy.',
     required: false,
     options: {
       disabled: false,
@@ -140,8 +149,7 @@ export const getRegistarantProps = () => ({
     },
   }),
   role_in_purchase_process: Property.StaticDropdown({
-    displayName: 'Role in purchase process',
-    description: "The registrant's role in the purchase process.",
+    displayName: 'Role in Purchase Process',
     required: false,
     options: {
       disabled: false,
@@ -156,30 +164,32 @@ export const getRegistarantProps = () => ({
 });
 
 export const zoomProps = {
-  meetingId: ({ description }: { description: string }) =>
+  meetingId: ({ description, placeholder }: { description: string; placeholder?: string }) =>
     Property.ShortText({
       displayName: 'Meeting ID',
       description,
+      placeholder,
       required: true,
     }),
-  occurrenceId: () =>
+  occurrenceId: ({ description }: { description?: string } = {}) =>
     Property.ShortText({
       displayName: 'Occurrence ID',
-      description: 'Only for recurring meetings: the occurrence ID of one specific occurrence. Leave empty to target the whole meeting.',
+      description: description ?? 'Only for recurring meetings: the occurrence ID of one specific occurrence. Leave empty to target the whole meeting.',
       required: false,
     }),
   pageSize: () =>
     Property.Number({
       displayName: 'Page Size',
-      description: 'How many records to return in this page (1-300). Default 30.',
+      description: 'Results per page, from 1 to 300. Default 30.',
       required: false,
       defaultValue: 30,
     }),
   nextPageToken: () =>
     Property.ShortText({
       displayName: 'Next Page Token',
-      description: 'Leave empty for the first page. To get the next page, paste the Next Page Token from the previous run.',
+      description: 'Empty: first page. For more, paste Next Page Token from the last run.',
       required: false,
+      advanced: true,
     }),
 };
 
@@ -199,7 +209,7 @@ async function loadScheduledMeetings({ accessToken }: { accessToken: string }): 
     for (const meeting of meetings) {
       if (zoomClient.isRecord(meeting) && meeting['id'] !== undefined) {
         const topic = typeof meeting['topic'] === 'string' && meeting['topic'].length > 0 ? meeting['topic'] : `Meeting ${String(meeting['id'])}`;
-        options.push({ label: topic, value: String(meeting['id']) });
+        options.push({ label: meetingLabel({ topic, startTime: meeting['start_time'] }), value: String(meeting['id']) });
       }
     }
     const token = body['next_page_token'];
@@ -209,6 +219,13 @@ async function loadScheduledMeetings({ accessToken }: { accessToken: string }): 
     }
   } while (nextPageToken !== undefined);
   return options;
+}
+
+function meetingLabel({ topic, startTime }: { topic: string; startTime: unknown }): string {
+  if (typeof startTime === 'string' && startTime.length >= 10) {
+    return `${topic} (${startTime.slice(0, 10)})`;
+  }
+  return topic;
 }
 
 function dropdownErrorReason(error: unknown): string {

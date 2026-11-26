@@ -18,11 +18,11 @@ export const zoomDeleteMeeting = createAction({
   },
   outputSchema: deleteMeetingOutputSchema,
   props: {
-    meeting_id: zoomProps.meetingId({ description: 'The numeric Zoom meeting ID to delete, for example 85746065432. Find it with List Meetings.' }),
-    occurrence_id: zoomProps.occurrenceId(),
+    meeting_id: zoomProps.meetingId({ description: 'The number in the meeting link after /j/, or from List Meetings.', placeholder: '85746065432' }),
+    occurrence_id: zoomProps.occurrenceId({ description: 'Recurring meetings only: one occurrence. Empty: the whole series.' }),
     schedule_for_reminder: Property.Checkbox({
       displayName: 'Notify Host and Alternative Hosts',
-      description: 'Email the host and alternative hosts that the meeting was cancelled.',
+      description: 'Email them that the meeting was cancelled.',
       required: false,
       defaultValue: false,
     }),
