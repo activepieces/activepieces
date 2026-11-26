@@ -191,6 +191,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Demande",
+  "Data to send": "Données à envoyer",
   "New Record": "Nouvel enregistrement",
   "Updated Record": "Enregistrement mis à jour",
   "Triggers when a new record is created in the specified table": "Déclenche lorsqu'un nouvel enregistrement est créé dans la table spécifiée",
