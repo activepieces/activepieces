@@ -58,8 +58,8 @@
   "PUT": "PUT",
   "DELETE": "BORRAR",
   "HEAD": "LIMPIO",
-  "Request": "Request",
-  "Data to send": "Data to send",
+  "Request": "Solicitud",
+  "Data to send": "Datos a enviar",
   "Task Created": "Tarea creada",
   "Triggers when a new task is created.": "Se activa cuando se crea una nueva tarea."
 }
