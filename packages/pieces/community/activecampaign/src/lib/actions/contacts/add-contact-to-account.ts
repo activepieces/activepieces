@@ -8,7 +8,7 @@ export const addContactToAccountAction = createAction({
 	name: 'activecampaign_add_contact_to_account',
 	classification: 'WRITE',
 	displayName: 'Add Contact to Account',
-	description: 'Adds a contact to an ActiveCampaign account.',
+	description: 'Links a contact to an account, with an optional job title.',
 	audience: 'human',
 	aiMetadata: { description: 'Associates an existing contact with an existing account (CRM organization), optionally recording the contact\'s job title at that account. Use when linking a person to a company already in the CRM. Requires both the contact ID and account ID. Not idempotent: repeating it for a contact that is already associated is not a no-op and may fail.', idempotent: false },
 	outputSchema: addContactToAccountOutputSchema,
@@ -17,7 +17,9 @@ export const addContactToAccountAction = createAction({
 		accountId: activecampaignCommon.accountId,
 		jobTitle: Property.ShortText({
 			displayName: 'Job Title',
+			description: "The contact's role at this account.",
 			required: false,
+			placeholder: 'Marketing Manager',
 		}),
 	},
 	async run(context) {

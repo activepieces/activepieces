@@ -17,7 +17,7 @@ export const findContactAction = createAction({
 	},
 	outputSchema: findContactOutputSchema,
 	props: {
-		email: Property.ShortText({ displayName: 'Email', required: true }),
+		email: Property.ShortText({ displayName: 'Email', required: true, placeholder: 'jane@example.com' }),
 	},
 	async run({ auth, propsValue }) {
 		const email = propsValue.email.trim();

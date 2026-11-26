@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { OutputSchema, Store } from '@activepieces/pieces-framework';
+import { MarkdownVariant, OutputSchema, PropertyType, Store } from '@activepieces/pieces-framework';
 import { activecampaign } from '../src/index';
 import { updatedContactTrigger } from '../src/lib/triggers/updated-contact';
 import { newContactSubscribedTrigger } from '../src/lib/triggers/new-contact-subscribed';
@@ -79,9 +79,17 @@ describe('trigger outputSchemas scored both ways against the live captures (samp
   });
 
   test('every trigger that API calls can fire warns about loops; campaign triggers do not', () => {
+    const campaignTriggers = ['activecampaign_campaign_link_clicked', 'activecampaign_new_campaign_bounce'];
     for (const [name, trigger] of Object.entries(activecampaign.triggers())) {
-      const warns = trigger.description.includes('can trigger itself again');
-      expect(warns).toBe(!['activecampaign_campaign_link_clicked', 'activecampaign_new_campaign_bounce'].includes(name));
+      const note = trigger.props['selfTriggerNote'];
+      if (campaignTriggers.includes(name)) {
+        expect(note).toBeUndefined();
+        continue;
+      }
+      expect(note).toBeDefined();
+      expect(note.type).toBe(PropertyType.MARKDOWN);
+      expect('variant' in note ? note.variant : undefined).toBe(MarkdownVariant.WARNING);
+      expect(note.description).toContain('can trigger itself');
     }
   });
 });

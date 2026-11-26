@@ -8,7 +8,7 @@ export const addContactToAutomationAction = createAction({
 	name: 'activecampaign_add_contact_to_automation_human',
 	classification: 'WRITE',
 	displayName: 'Add Contact to Automation',
-	description: 'Starts an automation for a contact. Each run of this step starts another run of the automation.',
+	description: 'Starts an automation for a contact. Each run starts it again.',
 	audience: 'human',
 	aiMetadata: {
 		description: 'Enrolls a contact in an automation. Not safe to repeat: each call starts another run of the automation for the contact.',

@@ -9,17 +9,19 @@ export const createAccountAction = createAction({
 	name: 'activecampaign_create_account',
 	classification: 'WRITE',
 	displayName: 'Create Account',
-	description: 'Creates a new account.',
+	description: "Creates an account, ActiveCampaign's record for a company.",
 	audience: 'human',
 	aiMetadata: { description: 'Creates a new ActiveCampaign account (CRM organization/company record) with a name and optional URL and custom field values. Use when you need to register a company in the CRM before associating contacts or deals with it. Not idempotent: each call creates a separate account even with identical input, so it can produce duplicates.', idempotent: false },
 	outputSchema: accountOutputSchema,
 	props: {
 		name: Property.ShortText({
 			displayName: 'Account Name',
+			placeholder: 'Acme Inc',
 			required: true,
 		}),
 		accountUrl: Property.ShortText({
-			displayName: 'Account URL',
+			displayName: 'Website',
+			placeholder: 'https://acme.com',
 			required: false,
 		}),
 		accountCustomFields: activecampaignCommon.accountCustomFields,
@@ -32,7 +34,7 @@ export const createAccountAction = createAction({
 			fields: [],
 		};
 
-		Object.entries(accountCustomFields).forEach(([key, value]) => {
+		Object.entries(accountCustomFields ?? {}).forEach(([key, value]) => {
 			createAccountParams.fields?.push({ customFieldId: Number(key), fieldValue: value });
 		});
 

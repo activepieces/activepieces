@@ -1,5 +1,6 @@
 import { activeCampaignAuth } from '../auth';
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+import { activecampaignCommon } from '../common';
 import { activeCampaignWebhook } from '../common/webhook';
 import { contactUnsubscribedTriggerOutputSchema } from '../common/output-schemas';
 
@@ -10,13 +11,15 @@ export const contactUnsubscribedTrigger = createTrigger({
 	name: 'activecampaign_contact_unsubscribed',
 	classification: 'READ',
 	displayName: 'Contact Unsubscribed',
-	description: 'Triggers when a contact unsubscribes from a list. Also fires for changes made through the API, including this piece\'s own actions, so a flow that changes the same record can trigger itself again.',
+	description: 'Triggers when a contact unsubscribes from a list.',
 	aiMetadata: {
 		description: 'Fires once per contact unsubscribe from a list, from an unsubscribe link, the app or the API. Unlike the other ActiveCampaign events, list is an array of { id, name } for the lists left, and active_subscriptions holds the IDs of lists the contact is still on ("0" when none).',
 	},
 	outputSchema: contactUnsubscribedTriggerOutputSchema,
 	type: TriggerStrategy.WEBHOOK,
-	props: {},
+	props: {
+		selfTriggerNote: activecampaignCommon.selfTriggerNote,
+	},
 	async onEnable(context) {
 		await activeCampaignWebhook.enable({
 			auth: context.auth.props,

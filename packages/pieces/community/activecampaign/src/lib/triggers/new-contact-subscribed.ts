@@ -1,5 +1,6 @@
 import { activeCampaignAuth } from '../auth';
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+import { activecampaignCommon } from '../common';
 import { activeCampaignWebhook } from '../common/webhook';
 import { contactSubscribedTriggerOutputSchema } from '../common/output-schemas';
 
@@ -10,13 +11,15 @@ export const newContactSubscribedTrigger = createTrigger({
 	name: 'activecampaign_new_contact_subscribed',
 	classification: 'READ',
 	displayName: 'New Contact Subscribed',
-	description: 'Triggers when a contact subscribes to a list (not on imports). Also fires for changes made through the API, including this piece\'s own actions, so a flow that changes the same record can trigger itself again.',
+	description: 'Triggers when a contact subscribes to a list, except through imports.',
 	aiMetadata: {
 		description: 'Fires once per contact subscription to a list, whether the contact was added through a form, the app or the API. Contact imports do not fire it. The payload holds the list ID and the contact.',
 	},
 	outputSchema: contactSubscribedTriggerOutputSchema,
 	type: TriggerStrategy.WEBHOOK,
-	props: {},
+	props: {
+		selfTriggerNote: activecampaignCommon.selfTriggerNote,
+	},
 	async onEnable(context) {
 		await activeCampaignWebhook.enable({
 			auth: context.auth.props,
