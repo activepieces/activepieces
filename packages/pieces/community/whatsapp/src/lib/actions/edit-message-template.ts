@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { whatsappAuth } from '../auth';
 import { commonProps } from '../common/utils';
@@ -21,6 +21,10 @@ export const editMessageTemplate = createAction({
 	},
 	props: {
 		message_template_id: commonProps.message_template_id,
+		changes_info: Property.MarkDown({
+			value: "Components replace all of the template's current ones. Leave Category empty to keep it.",
+			variant: MarkdownVariant.INFO,
+		}),
 		components: whatsappProps.templateComponents,
 		category: Property.StaticDropdown({
 			displayName: 'Category',
@@ -35,6 +39,10 @@ export const editMessageTemplate = createAction({
 			},
 		}),
 	},
+	propertyGroups: [
+		{ key: 'template', display: 'section', label: 'Template', icon: 'file', props: ['message_template_id'] },
+		{ key: 'changes', display: 'section', label: 'Changes', icon: 'sliders', props: ['changes_info', 'components', 'category'] },
+	],
 	async run(context) {
 		const { message_template_id, components, category } = context.propsValue;
 		return whatsappClient.request<{ success: boolean }>({
