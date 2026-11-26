@@ -1,50 +1,15 @@
-import { createTrigger, TriggerStrategy, PiecePropValueSchema, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
-import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { HumeClient } from 'hume';
+import { createTrigger, TriggerStrategy, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import { HumeClient, Hume } from 'hume';
 import { humeAiAuth } from '../common/auth';
 
-const polling: Polling<AppConnectionValueForAuthProperty<typeof humeAiAuth>, Record<string, never>> = {
-  strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, lastFetchEpochMS }) => {
-    const client = new HumeClient({
-      apiKey: auth.secret_text,
-    });
-
-    const allVoices: any[] = [];
-    const pageableResponse = await client.tts.voices.list({
-      provider: "CUSTOM_VOICE"
-    });
-
-    for await (const voice of pageableResponse) {
-      allVoices.push(voice);
-    }
-
-    const newVoices = lastFetchEpochMS
-      ? allVoices.filter(voice => {
-          return true;
-        })
-      : allVoices;
-
-    const items = newVoices.map((voice: any) => ({
-      epochMilliSeconds: Date.now(),
-      data: {
-        id: voice.id,
-        name: voice.name,
-        provider: voice.provider,
-        compatibleOctaveModels: voice.compatibleOctaveModels,
-      },
-    }));
-
-    return items;
-  },
-};
+const KNOWN_VOICE_IDS_KEY = 'known_voice_ids';
 
 export const newVoiceTrigger = createTrigger({
   auth: humeAiAuth,
   name: 'new_voice',
   classification: 'READ',
   displayName: 'New Voice',
-  description: 'Triggers when a new voice is created in Hume AI',
+  description: 'Fires when a custom voice is saved to your Hume account.',
   aiMetadata: {
     description: 'Fires when a new custom voice appears in the connected Hume AI account, polling the custom voice list on an interval. Each emitted event represents one newly detected custom voice.',
   },
@@ -57,15 +22,52 @@ export const newVoiceTrigger = createTrigger({
     compatibleOctaveModels: ['octave-2'],
   },
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, context);
+    const existing = await context.store.get<string[]>(KNOWN_VOICE_IDS_KEY);
+    if (context.isRepublish && existing !== null && existing !== undefined) {
+      return;
+    }
+    const voices = await listCustomVoices({ auth: context.auth });
+    await context.store.put(KNOWN_VOICE_IDS_KEY, voices.map((voice) => voice.id));
   },
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, context);
+    await context.store.delete(KNOWN_VOICE_IDS_KEY);
   },
   async test(context) {
-    return await pollingHelper.test(polling, context);
+    const voices = await listCustomVoices({ auth: context.auth });
+    return voices.slice(0, 5).map(toEmittedVoice);
   },
   async run(context) {
-    return await pollingHelper.poll(polling, context);
+    const voices = await listCustomVoices({ auth: context.auth });
+    const currentIds = voices.map((voice) => voice.id);
+    const known = await context.store.get<string[]>(KNOWN_VOICE_IDS_KEY);
+    await context.store.put(KNOWN_VOICE_IDS_KEY, currentIds);
+    if (known === null || known === undefined) {
+      return [];
+    }
+    const knownIds = new Set(known);
+    return voices.filter((voice) => !knownIds.has(voice.id)).map(toEmittedVoice);
   },
 });
+
+async function listCustomVoices({ auth }: { auth: AppConnectionValueForAuthProperty<typeof humeAiAuth> }): Promise<Hume.tts.ReturnVoice[]> {
+  const client = new HumeClient({
+    apiKey: auth.secret_text,
+  });
+  const pageableResponse = await client.tts.voices.list({
+    provider: 'CUSTOM_VOICE',
+  });
+  const voices: Hume.tts.ReturnVoice[] = [];
+  for await (const voice of pageableResponse) {
+    voices.push(voice);
+  }
+  return voices;
+}
+
+function toEmittedVoice(voice: Hume.tts.ReturnVoice) {
+  return {
+    id: voice.id,
+    name: voice.name,
+    provider: voice.provider,
+    compatibleOctaveModels: voice.compatibleOctaveModels,
+  };
+}
