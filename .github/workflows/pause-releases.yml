@@ -1,0 +1,43 @@
+name: Pause Releases
+
+# Sets the RELEASES_PAUSED repository variable, so anyone with write access can pause the scheduled releases
+# without admin access. Manual and hotfix runs ignore the variable.
+run-name: ${{ inputs.action == 'pause' && 'Pause' || 'Resume' }} releases
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'pause stops scheduled release runs that have not started. Cancel a Cloud gate run that is already past cut.'
+        type: choice
+        required: true
+        default: pause
+        options:
+          - pause
+          - resume
+
+permissions: {}
+
+concurrency:
+  group: pause-releases
+  cancel-in-progress: false
+
+jobs:
+  set:
+    runs-on: ubuntu-latest
+    steps:
+      # GITHUB_TOKEN cannot write repository variables; the release app needs the Variables permission.
+      - name: Create GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
+      - name: Set RELEASES_PAUSED
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PAUSED: ${{ inputs.action == 'pause' }}
+        run: |
+          gh variable set RELEASES_PAUSED --repo "$GITHUB_REPOSITORY" --body "$PAUSED"
+          echo "\`RELEASES_PAUSED\` is now \`$PAUSED\`, set by $GITHUB_TRIGGERING_ACTOR." >> "$GITHUB_STEP_SUMMARY"
