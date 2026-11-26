@@ -16,6 +16,9 @@ export const getPostDetailsAction = createAction({
 		space_id: spaceIdDropdown,
 		post_id: postIdDropdown,
 	},
+	propertyGroups: [
+		{ key: 'post', display: 'section', label: 'Post', icon: 'inbox', props: ['space_id', 'post_id'] },
+	],
 	async run(context) {
 		const { post_id } = context.propsValue;
 

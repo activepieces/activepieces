@@ -1,15 +1,13 @@
-import { Property, createAction } from "@activepieces/pieces-framework";
+import { MarkdownVariant, Property, createAction } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { circleAuth } from "../common/auth";
 import { BASE_URL, spaceIdDropdown } from "../common";
 
-// Interface for the TipTap body structure (simplified for payload)
 interface TipTapPayloadBody {
-    type: string; // "doc"
-    content: any[]; // Content structure for TipTap
+    type: string;
+    content: unknown[];
 }
 
-// Interface for the full payload to create a post
 interface CreatePostPayload {
     space_id: number;
     name: string;
@@ -28,13 +26,47 @@ interface CreatePostPayload {
     meta_description?: string;
     opengraph_title?: string;
     opengraph_description?: string;
-    published_at?: string; // ISO 8601 string
-    created_at?: string; // ISO 8601 string - usually set by server
+    published_at?: string;
+    created_at?: string;
     topics?: number[];
     skip_notifications?: boolean;
     is_pinned?: boolean;
     user_email?: string;
     user_id?: number;
+}
+
+function isTipTapDocument(value: unknown): value is TipTapPayloadBody {
+    return (
+        typeof value === 'object' &&
+        value !== null &&
+        'type' in value &&
+        typeof value.type === 'string' &&
+        'content' in value &&
+        Array.isArray(value.content)
+    );
+}
+
+function isEmptyJsonInput(value: unknown): boolean {
+    if (value === undefined || value === null) {
+        return true;
+    }
+    if (typeof value === 'string') {
+        return value.trim() === '';
+    }
+    return typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === 0;
+}
+
+function resolveTipTapBody(input: unknown): { body: TipTapPayloadBody } | undefined {
+    if (typeof input !== 'object' || input === null) {
+        return undefined;
+    }
+    if ('body' in input && isTipTapDocument(input.body)) {
+        return { ...input, body: input.body };
+    }
+    if (isTipTapDocument(input)) {
+        return { body: input };
+    }
+    return undefined;
 }
 
 export const createPost = createAction({
@@ -48,24 +80,30 @@ export const createPost = createAction({
     props: {
         space_id: spaceIdDropdown,
         name: Property.ShortText({
-            displayName: 'Post Name/Title',
-            description: 'The title of the post.',
+            displayName: 'Title',
+            description: 'The title shown at the top of the post.',
+            placeholder: 'Weekly community update',
             required: true,
         }),
+        body_info: Property.MarkDown({
+            value: 'Write the post in Body. For formatting, paste a TipTap document in TipTap Body instead; it wins when both are set.',
+            variant: MarkdownVariant.INFO,
+        }),
         text_body: Property.LongText({
-            displayName: 'Post Body (Plain Text)',
-            description: "Simple plain text content for the post. Used if 'Tiptap Body JSON' is not provided.",
+            displayName: 'Body',
+            description: 'Plain text content of the post.',
             required: false,
         }),
         tiptap_body_json: Property.Json({
-            displayName: 'Tiptap Body JSON',
-            description: "Full TipTap JSON object for the post body. If provided, 'Post Body (Plain Text)' is ignored.",
+            displayName: 'TipTap Body',
+            description: 'A TipTap JSON document, with or without a top-level body key.',
             required: false,
         }),
         status: Property.StaticDropdown({
             displayName: 'Status',
-            description: 'The status of the post.',
+            description: 'Draft, publish now, or schedule for later.',
             required: false,
+            width: 'half',
             options: {
                 options: [
                     { label: 'Draft', value: 'draft' },
@@ -76,28 +114,39 @@ export const createPost = createAction({
             defaultValue: 'published',
         }),
         published_at: Property.DateTime({
-            displayName: 'Published At (for Scheduled)',
-            description: "If status is 'scheduled', provide the future date and time for publishing.",
+            displayName: 'Publish Date',
+            description: 'Required when Status is Scheduled.',
+            placeholder: '2026-12-01 09:00',
             required: false,
+            width: 'half',
         }),
         is_comments_enabled: Property.Checkbox({
             displayName: 'Enable Comments',
-            description: 'Allow comments on this post?',
+            description: 'Let members comment on this post.',
             required: false,
+            advanced: true,
             defaultValue: true,
         }),
         skip_notifications: Property.Checkbox({
             displayName: 'Skip Notifications',
-            description: 'Prevent notifications from being sent for this post?',
+            description: "Don't notify members about this post.",
             required: false,
+            advanced: true,
             defaultValue: false,
         }),
         user_email: Property.ShortText({
-            displayName: 'Post As User Email (Optional)',
-            description: 'Email of an existing community member to create this post as. If empty, posts as the authenticated admin.',
+            displayName: 'Post As',
+            description: 'Member email to post as; leave empty to post as the admin.',
+            placeholder: 'member@example.com',
             required: false,
+            advanced: true,
         })
     },
+    propertyGroups: [
+        { key: 'post', display: 'section', label: 'Post', icon: 'file', props: ['space_id', 'name'] },
+        { key: 'content', display: 'section', label: 'Content', icon: 'text', props: ['body_info', 'text_body', 'tiptap_body_json'] },
+        { key: 'publishing', display: 'section', label: 'Publishing', icon: 'calendar', props: ['status', 'published_at'] },
+    ],
     async run(context) {
         const {
             space_id, name, text_body, tiptap_body_json,
@@ -112,30 +161,20 @@ export const createPost = createAction({
             throw new Error("Post Name/Title is undefined, but it is a required field.");
         }
 
-        let finalTiptapBody: { body: TipTapPayloadBody };
+        const validTipTapBody = resolveTipTapBody(tiptap_body_json);
+        if (validTipTapBody === undefined && !isEmptyJsonInput(tiptap_body_json)) {
+            throw new Error('TipTap Body is not a TipTap document. Use { "type": "doc", "content": [...] } or leave it empty.');
+        }
+        const emptyBody: { body: TipTapPayloadBody } = {
+            body: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "" }] }] }
+        };
+        const textBody: { body: TipTapPayloadBody } | undefined = text_body
+            ? { body: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: text_body }] }] } }
+            : undefined;
+        const finalTiptapBody = validTipTapBody ?? textBody ?? emptyBody;
 
-        if (tiptap_body_json && typeof tiptap_body_json === 'object' && (tiptap_body_json as any).body) {
-            finalTiptapBody = tiptap_body_json as { body: TipTapPayloadBody };
-        } else if (text_body) {
-            finalTiptapBody = {
-                body: {
-                    type: "doc",
-                    content: [
-                        {
-                            type: "paragraph",
-                            content: [
-                                { type: "text", text: text_body }
-                            ]
-                        }
-                    ]
-                }
-            };
-        } else if (!text_body && !tiptap_body_json) {
-            finalTiptapBody = {
-                body: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "" }] }] }
-            };
-        } else {
-             throw new Error("Invalid body input. Provide either 'Post Body (Plain Text)' or a valid 'Tiptap Body JSON'. If both are empty, an empty post will be created.");
+        if (status === 'scheduled' && !published_at) {
+            throw new Error('Scheduled posts need a Publish Date.');
         }
 
         const payload: CreatePostPayload = {
@@ -147,10 +186,6 @@ export const createPost = createAction({
 
         if (published_at && payload.status === 'scheduled') {
             payload.published_at = new Date(published_at).toISOString();
-        } else if (payload.status === 'scheduled' && !published_at) {
-            // It's an error to have scheduled status without a published_at date.
-            // However, the API might handle this. For now, we'll let it pass,
-            // but this could be a validation point.
         }
 
         if (is_comments_enabled !== undefined) {
