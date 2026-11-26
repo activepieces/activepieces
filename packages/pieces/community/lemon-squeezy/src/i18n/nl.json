@@ -281,6 +281,8 @@
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
   "HEAD": "HOOFD",
+  "Request": "Aanvraag",
+  "Data to send": "Gegevens om te verzenden",
   "Order Created": "Bestelling aangemaakt",
   "Order Refunded": "Terugbetaalde bestelling",
   "Subscription Created": "Abonnement aangemaakt",
