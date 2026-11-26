@@ -1,17 +1,23 @@
-import { isNil, SeekPage } from '@activepieces/core-utils';
+import { isNil } from '@activepieces/core-utils';
 import {
-  AgentConversation,
   AgentMessageSource,
+  AgentPageContext,
   ChatPersonalizationStatus,
   ModelOptions,
   PlatformRole,
 } from '@activepieces/shared';
-import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { AlertTriangle, RefreshCw, Square } from 'lucide-react';
-import { AnimatePresence, motion } from 'motion/react';
+import {
+  AnimatePresence,
+  motion,
+  MotionConfig,
+  useReducedMotion,
+} from 'motion/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useStickToBottomContext } from 'use-stick-to-bottom';
 
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import {
   ChatContainerContent,
   ChatContainerRoot,
@@ -24,6 +30,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ModelPicker, modelPickerUtils } from '@/features/agents';
 import { aiModelHooks } from '@/features/agents/ai-model/hooks';
 import { ChatCreditsAlert } from '@/features/billing';
+import { useHasConversations } from '@/features/chat/lib/chat-conversations';
+import { chatDom } from '@/features/chat/lib/chat-dom';
 import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
 import {
   ChatStoreProvider,
@@ -31,25 +39,32 @@ import {
 } from '@/features/chat/lib/chat-store-context';
 import { ChatUIMessage, chatPartUtils } from '@/features/chat/lib/chat-types';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
+import { followHold } from '@/features/chat/lib/follow/follow-hold';
 import { onboardingPrefillUtils } from '@/features/chat/lib/onboarding-prefill';
 import { useAgentChat } from '@/features/chat/lib/use-chat';
 import { useCreditsState } from '@/features/chat/lib/use-credits-state';
 import { usePersonalization } from '@/features/chat/lib/use-personalization';
+import { MOTION } from '@/features/workspace/lib/chat-layout';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { useSessionProjectId } from '@/hooks/use-session-project-id';
 import { userHooks } from '@/hooks/user-hooks';
-import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
 import { AssistantMessage } from './components/assistant-message';
 import { ChatBottomBar } from './components/chat-bottom-bar';
 import {
-  EmptyState,
+  ChatEmptyState,
   MessageSkeletons,
   SetupRequiredState,
 } from './components/chat-empty-state';
+import { ComposerHandle } from './components/chat-input';
+import {
+  ExposeScrollToBottom,
+  KeepBottomOnFooterGrowth,
+  MatchScrollGutter,
+} from './components/chat-scroll-sync';
 import { MemoryImportNudgeCard } from './components/memory-import-nudge-card';
 import { OnboardingQuestionCard } from './components/onboarding-question-card';
-import { OnboardingWelcome } from './components/onboarding-welcome';
 import {
   PersonalizationChip,
   PersonalizationChipState,
@@ -59,54 +74,15 @@ import { TaskPanelLayout } from './components/task-panel';
 import { UserMessage } from './components/user-message';
 import { getTextFromParts } from './lib/message-parsers';
 
-export function AIChatBox({
-  incognito,
-  initialPrompt,
-  agentId,
-  builder,
-  onTurnEnd,
-  emptyState,
-  footerNote,
-  placeholder,
-  conversationId,
-  onTitleUpdate,
-  onConversationCreated,
-}: AIChatBoxProps) {
-  const projectId = authenticationSession.getProjectId();
-  const gated =
-    agentId === undefined && isNil(conversationId) && !isNil(projectId);
-  const { data: options, isLoading } = aiModelHooks.useModelOptions({
-    projectId: projectId ?? '',
-    surface: 'chat',
-    enabled: gated,
-  });
-
-  if (gated && isLoading) {
-    return <MessageSkeletons />;
-  }
-
-  if (gated && !isNil(options) && !hasAnyModel({ options })) {
-    return <SetupRequiredState />;
-  }
-
+export function AIChatBox(props: AIChatBoxProps) {
   return (
-    <ChatStoreProvider>
-      <TaskPanelLayout>
-        <ChatBoxContent
-          incognito={incognito}
-          initialPrompt={initialPrompt}
-          agentId={agentId}
-          builder={builder}
-          onTurnEnd={onTurnEnd}
-          emptyState={emptyState}
-          footerNote={footerNote}
-          placeholder={placeholder}
-          conversationId={conversationId}
-          onTitleUpdate={onTitleUpdate}
-          onConversationCreated={onConversationCreated}
-        />
-      </TaskPanelLayout>
-    </ChatStoreProvider>
+    <MotionConfig reducedMotion="user">
+      <ChatStoreProvider>
+        <TaskPanelLayout>
+          <ChatBoxContent {...props} />
+        </TaskPanelLayout>
+      </ChatStoreProvider>
+    </MotionConfig>
   );
 }
 
@@ -122,12 +98,25 @@ function ChatBoxContent({
   conversationId: initialConversationId,
   onTitleUpdate,
   onConversationCreated,
+  onConversationMissing,
+  compact,
+  autoFocusComposer,
 }: AIChatBoxProps) {
-  const queryClient = useQueryClient();
+  const reduced = useReducedMotion();
   const credits = useCreditsState();
-  const sessionProjectId = authenticationSession.getProjectId();
+  const sessionProjectId = useSessionProjectId();
+  const { data: gateUser } = userHooks.useCurrentUser();
+  const gate = useModelGate({
+    gated:
+      agentId === undefined &&
+      isNil(initialConversationId) &&
+      (!isNil(sessionProjectId) ||
+        gateUser?.platformRole === PlatformRole.ADMIN),
+    projectId: sessionProjectId,
+  });
 
   const {
+    session,
     conversationId,
     conversationProjectId,
     modelPick,
@@ -139,6 +128,8 @@ function ChatBoxContent({
     isLoadingHistory,
     error,
     failed,
+    historyFailed,
+    reloadHistory,
     sendMessage,
     retryLastMessage,
     cancelStream,
@@ -151,6 +142,7 @@ function ChatBoxContent({
     onTitleUpdate,
     onConversationCreated,
     onTurnEnd,
+    onConversationMissing,
     onCreditsExhausted: () => credits.setCreditsExhausted(true),
   });
 
@@ -164,7 +156,7 @@ function ChatBoxContent({
 
   useEffect(() => {
     if (initialConversationId) {
-      void setConversationId(initialConversationId);
+      setConversationId(initialConversationId).catch(() => undefined);
     }
   }, [initialConversationId, setConversationId]);
 
@@ -172,27 +164,30 @@ function ChatBoxContent({
     setStoreConversationId(conversationId ?? null);
   }, [conversationId, setStoreConversationId]);
 
+  const rootRef = useRef<HTMLDivElement>(null);
+  const footerRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!isStreaming) return;
     const handler = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
-      const target = e.target as HTMLElement | null;
+      const target = e.target;
       if (
-        target &&
-        (target.tagName === 'INPUT' ||
-          target.tagName === 'TEXTAREA' ||
-          target.tagName === 'SELECT' ||
-          target.closest('[role="dialog"]') ||
-          target.closest('[data-radix-popper-content-wrapper]'))
+        e.key !== 'Escape' ||
+        !(target instanceof HTMLElement) ||
+        !(
+          rootRef.current?.contains(target) ||
+          (!compact && target === document.body)
+        ) ||
+        chatDom.isCardField(target) ||
+        !chatDom.escapeFree(e)
       ) {
         return;
       }
-      e.preventDefault();
+      chatDom.claimEscape(e);
       cancelStream();
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [isStreaming, cancelStream]);
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [isStreaming, cancelStream, compact]);
 
   const chatProjectId = conversationProjectId ?? sessionProjectId;
   const showsPicker = agentId === undefined && !isNil(chatProjectId);
@@ -208,7 +203,13 @@ function ChatBoxContent({
       modelOptions.defaultChoice ??
       null;
   const awaitingSavedPick =
-    !isNil(initialConversationId) && (isNil(modelPick) || isLoadingHistory);
+    !isNil(initialConversationId) &&
+    (isLoadingHistory ||
+      (initialConversationId !== conversationId && !failed && !historyFailed));
+  const showHistorySkeleton = useDelayedFlag({
+    value: isLoadingHistory,
+    delayMs: HISTORY_SKELETON_DELAY_MS,
+  });
   const pickUnavailable =
     showsPicker &&
     !isNil(modelOptions) &&
@@ -217,25 +218,33 @@ function ChatBoxContent({
       value: shownChoice,
     });
 
+  const scrollToBottomRef = useRef<(() => void) | null>(null);
   const [hasSentMessage, setHasSentMessage] = useState(false);
+  const historyLoading = isLoadingHistory && !isNil(conversationId);
 
   const handleSend = useCallback(
     async (
       text: string,
       files?: File[],
-      options?: { messageSource?: AgentMessageSource },
+      options?: {
+        messageSource?: AgentMessageSource;
+        pageContext?: AgentPageContext | null;
+      },
     ) => {
       if (!text.trim() && (!files || files.length === 0)) return;
-      if (pickUnavailable) return;
+      if (pickUnavailable || historyFailed || historyLoading) return;
       if (isNil(conversationId) && isNil(modelPick) && !isNil(shownChoice)) {
         await setModelPick(chatUtils.pickOf({ choice: shownChoice }));
       }
       setHasSentMessage(true);
+      scrollToBottomRef.current?.();
       await sendMessage(text.trim(), files, options);
     },
     [
       sendMessage,
       pickUnavailable,
+      historyFailed,
+      historyLoading,
       conversationId,
       modelPick,
       shownChoice,
@@ -243,6 +252,15 @@ function ChatBoxContent({
     ],
   );
 
+  const handleSendRef = useRef(handleSend);
+  handleSendRef.current = handleSend;
+  const sendPrompt = useCallback((text: string) => {
+    handleSendRef.current(text).catch(() => undefined);
+  }, []);
+
+  const [hasInput, setHasInput] = useState(false);
+  const composerRef = useRef<ComposerHandle>(null);
+  const [promptOpen, setPromptOpen] = useState(false);
   const sentInitialPrompt = useRef(false);
 
   useEffect(() => {
@@ -250,11 +268,15 @@ function ChatBoxContent({
       initialPrompt !== undefined &&
       initialPrompt.trim().length > 0 &&
       !initialConversationId &&
+      gate === 'ready' &&
       !sentInitialPrompt.current;
     if (!shouldSendInitialPrompt) return;
-    sentInitialPrompt.current = true;
-    handleSend(initialPrompt).catch(() => undefined);
-  }, [initialPrompt, initialConversationId, handleSend]);
+    const timer = setTimeout(() => {
+      sentInitialPrompt.current = true;
+      handleSend(initialPrompt).catch(() => undefined);
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [initialPrompt, initialConversationId, handleSend, gate]);
 
   const handleRetry = useCallback(() => {
     const lastUser = messages.findLast((m) => m.role === 'user');
@@ -291,19 +313,21 @@ function ChatBoxContent({
 
   const showBanner = credits.creditsExhausted || credits.showLowCreditsWarning;
 
-  const [hasInput, setHasInput] = useState(false);
-  const [promptOpen, setPromptOpen] = useState(false);
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: currentUser } = userHooks.useCurrentUser();
   const personalization = usePersonalization({ enabled: !incognito });
 
   const isAwaitingLoad =
-    !!initialConversationId && messages.length === 0 && !error;
+    !!initialConversationId &&
+    messages.length === 0 &&
+    !error &&
+    !historyFailed;
   const isEmpty =
     messages.length === 0 &&
     !isLoadingHistory &&
     !isStreaming &&
     !isAwaitingLoad &&
+    !historyFailed &&
     !hasSentMessage;
 
   const isFirstRun =
@@ -312,10 +336,11 @@ function ChatBoxContent({
     (personalization.companyInput ?? '').trim().length > 0 &&
     currentUser?.platformRole !== PlatformRole.ADMIN;
   const showOnboardingCard =
-    isEmpty && !incognito && (isFirstRun || promptOpen);
+    isEmpty && !incognito && !compact && (isFirstRun || promptOpen);
   const showPersonalizationDonut =
     isEmpty &&
     !incognito &&
+    !compact &&
     isNil(agentId) &&
     !showOnboardingCard &&
     !personalization.isResolving &&
@@ -369,13 +394,21 @@ function ChatBoxContent({
     }
   };
 
-  const cachedConversations = queryClient.getQueryData<
-    SeekPage<AgentConversation>
-  >(['chat-conversations']);
-  const hasConversations = (cachedConversations?.data?.length ?? 0) > 0;
+  const hasConversations = useHasConversations();
+
+  if (gate === 'loading') {
+    return <MessageSkeletons />;
+  }
+
+  if (gate === 'setup') {
+    return <SetupRequiredState />;
+  }
 
   return (
-    <div className="flex flex-col h-full flex-1 min-w-0">
+    <div
+      ref={rootRef}
+      className="@container/chat flex flex-col h-full flex-1 min-w-0 [&_*]:[scrollbar-width:thin]"
+    >
       <AnimatePresence mode="wait">
         {isEmpty ? (
           <div
@@ -385,17 +418,16 @@ function ChatBoxContent({
               showPersonalizationDonut && 'pb-14',
             )}
           >
-            {emptyState ??
-              (showOnboardingCard ? (
-                <OnboardingWelcome />
-              ) : (
-                <EmptyState
-                  onSuggestionClick={(text) => void handleSend(text)}
-                  incognito={incognito}
-                  showFlowCards={!hasConversations}
-                  hasInput={hasInput}
-                />
-              ))}
+            {emptyState ?? (
+              <ChatEmptyState
+                incognito={incognito}
+                hasInput={hasInput}
+                onboarding={showOnboardingCard}
+                showFlowCards={!hasConversations}
+                onSend={(text) => handleSend(text).catch(() => undefined)}
+                onFill={(text) => composerRef.current?.fill(text)}
+              />
+            )}
           </div>
         ) : (
           <motion.div
@@ -403,19 +435,29 @@ function ChatBoxContent({
             className="flex-1 min-h-0"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.25 }}
+            transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
           >
             <ChatContainerRoot
-              className="flex-1 relative h-full px-3 sm:px-6"
+              className="flex-1 relative h-full"
               style={{
                 maskImage:
-                  'linear-gradient(to bottom, black 0%, black calc(100% - 12px), transparent 100%)',
+                  'linear-gradient(to bottom, black 0%, black calc(100% - 24px), transparent 100%)',
                 WebkitMaskImage:
-                  'linear-gradient(to bottom, black 0%, black calc(100% - 12px), transparent 100%)',
+                  'linear-gradient(to bottom, black 0%, black calc(100% - 24px), transparent 100%)',
               }}
             >
-              <ChatContainerContent className="max-w-3xl mx-auto pt-8 pb-4 gap-0 min-h-full">
-                {isLoadingHistory && <MessageSkeletons />}
+              <ChatContainerContent
+                scrollClassName="px-3 @chat-sm/chat:px-6"
+                className="max-w-3xl mx-auto pt-8 pb-4 gap-0 min-h-full"
+              >
+                {showHistorySkeleton && <MessageSkeletons />}
+
+                {historyFailed && (
+                  <DataFetchErrorState
+                    entity={t('this chat')}
+                    onRetry={reloadHistory}
+                  />
+                )}
 
                 {messages.map((msg, idx) => {
                   if (msg.role === 'user') {
@@ -440,7 +482,7 @@ function ChatBoxContent({
                       isStreaming={isLastStreamingAssistant}
                       isResumed={isLastStreamingAssistant && isResumedStream}
                       isLastMessage={isLastAssistant}
-                      onSendPrompt={(text) => void handleSend(text)}
+                      onSendPrompt={sendPrompt}
                       claimedBuildIds={claimedBuildIdsByMessage.get(msg.id)}
                       conversationId={conversationId}
                       messageIndex={idx}
@@ -466,7 +508,7 @@ function ChatBoxContent({
                 )}
 
                 {wasCancelled && (
-                  <div className="flex items-center gap-2 py-2 text-xs text-gray-11 animate-in fade-in duration-200">
+                  <div className="flex items-center gap-2 py-2 text-xs text-gray-11 animate-in fade-in duration-(--dur-base) ease-(--ease-ap-out) motion-reduce:animate-none">
                     <Square className="h-3 w-3 fill-current" />
                     <span>{t('Response stopped')}</span>
                   </div>
@@ -479,9 +521,9 @@ function ChatBoxContent({
                       error &&
                         'rounded-xl border border-danger-6 bg-danger-3 px-3 py-2',
                     )}
-                    initial={{ opacity: 0, y: 4 }}
+                    initial={{ opacity: 0, y: reduced ? 0 : 4 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.2 }}
+                    transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
                   >
                     {error && (
                       <>
@@ -504,12 +546,20 @@ function ChatBoxContent({
                 <ChatContainerScrollAnchor />
               </ChatContainerContent>
               <ScrollButton className="absolute bottom-4 right-1/2 translate-x-1/2" />
+              <ScrolledEdge />
+              <MatchScrollGutter footerRef={footerRef} />
+              <KeepBottomOnFooterGrowth footerRef={footerRef} />
+              <ReportScrolledUp />
+              <ExposeScrollToBottom scrollToBottomRef={scrollToBottomRef} />
             </ChatContainerRoot>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <div className="px-3 sm:px-6 pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <div
+        ref={footerRef}
+        className="pl-3 pr-[calc(0.75rem+var(--chat-scroll-gutter,0px))] @chat-sm/chat:pl-6 @chat-sm/chat:pr-[calc(1.5rem+var(--chat-scroll-gutter,0px))] pb-[max(1rem,env(safe-area-inset-bottom))]"
+      >
         <div className="max-w-3xl mx-auto relative">
           {showOnboardingCard && (
             <div className="mb-3">
@@ -544,6 +594,10 @@ function ChatBoxContent({
             onSend={handleSend}
             onStop={cancelStream}
             onInputChange={setHasInput}
+            replyStopped={wasCancelled || failed}
+            composerRef={composerRef}
+            chatSession={session}
+            autoFocus={autoFocusComposer}
             recede={showOnboardingCard}
             modelPicker={
               showsPicker && awaitingSavedPick ? (
@@ -561,7 +615,13 @@ function ChatBoxContent({
               ) : null
             }
             sendBlockedReason={
-              pickUnavailable ? t('Pick another model to continue') : undefined
+              historyFailed
+                ? t('Load this chat again before you reply.')
+                : historyLoading
+                ? t('Loading…')
+                : pickUnavailable
+                ? t('Pick another model to continue')
+                : undefined
             }
             lastAssistantMessage={lastAssistantMessage}
             lastMessageId={lastMessage?.id}
@@ -592,6 +652,23 @@ function ChatBoxContent({
       </div>
     </div>
   );
+}
+
+function useModelGate({
+  gated,
+  projectId,
+}: {
+  gated: boolean;
+  projectId: string | null;
+}): ModelGate {
+  const { data: options, isLoading } = aiModelHooks.useModelOptions({
+    projectId: projectId ?? undefined,
+    surface: 'chat',
+    enabled: gated,
+  });
+  if (gated && isLoading) return 'loading';
+  if (gated && !isNil(options) && !hasAnyModel({ options })) return 'setup';
+  return 'ready';
 }
 
 function hasAnyModel({ options }: { options: ModelOptions }): boolean {
@@ -630,6 +707,58 @@ function computeClaimedBuildIds(
   return claimed;
 }
 
+function ScrolledEdge() {
+  const { scrollRef } = useStickToBottomContext();
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const scroller = scrollRef.current;
+    if (!scroller) return;
+    const update = () => setScrolled(scroller.scrollTop > 0);
+    update();
+    scroller.addEventListener('scroll', update, { passive: true });
+    return () => scroller.removeEventListener('scroll', update);
+  }, [scrollRef]);
+  return (
+    <div
+      aria-hidden
+      data-scrolled={scrolled}
+      className={cn(
+        'pointer-events-none absolute inset-x-0 top-0 z-10 h-px bg-gray-5 transition-opacity duration-(--dur-micro) ease-[ease]',
+        scrolled ? 'opacity-100' : 'opacity-0',
+      )}
+    />
+  );
+}
+
+function ReportScrolledUp() {
+  const { isAtBottom, scrollRef } = useStickToBottomContext();
+  useEffect(() => {
+    if (!chatDom.inChat(scrollRef.current)) return;
+    followHold.report({ scrolledUp: !isAtBottom });
+    return () => followHold.report({ scrolledUp: false });
+  }, [isAtBottom, scrollRef]);
+  return null;
+}
+
+function useDelayedFlag({
+  value,
+  delayMs,
+}: {
+  value: boolean;
+  delayMs: number;
+}): boolean {
+  const [elapsed, setElapsed] = useState(false);
+  useEffect(() => {
+    setElapsed(false);
+    if (!value) return;
+    const timer = setTimeout(() => setElapsed(true), delayMs);
+    return () => clearTimeout(timer);
+  }, [value, delayMs]);
+  return value && elapsed;
+}
+
+const HISTORY_SKELETON_DELAY_MS = 150;
+
 type AIChatBoxProps = {
   incognito: boolean;
   initialPrompt?: string;
@@ -641,5 +770,10 @@ type AIChatBoxProps = {
   placeholder?: string;
   conversationId?: string | null;
   onConversationCreated?: (conversationId: string) => void;
+  onConversationMissing?: () => void;
   onTitleUpdate?: (title: string) => void;
+  compact?: boolean;
+  autoFocusComposer?: boolean;
 };
+
+type ModelGate = 'loading' | 'setup' | 'ready';

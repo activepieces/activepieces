@@ -1,3 +1,4 @@
+import { ApResourceKind } from '@activepieces/core-utils';
 import {
   FlowActionType,
   FlowOperationType,
@@ -13,10 +14,13 @@ import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { PieceSelector } from '@/app/builder/pieces-selector';
 import { LoopIterationInput } from '@/app/builder/run-details/loop-iteration-input';
 import { RightSideBarType } from '@/app/builder/types';
+import { aiHighlightKey } from '@/features/chat/lib/follow/ai-highlight-key';
+import { useAiHighlight } from '@/features/chat/lib/follow/use-ai-highlight';
 import { stepsHooks } from '@/features/pieces';
 import { cn } from '@/lib/utils';
 
 import { flowCanvasConsts } from '../../utils/consts';
+import { flowCanvasUtils } from '../../utils/flow-canvas-utils';
 import { ApStepNode } from '../../utils/types';
 
 import { StepNodeChevron } from './step-node-chevron';
@@ -53,6 +57,10 @@ const ApStepCanvasNode = React.memo(
       state.canvasOrientation,
     ]);
     const isHorizontal = canvasOrientation === 'horizontal';
+    useAiHighlight({
+      resource: { kind: ApResourceKind.FLOW, id: flowVersion.flowId },
+      key: aiHighlightKey.step(step.name),
+    });
     const { stepMetadata } = stepsHooks.useStepMetadata({
       step,
     });
@@ -65,6 +73,7 @@ const ApStepCanvasNode = React.memo(
       stepName: step.name,
       trigger: flowVersion.trigger,
     });
+    const stepDisplayName = flowCanvasUtils.getStepDisplayName(step);
     const chevronClickOverride =
       step.type === FlowTriggerType.EMPTY
         ? () => setOpenedPieceSelectorStepNameOrAddButtonId(step.name)
@@ -129,6 +138,8 @@ const ApStepCanvasNode = React.memo(
         {...{
           [`data-${flowCanvasConsts.STEP_CONTEXT_MENU_ATTRIBUTE}`]: step.name,
         }}
+        data-ai-field={aiHighlightKey.step(step.name)}
+        data-ai-scroll="canvas"
         style={{
           height: `${flowCanvasConsts.STEP_NODE_SIZE[canvasOrientation].height}px`,
           width: `${flowCanvasConsts.STEP_NODE_SIZE[canvasOrientation].width}px`,
@@ -197,7 +208,7 @@ const ApStepCanvasNode = React.memo(
                     displayName={stepMetadata?.displayName ?? ''}
                   />
                   <StepNodeDisplayName
-                    stepDisplayName={step.displayName}
+                    stepDisplayName={stepDisplayName}
                     stepIndex={stepIndex}
                     isSkipped={isSkipped}
                     pieceDisplayName={stepMetadata?.displayName ?? ''}
@@ -219,7 +230,7 @@ const ApStepCanvasNode = React.memo(
             >
               <div className="flex flex-col items-center min-w-0 pointer-events-auto">
                 <StepNodeDisplayName
-                  stepDisplayName={step.displayName}
+                  stepDisplayName={stepDisplayName}
                   stepIndex={stepIndex}
                   isSkipped={isSkipped}
                   pieceDisplayName={stepMetadata?.displayName ?? ''}

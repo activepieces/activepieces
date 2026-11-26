@@ -31,8 +31,10 @@ vi.mock('@/features/billing', async (importOriginal) => ({
   },
 }));
 
-vi.mock('@/app/components/platform-layout', () => ({
-  PlatformLayout: ({ children }: React.PropsWithChildren) => <>{children}</>,
+vi.mock('@/app/guards/platform-admin-guard', () => ({
+  PlatformAdminGuard: ({ children }: React.PropsWithChildren) => (
+    <>{children}</>
+  ),
 }));
 
 vi.mock('@/app/components/page-title', () => ({

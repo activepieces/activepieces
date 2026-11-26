@@ -1,16 +1,4 @@
-import {
-    apId,
-    EDITOR_SESSION_ID_HEADER,
-    FlowOperationRequest,
-    FlowOperationType,
-    FlowStatus,
-    FlowVersion,
-    FlowVersionState,
-    LATEST_FLOW_SCHEMA_VERSION,
-    NoteColorVariant,
-    PopulatedFlow,
-    UncategorizedFolderId,
-} from '@activepieces/shared'
+import { apId, EDITOR_SESSION_ID_HEADER, FlowOperationRequest, FlowOperationType, FlowStatus, FlowVersion, FlowVersionState, LATEST_FLOW_SCHEMA_VERSION, NoteColorVariant, PopulatedFlow, ResourceChangeOp, UncategorizedFolderId } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { websocketService } from '../../../../../src/app/core/websockets.service'
@@ -52,7 +40,7 @@ describe('Draft Push', () => {
             expect(response.statusCode).toBe(StatusCodes.OK)
             expect(pushes).toEqual([{
                 room: ctx.project.id,
-                payload: { flowId: flow.id, editorSessionId: savingTabSessionId },
+                payload: { flowId: flow.id, editorSessionId: savingTabSessionId, op: ResourceChangeOp.UPDATE },
             }])
         })
 
@@ -70,7 +58,7 @@ describe('Draft Push', () => {
             expect(response.statusCode).toBe(StatusCodes.OK)
             expect(pushes).toEqual([{
                 room: ctx.project.id,
-                payload: { flowId: flow.id, editorSessionId: null },
+                payload: { flowId: flow.id, editorSessionId: null, op: ResourceChangeOp.UPDATE },
             }])
         })
 
@@ -89,11 +77,11 @@ describe('Draft Push', () => {
             expect(response.statusCode).toBe(StatusCodes.OK)
             expect(pushes).toEqual([{
                 room: ctx.project.id,
-                payload: { flowId: flow.id, editorSessionId: null },
+                payload: { flowId: flow.id, editorSessionId: null, op: ResourceChangeOp.UPDATE },
             }])
         })
 
-        it.each(nonDraftWrites)('sends no push for $type', async ({ build }) => {
+        it.each(nonDraftWrites)('sends an update push for $type so open lists refresh', async ({ build }) => {
             const ctx = await setup()
             const flow = await createFlow(ctx)
             const pushes = draftPushes.capture()
@@ -106,7 +94,7 @@ describe('Draft Push', () => {
             })
 
             expect(response.statusCode).toBe(StatusCodes.OK)
-            expect(pushes).toEqual([])
+            expect(pushes).toEqual([{ room: ctx.project.id, payload: { flowId: flow.id, editorSessionId: savingTabSessionId, op: ResourceChangeOp.UPDATE } }])
         })
 
         it('sends a push when an edit on a published flow makes a new draft', async () => {
@@ -131,7 +119,7 @@ describe('Draft Push', () => {
             expect(response.json().version.state).toBe(FlowVersionState.DRAFT)
             expect(pushes).toEqual([{
                 room: ctx.project.id,
-                payload: { flowId: flow.id, editorSessionId: savingTabSessionId },
+                payload: { flowId: flow.id, editorSessionId: savingTabSessionId, op: ResourceChangeOp.UPDATE },
             }])
         })
 
@@ -169,7 +157,7 @@ describe('Draft Push', () => {
 
             expect(pushes).toEqual([{
                 room: ctx.project.id,
-                payload: { flowId: flow.id, editorSessionId: null },
+                payload: { flowId: flow.id, editorSessionId: null, op: ResourceChangeOp.UPDATE },
             }])
         })
 
@@ -213,16 +201,16 @@ describe('Draft Push', () => {
             expect(pushes).toEqual([])
         })
 
-        it('sends no push when a new flow gets its empty draft', async () => {
+        it('sends a create push when a flow is created', async () => {
             const ctx = await createTestContext(app)
             const pushes = draftPushes.capture()
 
-            await createFlow(ctx)
+            const flow = await createFlow(ctx)
 
-            expect(pushes).toEqual([])
+            expect(pushes).toEqual([{ room: ctx.project.id, payload: { flowId: flow.id, editorSessionId: null, op: ResourceChangeOp.CREATE } }])
         })
 
-        it('sends no push when a flow is deleted', async () => {
+        it('sends a delete push when a flow is deleted', async () => {
             const ctx = await createTestContext(app)
             const flow = await createFlow(ctx)
             const pushes = draftPushes.capture()
@@ -230,7 +218,7 @@ describe('Draft Push', () => {
             const response = await ctx.delete(`/v1/flows/${flow.id}`)
 
             expect(response.statusCode).toBe(StatusCodes.NO_CONTENT)
-            expect(pushes).toEqual([])
+            expect(pushes).toEqual([{ room: ctx.project.id, payload: { flowId: flow.id, editorSessionId: null, op: ResourceChangeOp.DELETE } }])
         })
     })
 })
