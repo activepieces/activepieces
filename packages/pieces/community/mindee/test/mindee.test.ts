@@ -360,6 +360,20 @@ describe('rag documents', () => {
     expect(init?.method).toBe('PATCH');
     expect(init?.body).toBe(JSON.stringify({ status: 'Active' }));
   });
+
+  it('ignores an empty annotation object so a status-only update keeps the annotation', async () => {
+    const fetchMock = vi.fn(async () =>
+      json({ status: 200, body: { id: INF, model_id: MODEL, filename: 'r.pdf', created_at: 'x', total_matches: 0, last_match_at: null, status: 'Active', annotation: null } }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const { updateRagDocumentAction } = await import('../src/lib/actions/rag-documents');
+    await Reflect.apply(updateRagDocumentAction.run, updateRagDocumentAction, [
+      { auth: { secret_text: 'k' }, propsValue: { document_id: INF, status: 'Active', annotation: {} } },
+    ]);
+    const [, init] = fetchMock.mock.calls[0] ?? [];
+    expect(init?.method).toBe('PATCH');
+    expect(init?.body).toBe(JSON.stringify({ status: 'Active' }));
+  });
 });
 
 describe('download SSRF guard', () => {

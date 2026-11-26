@@ -7,7 +7,7 @@ function modelDropdown({ product, displayName, description }: { product: MindeeP
   return Property.Dropdown({
     auth: mindeeAuth,
     displayName: displayName ?? 'Model',
-    description: description ?? `Your Mindee ${PRODUCT_LABELS[product]} model. Models are created at app.mindee.com.`,
+    description: description ?? `Your Mindee ${PRODUCT_LABELS[product]} model, created at app.mindee.com.`,
     required: true,
     refreshers: [],
     options: async ({ auth }) => {
@@ -38,11 +38,13 @@ function modelDropdown({ product, displayName, description }: { product: MindeeP
   });
 }
 
-function aliasProp() {
+function aliasProp({ advanced }: { advanced: boolean }) {
   return Property.ShortText({
     displayName: 'Alias',
-    description: 'Optional tag of your own (for example an internal document ID). Mindee returns it with the job and result.',
+    description: 'Your own tag for this run. Mindee returns it with the result.',
+    placeholder: 'invoice-2024-001',
     required: false,
+    advanced,
   });
 }
 
@@ -62,13 +64,13 @@ function extractionOptionProps() {
     }),
     confidence: Property.Checkbox({
       displayName: 'Include Confidence',
-      description: 'Return a confidence level (Certain, High or Medium) for each top-level field.',
+      description: 'Add Certain, High or Medium confidence to each top-level field.',
       required: false,
       defaultValue: false,
     }),
     text_context: Property.LongText({
       displayName: 'Text Context',
-      description: 'Optional hint for the model for this document, for example "This is a grocery receipt."',
+      description: 'A hint for the model, for example "This is a grocery receipt."',
       required: false,
     }),
   };
@@ -77,7 +79,7 @@ function extractionOptionProps() {
 function productProp() {
   return Property.StaticDropdown<MindeeProduct, true>({
     displayName: 'Product',
-    description: 'The Mindee product that ran the inference.',
+    description: 'The product that ran the job. Get Job Status returns it.',
     required: true,
     defaultValue: 'extraction',
     options: {

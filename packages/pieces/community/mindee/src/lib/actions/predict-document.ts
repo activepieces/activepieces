@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { mindeeAuth } from '../auth';
 import { MINDEE_V1_BASE_URL, normalizeApiKey, toMindeeError, verifiedTls } from '../common/client';
@@ -17,7 +17,15 @@ export const mindeePredictDocumentAction = createAction({
       'Legacy Mindee v1 prediction for existing flows: parses a receipt, invoice, passport, bank account details, proof of address or financial document with a v1 API key. Read-only analysis, idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    { key: 'api', display: 'section', label: 'Legacy API', icon: 'sliders', props: ['legacy_info', 'account_name', 'api_name'] },
+    { key: 'document', display: 'section', label: 'Document', icon: 'file', props: ['upload', 'file'] },
+  ],
   props: {
+    legacy_info: Property.MarkDown({
+      value: 'Needs a legacy v1 API key from platform.mindee.com. For new flows, use Extract Document.',
+      variant: MarkdownVariant.INFO,
+    }),
     account_name: Property.ShortText({
       displayName: 'Account Name',
       description: 'Keep "mindee" for the off-the-shelf APIs.',
@@ -51,6 +59,7 @@ export const mindeePredictDocumentAction = createAction({
     file: Property.LongText({
       displayName: 'File URL or Base64',
       description: 'An http(s) URL or Base64 string, used when File is empty.',
+      placeholder: 'https://example.com/invoice.pdf',
       required: false,
     }),
   },

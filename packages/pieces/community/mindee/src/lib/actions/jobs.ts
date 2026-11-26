@@ -17,7 +17,12 @@ export const getJobStatusAction = createAction({
     idempotent: true,
   },
   props: {
-    job_id: Property.ShortText({ displayName: 'Job ID', required: true }),
+    job_id: Property.ShortText({
+      displayName: 'Job ID',
+      description: 'From a run that took longer than 4 minutes.',
+      placeholder: '0b9f7c1e-3d2a-4f6b-9c8e-1a2b3c4d5e6f',
+      required: true,
+    }),
   },
   outputSchema: mindeeSchemas.jobStatus,
   async run({ auth, propsValue }) {
@@ -40,7 +45,12 @@ export const getResultAction = createAction({
   },
   props: {
     product: mindeeProps.productProp(),
-    inference_id: Property.ShortText({ displayName: 'Inference ID', required: true }),
+    inference_id: Property.ShortText({
+      displayName: 'Inference ID',
+      description: 'Returned by Get Job Status once the job is processed.',
+      placeholder: '0b9f7c1e-3d2a-4f6b-9c8e-1a2b3c4d5e6f',
+      required: true,
+    }),
   },
   outputSchema: mindeeSchemas.anyResult,
   async run({ auth, propsValue }) {
