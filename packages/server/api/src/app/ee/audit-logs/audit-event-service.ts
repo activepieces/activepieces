@@ -15,10 +15,10 @@ export const auditLogService = (log: FastifyBaseLogger) => ({
     setup(): void {
         applicationEvents(log).registerListeners(log, {
             userEvent: (log) => async (params) => {
-                rejectedPromiseHandler(auditLogRepo().save(params), log)
+                rejectedPromiseHandler(auditLogRepo().insert(params), log)
             },
             workerEvent: (log) => async (_projectId, params) => {
-                rejectedPromiseHandler(auditLogRepo().save(params), log)
+                rejectedPromiseHandler(auditLogRepo().insert(params), log)
             },
         })
     },
