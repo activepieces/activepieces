@@ -17,8 +17,9 @@ export default createAction({
   props: {
     volume: Property.Number({
       displayName: 'Volume',
-      description: 'Volume from 0 to 100',
+      description: 'Volume in percent, from 0 to 100.',
       required: true,
+      defaultValue: 50,
     }),
     device_id: spotifyCommon.device_id(false),
   },

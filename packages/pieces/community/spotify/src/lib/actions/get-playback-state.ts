@@ -15,7 +15,7 @@ export default createAction({
   auth: spotifyCommon.authentication,
   outputSchema: spotifyOutputSchemas['playback'],
   props: {
-    market: spotifyCommon.market(),
+    market: spotifyCommon.market({ advanced: false }),
   },
   async run({ auth, propsValue }) {
     const market = spotifyValidate.market(propsValue.market);

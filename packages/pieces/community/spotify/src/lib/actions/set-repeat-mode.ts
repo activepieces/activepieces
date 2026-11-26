@@ -18,11 +18,13 @@ export default createAction({
     state: Property.StaticDropdown<string>({
       displayName: 'Repeat Mode',
       required: true,
+      display: 'cards',
+      defaultValue: 'context',
       options: {
         options: [
-          { label: 'Repeat track', value: 'track' },
-          { label: 'Repeat album / playlist', value: 'context' },
-          { label: 'Off', value: 'off' },
+          { label: 'Track', value: 'track', description: 'Repeat the current track' },
+          { label: 'Album or Playlist', value: 'context', description: 'Repeat what is playing' },
+          { label: 'Off', value: 'off', description: 'Stop repeating' },
         ],
       },
     }),

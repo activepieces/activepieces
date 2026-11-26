@@ -18,7 +18,7 @@ export default createAction({
     device_id: spotifyCommon.device_id(true),
     play: Property.StaticDropdown<string>({
       displayName: 'Start Playing',
-      description: 'Yes plays on the new device, No keeps it paused. Empty keeps state.',
+      description: 'Yes starts playback there; otherwise the current state is kept.',
       required: false,
       options: {
         options: [

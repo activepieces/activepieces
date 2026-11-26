@@ -19,12 +19,12 @@ export default createAction({
     playlist_id: spotifyCommon.playlist_id(true),
     items: Property.Array({
       displayName: 'Items',
-      description: 'Track or episode URIs or links the playlist should hold, in order',
+      description: 'Track or episode URIs or links, in the order to keep.',
       required: false,
     }),
     clear_all: Property.Checkbox({
-      displayName: 'Empty The Playlist',
-      description: 'Turn on (with Items empty) to remove every item.',
+      displayName: 'Empty Playlist',
+      description: 'Turn on with Items empty to remove every item.',
       required: false,
     }),
   },
@@ -33,10 +33,10 @@ export default createAction({
     const uris = spotifyIds.parseUriList({ value: propsValue.items, kinds: ['track', 'episode'], label: 'Items' });
     const clearAll = spotifyValidate.isYes(propsValue.clear_all);
     if (uris.length === 0 && !clearAll) {
-      throw new Error('Items is empty. Give the items the playlist should contain, or turn on Empty The Playlist to remove everything.');
+      throw new Error('Items is empty. Give the items the playlist should contain, or turn on Empty Playlist to remove everything.');
     }
     if (uris.length > 0 && clearAll) {
-      throw new Error('Empty The Playlist is on but Items were given. Turn it off to replace the contents, or clear Items to empty the playlist.');
+      throw new Error('Empty Playlist is on but Items were given. Turn it off to replace the contents, or clear Items to empty the playlist.');
     }
     const client = makeClient({ auth });
     const res = await client.replacePlaylistItems({ playlistId, uris });
