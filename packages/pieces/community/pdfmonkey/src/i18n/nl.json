@@ -58,7 +58,7 @@
   "The data merged into the template, as a JSON object, e.g. {\"clientName\": \"Jane Doe\", \"total\": 120}.": "The data merged into the template, as a JSON object, e.g. {\"clientName\": \"Jane Doe\", \"total\": 120}.",
   "Optional metadata to keep with the document, as a JSON object. It is returned with the document and in triggers.": "Optional metadata to keep with the document, as a JSON object. It is returned with the document and in triggers.",
   "Name of the generated file, e.g. \"Invoice 2026-001.pdf\". Stored as the _filename meta key.": "Name of the generated file, e.g. \"Invoice 2026-001.pdf\". Stored as the _filename meta key.",
-  "Wait until the file is generated and return its download URL.": "Wait until the file is generated and return its download URL.",
+  "Wait up to 4 minutes for the file and return its download URL; if it is not ready by then, return the document ID and current status.": "Wacht maximaal 4 minuten op het bestand en geef de download-URL terug; als het dan nog niet gereed is, geef dan de document-ID en huidige status terug.",
   "The document ID (a UUID), e.g. from Generate Document or List Documents.": "The document ID (a UUID), e.g. from Generate Document or List Documents.",
   "Only documents made from this template. Use List Templates to find the ID.": "Only documents made from this template. Use List Templates to find the ID.",
   "A document ID (exact match) or part of a file name.": "A document ID (exact match) or part of a file name.",
@@ -87,6 +87,8 @@
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
   "HEAD": "HOOFD",
+  "Request": "Verzoek",
+  "Data to send": "Gegevens om te verzenden",
   "Document Generated": "Document gegenereerd",
   "Triggers when a document generation completes successfully.": "Triggert wanneer een document generatie succesvol is voltooid."
 }
