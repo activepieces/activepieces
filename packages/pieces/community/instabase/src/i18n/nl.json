@@ -69,8 +69,8 @@
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
   "HEAD": "HOOFD",
-  "Request": "Request",
-  "Data to send": "Data to send",
+  "Request": "Verzoek",
+  "Data to send": "Gegevens om te verzenden",
   "New Conversation": "Nieuwe conversatie",
   "Triggers when a new conversation is created": "Triggert wanneer een nieuw gesprek wordt gemaakt"
 }
