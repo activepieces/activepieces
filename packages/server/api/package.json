@@ -111,7 +111,7 @@
     "typeorm": "0.3.31",
     "typeorm-pglite": "0.3.2",
     "unpdf": "1.4.0",
-    "zod": "4.3.6",
+    "zod": "4.6.6",
     "@activepieces/piece-facebook-leads": "workspace:*",
     "@activepieces/piece-intercom": "workspace:*",
     "@activepieces/piece-microsoft-teams-bot": "workspace:*",
