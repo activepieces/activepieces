@@ -12,6 +12,7 @@ import { jobQueue } from '../job-queue/job-queue'
 import { createHandlers } from '../rpc/worker-rpc-service'
 import { workerGroupQueues } from '../worker-groups/worker-group-queues'
 import { machineService } from './machine-service'
+import { sandboxPrometheusMetrics } from './sandbox-prometheus-metrics'
 
 export const workerMachineController: FastifyPluginAsyncZod = async (app) => {
 
@@ -70,6 +71,11 @@ export const workerMachineController: FastifyPluginAsyncZod = async (app) => {
             }
             return reply.type('text/plain').send(await queue.exportPrometheusMetrics())
         })
+
+        app.get('/sandbox-metrics/prometheus', PrometheusSandboxMetricsParams, async (request, reply) => {
+            const workers = await machineService(app.log).list(request.principal.platform.id)
+            return reply.type('text/plain').send(sandboxPrometheusMetrics.format({ workers }))
+        })
     }
 }
 
@@ -106,5 +112,11 @@ const PrometheusQueueMetricsParams = {
         params: z.object({
             queueName: z.string().default(QueueName.WORKER_JOBS),
         }),
+    },
+}
+
+const PrometheusSandboxMetricsParams = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
 }

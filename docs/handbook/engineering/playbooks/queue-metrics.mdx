@@ -38,3 +38,40 @@ Bearer auth works with standard scraper config: Prometheus `authorization.creden
 </Note>
 
 Metrics come from BullMQ's built-in `Queue.exportPrometheusMetrics()`. Each queue only reports the states it holds on the app instance being scraped; in a multi-worker-group deployment, scrape each group's queue by name (`platform-<groupId>-jobs` / `project-<groupId>-jobs`). A JSON variant with `waiting`/`active` counts only lives at `GET /v1/worker-machines/queue-metrics` (all editions, used for KEDA autoscaling).
+
+## Sandbox and worker metrics (self-hosted only)
+
+```
+GET /v1/worker-machines/sandbox-metrics/prometheus
+```
+
+- Same availability and auth as the queue endpoint above.
+- Reports every online worker the platform can see, from the worker's latest heartbeat. All metrics are gauges.
+
+| Metric | Labels | Meaning |
+| --- | --- | --- |
+| `activepieces_sandbox_memory_usage_bytes` | `worker_id`, `host`, `box_id` | Resident memory of the sandbox process tree |
+| `activepieces_sandbox_busy` | `worker_id`, `host`, `box_id` | `1` while the sandbox runs a job, `0` when idle |
+| `activepieces_sandbox_memory_limit_bytes` | `worker_id`, `host` | Heap limit of each sandbox (`AP_SANDBOX_MEMORY_LIMIT`) |
+| `activepieces_worker_cpu_usage_percent` | `worker_id`, `host` | CPU usage of the worker machine |
+| `activepieces_worker_memory_usage_percent` | `worker_id`, `host` | RAM usage of the worker machine |
+| `activepieces_worker_memory_total_bytes` | `worker_id`, `host` | RAM available to the worker machine |
+| `activepieces_worker_disk_usage_percent` | `worker_id`, `host` | Disk usage of the worker machine |
+
+```
+# HELP activepieces_sandbox_memory_usage_bytes Resident memory of the sandbox process tree
+# TYPE activepieces_sandbox_memory_usage_bytes gauge
+activepieces_sandbox_memory_usage_bytes{worker_id="aB3dE",host="worker-7",box_id="1"} 412516352
+```
+
+`box_id` is the stable slot number on the worker (1 to `AP_WORKER_CONCURRENCY`), so the series survive sandbox restarts. To alert before a sandbox runs out of heap, compare usage to the limit:
+
+```
+activepieces_sandbox_memory_usage_bytes
+  / on(worker_id, host) group_left activepieces_sandbox_memory_limit_bytes > 0.8
+```
+
+<Note>
+The worker samples sandbox memory every 15 seconds, and a sandbox only appears while its process is alive. When sandboxes are not reused between runs, a short run can start and finish between two samples.
+</Note>
+
