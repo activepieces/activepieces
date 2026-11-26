@@ -2,7 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 
 export const jsonToAsciiTable = createAction({
   audience: 'both',
-  description: 'Convert a list of items to a text table',
+  description: 'Turn a list of items into a plain-text table.',
   aiMetadata: {
     description:
       'Renders an array of objects as a fixed-width ASCII table, using the union of all object keys as columns and sizing each column to its widest value. Use it when a list must be shown as human-readable plain text in a chat message, email, or log rather than as JSON. The input must be a JSON array or the action throws, and an empty array returns an empty string; deterministic and idempotent.',
@@ -14,7 +14,7 @@ export const jsonToAsciiTable = createAction({
   props: {
     data: Property.Json({
       displayName: 'List',
-      description: 'List of items to convert to a text table',
+      description: 'A JSON list of objects; their keys become the columns.',
       required: true,
     }),
   },

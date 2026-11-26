@@ -17,7 +17,7 @@ export const textHelper = createPiece({
   displayName: 'Text Helper',
   description: 'Tools for text processing',
   auth: PieceAuth.None(),
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/new-core/text-helper.svg',
   authors: [
     'joeworkman',

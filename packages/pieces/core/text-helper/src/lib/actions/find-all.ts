@@ -2,7 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 
 export const findAll = createAction({
   audience: 'both',
-  description: 'Find all substrings matching a regex or text pattern.',
+  description: 'Find every match of a word or pattern in a text.',
   aiMetadata: {
     description:
       'Returns every substring of a text that matches a regex or plain-text pattern, with an optional case-insensitive mode. Use it when you need all occurrences; prefer Find when one match is enough or when you need capture groups, since this action returns only the whole-match text. The pattern is compiled as a regular expression and an invalid one throws; deterministic and idempotent.',
@@ -11,6 +11,15 @@ export const findAll = createAction({
   displayName: 'Find All',
   name: 'find_all',
   classification: 'READ',
+  propertyGroups: [
+    {
+      key: 'search',
+      display: 'section',
+      label: 'Search',
+      icon: 'filter',
+      props: ['text', 'expression', 'ignoreCase'],
+    },
+  ],
   props: {
     text: Property.ShortText({
       displayName: 'Text',
@@ -18,7 +27,8 @@ export const findAll = createAction({
     }),
     expression: Property.ShortText({
       displayName: 'Expression',
-      description: 'Regex or text to search for. Returns every occurrence.',
+      description: 'Read as a regular expression. Returns every match.',
+      placeholder: 'e.g. [A-Z]{3}-\\d+',
       required: true,
     }),
     ignoreCase: Property.Checkbox({

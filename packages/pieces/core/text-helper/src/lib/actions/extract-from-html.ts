@@ -1,4 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  MarkdownVariant,
+  Property,
+} from '@activepieces/pieces-framework';
 import { JSDOM, VirtualConsole } from 'jsdom';
 
 export const extractFromHtml = createAction({
@@ -6,66 +10,113 @@ export const extractFromHtml = createAction({
   name: 'extract_from_html',
   classification: 'READ',
   displayName: 'Extract from HTML',
-  description: 'Extract specific elements or data from an HTML document.',
+  description: 'Extract elements or values from an HTML document.',
   aiMetadata: {
     description:
       'Parses an HTML string and extracts elements selected either by a preset target (page title, links, images, headings, paragraphs) or by a custom CSS selector, returning text content, inner HTML, outer HTML, or a named attribute for just the first match or for all matches. Use it to scrape specific values out of fetched HTML; prefer Remove HTML Tags or HTML to Markdown when you want the whole document as text. A custom target requires the selector and attribute extraction requires an attribute name, otherwise it throws; parsing runs with scripts disabled, and it is deterministic and idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'html',
+      display: 'section',
+      label: 'Source',
+      icon: 'code',
+      props: ['html'],
+    },
+    {
+      key: 'extract',
+      display: 'section',
+      label: 'What to extract',
+      icon: 'filter',
+      props: [
+        'extract_info',
+        'target',
+        'selector',
+        'extractionType',
+        'attributeName',
+        'returnMultiple',
+      ],
+    },
+  ],
   props: {
     html: Property.LongText({
       displayName: 'HTML Content',
-      description: 'The raw HTML string to extract data from.',
+      placeholder: '<html><body>…</body></html>',
       required: true,
     }),
+    extract_info: Property.MarkDown({
+      value:
+        '**Custom CSS Selector** is needed when Element is Custom CSS Selector, and **Attribute Name** when Value to Return is Attribute.',
+      variant: MarkdownVariant.INFO,
+    }),
     target: Property.StaticDropdown({
-      displayName: 'Extraction Target',
-      description: 'What do you want to extract from the page?',
+      displayName: 'Element',
+      description: 'Which elements to look for.',
       required: true,
+      width: 'half',
       options: {
         disabled: false,
         options: [
           { label: 'Page Title', value: 'title' },
-          { label: 'All Links (<a> elements)', value: 'links' },
-          { label: 'All Images', value: 'images' },
-          { label: 'Main Headings (H1, H2, H3)', value: 'headings' },
-          { label: 'Paragraphs / Text Blocks', value: 'paragraphs' },
-          { label: 'Custom CSS Selector (Advanced)', value: 'custom' },
+          { label: 'Links', value: 'links' },
+          { label: 'Images', value: 'images' },
+          { label: 'Headings (H1–H3)', value: 'headings' },
+          { label: 'Paragraphs', value: 'paragraphs' },
+          { label: 'Custom CSS Selector', value: 'custom' },
         ],
       },
       defaultValue: 'title',
     }),
     selector: Property.ShortText({
       displayName: 'Custom CSS Selector',
-      description:
-        'ONLY required if "Extraction Target" is set to "Custom CSS Selector". (e.g., .price, #main-title)',
+      placeholder: '.price',
       required: false,
+      width: 'half',
     }),
     extractionType: Property.StaticDropdown({
-      displayName: 'Extraction Type',
-      description: 'What part of the element do you want to extract?',
+      displayName: 'Value to Return',
       required: true,
+      display: 'cards',
       options: {
         disabled: false,
         options: [
-          { label: 'Text Content (Clean Text)', value: 'textContent' },
-          { label: 'Inner HTML', value: 'innerHtml' },
-          { label: 'Outer HTML', value: 'outerHtml' },
-          { label: 'Attribute (e.g., href, src)', value: 'attribute' },
+          {
+            label: 'Text',
+            value: 'textContent',
+            description: 'Clean text',
+            icon: 'type',
+          },
+          {
+            label: 'Inner HTML',
+            value: 'innerHtml',
+            description: 'Inside the tag',
+            icon: 'code',
+          },
+          {
+            label: 'Outer HTML',
+            value: 'outerHtml',
+            description: 'Tag included',
+            icon: 'code',
+          },
+          {
+            label: 'Attribute',
+            value: 'attribute',
+            description: 'href, src, …',
+            icon: 'tag',
+          },
         ],
       },
       defaultValue: 'textContent',
     }),
     attributeName: Property.ShortText({
       displayName: 'Attribute Name',
-      description:
-        'ONLY required if "Extraction Type" is set to "Attribute". (e.g., href, src, data-id)',
+      placeholder: 'href',
       required: false,
     }),
     returnMultiple: Property.Checkbox({
-      displayName: 'Return Multiple Elements',
-      description:
-        'If checked, returns a list of all matching elements. If unchecked, returns only the first match.',
+      displayName: 'Return All Matches',
+      description: 'When off, only the first match is returned.',
       required: true,
       defaultValue: false,
     }),
@@ -95,7 +146,7 @@ export const extractFromHtml = createAction({
         headings: 'h1, h2, h3',
         paragraphs: 'p',
       };
-      finalSelector = predefinedSelectors[target as string];
+      finalSelector = predefinedSelectors[target];
     }
 
     // Create an empty virtual console to swallow spam/errors from malicious HTML
@@ -116,7 +167,7 @@ export const extractFromHtml = createAction({
       } catch (error) {
         throw new Error(
           `Invalid CSS selector: "${finalSelector}". Error: ${
-            (error as Error).message
+            error instanceof Error ? error.message : String(error)
           }`
         );
       }
