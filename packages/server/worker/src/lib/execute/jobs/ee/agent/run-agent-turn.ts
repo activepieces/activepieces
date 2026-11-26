@@ -286,9 +286,9 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
             if (!failedFast) {
                 failedModelIds.add(failedModel.modelId)
             }
-            const sentNothing = runsATier && drained?.lastStepSentContent === false
+            const sentNothing = drained?.lastStepSentContent === false
             const dropsFast = failedFast && sentNothing
-            const movesOn = !failedFast && sentNothing && isFallbackWorthy(signal) && hasNextModel()
+            const movesOn = !failedFast && runsATier && sentNothing && isFallbackWorthy(signal) && hasNextModel()
             if (dropsFast || movesOn) {
                 if (!failedFast) {
                     modelIndex++
