@@ -191,11 +191,11 @@
   "HEAD": "LIMPIO",
   "Page": "Pgina",
   "Output": "Salida",
-  "Pages": "Pages",
-  "What to extract": "What to extract",
+  "Pages": "Páginas",
+  "What to extract": "Qué extraer",
   "Site": "Sitio",
-  "Limits": "Limits",
+  "Limits": "Límites",
   "Webhook": "Webhook",
-  "Request": "Request",
-  "Data to send": "Data to send"
+  "Request": "Solicitud",
+  "Data to send": "Datos a enviar"
 }
