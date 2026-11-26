@@ -105,6 +105,40 @@ jobs:
         run: |
           ssh ops -t -t 'bash -ic "cd mrsk/stg && kamal deploy --version ${{ needs.build-image.outputs.image_tag }} --config-file=config/worker.yml --skip-push; exit"'
 
+  deploy-stg-cloud:
+    needs: build-image
+    if: always() && needs.build-image.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+    environment:
+      name: stg-cloud
+      url: https://stg-cloud.activepieces.com
+    steps:
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/ops.key
+          chmod 600 ~/.ssh/ops.key
+          cat >>~/.ssh/config <<END
+          Host ops
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/ops.key
+            StrictHostKeyChecking no
+          END
+        env:
+          SSH_USER: ${{ secrets.DEV_OPS_USERNAME }}
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.DEV_OPS_HOST }}
+      - name: Deploy to stg-cloud
+        run: |
+          ssh ops -t -t 'bash -ic "cd mrsk/stg-cloud && kamal deploy --version ${{ needs.build-image.outputs.image_tag }} --skip-push; exit"'
+      - name: Release the stg-cloud deploy lock
+        if: cancelled()
+        run: |
+          ssh ops -t -t 'bash -ic "cd mrsk/stg-cloud && kamal lock release; exit"'
+
   # Records the deploy in the Linear "Staging" release pipeline. Never fails the workflow.
   # Piece commits are left out: pieces ship through npm, not the image.
   linear-release:
