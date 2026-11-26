@@ -84,8 +84,8 @@
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
   "HEAD": "HOOFD",
-  "Request": "Request",
-  "Data to send": "Data to send",
+  "Request": "Verzoek",
+  "Data to send": "Gegevens om te verzenden",
   "New or Updated Contact": "Nieuw of bijgewerkt contact",
   "Triggers when a contact is created or updated in Microsoft 365 People.": "Triggert wanneer een contact wordt aangemaakt of bijgewerkt in Microsoft 365 mensen."
 }
