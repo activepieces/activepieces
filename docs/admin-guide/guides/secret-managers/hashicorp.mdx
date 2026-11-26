@@ -50,6 +50,10 @@ path "<secret_engine_name>/data/*" {
    - **Namespace** (optional): Vault namespace if using Vault Enterprise namespaces
 6. Click **Save** to test and save the connection
 
+<Note>
+  Requests to Vault go through the SSRF filter. If Vault runs on a private or loopback address (such as the `http://localhost:8200` example above), add its IP to [`AP_SSRF_ALLOW_LIST`](/install/architecture/network-security#self-hosted-providers-on-private-ips) and restart Activepieces.
+</Note>
+
 ## Using HashiCorp Vault Secrets
 
 Once the connection is saved, you can reference Vault secrets inside any piece connection dialog — in global connections (Platform Admin) or directly in the flow builder.
