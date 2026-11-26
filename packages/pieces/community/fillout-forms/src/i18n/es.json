@@ -56,8 +56,8 @@
   "PUT": "PUT",
   "DELETE": "BORRAR",
   "HEAD": "LIMPIO",
-  "Request": "Request",
-  "Data to send": "Data to send",
+  "Request": "Solicitud",
+  "Data to send": "Datos a enviar",
   "New Form Response": "Nueva respuesta de formulario",
   "Triggers when a new submission is received for a selected Fillout form.": "Se activa cuando se recibe un nuevo envío para un formulario de rellenado seleccionado."
 }
