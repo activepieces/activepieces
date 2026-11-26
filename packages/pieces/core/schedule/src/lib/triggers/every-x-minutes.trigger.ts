@@ -17,8 +17,7 @@ export const everyXMinutesTrigger = createTrigger({
   sampleData: {},
   props: {
     minutes: Property.StaticDropdown({
-      displayName: 'Minutes',
-      description: 'Valid value between 1 to 59.',
+      displayName: 'Run Every',
       required: true,
       defaultValue: 1,
       options: {
