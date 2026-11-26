@@ -193,10 +193,22 @@ describe('sandbox-manager recycle threshold', () => {
         return { createSandboxForJob, first }
     }
 
-    it('kills the reused sandbox and creates a fresh one when memory is at the threshold', async () => {
+    it('kills the reused sandbox and creates a fresh one when memory is above the threshold', async () => {
         const { createSandboxForJob, first } = await acquireTwice({ recycleSandboxAt: '80', reuseSandbox: 'true', memoryBytes: 820 * MB })
         expect(createSandboxForJob).toHaveBeenCalledTimes(2)
         expect(first.shutdown).toHaveBeenCalledTimes(1)
+    })
+
+    it('recycles when memory is exactly at the threshold', async () => {
+        const { createSandboxForJob, first } = await acquireTwice({ recycleSandboxAt: '50', reuseSandbox: 'true', memoryBytes: 512 * MB })
+        expect(createSandboxForJob).toHaveBeenCalledTimes(2)
+        expect(first.shutdown).toHaveBeenCalledTimes(1)
+    })
+
+    it('keeps reusing the sandbox one byte below the threshold', async () => {
+        const { createSandboxForJob, first } = await acquireTwice({ recycleSandboxAt: '50', reuseSandbox: 'true', memoryBytes: 512 * MB - 1 })
+        expect(createSandboxForJob).toHaveBeenCalledTimes(1)
+        expect(first.shutdown).not.toHaveBeenCalled()
     })
 
     it('keeps reusing the sandbox below the threshold', async () => {
