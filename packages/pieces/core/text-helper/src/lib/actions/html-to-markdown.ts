@@ -9,22 +9,30 @@ export const htmlToMarkdown = createAction({
   name: 'html_to_markdown',
   classification: 'READ',
   displayName: 'HTML to Markdown',
-  description: 'Convert HTML to Markdown',
+  description: 'Convert HTML to Markdown.',
   aiMetadata: {
     description:
       'Converts an HTML string into Markdown, optionally with GitHub Flavored Markdown extensions (tables, strikethrough, task lists) enabled. Use it when you want compact readable markup preserving structure; prefer Remove HTML Tags for bare text with no markup, Extract from HTML to pull specific elements, or Markdown to HTML for the reverse. Requires the HTML content and script elements are dropped; deterministic and idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'source',
+      display: 'section',
+      label: 'Source',
+      icon: 'code',
+      props: ['html', 'gfm'],
+    },
+  ],
   props: {
     html: Property.LongText({
       displayName: 'HTML Content',
-      description: 'The HTML to convert to markdown',
+      placeholder: '<p>Hello <b>world</b></p>',
       required: true,
     }),
     gfm: Property.Checkbox({
       displayName: 'GitHub Flavored Markdown',
-      description:
-        'Enable GFM extensions (tables, strikethrough, task lists, etc.)',
+      description: 'Keep tables, strikethrough and task lists in the output.',
       required: false,
       defaultValue: true,
     }),
