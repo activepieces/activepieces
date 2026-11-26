@@ -141,6 +141,8 @@
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
   "HEAD": "HOOFD",
+  "Request": "Verzoek",
+  "Data to send": "Gegevens om te verzenden",
   "New Record": "Nieuwe Record",
   "Updated Record": "Updated Record",
   "Triggers when a new record is created in a table.": "Triggers when a new record is created in a table.",
