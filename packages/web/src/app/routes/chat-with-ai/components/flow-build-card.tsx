@@ -4,8 +4,8 @@ import {
   AlertCircle,
   Check,
   Circle,
-  ExternalLink,
   Loader2,
+  PanelLeft,
   Rocket,
 } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
@@ -15,8 +15,10 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
 import { useChatStoreContext } from '@/features/chat/lib/chat-store-context';
+import { MOTION } from '@/features/workspace/lib/chat-layout';
+import { chatPanelUtils } from '@/features/workspace/lib/chat-panel-open';
 import { authenticationSession } from '@/lib/authentication-session';
-import { useNewWindow } from '@/lib/navigation-utils';
+import { domUtils } from '@/lib/dom-utils';
 import { cn } from '@/lib/utils';
 
 const CARD_BASE =
@@ -52,31 +54,31 @@ export function FlowBuildCard({
       className={cn('relative my-2 rounded-xl', CARD_BASE)}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
     >
       <div
         className={cn(
-          'relative z-10 rounded-t-xl px-4 pb-3 pt-4 sm:px-5',
+          'relative z-10 rounded-t-xl px-4 pb-3 pt-4 @chat-sm/chat:px-5',
           !isDone && !isFailed && 'sticky top-0',
           CARD_BASE,
         )}
       >
         <BuildDoodle iconName={iconName} />
-        <h2 className="pr-28 text-2xl font-semibold leading-tight tracking-tight text-gray-12 sm:pr-40 sm:text-3xl">
+        <h2 className="pr-28 text-2xl font-semibold leading-tight tracking-tight text-gray-12 @chat-sm/chat:pr-40 @chat-sm/chat:text-3xl">
           {tagline}
         </h2>
         <Progress
           value={percentage}
           className="mt-3 h-2"
           indicatorClassName={cn(
-            'transition-all duration-500',
+            'transition-[translate,transform,background-color] duration-(--dur-move) ease-(--ease-ap-out) motion-reduce:transition-none',
             isDone && 'bg-success-9',
             isFailed && 'bg-warning-9',
           )}
         />
       </div>
 
-      <div className="px-4 pb-4 pt-1 sm:px-5">
+      <div className="px-4 pb-4 pt-1 @chat-sm/chat:px-5">
         <ul className="space-y-2.5">
           {build.steps.map((step) => (
             <BuildStepRow key={step.id} step={step} />
@@ -93,7 +95,7 @@ export function FlowBuildCard({
               <Button
                 size="sm"
                 variant="ghost"
-                className="gap-1.5 border border-gray-6 bg-transparent text-xs font-medium text-gray-12 shadow-none transition-colors hover:bg-gray-5 hover:text-gray-12"
+                className="gap-1.5 border border-gray-6 bg-transparent text-xs font-medium text-gray-12 shadow-none transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-5 hover:text-gray-12"
                 onClick={() =>
                   onSendPrompt?.(
                     t('Publish and enable the automation so it runs live'),
@@ -123,16 +125,28 @@ function OpenInBuilderButton({
   projectId: string;
   flowId: string;
 }) {
-  const openNewWindow = useNewWindow();
+  const route = `/projects/${projectId}/flows/${flowId}`;
   return (
     <Button
+      asChild
       size="sm"
       variant="ghost"
-      className="gap-1.5 text-xs font-medium text-gray-11 shadow-none transition-colors hover:bg-gray-4 hover:text-gray-12"
-      onClick={() => openNewWindow(`/projects/${projectId}/flows/${flowId}`)}
+      className="gap-1.5 text-xs font-medium text-gray-11 shadow-none transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-4 hover:text-gray-12"
     >
-      <ExternalLink className="h-3.5 w-3.5" />
-      {t('Open in builder')}
+      <a
+        href={route}
+        onClick={(event) => {
+          if (!domUtils.isPlainLeftClick(event)) return;
+          if (
+            chatPanelUtils.openBeside({ route, push: true, name: t('Flow') })
+          ) {
+            event.preventDefault();
+          }
+        }}
+      >
+        <PanelLeft className="h-3.5 w-3.5" />
+        {t('Open in builder')}
+      </a>
     </Button>
   );
 }
@@ -342,7 +356,7 @@ function BuildDoodle({ iconName }: { iconName: string }) {
 
   return (
     <div
-      className="absolute right-4 top-0 z-20 size-[80px] -rotate-12 sm:right-10 sm:size-[104px]"
+      className="absolute right-4 top-0 z-20 size-[80px] -rotate-12 @chat-sm/chat:right-10 @chat-sm/chat:size-[104px]"
       aria-hidden="true"
     >
       <svg viewBox="0 0 100 100" fill="none" className="h-full w-full">

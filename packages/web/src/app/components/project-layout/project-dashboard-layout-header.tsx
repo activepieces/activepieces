@@ -1,6 +1,6 @@
 import { isNil, Permission } from '@activepieces/core-utils';
 import { t } from 'i18next';
-import { useRef } from 'react';
+import { ComponentType, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { BoxIcon } from '@/components/icons/box';
@@ -19,8 +19,6 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { ProjectDashboardPageHeader } from './project-dashboard-page-header';
-
-import { ProjectDashboardLayoutHeaderTab } from '.';
 
 type AnimatedIconHandle = {
   startAnimation: () => void;
@@ -54,7 +52,7 @@ const AnimatedTab = ({
       onMouseEnter={() => iconRef.current?.startAnimation()}
       onMouseLeave={() => iconRef.current?.stopAnimation()}
     >
-      <IconComponent ref={iconRef} size={16} className="mr-2" />
+      <IconComponent ref={iconRef} size={16} className="mr-2 @max-xl:hidden" />
       {tab.label}
       {tab.beta && (
         <span className="ml-1.5 rounded-full bg-accent-3 px-1.5 py-0.5 text-xs font-medium leading-none text-accent-11">
@@ -147,8 +145,8 @@ export const ProjectDashboardLayoutHeader = () => {
     <div className="flex flex-col">
       {!isEmbedded && <ProjectDashboardPageHeader />}
       {!embedState.hideSideNav && (
-        <Tabs className="px-3 pt-2 border-b overflow-x-auto scrollbar-none">
-          <TabsList variant="outline">
+        <Tabs className="@container px-3 pt-2 border-b">
+          <TabsList variant="outline" className="flex-wrap">
             {visiblePrimaryTabs.map((tab) => (
               <AnimatedTab
                 key={tab.to}
@@ -180,3 +178,13 @@ export const ProjectDashboardLayoutHeader = () => {
 };
 
 ProjectDashboardLayoutHeader.displayName = 'ProjectDashboardLayoutHeader';
+
+type ProjectDashboardLayoutHeaderTab = {
+  to: string;
+  label: string;
+  icon: ComponentType<{ className?: string; size?: number }>;
+  hasPermission: boolean;
+  show: boolean;
+  beta?: boolean;
+  badgeCount?: number;
+};

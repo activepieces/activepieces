@@ -1,4 +1,4 @@
-import { AIProviderName } from '@activepieces/core-utils'
+import { ActivepiecesAiConsumerSource, AIProviderName } from '@activepieces/core-utils'
 import { AiStepAction, ExecuteAiJobData, ResolveAiProviderResponse } from '@activepieces/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -92,6 +92,7 @@ describe('flowStep reaches every model built on the worker', () => {
             }),
             resolved: { ...RESOLVED, provider: AIProviderName.GOOGLE },
             flowStep: FLOW_STEP,
+            billing: { source: ActivepiecesAiConsumerSource.AI_STEP_IN_FLOW, platformId: 'platform-1', projectId: 'project-1', flowRun: { flowId: 'flow-1', flowRunId: 'run-1' } },
             inputImages: [],
         })
 

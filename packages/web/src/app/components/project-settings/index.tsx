@@ -42,7 +42,12 @@ export function ProjectSettingsDialog({
   onClose,
   initialTab = 'general',
 }: ProjectSettingsDialogProps) {
-  const [activeTab, setActiveTab] = useState<TabId>(initialTab);
+  const [pickedTab, setPickedTab] = useState<TabId>(initialTab);
+  const [requestedTab, setRequestedTab] = useState<TabId>(initialTab);
+  if (initialTab !== requestedTab) {
+    setRequestedTab(initialTab);
+    setPickedTab(initialTab);
+  }
   const { checkAccess } = useAuthorization();
   const { project } = projectCollectionUtils.useCurrentProject();
   const previousOpenRef = useRef(open);
@@ -88,7 +93,7 @@ export function ProjectSettingsDialog({
     const dialogJustOpened = open && !previousOpenRef.current;
     if (dialogJustOpened) {
       form.reset(projectSettingsFormDefaults(project));
-      setActiveTab(initialTab);
+      setPickedTab(initialTab);
     }
     previousOpenRef.current = open;
   }, [open, project]);
@@ -132,6 +137,9 @@ export function ProjectSettingsDialog({
       disabled: !checkAccess(Permission.READ_PROJECT_RELEASE),
     },
   ].filter((tab) => !tab.disabled);
+  const activeTab: TabId = tabs.some((tab) => tab.id === pickedTab)
+    ? pickedTab
+    : tabs[0]?.id ?? 'pieces';
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -177,6 +185,7 @@ export function ProjectSettingsDialog({
           <Button
             disabled={!form.formState.isDirty}
             size="sm"
+            data-testid="project-settings-save"
             onClick={form.handleSubmit(handleSave)}
           >
             {t('Save Changes')}
@@ -204,19 +213,21 @@ export function ProjectSettingsDialog({
               />
               <div className="flex flex-col px-2 gap-1">
                 {tabs.map((tab) => (
-                  <div
+                  <button
+                    type="button"
                     key={tab.id}
+                    data-testid={`project-settings-tab-${tab.id}`}
                     className={cn(
                       'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium transition-all cursor-pointer hover:bg-gray-4',
                       {
                         'bg-gray-4': activeTab === tab.id,
                       },
                     )}
-                    onClick={() => setActiveTab(tab.id)}
+                    onClick={() => setPickedTab(tab.id)}
                   >
                     {tab.icon}
                     {tab.label}
-                  </div>
+                  </button>
                 ))}
               </div>
             </nav>

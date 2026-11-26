@@ -11,5 +11,4 @@ export { SettingsPanel, SettingsRow, DangerZone } from './settings-panel';
 export { SaveBar } from './save-bar';
 export type { SaveBarLock } from './save-bar';
 export { StatusDot } from './status-dot';
-export type { StatusTone } from './status-dot';
 export { StatCard, StatGrid } from './stat-card';

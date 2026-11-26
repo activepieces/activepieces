@@ -160,6 +160,8 @@ export function DataTable<
     header: ({ table }) => (
       <div className="flex items-center h-full">
         <Checkbox
+          data-testid="data-table-select-all"
+          aria-label={t('Select all')}
           checked={table.getIsAllPageRowsSelected()}
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
         />
@@ -367,8 +369,8 @@ export function DataTable<
         <DataTableToolbar
           className={toolbarClassName ?? (bordered ? 'px-0' : undefined)}
         >
-          <div className="w-full flex items-center justify-between">
-            <div className="flex items-center space-x-2">
+          <div className="w-full flex flex-wrap items-center justify-between gap-2">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
               {filters &&
                 filters.map((filter) => (
                   <DataTableFilter
@@ -383,7 +385,7 @@ export function DataTable<
                 ))}
             </div>
             {toolbarButtons && toolbarButtons.length > 0 && (
-              <div className="flex items-center gap-2">
+              <div className="ml-auto flex shrink-0 items-center gap-2">
                 {toolbarButtons.map((button, idx) => (
                   <React.Fragment key={idx}>{button}</React.Fragment>
                 ))}
@@ -657,7 +659,10 @@ export function DataTable<
                   colSpan={visibleColumnCount}
                   className="h-[350px] text-center"
                 >
-                  <div className="flex flex-col items-center justify-center gap-2">
+                  <div
+                    className="flex flex-col items-center justify-center gap-2"
+                    data-testid="data-table-empty-state"
+                  >
                     {emptyStateIcon ? emptyStateIcon : <></>}
                     <p className="text-lg font-semibold">
                       {emptyStateTextTitle}

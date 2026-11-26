@@ -25,7 +25,7 @@ function SpreadsheetTable({
 
   return (
     <div className={cn('overflow-auto', className)}>
-      <table className="w-full table-fixed text-sm">
+      <table className="w-full text-sm">
         <thead className="sticky top-0 z-10">
           <tr className="border-b border-gray-6 bg-gray-3">
             {table.headers.map((header, i) => (
@@ -42,7 +42,7 @@ function SpreadsheetTable({
           {rows.map((row, rowIdx) => (
             <tr
               key={rowIdx}
-              className="border-b border-gray-6 transition-colors last:border-b-0 hover:bg-gray-4/30"
+              className="border-b border-gray-6 transition-colors duration-(--dur-micro) ease-[ease] last:border-b-0 hover:bg-gray-4/30"
             >
               {row.map((cell, colIdx) => (
                 <td key={colIdx} className="px-3 py-2 align-top">
