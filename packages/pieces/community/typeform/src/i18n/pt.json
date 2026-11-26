@@ -205,7 +205,19 @@
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
   "HEAD": "CABEÇA",
+  "New form": "Novo formulário",
+  "Form content": "Conteúdo do formulário",
+  "Original": "Original",
+  "The copy": "A cópia",
+  "Target": "Destino",
+  "Changes": "Alterações",
+  "Search in": "Pesquisar em",
+  "Filters": "Filtros",
+  "Results": "Resultados",
+  "Request": "Solicitação",
+  "Data to send": "Dados a enviar",
   "New Submission": "Nova Submissão",
   "Triggers when someone submits the form.": "Triggers when someone submits the form.",
-  "A webhook is added to this form in Typeform when you publish the flow, and removed when you turn it off.": "A webhook is added to this form in Typeform when you publish the flow, and removed when you turn it off."
+  "A webhook is added to this form in Typeform when you publish the flow, and removed when you turn it off.": "A webhook is added to this form in Typeform when you publish the flow, and removed when you turn it off.",
+  "Watch": "Assistir"
 }
