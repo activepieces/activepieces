@@ -190,6 +190,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Requête",
+  "Data to send": "Données à envoyer",
   "New Blog Post": "Nouveau billet de blog",
   "New Object": "New Object",
   "Updated Object": "Updated Object",
