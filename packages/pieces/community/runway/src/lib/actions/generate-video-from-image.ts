@@ -1,4 +1,4 @@
-import { createAction, Property, DynamicPropsValue } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property, DynamicPropsValue } from '@activepieces/pieces-framework';
 import { propsValidation } from '@activepieces/pieces-common';
 import { runwayAuth } from '../common';
 import RunwayML from '@runwayml/sdk';
@@ -9,61 +9,39 @@ export const generateVideoFromImage = createAction({
 	name: 'generate_video_from_image',
 	classification: 'READ',
 	displayName: 'Generate Video From Image',
-	description: 'Generates a video based on image(s) and text prompt using Runway\'s AI models',
+	description: 'Start a video generation from an image and an optional prompt.',
 	audience: 'both',
 	aiMetadata: { description: 'Submits an image-to-video generation job to Runway from a starting frame and optional prompt, returning the created task ID; the video is produced asynchronously, so poll Get Task Details with that ID for the result. Provide the starting frame as exactly one of an uploaded file or an HTTPS image URL (not both). Choose when an agent needs to animate an image into a clip. Each call starts a new billable generation, so it is not idempotent.', idempotent: false },
+	propertyGroups: [
+		{ key: 'model', display: 'section', label: 'Model', icon: 'sliders', props: ['model', 'ratio', 'duration'] },
+		{ key: 'image', display: 'section', label: 'Starting Image', icon: 'file', props: ['imageSourceInfo', 'promptImageFile', 'promptImageUrl', 'imagePosition'] },
+	],
 	props: {
 		model: Property.StaticDropdown({
 			displayName: 'Model',
-			description: 'AI model to use for video generation',
 			required: true,
+			display: 'cards',
 			options: {
 				options: [
-					{ label: 'Gen4 Turbo (Fast, High Quality)', value: 'gen4_turbo' },
-					{ label: 'Gen3a Turbo (Balanced)', value: 'gen3a_turbo' },
-					{ label: 'Veo3 (Google\'s Latest)', value: 'veo3' },
+					{ label: 'Gen4 Turbo', value: 'gen4_turbo', description: 'Fast' },
+					{ label: 'Gen3a Turbo', value: 'gen3a_turbo', description: 'Balanced' },
+					{ label: 'Veo3', value: 'veo3', description: 'By Google' },
 				],
 			},
-		}),
-		promptImageFile: Property.File({ 
-			displayName: 'Prompt Image File', 
-			description: 'Upload an image file to use as the video\'s starting frame',
-			required: false 
-		}),
-		promptImageUrl: Property.ShortText({ 
-			displayName: 'Prompt Image URL', 
-			description: 'HTTPS URL of an image to use as the video\'s starting frame',
-			required: false 
-		}),
-		imagePosition: Property.StaticDropdown({
-			displayName: 'Image Position',
-			description: 'Position of the image in the video (last frame only supported by gen3a_turbo)',
-			required: false,
-			defaultValue: 'first',
-			options: {
-				options: [
-					{ label: 'First Frame', value: 'first' },
-					{ label: 'Last Frame (gen3a_turbo only)', value: 'last' },
-				],
-			},
-		}),
-		promptText: Property.LongText({ 
-			displayName: 'Prompt Text (Optional)', 
-			description: 'Describe what should happen in the video (max 1000 characters)',
-			required: false 
 		}),
 		ratio: Property.DynamicProperties({
 			auth: runwayAuth,
-			displayName: 'Video Resolution',
+			displayName: 'Resolution',
 			description: 'Available resolutions depend on the selected model',
 			required: true,
 			refreshers: ['model'],
 			props: async ({ model }) => {
 				const ratioOptions: DynamicPropsValue = {};
-				
+
 				if ((model as unknown as string) === 'gen4_turbo') {
 					ratioOptions['ratio'] = Property.StaticDropdown({
 						displayName: 'Resolution',
+						description: 'Width and height of the video.',
 						required: true,
 						options: {
 							options: [
@@ -79,6 +57,7 @@ export const generateVideoFromImage = createAction({
 				} else if ((model as unknown as string) === 'gen3a_turbo') {
 					ratioOptions['ratio'] = Property.StaticDropdown({
 						displayName: 'Resolution',
+						description: 'Width and height of the video.',
 						required: true,
 						options: {
 							options: [
@@ -90,6 +69,7 @@ export const generateVideoFromImage = createAction({
 				} else if ((model as unknown as string) === 'veo3') {
 					ratioOptions['ratio'] = Property.StaticDropdown({
 						displayName: 'Resolution',
+						description: 'Width and height of the video.',
 						required: true,
 						options: {
 							options: [
@@ -101,41 +81,42 @@ export const generateVideoFromImage = createAction({
 				} else {
 					ratioOptions['ratio'] = Property.StaticDropdown({
 						displayName: 'Resolution',
+						description: 'Width and height of the video.',
 						required: true,
 						options: {
-							options: [
-								{ label: 'Select a model first', value: '' },
-							],
+							options: [],
+							placeholder: 'Pick a model first',
 						},
 					});
 				}
-				
+
 				return ratioOptions;
 			},
 		}),
 		duration: Property.DynamicProperties({
 			auth: runwayAuth,
-			displayName: 'Video Duration',
+			displayName: 'Duration',
 			description: 'Available durations depend on the selected model',
 			required: true,
 			refreshers: ['model'],
 			props: async ({ model }) => {
 				const durationOptions: DynamicPropsValue = {};
-				
+
 				if ((model as unknown as string) === 'veo3') {
 					durationOptions['duration'] = Property.StaticDropdown({
-						displayName: 'Duration (seconds)',
+						displayName: 'Duration',
+						description: 'Veo3 videos are always 8 seconds.',
 						required: true,
 						defaultValue: 8,
 						options: {
 							options: [
-								{ label: '8 seconds (required for veo3)', value: 8 },
+								{ label: '8 seconds', value: 8 },
 							],
 						},
 					});
 				} else if ((model as unknown as string) === 'gen4_turbo' || (model as unknown as string) === 'gen3a_turbo') {
 					durationOptions['duration'] = Property.StaticDropdown({
-						displayName: 'Duration (seconds)',
+						displayName: 'Duration',
 						required: true,
 						options: {
 							options: [
@@ -146,41 +127,75 @@ export const generateVideoFromImage = createAction({
 					});
 				} else {
 					durationOptions['duration'] = Property.StaticDropdown({
-						displayName: 'Duration (seconds)',
+						displayName: 'Duration',
 						required: true,
 						options: {
-							options: [
-								{ label: 'Select a model first', value: '' },
-							],
+							options: [],
+							placeholder: 'Pick a model first',
 						},
 					});
 				}
-				
+
 				return durationOptions;
 			},
 		}),
-		seed: Property.Number({ 
-			displayName: 'Seed (Optional)', 
-			description: 'Random seed for reproducible results (0-4294967295)',
-			required: false 
+		imageSourceInfo: Property.MarkDown({
+			value: 'Upload an image file or enter an image URL, not both.',
+			variant: MarkdownVariant.INFO,
+		}),
+		promptImageFile: Property.File({
+			displayName: 'Image File',
+			description: 'The image the video starts from.',
+			required: false
+		}),
+		promptImageUrl: Property.ShortText({
+			displayName: 'Image URL',
+			description: 'Public HTTPS link to the image, used instead of a file.',
+			placeholder: 'https://example.com/frame.jpg',
+			required: false
+		}),
+		imagePosition: Property.StaticDropdown({
+			displayName: 'Image Position',
+			description: 'Where the image sits in the video. Last frame needs Gen3a Turbo.',
+			required: false,
+			defaultValue: 'first',
+			options: {
+				options: [
+					{ label: 'First Frame', value: 'first' },
+					{ label: 'Last Frame', value: 'last' },
+				],
+			},
+		}),
+		promptText: Property.LongText({
+			displayName: 'Prompt',
+			description: 'What should happen in the video. Up to 1,000 characters.',
+			required: false
+		}),
+		seed: Property.Number({
+			displayName: 'Seed',
+			description: 'Use the same seed and prompt to get the same result.',
+			required: false,
+			advanced: true,
 		}),
 		contentModeration: Property.DynamicProperties({
 			auth: runwayAuth,
 			displayName: 'Content Moderation',
 			description: 'Content moderation settings (not available for veo3)',
 			required: false,
+			advanced: true,
 			refreshers: ['model'],
 			props: async ({ model }) => {
 				const moderationOptions: DynamicPropsValue = {};
-				
+
 				if ((model as unknown as string) === 'veo3') {
 					moderationOptions['info'] = Property.MarkDown({
-						value: '**Note:** Content moderation is not supported by the veo3 model.',
+						value: 'Veo3 does not support content moderation.',
+						variant: MarkdownVariant.INFO,
 					});
 				} else {
 					moderationOptions['publicFigureThreshold'] = Property.StaticDropdown({
 						displayName: 'Public Figure Detection',
-						description: 'How strict content moderation should be for recognizable public figures',
+						description: 'How strictly to block images of recognizable public figures.',
 						required: false,
 						defaultValue: 'auto',
 						options: {
@@ -191,7 +206,7 @@ export const generateVideoFromImage = createAction({
 						},
 					});
 				}
-				
+
 				return moderationOptions;
 			},
 		}),
@@ -207,9 +222,9 @@ export const generateVideoFromImage = createAction({
 		// Input validation
 		const hasFile = !!propsValue.promptImageFile;
 		const hasUrl = !!propsValue.promptImageUrl;
-		
+
 		if ((hasFile && hasUrl) || (!hasFile && !hasUrl)) {
-			throw new Error('You must provide either a Prompt Image File or a Prompt Image URL, but not both.');
+			throw new Error('Provide either an Image File or an Image URL, not both.');
 		}
 
 		// Model-specific validations
@@ -217,7 +232,7 @@ export const generateVideoFromImage = createAction({
 		const duration = (propsValue.duration as any)?.['duration'] || propsValue.duration;
 		const ratio = (propsValue.ratio as any)?.['ratio'] || propsValue.ratio;
 		const imagePosition = propsValue.imagePosition || 'first';
-		
+
 		// Validate duration per model
 		if (model === 'veo3' && duration !== 8) {
 			throw new Error('veo3 model requires a duration of exactly 8 seconds');
@@ -232,7 +247,7 @@ export const generateVideoFromImage = createAction({
 			gen3a_turbo: ['1280:768', '768:1280'],
 			veo3: ['1280:720', '720:1280']
 		};
-		
+
 		if (!validRatios[model as keyof typeof validRatios]?.includes(ratio)) {
 			throw new Error(`Invalid resolution ${ratio} for model ${model}`);
 		}
@@ -295,7 +310,7 @@ export const generateVideoFromImage = createAction({
 
 		try {
 			const task = await client.imageToVideo.create(requestBody);
-			
+
 			return {
 				success: true,
 				taskId: task.id,
