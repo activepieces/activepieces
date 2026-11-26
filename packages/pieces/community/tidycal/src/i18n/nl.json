@@ -24,6 +24,8 @@
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
   "HEAD": "HOOFD",
+  "Request": "Verzoek",
+  "Data to send": "Gegevens om te verzenden",
   "Booking Canceled": "Boeking geannuleerd",
   "New Booking": "Nieuwe boeking",
   "New Contact": "Nieuw contactpersoon",
