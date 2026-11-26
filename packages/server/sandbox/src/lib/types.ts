@@ -108,6 +108,8 @@ export type SandboxSettings = {
     REUSE_SANDBOX: string | undefined
     FLOW_TIMEOUT_SECONDS: number
     MAX_FILE_SIZE_MB: number
+    FILE_STORAGE_LOCATION: string
+    S3_USE_SIGNED_URLS: string
     MAX_FLOW_RUN_LOG_SIZE_MB: number
     FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB?: number | undefined
     FLOW_RUN_LOG_SLICE_THRESHOLD_KB?: number | undefined

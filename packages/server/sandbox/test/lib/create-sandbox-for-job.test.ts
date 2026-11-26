@@ -155,6 +155,8 @@ describe('createSandboxForJob', () => {
                 EXECUTION_MODE: ExecutionMode.SANDBOX_PROCESS,
                 MAX_FLOW_RUN_LOG_SIZE_MB: 25,
                 MAX_FILE_SIZE_MB: 50,
+                FILE_STORAGE_LOCATION: 'S3',
+                S3_USE_SIGNED_URLS: 'true',
                 NETWORK_MODE: NetworkMode.STRICT,
             })
             createSandboxForJob({ log, boxId: 1, reusable: false, basePath: '/tmp', getSettings: () => settings })
@@ -165,6 +167,8 @@ describe('createSandboxForJob', () => {
                 AP_EXECUTION_MODE: ExecutionMode.SANDBOX_PROCESS,
                 AP_MAX_FLOW_RUN_LOG_SIZE_MB: '25',
                 AP_MAX_FILE_SIZE_MB: '50',
+                AP_FILE_STORAGE_LOCATION: 'S3',
+                AP_S3_USE_SIGNED_URLS: 'true',
                 NODE_PATH: '/usr/src/node_modules',
                 AP_NETWORK_MODE: NetworkMode.STRICT,
             })
