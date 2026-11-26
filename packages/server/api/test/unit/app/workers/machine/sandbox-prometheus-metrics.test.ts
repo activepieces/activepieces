@@ -61,7 +61,7 @@ describe('sandboxPrometheusMetrics.format', () => {
             '# TYPE activepieces_sandbox_busy gauge',
             'activepieces_sandbox_busy{worker_id="w1",host="worker-\\"a\\"",box_id="1"} 1',
             'activepieces_sandbox_busy{worker_id="w1",host="worker-\\"a\\"",box_id="2"} 0',
-            '# HELP activepieces_sandbox_piece_memory_usage_bytes Estimated live JS heap held by each piece loaded in the sandbox',
+            '# HELP activepieces_sandbox_piece_memory_usage_bytes Estimated live JS heap held by each piece loaded in the sandbox. Each sandbox refreshes it every 60 seconds, the other sandbox metrics every 15',
             '# TYPE activepieces_sandbox_piece_memory_usage_bytes gauge',
             'activepieces_sandbox_piece_memory_usage_bytes{worker_id="w1",host="worker-\\"a\\"",box_id="1",piece="@activepieces/piece-slack",version="0.9.1"} 120',
             '# HELP activepieces_sandbox_memory_limit_bytes Configured AP_SANDBOX_MEMORY_LIMIT for each sandbox on the worker. It caps the V8 heap only, not activepieces_sandbox_memory_usage_bytes',

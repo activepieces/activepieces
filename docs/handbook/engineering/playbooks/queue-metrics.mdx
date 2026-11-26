@@ -55,7 +55,7 @@ GET /v1/worker-machines/sandbox-metrics/prometheus
 | `activepieces_sandbox_heap_limit_bytes` | `worker_id`, `host`, `box_id` | V8 heap limit enforced in the sandbox, as reported by V8. The sandbox is killed when heap used reaches it |
 | `activepieces_sandbox_external_memory_bytes` | `worker_id`, `host`, `box_id` | Memory held outside the V8 heap by JS objects, mostly `Buffer` data. Not capped by `AP_SANDBOX_MEMORY_LIMIT` |
 | `activepieces_sandbox_busy` | `worker_id`, `host`, `box_id` | `1` while the sandbox runs a job, `0` when idle |
-| `activepieces_sandbox_piece_memory_usage_bytes` | `worker_id`, `host`, `box_id`, `piece`, `version` | Estimated live JS heap held by each piece loaded in the sandbox |
+| `activepieces_sandbox_piece_memory_usage_bytes` | `worker_id`, `host`, `box_id`, `piece`, `version` | Estimated live JS heap held by each piece loaded in the sandbox. Refreshed every 60 seconds, not every 15 like the other sandbox metrics |
 | `activepieces_sandbox_memory_limit_bytes` | `worker_id`, `host` | Configured `AP_SANDBOX_MEMORY_LIMIT`. Caps the V8 heap only |
 
 ```
@@ -87,7 +87,7 @@ activepieces_sandbox_heap_used_bytes / activepieces_sandbox_heap_limit_bytes > 0
 
 The three heap metrics come from the sandbox itself. A sandbox that is busy in synchronous code may not answer in time, and those series skip that sample.
 
-The per-piece number comes from V8's sampling heap profiler. It is an estimate and covers the JS heap only, not `Buffer` data or native addons.
+The per-piece number comes from V8's sampling heap profiler. It is an estimate and covers the JS heap only, not `Buffer` data or native addons. Each sandbox refreshes it once every 60 seconds, because reading the profile forces a full garbage collection. The other sandbox metrics update every 15 seconds, so the per-piece series can be up to a minute behind them and is empty for a sandbox's first minute.
 
 <Note>
 The worker samples sandbox memory every 15 seconds, and a sandbox only appears while its process is alive. When sandboxes are not reused between runs, a short run can start and finish between two samples.

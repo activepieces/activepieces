@@ -52,7 +52,7 @@ const METRICS: Metric[] = [
     },
     {
         name: 'activepieces_sandbox_piece_memory_usage_bytes',
-        help: 'Estimated live JS heap held by each piece loaded in the sandbox',
+        help: 'Estimated live JS heap held by each piece loaded in the sandbox. Each sandbox refreshes it every 60 seconds, the other sandbox metrics every 15',
         collect: (worker) => (worker.information.sandboxes ?? []).flatMap((sandbox) => (sandbox.sandboxPiecesUsage ?? []).map((piece) => ({
             labels: { ...workerLabels(worker), box_id: String(sandbox.boxId), piece: piece.pieceName, version: piece.pieceVersion },
             value: piece.memoryUsageBytes,
