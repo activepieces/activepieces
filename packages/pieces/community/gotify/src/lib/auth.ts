@@ -3,17 +3,16 @@ import { PieceAuth, Property } from '@activepieces/pieces-framework';
 import { GotifyApiError, gotifyClient } from './common/client';
 
 export const gotifyAuth = PieceAuth.CustomAuth({
-  description: `
-    To connect Gotify:
+  description: `Connect your self-hosted Gotify server.
 
-    1. Log in to your Gotify web UI.
-    2. Open **Apps**, create an application (or pick one) and copy its token into **App Token**. It is used to send notifications.
-    3. Optional: open **Clients**, create a client and copy its token into **Client Token**. It is needed to read and delete messages and to manage applications.
-    `,
+1. Log in to your Gotify web UI.
+2. Open **Apps**, create an application (or pick one) and copy its token into **App Token**. Notifications are sent with it.
+3. Optional: open **Clients**, create a client as the same user that owns the app, and copy its token into **Client Token**. Every action except sending a notification and checking server health needs it.`,
   props: {
     base_url: Property.ShortText({
       displayName: 'Server URL',
-      description: 'The address of your Gotify server, e.g. https://gotify.example.com',
+      description: 'Include the sub-path if Gotify is served under one.',
+      placeholder: 'https://gotify.example.com',
       required: true,
     }),
     app_token: PieceAuth.SecretText({
@@ -23,7 +22,7 @@ export const gotifyAuth = PieceAuth.CustomAuth({
     }),
     client_token: PieceAuth.SecretText({
       displayName: 'Client Token',
-      description: 'Token of a Gotify client. Needed to read or delete messages and manage applications.',
+      description: 'Needed by every action except sending and server health.',
       required: false,
     }),
   },

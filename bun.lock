@@ -4235,7 +4235,7 @@
     },
     "packages/pieces/community/gotify": {
       "name": "@activepieces/piece-gotify",
-      "version": "0.5.3",
+      "version": "0.6.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",

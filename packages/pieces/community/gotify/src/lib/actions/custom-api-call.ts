@@ -1,5 +1,5 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { gotifyAuth } from '../auth';
 import { gotifyClient } from '../common/client';
 
@@ -11,9 +11,14 @@ export const customApiCall = createAction({
   description: 'Make a request to any Gotify API endpoint with the Client Token.',
   audience: 'human',
   props: {
+    info: Property.MarkDown({
+      value: "Uses your connection's Client Token, so add one there first.",
+      variant: MarkdownVariant.INFO,
+    }),
     path: Property.ShortText({
       displayName: 'Path',
-      description: 'Endpoint path on your Gotify server, for example /message or /application/1.',
+      description: 'Path on your Gotify server, starting with /.',
+      placeholder: '/message',
       required: true,
     }),
     method: Property.StaticDropdown({
@@ -27,9 +32,29 @@ export const customApiCall = createAction({
         })),
       },
     }),
-    queryParams: Property.Object({ displayName: 'Query Parameters', required: false }),
-    body: Property.Json({ displayName: 'Body', description: 'JSON body (ignored for GET).', required: false }),
+    queryParams: Property.Object({
+      displayName: 'Query Parameters',
+      description: 'Appended to the URL as ?key=value.',
+      required: false,
+    }),
+    body: Property.Json({ displayName: 'Body', description: 'JSON body. Ignored for GET requests.', required: false }),
   },
+  propertyGroups: [
+    {
+      key: 'request',
+      display: 'section',
+      label: 'Request',
+      icon: 'send',
+      props: ['info', 'method', 'path', 'queryParams'],
+    },
+    {
+      key: 'payload',
+      display: 'section',
+      label: 'Data to send',
+      icon: 'code',
+      props: ['body'],
+    },
+  ],
   async run({ auth, propsValue }) {
     const path = parsePath(propsValue.path);
     const method = parseMethod(propsValue.method);
