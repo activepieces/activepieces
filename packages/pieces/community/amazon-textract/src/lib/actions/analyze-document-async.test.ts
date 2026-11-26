@@ -627,7 +627,7 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
     });
   });
 
-  it('returns one row per question with the most confident answer, and every page\'s answer', async () => {
+  it('returns one row per question with the first page\'s answer, and every page\'s answer', async () => {
     textractSend.mockImplementation(async (command: AwsCommand) =>
       command.kind === 'start' ? { JobId: 'job-1' } : answeredQuestions()
     );
@@ -639,9 +639,9 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
         { query: 'Total Due', answer: '$1,250.00', pageNumber: 3, answers: [{ answer: '$1,250.00', confidence: 90, pageNumber: 3 }] },
         {
           query: 'Invoice Number',
-          answer: 'INV-8',
-          confidence: 95,
-          pageNumber: 2,
+          answer: 'INV-7',
+          confidence: 40,
+          pageNumber: 1,
           answers: [
             { answer: 'INV-7', confidence: 40, pageNumber: 1 },
             { answer: 'INV-8', confidence: 95, pageNumber: 2 },
@@ -649,6 +649,28 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
         },
         { query: 'Due Date', answer: '', pageNumber: 1, answers: [] },
       ],
+    });
+  });
+
+  it('keeps the first page\'s answer when Textract lists a later page first', async () => {
+    const response = answeredQuestions();
+    response.Blocks.reverse();
+    textractSend.mockImplementation(async (command: AwsCommand) => (command.kind === 'start' ? { JobId: 'job-1' } : response));
+
+    const result = await runAction({ source: 's3', s3Key: 'contract.pdf', queries: ['Total Due', 'Invoice Number', 'Due Date'] });
+
+    expect(result).toMatchObject({
+      queryResults: expect.arrayContaining([
+        expect.objectContaining({
+          query: 'Invoice Number',
+          answer: 'INV-7',
+          pageNumber: 1,
+          answers: [
+            { answer: 'INV-7', confidence: 40, pageNumber: 1 },
+            { answer: 'INV-8', confidence: 95, pageNumber: 2 },
+          ],
+        }),
+      ]),
     });
   });
 

@@ -30,7 +30,7 @@ export const analyzeDocumentAsync = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Analyze a multi-page or single-page PDF, TIFF, JPEG or PNG with AWS Textract and return its text, forms, tables, signatures and answers to optional questions: one queryResults row per question with the most confident answer, and the answers from all pages in its answers list. Use it for multi-page documents, which the synchronous Analyze Document action cannot handle. Set source to "file" and pass the file, or to "s3" and pass the path of an object already in the bucket. With a file, the step uploads a temporary copy to the bucket under activepieces-textract-uploads/, analyzes it, then deletes the copy; if the delete fails, the copy stays and warnings names it. It waits up to 5 minutes for the job. Safe to retry. For an S3 file, the same deduplication token with the same inputs within 7 days returns the first job; the token cannot be combined with a file upload.',
+      'Analyze a multi-page or single-page PDF, TIFF, JPEG or PNG with AWS Textract and return its text, forms, tables, signatures and answers to optional questions: one queryResults row per question with the answer from the first page that has one, and the answer from every page, with its confidence, in its answers list. Use it for multi-page documents, which the synchronous Analyze Document action cannot handle. Set source to "file" and pass the file, or to "s3" and pass the path of an object already in the bucket. With a file, the step uploads a temporary copy to the bucket under activepieces-textract-uploads/, analyzes it, then deletes the copy; if the delete fails, the copy stays and warnings names it. It waits up to 5 minutes for the job. Safe to retry. For an S3 file, the same deduplication token with the same inputs within 7 days returns the first job; the token cannot be combined with a file upload.',
     idempotent: true,
   },
   props: {
@@ -458,14 +458,17 @@ function oneResultPerQuestion(results: QueryResult[]): QuestionResult[] {
     if (result.answer) {
       answers.push({ answer: result.answer, confidence: result.confidence, pageNumber: result.pageNumber });
     }
-    const best = kept && !isBetterAnswer({ candidate: result, current: kept }) ? kept : result;
-    byQuestion.set(result.query, { ...best, answers });
+    const first = kept && !isEarlierAnswer({ candidate: result, current: kept }) ? kept : result;
+    byQuestion.set(result.query, { ...first, answers });
   }
-  return [...byQuestion.values()];
+  return [...byQuestion.values()].map((row) => ({
+    ...row,
+    answers: [...row.answers].sort((a, b) => a.pageNumber - b.pageNumber),
+  }));
 }
 
-function isBetterAnswer({ candidate, current }: { candidate: QueryResult; current: QueryResult }): boolean {
-  return candidate.answer.length > 0 && (!current.answer || candidate.confidence > current.confidence);
+function isEarlierAnswer({ candidate, current }: { candidate: QueryResult; current: QueryResult }): boolean {
+  return candidate.answer.length > 0 && (!current.answer || candidate.pageNumber < current.pageNumber);
 }
 
 class TextractStepError extends Error {}
