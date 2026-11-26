@@ -45,8 +45,8 @@
   "Continue flow on all errors": "Flow bei allen Fehlern fortsetzen",
   "Continue flow on 4xx errors": "Flow bei 4xx-Fehlern fortsetzen",
   "Do not continue (stop the flow)": "Nicht fortfahren (Strömung stoppen)",
-  "Request": "Request",
-  "Credentials": "Credentials",
-  "Data to send": "Data to send",
+  "Request": "Anfrage",
+  "Credentials": "Anmeldeinformationen",
+  "Data to send": "Zu sendende Daten",
   "HTTP": "HTTP"
 }
