@@ -10,28 +10,45 @@ export const alertForQuery = createTrigger({
   auth: asknewsAuth,
   name: 'alertForQuery',
   classification: 'READ',
-  displayName: 'Alert for Query',
-  description: 'Trigger when a new alert is created for a specific news query',
+  displayName: 'New News Alert',
+  description: 'Fires when AskNews finds news that matches your alert query.',
   aiMetadata: {
     description:
       'Fires when an AskNews alert matches a monitored natural-language news query on its cron schedule (or on every scheduled check if "Always Trigger" is enabled), delivering the matching alert payload. Represents a newly detected news development matching the query of interest.',
   },
+  propertyGroups: [
+    {
+      key: 'alert',
+      display: 'section',
+      label: 'Alert',
+      icon: 'text',
+      props: ['query', 'title', 'model'],
+    },
+    {
+      key: 'schedule',
+      display: 'section',
+      label: 'Schedule',
+      icon: 'calendar',
+      props: ['cron', 'repeat', 'alwaysTrigger'],
+    },
+  ],
   props: {
     query: Property.LongText({
       displayName: 'Alert Query',
-      description:
-        'Query to monitor (e.g., "I want to be alerted if there is a protest in paris")',
+      description: 'Describe the news to watch for, in plain words.',
+      placeholder: 'Alert me if there is a protest in Paris',
       required: true,
     }),
     cron: Property.ShortText({
       displayName: 'Cron Schedule',
       description:
-        'Cron schedule for alert checks (5-7 fields, e.g., "0 * * * *" for every hour, or "0 0 * * * America/New_York")',
+        'How often to check, as a cron expression. A time zone may follow.',
+      placeholder: '0 * * * *',
       required: true,
     }),
     model: Property.StaticDropdown({
       displayName: 'Model',
-      description: 'AI model to use for alert checking',
+      description: 'AI model that checks the news for matches.',
       defaultValue: 'gpt-4o-mini',
       required: false,
       options: {
@@ -47,20 +64,19 @@ export const alertForQuery = createTrigger({
     }),
     alwaysTrigger: Property.Checkbox({
       displayName: 'Always Trigger',
-      description: 'Skip alert check and trigger immediately on schedule',
+      description: 'Fire on every check, even when nothing matches.',
       defaultValue: false,
       required: false,
     }),
     repeat: Property.Checkbox({
       displayName: 'Repeat',
-      description:
-        'Repeat alert after each trigger (disable for one-time alert)',
+      description: 'Keep the alert after it fires. Off: fire once.',
       defaultValue: true,
       required: false,
     }),
     title: Property.ShortText({
       displayName: 'Alert Title',
-      description: 'Optional title for the alert',
+      description: 'Name for the alert in AskNews.',
       required: false,
     }),
   },

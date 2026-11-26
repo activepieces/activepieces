@@ -1,4 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  MarkdownVariant,
+  Property,
+} from '@activepieces/pieces-framework';
 import { asknewsAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
@@ -8,49 +12,71 @@ export const searchNews = createAction({
   name: 'searchNews',
   classification: 'SEARCH',
   displayName: 'Search News',
-  description:
-    'Search for enriched real-time news articles from the past 48 hours or historical archive',
+  description: 'Find news articles from the last 48 hours or the archive.',
   audience: 'both',
   aiMetadata: {
     description:
       'Searches enriched news articles via the AskNews API, defaulting to recent coverage but able to query the historical archive (60+ days) instead when historical is set. The query can be keywords, a question, or a paragraph, and the search method switches between keyword, semantic natural-language, or hybrid matching; filter by category and recency. Choose this to find or retrieve current/past news on a topic. Read-only and idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'search',
+      display: 'section',
+      label: 'Search',
+      icon: 'text',
+      props: ['query', 'method', 'categories'],
+    },
+    {
+      key: 'time',
+      display: 'section',
+      label: 'Time Window',
+      icon: 'calendar',
+      props: ['timeWindowInfo', 'hoursBack', 'historical'],
+    },
+    {
+      key: 'results',
+      display: 'section',
+      label: 'Results',
+      icon: 'sliders',
+      props: ['nArticles', 'similarityScoreThreshold', 'returnType'],
+    },
+  ],
   props: {
     query: Property.ShortText({
       displayName: 'Query',
-      description:
-        'Search query - can be a phrase, keyword, question, or paragraph. Leave empty to search by filters only.',
+      description: 'Keywords, a question or a short paragraph.',
+      placeholder: 'Electric vehicle sales in Europe',
       required: true,
     }),
     nArticles: Property.Number({
       displayName: 'Number of Articles',
-      description: 'Number of articles to return',
+      description: 'How many articles to return.',
+      width: 'half',
       defaultValue: 10,
       required: false,
     }),
     method: Property.StaticDropdown({
       displayName: 'Search Method',
       description:
-        'Search method to use. "kw" for keyword matching, "nl" for semantic/natural language search, "both" for hybrid',
+        'Keyword matches exact words; Natural Language matches meaning.',
       options: {
         options: [
-          { label: 'Keyword (kw)', value: 'kw' },
-          { label: 'Natural Language (nl)', value: 'nl' },
-          { label: 'Both (kw + nl)', value: 'both' },
+          { label: 'Keyword', value: 'kw' },
+          { label: 'Natural Language', value: 'nl' },
+          { label: 'Both', value: 'both' },
         ],
       },
       defaultValue: 'kw',
       required: false,
     }),
     returnType: Property.StaticDropdown({
-      displayName: 'Return Type',
-      description:
-        'Format of returned articles. "string" is prompt-optimized, "dicts" is structured data, "both" returns both',
+      displayName: 'Result Format',
+      description: 'Text suits AI prompts; Structured Data suits later steps.',
       options: {
         options: [
-          { label: 'String (prompt-optimized)', value: 'string' },
-          { label: 'Dicts (structured)', value: 'dicts' },
+          { label: 'Text for AI Prompts', value: 'string' },
+          { label: 'Structured Data', value: 'dicts' },
           { label: 'Both', value: 'both' },
         ],
       },
@@ -58,22 +84,25 @@ export const searchNews = createAction({
       required: false,
     }),
     historical: Property.Checkbox({
-      displayName: 'Search Historical Archive',
-      description:
-        'Search in historical archive (60+ days back) instead of just recent news (48 hours)',
+      displayName: 'Search Archive',
+      description: 'Search the archive instead of recent news.',
       defaultValue: false,
       required: false,
     }),
+    timeWindowInfo: Property.MarkDown({
+      value:
+        'Recent news covers the last 48 hours. The archive goes back further.',
+      variant: MarkdownVariant.INFO,
+    }),
     hoursBack: Property.Number({
       displayName: 'Hours Back',
-      description:
-        'Number of hours back to search from current time. Defaults to 24.',
+      description: 'How many hours back from now to search.',
       defaultValue: 24,
       required: false,
     }),
     categories: Property.StaticMultiSelectDropdown({
       displayName: 'Categories',
-      description: 'Filter articles by news categories',
+      description: 'Only return articles in these categories.',
       options: {
         options: [
           { label: 'Business', value: 'Business' },
@@ -95,9 +124,9 @@ export const searchNews = createAction({
       required: false,
     }),
     similarityScoreThreshold: Property.Number({
-      displayName: 'Similarity Score Threshold',
-      description:
-        'Minimum similarity score (0-1) for results. Lower = more lenient matches.',
+      displayName: 'Minimum Similarity',
+      description: 'From 0 to 1. Lower values allow looser matches.',
+      width: 'half',
       defaultValue: 0.5,
       required: false,
     }),
@@ -114,19 +143,25 @@ export const searchNews = createAction({
       similarityScoreThreshold,
     } = context.propsValue;
 
-    const queryParams: any = {
-      query: query,
-    };
-    if (nArticles) queryParams.n_articles = nArticles;
-    if (method) queryParams.method = method;
-    if (returnType) queryParams.return_type = returnType;
-    if (historical) queryParams.historical = historical;
-    if (hoursBack) queryParams.hours_back = hoursBack;
-    if (categories && categories.length > 0) queryParams.categories = categories;
+    const queryParams = new URLSearchParams();
+    queryParams.append('query', query);
+    if (nArticles) queryParams.append('n_articles', String(nArticles));
+    if (method) queryParams.append('method', method);
+    if (returnType) queryParams.append('return_type', returnType);
+    if (historical) queryParams.append('historical', String(historical));
+    if (hoursBack) queryParams.append('hours_back', String(hoursBack));
+    if (categories && categories.length > 0) {
+      categories.forEach((category) =>
+        queryParams.append('categories', category),
+      );
+    }
     if (similarityScoreThreshold)
-      queryParams.similarity_score_threshold = similarityScoreThreshold;
+      queryParams.append(
+        'similarity_score_threshold',
+        String(similarityScoreThreshold),
+      );
 
-    const queryString = new URLSearchParams(queryParams).toString();
+    const queryString = queryParams.toString();
     const response = await makeRequest(
       context.auth.secret_text,
       HttpMethod.GET,

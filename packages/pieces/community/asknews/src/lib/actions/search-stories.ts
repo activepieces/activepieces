@@ -7,23 +7,41 @@ export const searchStories = createAction({
   auth: asknewsAuth,
   name: 'searchStories',
   classification: 'SEARCH',
-  displayName: 'Search Stories (Narrative Clusters)',
-  description: 'Filter and search for top news narratives and story clusters',
+  displayName: 'Search Stories',
+  description: 'Find top news stories, each grouping articles on one event.',
   audience: 'both',
   aiMetadata: {
     description:
       'Searches AskNews for top news narratives and story clusters (grouped multi-article events) rather than individual articles. The query is optional: with no query it returns top trending stories filtered by category/sort, and with a query it filters to matching narratives via keyword, semantic, or hybrid matching. Choose this for the big-picture narrative view over a topic. Read-only and idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'search',
+      display: 'section',
+      label: 'Search',
+      icon: 'text',
+      props: ['query', 'method', 'categories'],
+    },
+    {
+      key: 'results',
+      display: 'section',
+      label: 'Results',
+      icon: 'sliders',
+      props: ['sort_by', 'expand_updates'],
+    },
+  ],
   props: {
     query: Property.ShortText({
       displayName: 'Query',
-      description: 'Natural language or keyword query for search',
+      description: 'Keywords or a question. Leave empty for top stories.',
+      placeholder: 'Climate summit',
       required: false,
     }),
     method: Property.StaticDropdown({
       displayName: 'Search Method',
-      description: 'nl: semantic search, kw: keyword search, both: combined',
+      description:
+        'Keyword matches exact words; Natural Language matches meaning.',
       required: false,
       defaultValue: 'kw',
       options: {
@@ -36,7 +54,7 @@ export const searchStories = createAction({
     }),
     categories: Property.StaticMultiSelectDropdown({
       displayName: 'Categories',
-      description: 'Filter stories by categories',
+      description: 'Only return stories in these categories.',
       required: false,
       options: {
         options: [
@@ -57,15 +75,15 @@ export const searchStories = createAction({
       },
     }),
     expand_updates: Property.Checkbox({
-      displayName: 'Expand Updates',
-      description: 'Include story updates in results',
+      displayName: 'Include Updates',
+      description: "Add each story's later updates to the results.",
       required: false,
       defaultValue: false,
     }),
 
     sort_by: Property.StaticDropdown({
       displayName: 'Sort By',
-      description: 'Sort results by field',
+      description: 'Newest first unless you pick another order.',
       required: false,
       defaultValue: 'published',
       options: {
