@@ -29,7 +29,7 @@
     export const razorpay = createPiece({
       displayName: "Razorpay",
       auth: razorpayAuth,
-      minimumSupportedRelease: '0.30.0',
+      minimumSupportedRelease: '0.88.2',
       logoUrl: "https://cdn.activepieces.com/pieces/razorpay.png",
       authors: ['drona2938'],
       actions: [
@@ -37,6 +37,12 @@
           baseUrl: () => razorpayURL.apiURL,
           auth: razorpayAuth,
           authMapping: (auth) => generateRazorpayAuthHeader(auth.props),
+          props: {
+            url: {
+              description: `Full URL, or a path relative to ${razorpayURL.apiURL}`,
+              placeholder: '/payment_links',
+            },
+          },
         }),
         createPaymentlink
       ],
