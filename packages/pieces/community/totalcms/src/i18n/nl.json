@@ -190,6 +190,8 @@
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
   "HEAD": "HOOFD",
+  "Request": "Aanvraag",
+  "Data to send": "Gegevens om te verzenden",
   "New Blog Post": "Nieuwe blogpost",
   "New Object": "New Object",
   "Updated Object": "Updated Object",
