@@ -4,8 +4,8 @@
   "Return a file or text (markdown) as a response.": "Retornar um arquivo ou texto (markdown) como uma resposta.",
   "Text": "Text",
   "Attachment": "Anexo",
-  "Shown to the person waiting. Markdown is supported.": "Shown to the person waiting. Markdown is supported.",
-  "A file the person can download with the response.": "A file the person can download with the response.",
+  "Shown to the person waiting. Markdown is supported.": "Exibido para a pessoa que está aguardando. Markdown é compatível.",
+  "A file the person can download with the response.": "Um arquivo que a pessoa pode baixar com a resposta.",
   "Web Form": "Formulário Web",
   "Chat UI": "Interface do Chat",
   "Trigger the flow by submitting a form.": "Acionar o fluxo enviando um formulário.",
@@ -15,11 +15,11 @@
   "Inputs": "Entradas",
   "Bot Name": "Nome do bot",
   "**Published Form URL:**\n```text\n{{formUrl}}\n```\nProduction link. Serves the published version of the form.\n\n**Draft Form URL:**\n```text\n{{formUrl}}?useDraft=true\n```\nTesting link. Serves the draft you are editing now.\n": "**Published Form URL:**\n```text\n{{formUrl}}\n```\nProduction link. Serves the published version of the form.\n\n**Draft Form URL:**\n```text\n{{formUrl}}?useDraft=true\n```\nTesting link. Serves the draft you are editing now.\n",
-  "Keeps the submitter on the form until the flow replies.": "Keeps the submitter on the form until the flow replies.",
+  "Keeps the submitter on the form until the flow replies.": "Mantém o remetente no formulário até que o fluxo responda.",
   "With **Wait for Response** on, the form waits for a **Respond on UI** step.\nWithout one, it errors after {{webhookTimeoutSeconds}} seconds.": "With **Wait for Response** on, the form waits for a **Respond on UI** step.\nWithout one, it errors after {{webhookTimeoutSeconds}} seconds.",
-  "One row per field shown on the form.": "One row per field shown on the form.",
+  "One row per field shown on the form.": "Uma linha por campo exibido no formulário.",
   "**Published Chat URL:**\n```text\n{{chatUrl}}\n```\nProduction link. Serves the published version of the chat.\n\n**Draft Chat URL:**\n```text\n{{chatUrl}}?useDraft=true\n```\nTesting link. Serves the draft you are editing now.\nOr press **Open Chat** in the builder to try it in a side panel.\n": "**Published Chat URL:**\n```text\n{{chatUrl}}\n```\nProduction link. Serves the published version of the chat.\n\n**Draft Chat URL:**\n```text\n{{chatUrl}}?useDraft=true\n```\nTesting link. Serves the draft you are editing now.\nOr press **Open Chat** in the builder to try it in a side panel.\n",
   "The sender waits for a **Respond on UI** step in this flow.\nWithout one, they see an error after {{webhookTimeoutSeconds}} seconds.": "The sender waits for a **Respond on UI** step in this flow.\nWithout one, they see an error after {{webhookTimeoutSeconds}} seconds.",
   "Shown in the greeting above the chat box.": "Shown in the greeting above the chat box.",
-  "Human Input": "Human Input"
+  "Human Input": "Entrada humana"
 }
