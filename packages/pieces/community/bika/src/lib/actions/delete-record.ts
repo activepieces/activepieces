@@ -9,7 +9,7 @@ export const deleteRecordAction = createAction({
   name: 'bika_delete_record',
   classification: 'DESTRUCTIVE',
   displayName: 'Delete Record',
-  description: 'Deletes a record in database by ID.',
+  description: 'Deletes a record from a Bika database by its ID.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -19,7 +19,7 @@ export const deleteRecordAction = createAction({
   props: {
     space_id: bikaProps.space(),
     database_id: bikaProps.database(),
-    recordId: bikaProps.recordId({ description: 'The ID of the record to delete (starts with "rec").' }),
+    recordId: bikaProps.recordId({ description: 'The record ID, mapped from a Find Records or Create Record step.' }),
   },
   outputSchema: bikaOutputSchemas.humanDeleted,
   async run(context) {
