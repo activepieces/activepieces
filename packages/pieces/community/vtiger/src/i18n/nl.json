@@ -184,6 +184,8 @@
   "Exact": "Exact",
   "Contains (text values)": "Contains (text values)",
   "HEAD": "HOOFD",
+  "Request": "Verzoek",
+  "Data to send": "Gegevens om te verzenden",
   "New or Updated Record": "Nieuwe of bijgewerkte record",
   "Triggers when a new record is introduced or a record is updated. Deleted records are not emitted.": "Triggers when a new record is introduced or a record is updated. Deleted records are not emitted.",
   "Watch By": "Bekijk door",
