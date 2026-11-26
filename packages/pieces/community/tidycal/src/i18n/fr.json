@@ -24,6 +24,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Demande",
+  "Data to send": "Données à envoyer",
   "Booking Canceled": "Réservation annulée",
   "New Booking": "Nouvelle réservation",
   "New Contact": "Nouveau contact",
