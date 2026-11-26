@@ -26,7 +26,7 @@ const getBitlyGroups = async (auth: BitlyAuthProps): Promise<BitlyGroup[]> => {
 
 export const groupGuid = Property.Dropdown({
   displayName: 'Group',
-  description: 'The group where the item will be managed.',
+  description: 'The Bitly group to work in.',
   required: true,
   refreshers: [],
   auth:bitlyAuth ,
@@ -59,7 +59,7 @@ export const groupGuid = Property.Dropdown({
 export const domain = Property.Dropdown({
   auth: bitlyAuth,
     displayName: 'Domain',
-    description: 'Domain to use for the Bitlink.',
+    description: 'Short domain for the link.',
     required: false,
     refreshers: ['group_guid'],
     options: async ({ auth, group_guid }) => {
@@ -90,7 +90,7 @@ export const domain = Property.Dropdown({
 
 export const bitlinkDropdown = Property.Dropdown({
     displayName: 'Bitlink',
-    description: 'Select the Bitlink to modify.',
+    description: "Pick a link from the group's most recent Bitlinks.",
     required: true,
     refreshers: ['group_guid'],
     auth: bitlyAuth,
@@ -112,7 +112,7 @@ export const bitlinkDropdown = Property.Dropdown({
             return {
                 disabled: false,
                 options: response.links.map(link => ({
-                    label: `${link.title || 'No Title'} (${link.id})`,
+                    label: `${link.title || 'Untitled'} (${link.id})`,
                     value: link.id
                 }))
             };

@@ -5,13 +5,14 @@ import { bitlyApiCall } from '../common/client';
 import { groupGuid } from '../common/props';
 
 const LAST_BITLINK_IDS_KEY = 'bitly-last-bitlink-ids';
+const LAST_CREATED_AT_KEY = 'bitly-last-bitlink-created-at';
 
 export const newBitlinkCreatedTrigger = createTrigger({
   auth: bitlyAuth,
   name: 'new_bitlink_created',
   classification: 'READ',
   displayName: 'New Bitlink Created',
-  description: 'Fires when a new Bitlink is created.',
+  description: 'Fires when a new Bitlink is created in the selected group.',
   aiMetadata: {
     description: 'Fires when a new Bitlink appears in the selected group, detected by polling. Represents a newly created short link, optionally narrowed to those whose title or tags match a filter and optionally including archived links.',
   },
@@ -19,7 +20,8 @@ export const newBitlinkCreatedTrigger = createTrigger({
   props: {
     pollingInterval: Property.StaticDropdown({
       displayName: 'Polling Interval',
-      description: 'How frequently to check for new Bitlinks.',
+      description: 'Not used. Activepieces sets how often Bitly is checked.',
+      advanced: true,
       required: false,
       defaultValue: '5',
       options: {
@@ -37,24 +39,42 @@ export const newBitlinkCreatedTrigger = createTrigger({
     group_guid: groupGuid,
     
     titleFilter: Property.ShortText({
-      displayName: 'Title Filter (Optional)',
-      description: 'Only trigger for Bitlinks containing this text in their title.',
+      displayName: 'Title Contains',
+      description: 'Match text in the title.',
       required: false,
+      width: 'half',
     }),
     
     tagFilter: Property.ShortText({
-      displayName: 'Tag Filter (Optional)',
-      description: 'Only trigger for Bitlinks containing this tag.',
+      displayName: 'Tag Contains',
+      description: 'Match text in a tag.',
       required: false,
+      width: 'half',
     }),
     
     includeArchived: Property.Checkbox({
       displayName: 'Include Archived Bitlinks',
-      description: 'Include archived Bitlinks in monitoring.',
+      description: 'Also watch Bitlinks that are archived.',
       required: false,
       defaultValue: false,
     }),
   },
+  propertyGroups: [
+    {
+      key: 'source',
+      display: 'section',
+      label: 'Source',
+      icon: 'send',
+      props: ['group_guid'],
+    },
+    {
+      key: 'filters',
+      display: 'section',
+      label: 'Filters',
+      icon: 'filter',
+      props: ['titleFilter', 'tagFilter', 'includeArchived'],
+    },
+  ],
 
   async onEnable(context) {
     const { group_guid } = context.propsValue;
@@ -77,6 +97,7 @@ export const newBitlinkCreatedTrigger = createTrigger({
 
       const linkIds = response.links.map((link) => link.id);
       await context.store.put<string[]>(LAST_BITLINK_IDS_KEY, linkIds);
+      await context.store.put<number>(LAST_CREATED_AT_KEY, newestCreatedAt({ links: response.links }));
       
       console.log(`Bitly New Bitlink trigger initialized with ${linkIds.length} existing links`);
     } catch (error: any) {
@@ -108,6 +129,7 @@ export const newBitlinkCreatedTrigger = createTrigger({
     
     try {
       const previousLinkIds = await context.store.get<string[]>(LAST_BITLINK_IDS_KEY) || [];
+      const lastCreatedAt = await context.store.get<number>(LAST_CREATED_AT_KEY);
 
       const response = await bitlyApiCall<{ links: BitlyLink[] }>({
         auth: { accessToken },
@@ -122,9 +144,21 @@ export const newBitlinkCreatedTrigger = createTrigger({
       const allLinks = response.links || [];
       const currentLinkIds = allLinks.map((l) => l.id);
 
-      await context.store.put<string[]>(LAST_BITLINK_IDS_KEY, currentLinkIds);
+      await context.store.put<string[]>(
+        LAST_BITLINK_IDS_KEY,
+        [...new Set([...currentLinkIds, ...previousLinkIds])].slice(0, 500),
+      );
+      const createdAtBoundary =
+        lastCreatedAt ??
+        newestCreatedAt({ links: allLinks.filter((link) => previousLinkIds.includes(link.id)) });
 
-      let newLinks = allLinks.filter((link) => !previousLinkIds.includes(link.id));
+      await context.store.put<number>(LAST_CREATED_AT_KEY, Math.max(createdAtBoundary, newestCreatedAt({ links: allLinks })));
+
+      let newLinks = allLinks.filter(
+        (link) =>
+          !previousLinkIds.includes(link.id) &&
+          createdAtMs({ link }) >= createdAtBoundary,
+      );
 
       if (titleFilter && titleFilter.trim()) {
         const filterText = titleFilter.trim().toLowerCase();
@@ -345,6 +379,15 @@ export const newBitlinkCreatedTrigger = createTrigger({
     },
   },
 });
+
+function createdAtMs({ link }: { link: BitlyLink }): number {
+  const ms = Date.parse(link.created_at);
+  return Number.isNaN(ms) ? 0 : ms;
+}
+
+function newestCreatedAt({ links }: { links: BitlyLink[] }): number {
+  return links.reduce((max, link) => Math.max(max, createdAtMs({ link })), 0);
+}
 
 /**
  * Interface for Bitly link data structure
