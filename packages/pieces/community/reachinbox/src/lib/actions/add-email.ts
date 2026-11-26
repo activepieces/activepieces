@@ -7,20 +7,28 @@ export const addEmail = createAction({
   auth: ReachinboxAuth,
   name: 'addEmail',
   classification: 'WRITE',
-  displayName: 'Add Email',
-  description: 'Add an email to a specific account.',
+  displayName: 'Add Sending Account to Campaign',
+  description: 'Lets a campaign send from one of your connected email accounts.',
   audience: 'both',
   aiMetadata: {
     description:
       'Attaches a sending email address to a specific ReachInbox campaign so that account is used for outreach. Use to assign which connected mailbox a campaign sends from. Requires both a campaign id and the email address.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'sending',
+      display: 'section',
+      label: 'Sending Account',
+      icon: 'send',
+      props: ['campaignId', 'email'],
+    },
+  ],
   props: {
     campaignId: Property.Dropdown({
-  auth: ReachinboxAuth,
-      displayName: 'Select Campaign',
-      description:
-        'Choose a campaign from the list or enter the campaign ID manually.',
+      auth: ReachinboxAuth,
+      displayName: 'Campaign',
+      description: 'Your campaigns, newest first.',
       required: true,
       refreshers: ['auth'],
       options: async ({ auth }) => {
@@ -31,20 +39,34 @@ export const addEmail = createAction({
             placeholder: 'Please connect your account first',
           };
         }
-        const campaigns = await fetchCampaigns(auth.secret_text);
-
-        return {
-          options: campaigns.map((campaign) => ({
-            label: campaign.name,
-            value: campaign.id,
-          })),
-          disabled: campaigns.length === 0,
-        };
+        try {
+          const campaigns = await fetchCampaigns(auth.secret_text);
+          if (campaigns.length === 0) {
+            return {
+              disabled: true,
+              options: [],
+              placeholder: 'No campaigns found. Create one in ReachInbox first.',
+            };
+          }
+          return {
+            options: campaigns.map((campaign) => ({
+              label: reachinboxCommon.campaignLabel(campaign),
+              value: campaign.id,
+            })),
+          };
+        } catch (error) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Failed to load campaigns. Check your connection.',
+          };
+        }
       },
     }),
     email: Property.ShortText({
-      displayName: 'Email',
-      description: 'Enter the email address to add to the campaign.',
+      displayName: 'Account Email',
+      description: 'An email account already connected in ReachInbox.',
+      placeholder: 'sales@yourcompany.com',
       required: true,
     }),
   },

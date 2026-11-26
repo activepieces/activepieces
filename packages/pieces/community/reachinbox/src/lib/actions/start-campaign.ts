@@ -8,7 +8,7 @@ export const startCampaign = createAction({
   name: 'startCampaign',
   classification: 'WRITE',
   displayName: 'Start Campaign',
-  description: 'Starts a Campaign',
+  description: 'Starts or resumes sending for a campaign.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -18,9 +18,8 @@ export const startCampaign = createAction({
   props: {
     campaignId: Property.Dropdown({
   auth: ReachinboxAuth,
-      displayName: 'Select Campaign',
-      description:
-        'Choose a campaign from the list or enter the campaign ID manually.',
+      displayName: 'Campaign',
+      description: 'Your campaigns, newest first.',
       required: true,
       refreshers: ['auth'],
       options: async ({ auth }) => {
@@ -31,15 +30,30 @@ export const startCampaign = createAction({
             placeholder: 'Please connect your account first',
           };
         }
-        const campaigns = await fetchCampaigns(auth.secret_text);
+        try {
+          const campaigns = await fetchCampaigns(auth.secret_text);
 
-        return {
-          options: campaigns.map((campaign) => ({
-            label: campaign.name,
-            value: campaign.id,
-          })),
-          disabled: campaigns.length === 0,
-        };
+          if (campaigns.length === 0) {
+            return {
+              disabled: true,
+              options: [],
+              placeholder: 'No campaigns found. Create one in ReachInbox first.',
+            };
+          }
+          return {
+            options: campaigns.map((campaign) => ({
+              label: reachinboxCommon.campaignLabel(campaign),
+              value: campaign.id,
+            })),
+            disabled: false,
+          };
+        } catch (error) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Failed to load campaigns. Check your connection.',
+          };
+        }
       },
     }),
   },

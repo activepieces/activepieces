@@ -3,21 +3,12 @@ import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { ReachinboxAuth } from '../..';
 import { reachinboxCommon } from '../common';
 
-// Define the shape of the account object
-interface EmailAccount {
-  id: number;
-  email: string;
-  warmupEnabled: boolean;
-  isDisconnected: boolean;
-}
-
 export const enableWarmup = createAction({
   auth: ReachinboxAuth,
   name: 'enableWarmup',
   classification: 'WRITE',
   displayName: 'Enable Warmup',
-  description:
-    'Enable warmup for specific email accounts where it is currently disabled.',
+  description: 'Turns on warmup for a connected email account.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -27,45 +18,43 @@ export const enableWarmup = createAction({
   props: {
     accountId: Property.Dropdown({
   auth: ReachinboxAuth,
-      displayName: 'Select Email Accounts to Enable Warmup',
-      description: 'Choose email accounts that have warmup disabled.',
+      displayName: 'Email Account',
+      description: 'Only accounts with warmup turned off are listed.',
       required: true,
       refreshers: ['auth'],
       options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
+          };
+        }
         try {
-          // Fetch email accounts
-          const response = await httpClient.sendRequest({
-            method: HttpMethod.GET,
-            url: `${reachinboxCommon.baseUrl}account/all`,
-            headers: {
-              Authorization: `Bearer ${auth}`,
-            },
-          });
-
-          const accounts: EmailAccount[] =
-            response.body?.data?.emailsConnected || [];
-
-          // Filter accounts where warmup is not enabled and isDisconnected is false
-          const accountsToEnableWarmup = accounts.filter(
-            (account: EmailAccount) =>
-              !account.warmupEnabled && !account.isDisconnected
+          const accounts = await reachinboxCommon.fetchEmailAccounts(
+            auth.secret_text
           );
-
-          // Map the filtered accounts to dropdown options
-          const options = accountsToEnableWarmup.map(
-            (account: EmailAccount) => ({
+          const options = accounts
+            .filter((account) => !account.warmupEnabled && !account.isDisconnected)
+            .map((account) => ({
               label: `${account.email} (ID: ${account.id})`,
               value: account.id.toString(),
-            })
-          );
+            }));
 
-          return {
-            options,
-            disabled: options.length === 0,
-          };
+          if (options.length === 0) {
+            return {
+              disabled: true,
+              options: [],
+              placeholder: 'No accounts with warmup turned off.',
+            };
+          }
+          return { options, disabled: false };
         } catch (error) {
-          console.error('Error fetching email accounts:', error);
-          return { options: [], disabled: true };
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Failed to load accounts. Check your connection.',
+          };
         }
       },
     }),

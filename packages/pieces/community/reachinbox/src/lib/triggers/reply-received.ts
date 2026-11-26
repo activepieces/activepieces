@@ -1,37 +1,24 @@
 import {
   createTrigger,
+  MarkdownVariant,
   Property,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
-
-const replyReceivedMessage = `
-
-  Follow the below steps:
-  
-  1. Login to the ReachInbox dashboard.
-  2. Go to the "Profile" section and navigate to the "Settings" tab.
-  3. Click on the "Integrations" and go to the "Webhooks". Click on the "Add Webhook" button.
-  4. Copy the following webhook URL and paste it into the "Webhook URL" field.
-      \`\`\`text
-      {{webhookUrl}}
-      \`\`\`
-
-  5. Select the event type as "Reply Received".
-  6. Click on the "Test Trigger" button to simulate a test and capture the webhook response here.
-  `;
+import { reachinboxCommon } from '../common';
 
 export const replyReceived = createTrigger({
   name: 'replyReceived',
   classification: 'READ',
   displayName: 'Reply Received',
-  description: 'Triggers when a reply to an email is received.',
+  description: 'Triggers when a lead replies to an email.',
   aiMetadata: {
     description:
       'Fires when a lead replies to an outreach email (REPLY_RECEIVED). Represents an inbound response; payload includes the lead, sending account, campaign, and the replied message body. Requires the webhook to be configured in ReachInbox.',
   },
   props: {
     markdown: Property.MarkDown({
-      value: replyReceivedMessage,
+      value: reachinboxCommon.webhookInstructions('Reply Received'),
+      variant: MarkdownVariant.INFO,
     }),
   },
   sampleData: {

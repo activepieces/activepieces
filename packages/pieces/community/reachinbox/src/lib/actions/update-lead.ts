@@ -1,4 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  MarkdownVariant,
+  Property,
+} from '@activepieces/pieces-framework';
 import { fetchCampaigns, reachinboxCommon } from '../common/index';
 import { ReachinboxAuth } from '../..';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
@@ -15,19 +19,34 @@ export const updateLead = createAction({
   name: 'updateLead',
   classification: 'WRITE',
   displayName: 'Update Lead',
-  description: 'Updates a Lead.',
+  description: "Sets a lead's email, name and the custom variables you list.",
   audience: 'both',
   aiMetadata: {
     description:
       "Updates an existing lead in a ReachInbox campaign, overwriting its email, name, and custom-variable attributes. Use to modify a known contact's details. Requires both the campaign id and the lead id; idempotent since it sets the lead to the supplied values.",
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'lead',
+      display: 'section',
+      label: 'Lead to Update',
+      icon: 'user',
+      props: ['campaignId', 'leadId'],
+    },
+    {
+      key: 'details',
+      display: 'section',
+      label: 'New Details',
+      icon: 'text',
+      props: ['info', 'email', 'firstName', 'lastName', 'customVariables'],
+    },
+  ],
   props: {
     campaignId: Property.Dropdown({
-  auth: ReachinboxAuth,
-      displayName: 'Select Campaign',
-      description:
-        'Choose a campaign from the list or enter the campaign ID manually.',
+      auth: ReachinboxAuth,
+      displayName: 'Campaign',
+      description: 'Your campaigns, newest first.',
       required: true,
       refreshers: ['auth'],
       options: async ({ auth }) => {
@@ -38,28 +57,49 @@ export const updateLead = createAction({
             placeholder: 'Please connect your account first',
           };
         }
-        const campaigns = await fetchCampaigns(auth.secret_text);
-        return {
-          options: campaigns.map((campaign) => ({
-            label: campaign.name,
-            value: campaign.id,
-          })),
-          disabled: campaigns.length === 0,
-        };
-      },
-    }),
-    leadId: Property.Dropdown({
-  auth: ReachinboxAuth,
-      displayName: 'Select Lead',
-      description: 'Choose a lead from the selected campaign.',
-      required: true,
-      refreshers: ['campaignId'],
-      options: async ({ auth, campaignId }) => {
-        if (!campaignId || !auth) {
+        try {
+          const campaigns = await fetchCampaigns(auth.secret_text);
+          if (campaigns.length === 0) {
+            return {
+              disabled: true,
+              options: [],
+              placeholder: 'No campaigns found. Create one in ReachInbox first.',
+            };
+          }
+          return {
+            options: campaigns.map((campaign) => ({
+              label: reachinboxCommon.campaignLabel(campaign),
+              value: campaign.id,
+            })),
+          };
+        } catch (error) {
           return {
             disabled: true,
             options: [],
-            placeholder: 'Please connect your account first and select a campaign',
+            placeholder: 'Failed to load campaigns. Check your connection.',
+          };
+        }
+      },
+    }),
+    leadId: Property.Dropdown({
+      auth: ReachinboxAuth,
+      displayName: 'Lead',
+      description: 'Leads of the selected campaign, listed by email.',
+      required: true,
+      refreshers: ['campaignId'],
+      options: async ({ auth, campaignId }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
+          };
+        }
+        if (!campaignId) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Select a campaign first',
           };
         }
 
@@ -79,42 +119,56 @@ export const updateLead = createAction({
           ? response.body.data.leads
           : [];
 
+        if (leads.length === 0) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'No leads in this campaign.',
+          };
+        }
+
         return {
           options: leads.map((lead: { email: string; id: string }) => ({
             label: lead.email,
             value: lead.id,
           })),
-          disabled: leads.length === 0,
         };
       },
     }),
+    info: Property.MarkDown({
+      value: 'Empty First Name or Last Name fields clear that name on the lead.',
+      variant: MarkdownVariant.INFO,
+    }),
     email: Property.ShortText({
       displayName: 'Email',
-      description: 'Enter the new email address for the lead.',
+      description: "The lead's email address after the update.",
+      placeholder: 'jane@example.com',
       required: true,
     }),
     firstName: Property.ShortText({
       displayName: 'First Name',
-      description: 'Enter the new first name for the lead.',
+      placeholder: 'Jane',
       required: false,
+      width: 'half',
     }),
     lastName: Property.ShortText({
       displayName: 'Last Name',
-      description: 'Enter the new last name for the lead.',
+      placeholder: 'Doe',
       required: false,
+      width: 'half',
     }),
     customVariables: Property.Array({
       displayName: 'Custom Variables',
-      description: 'Add custom variables as key-value pairs for the lead.',
+      description: 'Extra fields to use as variables in your emails.',
       properties: {
         key: Property.ShortText({
-          displayName: 'Key',
-          description: 'Enter the key for the custom variable',
+          displayName: 'Name',
+          placeholder: 'company',
           required: true,
         }),
         value: Property.ShortText({
           displayName: 'Value',
-          description: 'Enter the value for the custom variable',
+          placeholder: 'Acme Inc',
           required: true,
         }),
       },

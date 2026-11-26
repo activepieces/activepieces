@@ -20,6 +20,7 @@ import { setSchedule } from './lib/actions/set-schedule';
 import { startCampaign } from './lib/actions/start-campaign';
 import { updateLead } from './lib/actions/update-lead';
 import { PieceCategory } from '@activepieces/pieces-framework';
+import { reachinboxCommon } from './lib/common';
 
 /**
  * Define the API Key authentication using PieceAuth.SecretText
@@ -27,7 +28,8 @@ import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const ReachinboxAuth = PieceAuth.SecretText({
   displayName: 'API Key',
-  description: 'Enter your ReachInbox API key',
+  description:
+    'To get your API key:\n1. In ReachInbox, open **Settings** → **Integrations** → **API**.\n2. Copy the key for this workspace.\n\nIt looks like xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.',
   required: true,
   validate: async ({ auth }) => {
     // Validate the API key format (UUID pattern: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX)
@@ -45,9 +47,9 @@ export const ReachinboxAuth = PieceAuth.SecretText({
 });
 
 export const reachinbox = createPiece({
-  displayName: 'Reachinbox',
+  displayName: 'ReachInbox',
   auth: ReachinboxAuth,
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/reachinbox.png',
   categories: [PieceCategory.MARKETING],
   authors: ['support@reachinbox.ai', 'ManojKumard', 'Mitrajit'],
@@ -66,6 +68,12 @@ export const reachinbox = createPiece({
     updateLead,
     createCustomApiCallAction({
       baseUrl: () => 'https://api.reachinbox.ai/api/v1/',
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${reachinboxCommon.baseUrl.replace(/\/$/, '')}`,
+          placeholder: '/campaigns/all',
+        },
+      },
       auth: ReachinboxAuth,
       authMapping: async (auth) => ({
         Authorization: `Bearer ${auth.secret_text}`,
