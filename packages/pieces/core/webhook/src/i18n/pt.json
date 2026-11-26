@@ -19,9 +19,11 @@
   "Authentication": "Autenticação",
   "Authentication Fields": "Campos de autenticação",
   "**Live URL:**\n```text\n{{webhookUrl}}\n```\ngenerate sample data & triggers published flow.\n\n": "**URL ao vivo:**\n```text\n{{webhookUrl}}\n```\ngera dados de amostra e aciona fluxo publicado.\n\n",
-  "**Synchronous Requests:**\n\nIf you expect a response from this webhook, add `/sync` to the end of the URL. \nIf it takes more than 30 seconds, it will return a 408 Request Timeout response.\n\nTo return data, add an Webhook step to your flow with the Return Response action.\n": "**Requisições Síncronas.**\n\nSe você espera uma resposta deste webhook, adicione '/sync' ao final do URL.\nSe demorar mais que 30 segundos, ele vai retornar o erro 408 Request Timeout.\nPara retornar dados, adicione um passo de webhook ao seu fluxo com a ação de Retornar Resposta.\n",
+  "**Synchronous Requests:**\n\nIf you expect a response from this webhook, add `/sync` to the end of the URL.\nIf it takes more than {{webhookTimeoutSeconds}} seconds, it will return a 408 Request Timeout response.\n\nTo return data, add an Webhook step to your flow with the Return Response action.\n": "**Requisições Sincronas:**\n\nSe você espera uma resposta deste webhook, adicione `/sync` ao final da URL.\nSe levar mais de {{webhookTimeoutSeconds}} segundos, ele retornará uma resposta 408 Request Timeout.\n\nPara retornar dados, adicione um passo de Webhook ao seu fluxo com a ação Return Response.\n",
   "\n**Test URL:**\n\nif you want to generate sample data without triggering the flow, append `/test` to your webhook URL.\n\n": "\n**URL de Teste: **\n\nSe você quer gerar dados demonstrativos sem acionar o fluxo, adicione '/test' ao final do URL do webhook\n\n",
   "None": "Nenhuma",
   "Basic Auth": "Autenticação básica",
-  "Header Auth": "Autenticação de Cabeçalho"
+  "Header Auth": "Autenticação de Cabeçalho",
+  "HMAC Signature": "Assinatura HMAC",
+  "Webhook": "Webhook"
 }
