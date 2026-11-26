@@ -61,6 +61,7 @@ export const openai = createPiece({
     }),
   ],
   authors: [
+    'OdaiAhmed99',
     'aboudzein',
     'astorozhevsky',
     'Willianwg',

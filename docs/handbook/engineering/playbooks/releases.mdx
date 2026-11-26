@@ -7,7 +7,7 @@ All changes flow through a staging environment before reaching production. There
 
 ## How It Works
 
-1. **Merge to `main`** — `continuous-delivery-stg.yml` builds a `version.sha.beta` image, and deploys it to **staging** (`stg.activepieces.com`).
+1. **Merge to `main`** — `continuous-delivery-stg.yml` builds a `version.sha.beta` image, and deploys it to **staging** (`stg.activepieces.com`) and to **stg-cloud** (`stg-cloud.activepieces.com`). Only the staging deploy decides which commit the Cloud gate can pick.
 2. **Sunday to Wednesday at 8 AM UTC, or by hand** — `continuous-delivery-cloud.yml` (the Cloud gate) picks a candidate. A scheduled run takes the newest `main` commit that staging deployed; a manual run takes the tip of `main` (the run stops if staging has not deployed it). The gate runs the E2E matrix and the upgrade test on the image staging built from the candidate, and waits for one approval. A scheduled run skips the approval when its candidate contains the commit Cloud runs and adds no migration that cannot roll back.
 3. **On approval, or at once for a scheduled run that needs none** — the gate deploys that same image to the canary, then to the whole production fleet.
 4. **Self-hosted** — `release-self-hosted.yml`, by hand. The weekly `continuous-delivery-release.yml` is disabled.
@@ -18,6 +18,7 @@ All changes flow through a staging environment before reaching production. There
 |---|---|---|
 | Preview | `branch-name.activepieces.com` | Per-PR ephemeral environment for review. *Requires the `preview` label on the PR.* |
 | Staging | `stg.activepieces.com` | Internal testing |
+| stg-cloud | `stg-cloud.activepieces.com` | Internal testing of the Cloud edition (`AP_EDITION=cloud`) |
 | Canary | `canary.activepieces.com` | Gets each Cloud deploy a few minutes before the rest of production |
 | Production | `cloud.activepieces.com` | Live customers |
 
@@ -35,11 +36,18 @@ In an emergency, run the gate with `skip_tests`: it skips the E2E matrix, the up
 
 ## Pause the Scheduled Releases
 
-For a freeze or an incident, set the `RELEASES_PAUSED` repository variable to `true`:
+For a freeze or an incident, run `pause-releases.yml` from the **Actions** tab and pick `pause`. Pick `resume` to end the pause. The workflow sets the `RELEASES_PAUSED` repository variable to `true` or `false`, and needs only write access to the repository. From a terminal:
 
 ```bash
-gh variable set RELEASES_PAUSED --body true   # pause
-gh variable delete RELEASES_PAUSED            # resume
+gh workflow run pause-releases.yml -f action=pause    # pause
+gh workflow run pause-releases.yml -f action=resume   # resume
+```
+
+If the workflow cannot run, for example when it fails with a 403 because the release GitHub App lacks the Variables permission, a repository admin can set the variable directly:
+
+```bash
+gh variable set RELEASES_PAUSED --body true    # pause
+gh variable set RELEASES_PAUSED --body false   # resume
 ```
 
 A scheduled gate run then stops in `cut` and says so in its summary. Manual runs, `hotfix_prs` runs and `emergency-cloud-deploy.yml` still run. The flag is read only in `cut`, so it does not stop a run that has passed `cut`: cancel that run before its `deploy` job starts. The scheduled self-hosted release will read the same flag (ENG-1025).
@@ -56,12 +64,12 @@ To run any workflow manually, go to the repo's **Actions** tab, select the workf
 
 | Trigger | What happens |
 |---|---|
-| **Push to `main`** | Builds a `version.sha.beta` image and deploys to staging. |
+| **Push to `main`** | Builds a `version.sha.beta` image and deploys to staging and stg-cloud. |
 | **Manual dispatch** | Presents a dropdown with one choice (see below). |
 
 #### Manual dispatch choices
 
-- **`deploy-staging`** — Re-deploy the latest `main` to staging. Use this after an infra change.
+- **`deploy-staging`** — Re-deploy the latest `main` to staging and stg-cloud. Use this after an infra change.
 
 ### `continuous-delivery-cloud.yml` — Cloud Gate
 

@@ -56,8 +56,8 @@
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
   "HEAD": "HOOFD",
-  "Request": "Request",
-  "Data to send": "Data to send",
+  "Request": "Verzoek",
+  "Data to send": "Gegevens om te verzenden",
   "New Form Response": "Nieuw formulierantwoord",
   "Triggers when a new submission is received for a selected Fillout form.": "Activeert wanneer een nieuwe uitwerking wordt ontvangen voor een geselecteerd Fillout formulier."
 }

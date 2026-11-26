@@ -56,8 +56,8 @@
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
   "HEAD": "CABEÇA",
-  "Request": "Request",
-  "Data to send": "Data to send",
+  "Request": "Requisição",
+  "Data to send": "Dados a enviar",
   "New Form Response": "Nova resposta ao formulário",
   "Triggers when a new submission is received for a selected Fillout form.": "Aciona quando uma nova submissão for recebida para um formulário de Fillout selecionado."
 }

@@ -190,6 +190,8 @@
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
   "HEAD": "CABEÇA",
+  "Request": "Solicitação",
+  "Data to send": "Dados para enviar",
   "New Blog Post": "Nova publicação no blog",
   "New Object": "New Object",
   "Updated Object": "Updated Object",

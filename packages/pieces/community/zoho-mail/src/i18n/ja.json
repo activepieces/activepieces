@@ -77,8 +77,8 @@
   "PUT": "PUT",
   "DELETE": "削除",
   "HEAD": "頭",
-  "Request": "Request",
-  "Data to send": "Data to send",
+  "Request": "要求",
+  "Data to send": "送信するデータ",
   "New Email Received": "新しいメールを受信しました",
   "Triggers when a new email is received in a specified folder (or inbox).": "指定したフォルダ(または受信トレイ)に新しいメールを受信したときにトリガーします。",
   "Select the folder to watch. If empty, watches the inbox/all messages based on API default.": "監視するフォルダを選択します。空の場合は、API のデフォルトに基づいて受信トレイ/すべてのメッセージを監視します。"

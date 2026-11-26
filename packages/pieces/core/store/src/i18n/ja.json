@@ -22,5 +22,6 @@
   "Separator between added values, use \\n for newlines": "値の間の区切り文字。改行には \\n を使用します。",
   "Project": "プロジェクト",
   "Flow": "Flow",
-  "Run": "実行"
+  "Run": "実行",
+  "Storage": "ストレージ"
 }

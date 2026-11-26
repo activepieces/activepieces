@@ -1,4 +1,4 @@
-import { Permission } from '@activepieces/core-utils';
+import { ApResourceKind, Permission } from '@activepieces/core-utils';
 import {
   ApFlagId,
   FlowOperationType,
@@ -33,6 +33,8 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
+import { aiHighlightKey } from '@/features/chat/lib/follow/ai-highlight-key';
+import { useAiHighlight } from '@/features/chat/lib/follow/use-ai-highlight';
 import { flowHooks } from '@/features/flows';
 import { FlowCreatedByBadge } from '@/features/flows/components/flow-created-by-badge';
 import { foldersHooks } from '@/features/folders';
@@ -81,6 +83,15 @@ export const BuilderHeader = ({ isFlowLocked }: { isFlowLocked: boolean }) => {
     state.readonly,
   ]);
 
+  useAiHighlight({
+    resource: { kind: ApResourceKind.FLOW, id: flow.id },
+    key: aiHighlightKey.flowName(flow.id),
+  });
+  useAiHighlight({
+    resource: { kind: ApResourceKind.FLOW, id: flow.id },
+    key: aiHighlightKey.flowStatus(flow.id),
+  });
+
   const { embedState } = useEmbedding();
   const { project } = projectCollectionUtils.useCurrentProject();
 
@@ -106,29 +117,37 @@ export const BuilderHeader = ({ isFlowLocked }: { isFlowLocked: boolean }) => {
   };
 
   const titleContent = (
-    <div className="flex items-center gap-2 px-4">
-      <Breadcrumb>
-        <BreadcrumbList>
+    <div className="flex min-w-0 items-center gap-2 px-4">
+      <Breadcrumb className="min-w-0">
+        <BreadcrumbList className="flex-nowrap">
           {!embedState.disableNavigationInBuilder && (
             <>
-              <BreadcrumbItem>
+              <BreadcrumbItem className="min-w-0 @max-xl:hidden">
                 <BreadcrumbLink
                   onClick={goToFlowsPage}
-                  className="cursor-pointer text-sm"
+                  className="cursor-pointer truncate text-sm"
                 >
                   {getProjectName(project)}
                 </BreadcrumbLink>
               </BreadcrumbItem>
-              <BreadcrumbSeparator />
+              <BreadcrumbSeparator className="@max-xl:hidden" />
             </>
           )}
           {!embedState.hideFlowNameInBuilder && (
-            <BreadcrumbItem>
-              <BreadcrumbPage role={undefined} aria-disabled={undefined}>
+            <BreadcrumbItem className="min-w-16">
+              <BreadcrumbPage
+                className="min-w-0"
+                role={undefined}
+                aria-disabled={undefined}
+              >
                 <div
-                  className={cn('flex items-center gap-1 text-sm', {
-                    'max-w-[500px]': !isEditingFlowName || readonly,
-                  })}
+                  data-ai-field={aiHighlightKey.flowName(flow.id)}
+                  className={cn(
+                    'relative flex min-w-0 items-center gap-1 rounded-md px-1 text-sm',
+                    {
+                      'max-w-[500px]': !isEditingFlowName || readonly,
+                    },
+                  )}
                   data-testid="builder-flow-name"
                 >
                   <EditableText
@@ -187,16 +206,20 @@ export const BuilderHeader = ({ isFlowLocked }: { isFlowLocked: boolean }) => {
   );
 
   const rightContent = (
-    <div className="flex items-center justify-center gap-4">
+    <div className="flex shrink-0 items-center justify-center gap-4 @max-2xl:gap-2">
       {isLatestVersion &&
         !isRunsPage &&
         !embedState.hideConnectionsInBuilder && (
           <FlowConnectionsPopover isFlowLocked={isFlowLocked} />
         )}
       {showSupport && (
-        <Button variant="ghost" onClick={() => openNewWindow(supportUrl)}>
+        <Button
+          variant="ghost"
+          aria-label={t('Support')}
+          onClick={() => openNewWindow(supportUrl)}
+        >
           <CircleHelp className="w-4 h-4"></CircleHelp>
-          {t('Support')}
+          <span className="@max-2xl:hidden">{t('Support')}</span>
         </Button>
       )}
       {!embedState.hideActiveUsers && (
@@ -205,14 +228,20 @@ export const BuilderHeader = ({ isFlowLocked }: { isFlowLocked: boolean }) => {
       {hasPermissionToReadRuns && (
         <Button
           variant="ghost"
+          aria-label={t('Runs')}
           onClick={() => setRightSidebar(RightSideBarType.RUNS)}
         >
           <HistoryIcon className="w-4 h-4" />
-          {t('Runs')}
+          <span className="@max-2xl:hidden">{t('Runs')}</span>
         </Button>
       )}
 
-      <BuilderFlowStatusSection></BuilderFlowStatusSection>
+      <div
+        data-ai-field={aiHighlightKey.flowStatus(flow.id)}
+        className="relative rounded-md"
+      >
+        <BuilderFlowStatusSection></BuilderFlowStatusSection>
+      </div>
       <FlowCreatedByBadge createdBy={flow.createdBy} />
     </div>
   );
@@ -221,6 +250,7 @@ export const BuilderHeader = ({ isFlowLocked }: { isFlowLocked: boolean }) => {
 
   return (
     <div
+      className="@container"
       style={{
         height: `$${flowCanvasConsts.BUILDER_HEADER_HEIGHT}px`,
       }}

@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/core-utils'
-import { apVersionUtil } from '@activepieces/server-utils'
+import { apVersionUtil, posthogConfig } from '@activepieces/server-utils'
 import { ApEdition, ApFlagId, ExecutionMode, Flag } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -77,6 +77,12 @@ export const flagService = (log: FastifyBaseLogger) => ({
             {
                 id: ApFlagId.FRONTEND_SENTRY_DSN,
                 value: system.get(AppSystemProp.FRONTEND_SENTRY_DSN) ?? null,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.POSTHOG_PROJECT_TOKEN,
+                value: posthogConfig.projectToken(),
                 created,
                 updated,
             },

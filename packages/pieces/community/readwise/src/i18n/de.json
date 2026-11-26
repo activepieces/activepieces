@@ -68,8 +68,8 @@
   "PUT": "PUT",
   "DELETE": "LÖSCHEN",
   "HEAD": "HEAD",
-  "Request": "Request",
-  "Data to send": "Data to send",
+  "Request": "Anfrage",
+  "Data to send": "Daten zum Senden",
   "New Highlight": "New Highlight",
   "Fires when a new highlight is saved to Readwise.": "Fires when a new highlight is saved to Readwise."
 }

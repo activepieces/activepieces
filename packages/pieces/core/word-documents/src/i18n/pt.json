@@ -1,0 +1,23 @@
+{
+  "Read Word documents (.docx) and fill Word templates in your flow, no Microsoft account needed.": "Leia documentos do Word (.docx) e preencha modelos do Word no seu fluxo, sem precisar de conta Microsoft.",
+  "Extract Text": "Extrair Texto",
+  "Fill Template": "Preencher Modelo",
+  "Get the text, headers and footers of a Word document (.docx).": "Obtenha o texto, cabeçalhos e rodapés de um documento do Word (.docx).",
+  "Fill the {{placeholders}} in a Word template (.docx) and get a new document.": "Preencha os {{placeholders}} em um modelo do Word (.docx) e obtenha um novo documento.",
+  "Word Document": "Documento do Word",
+  "Password": "Senha",
+  "Markdown": "Markdown",
+  "Word Template": "Modelo do Word",
+  "Fields": "campos",
+  "Data (JSON)": "Dados (JSON)",
+  "File Name": "Nome do arquivo",
+  "Pick a .docx file from an earlier step, such as an email attachment, or paste a URL to download.": "Escolha um arquivo .docx de uma etapa anterior, como um anexo de e-mail, ou cole uma URL para baixar.",
+  "Only needed when the document is password-protected.": "Necessário apenas quando o documento está protegido por senha.",
+  "Type placeholders in your Word template with double braces:\n- `{{name}}` is replaced by the \"name\" value. `{{customer.city}}` reads a nested value.\n- `{{#items}}` ... `{{/items}}` repeats a table row or paragraph for each entry of the \"items\" list. Inside it, use the entry's fields, like `{{description}}`.\n- `{{#paid}}` ... `{{/paid}}` shows the text only when \"paid\" is true; `{{^paid}}` ... `{{/paid}}` only when it is false or empty.": "Digite placeholders no seu modelo do Word com chaves duplas:\n- `{{name}}` é substituído pelo valor \"name\". `{{customer.city}}` lê um valor aninhado.\n- `{{#items}}` ... `{{/items}}` repete uma linha de tabela ou parágrafo para cada entrada da lista \"items\". Dentro dela, use os campos da entrada, como `{{description}}`.\n- `{{#paid}}` ... `{{/paid}}` mostra o texto apenas quando \"paid\" é true; `{{^paid}}` ... `{{/paid}}` apenas quando é false ou vazio.",
+  "A .docx file with {{placeholders}}, from an earlier step or a URL.": "Um arquivo .docx com {{placeholders}}, de uma etapa anterior ou de uma URL.",
+  "One field per placeholder in the template. They appear once the template is set, or mapped from a step you have tested.": "Um campo por placeholder no modelo. Eles aparecem depois que o modelo é configurado ou mapeado a partir de uma etapa que você testou.",
+  "Optional. A JSON object with values for the placeholders. It overrides the fields above, and is needed for a list inside a list.": "Opcional. Um objeto JSON com valores para os placeholders. Ele substitui os campos acima e é necessário para uma lista dentro de uma lista.",
+  "Name of the new document. Leave empty to use the template's name.": "Nome do novo documento. Deixe em branco para usar o nome do modelo.",
+  "Document": "Document",
+  "Word Documents": "Documentos do Word"
+}

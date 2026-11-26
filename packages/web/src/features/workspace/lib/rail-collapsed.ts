@@ -1,14 +1,18 @@
-import { useCallback, useState } from 'react';
-import { matchPath, useLocation } from 'react-router-dom';
+import { useCallback } from 'react';
+import { matchPath, useLocation, useMatches } from 'react-router-dom';
 import { create } from 'zustand';
 
 import { routesThatRequireProjectId } from '@/lib/route-utils';
+import { safeStorage } from '@/lib/safe-storage';
 
-const STORAGE_KEY = 'primary-rail-collapsed';
+import { useChatPanel } from './chat-panel-open';
+import { layoutMove } from './layout-move';
+import { useChatOn } from './use-chat-on';
+import { windowSizeHooks } from './window-size-hooks';
 
-// Inside one agent the rail is furniture: the page has its own header, its own
-// conversation list and its own panel. The route only asks for it closed, so an
-// explicit click on that page still wins until you navigate on.
+const PREFERENCE_KEY = 'primary-rail-collapsed';
+const FOLDED_FOR_CHAT_KEY = 'primary-rail-folded-for-chat';
+
 const AGENT_ROUTES = [
   routesThatRequireProjectId.singleAgent,
   routesThatRequireProjectId.singleAgentRuns,
@@ -19,55 +23,135 @@ const ROUTES_THAT_HOLD_THE_RAIL_CLOSED = AGENT_ROUTES.flatMap((route) => [
   `/projects/:projectId${route}`,
 ]);
 
-function readInitial(): boolean {
-  return localStorage.getItem(STORAGE_KEY) === 'true';
+function readFlag({ area, key }: { area: 'local' | 'session'; key: string }) {
+  return safeStorage.read({ area, key }) === 'true';
 }
 
-function persist(value: boolean): boolean {
-  localStorage.setItem(STORAGE_KEY, String(value));
-  return value;
+function readFoldedForChat(): boolean {
+  if (!useChatPanel.getState().open) return false;
+  const saved = safeStorage.read({ area: 'session', key: FOLDED_FOR_CHAT_KEY });
+  return saved === null ? desktop() : saved === 'true';
 }
 
-const useRailCollapsed = create<RailCollapsedState>((set) => ({
-  preference: readInitial(),
-  setCollapsed: (value) => set({ preference: persist(value) }),
+function desktop(): boolean {
+  return !windowSizeHooks.isPhone();
+}
+
+const useRail = create<RailState>(() => ({
+  preference: readFlag({ area: 'local', key: PREFERENCE_KEY }),
+  foldedForChat: readFoldedForChat(),
+  openedOn: null,
 }));
 
-export function useRailOpenState() {
-  const { preference, setCollapsed } = useRailCollapsed();
-  const { pathname } = useLocation();
-  const [openedOn, setOpenedOn] = useState<string | null>(null);
-  const collapsed = railIsCollapsed({ preference, pathname, openedOn });
-
-  const onOpenChange = useCallback(
-    (open: boolean) => {
-      setOpenedOn(pathname);
-      setCollapsed(!open);
-    },
-    [pathname, setCollapsed],
-  );
-
-  return { open: !collapsed, onOpenChange };
+function update(patch: Partial<RailState>) {
+  useRail.setState(patch);
+  const state = useRail.getState();
+  safeStorage.write({
+    area: 'local',
+    key: PREFERENCE_KEY,
+    value: String(state.preference),
+  });
+  safeStorage.write({
+    area: 'session',
+    key: FOLDED_FOR_CHAT_KEY,
+    value: String(state.foldedForChat),
+  });
 }
 
-function railIsCollapsed({
-  preference,
+function railIsOpen({
+  state,
   pathname,
-  openedOn,
+  chatPage,
+  chatOn,
 }: {
-  preference: boolean;
+  state: RailState;
   pathname: string;
-  openedOn: string | null;
+  chatPage: boolean;
+  chatOn: boolean;
 }): boolean {
   const routeHoldsItClosed =
-    openedOn !== pathname &&
+    state.openedOn !== pathname &&
     ROUTES_THAT_HOLD_THE_RAIL_CLOSED.some(
       (route) => matchPath(route, pathname) !== null,
     );
-  return preference || routeHoldsItClosed;
+  const chatHoldsItClosed = state.foldedForChat && chatOn && !chatPage;
+  return !(state.preference || routeHoldsItClosed || chatHoldsItClosed);
 }
 
-type RailCollapsedState = {
+export function useRailOpen(): boolean {
+  const { pathname } = useLocation();
+  const chatPage = useMatches().some(({ handle }) => isChatPageHandle(handle));
+  const chatOn = useChatOn();
+  return useRail((state) => railIsOpen({ state, pathname, chatPage, chatOn }));
+}
+
+export function useRailOpenState() {
+  const open = useRailOpen();
+  const { pathname } = useLocation();
+
+  const onOpenChange = useCallback(
+    (next: boolean) => {
+      layoutMove.run({
+        waitForRoute: false,
+        update: () =>
+          update({
+            preference: !next,
+            foldedForChat: false,
+            openedOn: pathname,
+          }),
+      });
+    },
+    [pathname],
+  );
+
+  return { open, onOpenChange };
+}
+
+function railOpenNow(): boolean {
+  return railIsOpen({
+    state: useRail.getState(),
+    pathname: window.location.pathname,
+    chatPage: false,
+    chatOn: true,
+  });
+}
+
+function foldForDock() {
+  if (desktop() && railOpenNow()) {
+    update({ foldedForChat: true });
+  }
+}
+
+useChatPanel.subscribe((chat, prev) => {
+  if (chat.open && (!prev.open || chat.docks !== prev.docks)) {
+    foldForDock();
+  } else if (!chat.open && prev.open && useRail.getState().foldedForChat) {
+    update({ foldedForChat: false });
+  }
+});
+
+let wasDesktop = desktop();
+windowSizeHooks.subscribe(() => {
+  const now = desktop();
+  if (now && !wasDesktop && useChatPanel.getState().open) {
+    foldForDock();
+  }
+  wasDesktop = now;
+});
+
+function isChatPageHandle(handle: unknown): boolean {
+  return (
+    typeof handle === 'object' &&
+    handle !== null &&
+    'chat' in handle &&
+    handle.chat === 'full'
+  );
+}
+
+type RailState = {
   preference: boolean;
-  setCollapsed: (value: boolean) => void;
+  foldedForChat: boolean;
+  openedOn: string | null;
 };
+
+export const railUtils = { railIsOpen, store: useRail };

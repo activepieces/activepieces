@@ -8,6 +8,10 @@ icon: "hammer"
 
 ### What has changed?
 
+All breaking changes in this release are in pieces.
+
+<Accordion title="Pieces (21 changes)">
+
 #### Google Sheets 0.21.0: row triggers fire for more changes, and Trigger Column must be a column letter
 
 From Google Sheets 0.21.0, **New Row Added** and **New or Updated Row** also run the flow in three cases where they stayed silent before:
@@ -279,6 +283,8 @@ Microsoft Dynamics CRM "Create Record", "Get Record", "Update Record" and "Delet
 - If a flow relied on "Update Record" creating a missing record, use "Create Record" for that case instead.
 - If your self-hosted instance reaches Dynamics 365 through a proxy that inspects TLS traffic, add the proxy's CA certificate to `NODE_EXTRA_CA_CERTS`, or Dynamics CRM steps fail with a certificate error.
 - Flow steps that use these actions keep working unchanged otherwise. Steps keep running on the version they were built with until you upgrade them.
+
+</Accordion>
 
 ## 0.93.0
 

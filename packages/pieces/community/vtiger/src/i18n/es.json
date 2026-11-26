@@ -184,6 +184,8 @@
   "Exact": "Coincidencia exacta",
   "Contains (text values)": "Contains (text values)",
   "HEAD": "LIMPIO",
+  "Request": "Solicitud",
+  "Data to send": "Datos para enviar",
   "New or Updated Record": "Registro nuevo o actualizado",
   "Triggers when a new record is introduced or a record is updated. Deleted records are not emitted.": "Triggers when a new record is introduced or a record is updated. Deleted records are not emitted.",
   "Watch By": "Ver por",

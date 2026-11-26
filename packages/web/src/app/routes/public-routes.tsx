@@ -3,8 +3,8 @@ import React, { Suspense } from 'react';
 import { PageTitle } from '@/app/components/page-title';
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
+import { shellHandles } from '@/lib/shell-handle';
 
-import { ProjectDashboardLayout } from '../components/project-layout';
 import { TemplateDetailsWrapper } from '../guards/template-details-wrapper';
 
 import NotFoundPage from './404-page';
@@ -55,22 +55,6 @@ export const publicRoutes = [
     element: <AuthenticatePage />,
   },
   {
-    path: '/templates',
-    element: (
-      <ProjectDashboardLayout>
-        <PageTitle title="Templates">
-          <SuspenseWrapper>
-            <TemplatesPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </ProjectDashboardLayout>
-    ),
-  },
-  {
-    path: '/templates/:templateId',
-    element: <TemplateDetailsWrapper />,
-  },
-  {
     path: '/forms/:flowId',
     element: (
       <PageTitle title="Forms">
@@ -109,5 +93,24 @@ export const publicRoutes = [
         <NotFoundPage />
       </PageTitle>
     ),
+  },
+];
+
+export const templateRoutes = [
+  {
+    path: '/templates',
+    handle: shellHandles.publicProject,
+    element: (
+      <PageTitle title="Templates">
+        <SuspenseWrapper>
+          <TemplatesPage />
+        </SuspenseWrapper>
+      </PageTitle>
+    ),
+  },
+  {
+    path: '/templates/:templateId',
+    handle: shellHandles.templateDetails,
+    element: <TemplateDetailsWrapper />,
   },
 ];

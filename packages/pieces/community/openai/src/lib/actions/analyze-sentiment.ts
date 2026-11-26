@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import OpenAI from 'openai';
 import { openaiAuth } from '../auth';
 import { analyzeSentimentActionOutputSchema } from '../output-schemas';
+import { resolveModelId, samplingParams } from '../common/common';
 
 const sentiments = ['positive', 'negative', 'neutral'] as const;
 
@@ -43,11 +44,15 @@ export const analyzeSentiment = createAction({
   outputSchema: analyzeSentimentActionOutputSchema,
   async run(context) {
     const openai = new OpenAI({ apiKey: context.auth.secret_text });
-    const { model, text } = context.propsValue;
+    const model = resolveModelId(context.propsValue.model);
+    const { text } = context.propsValue;
 
     const completion = await openai.chat.completions.create({
       model,
-      temperature: 0,
+      ...samplingParams({
+        selectedModel: context.propsValue.model,
+        temperature: 0,
+      }),
       response_format: { type: 'json_object' },
       messages: [
         {
