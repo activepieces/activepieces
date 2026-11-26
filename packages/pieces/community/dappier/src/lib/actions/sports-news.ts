@@ -1,4 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  MarkdownVariant,
+  Property,
+} from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { dappierAuth } from '../..';
 import { dappierCommon } from '../common';
@@ -9,46 +13,71 @@ export const sportsNewsSearch = createAction({
   auth: dappierAuth,
   displayName: 'Sports News',
   description:
-    'Real-time news, updates, and personalized content from top sports sources like Sportsnaut, Forever Blueshirts, Minnesota Sports Fan, LAFB Network, Bounding Into Sports, and Ringside Intel.',
+    'Find articles from Sportsnaut, Forever Blueshirts and other sports sites.',
   audience: 'both',
   aiMetadata: {
     description:
       'Searches Dappier sports-news sources for articles matching a natural-language query or URL. Choose this for sports-specific content rather than the general web search action. Optionally tune result count, restrict to a preferred domain, and pick the search algorithm (semantic, most recent, most recent + semantic, or trending) to control whether matching is contextual or recency-driven. Read-only and safe to repeat.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'search',
+      display: 'section',
+      label: 'Search',
+      icon: 'text',
+      props: ['query', 'search_algorithm', 'similarity_top_k'],
+    },
+    {
+      key: 'preferred_site',
+      display: 'section',
+      label: 'Preferred Site',
+      icon: 'filter',
+      props: ['ref', 'num_articles_ref', 'preferred_site_info'],
+    },
+  ],
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',
-      description: 'Enter a natural language query or URL',
+      description: 'A question, keywords or an article URL.',
+      placeholder: 'Latest NBA trade news',
       required: true,
     }),
-    similarity_top_k: Property.Number({
-      displayName: 'Number of Results',
-      description: 'Number of articles to return (default is 9)',
-      required: false,
-    }),
-    ref: Property.ShortText({
-      displayName: 'Preferred Domain',
-      description: 'Restrict results to a domain (e.g., sportsnaut.com)',
-      required: false,
-    }),
-    num_articles_ref: Property.Number({
-      displayName: 'Guaranteed Articles from Domain',
-      description: 'Minimum number of articles to match the preferred domain',
-      required: false,
-    }),
     search_algorithm: Property.StaticDropdown({
-      displayName: 'Search Algorithm',
-      description: 'Choose how to match articles',
+      displayName: 'Ranking',
+      description: 'How articles are matched and ordered.',
       required: false,
       options: {
         options: [
-          { label: 'Semantic (Contextual)', value: 'semantic' },
-          { label: 'Most Recent', value: 'most_recent' },
-          { label: 'Most Recent + Semantic', value: 'most_recent_semantic' },
-          { label: 'Trending', value: 'trending' },
+          { label: 'Most Relevant', value: 'semantic' },
+          { label: 'Newest First', value: 'most_recent' },
+          { label: 'Most Relevant, Newest First', value: 'most_recent_semantic' },
+          { label: 'Trending in the Last 24 Hours', value: 'trending' },
         ],
       },
+    }),
+    similarity_top_k: Property.Number({
+      displayName: 'Number of Results',
+      description: 'How many articles to return. Empty: 9.',
+      required: false,
+    }),
+    ref: Property.ShortText({
+      displayName: 'Site Domain',
+      description: 'Without https://.',
+      placeholder: 'sportsnaut.com',
+      required: false,
+      width: 'half',
+    }),
+    num_articles_ref: Property.Number({
+      displayName: 'Minimum Articles',
+      description: 'From this site. Empty: 0.',
+      required: false,
+      width: 'half',
+    }),
+    preferred_site_info: Property.MarkDown({
+      value:
+        'Set Minimum Articles to guarantee that many results from this site. The rest come from other sites.',
+      variant: MarkdownVariant.TIP,
     }),
   },
   async run({ propsValue, auth }) {

@@ -9,7 +9,7 @@ export const stockMarketDataSearch = createAction({
   auth: dappierAuth,
   displayName: 'Stock Market Data',
   description:
-    'Access real-time financial news, stock prices, and trades from polygon.io, with AI-powered insights and up-to-the-minute updates to keep you informed on all your financial interests.',
+    'Get live stock prices, trades and financial news with AI insights.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -19,7 +19,8 @@ export const stockMarketDataSearch = createAction({
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',
-      description: 'Enter your stock market query',
+      description: 'A question about a company, ticker or the market.',
+      placeholder: 'How is AAPL doing today?',
       required: true,
     }),
   },

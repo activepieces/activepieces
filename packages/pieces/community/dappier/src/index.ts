@@ -8,7 +8,7 @@ import { lifestyleNewsSearch } from './lib/actions/lifestyle-news';
 export const dappierAuth = PieceAuth.SecretText({
   displayName: 'API Key',
   required: true,
-  description: 'Enter your Dappier API Key. You can generate one at https://platform.dappier.com/profile/api-keys.',
+  description: 'Create an API key in your [Dappier dashboard](https://platform.dappier.com/profile/api-keys) and paste it here.',
 });
 
 export const dappier = createPiece({
@@ -16,6 +16,7 @@ export const dappier = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/dappier.png',
   description: 'Enable fast, free real-time web search and access premium data from trusted media brands—news, financial markets, sports, entertainment, weather, and more. Build powerful AI agents with Dappier',
   auth: dappierAuth,
+  minimumSupportedRelease: '0.88.2',
   authors: [],
   actions: [
     realTimeWebSearch,
