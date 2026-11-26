@@ -18,6 +18,7 @@ export const addSubscriberAction = createAction({
     idempotent: true,
   },
   outputSchema: emailitSchemas.subscriber,
+  propertyGroups: [{ key: 'subscriber', display: 'section', label: 'Subscriber', icon: 'user', props: ['audience', 'email', 'first_name', 'last_name'] }],
   props: { audience: emailitDropdowns.audience(), ...fields() },
   async run({ auth, propsValue }) {
     return emailitOperations.addSubscriber({ auth, input: { audience: propsValue.audience, email: propsValue.email, firstName: propsValue.first_name, lastName: propsValue.last_name, customFields: propsValue.custom_fields } });
@@ -45,9 +46,9 @@ export const addSubscriberByIdAction = createAction({
 
 function fields() {
   return {
-    email: Property.ShortText({ displayName: 'Email', required: true }),
-    first_name: Property.ShortText({ displayName: 'First Name', required: false }),
-    last_name: Property.ShortText({ displayName: 'Last Name', required: false }),
+    email: Property.ShortText({ displayName: 'Email', placeholder: 'ada@example.com', required: true }),
+    first_name: Property.ShortText({ displayName: 'First Name', placeholder: 'Ada', width: 'half', required: false }),
+    last_name: Property.ShortText({ displayName: 'Last Name', placeholder: 'Lovelace', width: 'half', required: false }),
     custom_fields: Property.Object({ displayName: 'Custom Fields', description: 'Replaces all of the contact\'s custom fields, e.g. company: Acme.', required: false }),
   };
 }

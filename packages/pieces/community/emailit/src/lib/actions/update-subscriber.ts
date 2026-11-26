@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { emailitAuth } from '../auth';
 import { emailitDropdowns } from '../common/dropdowns';
 import { emailitOperations } from '../common/operations';
@@ -18,7 +18,8 @@ export const updateSubscriberAction = createAction({
     idempotent: true,
   },
   outputSchema: emailitSchemas.subscriberUpdated,
-  props: { audience: emailitDropdowns.audience(), ...fields() },
+  propertyGroups: [{ key: 'subscriber', display: 'section', label: 'Subscriber', icon: 'user', props: ['audience', 'subscriber'] }, { key: 'changes', display: 'section', label: 'Changes', icon: 'sliders', props: ['changes_note', 'subscribed', 'first_name', 'last_name'] }],
+  props: humanProps(),
   async run({ auth, propsValue }) {
     return emailitOperations.updateSubscriber({ auth, input: { audience: propsValue.audience, subscriber: propsValue.subscriber, subscribed: propsValue.subscribed, firstName: propsValue.first_name, lastName: propsValue.last_name } });
   },
@@ -43,16 +44,28 @@ export const updateSubscriberByIdAction = createAction({
   },
 });
 
+function humanProps() {
+  const base = fields();
+  return {
+    audience: emailitDropdowns.audience(),
+    subscriber: base.subscriber,
+    changes_note: Property.MarkDown({ value: 'Empty fields keep their current value.', variant: MarkdownVariant.INFO }),
+    subscribed: { ...base.subscribed, displayName: 'Subscription' },
+    first_name: Property.ShortText({ displayName: 'First Name', required: false, width: 'half' }),
+    last_name: Property.ShortText({ displayName: 'Last Name', required: false, width: 'half' }),
+  };
+}
+
 function fields() {
   return {
-    subscriber: Property.ShortText({ displayName: 'Subscriber', description: 'Subscriber ID (sub_…) or email address.', required: true }),
+    subscriber: Property.ShortText({ displayName: 'Subscriber', description: 'Subscriber ID (sub_…) or email address.', placeholder: 'ada@example.com', required: true }),
     subscribed: Property.StaticDropdown<'keep' | 'yes' | 'no'>({
       displayName: 'Subscribed',
       required: false,
       defaultValue: 'keep',
       options: { disabled: false, options: [{ label: 'Keep as is', value: 'keep' }, { label: 'Subscribed', value: 'yes' }, { label: 'Unsubscribed', value: 'no' }] },
     }),
-    first_name: Property.ShortText({ displayName: 'First Name', description: 'Leave empty to keep.', required: false }),
-    last_name: Property.ShortText({ displayName: 'Last Name', description: 'Leave empty to keep.', required: false }),
+    first_name: Property.ShortText({ displayName: 'First Name', description: 'Leave empty to keep.', width: 'half', required: false }),
+    last_name: Property.ShortText({ displayName: 'Last Name', description: 'Leave empty to keep.', width: 'half', required: false }),
   };
 }

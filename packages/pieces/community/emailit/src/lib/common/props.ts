@@ -3,7 +3,8 @@ import { Property } from '@activepieces/pieces-framework';
 function emailId({ description }: { description?: string } = {}) {
   return Property.ShortText({
     displayName: 'Email ID',
-    description: description ?? 'The Emailit email ID, e.g. em_4KYof1ZzXndZE2VPi0DgULiekG8 (from a Send Email step or Find Emails).',
+    description: description ?? 'The ID from a Send Email or Find Emails step.',
+    placeholder: 'em_4KYof1ZzXndZE2VPi0DgULiekG8',
     required: true,
   });
 }
@@ -19,7 +20,7 @@ function audienceId() {
 function limit() {
   return Property.Number({
     displayName: 'Limit',
-    description: 'Results per page, 1-100. Defaults to 25.',
+    description: 'Results per page, from 1 to 100. Empty: 25.',
     required: false,
   });
 }
@@ -27,7 +28,7 @@ function limit() {
 function page() {
   return Property.Number({
     displayName: 'Page',
-    description: 'Page to return, starting at 1. Use it when the previous result had Has More Pages = true.',
+    description: 'Page number, from 1. Raise it while Has More Pages is true.',
     required: false,
   });
 }
@@ -49,27 +50,28 @@ function sendingProps() {
   return {
     scheduled_at: Property.DateTime({
       displayName: 'Send At',
-      description: 'Optional. Schedule the email for later (ISO 8601 with time zone). Leave empty to send now.',
+      description: 'Leave empty to send now.',
       required: false,
     }),
     template: Property.ShortText({
       displayName: 'Template',
-      description: 'Optional. A template ID (tem_…) or alias. Subject and body in this step override the template\'s.',
+      description: 'Template ID or alias. Subject and body here override it.',
+      placeholder: 'welcome-email',
       required: false,
     }),
     variables: Property.Json({
       displayName: 'Template Variables',
-      description: 'Optional. Values for {{placeholders}} in the subject and body, e.g. {"first_name": "Ada"}.',
+      description: 'Placeholder values as JSON, e.g. {"first_name": "Ada"}.',
       required: false,
     }),
     meta: Property.Object({
       displayName: 'Metadata',
-      description: 'Optional. Your own key-value data stored with the email and sent back in webhooks, e.g. order_id: 1042.',
+      description: 'Your own key-value data, returned in webhooks.',
       required: false,
     }),
     tracking: Property.StaticDropdown<'default' | 'on' | 'off'>({
       displayName: 'Open & Click Tracking',
-      description: 'Uses the sending domain\'s setting by default. Tracking only works when the domain\'s tracking CNAME is verified.',
+      description: "Needs the domain's tracking CNAME to be verified.",
       required: false,
       defaultValue: 'default',
       options: {
@@ -82,17 +84,17 @@ function sendingProps() {
       },
     }),
     attachments: Property.Array({
-      displayName: 'Attachments (by URL)',
-      description: 'Optional. Files Emailit downloads when sending (public http/https URL, max 25 MB, no redirects).',
+      displayName: 'Attachment URLs',
+      description: 'Public links Emailit downloads when sending, up to 25 MB each.',
       required: false,
       properties: {
-        filename: Property.ShortText({ displayName: 'File Name', description: 'Including the extension, e.g. invoice.pdf.', required: true }),
-        url: Property.ShortText({ displayName: 'File URL', required: true }),
+        filename: Property.ShortText({ displayName: 'File Name', description: 'Include the extension.', placeholder: 'invoice.pdf', required: true }),
+        url: Property.ShortText({ displayName: 'File URL', placeholder: 'https://example.com/invoice.pdf', required: true }),
       },
     }),
     attachment_file: Property.File({
-      displayName: 'Attachment (file)',
-      description: 'Optional. A file from a previous step to attach.',
+      displayName: 'Attachment File',
+      description: 'A file from a previous step.',
       required: false,
     }),
     idempotency_key: idempotencyKey(),

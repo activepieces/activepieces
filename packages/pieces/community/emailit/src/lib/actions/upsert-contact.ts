@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { emailitAuth } from '../auth';
 import { emailitDropdowns } from '../common/dropdowns';
 import { emailitOperations } from '../common/operations';
@@ -17,7 +17,8 @@ export const upsertContactAction = createAction({
     idempotent: true,
   },
   outputSchema: emailitSchemas.contactUpsert,
-  props: { ...fields(), audiences: emailitDropdowns.audiences(), unsubscribed: unsubscribedProp() },
+  propertyGroups: [{ key: 'contact', display: 'section', label: 'Contact', icon: 'user', props: ['changes_note', 'email', 'first_name', 'last_name', 'custom_fields'] }, { key: 'subscriptions', display: 'section', label: 'Subscriptions', icon: 'inbox', props: ['audiences', 'unsubscribed'] }],
+  props: humanProps(),
   async run({ auth, propsValue }) {
     return emailitOperations.upsertContact({ auth, input: { email: propsValue.email, firstName: propsValue.first_name, lastName: propsValue.last_name, customFields: propsValue.custom_fields, audiences: propsValue.audiences, unsubscribed: propsValue.unsubscribed } });
   },
@@ -46,11 +47,30 @@ export const upsertContactByIdAction = createAction({
   },
 });
 
+function humanProps() {
+  const base = fields();
+  return {
+    changes_note: Property.MarkDown({ value: 'For an existing contact, empty fields keep their current value.', variant: MarkdownVariant.INFO }),
+    email: base.email,
+    first_name: Property.ShortText({ displayName: 'First Name', required: false, width: 'half' }),
+    last_name: Property.ShortText({ displayName: 'Last Name', required: false, width: 'half' }),
+    custom_fields: { ...base.custom_fields, description: 'Replaces all custom fields of an existing contact.' },
+    audiences: emailitDropdowns.audiences(),
+    unsubscribed: Property.StaticDropdown<'keep' | 'yes' | 'no'>({
+      displayName: 'Campaign Emails',
+      description: 'New contacts are subscribed unless you pick Unsubscribed.',
+      required: false,
+      defaultValue: 'keep',
+      options: { disabled: false, options: [{ label: 'Keep as is', value: 'keep' }, { label: 'Unsubscribed', value: 'yes' }, { label: 'Subscribed', value: 'no' }] },
+    }),
+  };
+}
+
 function fields() {
   return {
-    email: Property.ShortText({ displayName: 'Email', required: true }),
-    first_name: Property.ShortText({ displayName: 'First Name', description: 'Leave empty to keep.', required: false }),
-    last_name: Property.ShortText({ displayName: 'Last Name', description: 'Leave empty to keep.', required: false }),
+    email: Property.ShortText({ displayName: 'Email', placeholder: 'ada@example.com', required: true }),
+    first_name: Property.ShortText({ displayName: 'First Name', description: 'Leave empty to keep.', width: 'half', required: false }),
+    last_name: Property.ShortText({ displayName: 'Last Name', description: 'Leave empty to keep.', width: 'half', required: false }),
     custom_fields: Property.Object({ displayName: 'Custom Fields', description: 'Replaces all custom fields of an existing contact. Leave empty to keep.', required: false }),
   };
 }

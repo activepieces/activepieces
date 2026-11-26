@@ -18,6 +18,7 @@ export const removeSubscriberAction = createAction({
     idempotent: true,
   },
   outputSchema: emailitSchemas.removed,
+  propertyGroups: [{ key: 'subscriber', display: 'section', label: 'Subscriber', icon: 'user', props: ['audience', 'subscriber'] }],
   props: { audience: emailitDropdowns.audience(), subscriber: subscriberProp() },
   async run({ auth, propsValue }) {
     return emailitOperations.removeSubscriber({ auth, input: { audience: propsValue.audience, subscriber: propsValue.subscriber } });
@@ -44,5 +45,5 @@ export const removeSubscriberByIdAction = createAction({
 });
 
 function subscriberProp() {
-  return Property.ShortText({ displayName: 'Subscriber', description: 'Subscriber ID (sub_…) or email address.', required: true });
+  return Property.ShortText({ displayName: 'Subscriber', description: 'Subscriber ID (sub_…) or email address.', placeholder: 'ada@example.com', required: true });
 }

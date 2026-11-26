@@ -18,13 +18,15 @@ export const verifyEmailAddressAction = createAction({
     idempotent: false,
   },
   outputSchema: emailitSchemas.verification,
+  propertyGroups: [{ key: 'check', display: 'section', label: 'Address', icon: 'inbox', props: ['email', 'mode'] }],
   props: {
-    email: Property.ShortText({ displayName: 'Email', required: true }),
+    email: Property.ShortText({ displayName: 'Email', placeholder: 'ada@example.com', required: true }),
     mode: Property.StaticDropdown<'fast' | 'full'>({
-      displayName: 'Mode',
+      displayName: 'Check Type',
+      description: 'Full also checks that the mailbox exists.',
       required: false,
       defaultValue: 'fast',
-      options: { disabled: false, options: [{ label: 'Fast (syntax, domain, MX)', value: 'fast' }, { label: 'Full (also checks the mailbox)', value: 'full' }] },
+      options: { disabled: false, options: [{ label: 'Fast', value: 'fast' }, { label: 'Full', value: 'full' }] },
     }),
   },
   async run({ auth, propsValue }) {

@@ -19,10 +19,11 @@ export const listTemplatesAction = createAction({
     idempotent: true,
   },
   outputSchema: emailitSchemas.templateList,
+  propertyGroups: [{ key: 'filters', display: 'section', label: 'Filters', icon: 'filter', props: ['name', 'limit'] }],
   props: {
-    name: Property.ShortText({ displayName: 'Name Contains', description: 'Part of the template name or alias.', required: false }),
+    name: Property.ShortText({ displayName: 'Search', description: 'Part of the template name or alias.', placeholder: 'welcome', required: false }),
     limit: emailitProps.limit(),
-    page: emailitProps.page(),
+    page: { ...emailitProps.page(), advanced: true },
   },
   async run({ auth, propsValue }) {
     const page = emailitClient.page(propsValue.page);

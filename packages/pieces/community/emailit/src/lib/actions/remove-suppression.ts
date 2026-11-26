@@ -18,7 +18,7 @@ export const removeSuppressionAction = createAction({
   },
   outputSchema: emailitSchemas.removed,
   props: {
-    suppression: Property.ShortText({ displayName: 'Suppression ID or Email', required: true }),
+    suppression: Property.ShortText({ displayName: 'Suppression ID or Email', placeholder: 'ada@example.com', required: true }),
   },
   async run({ auth, propsValue }) {
     try {
