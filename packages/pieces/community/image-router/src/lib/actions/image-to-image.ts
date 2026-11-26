@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 
-import { createAction, Property, ApFile } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property, ApFile } from '@activepieces/pieces-framework';
 import { kebabCase } from '@activepieces/pieces-framework';
 
 import { imageRouterAuth } from '../auth';
@@ -17,40 +17,49 @@ export const imageToImageAction = createAction({
   displayName: 'Image to Image',
   description: 'Generate or edit images using input image(s) with optional mask',
   aiMetadata: { description: 'Edits or transforms one to sixteen supplied image files against a text prompt via ImageRouter\'s image-edit endpoint, either rewriting the whole picture or, when mask files are attached, confining the changes to the masked areas (some models require a mask). Choose this whenever a source image must be sent - inpainting, style transfer, background swaps, multi-image composition; use Create Image when generating from a prompt with no input image. At least one image file is required and the selected model must support editing. Not idempotent: each call renders new output images.', idempotent: false },
+  propertyGroups: [
+    { key: 'request', display: 'section', label: 'What to Change', icon: 'text', props: ['prompt', 'model'] },
+    { key: 'sources', display: 'section', label: 'Source Images', icon: 'paperclip', props: ['images', 'masks'] },
+    { key: 'output', display: 'section', label: 'Output', icon: 'sliders', props: ['outputNote', 'quality', 'size', 'responseFormat'] },
+  ],
   props: {
     prompt: Property.ShortText({
       displayName: 'Prompt',
-      description: 'Text prompt describing the image transformation',
+      description: 'What to change in the images.',
+      placeholder: 'Swap the background for a beach',
       required: true,
     }),
     model: imageRouterProps.model({ required: true }),
     images: Property.Array({
       displayName: 'Input Images',
-      description: 'Input image(s) for editing (up to 16 images)',
+      description: 'Up to 16 images to edit or combine.',
       required: true,
       properties: {
         image: Property.File({
           displayName: 'Image',
-          description: 'Input image file',
           required: true,
         }),
       },
     }),
     masks: Property.Array({
       displayName: 'Masks',
-      description: 'Mask file(s) to specify areas to edit (some models require this)',
+      description: 'Images marking the areas to change. Some models need one.',
       required: false,
       properties: {
         mask: Property.File({
           displayName: 'Mask',
-          description: 'Mask image file',
           required: true,
         }),
       },
     }),
+    outputNote: Property.MarkDown({
+      value: 'Quality and size apply only to models that support them.',
+      variant: MarkdownVariant.INFO,
+    }),
     quality: Property.StaticDropdown({
       displayName: 'Quality',
-      description: 'Image quality (not all models support this)',
+      description: 'Auto uses the model\'s default.',
+      width: 'half',
       required: false,
       defaultValue: 'auto',
       options: {
@@ -64,20 +73,22 @@ export const imageToImageAction = createAction({
     }),
     size: Property.ShortText({
       displayName: 'Size',
-      description: 'Image size (e.g., 1024x1024). Use "auto" for default size.',
+      description: 'Width x height, e.g. 1024x1024, or auto.',
+      width: 'half',
       required: false,
       defaultValue: 'auto',
     }),
     responseFormat: Property.StaticDropdown({
       displayName: 'Response Format',
-      description: 'How to receive the generated image',
+      description: 'The step saves the image as a file either way.',
+      display: 'cards',
       required: false,
       defaultValue: 'url',
       options: {
         options: [
-          { label: 'URL (saved in logs)', value: 'url' },
-          { label: 'Base64 JSON (saved in logs)', value: 'b64_json' },
-          { label: 'Base64 Ephemeral (not saved)', value: 'b64_ephemeral' },
+          { label: 'URL', value: 'url', description: 'Logged link', icon: 'file' },
+          { label: 'Base64', value: 'b64_json', description: 'Logged data', icon: 'code' },
+          { label: 'Unlogged Base64', value: 'b64_ephemeral', description: 'Image data, not logged', icon: 'code' },
         ],
       },
     }),

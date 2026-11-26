@@ -6,7 +6,7 @@ import { imageRouterApi } from './api';
 function model<R extends boolean>({
 	required,
 	displayName = 'Model',
-	description = 'Select an image generation model',
+	description = 'Free models first, then fast, premium and standard ones.',
 }: PropParams<R>) {
 	return Property.Dropdown({
 		auth: imageRouterAuth,
