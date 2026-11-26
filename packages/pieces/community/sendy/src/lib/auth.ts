@@ -11,14 +11,10 @@ import { AppConnectionType } from '@activepieces/pieces-framework';
 export type SendyAuthType = AppConnectionValueForAuthProperty<typeof sendyAuth>;
 
 const markdownDescription = `
-Your sendy domain should be the base URL of your Sendy installation. Example: https://sendy.example.com
-
-Follow these instructions to get your Sendy API Key:
-
-1. Visit the Settings page of your Sendy domain: _https://sendy-domain.com_/settings
-2. Once on the website, locate and click on the API Key and copy it.
-
-Get your Brand ID from the main Brands page. The ID is the first column in the table.
+To connect Sendy:
+1. **Sendy Domain**: the address of your Sendy installation, e.g. https://sendy.example.com
+2. **API Key**: in Sendy, open **Settings** and copy the API key.
+3. **Brand ID**: on the Brands page, the ID is in the first column.
 `;
 
 export const sendyAuth = PieceAuth.CustomAuth({
@@ -26,18 +22,19 @@ export const sendyAuth = PieceAuth.CustomAuth({
   props: {
     domain: Property.ShortText({
       displayName: 'Sendy Domain',
-      description: 'The domain of your Sendy account',
+      description: 'The address of your Sendy installation.',
+      placeholder: 'https://sendy.example.com',
       required: true,
     }),
     apiKey: PieceAuth.SecretText({
       displayName: 'API Key',
-      description: 'The API key for your Sendy account',
+      description: 'Found under Settings in Sendy.',
       required: true,
     }),
     brandId: Property.ShortText({
       displayName: 'Brand ID',
-      description:
-        'The brand ID that will be associated to this connection. Brand IDs can be found on the main Brands page.',
+      description: 'The brand this connection works with, from the Brands page.',
+      placeholder: '1',
       required: true,
     }),
   },
