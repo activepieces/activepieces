@@ -224,6 +224,8 @@
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
   "HEAD": "CABEÇA",
+  "Request": "Solicitação",
+  "Data to send": "Dados para enviar",
   "Task Due": "Task Due",
   "Task Assigned": "Task Assigned",
   "New Comment": "New Comment",
