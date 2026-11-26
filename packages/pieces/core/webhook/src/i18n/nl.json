@@ -19,9 +19,11 @@
   "Authentication": "Authenticatie",
   "Authentication Fields": "Authenticatie velden",
   "**Live URL:**\n```text\n{{webhookUrl}}\n```\ngenerate sample data & triggers published flow.\n\n": "**Live URL:**\n```text\n{{webhookUrl}}\n```\ngenereer sample data & triggers gepubliceerde flow.\n\n",
-  "**Synchronous Requests:**\n\nIf you expect a response from this webhook, add `/sync` to the end of the URL. \nIf it takes more than 30 seconds, it will return a 408 Request Timeout response.\n\nTo return data, add an Webhook step to your flow with the Return Response action.\n": "**Synchrone verzoeken:**\n\nAls je een reactie verwacht van deze webhook, voeg `/sync` toe aan het einde van de URL. \nAls het langer dan 30 seconden duurt, zal het een time-out van 408 verzoek teruggeven.\n\nOm gegevens terug te geven, voeg een Webhook stap toe aan uw stroom met de Return Response actie.\n",
+  "**Synchronous Requests:**\n\nIf you expect a response from this webhook, add `/sync` to the end of the URL.\nIf it takes more than {{webhookTimeoutSeconds}} seconds, it will return a 408 Request Timeout response.\n\nTo return data, add an Webhook step to your flow with the Return Response action.\n": "**Synchrone verzoeken:**\n\nAls je een reactie van deze webhook verwacht, voeg `/sync` toe aan het einde van de URL.\nAls het langer duurt dan {{webhookTimeoutSeconds}} seconden, wordt een 408 Request Timeout-reactie վերադարձen.\n\nOm gegevens terug te geven, voeg een Webhook-stap toe aan je flow met de Return Response-actie.\n",
   "\n**Test URL:**\n\nif you want to generate sample data without triggering the flow, append `/test` to your webhook URL.\n\n": "\n**Test URL:**\n\nals je voorbeelddata wilt genereren zonder de flow te activeren, voeg `/test` toe aan je webhook URL.\n\n",
   "None": "geen",
   "Basic Auth": "Basis authenticatie",
-  "Header Auth": "Header Auth"
+  "Header Auth": "Header Auth",
+  "HMAC Signature": "HMAC-handtekening",
+  "Webhook": "Webhook"
 }
