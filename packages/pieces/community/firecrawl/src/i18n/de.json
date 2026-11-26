@@ -191,11 +191,11 @@
   "HEAD": "HEAD",
   "Page": "Seite",
   "Output": "Ausgabe",
-  "Pages": "Pages",
-  "What to extract": "What to extract",
+  "Pages": "Seiten",
+  "What to extract": "Was extrahiert werden soll",
   "Site": "Site",
-  "Limits": "Limits",
+  "Limits": "Grenzen",
   "Webhook": "Webhook",
-  "Request": "Request",
-  "Data to send": "Data to send"
+  "Request": "Anfrage",
+  "Data to send": "Zu sendende Daten"
 }
