@@ -15,24 +15,12 @@ const liveMarkdown = `**Live URL:**
 \`\`\`text
 {{webhookUrl}}
 \`\`\`
-generate sample data & triggers published flow.
-
+Runs the published flow.
 `;
 
-const testMarkdown = `
-**Test URL:**
+const testMarkdown = `**Test URL:** add \`/test\` to the end to save sample data without running the flow.`;
 
-if you want to generate sample data without triggering the flow, append \`/test\` to your webhook URL.
-
-`;
-
-const syncMarkdown = `**Synchronous Requests:**
-
-If you expect a response from this webhook, add \`/sync\` to the end of the URL.
-If it takes more than {{webhookTimeoutSeconds}} seconds, it will return a 408 Request Timeout response.
-
-To return data, add an Webhook step to your flow with the Return Response action.
-`;
+const syncMarkdown = `**Wait for a reply:** add \`/sync\` to the end of the URL and add a **Return Response** step. Without a reply in {{webhookTimeoutSeconds}} seconds, the caller gets a 408 Request Timeout.`;
 
 export enum AuthType {
   NONE = 'none',
@@ -45,7 +33,7 @@ export const catchWebhook = createTrigger({
   classification: 'READ',
   displayName: 'Catch Webhook',
   description:
-    'Receive incoming HTTP/webhooks using any HTTP method such as GET, POST, PUT, DELETE, etc.',
+    'Starts the flow on each HTTP request to its unique URL.',
   aiMetadata: {
     description: 'Fires once for every request delivered to the unique webhook URL generated for this flow, under any HTTP method. Use it as the entry point for any system that can call a URL; Authentication must be set explicitly to None, Basic credentials, a shared header value, or an HMAC signature over the raw body, and requests that fail verification are rejected and recorded as a failed run instead of starting the flow. Appending /sync to the URL makes the caller wait for a Return Response action, while /test generates sample data without triggering the published flow.',
   },
@@ -54,25 +42,47 @@ export const catchWebhook = createTrigger({
       value: liveMarkdown,
       variant: MarkdownVariant.BORDERLESS,
     }),
+    testMarkdown: Property.MarkDown({
+      value: testMarkdown,
+      variant: MarkdownVariant.BORDERLESS,
+    }),
     syncMarkdown: Property.MarkDown({
       value: syncMarkdown,
       variant: MarkdownVariant.INFO,
     }),
-    testMarkdown: Property.MarkDown({
-      value: testMarkdown,
-      variant: MarkdownVariant.INFO,
-    }),
     authType: Property.StaticDropdown<AuthType>({
       displayName: 'Authentication',
+      description: 'Requests that fail the check end as a failed run.',
+      display: 'cards',
       required: true,
       defaultValue: 'none',
       options: {
         disabled: false,
         options: [
-          { label: 'None', value: AuthType.NONE },
-          { label: 'Basic Auth', value: AuthType.BASIC },
-          { label: 'Header Auth', value: AuthType.HEADER },
-          { label: 'HMAC Signature', value: AuthType.HMAC },
+          {
+            label: 'None',
+            value: AuthType.NONE,
+            description: 'Open URL',
+            icon: 'blank',
+          },
+          {
+            label: 'Basic Auth',
+            value: AuthType.BASIC,
+            description: 'Login details',
+            icon: 'user',
+          },
+          {
+            label: 'Header Auth',
+            value: AuthType.HEADER,
+            description: 'Secret header',
+            icon: 'tag',
+          },
+          {
+            label: 'HMAC',
+            value: AuthType.HMAC,
+            description: 'Signed body',
+            icon: 'code',
+          },
         ],
       },
     }),
@@ -95,12 +105,12 @@ export const catchWebhook = createTrigger({
             fields = {
               username: Property.ShortText({
                 displayName: 'Username',
-                description: 'The username to use for authentication.',
+                description: 'Callers must send this username.',
                 required: true,
               }),
               password: Property.ShortText({
                 displayName: 'Password',
-                description: 'The password to use for authentication.',
+                description: 'Callers must send this password.',
                 required: true,
               }),
             };
@@ -109,13 +119,13 @@ export const catchWebhook = createTrigger({
             fields = {
               headerName: Property.ShortText({
                 displayName: 'Header Name',
-                description:
-                  'The name of the header to use for authentication.',
+                description: 'Header callers put the secret in.',
+                placeholder: 'X-Api-Key',
                 required: true,
               }),
               headerValue: Property.ShortText({
                 displayName: 'Header Value',
-                description: 'The value to check against the header.',
+                description: 'Requests must carry exactly this value.',
                 required: true,
               }),
             };
@@ -124,48 +134,65 @@ export const catchWebhook = createTrigger({
             fields = {
               hmacHeaderName: Property.ShortText({
                 displayName: 'Signature Header Name',
-                description:
-                  'The HTTP header containing the HMAC signature (e.g., X-Signature, X-Hub-Signature-256)',
+                description: 'Header that holds the signature.',
+                placeholder: 'X-Hub-Signature-256',
                 required: true,
                 defaultValue: 'x-signature',
               }),
               hmacSecret: Property.ShortText({
                 displayName: 'Secret',
-                description:
-                  'The shared secret used for HMAC signature verification',
+                description: 'Shared secret the sender signs the raw body with.',
                 required: true,
               }),
               hmacAlgorithm: Property.StaticDropdown({
                 displayName: 'Algorithm',
-                description: 'The hash algorithm used for HMAC computation',
+                description: "Must match the sender's algorithm.",
+                display: 'cards',
                 required: true,
                 defaultValue: 'sha256',
                 options: {
                   disabled: false,
                   options: [
-                    { label: 'SHA-256 (Recommended)', value: 'sha256' },
-                    { label: 'SHA-1', value: 'sha1' },
-                    { label: 'SHA-512', value: 'sha512' },
+                    {
+                      label: 'SHA-256',
+                      value: 'sha256',
+                      description: 'Recommended',
+                    },
+                    { label: 'SHA-1', value: 'sha1', description: 'Older senders' },
+                    {
+                      label: 'SHA-512',
+                      value: 'sha512',
+                      description: 'Longer hash',
+                    },
                   ],
                 },
               }),
               hmacEncoding: Property.StaticDropdown({
                 displayName: 'Signature Encoding',
-                description: 'How the signature is encoded in the header',
+                description: 'How the sender encodes the signature.',
+                display: 'cards',
                 required: true,
                 defaultValue: 'hex',
                 options: {
                   disabled: false,
                   options: [
-                    { label: 'Hexadecimal', value: 'hex' },
-                    { label: 'Base64', value: 'base64' },
+                    {
+                      label: 'Hexadecimal',
+                      value: 'hex',
+                      description: '0-9, a-f',
+                    },
+                    {
+                      label: 'Base64',
+                      value: 'base64',
+                      description: 'A-Z, a-z, 0-9',
+                    },
                   ],
                 },
               }),
               hmacSignaturePrefix: Property.ShortText({
                 displayName: 'Signature Prefix',
-                description:
-                  'Optional prefix to strip from signature (e.g., "sha256=" for GitHub webhooks). Leave empty if no prefix.',
+                description: 'Stripped before checking; requests without it fail.',
+                placeholder: 'sha256=',
                 required: false,
                 defaultValue: '',
               }),
@@ -178,6 +205,22 @@ export const catchWebhook = createTrigger({
       },
     }),
   },
+  propertyGroups: [
+    {
+      key: 'url',
+      display: 'section',
+      label: 'Webhook URL',
+      icon: 'send',
+      props: ['liveMarkdown', 'testMarkdown', 'syncMarkdown'],
+    },
+    {
+      key: 'authentication',
+      display: 'section',
+      label: 'Security',
+      icon: 'user',
+      props: ['authType', 'authFields'],
+    },
+  ],
   sampleData: null,
   type: TriggerStrategy.WEBHOOK,
   async onEnable() {

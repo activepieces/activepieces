@@ -1,5 +1,6 @@
 import {
     DynamicPropsValue,
+    MarkdownVariant,
     PieceAuth,
     Property,
     createAction,
@@ -23,16 +24,16 @@ import {
     name: 'return_response_and_wait_for_next_webhook',
     classification: 'WRITE',
     displayName: 'Respond and Wait for Next Webhook',
-    description: 'return a response and wait for the next webhook to resume the flow',
+    description: 'Sends a response, then pauses until the next webhook call resumes the flow.',
     aiMetadata: { description: 'Replies to a webhook caller with a JSON, Raw, or Redirect body and attaches an x-activepieces-resume-webhook-url header holding a freshly minted callback URL, then suspends the run until that URL is called. Pick it for a multi-request handshake inside one flow; prefer plain Return Response when no follow-up call is needed, or Wait for Approval or the Delay piece when a human or a timer resumes the flow. Not idempotent: each execution creates a new waitpoint with a different resume URL and suspends the run again.', idempotent: false },
     props: {
         markdown: Property.MarkDown({
-            value: `**Respond and Wait for Next Webhook**<br> 
-            Check the response header (${RESUME_WEBHOOK_HEADER}) for the next webhook URL and call it to resume the flow. <br>
-            `,
-          }),  
+            value: `JSON and Raw responses to the \`/sync\` URL carry an \`${RESUME_WEBHOOK_HEADER}\` header. Call that URL to resume the flow.`,
+            variant: MarkdownVariant.INFO,
+          }),
       responseType: Property.StaticDropdown({
         displayName: 'Response Type',
+        description: 'Format of the response body.',
         required: false,
         defaultValue: 'json',
         options: {
@@ -68,11 +69,13 @@ import {
           if (bodyTypeInput !== ResponseType.REDIRECT) {
             fields['status'] = Property.Number({
               displayName: 'Status',
+              description: 'HTTP status code sent to the caller.',
               required: false,
               defaultValue: 200,
             });
             fields['headers'] = Property.Object({
               displayName: 'Headers',
+              description: 'Extra HTTP headers to send with the response.',
               required: false,
             });
           }
@@ -81,18 +84,22 @@ import {
             case ResponseType.JSON:
               fields['body'] = Property.Json({
                 displayName: 'JSON Body',
+                description: 'Must be valid JSON.',
                 required: true,
               });
               break;
             case ResponseType.RAW:
               fields['body'] = Property.LongText({
                 displayName: 'Raw Body',
+                description: 'Sent as is; add a Content-Type header for HTML.',
                 required: true,
               });
               break;
             case ResponseType.REDIRECT:
               fields['body'] = Property.LongText({
                 displayName: 'Redirect URL',
+                description: 'Callers are sent here with a 301 redirect.',
+                placeholder: 'https://example.com/thank-you',
                 required: true,
               });
               break;
@@ -101,7 +108,10 @@ import {
         },
       }),
     },
-  
+    propertyGroups: [
+      { key: 'response', display: 'section', label: 'Response', icon: 'reply', props: ['markdown', 'responseType', 'fields'] },
+    ],
+
     async run(context) {
       const { fields, responseType } = context.propsValue;
       const bodyInput = fields ['body'];
