@@ -511,9 +511,9 @@
   "December": "december",
   "Input": "Input",
   "Output": "Uitvoer",
-  "Start": "Start",
+  "Start": "Begin",
   "End": "Einde",
-  "Shift": "Shift",
-  "When": "When",
+  "Shift": "Verschuiving",
+  "When": "Wanneer",
   "Date Helper": "Datum Helper"
 }
