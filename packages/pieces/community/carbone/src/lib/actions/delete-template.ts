@@ -1,10 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
-import {
-  HttpMethod,
-  HttpRequest,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { CARBONE_API_URL, CARBONE_VERSION } from '../common/constants';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { carboneClient } from '../common/client';
 import { carboneAuth } from '../auth';
 import { carboneProps } from '../common/props';
 
@@ -19,6 +15,13 @@ export const deleteTemplateAction = createAction({
     description: 'Permanently deletes a stored Carbone template (or specific version) identified by its template/version ID. Use to remove a template that is no longer needed. Not idempotent: the first call removes the template and a repeat call on the same ID fails because it no longer exists.',
     idempotent: false,
   },
+  outputSchema: {
+    fields: [
+      { key: 'success', label: 'Success', format: 'boolean' },
+      { key: 'templateId', label: 'Template ID' },
+      { key: 'message', label: 'Message' },
+    ],
+  },
   props: {
     templateId: carboneProps.templateDropdown({
       displayName: 'Template ID or Version ID',
@@ -26,28 +29,13 @@ export const deleteTemplateAction = createAction({
     }),
   },
   async run(context) {
-    const { templateId } = context.propsValue;
-
-    const request: HttpRequest = {
+    const templateId = carboneClient.readId({ value: context.propsValue.templateId, label: 'Template ID' });
+    await carboneClient.request({
+      apiKey: context.auth.secret_text,
       method: HttpMethod.DELETE,
-      url: `${CARBONE_API_URL}/template/${templateId}`,
-      headers: {
-        Authorization: `Bearer ${context.auth.secret_text}`,
-        'carbone-version': CARBONE_VERSION,
-      },
-    };
-
-    const response = await httpClient.sendRequest<{
-      success: boolean;
-      error?: string;
-    }>(request);
-
-    if (!response.body.success) {
-      throw new Error(
-        `Failed to delete template: ${response.body.error ?? 'Unknown error'}`
-      );
-    }
-
+      path: `/template/${encodeURIComponent(templateId)}`,
+      operation: 'delete template',
+    });
     return {
       success: true,
       templateId,

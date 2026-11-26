@@ -1,12 +1,7 @@
 import { carboneAuth } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
-import {
-  HttpMethod,
-  HttpRequest,
-  httpClient,
-} from '@activepieces/pieces-common';
-
-import { CARBONE_API_URL, CARBONE_VERSION } from '../common/constants';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { carboneClient } from '../common/client';
 import { carboneProps } from '../common/props';
 
 
@@ -18,8 +13,26 @@ export const updateTemplateAction = createAction({
   description: 'Update the metadata of an existing Carbone template.',
   audience: 'both',
   aiMetadata: {
-    description: 'Updates metadata (name, comment, category, tags, deploy/expire timestamps) on an existing Carbone template or version identified by its ID; only the fields supplied are changed and tags are replaced wholesale. Use to rename, recategorize, or schedule deployment/expiry of a stored template. Idempotent: repeating the call with the same fields leaves the template in the same end state.',
+    description: 'Updates metadata (name, comment, category, tags, deploy/expire timestamps) on an existing Carbone template or version identified by its ID; only the fields supplied are changed, at least one field is required, and a non-empty tag list replaces the saved tags (an empty list is ignored, so tags cannot be cleared here). Use to rename, recategorize, or schedule deployment/expiry of a stored template. Idempotent: repeating the call with the same fields leaves the template in the same end state.',
     idempotent: true,
+  },
+  outputSchema: {
+    fields: [
+      { key: 'success', label: 'Success', format: 'boolean' },
+      { key: 'templateId', label: 'Template ID' },
+      {
+        key: 'updated',
+        label: 'Updated Fields',
+        children: [
+          { key: 'name', label: 'Name' },
+          { key: 'comment', label: 'Comment' },
+          { key: 'category', label: 'Category' },
+          { key: 'tags', label: 'Tags' },
+          { key: 'deployedAt', label: 'Deployed At (Unix)', format: 'number' },
+          { key: 'expireAt', label: 'Expire At (Unix)', format: 'number' },
+        ],
+      },
+    ],
   },
   props: {
     templateId: carboneProps.templateDropdown({
@@ -47,7 +60,7 @@ export const updateTemplateAction = createAction({
     tags: Property.Array({
       displayName: 'Tags (optional)',
       required: false,
-      description: 'Replace tags with a new list.',
+      description: 'A non-empty list replaces the saved tags. Leave empty to keep them.',
       properties: {
         tag: Property.ShortText({
           displayName: 'Tag',
@@ -69,39 +82,33 @@ export const updateTemplateAction = createAction({
     }),
   },
   async run(context) {
-    const { templateId, name, comment, category, tags, deployedAt, expireAt } =
-      context.propsValue;
-
+    const { name, comment, category, tags, deployedAt, expireAt } = context.propsValue;
+    const templateId = carboneClient.readId({ value: context.propsValue.templateId, label: 'Template ID' });
     const body: Record<string, unknown> = {};
-
-    if (name !== undefined) body['name'] = name;
-    if (comment !== undefined) body['comment'] = comment;
-    if (category !== undefined) body['category'] = category;
-    if (tags !== undefined) body['tags'] = tags.map((t) => (t as { tag: string }).tag);
-    if (deployedAt !== undefined) body['deployedAt'] = Number(deployedAt);
-    if (expireAt !== undefined) body['expireAt'] = Number(expireAt);
-
-    const request: HttpRequest = {
-      method: HttpMethod.PATCH,
-      url: `${CARBONE_API_URL}/template/${templateId}`,
-      headers: {
-        Authorization: `Bearer ${context.auth.secret_text}`,
-        'carbone-version': CARBONE_VERSION,
-        'Content-Type': 'application/json',
-      },
-      body,
-    };
-
-    const response = await httpClient.sendRequest<{
-      success: boolean;
-      error?: string;
-    }>(request);
-
-    if (!response.body.success) {
-      throw new Error(
-        `Failed to update template: ${response.body.error ?? 'Unknown error'}`
-      );
+    const trimmedName = name?.trim();
+    if (trimmedName) body['name'] = trimmedName;
+    const trimmedComment = comment?.trim();
+    if (trimmedComment) body['comment'] = trimmedComment;
+    const trimmedCategory = category?.trim();
+    if (trimmedCategory) body['category'] = trimmedCategory;
+    const tagList = carboneProps.readTags(tags);
+    if (tagList !== undefined && tagList.length > 0) body['tags'] = tagList;
+    const deployed = parseTimestamp({ value: deployedAt, label: 'Deployed At' });
+    if (deployed !== undefined) body['deployedAt'] = deployed;
+    const expire = parseTimestamp({ value: expireAt, label: 'Expire At' });
+    if (expire !== undefined) body['expireAt'] = expire;
+    if (Object.keys(body).length === 0) {
+      throw new Error('Provide at least one field to update.');
     }
+
+    await carboneClient.request({
+      apiKey: context.auth.secret_text,
+      method: HttpMethod.PATCH,
+      path: `/template/${encodeURIComponent(templateId)}`,
+      operation: 'update template',
+      body,
+      headers: { 'Content-Type': 'application/json' },
+    });
 
     return {
       success: true,
@@ -110,3 +117,22 @@ export const updateTemplateAction = createAction({
     };
   },
 });
+
+function parseTimestamp({ value, label }: { value: string | undefined; label: string }): number | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  const trimmed = value.trim();
+  if (trimmed.length === 0) {
+    return undefined;
+  }
+  if (!/^\d+$/.test(trimmed)) {
+    throw new Error(`${label} must be a Unix timestamp in seconds, for example 1767225600.`);
+  }
+  if (trimmed.replace(/^0+(?=\d)/, '').length > MAX_SECONDS_DIGITS) {
+    throw new Error(`${label} looks like a timestamp in milliseconds. Use seconds, for example 1767225600.`);
+  }
+  return Number(trimmed);
+}
+
+const MAX_SECONDS_DIGITS = 12;

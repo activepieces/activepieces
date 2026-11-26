@@ -1,6 +1,6 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { CARBONE_API_URL, CARBONE_VERSION } from './common/constants';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { CarboneApiError, carboneClient } from './common/client';
 
 export const carboneAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -13,18 +13,22 @@ To get your Carbone API key:
 `,
   validate: async ({ auth }) => {
     try {
-      await httpClient.sendRequest<{ success: boolean; error?: string }>({
+      await carboneClient.request({
+        apiKey: auth,
         method: HttpMethod.GET,
-        url: `${CARBONE_API_URL}/templates?limit=1`,
-        headers: {
-          Authorization: `Bearer ${auth}`,
-          'carbone-version': CARBONE_VERSION,
-        },
+        path: '/templates',
+        operation: 'validate connection',
+        queryParams: { limit: '1' },
       });
-
       return { valid: true };
-    } catch {
-      return { valid: false, error: 'Invalid API key' };
+    } catch (error) {
+      if (error instanceof CarboneApiError && (error.httpStatus === 401 || error.httpStatus === 403)) {
+        return { valid: false, error: 'Invalid API key' };
+      }
+      return {
+        valid: false,
+        error: error instanceof Error ? error.message : 'Could not reach Carbone',
+      };
     }
   },
 });

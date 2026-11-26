@@ -1,12 +1,7 @@
 import { carboneAuth } from '../auth';
 import { createAction } from '@activepieces/pieces-framework';
-import {
-  HttpMethod,
-  HttpRequest,
-  httpClient,
-} from '@activepieces/pieces-common';
-
-import { CARBONE_API_URL, CARBONE_VERSION } from '../common/constants';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { carboneClient } from '../common/client';
 
 export const listTagsAction = createAction({
   auth: carboneAuth,
@@ -16,35 +11,30 @@ export const listTagsAction = createAction({
   description: 'List all tags used to organize your Carbone templates.',
   audience: 'both',
   aiMetadata: {
-    description: 'Returns all tag names currently used to organize Carbone templates. Use to discover valid tag values before filtering, uploading, or updating templates. Idempotent: read-only lookup with no inputs.',
+    description: 'Returns all tag names currently used to organize Carbone templates. Use to discover existing tag values before uploading or updating templates; List Templates cannot filter by tag. Idempotent: read-only lookup with no inputs.',
     idempotent: true,
+  },
+  outputSchema: {
+    fields: [
+      { key: 'tags', label: 'Tags' },
+      { key: 'count', label: 'Count', format: 'number' },
+    ],
   },
   props: {},
   async run(context) {
-    const request: HttpRequest = {
-      method: HttpMethod.GET,
-      url: `${CARBONE_API_URL}/templates/tags`,
-      headers: {
-        Authorization: `Bearer ${context.auth.secret_text}`,
-        'carbone-version': CARBONE_VERSION,
-      },
-    };
-
-    const response = await httpClient.sendRequest<{
+    const response = await carboneClient.request<{
       success: boolean;
-      data: Array<{ name: string }>;
-      error?: string;
-    }>(request);
-
-    if (!response.body.success) {
-      throw new Error(
-        `Failed to list tags: ${response.body.error ?? 'Unknown error'}`
-      );
-    }
-
+      data?: Array<{ name: string }>;
+    }>({
+      apiKey: context.auth.secret_text,
+      method: HttpMethod.GET,
+      path: '/templates/tags',
+      operation: 'list tags',
+    });
+    const items = response.body.data ?? [];
     return {
-      tags: response.body.data.map((t) => t.name),
-      count: response.body.data.length,
+      tags: items.map((item) => item.name),
+      count: items.length,
     };
   },
 });

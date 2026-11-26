@@ -1,8 +1,9 @@
 import FormData from 'form-data';
 import { carboneAuth } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { CARBONE_API_URL, CARBONE_VERSION } from '../common/constants';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { carboneClient } from '../common/client';
+import { carboneProps } from '../common/props';
 
 
 export const uploadTemplateAction = createAction({
@@ -13,8 +14,18 @@ export const uploadTemplateAction = createAction({
   description: 'Upload a template file to Carbone and get a template ID for rendering.',
   audience: 'both',
   aiMetadata: {
-    description: 'Uploads a template file (DOCX, XLSX, ODS, ODT, PPTX, CSV, or HTML) to Carbone and returns a template ID used later by the render action. Operates in two modes: by default it creates a new versioned template, or when an existing template ID is supplied it adds the file as a new version of that template. Use before rendering when the target template is not yet stored in Carbone. Not idempotent: each call uploads a new template or template version.',
+    description: 'Uploads a template file (DOCX, XLSX, ODS, ODT, PPTX, CSV, or HTML) to Carbone and returns a template ID used later by the render action. Operates in two modes: by default it creates a new versioned template, or when an existing template ID is supplied it adds the file as a new version of that template and deploys it immediately. Use before rendering when the target template is not yet stored in Carbone. Not idempotent: each call uploads a new template or template version.',
     idempotent: false,
+  },
+  outputSchema: {
+    fields: [
+      { key: 'templateId', label: 'Template ID' },
+      { key: 'versionId', label: 'Version ID' },
+      { key: 'filename', label: 'File Name' },
+      { key: 'type', label: 'File Type' },
+      { key: 'size', label: 'Size', format: 'filesize' },
+      { key: 'createdAt', label: 'Created At (Unix)', format: 'number' },
+    ],
   },
   props: {
     file: Property.File({
@@ -39,8 +50,7 @@ export const uploadTemplateAction = createAction({
     existingTemplateId: Property.ShortText({
       displayName: 'Existing Template ID (optional)',
       required: false,
-      description:
-        'If provided, adds this upload as a new version to an existing template ID. Only works when versioning is enabled.',
+      description: 'Add this upload as a new version of an existing template ID.',
     }),
     name: Property.ShortText({
       displayName: 'Template Name (optional)',
@@ -74,54 +84,61 @@ export const uploadTemplateAction = createAction({
   },
   async run(context) {
     const { file, filename, versioning, existingTemplateId, name, comment, category, tags } = context.propsValue;
+    const trimmedFilename = filename.trim();
+    if (trimmedFilename.length === 0) {
+      throw new Error('Filename is required, for example invoice-template.docx.');
+    }
+    const existingId = existingTemplateId?.trim();
+    if (existingId && versioning === false) {
+      throw new Error('Existing Template ID only works when Enable Versioning is on.');
+    }
 
-    // Metadata fields must come before the template file in Carbone v5
     const form = new FormData();
-    if (versioning !== undefined) form.append('versioning', String(versioning));
-    if (existingTemplateId) form.append('id', existingTemplateId);
-    if (name) form.append('name', name);
-    if (comment) form.append('comment', comment);
-    if (category) form.append('category', category);
-    if (tags && tags.length > 0) form.append('tags', JSON.stringify(tags.map((t) => (t as { tag: string }).tag)));
+    form.append('versioning', String(versioning !== false));
+    if (existingId) {
+      form.append('id', existingId);
+      form.append('deployedAt', String(DEPLOY_NOW_TIMESTAMP));
+    }
+    const trimmedName = name?.trim();
+    if (trimmedName) form.append('name', trimmedName);
+    const trimmedComment = comment?.trim();
+    if (trimmedComment) form.append('comment', trimmedComment);
+    const trimmedCategory = category?.trim();
+    if (trimmedCategory) form.append('category', trimmedCategory);
+    const tagList = carboneProps.readTags(tags);
+    if (tagList && tagList.length > 0) form.append('tags', JSON.stringify(tagList));
+    form.append('template', Buffer.from(file.base64, 'base64'), trimmedFilename);
 
-    // Template file must be last in Carbone v5
-    form.append('template', Buffer.from(file.base64, 'base64'), filename);
-
-    const response = await httpClient.sendRequest<{
+    const response = await carboneClient.request<{
       success: boolean;
-      data: {
+      data?: {
         id?: string;
         versionId?: string;
         templateId?: string;
-        type: string;
-        size: number;
-        createdAt: number;
+        type?: string;
+        size?: number;
+        createdAt?: number;
       };
-      error?: string;
     }>({
+      apiKey: context.auth.secret_text,
       method: HttpMethod.POST,
-      url: `${CARBONE_API_URL}/template`,
-      headers: {
-        Authorization: `Bearer ${context.auth.secret_text}`,
-        'carbone-version': CARBONE_VERSION,
-        ...form.getHeaders(),
-      },
-      body: form as unknown as Record<string, unknown>,
+      path: '/template',
+      operation: 'upload template',
+      headers: form.getHeaders(),
+      body: form,
+      timeoutMs: carboneClient.RENDER_TIMEOUT_MS,
     });
-
-    if (!response.body.success) {
-      throw new Error(
-        `Failed to upload template: ${response.body.error ?? 'Unknown error'}`
-      );
-    }
+    const data = response.body.data ?? {};
 
     return {
-      templateId: response.body.data.id ?? response.body.data.templateId,
-      versionId: response.body.data.versionId,
-      filename,
-      type: response.body.data.type,
-      size: response.body.data.size,
-      createdAt: response.body.data.createdAt,
+      templateId: data.id ?? data.templateId ?? null,
+      versionId: data.versionId ?? null,
+      filename: trimmedFilename,
+      type: data.type ?? null,
+      size: data.size ?? null,
+      createdAt: data.createdAt ?? null,
     };
   },
 });
+
+const DEPLOY_NOW_TIMESTAMP = 42000000000;

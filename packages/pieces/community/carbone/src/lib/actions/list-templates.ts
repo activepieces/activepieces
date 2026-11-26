@@ -1,13 +1,12 @@
 import { carboneAuth } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
 import {
-  HttpMethod,
-  HttpRequest,
-  httpClient,
-} from '@activepieces/pieces-common';
-
-import { CARBONE_API_URL, CARBONE_VERSION } from '../common/constants';
-
+  CarboneListResponse,
+  CarboneTemplate,
+  carboneClient,
+  carboneOutputFields,
+} from '../common/client';
 
 export const listTemplatesAction = createAction({
   auth: carboneAuth,
@@ -18,8 +17,16 @@ export const listTemplatesAction = createAction({
     'Retrieve a list of deployed Carbone templates with filtering and pagination.',
   audience: 'both',
   aiMetadata: {
-    description: 'Lists deployed Carbone templates, optionally narrowed by template ID, version ID, category, or a fuzzy name search, with cursor-based pagination. Leaving all filters empty returns all templates; supplying a filter restricts to matches. Use to discover available templates or look up a template ID before rendering, updating, or deleting. Idempotent: read-only lookup.',
+    description: 'Lists deployed Carbone templates, optionally narrowed by template ID, version ID, category, or a fuzzy name search, with cursor-based pagination. Leaving all filters empty returns the first page of all templates; supplying a filter restricts to matches. Returns one page; pass nextCursor as Cursor while hasMore is true. Use to discover available templates or look up a template ID before rendering, updating, or deleting. Idempotent: read-only lookup.',
     idempotent: true,
+  },
+  outputSchema: {
+    fields: [
+      { key: 'templates', label: 'Templates', labelKey: 'name', listItems: carboneOutputFields.template },
+      { key: 'count', label: 'Count', format: 'number' },
+      { key: 'hasMore', label: 'Has More', format: 'boolean' },
+      { key: 'nextCursor', label: 'Next Cursor' },
+    ],
   },
   props: {
     id: Property.ShortText({
@@ -57,7 +64,7 @@ export const listTemplatesAction = createAction({
       displayName: 'Limit (optional)',
       required: false,
       description:
-        'Maximum number of templates to return. Default is 100.',
+        'Maximum number of templates to return, 1 to 100. Default is 100.',
     }),
     cursor: Property.ShortText({
       displayName: 'Cursor (optional)',
@@ -71,58 +78,34 @@ export const listTemplatesAction = createAction({
       context.propsValue;
 
     const queryParams: Record<string, string> = {};
-
-    if (id) queryParams['id'] = id;
-    if (versionId) queryParams['versionId'] = versionId;
-    if (category) queryParams['category'] = category;
-    if (search) queryParams['search'] = search;
-    if (includeVersions !== undefined)
-      queryParams['includeVersions'] = String(includeVersions);
-    if (limit) queryParams['limit'] = String(limit);
-    if (cursor) queryParams['cursor'] = cursor;
-
-    const request: HttpRequest = {
-      method: HttpMethod.GET,
-      url: `${CARBONE_API_URL}/templates`,
-      headers: {
-        Authorization: `Bearer ${context.auth.secret_text}`,
-        'carbone-version': CARBONE_VERSION,
-      },
-      queryParams,
-    };
-
-    const response = await httpClient.sendRequest<{
-      success: boolean;
-      data: Array<{
-        id: string;
-        versionId: string;
-        deployedAt: number;
-        createdAt: number;
-        expireAt: number;
-        size: number;
-        type: string;
-        name: string;
-        category: string;
-        comment: string;
-        tags: string[];
-        origin: number;
-      }>;
-      hasMore: boolean;
-      nextCursor?: string;
-      error?: string;
-    }>(request);
-
-    if (!response.body.success) {
-      throw new Error(
-        `Failed to list templates: ${response.body.error ?? 'Unknown error'}`
-      );
+    const filters = { id, versionId, category, search };
+    for (const [key, value] of Object.entries(filters)) {
+      const trimmed = value?.trim();
+      if (trimmed) queryParams[key] = trimmed;
     }
+    if (includeVersions === true) queryParams['includeVersions'] = 'true';
+    if (limit !== undefined && limit !== null) {
+      if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
+        throw new Error('Limit must be a whole number from 1 to 100.');
+      }
+      queryParams['limit'] = String(limit);
+    }
+    const trimmedCursor = cursor?.trim();
+    if (trimmedCursor) queryParams['cursor'] = trimmedCursor;
 
+    const response = await carboneClient.request<CarboneListResponse<CarboneTemplate>>({
+      apiKey: context.auth.secret_text,
+      method: HttpMethod.GET,
+      path: '/templates',
+      operation: 'list templates',
+      queryParams,
+    });
+    const templates = response.body.data ?? [];
     return {
-      templates: response.body.data,
-      hasMore: response.body.hasMore,
-      nextCursor: response.body.nextCursor,
-      count: response.body.data.length,
+      templates,
+      hasMore: response.body.hasMore === true,
+      nextCursor: response.body.nextCursor ?? null,
+      count: templates.length,
     };
   },
 });

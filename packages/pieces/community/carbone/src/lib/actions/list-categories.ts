@@ -1,13 +1,7 @@
 import { carboneAuth } from '../auth';
 import { createAction } from '@activepieces/pieces-framework';
-import {
-  HttpMethod,
-  HttpRequest,
-  httpClient,
-} from '@activepieces/pieces-common';
-
-import { CARBONE_API_URL, CARBONE_VERSION } from '../common/constants';
-
+import { HttpMethod } from '@activepieces/pieces-common';
+import { carboneClient } from '../common/client';
 
 export const listCategoriesAction = createAction({
   auth: carboneAuth,
@@ -20,32 +14,27 @@ export const listCategoriesAction = createAction({
     description: 'Returns all category names currently used to organize Carbone templates. Use to discover valid category values before filtering, uploading, or updating templates. Idempotent: read-only lookup with no inputs.',
     idempotent: true,
   },
+  outputSchema: {
+    fields: [
+      { key: 'categories', label: 'Categories' },
+      { key: 'count', label: 'Count', format: 'number' },
+    ],
+  },
   props: {},
   async run(context) {
-    const request: HttpRequest = {
-      method: HttpMethod.GET,
-      url: `${CARBONE_API_URL}/templates/categories`,
-      headers: {
-        Authorization: `Bearer ${context.auth.secret_text}`,
-        'carbone-version': CARBONE_VERSION,
-      },
-    };
-
-    const response = await httpClient.sendRequest<{
+    const response = await carboneClient.request<{
       success: boolean;
-      data: Array<{ name: string }>;
-      error?: string;
-    }>(request);
-
-    if (!response.body.success) {
-      throw new Error(
-        `Failed to list categories: ${response.body.error ?? 'Unknown error'}`
-      );
-    }
-
+      data?: Array<{ name: string }>;
+    }>({
+      apiKey: context.auth.secret_text,
+      method: HttpMethod.GET,
+      path: '/templates/categories',
+      operation: 'list categories',
+    });
+    const items = response.body.data ?? [];
     return {
-      categories: response.body.data.map((c) => c.name),
-      count: response.body.data.length,
+      categories: items.map((item) => item.name),
+      count: items.length,
     };
   },
 });
