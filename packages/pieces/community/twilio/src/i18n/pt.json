@@ -38,10 +38,10 @@
   "Return Error as Output": "Return Error as Output",
   "Timeout": "Timeout",
   "Follow redirects": "Seguir redirecionamentos",
-  "Your Twilio number the text is sent from.": "Your Twilio number the text is sent from.",
-  "Phone number with country code, starting with +.": "Phone number with country code, starting with +.",
+  "Your Twilio number the text is sent from.": "Seu número Twilio de onde o texto é enviado.",
+  "Phone number with country code, starting with +.": "Número de telefone com código do país, começando com +.",
   "Up to 1,600 characters. Long texts are split and billed per part.": "Up to 1,600 characters. Long texts are split and billed per part.",
-  "Your Twilio number the call comes from.": "Your Twilio number the call comes from.",
+  "Your Twilio number the call comes from.": "Seu número Twilio de onde a chamada vem.",
   "Text read aloud to the person who answers.": "Text read aloud to the person who answers.",
   "Empty: your Twilio account's default voice.": "Empty: your Twilio account's default voice.",
   "Language the message is read in. Empty: English (US).": "Language the message is read in. Empty: English (US).",
@@ -75,9 +75,9 @@
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
   "HEAD": "CABEÇA",
-  "Phone numbers": "Phone numbers",
-  "Request": "Request",
-  "Data to send": "Data to send",
+  "Phone numbers": "Números de telefone",
+  "Request": "Solicitação",
+  "Data to send": "Dados a enviar",
   "New Incoming SMS": "Novo SMS de entrada",
   "New Phone Number": "Novo número de telefone",
   "New Recording": "Nova Gravação",
@@ -88,5 +88,5 @@
   "Triggers when a new call recording is added to your account.": "Triggers when a new call recording is added to your account.",
   "Triggers when a new call recording transcription is completed.": "Dispara quando uma nova transcrição da gravação de chamadas for concluída.",
   "Triggers when a call completes (incoming or outgoing).": "Dispara quando uma chamada é concluída (entrada ou saída).",
-  "Your Twilio number that receives the texts.": "Your Twilio number that receives the texts."
+  "Your Twilio number that receives the texts.": "Seu número Twilio que recebe as mensagens."
 }
