@@ -152,13 +152,13 @@
   "HEAD": "HEAD",
   "Message": "メッセージ",
   "Settings": "Settings",
-  "Search in": "Search in",
-  "History": "History",
-  "Script": "Script",
-  "Speaker": "Speaker",
+  "Search in": "検索する項目",
+  "History": "履歴",
+  "Script": "スクリプト",
+  "Speaker": "スピーカー",
   "Video": "ビデオ",
   "Output": "Output",
   "Content": "内容",
-  "Request": "Request",
-  "Data to send": "Data to send"
+  "Request": "リクエスト",
+  "Data to send": "送信するデータ"
 }
