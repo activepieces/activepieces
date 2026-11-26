@@ -67,5 +67,6 @@
   "Trigger when a new file is created or modified.": "新しいファイルが作成または変更されたときにトリガーします。",
   "Path": "パス",
   "Ignore hidden files": "隠しファイルを無視",
-  "The path to watch for new files": "新しいファイルを見るためのパス"
+  "The path to watch for new files": "新しいファイルを見るためのパス",
+  "FTP/SFTP": "FTP/SFTP"
 }
