@@ -15,33 +15,44 @@ export const pdfToImageAction = createAction({
     idempotent: false,
   },
   outputSchema: conversionOutputSchema,
+  propertyGroups: [
+    { key: 'pdf', display: 'section', label: 'PDF', icon: 'file', props: ['pdf', 'pages'] },
+    { key: 'image', display: 'section', label: 'Image', icon: 'sliders', props: ['output_format', 'dpi'] },
+  ],
   props: {
-    pdf: Property.File({ displayName: 'PDF File', required: true }),
+    pdf: Property.File({
+      displayName: 'PDF File',
+      description: 'The PDF to convert. Upload it or map a file from an earlier step.',
+      required: true,
+    }),
     output_format: Property.StaticDropdown({
       displayName: 'Image Format',
       required: true,
       defaultValue: 'png',
+      display: 'cards',
       options: {
         options: [
-          { label: 'PNG', value: 'png' },
-          { label: 'JPG', value: 'jpg' },
-          { label: 'WebP', value: 'webp' },
+          { label: 'PNG', value: 'png', description: 'Lossless' },
+          { label: 'JPG', value: 'jpg', description: 'Smaller files' },
+          { label: 'WebP', value: 'webp', description: 'Modern, small' },
         ],
       },
     }),
     pages: Property.ShortText({
       displayName: 'Pages',
-      description: 'Pages to render, e.g. 1 or 2-4 or 1,3. Leave empty for all pages.',
+      description: 'Pages to convert. Empty: all pages.',
+      placeholder: '1-3,5',
       required: false,
     }),
     dpi: Property.Number({
-      displayName: 'Resolution (DPI)',
-      description: 'Defaults to 144. Use 72-96 for screen, 300 for print.',
+      displayName: 'Resolution',
+      description: 'Dots per inch. Empty: 144. Use 72–96 for screens, 300 for print.',
       required: false,
     }),
     filename: Property.ShortText({
       displayName: 'File Name',
-      description: 'Name without extension (.zip when several pages). Defaults to page.',
+      description: 'Name of the image or ZIP file. Empty: page.',
+      placeholder: 'page',
       required: false,
     }),
   },

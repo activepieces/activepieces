@@ -6,7 +6,7 @@ export const mergePdfsAction = createAction({
   auth: pdfcrowdAuth,
   name: 'merge_pdfs',
   displayName: 'Merge PDFs',
-  description: 'Join two or more PDF files into one PDF, in the order given.',
+  description: 'Join two or more PDFs into one, in the order given.',
   audience: 'both',
   classification: 'READ',
   aiMetadata: {
@@ -15,10 +15,13 @@ export const mergePdfsAction = createAction({
     idempotent: false,
   },
   outputSchema: conversionOutputSchema,
+  propertyGroups: [
+    { key: 'pdfs', display: 'section', label: 'Files to Join', icon: 'file', props: ['pdfs'] },
+  ],
   props: {
     pdfs: Property.Array({
       displayName: 'PDF Files',
-      description: 'The PDFs to merge, in order. At least two.',
+      description: 'Add two or more PDFs in the order to join them.',
       required: true,
       properties: {
         file: Property.File({ displayName: 'PDF File', required: true }),
@@ -26,7 +29,8 @@ export const mergePdfsAction = createAction({
     }),
     filename: Property.ShortText({
       displayName: 'File Name',
-      description: 'Name of the merged PDF. Defaults to merged.pdf.',
+      description: 'Name of the PDF file. Empty: merged.pdf.',
+      placeholder: 'merged.pdf',
       required: false,
     }),
   },

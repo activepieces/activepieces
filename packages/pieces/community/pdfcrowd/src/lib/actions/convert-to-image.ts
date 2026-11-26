@@ -1,12 +1,12 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { pdfcrowdAuth } from '../common/auth';
-import { conversionOutputSchema, pdfcrowdConvert, pickSource, withExtension } from '../common/convert';
+import { baseName, conversionOutputSchema, pdfcrowdConvert, pickSource, withExtension } from '../common/convert';
 
 export const convertToImageAction = createAction({
   auth: pdfcrowdAuth,
   name: 'convert_to_image',
   displayName: 'Convert to Image',
-  description: 'Take a screenshot of a web page URL or an HTML string as an image file.',
+  description: 'Take a screenshot of a web page or HTML as an image.',
   audience: 'both',
   classification: 'READ',
   aiMetadata: {
@@ -15,42 +15,53 @@ export const convertToImageAction = createAction({
     idempotent: false,
   },
   outputSchema: conversionOutputSchema,
+  propertyGroups: [
+    { key: 'source', display: 'section', label: 'Source', icon: 'file', props: ['source_info', 'url', 'html'] },
+    { key: 'image', display: 'section', label: 'Image', icon: 'sliders', props: ['output_format', 'screenshot_width', 'screenshot_height'] },
+  ],
   props: {
+    source_info: Property.MarkDown({ value: 'Give a URL or HTML, not both.', variant: MarkdownVariant.INFO }),
     url: Property.ShortText({
       displayName: 'URL',
-      description: 'http(s) address of the page to capture. Leave empty when giving HTML.',
+      description: 'Address of a public web page.',
+      placeholder: 'https://example.com',
       required: false,
     }),
     html: Property.LongText({
       displayName: 'HTML',
-      description: 'HTML markup to render. Leave empty when giving a URL.',
+      description: 'The HTML page to capture.',
+      placeholder: '<h1>Hello</h1>',
       required: false,
     }),
     output_format: Property.StaticDropdown({
       displayName: 'Image Format',
       required: true,
       defaultValue: 'png',
+      display: 'cards',
       options: {
         options: [
-          { label: 'PNG', value: 'png' },
-          { label: 'JPG', value: 'jpg' },
-          { label: 'WebP', value: 'webp' },
+          { label: 'PNG', value: 'png', description: 'Lossless' },
+          { label: 'JPG', value: 'jpg', description: 'Smaller files' },
+          { label: 'WebP', value: 'webp', description: 'Modern, small' },
         ],
       },
     }),
     screenshot_width: Property.Number({
-      displayName: 'Width (px)',
-      description: 'Image width in pixels, 96 to 65000. Defaults to 1024.',
+      displayName: 'Width',
+      description: 'In pixels, 96 to 65000. Empty: 1024.',
+      width: 'half',
       required: false,
     }),
     screenshot_height: Property.Number({
-      displayName: 'Height (px)',
-      description: 'Image height in pixels. Leave empty to capture the full page height.',
+      displayName: 'Height',
+      description: 'In pixels. Empty: the full page height.',
+      width: 'half',
       required: false,
     }),
     filename: Property.ShortText({
       displayName: 'File Name',
-      description: 'Name of the image file. Defaults to screenshot.',
+      description: 'Name of the image file. Empty: screenshot.',
+      placeholder: 'screenshot',
       required: false,
     }),
   },
@@ -71,7 +82,7 @@ export const convertToImageAction = createAction({
     return pdfcrowdConvert({
       auth,
       files,
-      filename: withExtension({ name: propsValue.filename, fallback: 'screenshot', extension: format }),
+      filename: withExtension({ name: baseName({ name: propsValue.filename, fallback: 'screenshot' }), fallback: 'screenshot', extension: format }),
       fields: {
         ...source,
         output_format: format,

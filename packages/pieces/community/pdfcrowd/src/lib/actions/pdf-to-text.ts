@@ -15,26 +15,37 @@ export const pdfToTextAction = createAction({
     idempotent: false,
   },
   outputSchema: textConversionOutputSchema,
+  propertyGroups: [
+    { key: 'pdf', display: 'section', label: 'PDF', icon: 'file', props: ['pdf', 'pages'] },
+  ],
   props: {
-    pdf: Property.File({ displayName: 'PDF File', required: true }),
+    pdf: Property.File({
+      displayName: 'PDF File',
+      description: 'The PDF to read. Upload it or map a file from an earlier step.',
+      required: true,
+    }),
     pages: Property.ShortText({
       displayName: 'Pages',
-      description: 'Pages to extract, e.g. 1 or 2-4 or 1,3. Leave empty for all pages.',
+      description: 'Pages to extract. Empty: all pages.',
+      placeholder: '1-3,5',
       required: false,
     }),
     no_layout: Property.Checkbox({
       displayName: 'Ignore Layout',
       description: 'Return text in reading order instead of keeping the page layout.',
+      advanced: true,
       required: false,
     }),
     remove_hyphenation: Property.Checkbox({
       displayName: 'Remove Hyphenation',
       description: 'Join words split by a hyphen at the end of a line.',
+      advanced: true,
       required: false,
     }),
     filename: Property.ShortText({
       displayName: 'File Name',
-      description: 'Name of the text file. Defaults to document.txt.',
+      description: 'Name of the text file. Empty: document.txt.',
+      placeholder: 'document.txt',
       required: false,
     }),
   },

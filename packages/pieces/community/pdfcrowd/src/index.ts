@@ -17,7 +17,7 @@ import { BASE_URL } from './lib/common/client';
 export const pdfcrowd = createPiece({
   displayName: 'Pdfcrowd',
   auth: pdfcrowdAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/pdfcrowd.png',
   authors: ['pdfcrowd', 'sanket-a11y'],
   categories: [PieceCategory.CONTENT_AND_FILES],
@@ -37,6 +37,12 @@ export const pdfcrowd = createPiece({
     createCustomApiCallAction({
       auth: pdfcrowdAuth,
       baseUrl: () => BASE_URL,
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${BASE_URL}`,
+          placeholder: '/info/',
+        },
+      },
       authMapping: async (auth) => {
         return {
           Authorization: `Basic ${Buffer.from(
