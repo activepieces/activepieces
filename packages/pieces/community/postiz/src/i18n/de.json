@@ -71,8 +71,8 @@
   "PUT": "PUT",
   "DELETE": "LÖSCHEN",
   "HEAD": "HEAD",
-  "Request": "Request",
-  "Data to send": "Data to send",
+  "Request": "Anfrage",
+  "Data to send": "Zu sendende Daten",
   "New Published Post": "Neuer veröffentlichter Beitrag",
   "Triggers when a post is published in Postiz": "Wird ausgelöst, wenn ein Beitrag in Postiz veröffentlicht wird"
 }
