@@ -69,26 +69,6 @@ const METRICS: Metric[] = [
             return [{ labels: workerLabels(worker), value: limitKb * BYTES_PER_KB }]
         },
     },
-    {
-        name: 'activepieces_worker_cpu_usage_percent',
-        help: 'CPU usage of the worker process itself, excluding its sandbox processes',
-        collect: (worker) => [{ labels: workerLabels(worker), value: worker.information.cpuUsagePercentage }],
-    },
-    {
-        name: 'activepieces_worker_memory_usage_percent',
-        help: 'RAM usage of the worker container',
-        collect: (worker) => [{ labels: workerLabels(worker), value: worker.information.ramUsagePercentage }],
-    },
-    {
-        name: 'activepieces_worker_memory_total_bytes',
-        help: 'RAM available to the worker container',
-        collect: (worker) => [{ labels: workerLabels(worker), value: worker.information.totalAvailableRamInBytes }],
-    },
-    {
-        name: 'activepieces_worker_disk_usage_percent',
-        help: 'Disk usage of the worker machine',
-        collect: (worker) => [{ labels: workerLabels(worker), value: worker.information.diskInfo.percentage }],
-    },
 ]
 
 function heapSamples({ worker, read }: HeapSamplesParams): Sample[] {

@@ -24,7 +24,7 @@ function fakeWorker({ workerId, sandboxes, memoryLimitKb }: FakeWorkerParams): W
 }
 
 describe('sandboxPrometheusMetrics.format', () => {
-    it('emits one sample per sandbox and per worker in Prometheus text format', () => {
+    it('emits one sample per sandbox in Prometheus text format', () => {
         const output = sandboxPrometheusMetrics.format({
             workers: [fakeWorker({
                 workerId: 'w1',
@@ -67,18 +67,6 @@ describe('sandboxPrometheusMetrics.format', () => {
             '# HELP activepieces_sandbox_memory_limit_bytes Configured AP_SANDBOX_MEMORY_LIMIT for each sandbox on the worker. It caps the V8 heap only, not activepieces_sandbox_memory_usage_bytes',
             '# TYPE activepieces_sandbox_memory_limit_bytes gauge',
             'activepieces_sandbox_memory_limit_bytes{worker_id="w1",host="worker-\\"a\\""} 1073741824',
-            '# HELP activepieces_worker_cpu_usage_percent CPU usage of the worker process itself, excluding its sandbox processes',
-            '# TYPE activepieces_worker_cpu_usage_percent gauge',
-            'activepieces_worker_cpu_usage_percent{worker_id="w1",host="worker-\\"a\\""} 12.5',
-            '# HELP activepieces_worker_memory_usage_percent RAM usage of the worker container',
-            '# TYPE activepieces_worker_memory_usage_percent gauge',
-            'activepieces_worker_memory_usage_percent{worker_id="w1",host="worker-\\"a\\""} 40',
-            '# HELP activepieces_worker_memory_total_bytes RAM available to the worker container',
-            '# TYPE activepieces_worker_memory_total_bytes gauge',
-            'activepieces_worker_memory_total_bytes{worker_id="w1",host="worker-\\"a\\""} 2048',
-            '# HELP activepieces_worker_disk_usage_percent Disk usage of the worker machine',
-            '# TYPE activepieces_worker_disk_usage_percent gauge',
-            'activepieces_worker_disk_usage_percent{worker_id="w1",host="worker-\\"a\\""} 75',
             '',
         ].join('\n'))
     })
@@ -88,8 +76,7 @@ describe('sandboxPrometheusMetrics.format', () => {
             workers: [fakeWorker({ workerId: 'w1', memoryLimitKb: undefined, sandboxes: [] })],
         })
 
-        expect(output).not.toContain('activepieces_sandbox_')
-        expect(output).toContain('activepieces_worker_cpu_usage_percent{worker_id="w1"')
+        expect(output).toBe('\n')
     })
 
     it('returns an empty body when no workers are online', () => {
