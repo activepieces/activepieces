@@ -191,6 +191,8 @@
   "PUT": "PUT",
   "DELETE": "削除",
   "HEAD": "頭",
+  "Request": "リクエスト",
+  "Data to send": "送信するデータ",
   "New Record": "新しいレコード",
   "Updated Record": "更新されたレコード",
   "Triggers when a new record is created in the specified table": "指定したテーブルに新しいレコードが作成されたときにトリガーされます。",
