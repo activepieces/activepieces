@@ -21,13 +21,13 @@ export const listAgentRunsAction = createAction({
   props: {
     limit: Property.Number({
       displayName: 'Limit',
-      description: 'How many runs to return in this page, 1 to 100. Defaults to 20.',
+      description: 'Runs per page, 1 to 100.',
       required: false,
       defaultValue: 20,
     }),
     cursor: Property.ShortText({
       displayName: 'Cursor',
-      description: 'Leave empty for the first page. To get the next page, paste the Next Cursor value from the previous result.',
+      description: 'Empty for the first page. For the next one, paste Next Cursor.',
       required: false,
     }),
   },
