@@ -24,3 +24,8 @@ export const enum BaserowFieldType {
   UUID = 'uuid',
   AUTO_NUMBER = 'autonumber',
 }
+
+export const enum BaserowLinkBy {
+  ROW_ID = 'row_id',
+  PRIMARY_FIELD_VALUE = 'primary_field_value',
+}
