@@ -107,6 +107,7 @@ export type SandboxSettings = {
     DEV_PIECES: string[]
     ENVIRONMENT: string
     REUSE_SANDBOX: string | undefined
+    RECYCLE_SANDBOX_AT?: string | undefined
     FLOW_TIMEOUT_SECONDS: number
     MAX_FILE_SIZE_MB: number
     MAX_FLOW_RUN_LOG_SIZE_MB: number

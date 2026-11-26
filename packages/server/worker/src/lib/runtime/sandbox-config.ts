@@ -13,6 +13,7 @@ export const sandboxConfig = {
         return {
             ...workerSettings.getSettings(),
             REUSE_SANDBOX: system.get(WorkerSystemProp.REUSE_SANDBOX),
+            RECYCLE_SANDBOX_AT: system.get(WorkerSystemProp.RECYCLE_SANDBOX_AT),
         }
     },
 }

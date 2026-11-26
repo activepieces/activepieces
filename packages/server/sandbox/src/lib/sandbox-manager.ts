@@ -1,9 +1,11 @@
 import { isNil } from '@activepieces/core-utils'
-import { type ApLogger } from '@activepieces/server-utils'
+import { type ApLogger, systemUsage } from '@activepieces/server-utils'
 import { ApEnvironment, ExecutionMode, SandboxMemoryUsage } from '@activepieces/shared'
 import { createSandboxForJob } from './create-sandbox-for-job'
 import { Sandbox } from './sandbox/types'
 import { SandboxSettings } from './types'
+
+const BYTES_PER_KB = 1024
 
 let devPiecesGeneration = 0
 
@@ -16,13 +18,15 @@ export function createSandboxManager({ boxId, basePath, getSettings }: { boxId: 
     let currentSandboxDevPiecesGeneration = devPiecesGeneration
 
     return {
-        acquire(params: { log: ApLogger }): Sandbox {
+        async acquire(params: { log: ApLogger }): Promise<Sandbox> {
             const builtBeforeDevPiecesRebuild = currentSandboxDevPiecesGeneration < devPiecesGeneration
-            if (canReuseSandbox(getSettings) && currentSandbox && currentSandbox.isReady() && !builtBeforeDevPiecesRebuild) {
-                return currentSandbox
+            const reusableSandbox = canReuseSandbox(getSettings) && currentSandbox && currentSandbox.isReady() && !builtBeforeDevPiecesRebuild ? currentSandbox : null
+            const reachedRecycleThreshold = !isNil(reusableSandbox) && await hasReachedRecycleThreshold({ sandbox: reusableSandbox, settings: getSettings() })
+            if (!isNil(reusableSandbox) && !reachedRecycleThreshold) {
+                return reusableSandbox
             }
             if (currentSandbox) {
-                params.log.info(builtBeforeDevPiecesRebuild ? 'Dev pieces were rebuilt, replacing stale sandbox' : 'Sandbox not ready or not reusable, creating fresh one')
+                params.log.info({ sandbox: { id: currentSandbox.id } }, replaceReason({ reachedRecycleThreshold, builtBeforeDevPiecesRebuild }))
                 currentSandbox.shutdown().catch((err) =>
                     params.log.error({ error: err }, 'Error shutting down previous sandbox'),
                 )
@@ -67,6 +71,24 @@ export function createSandboxManager({ boxId, basePath, getSettings }: { boxId: 
     }
 }
 
+async function hasReachedRecycleThreshold({ sandbox, settings }: { sandbox: Sandbox, settings: SandboxSettings }): Promise<boolean> {
+    const thresholdPercent = Number(settings.RECYCLE_SANDBOX_AT)
+    const memoryLimitKb = Number(settings.SANDBOX_MEMORY_LIMIT)
+    const pid = sandbox.getPid()
+    if (isNil(settings.RECYCLE_SANDBOX_AT) || isNil(pid) || !(thresholdPercent > 0) || !(memoryLimitKb > 0)) {
+        return false
+    }
+    const memoryByPid = await systemUsage.getProcessTreeMemoryBytesByPids([pid])
+    return (memoryByPid.get(pid) ?? 0) >= memoryLimitKb * BYTES_PER_KB * thresholdPercent / 100
+}
+
+function replaceReason({ reachedRecycleThreshold, builtBeforeDevPiecesRebuild }: { reachedRecycleThreshold: boolean, builtBeforeDevPiecesRebuild: boolean }): string {
+    if (reachedRecycleThreshold) {
+        return 'Sandbox memory reached AP_RECYCLE_SANDBOX_AT, replacing it with a fresh one'
+    }
+    return builtBeforeDevPiecesRebuild ? 'Dev pieces were rebuilt, replacing stale sandbox' : 'Sandbox not ready or not reusable, creating fresh one'
+}
+
 function canReuseSandbox(getSettings: () => SandboxSettings): boolean {
     const settings = getSettings()
     if (!isNil(settings.REUSE_SANDBOX)) {
@@ -91,7 +113,7 @@ export type ActiveSandboxInfo = {
 }
 
 export type SandboxManager = {
-    acquire(params: { log: ApLogger }): Sandbox
+    acquire(params: { log: ApLogger }): Promise<Sandbox>
     invalidate(log: ApLogger): Promise<void>
     release(log: ApLogger): Promise<void>
     shutdown(log: ApLogger): Promise<void>
