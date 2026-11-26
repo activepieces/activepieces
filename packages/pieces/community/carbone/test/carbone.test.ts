@@ -478,7 +478,33 @@ describe('review fixes', () => {
     await call({ method: HttpMethod.POST, body_type: 'raw', body: { data: 'text' } });
     expect(spy.mock.calls[1][0].body).toBe('text');
     const out = await call({ method: HttpMethod.GET, response_is_binary: true });
-    expect(out).toEqual({ status: 200, headers: {}, body: 'https://files/output.bin' });
+    expect(out).toEqual({ status: 200, headers: {}, body: 'https://files/output.txt' });
+  });
+
+  it('custom API call names binary downloads by content type', async () => {
+    const types = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document; charset=binary', 'application/x-unknown'];
+    const outputs = [];
+    for (const type of types) {
+      mockSend(() => ({ status: 200, headers: { 'content-type': type }, body: Buffer.from('X') }));
+      outputs.push(await runAction({ action: carboneCustomApiCall, context: ctx({ url: { url: '/render/R1' }, method: HttpMethod.GET, response_is_binary: true }).context }));
+    }
+    expect(outputs.map((out) => JSON.stringify(out))).toEqual([
+      expect.stringContaining('output.pdf'),
+      expect.stringContaining('output.docx'),
+      expect.stringContaining('output.txt'),
+    ]);
+  });
+
+  it('custom API call sends the body directly for saved steps without a body type and nothing for none', async () => {
+    const spy = mockSend(() => ({ status: 200, headers: {}, body: {} }));
+    const call = (props: Record<string, unknown>) =>
+      runAction({ action: carboneCustomApiCall, context: ctx({ url: { url: '/render/T1' }, method: HttpMethod.POST, ...props }).context });
+    await call({ body: { data: { a: 1 }, convertTo: 'pdf' } });
+    expect(spy.mock.calls[0][0].body).toEqual({ data: { a: 1 }, convertTo: 'pdf' });
+    await call({ body: 'raw text' });
+    expect(spy.mock.calls[1][0].body).toBe('raw text');
+    await call({ body_type: 'none', body: { data: { a: 1 } } });
+    expect(spy.mock.calls[2][0].body).toBeUndefined();
   });
 
   it('custom API call follows redirects only on api.carbone.io', async () => {

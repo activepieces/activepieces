@@ -81,7 +81,8 @@ export const carboneCustomApiCall = createAction({
         const data: unknown = response.body;
         if (binary && (Buffer.isBuffer(data) || data instanceof ArrayBuffer)) {
           const buffer = Buffer.isBuffer(data) ? data : Buffer.from(new Uint8Array(data));
-          return { status: response.status, headers: response.headers, body: await files.write({ fileName: 'output.bin', data: buffer }) };
+          const extension = extensionOf({ contentType: headerValue(response.headers?.['content-type']) });
+          return { status: response.status, headers: response.headers, body: await files.write({ fileName: `output.${extension}`, data: buffer }) };
         }
         return { status: response.status, headers: response.headers, body: data };
       }
@@ -153,7 +154,10 @@ function stringRecord({ value }: { value: unknown }): Record<string, string> {
 }
 
 function bodyOf({ body, bodyType }: { body: unknown; bodyType: unknown }): FormData | string | Record<string, unknown> | unknown[] | undefined {
-  if (!bodyType || bodyType === 'none' || typeof body !== 'object' || body === null) {
+  if (!bodyType) {
+    return legacyBodyOf({ body });
+  }
+  if (bodyType === 'none' || typeof body !== 'object' || body === null) {
     return undefined;
   }
   const data: unknown = Reflect.get(body, 'data');
@@ -193,4 +197,48 @@ function bodyOf({ body, bodyType }: { body: unknown; bodyType: unknown }): FormD
   return undefined;
 }
 
+function legacyBodyOf({ body }: { body: unknown }): string | Record<string, unknown> | unknown[] | undefined {
+  if (typeof body === 'string' || Array.isArray(body)) {
+    return body;
+  }
+  if (typeof body === 'object' && body !== null) {
+    return Object.fromEntries(Object.entries(body));
+  }
+  return undefined;
+}
+
+function extensionOf({ contentType }: { contentType: string | undefined }): string {
+  const key = (contentType ?? '').split(';')[0].trim().toLowerCase();
+  return CONTENT_TYPE_EXTENSIONS[key] ?? 'txt';
+}
+
 const MAX_REDIRECTS = 5;
+
+const CONTENT_TYPE_EXTENSIONS: Record<string, string> = {
+  'application/json': 'json',
+  'application/pdf': 'pdf',
+  'application/xml': 'xml',
+  'text/xml': 'xml',
+  'application/zip': 'zip',
+  'application/octet-stream': 'bin',
+  'application/msword': 'doc',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+  'application/vnd.ms-excel': 'xls',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+  'application/vnd.ms-powerpoint': 'ppt',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx',
+  'application/vnd.oasis.opendocument.text': 'odt',
+  'application/vnd.oasis.opendocument.spreadsheet': 'ods',
+  'application/vnd.oasis.opendocument.presentation': 'odp',
+  'application/rtf': 'rtf',
+  'text/plain': 'txt',
+  'text/html': 'html',
+  'text/csv': 'csv',
+  'text/markdown': 'md',
+  'image/png': 'png',
+  'image/jpeg': 'jpeg',
+  'image/jpg': 'jpg',
+  'image/gif': 'gif',
+  'image/webp': 'webp',
+  'image/svg+xml': 'svg',
+};
