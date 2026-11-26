@@ -1,4 +1,4 @@
-import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, MarkdownVariant, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { bindTokenStore } from '../common/client';
 import { bettermodeAuth } from '../auth';
 import { bettermodePolling, Checkpoint } from '../common/polling';
@@ -17,9 +17,13 @@ export const newReplyTrigger = createTrigger({
       'Fires once per new reply (comment or answer) on a post, checked on a schedule, oldest first, optionally only in the given spaces. Each check looks at the 25 most recently active posts and their 20 newest direct replies. Replied To Post ID holds the parent post.',
   },
   props: {
+    pollingNote: Property.MarkDown({
+      value: 'Each check reads the 25 most recently active posts and their 20 newest replies. Replies outside that window are missed.',
+      variant: MarkdownVariant.WARNING,
+    }),
     space_ids: Property.Array({
       displayName: 'Space IDs',
-      description: 'Only watch replies in these spaces. Leave empty for all spaces.',
+      description: 'Copy IDs from space_id in a test run. Leave empty for all spaces.',
       required: false,
     }),
   },

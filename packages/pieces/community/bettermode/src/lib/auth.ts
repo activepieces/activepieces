@@ -18,25 +18,26 @@ export const bettermodeAuth = PieceAuth.CustomAuth({
   props: {
     region: Property.StaticDropdown({
       displayName: 'Region',
-      description: 'The region of your Bettermode account',
+      description: 'EU communities use api.bettermode.de, all others the US region.',
       required: true,
       options: {
         options: BETTERMODE_REGIONS,
       },
     }),
     domain: Property.ShortText({
-      displayName: 'BetterMode Domain',
-      description: 'The domain of your community, for example community.example.com',
+      displayName: 'Community Domain',
+      description: 'The address members use to open your community.',
+      placeholder: 'community.example.com',
       required: true,
     }),
     email: Property.ShortText({
       displayName: 'Email',
-      description: 'Email address for your Bettermode account',
+      description: 'Email of the member the flows act as.',
       required: true,
     }),
     password: PieceAuth.SecretText({
       displayName: 'Password',
-      description: 'Password for your Bettermode account',
+      description: 'Password of that same member.',
       required: true,
     }),
   },

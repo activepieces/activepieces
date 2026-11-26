@@ -17,26 +17,33 @@ export const createDiscussionAction = createAction({
       'Publishes a new post of the community post type named exactly "Discussion" into a space the connected member has joined. Agents should use List Post Types and Create Post instead. Each call creates a separate post, so retries duplicate.',
     idempotent: false,
   },
+  propertyGroups: [
+    { key: 'destination', display: 'section', label: 'Post in', icon: 'inbox', props: ['spaceId'] },
+    { key: 'post', display: 'section', label: 'Post', icon: 'text', props: ['title', 'content', 'tagNames'] },
+  ],
   props: {
     spaceId: memberSpacesDropdown,
     title: Property.ShortText({
       displayName: 'Title',
-      description: 'The title of the discussion',
+      placeholder: 'Welcome to the community!',
       required: true,
     }),
     content: Property.LongText({
       displayName: 'Content',
-      description: 'The content of the discussion. HTML is supported.',
+      description: 'Plain text or HTML.',
+      placeholder: '<p>Share the details here.</p>',
       required: true,
     }),
     tagNames: Property.ShortText({
       displayName: 'Tags',
-      description: 'Comma-separated tag names to add, for example onboarding, feedback. Leave empty for no tags.',
+      description: 'Comma-separated tag names. Leave empty for no tags.',
+      placeholder: 'onboarding, feedback',
       required: false,
     }),
     locked: Property.Checkbox({
       displayName: 'Locked',
-      description: 'If the discussion should be locked',
+      description: 'Lock the post so nobody can reply.',
+      advanced: true,
       required: false,
       defaultValue: false,
     }),
