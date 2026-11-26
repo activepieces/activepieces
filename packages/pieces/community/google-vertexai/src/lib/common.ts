@@ -108,7 +108,8 @@ export async function getVertexAILocationOptions(auth: GoogleVertexAIAuthValue |
     });
 
     const options = (response.body.locations ?? []).map((loc) => ({
-      label: loc.locationId,
+      label:
+        VERTEX_AI_LOCATIONS.find((l) => l.value === loc.locationId)?.label ?? loc.locationId,
       value: loc.locationId,
     }));
 
