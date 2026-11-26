@@ -63,8 +63,8 @@
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
   "HEAD": "HOOFD",
-  "Request": "Request",
-  "Data to send": "Data to send",
+  "Request": "Verzoek",
+  "Data to send": "Gegevens om te verzenden",
   "New Presentation": "Nieuwe presentatie",
   "Triggers when a new presentation is created.": "Triggert wanneer een nieuwe presentatie wordt gemaakt."
 }
