@@ -22,5 +22,6 @@
   "Separator between added values, use \\n for newlines": "Séparateur entre les valeurs ajoutées, utilisez \\n pour les nouvelles lignes",
   "Project": "Votre compte",
   "Flow": "Votre Flow",
-  "Run": "Exécution de votre Flow"
+  "Run": "Exécution de votre Flow",
+  "Storage": "Storage"
 }
