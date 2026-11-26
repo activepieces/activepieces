@@ -99,6 +99,7 @@ jobs:
           exit 1
 
       - name: Run chat evals
+        shell: bash
         run: |
           npm run evals -- $MODEL $UPLOAD 2>&1 | tee "$RUNNER_TEMP/eval-output.txt"
 
