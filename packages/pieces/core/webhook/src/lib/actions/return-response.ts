@@ -1,5 +1,6 @@
 import {
   DynamicPropsValue,
+  MarkdownVariant,
   PieceAuth,
   Property,
   createAction,
@@ -26,11 +27,16 @@ export const returnResponse = createAction({
   name: 'return_response',
   classification: 'WRITE',
   displayName: 'Return Response',
-  description: 'return a response',
+  description: 'Sends an HTTP response back to the webhook caller.',
   aiMetadata: { description: 'Sends the HTTP response for a run started by the Catch Webhook trigger, with the body typed as JSON, Raw, or Redirect and Flow Execution choosing whether the run stops here or responds and continues; leave Flow Execution unset and no response is emitted. Prefer Respond and Wait for Next Webhook when the flow must answer then pause for a follow-up call, or the Forms piece Respond on UI action for form and chat triggers. Only synchronous (/sync) webhook calls receive it; not idempotent, since each call emits a response.', idempotent: false },
   props: {
+    syncNote: Property.MarkDown({
+      value: 'Only callers of a `/sync` URL wait for this response.',
+      variant: MarkdownVariant.INFO,
+    }),
     responseType: Property.StaticDropdown({
       displayName: 'Response Type',
+      description: 'Format of the response body.',
       required: false,
       defaultValue: 'json',
       options: {
@@ -66,11 +72,13 @@ export const returnResponse = createAction({
         if (bodyTypeInput !== ResponseType.REDIRECT) {
           fields['status'] = Property.Number({
             displayName: 'Status',
+            description: 'HTTP status code sent to the caller.',
             required: false,
             defaultValue: 200,
           });
           fields['headers'] = Property.Object({
             displayName: 'Headers',
+            description: 'Extra HTTP headers to send with the response.',
             required: false,
           });
         }
@@ -79,18 +87,22 @@ export const returnResponse = createAction({
           case ResponseType.JSON:
             fields['body'] = Property.Json({
               displayName: 'JSON Body',
+              description: 'Must be valid JSON.',
               required: true,
             });
             break;
           case ResponseType.RAW:
             fields['body'] = Property.LongText({
               displayName: 'Raw Body',
+              description: 'Sent as is; add a Content-Type header for HTML.',
               required: true,
             });
             break;
           case ResponseType.REDIRECT:
             fields['body'] = Property.LongText({
               displayName: 'Redirect URL',
+              description: 'Callers are sent here with a 301 redirect.',
+              placeholder: 'https://example.com/thank-you',
               required: true,
             });
             break;
@@ -100,6 +112,7 @@ export const returnResponse = createAction({
     }),
     respond: Property.StaticDropdown({
       displayName: 'Flow Execution',
+      description: 'Stop ends the run here; Respond and Continue runs later steps.',
       required: false,
       defaultValue: FlowExecution.STOP,
       options: {
@@ -111,6 +124,10 @@ export const returnResponse = createAction({
       },
     }),
   },
+  propertyGroups: [
+    { key: 'response', display: 'section', label: 'Response', icon: 'reply', props: ['syncNote', 'responseType', 'fields'] },
+    { key: 'afterResponding', display: 'section', label: 'After Responding', icon: 'sliders', props: ['respond'] },
+  ],
 
   async run(context) {
     const { fields, responseType, respond } = context.propsValue;
