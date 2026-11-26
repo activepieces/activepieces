@@ -45,6 +45,7 @@ export const queryAgentAction = createAction({
         httpClient.sendRequest({
           method: HttpMethod.POST,
           url: BASE_URL + `/agents/${encodeURIComponent(agentId)}/query`,
+          redactBodyInErrors: true,
           authentication: {
             type: AuthenticationType.BEARER_TOKEN,
             token: context.auth.secret_text,

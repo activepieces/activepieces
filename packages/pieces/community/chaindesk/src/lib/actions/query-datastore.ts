@@ -52,6 +52,7 @@ export const queryDatastoretAction = createAction({
           method: HttpMethod.POST,
           url:
             BASE_URL + `/datastores/${encodeURIComponent(datastoreId)}/query`,
+          redactBodyInErrors: true,
           authentication: {
             type: AuthenticationType.BEARER_TOKEN,
             token: context.auth.secret_text,

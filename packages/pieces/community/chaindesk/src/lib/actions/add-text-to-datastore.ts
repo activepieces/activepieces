@@ -47,6 +47,7 @@ export const addTextToDatastoreAction = createAction({
       httpClient.sendRequest({
         method: HttpMethod.POST,
         url: BASE_URL + '/datasources',
+        redactBodyInErrors: true,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
           token: context.auth.secret_text,

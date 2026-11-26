@@ -83,6 +83,22 @@ describe('chaindesk actions', () => {
     expect(lastRequest().body.getBuffer().toString()).toContain('filename="Report.pdf"');
   });
 
+  it('redacts private request bodies from http errors', async () => {
+    sendRequest.mockResolvedValue({ body: { id: 'x', answer: 'a' } });
+    const file = { filename: 'x.pdf', extension: 'pdf', data: Buffer.from('a') };
+    const cases = [
+      { action: addTextToDatastoreAction, props: { datastoreId: 'd', name: 'n', text: 'secret' } },
+      { action: addWebPageToDatastoreAction, props: { datastoreId: 'd', type: 'web_page', url: 'https://a.com' } },
+      { action: uploadFileAction, props: { datastoreId: 'd1', file } },
+      { action: queryAgentAction, props: { agentId: 'a', query: 'q' } },
+      { action: queryDatastoretAction, props: { datastoreId: 'd1', query: 'q', topK: 3 } },
+    ];
+    for (const c of cases) {
+      await run(c);
+      expect(lastRequest().redactBodyInErrors).toBe(true);
+    }
+  });
+
   it('list agents and datastores wrap arrays', async () => {
     sendRequest.mockResolvedValue({ body: [{ id: 'a', name: 'A' }] });
     expect(await run({ action: listAgentsAction, props: {} })).toEqual({ agents: [{ id: 'a', name: 'A' }], count: 1 });
