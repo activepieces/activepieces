@@ -191,11 +191,11 @@
   "HEAD": "HOOFD",
   "Page": "Pagina",
   "Output": "Uitvoer",
-  "Pages": "Pages",
-  "What to extract": "What to extract",
+  "Pages": "Pagina",
+  "What to extract": "Wat extraheren",
   "Site": "Website",
-  "Limits": "Limits",
+  "Limits": "Limieten",
   "Webhook": "Webhook",
-  "Request": "Request",
-  "Data to send": "Data to send"
+  "Request": "Aanvraag",
+  "Data to send": "Gegevens om te verzenden"
 }
