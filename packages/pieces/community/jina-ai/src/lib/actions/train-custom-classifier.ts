@@ -19,24 +19,21 @@ export const trainCustomClassifierAction = createAction({
   props: {
     model: Property.StaticDropdown({
       displayName: 'Model',
-      description: 'The base model to use for training.',
+      description: 'Base model to fine-tune.',
       required: true,
       defaultValue: 'jina-clip-v2',
       options: {
         options: [
           {
-            label:
-              'jina-clip-v2 - Multilingual multimodal embeddings for texts and images',
+            label: 'jina-clip-v2: text and images',
             value: 'jina-clip-v2',
           },
           {
-            label:
-              'jina-embeddings-v3 - Frontier multilingual embedding model with SOTA performance',
+            label: 'jina-embeddings-v3: text only',
             value: 'jina-embeddings-v3',
           },
           {
-            label:
-              'jina-clip-v1 - Multimodal embedding models for images and English text',
+            label: 'jina-clip-v1: images and English text',
             value: 'jina-clip-v1',
           },
         ],
@@ -44,29 +41,31 @@ export const trainCustomClassifierAction = createAction({
     }),
     access: Property.StaticDropdown({
       displayName: 'Access Level',
-      description: 'Visibility of the trained model.',
+      description: 'Who can use the trained classifier.',
+      display: 'cards',
       required: true,
       defaultValue: 'private',
       options: {
         options: [
-          { label: 'Private', value: 'private' },
-          { label: 'Public', value: 'public' },
+          { label: 'Private', value: 'private', description: 'Only your account', icon: 'user' },
+          { label: 'Public', value: 'public', description: 'Anyone with the ID', icon: 'users' },
         ],
       },
     }),
     num_iters: Property.Number({
-      displayName: 'Number of Iterations',
-      description: 'Number of training iterations to perform.',
+      displayName: 'Training Iterations',
+      description: 'More iterations train longer. Empty: 10.',
       required: false,
       defaultValue: 10,
     }),
     training_data: Property.Array({
       displayName: 'Training Data',
+      description: 'Labeled examples to learn from, one per row.',
       required: true,
       properties:{
         type:Property.StaticDropdown({
           displayName:'Input Type',
-          description:'Type of input either text or image URL.',
+          description:'Text, or an image URL.',
           required:true,
           defaultValue:'text',
           options:{
@@ -79,12 +78,13 @@ export const trainCustomClassifierAction = createAction({
         }),
         input:Property.LongText({
           displayName:'Input',
+          description:'The text, or the image URL.',
           required:true
         }),
         label:Property.ShortText({
           displayName:'Label',
           required:true,
-          description:'Label to associate with input.'
+          description:'Category this example belongs to.'
         })
       }
     }),

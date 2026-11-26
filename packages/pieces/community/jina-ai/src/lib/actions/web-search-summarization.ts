@@ -18,38 +18,55 @@ export const webSearchSummarizationAction = createAction({
       'Run a web search through the Jina Reader search API and return the result list, optionally visiting every hit to include full page content; supports country/language/location targeting, in-site (single-domain) search, and pagination. Pick this to discover pages by keyword — use Extract Webpage Content for a known URL or DeepSearch Query for multi-step research questions. Read-only search, so repeat calls are idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'search',
+      display: 'section',
+      label: 'Search',
+      icon: 'text',
+      props: ['query', 'in_site_search', 'pagination', 'read_full_content'],
+    },
+    {
+      key: 'location',
+      display: 'section',
+      label: 'Location and Language',
+      icon: 'location',
+      props: ['preferred_country', 'preferred_language', 'preferred_location'],
+    },
+  ],
   props: {
     query: Property.ShortText({
       displayName: 'Query',
-      description: 'The search query to perform.',
+      description: 'What to search the web for.',
+      placeholder: 'best open-source CRM tools',
       required: true,
     }),
+    in_site_search: Property.ShortText({
+      displayName: 'Only This Site',
+      description: 'Only return results from this website.',
+      placeholder: 'example.com',
+      required: false,
+      width: 'half',
+    }),
+    pagination: Property.Number({
+      displayName: 'Page',
+      description: 'Page of results to return. 1 is the first page.',
+      required: false,
+      width: 'half',
+      defaultValue: 1,
+    }),
     read_full_content: Property.Checkbox({
-      displayName: 'Read Full Content of SERP',
+      displayName: 'Read Full Content of Results',
       description:
-        'Visit every URL in the search result and return the full content using Reader. Toggle on to enable more Reader-specific options.',
-      required: false,
-      defaultValue: false,
-    }),
-    json_response: Property.Checkbox({
-      displayName: 'JSON Response',
-      description:
-        'The response will be in JSON format, containing the URL, title, content, and timestamp (if available). In Search mode, it returns a list of five entries, each following the described JSON structure.',
-      required: false,
-      defaultValue: false,
-    }),
-    fetch_favicons: Property.Checkbox({
-      displayName: 'Fetch Favicons',
-      description:
-        'This will fetch the favicon of each URL in the SERP and include them in the response as image URI, useful for UI rendering.',
+        'Open every result and return its full page content. Slower.',
       required: false,
       defaultValue: false,
     }),
     preferred_country: Property.StaticDropdown({
-      displayName: 'Preferred Country',
-      description:
-        "The country to use for the search. It's a two-letter country code.",
+      displayName: 'Country',
+      description: 'Search as if from this country.',
       required: false,
+      width: 'half',
       defaultValue: 'Default',
       options: {
         options: [
@@ -80,17 +97,11 @@ export const webSearchSummarizationAction = createAction({
         ],
       },
     }),
-    preferred_location: Property.ShortText({
-      displayName: 'Preferred Location',
-      description:
-        "From where you want the search query to originate. It is recommended to specify location at the city level in order to simulate a real user's search.",
-      required: false,
-    }),
     preferred_language: Property.StaticDropdown({
-      displayName: 'Preferred Language',
-      description:
-        "The language to use for the search. It's a two-letter language code.",
+      displayName: 'Language',
+      description: 'Language of the results.',
       required: false,
+      width: 'half',
       defaultValue: 'Default',
       options: {
         options: [
@@ -113,31 +124,38 @@ export const webSearchSummarizationAction = createAction({
         ],
       },
     }),
-    pagination: Property.Number({
-      displayName: 'Pagination',
-      description:
-        "The result offset. It skips the given number of results. It's used for pagination.",
+    preferred_location: Property.ShortText({
+      displayName: 'City',
+      description: 'Search as if from this city, for local results.',
+      placeholder: 'San Francisco, California, United States',
       required: false,
-      defaultValue: 1,
     }),
-    in_site_search: Property.ShortText({
-      displayName: 'In-site Search',
-      description:
-        'Returns the search results only from the specified website or domain. By default it searches the entire web.',
+    json_response: Property.Checkbox({
+      displayName: 'JSON Response',
+      description: 'Return the result as JSON instead of plain text.',
       required: false,
+      advanced: true,
+      defaultValue: false,
+    }),
+    fetch_favicons: Property.Checkbox({
+      displayName: 'Fetch Favicons',
+      description: "Include each result's favicon as an image URI.",
+      required: false,
+      advanced: true,
+      defaultValue: false,
     }),
     bypass_cached_content: Property.Checkbox({
-      displayName: 'Bypass Cached Content',
-      description:
-        'Our API caches URL contents for a certain amount of time. Set it to true to ignore the cached result and fetch the content from the URL directly.',
+      displayName: 'Bypass Cache',
+      description: "Ignore Jina's cache and fetch every page fresh.",
       required: false,
+      advanced: true,
       defaultValue: false,
     }),
     eu_compliance: Property.Checkbox({
       displayName: 'EU Compliance',
-      description:
-        'All infrastructure and data processing operations reside entirely within EU jurisdiction.',
+      description: 'Process the request only on EU infrastructure.',
       required: false,
+      advanced: true,
       defaultValue: false,
     }),
   },
