@@ -7,7 +7,7 @@ import { getGeneration } from "./lib/actions/get-generation";
 export const gamma = createPiece({
   displayName: "Gamma",
   auth: gammaAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: "https://cdn.activepieces.com/pieces/gamma.png",
   authors: ['Pranith124'],
   description: "An AI-powered design partner that helps users generate presentations, documents, social media posts, cards, etc., via natural language.",
