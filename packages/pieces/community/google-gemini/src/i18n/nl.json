@@ -152,13 +152,13 @@
   "HEAD": "HOOFD",
   "Message": "bericht",
   "Settings": "Instellingen",
-  "Search in": "Search in",
-  "History": "History",
+  "Search in": "Zoeken in",
+  "History": "Geschiedenis",
   "Script": "Script",
-  "Speaker": "Speaker",
+  "Speaker": "Spreker",
   "Video": "Video",
   "Output": "Uitvoer",
   "Content": "Inhoud",
-  "Request": "Request",
-  "Data to send": "Data to send"
+  "Request": "Verzoek",
+  "Data to send": "Gegevens om te verzenden"
 }
