@@ -1,8 +1,7 @@
 {
   "Access Apify tools for web scraping, data extraction, and automation.": "Toegang tot Apify tools voor webscraping, data-extractie en automatisering.",
-  "API Key": "API Sleutel",
-  "Find your API key on Apify in the settings, API & Integrations section.": "Vind je API-sleutel op Apify in de sectie instellingen, API & Integraties.",
-  "Enter API key authentication details": "Voer authenticatiegegevens van de API-sleutel in",
+  "API token": "API-token",
+  "Create an API token for Activepieces in [Apify Console](https://console.apify.com/settings/integrations?createApiToken=true&for=Activepieces&utm_source=activepieces&utm_medium=integrations) and copy it right after creating it — it is shown only once.": "Maak in [Apify Console](https://console.apify.com/settings/integrations?createApiToken=true&for=Activepieces&utm_source=activepieces&utm_medium=integrations) een API-token voor Activepieces aan en kopieer het direct na het aanmaken — het wordt maar één keer getoond.",
   "Get Dataset Items": "Dataset items ophalen",
   "Run Actor": "Voer acteur uit",
   "Run Task": "Taak uitvoeren",
