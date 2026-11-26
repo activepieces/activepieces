@@ -203,13 +203,18 @@ const PLATFORM_ADMIN_ONLY = {
     security: securityAccess.platformAdminOnly([PrincipalType.USER]),
 }
 
+const BILLING_READ_WITHOUT_LICENSE_KEY = {
+    ...PLATFORM_ADMIN_ONLY,
+    mcp: { redact: ['plan.licenseKey'] },
+}
+
 const BILLING_CHANGE_ONLY_BY_HAND = {
     ...PLATFORM_ADMIN_ONLY,
     mcp: { deny: true },
 }
 
 const InfoRequest = {
-    config: PLATFORM_ADMIN_ONLY,
+    config: BILLING_READ_WITHOUT_LICENSE_KEY,
     schema: {
         response: {
             [StatusCodes.OK]: PlatformBillingInformation,
@@ -218,7 +223,7 @@ const InfoRequest = {
 }
 
 const RefreshRequest = {
-    config: PLATFORM_ADMIN_ONLY,
+    config: BILLING_READ_WITHOUT_LICENSE_KEY,
     schema: {
         response: {
             [StatusCodes.OK]: PlatformBillingInformation,

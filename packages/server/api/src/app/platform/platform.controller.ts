@@ -229,6 +229,7 @@ const CreatePlatformEndpoint = {
 const UpdatePlatformRequest = {
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+        mcp: { redact: ['plan.licenseKey'] },
     },
     preValidation: attachMultipartFieldsToBody,
     schema: {
@@ -246,6 +247,7 @@ const UpdatePlatformRequest = {
 const GetPlatformRequest = {
     config: {
         security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
+        mcp: { redact: ['plan.licenseKey'] },
     },
     schema: {
         tags: ['platforms'],

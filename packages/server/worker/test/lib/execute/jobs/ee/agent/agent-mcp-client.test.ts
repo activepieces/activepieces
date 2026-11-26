@@ -102,6 +102,14 @@ describe('agentMcpClient.classifyMcpAuthError', () => {
             expect(result.isAuthError).toBe(false)
         })
 
+        it('does not flag a 403 from an Activepieces tool, so its own message reaches the model', () => {
+            const result = agentMcpClient.classifyMcpAuthError({
+                result: { isError: true, content: [{ type: 'text', text: 'HTTP 403\n{"message":"This endpoint is not available to MCP tools."}' }] },
+                toolName: 'ap_platform_write',
+            })
+            expect(result.isAuthError).toBe(false)
+        })
+
         it('still flags an isError result that signals an expired token', () => {
             const result = agentMcpClient.classifyMcpAuthError({
                 result: { isError: true, content: [{ type: 'text', text: 'Your token has expired' }] },

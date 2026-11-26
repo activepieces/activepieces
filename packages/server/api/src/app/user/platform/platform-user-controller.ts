@@ -92,6 +92,7 @@ const UpdateUserRequest = {
     },
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+        mcp: { deny: true },
     },
 }
 
@@ -109,5 +110,6 @@ const DeleteUserRequest = {
     },
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+        mcp: { deny: true },
     },
 }

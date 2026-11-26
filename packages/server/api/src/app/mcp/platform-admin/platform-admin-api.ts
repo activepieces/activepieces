@@ -53,7 +53,7 @@ function routes(): PlatformAdminRoute[] {
 }
 
 function exposedRoutes(): ExposedRoute[] {
-    exposedRoutesCache ??= routes().flatMap(({ method, url, mcp, schema }) => isExposed(mcp) ? [{ method, url, doc: mcp.doc, schema: describeSchema(schema) }] : [])
+    exposedRoutesCache ??= routes().flatMap(({ method, url, mcp, schema }) => isExposed(mcp) ? [{ method, url, doc: mcp.doc, redact: mcp.redact ?? [], schema: describeSchema(schema) }] : [])
     return exposedRoutesCache
 }
 
@@ -126,6 +126,7 @@ const TOKEN_TTL_SECONDS = 60
 export type McpRouteConfig = {
     doc?: string
     deny?: boolean
+    redact?: string[]
 }
 
 type PlatformAdminRoute = {
@@ -139,6 +140,7 @@ type ExposedRoute = {
     method: HTTPMethods
     url: string
     doc: string
+    redact: string[]
     schema: Record<string, unknown>
 }
 

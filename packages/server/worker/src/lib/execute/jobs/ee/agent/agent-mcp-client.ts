@@ -240,7 +240,8 @@ function classifyMcpAuthError({ error, result, toolName }: {
         const isAuthError = status === 401 || status === 403 || MCP_AUTH_ERROR_PATTERN.test(message)
         return { isAuthError, connectorUuid }
     }
-    if (isObject(result) && result['isError'] === true) {
+    const isConnectorErrorResult = !isNil(connectorUuid) && isObject(result) && result['isError'] === true
+    if (isConnectorErrorResult) {
         const text = agentWorkerTools.extractResultText(result)
         return { isAuthError: MCP_AUTH_ERROR_PATTERN.test(text), connectorUuid }
     }

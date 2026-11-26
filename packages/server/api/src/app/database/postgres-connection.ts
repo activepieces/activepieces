@@ -469,6 +469,7 @@ import { AddReplaceAppConnectionPermission1879000000000 } from './migration/post
 import { AddImportNudgeShownAtToUserMemory1880000000000 } from './migration/postgres/1880000000000-AddImportNudgeShownAtToUserMemory'
 import { ClearAiUsageCopiedFromSharedCustomers1881000000000 } from './migration/postgres/1881000000000-ClearAiUsageCopiedFromSharedCustomers'
 import { AddCustomPiecesEnabledToPlatformPlan1882000000000 } from './migration/postgres/1882000000000-AddCustomPiecesEnabledToPlatformPlan'
+import { TurnOffPlatformAdminWriteForMcpClients1883000000000 } from './migration/postgres/1883000000000-TurnOffPlatformAdminWriteForMcpClients'
 import { AddAgentConversationProviderConfigIdIndex1869000000000 } from './migration/postgres/background/1869000000000-AddAgentConversationProviderConfigIdIndex'
 import { ReshapeFlowRunListIndexesForBarrierChildren1871000000000 } from './migration/postgres/background/1871000000000-ReshapeFlowRunListIndexesForBarrierChildren'
 import { BackfillPieceTranslation1874000000000 } from './migration/postgres/background/1874000000000-BackfillPieceTranslation'
@@ -965,6 +966,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddImportNudgeShownAtToUserMemory1880000000000,
         ClearAiUsageCopiedFromSharedCustomers1881000000000,
         AddCustomPiecesEnabledToPlatformPlan1882000000000,
+        TurnOffPlatformAdminWriteForMcpClients1883000000000,
     ]
     return migrations
 }

@@ -15,7 +15,7 @@ import { ALLOW_ALL, deny, PermissionChecker, resolveMcpPermissionChecker, resolv
 import { mcpProjectSelection, ProjectSelectionScope } from './mcp-project-selection'
 import { mcpToolInput } from './mcp-tool-input'
 import { McpCallBilling, mcpUsageTracker, withCallBilling } from './mcp-usage-tracker'
-import { platformAdminTools } from './platform-admin/platform-admin-tools'
+import { PLATFORM_WRITE_TOOL_NAME, platformAdminTools } from './platform-admin/platform-admin-tools'
 import { activepiecesTools, ALL_CONTROLLABLE_TOOL_NAMES, LOCKED_TOOL_NAMES, PLATFORM_LEVEL_TOOL_NAMES } from './tools'
 import { apSetProjectContextTool, SET_PROJECT_CONTEXT_TOOL_NAME } from './tools/ap-set-project-context'
 
@@ -91,7 +91,8 @@ export async function buildMcpServer({ mcp, userId, platformId, platformDisabled
         registerStaticTools({ server, mcp, projectId, userId, platformDisabledTools, permissionChecker, activityContext, billing, log })
         const isInAppChatUser = isInAppChat && !isNil(userId)
         if (isInAppChatUser) {
-            await registerPlatformAdminTools({ server, userId, disabledTools: platformDisabledTools, log })
+            const chatDisabledTools = platformDisabledTools.filter((name) => name !== PLATFORM_WRITE_TOOL_NAME)
+            await registerPlatformAdminTools({ server, userId, disabledTools: chatDisabledTools, log })
         }
     }
     else if (!isNil(mcp.platformId) && !isNil(userId) && !isNil(resolveProjectMcp)) {

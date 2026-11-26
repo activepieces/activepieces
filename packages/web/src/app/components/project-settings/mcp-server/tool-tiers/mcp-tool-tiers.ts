@@ -117,7 +117,7 @@ function copyOf(tier: McpToolTier): McpToolTierCopy {
       return {
         label: t('Platform admin'),
         description: t(
-          'Read and change platform settings. Only platform admins get these.',
+          'Read and change platform settings from connected clients. Only platform admins get these. Changing settings is off until you turn it on.',
         ),
       };
   }

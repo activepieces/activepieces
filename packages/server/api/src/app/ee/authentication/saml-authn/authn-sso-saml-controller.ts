@@ -118,6 +118,7 @@ const DiscoverRequest = {
 const UpdateSsoDomainRequest = {
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+        mcp: { deny: true },
     },
     preHandler: platformMustHaveFeatureEnabled((platform) => platform.plan.ssoEnabled),
     schema: {
@@ -130,6 +131,7 @@ const UpdateSsoDomainRequest = {
 const VerifySsoDomainRequest = {
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+        mcp: { deny: true },
     },
     preHandler: platformMustHaveFeatureEnabled((platform) => platform.plan.ssoEnabled),
 }

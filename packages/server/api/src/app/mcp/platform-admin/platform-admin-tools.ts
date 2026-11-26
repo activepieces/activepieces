@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
-import { isNil } from '@activepieces/core-utils'
+import { isNil, isObject, tryCatchSync } from '@activepieces/core-utils'
 import { McpToolDefinition, McpToolResult } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -69,8 +69,31 @@ async function callEndpoint(params: PlatformAdminCallParams): Promise<McpToolRes
     const schemaHint = result.statusCode === 400 && !isNil(route)
         ? `\n\nFix the request to match this schema and retry once:\n${JSON.stringify(route.schema)}`
         : ''
-    const text = `HTTP ${result.statusCode}\n${mcpUtils.truncate(result.body, MAX_RESPONSE_CHARS)}${schemaHint}`
+    const body = isNil(route) ? result.body : redact({ body: result.body, paths: route.redact })
+    const text = `HTTP ${result.statusCode}\n${mcpUtils.truncate(body, MAX_RESPONSE_CHARS)}${schemaHint}`
     return { content: [{ type: 'text', text }], ...(result.statusCode >= 400 ? { isError: true } : {}) }
+}
+
+function redact({ body, paths }: { body: string, paths: string[] }): string {
+    if (paths.length === 0) {
+        return body
+    }
+    const { data: parsed, error } = tryCatchSync((): unknown => JSON.parse(body))
+    if (error) {
+        return body
+    }
+    return JSON.stringify(paths.reduce((value, dotPath) => withoutPath({ value, keys: dotPath.split('.') }), parsed))
+}
+
+function withoutPath({ value, keys }: { value: unknown, keys: string[] }): unknown {
+    const [key, ...rest] = keys
+    if (!isObject(value) || isNil(key) || !(key in value)) {
+        return value
+    }
+    if (rest.length === 0) {
+        return Object.fromEntries(Object.entries(value).filter(([name]) => name !== key))
+    }
+    return { ...value, [key]: withoutPath({ value: value[key], keys: rest }) }
 }
 
 function renderPageIndex(): string {
@@ -127,7 +150,7 @@ const writeInput = readInput.extend({
 
 const PLATFORM_GUIDE_TOOL_NAME = 'ap_platform_guide'
 const PLATFORM_READ_TOOL_NAME = 'ap_platform_read'
-const PLATFORM_WRITE_TOOL_NAME = 'ap_platform_write'
+export const PLATFORM_WRITE_TOOL_NAME = 'ap_platform_write'
 
 type PlatformDoc = {
     title: string

@@ -120,6 +120,7 @@ const ListProjectRolesRequest = {
 const CreateProjectRoleRequest = {
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+        mcp: { deny: true },
     },
     schema: {
         body: CreateProjectRoleRequestBody,
@@ -132,6 +133,7 @@ const CreateProjectRoleRequest = {
 const UpdateProjectRoleRequest = {
     config: {   
         security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+        mcp: { deny: true },
     },
     schema: {
         body: UpdateProjectRoleRequestBody,
@@ -147,6 +149,7 @@ const UpdateProjectRoleRequest = {
 const DeleteProjectRoleRequest = {
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+        mcp: { deny: true },
     },
     schema: {
         params: z.object({

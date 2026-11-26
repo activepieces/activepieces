@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/core-utils'
-import { DefaultProjectRole, McpToolDefinition } from '@activepieces/shared'
+import { DefaultProjectRole, McpToolDefinition, PlatformRole } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { platformAdminTools } from '../../../../src/app/mcp/platform-admin/platform-admin-tools'
@@ -16,7 +16,7 @@ beforeAll(async () => {
 })
 
 beforeEach(async () => {
-    ctx = await createTestContext(app, { plan: { apiKeysEnabled: true } })
+    ctx = await createTestContext(app, { plan: { apiKeysEnabled: true, licenseKey: LICENSE_KEY } })
 })
 
 describe('platform admin MCP tools', () => {
@@ -43,8 +43,35 @@ describe('platform admin MCP tools', () => {
         expect(flags).toContain('not available to MCP tools')
     })
 
+    it('refuses changes that grant access: user role, project roles, SSO domain', async () => {
+        const member = await createMemberContext(app, ctx, { projectRole: DefaultProjectRole.ADMIN })
+        const promote = await run({ userId: ctx.user.id, tool: 'ap_platform_write', args: { method: 'POST', path: `/api/v1/users/${member.user.id}`, body: { platformRole: PlatformRole.ADMIN } } })
+        expect(promote).toContain('not available to MCP tools')
+        expect(await db.findOneBy('user', { id: member.user.id })).toMatchObject({ platformRole: PlatformRole.MEMBER })
+
+        const createRole = await run({ userId: ctx.user.id, tool: 'ap_platform_write', args: { method: 'POST', path: '/api/v1/project-roles', body: { name: 'ci', permissions: [], platformId: ctx.platform.id, type: 'CUSTOM' } } })
+        expect(createRole).toContain('not available to MCP tools')
+
+        const ssoDomain = await run({ userId: ctx.user.id, tool: 'ap_platform_write', args: { method: 'POST', path: '/api/v1/authn/saml/sso-domain/verify' } })
+        expect(ssoDomain).toContain('not available to MCP tools')
+    })
+
+    it('hides the license key and the MCP token from reads', async () => {
+        const platform = await run({ userId: ctx.user.id, tool: 'ap_platform_read', args: { path: `/api/v1/platforms/${ctx.platform.id}` } })
+        expect(platform).toContain('HTTP 200')
+        expect(platform).not.toContain(LICENSE_KEY)
+
+        const billing = await run({ userId: ctx.user.id, tool: 'ap_platform_read', args: { path: '/api/v1/platform-billing/info' } })
+        expect(billing).not.toContain(LICENSE_KEY)
+
+        const mcpServer = await ctx.get('/v1/mcp-server')
+        const mcpRead = await run({ userId: ctx.user.id, tool: 'ap_platform_read', args: { path: '/api/v1/mcp-server' } })
+        expect(mcpRead).toContain('HTTP 200')
+        expect(mcpRead).not.toContain(mcpServer.json().token)
+    })
+
     it('returns the request schema when the body is wrong', async () => {
-        const result = await run({ userId: ctx.user.id, tool: 'ap_platform_write', args: { method: 'POST', path: '/api/v1/project-roles', body: {} } })
+        const result = await run({ userId: ctx.user.id, tool: 'ap_platform_write', args: { method: 'POST', path: `/api/v1/platforms/${ctx.platform.id}`, body: { name: 42 } } })
         expect(result).toContain('HTTP 400')
         expect(result).toContain('Fix the request to match this schema')
     })
@@ -71,14 +98,13 @@ describe('platform admin MCP tools', () => {
 })
 
 describe('which MCP clients get the platform admin tools', () => {
-    it('gives them to an admin on a platform grant, and drops write when the platform switches it off', async () => {
+    it('gives an admin on a platform grant read only, until the admin switches write on', async () => {
         const tools = await toolNames({ ctx })
-        expect(tools).toEqual(expect.arrayContaining(ADMIN_TOOLS))
+        expect(tools).toEqual(expect.arrayContaining(['ap_platform_guide', 'ap_platform_read']))
+        expect(tools).not.toContain('ap_platform_write')
 
-        await ctx.post('/v1/mcp-server', { disabledTools: ['ap_platform_write'] })
-        const afterSwitchOff = await toolNames({ ctx })
-        expect(afterSwitchOff).toContain('ap_platform_read')
-        expect(afterSwitchOff).not.toContain('ap_platform_write')
+        await ctx.post('/v1/mcp-server', { disabledTools: [] })
+        expect(await toolNames({ ctx })).toEqual(expect.arrayContaining(ADMIN_TOOLS))
     })
 
     it('keeps them from a member and from a project-scoped grant', async () => {
@@ -103,3 +129,4 @@ async function run({ userId, tool, args }: { userId: string, tool: string, args:
 }
 
 const ADMIN_TOOLS = ['ap_platform_guide', 'ap_platform_read', 'ap_platform_write']
+const LICENSE_KEY = 'ci-license-key-should-stay-hidden'

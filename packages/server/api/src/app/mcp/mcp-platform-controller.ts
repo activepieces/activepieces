@@ -48,6 +48,7 @@ export const mcpPlatformController: FastifyPluginAsyncZod = async (app) => {
 const GetPlatformMcpRoute = {
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+        mcp: { redact: ['token'] },
     },
     schema: {
         tags: ['mcp'],
@@ -72,6 +73,7 @@ const GetMcpReachRoute = {
 const UpdatePlatformMcpRoute = {
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+        mcp: { redact: ['token'] },
     },
     schema: {
         tags: ['mcp'],
