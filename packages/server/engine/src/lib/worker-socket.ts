@@ -1,4 +1,5 @@
 import { inspect } from 'node:util'
+import { getHeapStatistics } from 'node:v8'
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import {
     createNotifyClient,
@@ -8,6 +9,7 @@ import {
     EngineResponse,
     ERROR_MESSAGES_TO_REDACT,
     ForceReinstallPieceRequest,
+    SandboxHeapUsage,
     WorkerNotifyContract,
     WorkerRpcContract,
 } from '@activepieces/shared'
@@ -101,7 +103,10 @@ export const workerSocket = {
                     await flowRunProgressReporter.shutdown()
                 }
             },
-            getPiecesMemoryUsage: () => pieceMemorySampler.getUsage(),
+            getMemoryUsage: async () => ({
+                pieces: await pieceMemorySampler.getUsage(),
+                heap: readHeapUsage(),
+            }),
         })
 
         const gc = global.gc
@@ -138,6 +143,15 @@ export const workerSocket = {
         socket = undefined
         notifyClient = undefined
     },
+}
+
+function readHeapUsage(): SandboxHeapUsage {
+    const heap = getHeapStatistics()
+    return {
+        usedBytes: heap.used_heap_size,
+        limitBytes: heap.heap_size_limit,
+        externalBytes: heap.external_memory,
+    }
 }
 
 function buildSocketOptions(sandboxId: string): Partial<ManagerOptions & SocketOptions> {

@@ -572,13 +572,14 @@ async function buildSandboxInfo(): Promise<SandboxInformation[]> {
         return []
     }
     const memoryByPid = await systemUsage.getProcessTreeMemoryBytesByPids(activeExecutors.map((executor) => executor.pid))
-    const piecesUsage = await Promise.all(activeExecutors.map((executor) => tryCatch(() => executor.getPiecesMemoryUsage())))
+    const memoryUsage = await Promise.all(activeExecutors.map((executor) => tryCatch(() => executor.getMemoryUsage())))
     return activeExecutors.map((executor, index) => ({
         sandboxId: executor.sandboxId,
         boxId: executor.boxId,
         busy: executor.busy,
         memoryUsageBytes: memoryByPid.get(executor.pid) ?? 0,
-        sandboxPiecesUsage: piecesUsage[index]?.data ?? [],
+        sandboxPiecesUsage: memoryUsage[index]?.data?.pieces ?? [],
+        heapUsage: memoryUsage[index]?.data?.heap,
     }))
 }
 

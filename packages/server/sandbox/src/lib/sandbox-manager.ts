@@ -1,6 +1,6 @@
 import { isNil } from '@activepieces/core-utils'
 import { type ApLogger } from '@activepieces/server-utils'
-import { ApEnvironment, ExecutionMode, SandboxPieceUsage } from '@activepieces/shared'
+import { ApEnvironment, ExecutionMode, SandboxMemoryUsage } from '@activepieces/shared'
 import { createSandboxForJob } from './create-sandbox-for-job'
 import { Sandbox } from './sandbox/types'
 import { SandboxSettings } from './types'
@@ -61,7 +61,7 @@ export function createSandboxManager({ boxId, basePath, getSettings }: { boxId: 
                 boxId,
                 pid,
                 busy: sandbox.isBusy(),
-                getPiecesMemoryUsage: () => sandbox.getPiecesMemoryUsage(),
+                getMemoryUsage: () => sandbox.getMemoryUsage(),
             }
         },
     }
@@ -87,7 +87,7 @@ export type ActiveSandboxInfo = {
     boxId: number
     pid: number
     busy: boolean
-    getPiecesMemoryUsage: () => Promise<SandboxPieceUsage[]>
+    getMemoryUsage: () => Promise<SandboxMemoryUsage | null>
 }
 
 export type SandboxManager = {
