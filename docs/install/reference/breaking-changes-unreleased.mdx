@@ -7,3 +7,11 @@ hidden: true
 Entries here move to [Breaking Changes](/install/reference/breaking-changes) automatically when the release that contains them is tagged. Add new entries at the top, right under the heading below.
 
 ## What has changed?
+
+#### Senja 0.3.0: Create Testimonial picks its form and images in new fields
+
+In **Create Testimonial**, **Form** is now a dropdown of the project's forms instead of a text field for the form ID, and **Media (Images)** takes one entry per image, with an **Image URL** and an optional **Alt Text**, instead of a JSON object typed on each line. Steps keep running the old code until you upgrade them to 0.3.0.
+
+#### What you need to do
+
+Upgrading a Senja step to 0.3.0 in the builder resets its settings, as with any minor version change: fill them in again. In Create Testimonial, pick the form from the dropdown and enter each image in the new fields.

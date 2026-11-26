@@ -7,8 +7,11 @@ const testimonialFields: OutputSchema['fields'] = [
   { key: 'text', label: 'Text' },
   { key: 'rating', label: 'Rating', format: 'number' },
   { key: 'url', label: 'Source URL', format: 'url' },
+  { key: 'public_url', label: 'Public URL', format: 'url' },
+  { key: 'dashboard_url', label: 'Senja Dashboard URL', format: 'url' },
   { key: 'date', label: 'Date', format: 'datetime' },
   { key: 'approved', label: 'Approved', format: 'boolean' },
+  { key: 'reward', label: 'Reward' },
   { key: 'integration', label: 'Source / Integration' },
   { key: 'tags', label: 'Tags' },
   { key: 'lang', label: 'Language' },
@@ -60,4 +63,38 @@ export const deleteTestimonialActionOutputSchema: OutputSchema = {
 
 export const testimonialEventTriggerOutputSchema: OutputSchema = {
   fields: [{ key: 'event_type', label: 'Event Type' }, ...testimonialFields],
+};
+
+export const sendFormInviteActionOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'sent', label: 'Invites Sent', format: 'number' },
+    { key: 'skipped_count', label: 'Skipped Count', format: 'number' },
+    {
+      key: 'skipped',
+      label: 'Skipped Recipients',
+      labelKey: 'email',
+      listItems: [
+        { key: 'email', label: 'Email', format: 'email' },
+        { key: 'reason', label: 'Reason' },
+      ],
+    },
+  ],
+};
+
+export const listLinksActionOutputSchema: OutputSchema = {
+  itemLabel: '{name}',
+  fields: [
+    {
+      key: 'links',
+      label: 'Links',
+      value: '',
+      listItems: [
+        { key: 'type', label: 'Link Type' },
+        { key: 'id', label: 'Link ID' },
+        { key: 'name', label: 'Name' },
+        { key: 'url', label: 'URL', format: 'url' },
+        { key: 'widget_type', label: 'Widget Type' },
+      ],
+    },
+  ],
 };
