@@ -1,10 +1,9 @@
 import { z } from 'zod'
 import { AttributionParams } from '../../common/attribution'
 import { EmailType } from '../../user/user'
+import { CaptchaToken } from './captcha'
 
 export const MAX_FULL_NAME_LENGTH = 100
-export const MAX_CAPTCHA_TOKEN_LENGTH = 2048
-export const CaptchaToken = z.string().trim().min(1).max(MAX_CAPTCHA_TOKEN_LENGTH).optional()
 
 export const RequestEmailCodeRequest = z.object({
     email: EmailType,

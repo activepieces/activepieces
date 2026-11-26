@@ -62,7 +62,6 @@ function protectedEndpoints(): ProtectedEndpoint[] {
         { url: '/api/v1/authentication/sign-in', body: { email: 'sign-in@example.com', password: 'a-password' } },
         { url: '/api/v1/authentication/otp/verify', body: { email: 'code@example.com', code: '123456' } },
         { url: '/api/v1/authn/local/reset-password', body: { identityId: apId(), otp: '123456', newPassword: 'a-new-password' } },
-        { url: '/api/v1/authn/local/verify-email', body: { identityId: apId(), otp: '123456' } },
         { url: '/api/v1/authn/saml/discover', body: { domain: 'example.com' } },
         { url: '/api/v1/user-invitations/accept', body: { invitationToken: 'an-invitation-token' } },
     ]

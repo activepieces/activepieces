@@ -1,13 +1,12 @@
 import { ApId } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { CaptchaToken } from '../../../core/authentication/dto/passwordless-request'
+import { CaptchaToken } from '../../../core/authentication/dto/captcha'
 import { SignUpRequest } from '../../../core/authentication/dto/sign-up-request'
 import { PasswordType } from '../../../core/user/user'
 
 export const VerifyEmailRequestBody = z.object({
     identityId: ApId,
     otp: z.string(),
-    captchaToken: CaptchaToken,
 })
 export type VerifyEmailRequestBody = z.infer<typeof VerifyEmailRequestBody>
 

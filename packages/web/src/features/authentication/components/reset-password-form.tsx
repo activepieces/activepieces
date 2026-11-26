@@ -97,7 +97,7 @@ const ResetPasswordForm = () => {
                   </FormItem>
                 )}
               />
-              <TurnstileWidget {...captcha.widgetProps} />
+              <TurnstileWidget {...captcha.widgetProps} shownClassName="pt-4" />
               <Button
                 className="w-full mt-4"
                 loading={isPending}

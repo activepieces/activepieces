@@ -2,7 +2,7 @@ import { ApId, SAFE_STRING_PATTERN } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { AttributionParams } from '../../common/attribution'
 import { EmailType, PasswordType } from '../../user/user'
-import { CaptchaToken } from './passwordless-request'
+import { CaptchaToken } from './captcha'
 
 export const SignUpRequest = z.object({
     email: EmailType,

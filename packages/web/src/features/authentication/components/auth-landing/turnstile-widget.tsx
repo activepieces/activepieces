@@ -48,6 +48,7 @@ export function TurnstileWidget({
   onToken,
   onUnavailable,
   resetSignal,
+  shownClassName,
 }: TurnstileWidgetProps) {
   const siteKey = useTurnstileSiteKey();
   const { resolvedTheme } = useTheme();
@@ -135,7 +136,7 @@ export function TurnstileWidget({
   // sign-in cannot proceed and the person needs to know why.
   return (
     <>
-      <div className={cn(shown && 'pb-7')}>
+      <div className={cn(shown && 'pb-7', shown && shownClassName)}>
         <div ref={container} className="flex justify-center" />
       </div>
       {failed && (
@@ -153,6 +154,7 @@ type TurnstileWidgetProps = {
   onToken: (token: string | undefined) => void;
   onUnavailable: () => void;
   resetSignal: number;
+  shownClassName?: string;
 };
 
 declare global {

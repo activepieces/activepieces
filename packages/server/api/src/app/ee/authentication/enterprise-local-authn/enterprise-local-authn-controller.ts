@@ -11,7 +11,6 @@ export const enterpriseLocalAuthnController: FastifyPluginAsyncZod = async (
     app,
 ) => {
     app.post('/verify-email', VerifyEmailRequest, async (req) => {
-        await turnstile.assertSolved({ token: req.body.captchaToken, remoteIp: networkUtils.clientIp(req), log: req.log })
         await enterpriseLocalAuthnService(req.log).verifyEmail(req.body)
     })
 

@@ -16,9 +16,6 @@ import { pendingRedirect } from '@/lib/navigation-utils';
 
 import { authMutations } from '../hooks/auth-hooks';
 
-import { TurnstileWidget } from './auth-landing/turnstile-widget';
-import { useCaptcha } from './auth-landing/use-captcha';
-
 const VerifyEmail = () => {
   const [isExpired, setIsExpired] = useState(false);
   const navigate = useNavigate();
@@ -28,9 +25,8 @@ const VerifyEmail = () => {
   const hasMutated = useRef(false);
   const { reportSignup } = usePartnerStack();
   const { capture } = useTelemetry();
-  const captcha = useCaptcha({ surface: 'email-verification' });
 
-  const { mutate, isPending, isIdle } = authMutations.useVerifyEmail({
+  const { mutate, isPending } = authMutations.useVerifyEmail({
     onSuccess: ({ email, firstName }) => {
       capture({
         name: TelemetryEventName.EMAIL_VERIFICATION_COMPLETED,
@@ -55,13 +51,11 @@ const VerifyEmail = () => {
   });
 
   useEffect(() => {
-    if (otp && identityId && !hasMutated.current && !captcha.blocked) {
-      mutate({ otp, identityId, captchaToken: captcha.token });
+    if (otp && identityId && !hasMutated.current) {
+      mutate({ otp, identityId });
       hasMutated.current = true;
     }
-  }, [otp, identityId, mutate, captcha.blocked, captcha.token]);
-
-  const isVerifying = isIdle || isPending;
+  }, [otp, identityId, mutate]);
 
   if (!otp || !identityId) {
     return <Navigate to="/sign-in" replace />;
@@ -73,7 +67,7 @@ const VerifyEmail = () => {
       <Card className="w-md rounded-md drop-shadow-xl p-4">
         <div className="gap-2 w-full flex flex-col">
           <div className="gap-4 w-full flex flex-row items-center justify-center">
-            {!isVerifying && !isExpired && (
+            {!isPending && !isExpired && (
               <>
                 <MailCheck className="w-16 h-16" />
                 <span className="text-left w-fit">
@@ -83,7 +77,7 @@ const VerifyEmail = () => {
                 </span>
               </>
             )}
-            {isVerifying && !isExpired && (
+            {isPending && !isExpired && (
               <>
                 <LoadingSpinner className="size-6" />
                 <span className="text-left w-fit">
@@ -107,7 +101,6 @@ const VerifyEmail = () => {
             )}
           </div>
         </div>
-        <TurnstileWidget {...captcha.widgetProps} />
       </Card>
     </div>
   );

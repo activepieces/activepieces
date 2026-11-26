@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { CaptchaToken } from '../../core/authentication/dto/passwordless-request'
+import { CaptchaToken } from '../../core/authentication/dto/captcha'
 import { OtpType } from './otp-type'
 
 
