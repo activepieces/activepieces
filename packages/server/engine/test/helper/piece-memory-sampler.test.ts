@@ -29,6 +29,17 @@ describe('pieceMemorySampler', () => {
         expect(await pieceMemorySampler.getUsage()).toEqual([])
     })
 
+    it('serves the last refreshed usage without reading the profile again', async () => {
+        await pieceMemorySampler.start()
+        const piecePath = writePiece({ source: 'exports.noop = () => undefined' })
+        pieceMemorySampler.trackPiece({ pieceName: '@activepieces/piece-idle', pieceVersion: '0.2.0', piecePath })
+
+        expect(pieceMemorySampler.getLatestUsage()).toEqual([])
+        await pieceMemorySampler.refreshUsage()
+
+        expect(pieceMemorySampler.getLatestUsage().map(({ pieceName }) => pieceName)).toEqual(['@activepieces/piece-idle'])
+    })
+
     it('attributes live heap to the piece that allocated it', async () => {
         await pieceMemorySampler.start()
         const holdingPiecePath = writePiece({ source: HOLDING_PIECE_SOURCE })

@@ -8,6 +8,7 @@ const SAMPLING_INTERVAL_BYTES = 32768
 
 let session: Session | undefined
 let trackedPieces: TrackedPiece[] = []
+let latestUsage: SandboxPieceUsage[] = []
 
 export const pieceMemorySampler = {
     start: async (): Promise<void> => {
@@ -49,10 +50,26 @@ export const pieceMemorySampler = {
             .sort((a, b) => b.memoryUsageBytes - a.memoryUsageBytes)
     },
 
+    refreshUsage: async (): Promise<void> => {
+        if (isNil(session)) {
+            global.gc?.()
+            return
+        }
+        const { data, error } = await tryCatch(() => pieceMemorySampler.getUsage())
+        if (error) {
+            global.gc?.()
+            return
+        }
+        latestUsage = data
+    },
+
+    getLatestUsage: (): SandboxPieceUsage[] => latestUsage,
+
     stop: (): void => {
         session?.disconnect()
         session = undefined
         trackedPieces = []
+        latestUsage = []
     },
 }
 

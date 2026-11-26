@@ -20,6 +20,7 @@ import { execute } from './operations'
 
 const INITIAL_CONNECT_TIMEOUT_MS = 60_000
 const PIECE_REINSTALL_RPC_TIMEOUT_MS = 120_000
+const PIECES_MEMORY_REFRESH_INTERVAL_MS = 60_000
 
 let socket: Socket | undefined
 let notifyClient: WorkerNotifyContract | undefined
@@ -104,18 +105,14 @@ export const workerSocket = {
                 }
             },
             getMemoryUsage: async () => ({
-                pieces: await pieceMemorySampler.getUsage(),
+                pieces: pieceMemorySampler.getLatestUsage(),
                 heap: readHeapUsage(),
             }),
         })
 
-        const gc = global.gc
-        if (typeof gc === 'function') {
-            const GC_INTERVAL_MS = 60_000
-            setInterval(() => {
-                gc()
-            }, GC_INTERVAL_MS)
-        }
+        setInterval(() => {
+            pieceMemorySampler.refreshUsage().catch(() => undefined)
+        }, PIECES_MEMORY_REFRESH_INTERVAL_MS)
 
         socket.connect()
     },

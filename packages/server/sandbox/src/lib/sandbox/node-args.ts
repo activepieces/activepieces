@@ -4,8 +4,8 @@ import { SandboxResourceLimits } from './types'
 // no --mem, no --cg-mem), so --max-old-space-size is the ONLY thing bounding engine memory —
 // without it the engine ran with V8's default heap, outgrew its container, and was SIGKILLed by
 // the kernel OOM killer with no diagnostics (isolate reports only "Caught fatal signal 9").
-// --expose-gc is equally load-bearing: the engine's periodic forced GC in worker-socket.ts is
-// silently a no-op when global.gc is undefined.
+// The engine's periodic full GC comes from the heap-profile read in piece-memory-sampler.ts;
+// --expose-gc keeps the global.gc fallback working when the sampler could not start.
 export function engineNodeArgs(resourceLimits: SandboxResourceLimits): string[] {
     return [
         // IMPORTANT DO NOT REMOVE THIS ARGUMENT: https://github.com/laverdet/isolated-vm/issues/424
