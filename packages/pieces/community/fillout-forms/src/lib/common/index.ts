@@ -2,15 +2,15 @@ import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
 export const BASE_URL = 'https://api.fillout.com/v1/api';
 
-export async function makeRequest(
+export async function makeRequest<T = unknown>(
   apiKey: string,
   method: HttpMethod,
   path: string,
   queryParams?: Record<string, any>,
   body?: unknown
-) {
+): Promise<T> {
   try {
-    const response = await httpClient.sendRequest({
+    const response = await httpClient.sendRequest<T>({
       method,
       url: `${BASE_URL}${path}`,
       headers: {
