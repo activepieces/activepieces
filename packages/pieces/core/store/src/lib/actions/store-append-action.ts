@@ -47,7 +47,7 @@ export const storageAppendAction = createAction({
   name: 'append',
   classification: 'WRITE',
   displayName: 'Append',
-  description: 'Append to a value in storage',
+  description: 'Add text to the end of a saved text value.',
   aiMetadata: { description: 'Concatenates text onto the string already stored under a key, optionally inserting a separator between the old and new text. Use it to accumulate a growing log across runs; prefer Put to replace the value outright, or Add To List when the stored value is an array rather than a string. Requires the key (max 128 characters), the value, and the Store Scope, fails if the existing value is not a string, caps the stored value at 512 KB, and is not idempotent since each call appends again.', idempotent: false },
   errorHandlingOptions: {
     continueOnFailure: {
@@ -60,18 +60,21 @@ export const storageAppendAction = createAction({
   props: {
     key: Property.ShortText({
       displayName: 'Key',
+      description: 'Name the value is saved under, up to 128 characters.',
+      placeholder: 'last_order_id',
       required: true,
     }),
     value: Property.ShortText({
-      displayName: 'Value',
+      displayName: 'Text to Add',
+      description: 'Starts a new value if nothing is saved under this key yet.',
       required: true,
     }),
+    store_scope: common.store_scope,
     separator: Property.ShortText({
       displayName: 'Separator',
-      description: 'Separator between added values, use \\n for newlines',
+      description: 'Goes between the old and new text. Empty joins them; \\n is a new line.',
       required: false,
     }),
-    store_scope: common.store_scope,
   },
   async run(context) {
     return await executeStorageAppend(context, false);
