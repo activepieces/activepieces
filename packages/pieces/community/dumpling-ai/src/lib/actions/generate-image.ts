@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, isNil, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { dumplingAuth } from '../auth';
 
@@ -10,11 +10,14 @@ export const generateImage = createAction({
 	description: 'Generate images based on a text prompt using AI.',
 	audience: 'both',
 	aiMetadata: { description: 'Generates one or more images from a text prompt using a selectable FLUX or recraft model on Dumpling AI, with optional aspect ratio, output format, image count, and seed. Use when the agent needs to create images from a description. Not idempotent: each call is a fresh billed generation; even with a fixed seed it produces new output and consumes credits.', idempotent: false },
+	propertyGroups: [
+		{ key: 'image', display: 'section', label: 'Image', icon: 'text', props: ['model', 'prompt'] },
+		{ key: 'settings', display: 'section', label: 'Settings', icon: 'sliders', props: ['aspect_ratio', 'output_format', 'num_outputs'] },
+	],
 	props: {
 		model: Property.StaticDropdown({
 			displayName: 'Model',
 			required: true,
-			description: 'The model to use for image generation',
 			defaultValue: 'FLUX.1-schnell',
 			options: {
 				options: [
@@ -29,25 +32,27 @@ export const generateImage = createAction({
 		prompt: Property.LongText({
 			displayName: 'Prompt',
 			required: true,
-			description: 'The text prompt for image generation',
+			description: 'Describe the image you want.',
+			placeholder: 'A watercolor fox in a snowy forest',
 		}),
 		aspect_ratio: Property.StaticDropdown({
 			displayName: 'Aspect Ratio',
 			required: false,
-			description: 'Aspect ratio of the generated image',
+			description: 'Pro models skip 21:9 and 9:21; recraft-v3 ignores this.',
 			defaultValue: '1:1',
+			width: 'half',
 			options: {
 				options: [
 					{ label: 'Square (1:1)', value: '1:1' },
-					{ label: 'Landscape 16:9', value: '16:9' },
-					{ label: 'Landscape 21:9', value: '21:9' },
-					{ label: 'Landscape 3:2', value: '3:2' },
-					{ label: 'Landscape 4:3', value: '4:3' },
-					{ label: 'Portrait 2:3', value: '2:3' },
-					{ label: 'Portrait 3:4', value: '3:4' },
-					{ label: 'Portrait 4:5', value: '4:5' },
-					{ label: 'Portrait 9:16', value: '9:16' },
-					{ label: 'Portrait 9:21', value: '9:21' },
+					{ label: 'Landscape (16:9)', value: '16:9' },
+					{ label: 'Landscape (21:9)', value: '21:9' },
+					{ label: 'Landscape (3:2)', value: '3:2' },
+					{ label: 'Landscape (4:3)', value: '4:3' },
+					{ label: 'Portrait (2:3)', value: '2:3' },
+					{ label: 'Portrait (3:4)', value: '3:4' },
+					{ label: 'Portrait (4:5)', value: '4:5' },
+					{ label: 'Portrait (9:16)', value: '9:16' },
+					{ label: 'Portrait (9:21)', value: '9:21' },
 				],
 			},
 		}),
@@ -55,18 +60,19 @@ export const generateImage = createAction({
 			displayName: 'Number of Images',
 			required: false,
 			defaultValue: 1,
-			description: 'Number of images to generate (1-4)',
+			description: 'How many images to make, 1 to 4 (FLUX.1-schnell and FLUX.1-dev only).',
 		}),
 		seed: Property.Number({
 			displayName: 'Seed',
 			required: false,
-			description: 'Seed for reproducible results',
+			advanced: true,
+			description: 'Reuse the same number to get similar results again.',
 		}),
 		output_format: Property.StaticDropdown({
 			displayName: 'Output Format',
 			required: false,
-			description: 'Format of the generated image',
 			defaultValue: 'webp',
+			width: 'half',
 			options: {
 				options: [
 					{ label: 'WebP', value: 'webp' },
@@ -79,13 +85,11 @@ export const generateImage = createAction({
 	async run(context) {
 		const { model, prompt, aspect_ratio, num_outputs, seed, output_format } = context.propsValue;
 
-		// Prepare the input object based on the selected model
-		const input: Record<string, any> = {
+		const input: Record<string, unknown> = {
 			prompt: prompt,
 		};
 
-		// Add common optional parameters
-		if (seed !== undefined) input['seed'] = seed;
+		if (!isNil(seed)) input['seed'] = seed;
 		if (aspect_ratio) input['aspect_ratio'] = aspect_ratio;
 		if (num_outputs) input['num_outputs'] = num_outputs;
 		if (output_format) input['output_format'] = output_format;
