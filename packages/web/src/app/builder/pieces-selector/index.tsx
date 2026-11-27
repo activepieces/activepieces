@@ -142,17 +142,13 @@ const PieceSelectorContent = ({
     }
   }, [isOpen]);
   const { data: aiProviders } = aiProviderQueries.useProjectAiProviders();
-  const {
-    pieceModel: aiPieceModel,
-    isError: isAiPieceError,
-    isSuccess: isAiPieceLoaded,
-  } = piecesHooks.usePiece({
-    name: '@activepieces/piece-ai',
-    projectId: authenticationSession.getProjectId() ?? undefined,
-  });
-  const isAiPieceUnavailable =
-    isAiPieceError ||
-    (isAiPieceLoaded && Object.keys(aiPieceModel?.actions ?? {}).length === 0);
+  const { pieceModel: aiPieceModel, isSuccess: isAiPieceLoaded } =
+    piecesHooks.usePiece({
+      name: '@activepieces/piece-ai',
+      projectId: authenticationSession.getProjectId() ?? undefined,
+    });
+  const isAiPieceAvailable =
+    isAiPieceLoaded && Object.keys(aiPieceModel?.actions ?? {}).length > 0;
   const clearSearch = () => {
     setSearchQuery('');
     setSelectedPieceMetadataInPieceSelector(null);
@@ -160,7 +156,7 @@ const PieceSelectorContent = ({
 
   const { platform } = platformHooks.useCurrentPlatform();
   const hasAiPieceActions =
-    !isNil(aiProviders) && aiProviders.length > 0 && !isAiPieceUnavailable;
+    !isNil(aiProviders) && aiProviders.length > 0 && isAiPieceAvailable;
   const tabsList = pieceSelectorCustomization.buildResolvedTabs({
     availableBuiltinTabs: getTabsList(operation.type, hasAiPieceActions),
     config: platform.pieceSelectorConfig,
