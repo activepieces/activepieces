@@ -15,20 +15,38 @@ export const mcpTool = createTrigger({
   aiMetadata: {
     description: 'Fires when an MCP client such as Claude Desktop, Cursor, or Windsurf calls the tool that this flow publishes on the hosted MCP server, carrying the arguments the client supplied for the parameters declared on the trigger. The configured name and description are what the client sees when it picks the tool, any parameter marked required must be present or the call errors, and turning on Wait for Response holds the client until a Reply to MCP Client action returns a result.',
   },
+  propertyGroups: [
+    {
+      key: 'tool',
+      display: 'section',
+      label: 'Tool',
+      icon: 'code',
+      props: ['toolName', 'toolDescription', 'returnsResponse'],
+    },
+    {
+      key: 'inputs',
+      display: 'section',
+      label: 'Inputs',
+      icon: 'sliders',
+      props: ['inputSchema'],
+    },
+  ],
   props: {
     toolName: Property.ShortText({
       displayName: 'Name',
-      description: 'Used to call this tool from MCP clients like Claude Desktop, Cursor, or Windsurf',
+      description: 'The name AI clients like Claude or Cursor call this tool by.',
+      placeholder: 'get_weather',
       required: true,
     }),
     toolDescription: Property.LongText({
-      displayName: 'Description', 
-      description: 'Used to describe what this tool does and when to use it',
+      displayName: 'Description',
+      description: 'Tells the AI client what the tool does and when to use it.',
+      placeholder: 'Gets the current weather for a city.',
       required: true,
     }),
     inputSchema: Property.Array({
       displayName: 'Parameters',
-      description: 'Define the input parameters that this tool accepts. Parameters will be shown to users when calling the tool.',
+      description: 'Values the AI client fills in when it calls this tool.',
       required: false,
       defaultValue: [
         {
@@ -67,7 +85,7 @@ export const mcpTool = createTrigger({
     }),
     returnsResponse: Property.Checkbox({
       displayName: 'Wait for Response',
-      description: 'Keep the MCP client waiting until it receives a response via the Reply to MCP Client action',
+      description: 'Hold the client until a Reply to MCP Client step answers.',
       defaultValue: false,
       required: true,
     }),
