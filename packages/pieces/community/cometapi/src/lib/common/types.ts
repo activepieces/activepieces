@@ -31,3 +31,21 @@ export type CometApiChatResponse = {
     total_tokens: number;
   };
 };
+
+export type CometApiCatalogModel = {
+  id: string;
+  name?: string;
+  provider_code?: string;
+  features?: string[];
+};
+
+export type CometApiMidjourneySubmitResponse = {
+  code: number;
+  description: string;
+  result: string | number;
+  properties?: Record<string, unknown>;
+};
+
+export type CometApiMinimaxResponse = {
+  base_resp?: { status_code?: number; status_msg?: string };
+};

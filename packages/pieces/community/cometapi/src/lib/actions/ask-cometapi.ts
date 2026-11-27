@@ -4,23 +4,25 @@ import * as z from 'zod/mini';
 import { cometApiAuth } from '../auth';
 import { cometApiClient } from '../common/client';
 import { cometApiProps } from '../common/props';
+import { askCometApiOutputSchema } from '../output-schemas';
 import type {
   CometApiChatMessage,
   CometApiChatResponse,
 } from '../common/types';
 
 export const askCometApiAction = createAction({
-  audience: 'both',
+  audience: 'human',
   name: 'ask-cometapi',
   classification: 'READ',
   displayName: 'Ask CometAPI',
   description: 'Sends a prompt to any AI model supported by CometAPI.',
   aiMetadata: {
     description:
-      'Sends a single-turn chat completion (one prompt plus an optional system message, with no multi-turn history) to any model in the CometAPI catalog, which fronts OpenAI, Anthropic, Gemini and other vendors behind one key. Requires a model id chosen from CometAPI\'s live model list, and accepts temperature, top_p and max tokens as optional sampling controls; pick it when the model should be selectable at runtime rather than fixed to a single vendor, and use this piece\'s Custom API Call for any other CometAPI endpoint such as image generation or embeddings. Not idempotent: each call runs a fresh generation and consumes tokens.',
+      "Sends a single-turn chat completion (one prompt plus an optional system message, with no multi-turn history) to any model in the CometAPI catalog, which fronts OpenAI, Anthropic, Gemini and other vendors behind one key. Requires a model id chosen from CometAPI's live model list, and accepts temperature, top_p and max tokens as optional sampling controls; pick it when the model should be selectable at runtime rather than fixed to a single vendor, and use this piece's Custom API Call for any other CometAPI endpoint such as image generation or embeddings. Not idempotent: each call runs a fresh generation and consumes tokens.",
     idempotent: false,
   },
   auth: cometApiAuth,
+  outputSchema: askCometApiOutputSchema,
   props: {
     model: cometApiProps.model({ required: true }),
     prompt: Property.LongText({
