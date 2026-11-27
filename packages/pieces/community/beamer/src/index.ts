@@ -1,12 +1,12 @@
-import { createCustomApiCallAction, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
-import { createComment } from './lib/actions/create-comment';
-import { createNewFeatureRequest } from './lib/actions/create-feature-request';
-import { createBeamerPost } from './lib/actions/create-posts';
-import { createVote } from './lib/actions/create-vote';
-import { beamerCommon } from './lib/common';
-import { newPost } from './lib/trigger/new-post';
+import { createCommentAction } from './lib/actions/create-comment';
+import { createFeatureRequestAction } from './lib/actions/create-feature-request';
+import { createPostAction } from './lib/actions/create-post';
+import { createVoteAction } from './lib/actions/create-vote';
+import { beamerClient } from './lib/common/client';
+import { newPostTrigger } from './lib/triggers/new-post';
 import { beamerAuth } from './lib/auth';
 
 export const beamer = createPiece({
@@ -17,17 +17,17 @@ export const beamer = createPiece({
   auth: beamerAuth,
   authors: ["i-nithin","kishanprmr","MoShizzle","abuaboud"],
   actions: [
-    createBeamerPost,
-    createNewFeatureRequest,
-    createComment,
-    createVote,
+    createPostAction,
+    createFeatureRequestAction,
+    createCommentAction,
+    createVoteAction,
     createCustomApiCallAction({
-      baseUrl: () => beamerCommon.baseUrl,
+      baseUrl: () => beamerClient.baseUrl(),
       auth: beamerAuth,
       authMapping: async (auth) => ({
         'Beamer-Api-Key': `${auth}`,
       }),
     }),
   ],
-  triggers: [newPost],
+  triggers: [newPostTrigger],
 });

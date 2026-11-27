@@ -1,9 +1,9 @@
-import { httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { beamerAuth } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { beamerCommon } from '../common';
+import { beamerClient } from '../common/client';
 
-export const createVote = createAction({
+export const createVoteAction = createAction({
   auth: beamerAuth,
   name: 'create_vote',
   classification: 'WRITE',
@@ -32,23 +32,14 @@ export const createVote = createAction({
     }),
   },
   async run(context) {
-    const apiKey = context.auth.secret_text;
-
-    const request: HttpRequest = {
+    return await beamerClient.request<unknown>({
+      auth: context.auth,
       method: HttpMethod.POST,
-      url: `${beamerCommon.baseUrl}/requests/${context.propsValue.featureRequestId}/votes`,
-      headers: {
-        'Beamer-Api-Key': `${apiKey}`,
-        'Content-Type': 'application/json',
-      },
+      path: `/requests/${context.propsValue.featureRequestId}/votes`,
       body: {
         userFirstname: context.propsValue.userFirstname,
         email: context.propsValue.userEmail,
       },
-    };
-
-    const res = await httpClient.sendRequest(request);
-    return res.body;
-
+    });
   },
 });

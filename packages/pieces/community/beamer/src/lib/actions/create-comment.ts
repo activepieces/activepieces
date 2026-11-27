@@ -1,13 +1,9 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { beamerAuth } from '../auth';
-import { beamerCommon } from '../common';
-import {
-  HttpMethod,
-  HttpRequest,
-  httpClient,
-} from '@activepieces/pieces-common';
+import { beamerClient } from '../common/client';
+import { HttpMethod } from '@activepieces/pieces-common';
 
-export const createComment = createAction({
+export const createCommentAction = createAction({
   auth: beamerAuth,
   name: 'create_new_comment',
   classification: 'WRITE',
@@ -41,23 +37,16 @@ export const createComment = createAction({
     }),
   },
   async run(context) {
-    const apiKey = context.auth.secret_text;
-
-    const request: HttpRequest = {
+    return await beamerClient.request<unknown>({
+      auth: context.auth,
       method: HttpMethod.POST,
-      url: `${beamerCommon.baseUrl}/requests/${context.propsValue.featureRequestId}/comments`,
-      headers: {
-        'Beamer-Api-Key': `${apiKey}`,
-        'Content-Type': 'application/json',
-      },
+      path: `/requests/${context.propsValue.featureRequestId}/comments`,
       body: {
         text: context.propsValue.text,
         userId: context.propsValue.userId,
         userEmail: context.propsValue.userEmail,
         visible: 'true',
       },
-    };
-    const res = await httpClient.sendRequest<any>(request);
-    return res.body;
+    });
   },
 });
