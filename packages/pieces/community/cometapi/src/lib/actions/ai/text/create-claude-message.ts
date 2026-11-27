@@ -17,7 +17,7 @@ export const createClaudeMessageAction = createAction({
   classification: 'WRITE',
   aiMetadata: {
     description:
-      'Runs an Anthropic Messages API request on a Claude model through CometAPI, with alternating user and assistant turns and an optional system prompt; Max Tokens is required by the format. Use it for Claude-specific features (extended thinking, Claude tool use) passed through Additional Fields; for other vendors use Create Chat Completion. Each call runs a fresh, billed generation.',
+      'Runs an Anthropic Messages API request on a Claude model through CometAPI, with alternating user and assistant turns and an optional system prompt; Max Tokens is required by the format. Use it for Claude-specific features (extended thinking, Claude tool use) passed through Additional Fields; Messages takes text turns only, so for tool_use/tool_result or image blocks leave Messages empty and pass the full messages array in Additional Fields; for other vendors use Create Chat Completion. Each call runs a fresh, billed generation.',
     idempotent: false,
   },
   props: {
@@ -44,20 +44,28 @@ export const createClaudeMessageAction = createAction({
     additionalFields: cometApiAiProps.additionalFields({ required: false }),
   },
   async run({ auth, propsValue }) {
+    const { messages } = propsValue;
+    const body = cometApiUtils.withAdditionalFields({
+      additionalFields: propsValue.additionalFields,
+      fields: {
+        model: propsValue.model,
+        messages: messages && messages.length > 0 ? messages : undefined,
+        max_tokens: propsValue.maxTokens,
+        system: propsValue.system,
+        temperature: propsValue.temperature,
+      },
+    });
+    const sentMessages = body['messages'];
+    if (!Array.isArray(sentMessages) || sentMessages.length === 0) {
+      throw new Error(
+        'Give Messages, or structured messages in Additional Fields as {"messages": [{"role": "user", "content": "Hello"}]}.'
+      );
+    }
     return await cometApiClient.request({
       auth,
       method: HttpMethod.POST,
       path: '/messages',
-      body: cometApiUtils.withAdditionalFields({
-        additionalFields: propsValue.additionalFields,
-        fields: {
-          model: propsValue.model,
-          messages: propsValue.messages,
-          max_tokens: propsValue.maxTokens,
-          system: propsValue.system,
-          temperature: propsValue.temperature,
-        },
-      }),
+      body,
     });
   },
 });

@@ -77,25 +77,26 @@ export const fluxGenerateImageAction = createAction({
   },
   async run({ auth, propsValue }) {
     const { async } = propsValue;
+    const body = cometApiUtils.withAdditionalFields({
+      additionalFields: propsValue.additionalFields,
+      fields: {
+        prompt: propsValue.prompt,
+        input_image: propsValue.inputImage,
+        input_image_2: propsValue.inputImage2,
+        width: propsValue.width,
+        height: propsValue.height,
+        output_format: propsValue.outputFormat,
+        seed: propsValue.seed,
+        async: cometApiUtils.toBoolean({ value: async }),
+      },
+    });
     const response = await cometApiClient.request({
       auth,
       method: HttpMethod.POST,
       host: 'root',
       path: `/flux/v1/${encodeURIComponent(propsValue.model)}`,
-      body: cometApiUtils.withAdditionalFields({
-        additionalFields: propsValue.additionalFields,
-        fields: {
-          prompt: propsValue.prompt,
-          input_image: propsValue.inputImage,
-          input_image_2: propsValue.inputImage2,
-          width: propsValue.width,
-          height: propsValue.height,
-          output_format: propsValue.outputFormat,
-          seed: propsValue.seed,
-          async: cometApiUtils.toBoolean({ value: async }),
-        },
-      }),
+      body,
     });
-    return async !== 'false' ? { task: response } : { result: response };
+    return body['async'] === false ? { result: response } : { task: response };
   },
 });

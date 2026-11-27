@@ -17,15 +17,16 @@ export const createResponseAction = createAction({
   classification: 'WRITE',
   aiMetadata: {
     description:
-      'Runs an OpenAI Responses API request on a CometAPI model from plain text input, optionally continuing an earlier stored response by its ID. Prefer it over Create Chat Completion for OpenAI reasoning models and for stateful continuation; pass tools, reasoning or structured-input items through Additional Fields. Each call runs a fresh, billed generation.',
+      'Runs an OpenAI Responses API request on a CometAPI model from plain text Input (or structured input items given as "input" in Additional Fields when Input is empty), optionally continuing an earlier stored response by its ID. Prefer it over Create Chat Completion for OpenAI reasoning models and for stateful continuation; pass tools, reasoning or structured-input items through Additional Fields. Each call runs a fresh, billed generation.',
     idempotent: false,
   },
   props: {
     model: cometApiAiProps.model({ required: true }),
     input: Property.LongText({
       displayName: 'Input',
-      description: 'The text prompt for the model.',
-      required: true,
+      description:
+        'The text prompt for the model. Leave empty to pass structured input items (images, function_call_output) as "input" in Additional Fields.',
+      required: false,
     }),
     instructions: Property.LongText({
       displayName: 'Instructions',
@@ -48,21 +49,27 @@ export const createResponseAction = createAction({
     additionalFields: cometApiAiProps.additionalFields({ required: false }),
   },
   async run({ auth, propsValue }) {
+    const body = cometApiUtils.withAdditionalFields({
+      additionalFields: propsValue.additionalFields,
+      fields: {
+        model: propsValue.model,
+        input: propsValue.input || undefined,
+        instructions: propsValue.instructions,
+        previous_response_id: propsValue.previousResponseId,
+        max_output_tokens: propsValue.maxOutputTokens,
+        temperature: propsValue.temperature,
+      },
+    });
+    if (body['input'] === undefined || body['input'] === '') {
+      throw new Error(
+        'Give Input, or structured input items in Additional Fields as {"input": [...]}.'
+      );
+    }
     return await cometApiClient.request({
       auth,
       method: HttpMethod.POST,
       path: '/responses',
-      body: cometApiUtils.withAdditionalFields({
-        additionalFields: propsValue.additionalFields,
-        fields: {
-          model: propsValue.model,
-          input: propsValue.input,
-          instructions: propsValue.instructions,
-          previous_response_id: propsValue.previousResponseId,
-          max_output_tokens: propsValue.maxOutputTokens,
-          temperature: propsValue.temperature,
-        },
-      }),
+      body,
     });
   },
 });

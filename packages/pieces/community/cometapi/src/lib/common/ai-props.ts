@@ -14,20 +14,20 @@ function messages({
   displayName = 'Messages',
   description = 'The conversation so far, oldest first. Each item has a role and its text content.',
   roles,
-}: Omit<PropParams<true>, 'required'> & { roles: string[] }) {
+}: Omit<PropParams<false>, 'required'> & { roles: string[] }) {
   return Property.Array({
     displayName,
     description,
-    required: true,
+    required: false,
     properties: {
       role: Property.StaticDropdown({
         displayName: 'Role',
-        required: true,
+        required: false,
         options: {
           options: cometApiUtils.toOptions({ values: roles }),
         },
       }),
-      content: Property.LongText({ displayName: 'Content', required: true }),
+      content: Property.LongText({ displayName: 'Content', required: false }),
     },
   });
 }

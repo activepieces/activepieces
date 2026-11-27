@@ -3,6 +3,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { cometApiAuth } from '../../../auth';
 import { cometApiAiProps } from '../../../common/ai-props';
 import { cometApiClient } from '../../../common/client';
+import { cometApiUtils } from '../../../common/utils';
 import { cometapiReplicateCreatePredictionOutputSchema } from '../../../output-schemas';
 
 export const replicateCreatePredictionAction = createAction({
@@ -80,16 +81,18 @@ export const replicateCreatePredictionAction = createAction({
         .map(encodeURIComponent)
         .join('/')}/predictions`,
       body: {
-        input: {
-          ...propsValue.additionalInput,
-          prompt: propsValue.prompt,
-          aspect_ratio: propsValue.aspectRatio,
-          output_format: propsValue.outputFormat,
-          output_quality: propsValue.outputQuality,
-          input_image: propsValue.inputImage,
-          input_images:
-            inputImages && inputImages.length > 0 ? inputImages : undefined,
-        },
+        input: cometApiUtils.withAdditionalFields({
+          additionalFields: propsValue.additionalInput,
+          fields: {
+            prompt: propsValue.prompt,
+            aspect_ratio: propsValue.aspectRatio,
+            output_format: propsValue.outputFormat,
+            output_quality: propsValue.outputQuality,
+            input_image: propsValue.inputImage,
+            input_images:
+              inputImages && inputImages.length > 0 ? inputImages : undefined,
+          },
+        }),
       },
     });
   },

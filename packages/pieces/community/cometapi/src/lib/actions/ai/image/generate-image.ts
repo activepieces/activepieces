@@ -114,30 +114,29 @@ export const generateImageAction = createAction({
   },
   async run({ auth, propsValue }) {
     const { watermark, async } = propsValue;
+    const body = cometApiUtils.withAdditionalFields({
+      additionalFields: propsValue.additionalFields,
+      fields: {
+        model: propsValue.model,
+        prompt: propsValue.prompt,
+        n: propsValue.n,
+        size: propsValue.size,
+        quality: propsValue.quality,
+        aspect_ratio: propsValue.aspectRatio,
+        resolution: propsValue.resolution,
+        background: propsValue.background,
+        output_format: propsValue.outputFormat,
+        response_format: propsValue.responseFormat,
+        watermark: cometApiUtils.toBoolean({ value: watermark }),
+        async: cometApiUtils.toBoolean({ value: async }),
+      },
+    });
     const response = await cometApiClient.request({
       auth,
       method: HttpMethod.POST,
       path: '/images/generations',
-      body: cometApiUtils.withAdditionalFields({
-        additionalFields: propsValue.additionalFields,
-        fields: {
-          model: propsValue.model,
-          prompt: propsValue.prompt,
-          n: propsValue.n,
-          size: propsValue.size,
-          quality: propsValue.quality,
-          aspect_ratio: propsValue.aspectRatio,
-          resolution: propsValue.resolution,
-          background: propsValue.background,
-          output_format: propsValue.outputFormat,
-          response_format: propsValue.responseFormat,
-          watermark: cometApiUtils.toBoolean({ value: watermark }),
-          async: cometApiUtils.toBoolean({ value: async }),
-        },
-      }),
+      body,
     });
-    return cometApiUtils.toBoolean({ value: async })
-      ? { task: response }
-      : { result: response };
+    return body['async'] !== true ? { result: response } : { task: response };
   },
 });
