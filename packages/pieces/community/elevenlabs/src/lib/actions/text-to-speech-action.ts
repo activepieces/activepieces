@@ -4,7 +4,7 @@ import { elevenlabsAuth } from '../auth';
 import { elevenlabsTextToSpeechOutputSchema } from '../output-schemas';
 
 export const textToSpeech = createAction({
-  description: 'Convert text to speech using Elevenlabs',
+  description: 'Turn text into spoken audio with an ElevenLabs voice.',
   audience: 'both',
   aiMetadata: { description: 'Synthesizes spoken audio from a text string using a chosen ElevenLabs voice, returning an MP3 file. Use to turn written content into a narrated voiceover or speech clip. Requires a voice (selected from the account\'s available voices) and the text; the model is optional and defaults to ElevenLabs\' default. Not idempotent — each call generates a new audio file.', idempotent: false },
   displayName: 'Text to Speech',
@@ -13,10 +13,11 @@ export const textToSpeech = createAction({
   classification: 'READ',
   auth: elevenlabsAuth,
   props: {
-    model: Property.Dropdown({
+    voice: Property.Dropdown({
       auth: elevenlabsAuth,
-      displayName: 'Model',
-      required: false,
+      displayName: 'Voice',
+      required: true,
+      description: 'The voice that reads the text aloud.',
       refreshers: [],
       refreshOnSearch: false,
       options: async ({ auth }) => {
@@ -25,7 +26,62 @@ export const textToSpeech = createAction({
         if (!apiAuth) {
           return {
             disabled: true,
-            placeholder: 'Enter your API key first',
+            placeholder: 'Connect your ElevenLabs account first',
+            options: [],
+          };
+        }
+
+        try {
+          const elevenlabs = createClient(apiAuth);
+          const response = await elevenlabs.voices.getAll()
+
+          if (response.voices.length === 0) {
+            return {
+              disabled: false,
+              options: [],
+              placeholder: 'No voices found in your account.',
+            };
+          }
+
+          return {
+            disabled: false,
+            placeholder: 'Select a voice',
+            options: response.voices.map((template) => {
+              return {
+                label: template.category ? `${template.name} (${template.category})` : `${template.name}`,
+                value: template.voiceId,
+              };
+            }),
+          };
+        } catch (error) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: "Couldn't load voices. Check your connection.",
+          };
+        }
+      },
+    }),
+    text: Property.LongText({
+      displayName: 'Text',
+      required: true,
+      description: 'What the voice will say. The step returns an MP3 file.',
+      placeholder: 'Hello! Thanks for calling. How can I help you today?',
+    }),
+    model: Property.Dropdown({
+      auth: elevenlabsAuth,
+      displayName: 'Model',
+      required: false,
+      description: "Leave empty to use ElevenLabs' default model.",
+      refreshers: [],
+      refreshOnSearch: false,
+      options: async ({ auth }) => {
+        const apiAuth = auth
+
+        if (!apiAuth) {
+          return {
+            disabled: true,
+            placeholder: 'Connect your ElevenLabs account first',
             options: [],
           };
         }
@@ -34,12 +90,19 @@ export const textToSpeech = createAction({
           const elevenlabs = createClient(apiAuth);
           const models = await elevenlabs.models.list()
 
+          if (models.length === 0) {
+            return {
+              disabled: false,
+              options: [],
+              placeholder: 'No models found.',
+            };
+          }
+
           return {
             disabled: false,
             placeholder: 'Default model',
             options: models.map((template) => {
               return {
-                // there are models with the same name
                 label: `${template.name} (${template.modelId})`,
                 value: template.modelId,
               };
@@ -49,55 +112,10 @@ export const textToSpeech = createAction({
           return {
             disabled: true,
             options: [],
-            placeholder: "Couldn't load models, check your API key.",
+            placeholder: "Couldn't load models. Check your connection.",
           };
         }
       },
-    }),
-    voice: Property.Dropdown({
-      auth: elevenlabsAuth,
-      displayName: 'Voice',
-      required: true,
-      description: 'Select the voice for the text to speech',
-      refreshers: [],
-      refreshOnSearch: false,
-      options: async ({ auth }) => {
-        const apiAuth = auth
-
-        if (!apiAuth) {
-          return {
-            disabled: true,
-            placeholder: 'Enter your API key first',
-            options: [],
-          };
-        }
-
-        try {
-          const elevenlabs = createClient(apiAuth);
-          const response = await elevenlabs.voices.getAll()
-
-          return {
-            disabled: false,
-            options: response.voices.map((template) => {
-              return {
-                label: `${template.name}`,
-                value: template.voiceId,
-              };
-            }),
-          };
-        } catch (error) {
-          return {
-            disabled: true,
-            options: [],
-            placeholder: "Couldn't load voices, check your API key.",
-          };
-        }
-      },
-    }),
-    text: Property.LongText({
-      displayName: 'Text',
-      required: true,
-      description: 'The text to convert to speech',
     }),
   },
   async run({ auth, propsValue, files }) {
@@ -109,7 +127,6 @@ export const textToSpeech = createAction({
         modelId: propsValue.model || undefined,
         text: propsValue.text,
       }
-      // node implementation of ReadableStream<Uint8Array> has asyncInterator
     ) as ExtendedReadableStream<Buffer>;
 
     const chunks: Buffer[] = [];
