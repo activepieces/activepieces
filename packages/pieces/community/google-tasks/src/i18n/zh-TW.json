@@ -93,11 +93,11 @@
   "Data to send": "要傳送的資料",
   "New Task": "New Task",
   "Triggers when a task is added to a list, or also when one is edited if you choose New and edited tasks.": "Triggers when a task is added to a list, or also when one is edited if you choose New and edited tasks.",
-  "Run on": "Run on",
+  "Run on": "觸發條件",
   "Markdown": "Markdown",
-  "Whether edits run the flow again. Empty means \"New and edited tasks\".": "Whether edits run the flow again. Empty means \"New and edited tasks\".",
-  "With **New tasks only**, renaming, editing, moving or completing a task does not run the flow again; a task moved here from another list counts as new. With **New and edited tasks**, renaming or editing a task, or completing it through the API, runs the flow again, so the same task can arrive more than once; completing a task in the Google Tasks apps hides it and does not run the flow. Upgrading this piece to a new version in the builder pre-selects **New tasks only**; choose **New and edited tasks** to kee": "With **New tasks only**, renaming, editing, moving or completing a task does not run the flow again; a task moved here from another list counts as new. With **New and edited tasks**, renaming or editing a task, or completing it through the API, runs the flow again, so the same task can arrive more than once; completing a task in the Google Tasks apps hides it and does not run the flow. Upgrading this piece to a new version in the builder pre-selects **New tasks only**; choose **New and edited tasks** to keep the old behaviour.",
-  "New tasks only": "New tasks only",
-  "New and edited tasks": "New and edited tasks",
+  "Whether edits run the flow again. Empty means \"New and edited tasks\".": "是否在編輯後再次執行流程。留空表示「新任務與已編輯任務」。",
+  "With **New tasks only**, renaming, editing, moving or completing a task does not run the flow again; a task moved here from another list counts as new. With **New and edited tasks**, renaming or editing a task, or completing it through the API, runs the flow again, so the same task can arrive more than once; completing a task in the Google Tasks apps hides it and does not run the flow. Upgrading this piece to a new version in the builder pre-selects **New tasks only**; choose **New and edited tasks** to kee": "使用**僅限新任務**時，重新命名、編輯、移動或完成任務都不會再次執行流程；從其他清單移到這裡的任務會視為新任務。使用**新任務與已編輯任務**時，重新命名或編輯任務，或透過 API 將其標記為完成，都會再次執行流程，因此同一任務可能會出現多次；在 Google Tasks 應用程式中將任務標記為完成會將其隱藏，且不會執行流程。在建構器中將此 piece 升級到新版本時，預設會選取**僅限新任務**；若要保留舊版行為，請選擇**新任務與已編輯任務**。",
+  "New tasks only": "僅限新任務",
+  "New and edited tasks": "新任務與已編輯任務",
   "Watch": "監看"
 }

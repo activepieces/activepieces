@@ -390,8 +390,8 @@
   "Triggers when a new spreadsheet is created.": "创建新的电子表格时触发。",
   "Triggers when a worksheet is created in a spreadsheet.": "当工作表在电子表格中创建时触发.",
   "Trigger Column": "触发列",
-  "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.\n\nRows that only move (insert, delete, sort) and format-only changes do not fire. With a Trigger Column, a new row fires once that column is filled.": "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.\n\nRows that only move (insert, delete, sort) and format-only changes do not fire. With a Trigger Column, a new row fires once that column is filled.",
+  "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.\n\nRows that only move (insert, delete, sort) and format-only changes do not fire. With a Trigger Column, a new row fires once that column is filled.": "請注意，由於 Google 端的延遲，觸發器觸發可能會延遲最多 3 分鐘。\n\n只有移動（插入、刪除、排序）以及僅格式變更的列不會觸發。使用觸發欄位時，當新列填入該欄位後會觸發一次。",
   "Fire only when this column changes. Any Column fires on any cell.": "Fire only when this column changes. Any Column fires on any cell.",
-  "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.\n\nOnly rows added below the last row fire. Rows inserted higher up, sorting and edits do not.": "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.\n\nOnly rows added below the last row fire. Rows inserted higher up, sorting and edits do not.",
+  "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.\n\nOnly rows added below the last row fire. Rows inserted higher up, sorting and edits do not.": "請注意，由於 Google 端的延遲，觸發器觸發可能會延遲最多 3 分鐘。\n\n只有新增在最後一列下方的列才會觸發。插入到較上方、排序以及編輯都不會觸發。",
   "The spreadsheet to watch for new worksheets.": "The spreadsheet to watch for new worksheets."
 }

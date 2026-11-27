@@ -93,11 +93,11 @@
   "Data to send": "Données à envoyer",
   "New Task": "Nouvelle tâche",
   "Triggers when a task is added to a list, or also when one is edited if you choose New and edited tasks.": "Triggers when a task is added to a list, or also when one is edited if you choose New and edited tasks.",
-  "Run on": "Run on",
+  "Run on": "Exécuter sur",
   "Markdown": "Markdown",
-  "Whether edits run the flow again. Empty means \"New and edited tasks\".": "Whether edits run the flow again. Empty means \"New and edited tasks\".",
-  "With **New tasks only**, renaming, editing, moving or completing a task does not run the flow again; a task moved here from another list counts as new. With **New and edited tasks**, renaming or editing a task, or completing it through the API, runs the flow again, so the same task can arrive more than once; completing a task in the Google Tasks apps hides it and does not run the flow. Upgrading this piece to a new version in the builder pre-selects **New tasks only**; choose **New and edited tasks** to kee": "With **New tasks only**, renaming, editing, moving or completing a task does not run the flow again; a task moved here from another list counts as new. With **New and edited tasks**, renaming or editing a task, or completing it through the API, runs the flow again, so the same task can arrive more than once; completing a task in the Google Tasks apps hides it and does not run the flow. Upgrading this piece to a new version in the builder pre-selects **New tasks only**; choose **New and edited tasks** to keep the old behaviour.",
-  "New tasks only": "New tasks only",
-  "New and edited tasks": "New and edited tasks",
+  "Whether edits run the flow again. Empty means \"New and edited tasks\".": "Si les modifications déclenchent à nouveau le flow. Vide signifie \"Nouvelles tâches et tâches modifiées\".",
+  "With **New tasks only**, renaming, editing, moving or completing a task does not run the flow again; a task moved here from another list counts as new. With **New and edited tasks**, renaming or editing a task, or completing it through the API, runs the flow again, so the same task can arrive more than once; completing a task in the Google Tasks apps hides it and does not run the flow. Upgrading this piece to a new version in the builder pre-selects **New tasks only**; choose **New and edited tasks** to kee": "Avec **Nouvelles tâches uniquement**, le fait de renommer, modifier, déplacer ou terminer une tâche ne déclenche pas à nouveau le flow ; une tâche déplacée ici depuis une autre liste est considérée comme nouvelle. Avec **Nouvelles tâches et tâches modifiées**, renommer ou modifier une tâche, ou la terminer via l'API, déclenche à nouveau le flow, donc la même tâche peut apparaître plus d'une fois ; terminer une tâche dans les applications Google Tasks la masque et ne déclenche pas le flow. La mise à niveau de cette pièce vers une nouvelle version dans le builder présélectionne **Nouvelles tâches uniquement** ; choisissez **Nouvelles tâches et tâches modifiées** pour conserver l'ancien comportement.",
+  "New tasks only": "Nouvelles tâches uniquement",
+  "New and edited tasks": "Nouvelles tâches et tâches modifiées",
   "Watch": "Surveiller"
 }

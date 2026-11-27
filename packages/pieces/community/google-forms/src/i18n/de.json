@@ -48,11 +48,11 @@
   "Markdown": "Markdown",
   "Form": "Formular",
   "Include Shared Drives": "Include Shared Drives",
-  "Run On": "Run On",
-  "Checks the form every few minutes. With **New responses only**, each response starts the flow once, when it is first sent. With **New and edited responses**, it also starts the flow again every time the respondent edits and resends it (respondents can only edit when **Allow response editing** is on in the form settings). Only responses sent after the flow is published count. Upgrading the piece version in the builder pre-selects **New responses only**; choose **New and edited responses** to keep the old beh": "Checks the form every few minutes. With **New responses only**, each response starts the flow once, when it is first sent. With **New and edited responses**, it also starts the flow again every time the respondent edits and resends it (respondents can only edit when **Allow response editing** is on in the form settings). Only responses sent after the flow is published count. Upgrading the piece version in the builder pre-selects **New responses only**; choose **New and edited responses** to keep the old behaviour.",
+  "Run On": "Bei Aus",
+  "Checks the form every few minutes. With **New responses only**, each response starts the flow once, when it is first sent. With **New and edited responses**, it also starts the flow again every time the respondent edits and resends it (respondents can only edit when **Allow response editing** is on in the form settings). Only responses sent after the flow is published count. Upgrading the piece version in the builder pre-selects **New responses only**; choose **New and edited responses** to keep the old beh": "Prüft das Formular alle paar Minuten. Bei **Nur neue Antworten** startet jede Antwort den Flow einmal, wenn sie zum ersten Mal gesendet wird. Bei **Neue und bearbeitete Antworten** startet sie den Flow auch jedes Mal erneut, wenn der Antwortende sie bearbeitet und erneut sendet (Antwortende können nur bearbeiten, wenn **Antwortbearbeitung zulassen** in den Formulareinstellungen aktiviert ist). Es zählen nur Antworten, die gesendet wurden, nachdem der Flow veröffentlicht wurde. Beim Aktualisieren der Piece-Version im Builder wird **Nur neue Antworten** vorab ausgewählt; wähle **Neue und bearbeitete Antworten**, um das alte Verhalten beizubehalten.",
   "The form to watch for new responses.": "The form to watch for new responses.",
   "Also include forms stored in shared drives.": "Also include forms stored in shared drives.",
-  "Choose whether an edited response starts the flow again.": "Choose whether an edited response starts the flow again.",
-  "New responses only": "New responses only",
-  "New and edited responses": "New and edited responses"
+  "Choose whether an edited response starts the flow again.": "Wähle aus, ob eine bearbeitete Antwort den Flow erneut startet.",
+  "New responses only": "Nur neue Antworten",
+  "New and edited responses": "Neue und bearbeitete Antworten"
 }
