@@ -74,7 +74,7 @@ jobs:
           bun-version: latest
 
       - name: Install dependencies
-        run: bun install --frozen-lockfile --ignore-scripts
+        run: bun install --frozen-lockfile
 
       - name: Build shared and server-utils packages
         run: bunx turbo run build --filter=@activepieces/shared --filter=@activepieces/server-utils
