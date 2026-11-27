@@ -65,7 +65,14 @@ vi.mock('@/hooks/authorization-hooks', () => ({
 }));
 
 vi.mock('@/lib/authentication-session', () => ({
-  authenticationSession: { getProjectId: () => 'project-1' },
+  authenticationSession: {
+    getProjectId: () => 'project-1',
+    appendProjectRoutePrefix: (path: string) => `/projects/project-1${path}`,
+  },
+}));
+
+vi.mock('@/features/workspace/lib/use-open-in-app', () => ({
+  useOpenInApp: () => ({ open: vi.fn(), onLinkClick: vi.fn() }),
 }));
 
 vi.mock('@/components/custom/searchable-select', () => ({
@@ -96,7 +103,9 @@ vi.mock('@/components/ui/form', () => ({
 }));
 
 vi.mock('react-router-dom', () => ({
-  Link: ({ children }: { children: React.ReactNode }) => <a>{children}</a>,
+  Link: ({ children, to }: { children: React.ReactNode; to: string }) => (
+    <a href={to}>{children}</a>
+  ),
 }));
 
 vi.mock('sonner', () => ({ toast: vi.fn() }));
@@ -202,6 +211,15 @@ describe('the agent picker on a Run Agent step', () => {
       null
     );
     expect(container.textContent).toContain('Ops');
+  });
+
+  it('sends Create agent to the agent list, which has no project prefix', () => {
+    render();
+
+    const create = [...container.querySelectorAll('a')].find((link) =>
+      link.textContent?.includes('Create agent')
+    );
+    expect(create?.getAttribute('href')).toBe('/agents');
   });
 
   it('does not render at all when the platform has agents switched off', () => {

@@ -21,7 +21,8 @@ SCIM 2.0 provisioning: lets enterprise IdPs (Okta, Azure AD, Google Workspace) a
 ### Gotchas
 - **DELETE is deactivation, not hard deletion** — user `status` set to INACTIVE.
 - User provisioning conflicts if an existing user matches by `externalId` or by identity on the platform.
-- Supported: Patch, Filter (max 100). Not supported: Bulk, password change, Sort, ETag.
+- Supported: Patch, Filter. Not supported: Bulk, password change, Sort, ETag. Discovery advertises `maxResults: 100` and a list defaults `count` to 100, but the server does not cap `count`.
+- **PUT and PATCH never change the email.** They update name, `active`, `externalId` and `platformRole`; `userName` is read only on create, because the email is the sign-in identity.
 - Provisioning sends a welcome email via `emailService.sendScimUserWelcome`.
 
 ### Key files
@@ -32,4 +33,4 @@ Entry point: `scimModule`, registered twice in `packages/server/api/src/app/app.
 - `packages/server/api/test/integration/ee/scim/` — integration tests covering the endpoints
 - `docs/admin-guide/guides/scim/` — customer-facing IdP setup docs
 
-Paths verified 2026-07-17.
+Paths verified 2026-11-22.

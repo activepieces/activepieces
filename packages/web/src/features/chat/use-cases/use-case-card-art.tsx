@@ -15,7 +15,7 @@ export function UseCaseDoodle({
   return (
     <span
       className={cn(
-        'inline-flex shrink-0 transition-transform duration-300 group-hover:-rotate-2 group-hover:scale-110',
+        'inline-flex shrink-0 transition-transform duration-(--dur-base) ease-(--ease-ap-out) motion-reduce:transition-none group-hover:-rotate-2 group-hover:scale-110',
         className,
       )}
     >

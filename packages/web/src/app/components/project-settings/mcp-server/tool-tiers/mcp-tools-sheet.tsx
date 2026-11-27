@@ -126,6 +126,7 @@ function TierTools({
                   <ItemActions>
                     <Switch
                       {...adminControl(AdminControl.MCP_TOOL_TOGGLE)}
+                      data-testid={`mcp-tool-switch-${tool.name}`}
                       checked={!offTools.includes(tool.name)}
                       disabled={readOnly || offForPlatform}
                       onCheckedChange={(checked) =>

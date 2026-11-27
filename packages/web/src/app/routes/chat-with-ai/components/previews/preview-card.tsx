@@ -15,6 +15,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { MOTION } from '@/features/workspace/lib/chat-layout';
 import { cn } from '@/lib/utils';
 
 export function PreviewIconButton({
@@ -65,9 +66,9 @@ export function PreviewCard({
         'my-3 w-full overflow-hidden rounded-xl border bg-panel',
         className,
       )}
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
     >
       <div className="flex items-center justify-between gap-2 border-b border-gray-6 px-3 py-2">
         <div className="flex min-w-0 items-center gap-2">

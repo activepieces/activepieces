@@ -1,6 +1,7 @@
 import { motion, useReducedMotion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 
+import { MOTION } from '@/features/workspace/lib/chat-layout';
 import { cn } from '@/lib/utils';
 
 export function OnboardingJourneyPattern() {
@@ -116,7 +117,7 @@ export function OnboardingJourneyPattern() {
         <motion.g
           initial={reducedMotion ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 1 }}
+          transition={{ duration: MOTION.move, ease: MOTION.easeOut }}
         >
           <rect
             width="900"
@@ -130,7 +131,7 @@ export function OnboardingJourneyPattern() {
 
       <div
         ref={lensRef}
-        className="absolute inset-0 opacity-0 transition-opacity duration-500"
+        className="absolute inset-0 opacity-0 transition-opacity duration-(--dur-move) ease-(--ease-ap-out)"
         style={{
           maskImage: LENS_MASK,
           WebkitMaskImage: LENS_MASK,

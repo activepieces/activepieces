@@ -6,23 +6,32 @@ import { BasicTracerProvider, BatchSpanProcessor } from '@opentelemetry/sdk-trac
 import { Telemetry } from 'ai'
 import { aiTraceScrubber } from './ai-trace-scrubber'
 import { apVersionUtil } from './ap-version'
+import { posthogConfig } from './posthog-config'
 import { wideEvent } from './wide-event'
 
-let tracing: { processor: BatchSpanProcessor, integration: Telemetry } | undefined
+let tracing: { processor: BatchSpanProcessor, integration: Telemetry, projectToken: string } | undefined
 
-function init({ enabled }: { enabled: boolean }): void {
-    if (!enabled || !isNil(tracing)) {
+function init({ enabled, projectToken }: { enabled: boolean, projectToken: string | null }): void {
+    const activeToken = enabled ? projectToken : null
+    if (tracing?.projectToken === activeToken) {
+        return
+    }
+    if (!isNil(tracing)) {
+        tracing.processor.shutdown().catch(() => undefined)
+        tracing = undefined
+    }
+    if (isNil(activeToken)) {
         return
     }
     const exporter = aiTraceScrubber.wrapExporter({
         exporter: new OTLPTraceExporter({
-            url: `${POSTHOG_HOST}/i/v0/ai/otel`,
-            headers: { Authorization: `Bearer ${POSTHOG_PROJECT_TOKEN}` },
+            url: `${posthogConfig.host}/i/v0/ai/otel`,
+            headers: { Authorization: `Bearer ${activeToken}` },
         }),
     })
     const processor = new BatchSpanProcessor(exporter, { maxExportBatchSize: 8, maxQueueSize: 128 })
     const tracer = new BasicTracerProvider({ spanProcessors: [processor], spanLimits: { attributeValueLengthLimit: 100_000 } }).getTracer('activepieces-ai')
-    tracing = { processor, integration: new OpenTelemetry({ tracer, enrichSpan }) }
+    tracing = { processor, integration: new OpenTelemetry({ tracer, enrichSpan }), projectToken: activeToken }
 }
 
 function integration(): Telemetry | undefined {
@@ -37,7 +46,7 @@ function reset(): void {
     tracing = undefined
 }
 
-function runtimeContextOf({ billing }: { billing?: ActivepiecesAiBilling }): AiTraceContext {
+function runtimeContextOf({ billing, functionId }: { billing?: ActivepiecesAiBilling, functionId?: string }): AiTraceContext {
     const ids = { ...runLabelsFromWideEvent(), ...(isNil(billing) ? idsFromWideEvent() : idsFromBilling({ billing })) }
     const groups = {
         ...(isNil(ids.platformId) ? {} : { platform: ids.platformId }),
@@ -50,6 +59,7 @@ function runtimeContextOf({ billing }: { billing?: ActivepiecesAiBilling }): AiT
         ...(isNil(ids.runSource) ? {} : { runSource: ids.runSource }),
         ...(isNil(ids.tierId) ? {} : { tierId: ids.tierId }),
         ...(isNil(ids.tierModel) ? {} : { tierModel: ids.tierModel }),
+        ...(isNil(functionId) ? {} : { functionId }),
     }
 }
 
@@ -107,6 +117,7 @@ const SPAN_ATTRIBUTE_BY_CONTEXT_KEY: Record<keyof AiTraceContext, string> = {
     runSource: 'ai_run_source',
     tierId: 'ai_tier_id',
     tierModel: 'ai_tier_model',
+    functionId: 'ai_function_id',
 }
 
 export const aiObservability = {
@@ -117,9 +128,7 @@ export const aiObservability = {
     runtimeContextOf,
 }
 
-export const POSTHOG_PROJECT_TOKEN = 'phc_7F92HoXJPeGnTKmYv0eOw62FurPMRW9Aqr0TPrDzvHh'
-export const POSTHOG_HOST = 'https://us.i.posthog.com'
-export const AI_TRACE_RUNTIME_CONTEXT = { distinctId: true, sessionId: true, groups: true, runSource: true, tierId: true, tierModel: true }
+export const AI_TRACE_RUNTIME_CONTEXT = { distinctId: true, sessionId: true, groups: true, runSource: true, tierId: true, tierModel: true, functionId: true }
 
 export type AiTraceContext = {
     distinctId?: string
@@ -128,6 +137,7 @@ export type AiTraceContext = {
     runSource?: string
     tierId?: string
     tierModel?: string
+    functionId?: string
 }
 
 type TraceIds = {

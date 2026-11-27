@@ -135,6 +135,8 @@ export default function ImpactPage() {
                     <Button
                       variant="ghost"
                       size="icon-xs"
+                      aria-label={t('Refresh analytics')}
+                      data-testid="impact-refresh"
                       onClick={() =>
                         refreshAnalytics(undefined, {
                           onSuccess: () =>

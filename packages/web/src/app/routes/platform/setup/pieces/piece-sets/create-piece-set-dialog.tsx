@@ -77,7 +77,11 @@ const CreatePieceSetForm = ({
             <FormItem>
               <FormLabel>{t('Name')}</FormLabel>
               <FormControl>
-                <Input {...field} placeholder={t('e.g. Engineering')} />
+                <Input
+                  {...field}
+                  data-testid="piece-set-name-input"
+                  placeholder={t('e.g. Engineering')}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

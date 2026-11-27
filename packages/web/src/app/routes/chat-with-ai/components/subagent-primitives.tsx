@@ -8,6 +8,7 @@ import { FaviconOrGlobe } from '@/components/prompt-kit/source';
 import { TextShimmer } from '@/components/ui/text-shimmer';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
+import { MOTION } from '@/features/workspace/lib/chat-layout';
 
 export function LiveLine({ activity }: { activity: SubagentActivity }) {
   if (activity.status === 'done') {
@@ -32,8 +33,12 @@ export function LiveLine({ activity }: { activity: SubagentActivity }) {
         key={label}
         initial={{ opacity: 0, y: 3 }}
         animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -3 }}
-        transition={{ duration: 0.18 }}
+        exit={{
+          opacity: 0,
+          y: -3,
+          transition: { duration: MOTION.fast, ease: MOTION.easeOut },
+        }}
+        transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
       >
         <TextShimmer as="p" className="truncate text-xs font-normal leading-4">
           {label}

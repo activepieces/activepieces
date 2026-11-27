@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ImageDialog } from '@/features/chat/chat-message/image-dialog';
+import { MOTION } from '@/features/workspace/lib/chat-layout';
 
 import { DocumentPreview } from './previews/document-preview';
 import { HtmlPreview } from './previews/html-preview';
@@ -66,9 +67,9 @@ function FileChip({ file }: { file: FileProducedEvent }) {
   return (
     <motion.div
       className="flex max-w-md items-center gap-3 rounded-xl border bg-panel p-3"
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
     >
       <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gray-3">
         <FileIcon className="size-4 text-gray-11" />
@@ -119,9 +120,9 @@ export function ProducedFileCard({ file }: { file: FileProducedEvent }) {
       <>
         <motion.div
           className="max-w-md overflow-hidden rounded-xl border bg-panel"
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 4 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
+          transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
         >
           <button
             type="button"

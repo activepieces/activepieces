@@ -2,7 +2,6 @@ import { VariantProps, cva } from 'class-variance-authority';
 import React from 'react';
 
 import { ImageWithFallback } from '@/components/custom/image-with-fallback';
-import { Skeleton } from '@/components/ui/skeleton';
 import { logoTint } from '@/lib/logo-tint';
 import { cn } from '@/lib/utils';
 
@@ -58,7 +57,7 @@ export const LogoPlate = React.memo(
   }: LogoPlateProps) => {
     const tintColor = logoTint.useLogoTint({ src, enabled: tint === true });
     return (
-      <div
+      <span
         data-theme="light"
         title={title}
         className={cn(logoPlateVariants({ size, border, tint }), className)}
@@ -73,9 +72,11 @@ export const LogoPlate = React.memo(
             fallback={fallback}
           />
         ) : (
-          fallback ?? <Skeleton className="h-full w-full rounded-md" />
+          fallback ?? (
+            <span className="block h-full w-full animate-pulse rounded-md bg-gray-3" />
+          )
         )}
-      </div>
+      </span>
     );
   },
 );

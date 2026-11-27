@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import { ReactNode } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { MOTION } from '@/features/workspace/lib/chat-layout';
 import { cn } from '@/lib/utils';
 
 export function InteractiveCardShell({
@@ -16,13 +17,18 @@ export function InteractiveCardShell({
   return (
     <motion.div
       className={cn(
-        'chat-question-gradient-border rounded-xl bg-panel p-4 sm:p-5 shadow-glow-primary backdrop-blur-sm transition-[color,background-color,border-color,opacity]',
+        'chat-question-gradient-border rounded-xl bg-panel p-4 @chat-sm/chat:p-5 shadow-glow-primary backdrop-blur-sm transition-[color,background-color,border-color,opacity] duration-(--dur-micro) ease-[ease]',
         !active && 'opacity-60',
       )}
-      initial={{ opacity: 0, y: 16, scale: 0.98 }}
+      initial={{ opacity: 0, y: 4, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 8, scale: 0.98 }}
-      transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+      exit={{
+        opacity: 0,
+        y: 4,
+        scale: 0.98,
+        transition: { duration: MOTION.fast, ease: MOTION.easeOut },
+      }}
+      transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">

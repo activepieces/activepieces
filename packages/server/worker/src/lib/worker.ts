@@ -473,7 +473,7 @@ async function fetchAndStoreSettings(sock: Socket): Promise<void> {
                 }
             }
             workerSettings.set(response)
-            aiObservability.init({ enabled: response.EDITION === ApEdition.CLOUD })
+            aiObservability.init({ enabled: response.EDITION === ApEdition.CLOUD, projectToken: response.POSTHOG_PROJECT_TOKEN ?? null })
             logger.info({ environment: response.ENVIRONMENT, executionMode: response.EXECUTION_MODE, sandboxMemoryLimitKb: response.SANDBOX_MEMORY_LIMIT }, 'Worker settings loaded')
             resolve()
         })

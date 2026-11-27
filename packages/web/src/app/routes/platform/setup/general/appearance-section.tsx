@@ -324,6 +324,7 @@ export const AppearanceSection = ({
                         {...field}
                         required
                         id="name"
+                        data-testid="general-platform-name"
                         placeholder={t('Platform Name')}
                         className="w-full sm:w-64"
                       />
@@ -454,6 +455,7 @@ const ColorRow = ({
         <ColorPicker
           side="top"
           aria-label={label}
+          data-testid={`general-${tone}-color`}
           value={shownColor}
           onChange={onChange}
           className="shrink-0"
@@ -461,7 +463,12 @@ const ColorRow = ({
         <div className="flex min-w-0 flex-1 flex-col">
           <FormLabel className="font-normal">{label}</FormLabel>
           <span className="text-xs text-gray-11">
-            <span className="font-mono uppercase">{shownColor}</span>
+            <span
+              data-testid={`general-${tone}-color-value`}
+              className="font-mono uppercase"
+            >
+              {shownColor}
+            </span>
             {isDefault && ` · ${t('Default')}`}
           </span>
         </div>
@@ -477,7 +484,7 @@ const ColorRow = ({
           {t('Reset')}
         </Button>
       </div>
-      <FormMessage />
+      <FormMessage data-testid={`general-${tone}-color-error`} />
       <ColorPreview tone={tone} />
     </FormItem>
   );

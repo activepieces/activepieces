@@ -69,8 +69,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
-  "Request": "Request",
-  "Data to send": "Data to send",
+  "Request": "Demande",
+  "Data to send": "Données à envoyer",
   "New Conversation": "Nouvelle conversation",
   "Triggers when a new conversation is created": "Déclenche quand une nouvelle conversation est créée"
 }

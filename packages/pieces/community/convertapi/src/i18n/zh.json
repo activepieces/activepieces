@@ -11,9 +11,9 @@
   "Make a custom API call to a specific endpoint": "将一个自定义 API 调用到一个特定的终点",
   "PDF Files": "PDF Files",
   "Output File Name": "Output File Name",
-  "Password": "Password",
+  "Password": "密码",
   "Bookmark Each File": "Bookmark Each File",
-  "Page Size": "Page Size",
+  "Page Size": "页面大小",
   "Page Orientation": "Page Orientation",
   "PDF File": "PDF File",
   "Split By": "Split By",
@@ -28,7 +28,7 @@
   "Method": "方法",
   "Headers": "信头",
   "Query Parameters": "查询参数",
-  "Body Type": "Body Type",
+  "Body Type": "正文类型",
   "Body": "正文内容",
   "Response is Binary": "Response is Binary",
   "Return Error as Output": "Return Error as Output",
@@ -61,7 +61,7 @@
   "No bookmarks": "No bookmarks",
   "Use file names": "Use file names",
   "Use PDF titles": "Use PDF titles",
-  "Original": "Original",
+  "Original": "原始文件",
   "A2": "A2",
   "A3": "A3",
   "A4": "A4",
@@ -81,5 +81,7 @@
   "PATCH": "PATCH",
   "PUT": "弹出",
   "DELETE": "删除",
-  "HEAD": "黑色"
+  "HEAD": "黑色",
+  "Request": "请求",
+  "Data to send": "要发送的数据"
 }

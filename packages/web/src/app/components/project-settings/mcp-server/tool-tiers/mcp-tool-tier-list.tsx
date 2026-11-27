@@ -260,6 +260,7 @@ function TierRow({
           className={cn('text-gray-11', someOff && 'text-gray-12')}
           onClick={onOpenTools}
           {...adminControl(AdminControl.MCP_TIER_TOOLS_OPEN)}
+          data-testid={`mcp-tool-tier-${tier.id}-tools`}
           aria-label={t('{tier}: {status}', {
             tier: copy.label,
             status: countLabel,

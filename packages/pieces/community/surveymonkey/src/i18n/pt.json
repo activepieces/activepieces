@@ -24,6 +24,8 @@
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
   "HEAD": "CABEÇA",
+  "Request": "Solicitação",
+  "Data to send": "Dados a enviar",
   "New Response": "Nova Resposta",
   "Triggers when a new response is submitted": "Dispara quando uma nova resposta é enviada",
   "Survey": "Questionário"

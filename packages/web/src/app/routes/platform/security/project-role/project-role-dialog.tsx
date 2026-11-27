@@ -207,6 +207,8 @@ function RoleDialogBody({
                   setSaveError(null);
                 }}
                 placeholder={t('Role name')}
+                aria-label={t('Role name')}
+                data-testid="project-role-name-input"
                 className="max-w-xs"
               />
             </>

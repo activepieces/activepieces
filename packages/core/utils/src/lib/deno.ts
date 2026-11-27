@@ -500,7 +500,12 @@ for await (const chunk of Deno.stdin.readable) {
             continue;
         }
         if (command.kind === 'set') {
-            globalThis[command.key] = command.value;
+            if ('value' in command) {
+                globalThis[command.key] = command.value;
+            }
+            else {
+                delete globalThis[command.key];
+            }
             reply({ id: command.id, success: true, result: null });
             continue;
         }
@@ -515,7 +520,8 @@ for await (const chunk of Deno.stdin.readable) {
             failCurrentRun = null;
         }
     }
-}`
+}
+Deno.exit(0);`
 
 function extractResult(stdout: string): { userOutput: string, resultJson: string | null } {
     if (!stdout.startsWith(MARKER_HEADER_PREFIX)) {

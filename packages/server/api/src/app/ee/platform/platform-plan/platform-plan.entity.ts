@@ -79,6 +79,10 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         managePiecesEnabled: {
             type: Boolean,
         },
+        customPiecesEnabled: {
+            type: Boolean,
+            default: false,
+        },
         manageTemplatesEnabled: {
             type: Boolean,
         },

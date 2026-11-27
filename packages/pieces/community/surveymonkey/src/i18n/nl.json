@@ -24,6 +24,8 @@
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
   "HEAD": "HOOFD",
+  "Request": "Verzoek",
+  "Data to send": "Gegevens om te verzenden",
   "New Response": "Nieuw Antwoord",
   "Triggers when a new response is submitted": "Triggert wanneer een nieuw antwoord wordt verzonden",
   "Survey": "Vragenlijst"

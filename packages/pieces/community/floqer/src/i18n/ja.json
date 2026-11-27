@@ -50,5 +50,7 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "DELETE",
-  "HEAD": "HEAD"
+  "HEAD": "HEAD",
+  "Request": "リクエスト",
+  "Data to send": "送信するデータ"
 }

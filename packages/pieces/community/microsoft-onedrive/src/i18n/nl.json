@@ -252,8 +252,8 @@
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
   "HEAD": "HOOFD",
-  "Request": "Request",
-  "Data to send": "Data to send",
+  "Request": "Aanvraag",
+  "Data to send": "Gegevens om te verzenden",
   "New File": "Nieuw bestand",
   "Trigger when a new file is uploaded.": "Trigger wanneer een nieuw bestand wordt geüpload."
 }

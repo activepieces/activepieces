@@ -1,9 +1,11 @@
+import { ResourceChangeOp } from '@activepieces/shared'
 import { apId, Permission, RoleType } from '@activepieces/core-utils'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { mcpOAuthTokenService } from '../../../../src/app/mcp/oauth/token/mcp-oauth-token.service'
 import { db } from '../../../helpers/db'
+import { draftPushes } from '../../../helpers/draft-push'
 import { McpClient, mcpClientHelpers } from '../../../helpers/mcp-client'
 import { createMockProjectRole } from '../../../helpers/mocks'
 import { createMemberContext, createTestContext, TestContext } from '../../../helpers/test-context'
@@ -17,6 +19,10 @@ beforeAll(async () => {
 
 afterAll(async () => {
     await teardownTestEnvironment()
+})
+
+afterEach(() => {
+    vi.restoreAllMocks()
 })
 
 async function setup({ permissions }: { permissions: Permission[] }): Promise<{ owner: TestContext, member: TestContext }> {
@@ -128,6 +134,37 @@ describe('In-app AI Chat on the MCP server', () => {
 
         expect(text).toContain('✅')
     })
+
+    it('marks a flow edit made by the chat with its conversation id', async () => {
+        const { owner } = await setup({ permissions: [Permission.READ_FLOW] })
+        const conversationId = await startConversation({ ctx: owner, projectId: owner.project.id })
+        const flowId = await createFlow({ ctx: owner })
+        const pushes = draftPushes.capture()
+
+        const text = await mcpClientHelpers.callTool({ app, mcpClient: await chatClient({ ctx: owner, conversationId }), name: 'ap_rename_flow', args: { flowId, displayName: 'Renamed by chat' } })
+
+        expect(text).toContain('✅')
+        expect(pushes).toEqual([{ room: owner.project.id, payload: { flowId, editorSessionId: conversationId, op: ResourceChangeOp.UPDATE } }])
+    })
+
+    it('does not mark an outside client edit as the chat, even with a conversation header', async () => {
+        const { owner } = await setup({ permissions: [Permission.READ_FLOW] })
+        const conversationId = await startConversation({ ctx: owner, projectId: owner.project.id })
+        const flowId = await createFlow({ ctx: owner })
+        const accessToken = await mcpOAuthTokenService.issueInternalAccessToken({ userId: owner.user.id, platformId: owner.platform.id, projectId: owner.project.id })
+        const pushes = draftPushes.capture()
+
+        const text = await mcpClientHelpers.callTool({ app, mcpClient: { accessToken, endpoint: '/mcp', conversationId }, name: 'ap_rename_flow', args: { flowId, displayName: 'Renamed outside' } })
+
+        expect(text).toContain('✅')
+        expect(pushes).toEqual([{ room: owner.project.id, payload: { flowId, editorSessionId: null, op: ResourceChangeOp.UPDATE } }])
+    })
 })
+
+async function createFlow({ ctx }: { ctx: TestContext }): Promise<string> {
+    const response = await ctx.post('/v1/flows', { displayName: 'Chat target', projectId: ctx.project.id })
+    expect(response.statusCode).toBe(StatusCodes.CREATED)
+    return response.json().id
+}
 
 const LONG_TURN_MS = 45 * 60 * 1000

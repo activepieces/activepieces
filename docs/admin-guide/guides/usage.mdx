@@ -6,29 +6,30 @@ icon:
   library: "fontawesome"
 ---
 
-The **Usage** page gives platform admins a central place to understand how resources are being consumed across the platform.
+The **Usage** page shows platform admins how the platform consumes the resources of its plan. It is available on Cloud and in the Enterprise edition.
 
-At the top of the page, you can see your overall usage for:
+The figures can be a few minutes behind the latest activity.
 
-- **Credits:** The number of credits used and the credit limit included in your plan.
-- **Users:** The number of users on the platform and the user limit included in your plan.
+### Plan usage
 
-If your plan does not have a limit for a resource, it is shown as **Unlimited**.
+At the top of the page, a card for each resource shows how much the platform uses and the limit of the plan:
 
-### **Credits Usage by Project**
+- **Credits:** The credits used in the current billing period.
+- **Users:** The active users of the platform, plus the invitations that are not accepted yet.
+- **Active Flows** and **Team Projects:** Shown only when your plan limits them.
 
-The Project section breaks down credit usage across individual projects, making it easier to see where usage is coming from.
+A resource with no limit in your plan shows **Unlimited**.
 
-For each project, you can see:
+### Credits Usage by Project
 
-- **AI Usage:** Credits used by AI-related activity.
-- **Runs Usage:** Credits used by flow runs.
-- **Total:** The total credits used by the project.
+The table breaks the credits down by project, so you can see where the usage comes from. For each project, you see:
 
-If credit usage increases, you can identify which projects are responsible for most of that usage.
+- **AI Usage:** Credits used by AI steps and chat.
+- **Runs Usage:** All other credits, mainly flow runs. Each run of a published flow uses one credit, whether it succeeds or fails. A test run in the builder uses none.
+- **Total:** All the credits the project used.
 
-You can change the time period to review usage over a specific date range.
+The table shows the last 30 days. Use the date picker to choose a different date range. Click a project name to open that project.
 
-To understand the credit usage break down, checkout the Billing and Subscription page in the platform admin 
+To see what each action costs in credits, open **Usage breakdown** on the **Billing** page.
 
 <br />

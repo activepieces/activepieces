@@ -1,4 +1,4 @@
-import { BaseModelSchema } from '@activepieces/core-utils'
+import { BaseModelSchema, formErrors } from '@activepieces/core-utils'
 import { z } from 'zod'
 
 const MAX_EMBED_HOSTNAME_LENGTH = 253
@@ -49,11 +49,11 @@ export const EmbedSubdomain = z.object({
 export type EmbedSubdomain = z.infer<typeof EmbedSubdomain>
 
 export const GenerateEmbedSubdomainRequest = z.object({
-    hostname: z.hostname('invalidEmbedHostname')
-        .min(4, 'invalidEmbedHostname')
-        .max(MAX_EMBED_HOSTNAME_LENGTH, 'invalidEmbedHostname')
-        .refine((value) => value.includes('.'), 'invalidEmbedHostname')
-        .refine((value) => value === value.toLowerCase(), 'invalidEmbedHostname'),
+    hostname: z.hostname(formErrors.invalidEmbedHostname)
+        .min(4, formErrors.invalidEmbedHostname)
+        .max(MAX_EMBED_HOSTNAME_LENGTH, formErrors.invalidEmbedHostname)
+        .refine((value) => value.includes('.'), formErrors.invalidEmbedHostname)
+        .refine((value) => value === value.toLowerCase(), formErrors.invalidEmbedHostname),
 })
 
 export type GenerateEmbedSubdomainRequest = z.infer<typeof GenerateEmbedSubdomainRequest>

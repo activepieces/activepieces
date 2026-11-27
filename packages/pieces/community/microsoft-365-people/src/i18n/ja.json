@@ -84,8 +84,8 @@
   "PUT": "PUT",
   "DELETE": "削除",
   "HEAD": "頭",
-  "Request": "Request",
-  "Data to send": "Data to send",
+  "Request": "要求します",
+  "Data to send": "送信するデータ",
   "New or Updated Contact": "新規または更新された連絡先",
   "Triggers when a contact is created or updated in Microsoft 365 People.": "連絡先が Microsoft 365 Peopleで作成または更新されたときにトリガーされます。"
 }

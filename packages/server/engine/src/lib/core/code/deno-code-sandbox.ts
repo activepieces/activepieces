@@ -3,7 +3,7 @@ import { realpath } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { deno, DenoPermission, DenoSession, isNil } from '@activepieces/core-utils'
+import { deno, DenoPermission, DenoSession, isNil, tryCatch } from '@activepieces/core-utils'
 import { ExecutionMode } from '@activepieces/shared'
 import { CodeSandbox } from './code-sandbox-common'
 
@@ -84,7 +84,7 @@ export function denoCodeSandbox({ permissions, codeStepMemoryLimitMb }: DenoCode
         },
 
         async createScriptSession({ scriptContext, functions, flowVersionDir }) {
-            const context: Record<string, unknown> = { ...scriptContext }
+            let context: Record<string, unknown> = { ...scriptContext }
             const bootstrapBody = Object.entries(functions).map(([key, value]) => `globalThis[${JSON.stringify(key)}] = ${value.toString()};`).join('\n')
             const sessionDenoDir = isNil(flowVersionDir) || !existsSync(flowVersionDir) ? undefined : resolveWarmDenoDir(flowVersionDir)
             let current: LiveScriptSession | null = null
@@ -145,10 +145,22 @@ export function denoCodeSandbox({ permissions, codeStepMemoryLimitMb }: DenoCode
                     return live.session.run({ script })
                 },
                 setGlobal: async (key: string, value: unknown, noOverwrite = true) => {
-                    if (noOverwrite && (key in context || key in functions)) {
+                    if (key in functions || (noOverwrite && key in context)) {
                         return
                     }
                     context[key] = value
+                },
+                reset: async () => {
+                    context = { ...scriptContext }
+                    const live = current
+                    if (live === null || !live.session.isAlive()) {
+                        return
+                    }
+                    const sentStepKeys = [...live.sentGlobals.keys()].filter((key) => !(key in scriptContext))
+                    await tryCatch(() => Promise.all(sentStepKeys.map((key) => {
+                        live.sentGlobals.delete(key)
+                        return live.session.setGlobal({ key, value: undefined })
+                    })))
                 },
                 dispose: () => {
                     disposed = true

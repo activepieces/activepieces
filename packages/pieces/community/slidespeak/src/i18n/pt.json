@@ -63,8 +63,8 @@
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
   "HEAD": "CABEÇA",
-  "Request": "Request",
-  "Data to send": "Data to send",
+  "Request": "Solicitação",
+  "Data to send": "Dados a enviar",
   "New Presentation": "Nova apresentação",
   "Triggers when a new presentation is created.": "Dispara quando uma nova apresentação é criada."
 }

@@ -7,9 +7,9 @@ All changes flow through a staging environment before reaching production. There
 
 ## How It Works
 
-1. **Merge to `main`** — `continuous-delivery-stg.yml` builds a `version.sha.beta` image, and deploys it to **staging** (`stg.activepieces.com`).
-2. **By hand** — `continuous-delivery-cloud.yml` (the Cloud gate) picks the tip of `main` (the run stops if staging has not deployed it), runs the E2E matrix and the upgrade test on the image staging built from it, and waits for one approval.
-3. **On approval** — the gate deploys that same image to the canary, then to the whole production fleet.
+1. **Merge to `main`** — `continuous-delivery-stg.yml` builds a `version.sha.beta` image, and deploys it to **staging** (`stg.activepieces.com`) and to **stg-cloud** (`stg-cloud.activepieces.com`). Only the staging deploy decides which commit the Cloud gate can pick.
+2. **Sunday to Wednesday at 8 AM UTC, or by hand** — `continuous-delivery-cloud.yml` (the Cloud gate) picks a candidate. A scheduled run takes the newest `main` commit that staging deployed; a manual run takes the tip of `main` (the run stops if staging has not deployed it). The gate runs the E2E matrix and the upgrade test on the image staging built from the candidate, and waits for one approval. A scheduled run skips the approval when its candidate contains the commit Cloud runs and adds no migration that cannot roll back.
+3. **On approval, or at once for a scheduled run that needs none** — the gate deploys that same image to the canary, then to the whole production fleet.
 4. **Self-hosted** — `release-self-hosted.yml`, by hand. The weekly `continuous-delivery-release.yml` is disabled.
 
 ## Environments
@@ -18,6 +18,7 @@ All changes flow through a staging environment before reaching production. There
 |---|---|---|
 | Preview | `branch-name.activepieces.com` | Per-PR ephemeral environment for review. *Requires the `preview` label on the PR.* |
 | Staging | `stg.activepieces.com` | Internal testing |
+| stg-cloud | `stg-cloud.activepieces.com` | Internal testing of the Cloud edition (`AP_EDITION=cloud`) |
 | Canary | `canary.activepieces.com` | Gets each Cloud deploy a few minutes before the rest of production |
 | Production | `cloud.activepieces.com` | Live customers |
 
@@ -25,13 +26,31 @@ All changes flow through a staging environment before reaching production. There
 
   1. Merge the fix into `main`.
   2. Run `continuous-delivery-cloud.yml` by hand with `hotfix_prs` set to the PR numbers, for example `17001,17005`. The gate cherry-picks only those PRs, oldest first, onto the commit Cloud runs (branch `hotfix/cloud/<run id>-<attempt>`), builds a `version.sha.pick` image, and runs the E2E matrix and the upgrade test on it. The rest of `main` waits for the next full gate run.
-  3. The run summary names what Cloud runs and what this run adds. The approval and the deploy are the same as any other Cloud deploy.
+  3. The run summary names what Cloud runs, what this run adds, and the migrations it applies. The approval and the deploy are the same as any other Cloud deploy.
 
-  The run stops when a PR is not merged into `main`, is already on Cloud, does not apply cleanly, or changes a migration (set `allow_migrations` only when the migration needs nothing Cloud lacks). A hotfix deploy records no Linear release; the next full gate run does. No step checks that its candidate contains every picked PR, so check it before you approve that run.
+  The run stops when a PR is not merged into `main`, is already on Cloud, or does not apply cleanly. A picked PR that adds a migration goes through: read it in the migration list before you approve. A hotfix deploy records no Linear release; the next full gate run does. No step checks that its candidate contains every picked PR, so check it before you approve that run.
 
   To ship all of `main` at once instead, leave `hotfix_prs` empty: the gate takes the tip of `main`, or the commit named in `sha`. Staging must have deployed that commit, so start the gate after its staging deploy is green.
 
-If Cloud is down and the gate is too slow, use `emergency-cloud-deploy.yml`. To go back to an earlier image, use `continuous-delivery-rollback.yml`.
+In an emergency, run the gate with `skip_tests`: it skips the E2E matrix, the upgrade test and the benchmark, and keeps the approval. If Cloud is down and that is still too slow, use `emergency-cloud-deploy.yml`. To go back to an earlier image, use `continuous-delivery-rollback.yml`.
+
+## Pause the Scheduled Releases
+
+For a freeze or an incident, run `pause-releases.yml` from the **Actions** tab and pick `pause`. Pick `resume` to end the pause. The workflow sets the `RELEASES_PAUSED` repository variable to `true` or `false`, and needs only write access to the repository. From a terminal:
+
+```bash
+gh workflow run pause-releases.yml -f action=pause    # pause
+gh workflow run pause-releases.yml -f action=resume   # resume
+```
+
+If the workflow cannot run, for example when it fails with a 403 because the release GitHub App lacks the Variables permission, a repository admin can set the variable directly:
+
+```bash
+gh variable set RELEASES_PAUSED --body true    # pause
+gh variable set RELEASES_PAUSED --body false   # resume
+```
+
+A scheduled gate run then stops in `cut` and says so in its summary. Manual runs, `hotfix_prs` runs and `emergency-cloud-deploy.yml` still run. The flag is read only in `cut`, so it does not stop a run that has passed `cut`: cancel that run before its `deploy` job starts. The scheduled self-hosted release will read the same flag (ENG-1025).
 
 ## Self-Hosted Release
 
@@ -45,32 +64,31 @@ To run any workflow manually, go to the repo's **Actions** tab, select the workf
 
 | Trigger | What happens |
 |---|---|
-| **Push to `main`** | Builds a `version.sha.beta` image and deploys to staging. |
+| **Push to `main`** | Builds a `version.sha.beta` image and deploys to staging and stg-cloud. |
 | **Manual dispatch** | Presents a dropdown with one choice (see below). |
 
 #### Manual dispatch choices
 
-- **`deploy-staging`** — Re-deploy the latest `main` to staging. Use this after an infra change.
+- **`deploy-staging`** — Re-deploy the latest `main` to staging and stg-cloud. Use this after an infra change.
 
 ### `continuous-delivery-cloud.yml` — Cloud Gate
 
 | Trigger | What happens |
 |---|---|
-| **Manual dispatch** | Picks the tip of `main`, or the `main` commit named in `sha`. The run stops unless that commit's `deploy-staging-app` and `deploy-staging-workers` checks passed. `skip_migration_check` lets a breaking migration through. |
-
-The gate has no schedule yet. A daily run (Sunday to Thursday, 8 AM UTC) comes back when the E2E suite covers more of the product; a scheduled run picks the newest `main` commit whose staging deploy checks passed, not the tip, and the `cut` job already stops it when every Cloud host runs the candidate.
+| **Schedule** (Sunday to Wednesday, 8 AM UTC) | Picks the newest of the last 30 `main` commits whose `deploy-staging-app` and `deploy-staging-workers` checks passed, not the tip. The run stops with no approval when every Cloud host, canary included, already runs that commit, or when `RELEASES_PAUSED` is `true`. |
+| **Manual dispatch** | Picks the tip of `main`, or the `main` commit named in `sha`. The run stops unless that commit's `deploy-staging-app` and `deploy-staging-workers` checks passed. `skip_tests` (emergency only) skips the E2E matrix, the upgrade test and the benchmark. |
 
 Then, for the candidate:
 
-1. `e2e-matrix.yml` and `upgrade-test.yml` run on the candidate's `version.sha.beta` image. Nothing is built again.
+1. `e2e-matrix.yml`, `upgrade-test.yml` and `benchmark-compare.yml` run on the candidate's `version.sha.beta` image. Nothing is built again. The benchmark runs the image Cloud runs and the candidate in turns on one runner, on a light and a heavy flow, and its job summary shows the median change of each metric. It is report only.
 2. The `report` job posts the `e2e-matrix` and `upgrade-test` commit statuses on the candidate SHA. A red upgrade test says whether the candidate broke or the setup failed before the upgrade.
-3. The run summary lists the tickets between the commit Cloud runs and the candidate.
-4. The `approve` job waits for approval in the `production` GitHub Environment. It starts only when every check passed. The gate does not fall back to an older commit: when the matrix is red, fix `main`, or name an older commit in `sha`. A newer candidate cancels an older one that still waits.
-5. Under the `promote-production` lock, the `deploy` job reads the Cloud version again and refuses to deploy when the canary and the fleet run different images, or when Cloud changed after the cut. It does not check that the candidate contains every hotfix Cloud runs. Then the breaking-migration check, the canary, the fleet, and the Linear "Cloud" release.
+3. The run summary lists the tickets between the commit Cloud runs and the candidate, and every migration the candidate adds: its track (blocking at boot, or background after boot), whether it rolls back, and its PR.
+4. The `approve` job waits for approval in the `production` GitHub Environment. A scheduled run uses `production-scheduled` instead, which has no reviewers, when its candidate contains the commit Cloud runs and adds no `breaking = true` migration; the run summary says which one applies. It starts when the benchmark has finished and every other check passed; the benchmark result does not block it. The gate does not fall back to an older commit: when the matrix is red, fix `main`, or name an older commit in `sha`. A newer candidate cancels an older one that still waits.
+5. Under the `promote-production` lock, the `deploy` job reads the Cloud version again and refuses to deploy when the canary and the fleet run different images, or when Cloud changed after the cut. It does not check that the candidate contains every hotfix Cloud runs. Then the canary, whose app applies every pending migration at boot, the fleet, and the Linear "Cloud" release. No step stops on a breaking migration: the approval is the consent.
 
 If the gate refuses because the canary and the fleet differ (for example after `emergency-cloud-deploy.yml`, which deploys only the fleet), deploy the fleet's tag to the canary from `mrsk/prod`: `kamal deploy --version <tag> --config-file=config/app-canary.yml --skip-push`, then the same with `config/worker-canary.yml`.
 
-The canary has no workflow of its own since ENG-1021: the gate's `deploy` job runs the breaking-migration check, deploys the canary, then the fleet, under the `promote-production` lock that `continuous-delivery-rollback.yml` also uses. See the [Canary Deployment playbook](/handbook/engineering/playbooks/canary-deployment).
+The canary has no workflow of its own since ENG-1021: the gate's `deploy` job deploys the canary, then the fleet, under the `promote-production` lock that `continuous-delivery-rollback.yml` also uses. See the [Canary Deployment playbook](/handbook/engineering/playbooks/canary-deployment).
 
 ### `release-self-hosted.yml`
 
