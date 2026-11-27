@@ -107,7 +107,7 @@ export function ModelPicker({
         data-testid="model-picker-trigger"
         className={cn(
           variant === 'pill'
-            ? 'flex h-8 min-w-0 max-w-64 items-center gap-1.5 rounded-full px-2.5 text-left text-xs transition-colors hover:bg-gray-3 disabled:pointer-events-none disabled:opacity-50'
+            ? 'flex h-8 min-w-0 shrink items-center gap-1.5 rounded-full px-2.5 text-left text-xs transition-colors hover:bg-gray-3 disabled:pointer-events-none disabled:opacity-50'
             : 'flex h-9 w-full min-w-0 items-center gap-2 rounded-md border bg-panel px-2.5 text-left text-sm transition-colors hover:bg-gray-2 disabled:pointer-events-none disabled:opacity-50',
           className,
         )}

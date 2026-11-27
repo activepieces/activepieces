@@ -69,8 +69,8 @@
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
   "HEAD": "HOOFD",
-  "Request": "Request",
-  "Data to send": "Data to send",
+  "Request": "Verzoek",
+  "Data to send": "Gegevens om te verzenden",
   "New or Updated Record": "Nieuwe of bijgewerkte record",
   "Triggers when a new record is added or modified.": "Triggert wanneer een nieuwe record is toegevoegd of gewijzigd."
 }

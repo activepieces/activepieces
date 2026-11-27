@@ -58,8 +58,8 @@
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
   "HEAD": "HOOFD",
-  "Request": "Request",
-  "Data to send": "Data to send",
+  "Request": "Verzoek",
+  "Data to send": "Gegevens om te verzenden",
   "Task Created": "Taak aangemaakt",
   "Triggers when a new task is created.": "Triggert wanneer een nieuwe taak is aangemaakt."
 }

@@ -13,13 +13,20 @@ import { Sandbox, SandboxMount, SandboxProcessMaker } from '../../../src/lib/san
 import { SandboxSettings } from '../../../src/lib/types'
 import { testLogger } from '../../helpers/logger'
 
-const { treeKillMock, isolateProcessMock } = vi.hoisted(() => ({
+const { treeKillMock, isolateProcessMock, mkdirMock, chmodMock } = vi.hoisted(() => ({
     treeKillMock: vi.fn((_pid: number, _signal: string, cb: (err?: Error) => void) => cb()),
     isolateProcessMock: vi.fn(),
+    mkdirMock: vi.fn(async () => undefined),
+    chmodMock: vi.fn(async () => undefined),
 }))
 
 vi.mock('tree-kill', () => ({
     default: treeKillMock,
+}))
+
+vi.mock('fs/promises', () => ({
+    mkdir: mkdirMock,
+    chmod: chmodMock,
 }))
 
 vi.mock('../../../src/lib/sandbox/isolate', () => ({
@@ -321,7 +328,7 @@ describe('createSandbox', () => {
             expect(testPM.maker.create).not.toHaveBeenCalled()
         })
 
-        it('composes mounts in order: baseMounts, codeMount, callerMounts, customPieceMounts', async () => {
+        it('composes mounts in order: baseMounts, codeMount, denoCacheMount, callerMounts, customPieceMounts', async () => {
             const log = createMockLogger()
             testPM = createTestProcessMaker()
             const baseMounts: SandboxMount[] = [{ hostPath: '/host/common', sandboxPath: '/root/common' }]
@@ -334,9 +341,55 @@ describe('createSandbox', () => {
             expect(createCall.mounts).toEqual([
                 { hostPath: '/host/common', sandboxPath: '/root/common' },
                 { hostPath: '/tmp/test-cache/codes/fv-1', sandboxPath: '/root/codes/fv-1', optional: true },
+                { hostPath: '/tmp/test-cache/codes/fv-1/.deno-cache', sandboxPath: '/root/codes/fv-1/.deno-cache', rw: true },
                 { hostPath: '/host/x', sandboxPath: '/root/x' },
                 { hostPath: '/tmp/test-cache/custom_pieces/plat-1', sandboxPath: '/root/custom_pieces', optional: true },
             ])
+        })
+
+        it('mounts a writable deno-cache dir next to the code mount when non-reusable, pre-creates it, and opens its permissions for the sandbox\'s unprivileged per-box UID', async () => {
+            const log = createMockLogger()
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-deno-cache', { ...defaultOptions, reusable: false }, testPM.maker)
+
+            await sandbox.start({ flowVersionId: 'fv-1', platformId: '', mounts: [] })
+
+            const createCall = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+            const denoCacheMount = createCall.mounts.find((m: SandboxMount) => m.sandboxPath.endsWith('.deno-cache'))
+            expect(denoCacheMount).toEqual({
+                hostPath: '/tmp/test-cache/codes/fv-1/.deno-cache',
+                sandboxPath: '/root/codes/fv-1/.deno-cache',
+                rw: true,
+            })
+            expect(mkdirMock).toHaveBeenCalledWith('/tmp/test-cache/codes/fv-1/.deno-cache', { recursive: true })
+            expect(chmodMock).toHaveBeenCalledWith('/tmp/test-cache/codes/fv-1/.deno-cache', 0o777)
+            expect(createCall.env.AP_DENO_CACHE_MOUNTED).toBe('true')
+        })
+
+        it('omits the deno-cache mount and env flag when reusable, even with a flowVersionId', async () => {
+            const log = createMockLogger()
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-deno-cache-reusable', { ...defaultOptions, reusable: true }, testPM.maker)
+
+            await sandbox.start({ flowVersionId: 'fv-1', platformId: '', mounts: [] })
+
+            const createCall = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+            const denoCacheMount = createCall.mounts.find((m: SandboxMount) => m.sandboxPath.endsWith('.deno-cache'))
+            expect(denoCacheMount).toBeUndefined()
+            expect(createCall.env.AP_DENO_CACHE_MOUNTED).toBeUndefined()
+        })
+
+        it('omits the deno-cache mount when non-reusable without a flowVersionId', async () => {
+            const log = createMockLogger()
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-deno-cache-no-fv', { ...defaultOptions, reusable: false }, testPM.maker)
+
+            await sandbox.start({ flowVersionId: undefined, platformId: '', mounts: [] })
+
+            const createCall = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+            const denoCacheMount = createCall.mounts.find((m: SandboxMount) => m.sandboxPath.endsWith('.deno-cache'))
+            expect(denoCacheMount).toBeUndefined()
+            expect(createCall.env.AP_DENO_CACHE_MOUNTED).toBeUndefined()
         })
 
         it('never exposes host /etc, /root, or / as a sandbox mount', async () => {
@@ -908,6 +961,38 @@ describe('createSandbox', () => {
             sandbox = null // already shut down
 
             expect(treeKillMock).toHaveBeenCalledWith(12345, 'SIGKILL', expect.any(Function))
+        })
+
+        it('does not create the process when shutdown lands before start reaches it', async () => {
+            const log = createMockLogger()
+            testPM = createTestProcessMaker()
+            const shutDownSandbox = createSandbox(log, 'sb-shutdown-early', defaultOptions, testPM.maker)
+
+            const starting = shutDownSandbox.start(startOptions).catch((e: unknown) => e)
+            await shutDownSandbox.shutdown()
+
+            expect(await starting).toBeInstanceOf(ActivepiecesError)
+            expect(testPM.maker.create).not.toHaveBeenCalled()
+        })
+
+        it('kills the process when shutdown lands while it is being created', async () => {
+            const log = createMockLogger()
+            let finishCreate: (child: ChildProcess) => void = () => undefined
+            const create = vi.fn(() => new Promise<ChildProcess>((resolve) => {
+                finishCreate = resolve
+            }))
+            const shutDownSandbox = createSandbox(log, 'sb-shutdown-mid-create', defaultOptions, { create })
+
+            const starting = shutDownSandbox.start(startOptions).catch((e: unknown) => e)
+            await vi.waitFor(() => expect(create).toHaveBeenCalledTimes(1))
+            await shutDownSandbox.shutdown()
+            const lateChild = new EventEmitter() as ChildProcess & EventEmitter
+            ;(lateChild as ChildProcess).pid = 777
+            finishCreate(lateChild)
+
+            expect(await starting).toBeInstanceOf(ActivepiecesError)
+            expect(treeKillMock).toHaveBeenCalledWith(777, 'SIGKILL', expect.any(Function))
+            expect(shutDownSandbox.getPid()).toBeNull()
         })
     })
 })

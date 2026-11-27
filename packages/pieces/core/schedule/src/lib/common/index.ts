@@ -37,1681 +37,1712 @@ export function validateMonthDays(days: number) {
   return dayofTheMonth;
 }
 
-export const timezoneOptions = [
+function utcOffset({ timeZone, date }: { timeZone: string; date: Date }) {
+  const name = new Intl.DateTimeFormat('en-US', { timeZone, timeZoneName: 'longOffset' })
+    .formatToParts(date)
+    .find((part) => part.type === 'timeZoneName')?.value;
+  return name === undefined || name === 'GMT' ? '+00:00' : name.replace('GMT', '');
+}
+
+function offsetMinutes(offset: string) {
+  const [hours, minutes] = offset.slice(1).split(':').map(Number);
+  return (offset.startsWith('-') ? -1 : 1) * (hours * 60 + minutes);
+}
+
+function yearlyOffsets(timeZone: string) {
+  const year = new Date().getUTCFullYear();
+  const offsets = [...Array(12).keys()]
+    .map((month) => utcOffset({ timeZone, date: new Date(Date.UTC(year, month, 15, 12)) }))
+    .sort((a, b) => offsetMinutes(a) - offsetMinutes(b));
+  return [...new Set(offsets)];
+}
+
+const TIMEZONES = [
   {
-    label: '(GMT-11:00) Pacific, Midway',
+    label: 'Pacific, Midway',
     value: 'Pacific/Midway',
   },
   {
-    label: '(GMT-11:00) Pacific, Niue',
+    label: 'Pacific, Niue',
     value: 'Pacific/Niue',
   },
   {
-    label: '(GMT-11:00) Pacific, Pago Pago',
+    label: 'Pacific, Pago Pago',
     value: 'Pacific/Pago_Pago',
   },
   {
-    label: '(GMT-10:00) Pacific, Honolulu',
+    label: 'Pacific, Honolulu',
     value: 'Pacific/Honolulu',
   },
   {
-    label: '(GMT-10:00) Pacific, Rarotonga',
+    label: 'Pacific, Rarotonga',
     value: 'Pacific/Rarotonga',
   },
   {
-    label: '(GMT-10:00) Pacific, Tahiti',
+    label: 'Pacific, Tahiti',
     value: 'Pacific/Tahiti',
   },
   {
-    label: '(GMT-09:30) Pacific, Marquesas',
+    label: 'Pacific, Marquesas',
     value: 'Pacific/Marquesas',
   },
   {
-    label: '(GMT-09:00) America, Adak',
+    label: 'America, Adak',
     value: 'America/Adak',
   },
   {
-    label: '(GMT-09:00) Pacific, Gambier',
+    label: 'Pacific, Gambier',
     value: 'Pacific/Gambier',
   },
   {
-    label: '(GMT-08:00) America, Anchorage',
+    label: 'America, Anchorage',
     value: 'America/Anchorage',
   },
   {
-    label: '(GMT-08:00) America, Juneau',
+    label: 'America, Juneau',
     value: 'America/Juneau',
   },
   {
-    label: '(GMT-08:00) America, Metlakatla',
+    label: 'America, Metlakatla',
     value: 'America/Metlakatla',
   },
   {
-    label: '(GMT-08:00) America, Nome',
+    label: 'America, Nome',
     value: 'America/Nome',
   },
   {
-    label: '(GMT-08:00) America, Sitka',
+    label: 'America, Sitka',
     value: 'America/Sitka',
   },
   {
-    label: '(GMT-08:00) America, Yakutat',
+    label: 'America, Yakutat',
     value: 'America/Yakutat',
   },
   {
-    label: '(GMT-08:00) Pacific, Pitcairn',
+    label: 'Pacific, Pitcairn',
     value: 'Pacific/Pitcairn',
   },
   {
-    label: '(GMT-07:00) America, Creston',
+    label: 'America, Creston',
     value: 'America/Creston',
   },
   {
-    label: '(GMT-07:00) America, Dawson',
+    label: 'America, Dawson',
     value: 'America/Dawson',
   },
   {
-    label: '(GMT-07:00) America, Dawson Creek',
+    label: 'America, Dawson Creek',
     value: 'America/Dawson_Creek',
   },
   {
-    label: '(GMT-07:00) America, Fort Nelson',
+    label: 'America, Fort Nelson',
     value: 'America/Fort_Nelson',
   },
   {
-    label: '(GMT-07:00) America, Hermosillo',
+    label: 'America, Hermosillo',
     value: 'America/Hermosillo',
   },
   {
-    label: '(GMT-07:00) America, Los Angeles',
+    label: 'America, Los Angeles',
     value: 'America/Los_Angeles',
   },
   {
-    label: '(GMT-07:00) America, Mazatlan',
+    label: 'America, Mazatlan',
     value: 'America/Mazatlan',
   },
   {
-    label: '(GMT-07:00) America, Phoenix',
+    label: 'America, Phoenix',
     value: 'America/Phoenix',
   },
   {
-    label: '(GMT-07:00) America, Tijuana',
+    label: 'America, Tijuana',
     value: 'America/Tijuana',
   },
   {
-    label: '(GMT-07:00) America, Vancouver',
+    label: 'America, Vancouver',
     value: 'America/Vancouver',
   },
   {
-    label: '(GMT-07:00) America, Whitehorse',
+    label: 'America, Whitehorse',
     value: 'America/Whitehorse',
   },
   {
-    label: '(GMT-06:00) America, Bahia Banderas',
+    label: 'America, Bahia Banderas',
     value: 'America/Bahia_Banderas',
   },
   {
-    label: '(GMT-06:00) America, Belize',
+    label: 'America, Belize',
     value: 'America/Belize',
   },
   {
-    label: '(GMT-06:00) America, Boise',
+    label: 'America, Boise',
     value: 'America/Boise',
   },
   {
-    label: '(GMT-06:00) America, Cambridge Bay',
+    label: 'America, Cambridge Bay',
     value: 'America/Cambridge_Bay',
   },
   {
-    label: '(GMT-06:00) America, Chihuahua',
+    label: 'America, Chihuahua',
     value: 'America/Chihuahua',
   },
   {
-    label: '(GMT-06:00) America, Ciudad Juarez',
+    label: 'America, Ciudad Juarez',
     value: 'America/Ciudad_Juarez',
   },
   {
-    label: '(GMT-06:00) America, Costa Rica',
+    label: 'America, Costa Rica',
     value: 'America/Costa_Rica',
   },
   {
-    label: '(GMT-06:00) America, Denver',
+    label: 'America, Denver',
     value: 'America/Denver',
   },
   {
-    label: '(GMT-06:00) America, Edmonton',
+    label: 'America, Edmonton',
     value: 'America/Edmonton',
   },
   {
-    label: '(GMT-06:00) America, El Salvador',
+    label: 'America, El Salvador',
     value: 'America/El_Salvador',
   },
   {
-    label: '(GMT-06:00) America, Guatemala',
+    label: 'America, Guatemala',
     value: 'America/Guatemala',
   },
   {
-    label: '(GMT-06:00) America, Inuvik',
+    label: 'America, Inuvik',
     value: 'America/Inuvik',
   },
   {
-    label: '(GMT-06:00) America, Managua',
+    label: 'America, Managua',
     value: 'America/Managua',
   },
   {
-    label: '(GMT-06:00) America, Merida',
+    label: 'America, Merida',
     value: 'America/Merida',
   },
   {
-    label: '(GMT-06:00) America, Mexico City',
+    label: 'America, Mexico City',
     value: 'America/Mexico_City',
   },
   {
-    label: '(GMT-06:00) America, Monterrey',
+    label: 'America, Monterrey',
     value: 'America/Monterrey',
   },
   {
-    label: '(GMT-06:00) America, Regina',
+    label: 'America, Regina',
     value: 'America/Regina',
   },
   {
-    label: '(GMT-06:00) America, Swift Current',
+    label: 'America, Swift Current',
     value: 'America/Swift_Current',
   },
   {
-    label: '(GMT-06:00) America, Tegucigalpa',
+    label: 'America, Tegucigalpa',
     value: 'America/Tegucigalpa',
   },
   {
-    label: '(GMT-06:00) Pacific, Easter',
+    label: 'Pacific, Easter',
     value: 'Pacific/Easter',
   },
   {
-    label: '(GMT-06:00) Pacific, Galapagos',
+    label: 'Pacific, Galapagos',
     value: 'Pacific/Galapagos',
   },
   {
-    label: '(GMT-05:00) America, Atikokan',
+    label: 'America, Atikokan',
     value: 'America/Atikokan',
   },
   {
-    label: '(GMT-05:00) America, Bogota',
+    label: 'America, Bogota',
     value: 'America/Bogota',
   },
   {
-    label: '(GMT-05:00) America, Cancun',
+    label: 'America, Cancun',
     value: 'America/Cancun',
   },
   {
-    label: '(GMT-05:00) America, Cayman',
+    label: 'America, Cayman',
     value: 'America/Cayman',
   },
   {
-    label: '(GMT-05:00) America, Chicago',
+    label: 'America, Chicago',
     value: 'America/Chicago',
   },
   {
-    label: '(GMT-05:00) America, Eirunepe',
+    label: 'America, Eirunepe',
     value: 'America/Eirunepe',
   },
   {
-    label: '(GMT-05:00) America, Guayaquil',
+    label: 'America, Guayaquil',
     value: 'America/Guayaquil',
   },
   {
-    label: '(GMT-05:00) America, Indiana, Knox',
+    label: 'America, Indiana, Knox',
     value: 'America/Indiana/Knox',
   },
   {
-    label: '(GMT-05:00) America, Indiana, Tell City',
+    label: 'America, Indiana, Tell City',
     value: 'America/Indiana/Tell_City',
   },
   {
-    label: '(GMT-05:00) America, Jamaica',
+    label: 'America, Jamaica',
     value: 'America/Jamaica',
   },
   {
-    label: '(GMT-05:00) America, Lima',
+    label: 'America, Lima',
     value: 'America/Lima',
   },
   {
-    label: '(GMT-05:00) America, Matamoros',
+    label: 'America, Matamoros',
     value: 'America/Matamoros',
   },
   {
-    label: '(GMT-05:00) America, Menominee',
+    label: 'America, Menominee',
     value: 'America/Menominee',
   },
   {
-    label: '(GMT-05:00) America, North Dakota, Beulah',
+    label: 'America, North Dakota, Beulah',
     value: 'America/North_Dakota/Beulah',
   },
   {
-    label: '(GMT-05:00) America, North Dakota, Center',
+    label: 'America, North Dakota, Center',
     value: 'America/North_Dakota/Center',
   },
   {
-    label: '(GMT-05:00) America, North Dakota, New Salem',
+    label: 'America, North Dakota, New Salem',
     value: 'America/North_Dakota/New_Salem',
   },
   {
-    label: '(GMT-05:00) America, Ojinaga',
+    label: 'America, Ojinaga',
     value: 'America/Ojinaga',
   },
   {
-    label: '(GMT-05:00) America, Panama',
+    label: 'America, Panama',
     value: 'America/Panama',
   },
   {
-    label: '(GMT-05:00) America, Rankin Inlet',
+    label: 'America, Rankin Inlet',
     value: 'America/Rankin_Inlet',
   },
   {
-    label: '(GMT-05:00) America, Resolute',
+    label: 'America, Resolute',
     value: 'America/Resolute',
   },
   {
-    label: '(GMT-05:00) America, Rio Branco',
+    label: 'America, Rio Branco',
     value: 'America/Rio_Branco',
   },
   {
-    label: '(GMT-05:00) America, Winnipeg',
+    label: 'America, Winnipeg',
     value: 'America/Winnipeg',
   },
   {
-    label: '(GMT-04:00) America, Anguilla',
+    label: 'America, Anguilla',
     value: 'America/Anguilla',
   },
   {
-    label: '(GMT-04:00) America, Antigua',
+    label: 'America, Antigua',
     value: 'America/Antigua',
   },
   {
-    label: '(GMT-04:00) America, Aruba',
+    label: 'America, Aruba',
     value: 'America/Aruba',
   },
   {
-    label: '(GMT-04:00) America, Asuncion',
+    label: 'America, Asuncion',
     value: 'America/Asuncion',
   },
   {
-    label: '(GMT-04:00) America, Barbados',
+    label: 'America, Barbados',
     value: 'America/Barbados',
   },
   {
-    label: '(GMT-04:00) America, Blanc-Sablon',
+    label: 'America, Blanc-Sablon',
     value: 'America/Blanc-Sablon',
   },
   {
-    label: '(GMT-04:00) America, Boa Vista',
+    label: 'America, Boa Vista',
     value: 'America/Boa_Vista',
   },
   {
-    label: '(GMT-04:00) America, Campo Grande',
+    label: 'America, Campo Grande',
     value: 'America/Campo_Grande',
   },
   {
-    label: '(GMT-04:00) America, Caracas',
+    label: 'America, Caracas',
     value: 'America/Caracas',
   },
   {
-    label: '(GMT-04:00) America, Cuiaba',
+    label: 'America, Cuiaba',
     value: 'America/Cuiaba',
   },
   {
-    label: '(GMT-04:00) America, Curacao',
+    label: 'America, Curacao',
     value: 'America/Curacao',
   },
   {
-    label: '(GMT-04:00) America, Detroit',
+    label: 'America, Detroit',
     value: 'America/Detroit',
   },
   {
-    label: '(GMT-04:00) America, Dominica',
+    label: 'America, Dominica',
     value: 'America/Dominica',
   },
   {
-    label: '(GMT-04:00) America, Grand Turk',
+    label: 'America, Grand Turk',
     value: 'America/Grand_Turk',
   },
   {
-    label: '(GMT-04:00) America, Grenada',
+    label: 'America, Grenada',
     value: 'America/Grenada',
   },
   {
-    label: '(GMT-04:00) America, Guadeloupe',
+    label: 'America, Guadeloupe',
     value: 'America/Guadeloupe',
   },
   {
-    label: '(GMT-04:00) America, Guyana',
+    label: 'America, Guyana',
     value: 'America/Guyana',
   },
   {
-    label: '(GMT-04:00) America, Havana',
+    label: 'America, Havana',
     value: 'America/Havana',
   },
   {
-    label: '(GMT-04:00) America, Indiana, Indianapolis',
+    label: 'America, Indiana, Indianapolis',
     value: 'America/Indiana/Indianapolis',
   },
   {
-    label: '(GMT-04:00) America, Indiana, Marengo',
+    label: 'America, Indiana, Marengo',
     value: 'America/Indiana/Marengo',
   },
   {
-    label: '(GMT-04:00) America, Indiana, Petersburg',
+    label: 'America, Indiana, Petersburg',
     value: 'America/Indiana/Petersburg',
   },
   {
-    label: '(GMT-04:00) America, Indiana, Vevay',
+    label: 'America, Indiana, Vevay',
     value: 'America/Indiana/Vevay',
   },
   {
-    label: '(GMT-04:00) America, Indiana, Vincennes',
+    label: 'America, Indiana, Vincennes',
     value: 'America/Indiana/Vincennes',
   },
   {
-    label: '(GMT-04:00) America, Indiana, Winamac',
+    label: 'America, Indiana, Winamac',
     value: 'America/Indiana/Winamac',
   },
   {
-    label: '(GMT-04:00) America, Iqaluit',
+    label: 'America, Iqaluit',
     value: 'America/Iqaluit',
   },
   {
-    label: '(GMT-04:00) America, Kentucky, Louisville',
+    label: 'America, Kentucky, Louisville',
     value: 'America/Kentucky/Louisville',
   },
   {
-    label: '(GMT-04:00) America, Kentucky, Monticello',
+    label: 'America, Kentucky, Monticello',
     value: 'America/Kentucky/Monticello',
   },
   {
-    label: '(GMT-04:00) America, Kralendijk',
+    label: 'America, Kralendijk',
     value: 'America/Kralendijk',
   },
   {
-    label: '(GMT-04:00) America, La Paz',
+    label: 'America, La Paz',
     value: 'America/La_Paz',
   },
   {
-    label: '(GMT-04:00) America, Lower Princes',
+    label: 'America, Lower Princes',
     value: 'America/Lower_Princes',
   },
   {
-    label: '(GMT-04:00) America, Manaus',
+    label: 'America, Manaus',
     value: 'America/Manaus',
   },
   {
-    label: '(GMT-04:00) America, Marigot',
+    label: 'America, Marigot',
     value: 'America/Marigot',
   },
   {
-    label: '(GMT-04:00) America, Martinique',
+    label: 'America, Martinique',
     value: 'America/Martinique',
   },
   {
-    label: '(GMT-04:00) America, Montserrat',
+    label: 'America, Montserrat',
     value: 'America/Montserrat',
   },
   {
-    label: '(GMT-04:00) America, Nassau',
+    label: 'America, Nassau',
     value: 'America/Nassau',
   },
   {
-    label: '(GMT-04:00) America, New York',
+    label: 'America, New York',
     value: 'America/New_York',
   },
   {
-    label: '(GMT-04:00) America, Port of Spain',
+    label: 'America, Port of Spain',
     value: 'America/Port_of_Spain',
   },
   {
-    label: '(GMT-04:00) America, Port-au-Prince',
+    label: 'America, Port-au-Prince',
     value: 'America/Port-au-Prince',
   },
   {
-    label: '(GMT-04:00) America, Porto Velho',
+    label: 'America, Porto Velho',
     value: 'America/Porto_Velho',
   },
   {
-    label: '(GMT-04:00) America, Puerto Rico',
+    label: 'America, Puerto Rico',
     value: 'America/Puerto_Rico',
   },
   {
-    label: '(GMT-04:00) America, Santiago',
+    label: 'America, Santiago',
     value: 'America/Santiago',
   },
   {
-    label: '(GMT-04:00) America, Santo Domingo',
+    label: 'America, Santo Domingo',
     value: 'America/Santo_Domingo',
   },
   {
-    label: '(GMT-04:00) America, St. Barthelemy',
+    label: 'America, St. Barthelemy',
     value: 'America/St_Barthelemy',
   },
   {
-    label: '(GMT-04:00) America, St. Kitts',
+    label: 'America, St. Kitts',
     value: 'America/St_Kitts',
   },
   {
-    label: '(GMT-04:00) America, St. Lucia',
+    label: 'America, St. Lucia',
     value: 'America/St_Lucia',
   },
   {
-    label: '(GMT-04:00) America, St. Thomas',
+    label: 'America, St. Thomas',
     value: 'America/St_Thomas',
   },
   {
-    label: '(GMT-04:00) America, St. Vincent',
+    label: 'America, St. Vincent',
     value: 'America/St_Vincent',
   },
   {
-    label: '(GMT-04:00) America, Toronto',
+    label: 'America, Toronto',
     value: 'America/Toronto',
   },
   {
-    label: '(GMT-04:00) America, Tortola',
+    label: 'America, Tortola',
     value: 'America/Tortola',
   },
   {
-    label: '(GMT-03:00) America, Araguaina',
+    label: 'America, Araguaina',
     value: 'America/Araguaina',
   },
   {
-    label: '(GMT-03:00) America, Argentina, Buenos Aires',
+    label: 'America, Argentina, Buenos Aires',
     value: 'America/Argentina/Buenos_Aires',
   },
   {
-    label: '(GMT-03:00) America, Argentina, Catamarca',
+    label: 'America, Argentina, Catamarca',
     value: 'America/Argentina/Catamarca',
   },
   {
-    label: '(GMT-03:00) America, Argentina, Cordoba',
+    label: 'America, Argentina, Cordoba',
     value: 'America/Argentina/Cordoba',
   },
   {
-    label: '(GMT-03:00) America, Argentina, Jujuy',
+    label: 'America, Argentina, Jujuy',
     value: 'America/Argentina/Jujuy',
   },
   {
-    label: '(GMT-03:00) America, Argentina, La Rioja',
+    label: 'America, Argentina, La Rioja',
     value: 'America/Argentina/La_Rioja',
   },
   {
-    label: '(GMT-03:00) America, Argentina, Mendoza',
+    label: 'America, Argentina, Mendoza',
     value: 'America/Argentina/Mendoza',
   },
   {
-    label: '(GMT-03:00) America, Argentina, Rio Gallegos',
+    label: 'America, Argentina, Rio Gallegos',
     value: 'America/Argentina/Rio_Gallegos',
   },
   {
-    label: '(GMT-03:00) America, Argentina, Salta',
+    label: 'America, Argentina, Salta',
     value: 'America/Argentina/Salta',
   },
   {
-    label: '(GMT-03:00) America, Argentina, San Juan',
+    label: 'America, Argentina, San Juan',
     value: 'America/Argentina/San_Juan',
   },
   {
-    label: '(GMT-03:00) America, Argentina, San Luis',
+    label: 'America, Argentina, San Luis',
     value: 'America/Argentina/San_Luis',
   },
   {
-    label: '(GMT-03:00) America, Argentina, Tucuman',
+    label: 'America, Argentina, Tucuman',
     value: 'America/Argentina/Tucuman',
   },
   {
-    label: '(GMT-03:00) America, Argentina, Ushuaia',
+    label: 'America, Argentina, Ushuaia',
     value: 'America/Argentina/Ushuaia',
   },
   {
-    label: '(GMT-03:00) America, Bahia',
+    label: 'America, Bahia',
     value: 'America/Bahia',
   },
   {
-    label: '(GMT-03:00) America, Belem',
+    label: 'America, Belem',
     value: 'America/Belem',
   },
   {
-    label: '(GMT-03:00) America, Cayenne',
+    label: 'America, Cayenne',
     value: 'America/Cayenne',
   },
   {
-    label: '(GMT-03:00) America, Fortaleza',
+    label: 'America, Fortaleza',
     value: 'America/Fortaleza',
   },
   {
-    label: '(GMT-03:00) America, Glace Bay',
+    label: 'America, Glace Bay',
     value: 'America/Glace_Bay',
   },
   {
-    label: '(GMT-03:00) America, Goose Bay',
+    label: 'America, Goose Bay',
     value: 'America/Goose_Bay',
   },
   {
-    label: '(GMT-03:00) America, Halifax',
+    label: 'America, Halifax',
     value: 'America/Halifax',
   },
   {
-    label: '(GMT-03:00) America, Maceio',
+    label: 'America, Maceio',
     value: 'America/Maceio',
   },
   {
-    label: '(GMT-03:00) America, Moncton',
+    label: 'America, Moncton',
     value: 'America/Moncton',
   },
   {
-    label: '(GMT-03:00) America, Montevideo',
+    label: 'America, Montevideo',
     value: 'America/Montevideo',
   },
   {
-    label: '(GMT-03:00) America, Paramaribo',
+    label: 'America, Paramaribo',
     value: 'America/Paramaribo',
   },
   {
-    label: '(GMT-03:00) America, Punta Arenas',
+    label: 'America, Punta Arenas',
     value: 'America/Punta_Arenas',
   },
   {
-    label: '(GMT-03:00) America, Recife',
+    label: 'America, Recife',
     value: 'America/Recife',
   },
   {
-    label: '(GMT-03:00) America, Santarem',
+    label: 'America, Santarem',
     value: 'America/Santarem',
   },
   {
-    label: '(GMT-03:00) America, Sao Paulo',
+    label: 'America, Sao Paulo',
     value: 'America/Sao_Paulo',
   },
   {
-    label: '(GMT-03:00) America, Thule',
+    label: 'America, Thule',
     value: 'America/Thule',
   },
   {
-    label: '(GMT-03:00) Antarctica, Palmer',
+    label: 'Antarctica, Palmer',
     value: 'Antarctica/Palmer',
   },
   {
-    label: '(GMT-03:00) Antarctica, Rothera',
+    label: 'Antarctica, Rothera',
     value: 'Antarctica/Rothera',
   },
   {
-    label: '(GMT-03:00) Atlantic, Bermuda',
+    label: 'Atlantic, Bermuda',
     value: 'Atlantic/Bermuda',
   },
   {
-    label: '(GMT-03:00) Atlantic, Stanley',
+    label: 'Atlantic, Stanley',
     value: 'Atlantic/Stanley',
   },
   {
-    label: '(GMT-02:30) America, St. Johns',
+    label: 'America, St. Johns',
     value: 'America/St_Johns',
   },
   {
-    label: '(GMT-02:00) America, Miquelon',
+    label: 'America, Miquelon',
     value: 'America/Miquelon',
   },
   {
-    label: '(GMT-02:00) America, Noronha',
+    label: 'America, Noronha',
     value: 'America/Noronha',
   },
   {
-    label: '(GMT-02:00) America, Nuuk',
+    label: 'America, Nuuk',
     value: 'America/Nuuk',
   },
   {
-    label: '(GMT-02:00) Atlantic, South Georgia',
+    label: 'Atlantic, South Georgia',
     value: 'Atlantic/South_Georgia',
   },
   {
-    label: '(GMT-01:00) Atlantic, Cape Verde',
+    label: 'Atlantic, Cape Verde',
     value: 'Atlantic/Cape_Verde',
   },
   {
-    label: '(GMT) Africa, Abidjan',
+    label: 'Africa, Abidjan',
     value: 'Africa/Abidjan',
   },
   {
-    label: '(GMT) Africa, Accra',
+    label: 'Africa, Accra',
     value: 'Africa/Accra',
   },
   {
-    label: '(GMT) Africa, Bamako',
+    label: 'Africa, Bamako',
     value: 'Africa/Bamako',
   },
   {
-    label: '(GMT) Africa, Banjul',
+    label: 'Africa, Banjul',
     value: 'Africa/Banjul',
   },
   {
-    label: '(GMT) Africa, Bissau',
+    label: 'Africa, Bissau',
     value: 'Africa/Bissau',
   },
   {
-    label: '(GMT) Africa, Conakry',
+    label: 'Africa, Conakry',
     value: 'Africa/Conakry',
   },
   {
-    label: '(GMT) Africa, Dakar',
+    label: 'Africa, Dakar',
     value: 'Africa/Dakar',
   },
   {
-    label: '(GMT) Africa, Freetown',
+    label: 'Africa, Freetown',
     value: 'Africa/Freetown',
   },
   {
-    label: '(GMT) Africa, Lome',
+    label: 'Africa, Lome',
     value: 'Africa/Lome',
   },
   {
-    label: '(GMT) Africa, Monrovia',
+    label: 'Africa, Monrovia',
     value: 'Africa/Monrovia',
   },
   {
-    label: '(GMT) Africa, Nouakchott',
+    label: 'Africa, Nouakchott',
     value: 'Africa/Nouakchott',
   },
   {
-    label: '(GMT) Africa, Ouagadougou',
+    label: 'Africa, Ouagadougou',
     value: 'Africa/Ouagadougou',
   },
   {
-    label: '(GMT) Africa, Sao Tome',
+    label: 'Africa, Sao Tome',
     value: 'Africa/Sao_Tome',
   },
   {
-    label: '(GMT) America, Danmarkshavn',
+    label: 'America, Danmarkshavn',
     value: 'America/Danmarkshavn',
   },
   {
-    label: '(GMT) America, Scoresbysund',
+    label: 'America, Scoresbysund',
     value: 'America/Scoresbysund',
   },
   {
-    label: '(GMT) Atlantic, Azores',
+    label: 'Atlantic, Azores',
     value: 'Atlantic/Azores',
   },
   {
-    label: '(GMT) Atlantic, Reykjavik',
+    label: 'Atlantic, Reykjavik',
     value: 'Atlantic/Reykjavik',
   },
   {
-    label: '(GMT) Atlantic, St. Helena',
+    label: 'Atlantic, St. Helena',
     value: 'Atlantic/St_Helena',
   },
   {
-    label: '(GMT) UTC',
+    label: 'UTC',
     value: 'UTC',
   },
   {
-    label: '(GMT+01:00) Africa, Algiers',
+    label: 'Africa, Algiers',
     value: 'Africa/Algiers',
   },
   {
-    label: '(GMT+01:00) Africa, Bangui',
+    label: 'Africa, Bangui',
     value: 'Africa/Bangui',
   },
   {
-    label: '(GMT+01:00) Africa, Brazzaville',
+    label: 'Africa, Brazzaville',
     value: 'Africa/Brazzaville',
   },
   {
-    label: '(GMT+01:00) Africa, Casablanca',
+    label: 'Africa, Casablanca',
     value: 'Africa/Casablanca',
   },
   {
-    label: '(GMT+01:00) Africa, Douala',
+    label: 'Africa, Douala',
     value: 'Africa/Douala',
   },
   {
-    label: '(GMT+01:00) Africa, El Aaiun',
+    label: 'Africa, El Aaiun',
     value: 'Africa/El_Aaiun',
   },
   {
-    label: '(GMT+01:00) Africa, Kinshasa',
+    label: 'Africa, Kinshasa',
     value: 'Africa/Kinshasa',
   },
   {
-    label: '(GMT+01:00) Africa, Lagos',
+    label: 'Africa, Lagos',
     value: 'Africa/Lagos',
   },
   {
-    label: '(GMT+01:00) Africa, Libreville',
+    label: 'Africa, Libreville',
     value: 'Africa/Libreville',
   },
   {
-    label: '(GMT+01:00) Africa, Luanda',
+    label: 'Africa, Luanda',
     value: 'Africa/Luanda',
   },
   {
-    label: '(GMT+01:00) Africa, Malabo',
+    label: 'Africa, Malabo',
     value: 'Africa/Malabo',
   },
   {
-    label: '(GMT+01:00) Africa, Ndjamena',
+    label: 'Africa, Ndjamena',
     value: 'Africa/Ndjamena',
   },
   {
-    label: '(GMT+01:00) Africa, Niamey',
+    label: 'Africa, Niamey',
     value: 'Africa/Niamey',
   },
   {
-    label: '(GMT+01:00) Africa, Porto-Novo',
+    label: 'Africa, Porto-Novo',
     value: 'Africa/Porto-Novo',
   },
   {
-    label: '(GMT+01:00) Africa, Tunis',
+    label: 'Africa, Tunis',
     value: 'Africa/Tunis',
   },
   {
-    label: '(GMT+01:00) Atlantic, Canary',
+    label: 'Atlantic, Canary',
     value: 'Atlantic/Canary',
   },
   {
-    label: '(GMT+01:00) Atlantic, Faroe',
+    label: 'Atlantic, Faroe',
     value: 'Atlantic/Faroe',
   },
   {
-    label: '(GMT+01:00) Atlantic, Madeira',
+    label: 'Atlantic, Madeira',
     value: 'Atlantic/Madeira',
   },
   {
-    label: '(GMT+01:00) Europe, Dublin',
+    label: 'Europe, Dublin',
     value: 'Europe/Dublin',
   },
   {
-    label: '(GMT+01:00) Europe, Guernsey',
+    label: 'Europe, Guernsey',
     value: 'Europe/Guernsey',
   },
   {
-    label: '(GMT+01:00) Europe, Isle of Man',
+    label: 'Europe, Isle of Man',
     value: 'Europe/Isle_of_Man',
   },
   {
-    label: '(GMT+01:00) Europe, Jersey',
+    label: 'Europe, Jersey',
     value: 'Europe/Jersey',
   },
   {
-    label: '(GMT+01:00) Europe, Lisbon',
+    label: 'Europe, Lisbon',
     value: 'Europe/Lisbon',
   },
   {
-    label: '(GMT+01:00) Europe, London',
+    label: 'Europe, London',
     value: 'Europe/London',
   },
   {
-    label: '(GMT+02:00) Africa, Blantyre',
+    label: 'Africa, Blantyre',
     value: 'Africa/Blantyre',
   },
   {
-    label: '(GMT+02:00) Africa, Bujumbura',
+    label: 'Africa, Bujumbura',
     value: 'Africa/Bujumbura',
   },
   {
-    label: '(GMT+02:00) Africa, Ceuta',
+    label: 'Africa, Ceuta',
     value: 'Africa/Ceuta',
   },
   {
-    label: '(GMT+02:00) Africa, Gaborone',
+    label: 'Africa, Gaborone',
     value: 'Africa/Gaborone',
   },
   {
-    label: '(GMT+02:00) Africa, Harare',
+    label: 'Africa, Harare',
     value: 'Africa/Harare',
   },
   {
-    label: '(GMT+02:00) Africa, Johannesburg',
+    label: 'Africa, Johannesburg',
     value: 'Africa/Johannesburg',
   },
   {
-    label: '(GMT+02:00) Africa, Juba',
+    label: 'Africa, Juba',
     value: 'Africa/Juba',
   },
   {
-    label: '(GMT+02:00) Africa, Khartoum',
+    label: 'Africa, Khartoum',
     value: 'Africa/Khartoum',
   },
   {
-    label: '(GMT+02:00) Africa, Kigali',
+    label: 'Africa, Kigali',
     value: 'Africa/Kigali',
   },
   {
-    label: '(GMT+02:00) Africa, Lubumbashi',
+    label: 'Africa, Lubumbashi',
     value: 'Africa/Lubumbashi',
   },
   {
-    label: '(GMT+02:00) Africa, Lusaka',
+    label: 'Africa, Lusaka',
     value: 'Africa/Lusaka',
   },
   {
-    label: '(GMT+02:00) Africa, Maputo',
+    label: 'Africa, Maputo',
     value: 'Africa/Maputo',
   },
   {
-    label: '(GMT+02:00) Africa, Maseru',
+    label: 'Africa, Maseru',
     value: 'Africa/Maseru',
   },
   {
-    label: '(GMT+02:00) Africa, Mbabane',
+    label: 'Africa, Mbabane',
     value: 'Africa/Mbabane',
   },
   {
-    label: '(GMT+02:00) Africa, Tripoli',
+    label: 'Africa, Tripoli',
     value: 'Africa/Tripoli',
   },
   {
-    label: '(GMT+02:00) Africa, Windhoek',
+    label: 'Africa, Windhoek',
     value: 'Africa/Windhoek',
   },
   {
-    label: '(GMT+02:00) Antarctica, Troll',
+    label: 'Antarctica, Troll',
     value: 'Antarctica/Troll',
   },
   {
-    label: '(GMT+02:00) Arctic, Longyearbyen',
+    label: 'Arctic, Longyearbyen',
     value: 'Arctic/Longyearbyen',
   },
   {
-    label: '(GMT+02:00) Europe, Amsterdam',
+    label: 'Europe, Amsterdam',
     value: 'Europe/Amsterdam',
   },
   {
-    label: '(GMT+02:00) Europe, Andorra',
+    label: 'Europe, Andorra',
     value: 'Europe/Andorra',
   },
   {
-    label: '(GMT+02:00) Europe, Belgrade',
+    label: 'Europe, Belgrade',
     value: 'Europe/Belgrade',
   },
   {
-    label: '(GMT+02:00) Europe, Berlin',
+    label: 'Europe, Berlin',
     value: 'Europe/Berlin',
   },
   {
-    label: '(GMT+02:00) Europe, Bratislava',
+    label: 'Europe, Bratislava',
     value: 'Europe/Bratislava',
   },
   {
-    label: '(GMT+02:00) Europe, Brussels',
+    label: 'Europe, Brussels',
     value: 'Europe/Brussels',
   },
   {
-    label: '(GMT+02:00) Europe, Budapest',
+    label: 'Europe, Budapest',
     value: 'Europe/Budapest',
   },
   {
-    label: '(GMT+02:00) Europe, Busingen',
+    label: 'Europe, Busingen',
     value: 'Europe/Busingen',
   },
   {
-    label: '(GMT+02:00) Europe, Copenhagen',
+    label: 'Europe, Copenhagen',
     value: 'Europe/Copenhagen',
   },
   {
-    label: '(GMT+02:00) Europe, Gibraltar',
+    label: 'Europe, Gibraltar',
     value: 'Europe/Gibraltar',
   },
   {
-    label: '(GMT+02:00) Europe, Kaliningrad',
+    label: 'Europe, Kaliningrad',
     value: 'Europe/Kaliningrad',
   },
   {
-    label: '(GMT+02:00) Europe, Ljubljana',
+    label: 'Europe, Ljubljana',
     value: 'Europe/Ljubljana',
   },
   {
-    label: '(GMT+02:00) Europe, Luxembourg',
+    label: 'Europe, Luxembourg',
     value: 'Europe/Luxembourg',
   },
   {
-    label: '(GMT+02:00) Europe, Madrid',
+    label: 'Europe, Madrid',
     value: 'Europe/Madrid',
   },
   {
-    label: '(GMT+02:00) Europe, Malta',
+    label: 'Europe, Malta',
     value: 'Europe/Malta',
   },
   {
-    label: '(GMT+02:00) Europe, Monaco',
+    label: 'Europe, Monaco',
     value: 'Europe/Monaco',
   },
   {
-    label: '(GMT+02:00) Europe, Oslo',
+    label: 'Europe, Oslo',
     value: 'Europe/Oslo',
   },
   {
-    label: '(GMT+02:00) Europe, Paris',
+    label: 'Europe, Paris',
     value: 'Europe/Paris',
   },
   {
-    label: '(GMT+02:00) Europe, Podgorica',
+    label: 'Europe, Podgorica',
     value: 'Europe/Podgorica',
   },
   {
-    label: '(GMT+02:00) Europe, Prague',
+    label: 'Europe, Prague',
     value: 'Europe/Prague',
   },
   {
-    label: '(GMT+02:00) Europe, Rome',
+    label: 'Europe, Rome',
     value: 'Europe/Rome',
   },
   {
-    label: '(GMT+02:00) Europe, San Marino',
+    label: 'Europe, San Marino',
     value: 'Europe/San_Marino',
   },
   {
-    label: '(GMT+02:00) Europe, Sarajevo',
+    label: 'Europe, Sarajevo',
     value: 'Europe/Sarajevo',
   },
   {
-    label: '(GMT+02:00) Europe, Skopje',
+    label: 'Europe, Skopje',
     value: 'Europe/Skopje',
   },
   {
-    label: '(GMT+02:00) Europe, Stockholm',
+    label: 'Europe, Stockholm',
     value: 'Europe/Stockholm',
   },
   {
-    label: '(GMT+02:00) Europe, Tirane',
+    label: 'Europe, Tirane',
     value: 'Europe/Tirane',
   },
   {
-    label: '(GMT+02:00) Europe, Vaduz',
+    label: 'Europe, Vaduz',
     value: 'Europe/Vaduz',
   },
   {
-    label: '(GMT+02:00) Europe, Vatican',
+    label: 'Europe, Vatican',
     value: 'Europe/Vatican',
   },
   {
-    label: '(GMT+02:00) Europe, Vienna',
+    label: 'Europe, Vienna',
     value: 'Europe/Vienna',
   },
   {
-    label: '(GMT+02:00) Europe, Warsaw',
+    label: 'Europe, Warsaw',
     value: 'Europe/Warsaw',
   },
   {
-    label: '(GMT+02:00) Europe, Zagreb',
+    label: 'Europe, Zagreb',
     value: 'Europe/Zagreb',
   },
   {
-    label: '(GMT+02:00) Europe, Zurich',
+    label: 'Europe, Zurich',
     value: 'Europe/Zurich',
   },
   {
-    label: '(GMT+03:00) Africa, Addis Ababa',
+    label: 'Africa, Addis Ababa',
     value: 'Africa/Addis_Ababa',
   },
   {
-    label: '(GMT+03:00) Africa, Asmara',
+    label: 'Africa, Asmara',
     value: 'Africa/Asmara',
   },
   {
-    label: '(GMT+03:00) Africa, Cairo',
+    label: 'Africa, Cairo',
     value: 'Africa/Cairo',
   },
   {
-    label: '(GMT+03:00) Africa, Dar es Salaam',
+    label: 'Africa, Dar es Salaam',
     value: 'Africa/Dar_es_Salaam',
   },
   {
-    label: '(GMT+03:00) Africa, Djibouti',
+    label: 'Africa, Djibouti',
     value: 'Africa/Djibouti',
   },
   {
-    label: '(GMT+03:00) Africa, Kampala',
+    label: 'Africa, Kampala',
     value: 'Africa/Kampala',
   },
   {
-    label: '(GMT+03:00) Africa, Mogadishu',
+    label: 'Africa, Mogadishu',
     value: 'Africa/Mogadishu',
   },
   {
-    label: '(GMT+03:00) Africa, Nairobi',
+    label: 'Africa, Nairobi',
     value: 'Africa/Nairobi',
   },
   {
-    label: '(GMT+03:00) Antarctica, Syowa',
+    label: 'Antarctica, Syowa',
     value: 'Antarctica/Syowa',
   },
   {
-    label: '(GMT+03:00) Asia, Aden',
+    label: 'Asia, Aden',
     value: 'Asia/Aden',
   },
   {
-    label: '(GMT+03:00) Asia, Amman',
+    label: 'Asia, Amman',
     value: 'Asia/Amman',
   },
   {
-    label: '(GMT+03:00) Asia, Baghdad',
+    label: 'Asia, Baghdad',
     value: 'Asia/Baghdad',
   },
   {
-    label: '(GMT+03:00) Asia, Bahrain',
+    label: 'Asia, Bahrain',
     value: 'Asia/Bahrain',
   },
   {
-    label: '(GMT+03:00) Asia, Beirut',
+    label: 'Asia, Beirut',
     value: 'Asia/Beirut',
   },
   {
-    label: '(GMT+03:00) Asia, Damascus',
+    label: 'Asia, Damascus',
     value: 'Asia/Damascus',
   },
   {
-    label: '(GMT+03:00) Asia, Famagusta',
+    label: 'Asia, Famagusta',
     value: 'Asia/Famagusta',
   },
   {
-    label: '(GMT+03:00) Asia, Gaza',
+    label: 'Asia, Gaza',
     value: 'Asia/Gaza',
   },
   {
-    label: '(GMT+03:00) Asia, Hebron',
+    label: 'Asia, Hebron',
     value: 'Asia/Hebron',
   },
   {
-    label: '(GMT+03:00) Asia, Jerusalem',
+    label: 'Asia, Jerusalem',
     value: 'Asia/Jerusalem',
   },
   {
-    label: '(GMT+03:00) Asia, Kuwait',
+    label: 'Asia, Kuwait',
     value: 'Asia/Kuwait',
   },
   {
-    label: '(GMT+03:00) Asia, Nicosia',
+    label: 'Asia, Nicosia',
     value: 'Asia/Nicosia',
   },
   {
-    label: '(GMT+03:00) Asia, Qatar',
+    label: 'Asia, Qatar',
     value: 'Asia/Qatar',
   },
   {
-    label: '(GMT+03:00) Asia, Riyadh',
+    label: 'Asia, Riyadh',
     value: 'Asia/Riyadh',
   },
   {
-    label: '(GMT+03:00) Europe, Athens',
+    label: 'Europe, Athens',
     value: 'Europe/Athens',
   },
   {
-    label: '(GMT+03:00) Europe, Bucharest',
+    label: 'Europe, Bucharest',
     value: 'Europe/Bucharest',
   },
   {
-    label: '(GMT+03:00) Europe, Chisinau',
+    label: 'Europe, Chisinau',
     value: 'Europe/Chisinau',
   },
   {
-    label: '(GMT+03:00) Europe, Helsinki',
+    label: 'Europe, Helsinki',
     value: 'Europe/Helsinki',
   },
   {
-    label: '(GMT+03:00) Europe, Istanbul',
+    label: 'Europe, Istanbul',
     value: 'Europe/Istanbul',
   },
   {
-    label: '(GMT+03:00) Europe, Kirov',
+    label: 'Europe, Kirov',
     value: 'Europe/Kirov',
   },
   {
-    label: '(GMT+03:00) Europe, Kyiv',
+    label: 'Europe, Kyiv',
     value: 'Europe/Kyiv',
   },
   {
-    label: '(GMT+03:00) Europe, Mariehamn',
+    label: 'Europe, Mariehamn',
     value: 'Europe/Mariehamn',
   },
   {
-    label: '(GMT+03:00) Europe, Minsk',
+    label: 'Europe, Minsk',
     value: 'Europe/Minsk',
   },
   {
-    label: '(GMT+03:00) Europe, Moscow',
+    label: 'Europe, Moscow',
     value: 'Europe/Moscow',
   },
   {
-    label: '(GMT+03:00) Europe, Riga',
+    label: 'Europe, Riga',
     value: 'Europe/Riga',
   },
   {
-    label: '(GMT+03:00) Europe, Simferopol',
+    label: 'Europe, Simferopol',
     value: 'Europe/Simferopol',
   },
   {
-    label: '(GMT+03:00) Europe, Sofia',
+    label: 'Europe, Sofia',
     value: 'Europe/Sofia',
   },
   {
-    label: '(GMT+03:00) Europe, Tallinn',
+    label: 'Europe, Tallinn',
     value: 'Europe/Tallinn',
   },
   {
-    label: '(GMT+03:00) Europe, Vilnius',
+    label: 'Europe, Vilnius',
     value: 'Europe/Vilnius',
   },
   {
-    label: '(GMT+03:00) Europe, Volgograd',
+    label: 'Europe, Volgograd',
     value: 'Europe/Volgograd',
   },
   {
-    label: '(GMT+03:00) Indian, Antananarivo',
+    label: 'Indian, Antananarivo',
     value: 'Indian/Antananarivo',
   },
   {
-    label: '(GMT+03:00) Indian, Comoro',
+    label: 'Indian, Comoro',
     value: 'Indian/Comoro',
   },
   {
-    label: '(GMT+03:00) Indian, Mayotte',
+    label: 'Indian, Mayotte',
     value: 'Indian/Mayotte',
   },
   {
-    label: '(GMT+03:30) Asia, Tehran',
+    label: 'Asia, Tehran',
     value: 'Asia/Tehran',
   },
   {
-    label: '(GMT+04:00) Asia, Baku',
+    label: 'Asia, Baku',
     value: 'Asia/Baku',
   },
   {
-    label: '(GMT+04:00) Asia, Dubai',
+    label: 'Asia, Dubai',
     value: 'Asia/Dubai',
   },
   {
-    label: '(GMT+04:00) Asia, Muscat',
+    label: 'Asia, Muscat',
     value: 'Asia/Muscat',
   },
   {
-    label: '(GMT+04:00) Asia, Tbilisi',
+    label: 'Asia, Tbilisi',
     value: 'Asia/Tbilisi',
   },
   {
-    label: '(GMT+04:00) Asia, Yerevan',
+    label: 'Asia, Yerevan',
     value: 'Asia/Yerevan',
   },
   {
-    label: '(GMT+04:00) Europe, Astrakhan',
+    label: 'Europe, Astrakhan',
     value: 'Europe/Astrakhan',
   },
   {
-    label: '(GMT+04:00) Europe, Samara',
+    label: 'Europe, Samara',
     value: 'Europe/Samara',
   },
   {
-    label: '(GMT+04:00) Europe, Saratov',
+    label: 'Europe, Saratov',
     value: 'Europe/Saratov',
   },
   {
-    label: '(GMT+04:00) Europe, Ulyanovsk',
+    label: 'Europe, Ulyanovsk',
     value: 'Europe/Ulyanovsk',
   },
   {
-    label: '(GMT+04:00) Indian, Mahe',
+    label: 'Indian, Mahe',
     value: 'Indian/Mahe',
   },
   {
-    label: '(GMT+04:00) Indian, Mauritius',
+    label: 'Indian, Mauritius',
     value: 'Indian/Mauritius',
   },
   {
-    label: '(GMT+04:00) Indian, Reunion',
+    label: 'Indian, Reunion',
     value: 'Indian/Reunion',
   },
   {
-    label: '(GMT+04:30) Asia, Kabul',
+    label: 'Asia, Kabul',
     value: 'Asia/Kabul',
   },
   {
-    label: '(GMT+05:00) Antarctica, Mawson',
+    label: 'Antarctica, Mawson',
     value: 'Antarctica/Mawson',
   },
   {
-    label: '(GMT+05:00) Asia, Aqtau',
+    label: 'Asia, Aqtau',
     value: 'Asia/Aqtau',
   },
   {
-    label: '(GMT+05:00) Asia, Aqtobe',
+    label: 'Asia, Aqtobe',
     value: 'Asia/Aqtobe',
   },
   {
-    label: '(GMT+05:00) Asia, Ashgabat',
+    label: 'Asia, Ashgabat',
     value: 'Asia/Ashgabat',
   },
   {
-    label: '(GMT+05:00) Asia, Atyrau',
+    label: 'Asia, Atyrau',
     value: 'Asia/Atyrau',
   },
   {
-    label: '(GMT+05:00) Asia, Dushanbe',
+    label: 'Asia, Dushanbe',
     value: 'Asia/Dushanbe',
   },
   {
-    label: '(GMT+05:00) Asia, Karachi',
+    label: 'Asia, Karachi',
     value: 'Asia/Karachi',
   },
   {
-    label: '(GMT+05:00) Asia, Oral',
+    label: 'Asia, Oral',
     value: 'Asia/Oral',
   },
   {
-    label: '(GMT+05:00) Asia, Qyzylorda',
+    label: 'Asia, Qyzylorda',
     value: 'Asia/Qyzylorda',
   },
   {
-    label: '(GMT+05:00) Asia, Samarkand',
+    label: 'Asia, Samarkand',
     value: 'Asia/Samarkand',
   },
   {
-    label: '(GMT+05:00) Asia, Tashkent',
+    label: 'Asia, Tashkent',
     value: 'Asia/Tashkent',
   },
   {
-    label: '(GMT+05:00) Asia, Yekaterinburg',
+    label: 'Asia, Yekaterinburg',
     value: 'Asia/Yekaterinburg',
   },
   {
-    label: '(GMT+05:00) Indian, Kerguelen',
+    label: 'Indian, Kerguelen',
     value: 'Indian/Kerguelen',
   },
   {
-    label: '(GMT+05:00) Indian, Maldives',
+    label: 'Indian, Maldives',
     value: 'Indian/Maldives',
   },
   {
-    label: '(GMT+05:30) Asia, Colombo',
+    label: 'Asia, Colombo',
     value: 'Asia/Colombo',
   },
   {
-    label: '(GMT+05:30) Asia, Kolkata',
+    label: 'Asia, Kolkata',
     value: 'Asia/Kolkata',
   },
   {
-    label: '(GMT+05:45) Asia, Kathmandu',
+    label: 'Asia, Kathmandu',
     value: 'Asia/Kathmandu',
   },
   {
-    label: '(GMT+06:00) Antarctica, Vostok',
+    label: 'Antarctica, Vostok',
     value: 'Antarctica/Vostok',
   },
   {
-    label: '(GMT+06:00) Asia, Almaty',
+    label: 'Asia, Almaty',
     value: 'Asia/Almaty',
   },
   {
-    label: '(GMT+06:00) Asia, Bishkek',
+    label: 'Asia, Bishkek',
     value: 'Asia/Bishkek',
   },
   {
-    label: '(GMT+06:00) Asia, Dhaka',
+    label: 'Asia, Dhaka',
     value: 'Asia/Dhaka',
   },
   {
-    label: '(GMT+06:00) Asia, Omsk',
+    label: 'Asia, Omsk',
     value: 'Asia/Omsk',
   },
   {
-    label: '(GMT+06:00) Asia, Qostanay',
+    label: 'Asia, Qostanay',
     value: 'Asia/Qostanay',
   },
   {
-    label: '(GMT+06:00) Asia, Thimphu',
+    label: 'Asia, Thimphu',
     value: 'Asia/Thimphu',
   },
   {
-    label: '(GMT+06:00) Asia, Urumqi',
+    label: 'Asia, Urumqi',
     value: 'Asia/Urumqi',
   },
   {
-    label: '(GMT+06:00) Indian, Chagos',
+    label: 'Indian, Chagos',
     value: 'Indian/Chagos',
   },
   {
-    label: '(GMT+06:30) Asia, Yangon',
+    label: 'Asia, Yangon',
     value: 'Asia/Yangon',
   },
   {
-    label: '(GMT+06:30) Indian, Cocos',
+    label: 'Indian, Cocos',
     value: 'Indian/Cocos',
   },
   {
-    label: '(GMT+07:00) Antarctica, Davis',
+    label: 'Antarctica, Davis',
     value: 'Antarctica/Davis',
   },
   {
-    label: '(GMT+07:00) Asia, Bangkok',
+    label: 'Asia, Bangkok',
     value: 'Asia/Bangkok',
   },
   {
-    label: '(GMT+07:00) Asia, Barnaul',
+    label: 'Asia, Barnaul',
     value: 'Asia/Barnaul',
   },
   {
-    label: '(GMT+07:00) Asia, Ho Chi Minh',
+    label: 'Asia, Ho Chi Minh',
     value: 'Asia/Ho_Chi_Minh',
   },
   {
-    label: '(GMT+07:00) Asia, Hovd',
+    label: 'Asia, Hovd',
     value: 'Asia/Hovd',
   },
   {
-    label: '(GMT+07:00) Asia, Jakarta',
+    label: 'Asia, Jakarta',
     value: 'Asia/Jakarta',
   },
   {
-    label: '(GMT+07:00) Asia, Krasnoyarsk',
+    label: 'Asia, Krasnoyarsk',
     value: 'Asia/Krasnoyarsk',
   },
   {
-    label: '(GMT+07:00) Asia, Novokuznetsk',
+    label: 'Asia, Novokuznetsk',
     value: 'Asia/Novokuznetsk',
   },
   {
-    label: '(GMT+07:00) Asia, Novosibirsk',
+    label: 'Asia, Novosibirsk',
     value: 'Asia/Novosibirsk',
   },
   {
-    label: '(GMT+07:00) Asia, Phnom Penh',
+    label: 'Asia, Phnom Penh',
     value: 'Asia/Phnom_Penh',
   },
   {
-    label: '(GMT+07:00) Asia, Pontianak',
+    label: 'Asia, Pontianak',
     value: 'Asia/Pontianak',
   },
   {
-    label: '(GMT+07:00) Asia, Tomsk',
+    label: 'Asia, Tomsk',
     value: 'Asia/Tomsk',
   },
   {
-    label: '(GMT+07:00) Asia, Vientiane',
+    label: 'Asia, Vientiane',
     value: 'Asia/Vientiane',
   },
   {
-    label: '(GMT+07:00) Indian, Christmas',
+    label: 'Indian, Christmas',
     value: 'Indian/Christmas',
   },
   {
-    label: '(GMT+08:00) Asia, Brunei',
+    label: 'Asia, Brunei',
     value: 'Asia/Brunei',
   },
   {
-    label: '(GMT+08:00) Asia, Choibalsan',
+    label: 'Asia, Choibalsan',
     value: 'Asia/Choibalsan',
   },
   {
-    label: '(GMT+08:00) Asia, Hong Kong',
+    label: 'Asia, Hong Kong',
     value: 'Asia/Hong_Kong',
   },
   {
-    label: '(GMT+08:00) Asia, Irkutsk',
+    label: 'Asia, Irkutsk',
     value: 'Asia/Irkutsk',
   },
   {
-    label: '(GMT+08:00) Asia, Kuala Lumpur',
+    label: 'Asia, Kuala Lumpur',
     value: 'Asia/Kuala_Lumpur',
   },
   {
-    label: '(GMT+08:00) Asia, Kuching',
+    label: 'Asia, Kuching',
     value: 'Asia/Kuching',
   },
   {
-    label: '(GMT+08:00) Asia, Macau',
+    label: 'Asia, Macau',
     value: 'Asia/Macau',
   },
   {
-    label: '(GMT+08:00) Asia, Makassar',
+    label: 'Asia, Makassar',
     value: 'Asia/Makassar',
   },
   {
-    label: '(GMT+08:00) Asia, Manila',
+    label: 'Asia, Manila',
     value: 'Asia/Manila',
   },
   {
-    label: '(GMT+08:00) Asia, Shanghai',
+    label: 'Asia, Shanghai',
     value: 'Asia/Shanghai',
   },
   {
-    label: '(GMT+08:00) Asia, Singapore',
+    label: 'Asia, Singapore',
     value: 'Asia/Singapore',
   },
   {
-    label: '(GMT+08:00) Asia, Taipei',
+    label: 'Asia, Taipei',
     value: 'Asia/Taipei',
   },
   {
-    label: '(GMT+08:00) Asia, Ulaanbaatar',
+    label: 'Asia, Ulaanbaatar',
     value: 'Asia/Ulaanbaatar',
   },
   {
-    label: '(GMT+08:00) Australia, Perth',
+    label: 'Australia, Perth',
     value: 'Australia/Perth',
   },
   {
-    label: '(GMT+08:45) Australia, Eucla',
+    label: 'Australia, Eucla',
     value: 'Australia/Eucla',
   },
   {
-    label: '(GMT+09:00) Asia, Chita',
+    label: 'Asia, Chita',
     value: 'Asia/Chita',
   },
   {
-    label: '(GMT+09:00) Asia, Dili',
+    label: 'Asia, Dili',
     value: 'Asia/Dili',
   },
   {
-    label: '(GMT+09:00) Asia, Jayapura',
+    label: 'Asia, Jayapura',
     value: 'Asia/Jayapura',
   },
   {
-    label: '(GMT+09:00) Asia, Khandyga',
+    label: 'Asia, Khandyga',
     value: 'Asia/Khandyga',
   },
   {
-    label: '(GMT+09:00) Asia, Pyongyang',
+    label: 'Asia, Pyongyang',
     value: 'Asia/Pyongyang',
   },
   {
-    label: '(GMT+09:00) Asia, Seoul',
+    label: 'Asia, Seoul',
     value: 'Asia/Seoul',
   },
   {
-    label: '(GMT+09:00) Asia, Tokyo',
+    label: 'Asia, Tokyo',
     value: 'Asia/Tokyo',
   },
   {
-    label: '(GMT+09:00) Asia, Yakutsk',
+    label: 'Asia, Yakutsk',
     value: 'Asia/Yakutsk',
   },
   {
-    label: '(GMT+09:00) Pacific, Palau',
+    label: 'Pacific, Palau',
     value: 'Pacific/Palau',
   },
   {
-    label: '(GMT+09:30) Australia, Adelaide',
+    label: 'Australia, Adelaide',
     value: 'Australia/Adelaide',
   },
   {
-    label: '(GMT+09:30) Australia, Broken Hill',
+    label: 'Australia, Broken Hill',
     value: 'Australia/Broken_Hill',
   },
   {
-    label: '(GMT+09:30) Australia, Darwin',
+    label: 'Australia, Darwin',
     value: 'Australia/Darwin',
   },
   {
-    label: '(GMT+10:00) Antarctica, DumontDUrville',
+    label: 'Antarctica, DumontDUrville',
     value: 'Antarctica/DumontDUrville',
   },
   {
-    label: '(GMT+10:00) Antarctica, Macquarie',
+    label: 'Antarctica, Macquarie',
     value: 'Antarctica/Macquarie',
   },
   {
-    label: '(GMT+10:00) Asia, Ust-Nera',
+    label: 'Asia, Ust-Nera',
     value: 'Asia/Ust-Nera',
   },
   {
-    label: '(GMT+10:00) Asia, Vladivostok',
+    label: 'Asia, Vladivostok',
     value: 'Asia/Vladivostok',
   },
   {
-    label: '(GMT+10:00) Australia, Brisbane',
+    label: 'Australia, Brisbane',
     value: 'Australia/Brisbane',
   },
   {
-    label: '(GMT+10:00) Australia, Hobart',
+    label: 'Australia, Hobart',
     value: 'Australia/Hobart',
   },
   {
-    label: '(GMT+10:00) Australia, Lindeman',
+    label: 'Australia, Lindeman',
     value: 'Australia/Lindeman',
   },
   {
-    label: '(GMT+10:00) Australia, Melbourne',
+    label: 'Australia, Melbourne',
     value: 'Australia/Melbourne',
   },
   {
-    label: '(GMT+10:00) Australia, Sydney',
+    label: 'Australia, Sydney',
     value: 'Australia/Sydney',
   },
   {
-    label: '(GMT+10:00) Pacific, Chuuk',
+    label: 'Pacific, Chuuk',
     value: 'Pacific/Chuuk',
   },
   {
-    label: '(GMT+10:00) Pacific, Guam',
+    label: 'Pacific, Guam',
     value: 'Pacific/Guam',
   },
   {
-    label: '(GMT+10:00) Pacific, Port Moresby',
+    label: 'Pacific, Port Moresby',
     value: 'Pacific/Port_Moresby',
   },
   {
-    label: '(GMT+10:00) Pacific, Saipan',
+    label: 'Pacific, Saipan',
     value: 'Pacific/Saipan',
   },
   {
-    label: '(GMT+10:30) Australia, Lord Howe',
+    label: 'Australia, Lord Howe',
     value: 'Australia/Lord_Howe',
   },
   {
-    label: '(GMT+11:00) Antarctica, Casey',
+    label: 'Antarctica, Casey',
     value: 'Antarctica/Casey',
   },
   {
-    label: '(GMT+11:00) Asia, Magadan',
+    label: 'Asia, Magadan',
     value: 'Asia/Magadan',
   },
   {
-    label: '(GMT+11:00) Asia, Sakhalin',
+    label: 'Asia, Sakhalin',
     value: 'Asia/Sakhalin',
   },
   {
-    label: '(GMT+11:00) Asia, Srednekolymsk',
+    label: 'Asia, Srednekolymsk',
     value: 'Asia/Srednekolymsk',
   },
   {
-    label: '(GMT+11:00) Pacific, Bougainville',
+    label: 'Pacific, Bougainville',
     value: 'Pacific/Bougainville',
   },
   {
-    label: '(GMT+11:00) Pacific, Efate',
+    label: 'Pacific, Efate',
     value: 'Pacific/Efate',
   },
   {
-    label: '(GMT+11:00) Pacific, Guadalcanal',
+    label: 'Pacific, Guadalcanal',
     value: 'Pacific/Guadalcanal',
   },
   {
-    label: '(GMT+11:00) Pacific, Kosrae',
+    label: 'Pacific, Kosrae',
     value: 'Pacific/Kosrae',
   },
   {
-    label: '(GMT+11:00) Pacific, Norfolk',
+    label: 'Pacific, Norfolk',
     value: 'Pacific/Norfolk',
   },
   {
-    label: '(GMT+11:00) Pacific, Noumea',
+    label: 'Pacific, Noumea',
     value: 'Pacific/Noumea',
   },
   {
-    label: '(GMT+11:00) Pacific, Pohnpei',
+    label: 'Pacific, Pohnpei',
     value: 'Pacific/Pohnpei',
   },
   {
-    label: '(GMT+12:00) Antarctica, McMurdo',
+    label: 'Antarctica, McMurdo',
     value: 'Antarctica/McMurdo',
   },
   {
-    label: '(GMT+12:00) Asia, Anadyr',
+    label: 'Asia, Anadyr',
     value: 'Asia/Anadyr',
   },
   {
-    label: '(GMT+12:00) Asia, Kamchatka',
+    label: 'Asia, Kamchatka',
     value: 'Asia/Kamchatka',
   },
   {
-    label: '(GMT+12:00) Pacific, Auckland',
+    label: 'Pacific, Auckland',
     value: 'Pacific/Auckland',
   },
   {
-    label: '(GMT+12:00) Pacific, Fiji',
+    label: 'Pacific, Fiji',
     value: 'Pacific/Fiji',
   },
   {
-    label: '(GMT+12:00) Pacific, Funafuti',
+    label: 'Pacific, Funafuti',
     value: 'Pacific/Funafuti',
   },
   {
-    label: '(GMT+12:00) Pacific, Kwajalein',
+    label: 'Pacific, Kwajalein',
     value: 'Pacific/Kwajalein',
   },
   {
-    label: '(GMT+12:00) Pacific, Majuro',
+    label: 'Pacific, Majuro',
     value: 'Pacific/Majuro',
   },
   {
-    label: '(GMT+12:00) Pacific, Nauru',
+    label: 'Pacific, Nauru',
     value: 'Pacific/Nauru',
   },
   {
-    label: '(GMT+12:00) Pacific, Tarawa',
+    label: 'Pacific, Tarawa',
     value: 'Pacific/Tarawa',
   },
   {
-    label: '(GMT+12:00) Pacific, Wake',
+    label: 'Pacific, Wake',
     value: 'Pacific/Wake',
   },
   {
-    label: '(GMT+12:00) Pacific, Wallis',
+    label: 'Pacific, Wallis',
     value: 'Pacific/Wallis',
   },
   {
-    label: '(GMT+12:45) Pacific, Chatham',
+    label: 'Pacific, Chatham',
     value: 'Pacific/Chatham',
   },
   {
-    label: '(GMT+13:00) Pacific, Apia',
+    label: 'Pacific, Apia',
     value: 'Pacific/Apia',
   },
   {
-    label: '(GMT+13:00) Pacific, Fakaofo',
+    label: 'Pacific, Fakaofo',
     value: 'Pacific/Fakaofo',
   },
   {
-    label: '(GMT+13:00) Pacific, Kanton',
+    label: 'Pacific, Kanton',
     value: 'Pacific/Kanton',
   },
   {
-    label: '(GMT+13:00) Pacific, Tongatapu',
+    label: 'Pacific, Tongatapu',
     value: 'Pacific/Tongatapu',
   },
   {
-    label: '(GMT+14:00) Pacific, Kiritimati',
+    label: 'Pacific, Kiritimati',
     value: 'Pacific/Kiritimati',
   },
 ];
+
+export const timezoneOptions = TIMEZONES.map(({ label, value }) => ({
+  value,
+  offsets: yearlyOffsets(value),
+  label,
+}))
+  .sort((a, b) => offsetMinutes(a.offsets[0]) - offsetMinutes(b.offsets[0]))
+  .map(({ value, offsets, label }) => ({
+    label: `(GMT${offsets.join('/')}) ${label}`,
+    value,
+  }));

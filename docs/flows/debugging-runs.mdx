@@ -1,7 +1,7 @@
 ---
 title: "Debugging Runs"
 icon: 'bug'
-description: "Ensuring your business automations are running properly"
+description: "Read what each step of a run did, then retry the run"
 ---
 
 You can monitor each run that results from an enabled flow:
@@ -9,10 +9,34 @@ You can monitor each run that results from an enabled flow:
 1. Go to the Dashboard, click on **Runs**.
 2. Find the run that you're looking for, and click on it.
 3. You will see the builder in a view-only mode, each step will show succeeded or failed to indicate its execution status. 
-4. Click on any of these steps, you will see the **input** and **output** in the **Run Details** panel.
+4. Click on any of these steps, you will see the **input** and **output** in the **Run Details** panel. A failed step shows its error in the output.
 
 The debugging experience looks like this:
 
  
 
 <video src="https://cdn.activepieces.com/videos/docs/debugging.mp4" controls />
+
+## Download a file from a step
+
+When a step output holds a file, such as the file that **Files Helper › Create File** writes, the output shows a **Download File** button next to it.
+
+An output too large to show in the panel shows **Download output** instead, which downloads the whole output.
+
+Run data, files included, is kept for the execution data retention of your project. After that, the run shows no input or output.
+
+## Retry a run
+
+Open the run, click **Runs** in the top bar, hover the run, and click the retry icon. Pick one of two options:
+
+| Option | What it runs | Use it when |
+| --- | --- | --- |
+| **From failed step** | The same run continues from the step that failed. The steps before it keep their output and do not run again. It runs on the flow version that the run started on, so a change to the flow does not apply. | The cause was outside the flow: a connection that expired, a service that was down, or data that you fixed. |
+| **On latest version** | A new run starts on the latest published version of the flow, with the same trigger data. Every step runs again. | You fixed the flow itself. Publish the fix first. |
+
+<Note>
+- **From failed step** shows only for a run that failed.
+- A retry needs permission to edit runs. A viewer cannot retry.
+- A run older than the execution data retention of the project cannot be retried.
+- To retry many runs at once, select them in the **Runs** table and click **Retry**.
+</Note>

@@ -96,14 +96,16 @@ const polling: Polling<
 
         const directRecords = directResponse.body?.['records'] ?? [];
 
-        // Merge both sources — CaseHistory overwrites on duplicate since its CreatedDate
-        // reflects the actual assignment time, which is more accurate than Case.CreatedDate.
         const caseIdToQueueDate: Record<string, string> = {};
-        for (const r of directRecords) {
-            caseIdToQueueDate[r.Id] = r.CreatedDate;
-        }
-        for (const r of historyRecords) {
-            caseIdToQueueDate[r.CaseId] = r.CreatedDate;
+        const queueEntries = [
+            ...directRecords.map((r) => ({ caseId: r.Id, date: r.CreatedDate })),
+            ...historyRecords.map((r) => ({ caseId: r.CaseId, date: r.CreatedDate })),
+        ];
+        for (const { caseId, date } of queueEntries) {
+            const current = caseIdToQueueDate[caseId];
+            if (current === undefined || dayjs(date).valueOf() > dayjs(current).valueOf()) {
+                caseIdToQueueDate[caseId] = date;
+            }
         }
 
         if (Object.keys(caseIdToQueueDate).length === 0) return [];

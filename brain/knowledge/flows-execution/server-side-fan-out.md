@@ -7,19 +7,20 @@ icon: 🪓
 
 The barrier's own child dispatcher. A batch step hands the server its items in one `POST /v1/waitpoints`, and a
 `fan-out-dispatch` job on the barrier queue creates one child run per signal. Its caller, `PROCESS_IN_BATCHES`,
-runs end to end on the server; the builder does not offer the step until its settings UI lands. See decision
+runs end to end on the server, and the builder offers it as **Process in Batches**. See decision
 [000051](../decisions/000051-batch-children-are-dispatched-by-an-app-queue-job-not-the-engine.md) for why, and
 [000015](../decisions/000015-fan-in-is-an-event-driven-waitpoint-barrier.md) for the barrier.
 
 **Server-side fan-out** — one parent pause, N child runs created by the app. _Avoid_: "subflow fan-out", which is
 fire-and-forget webhook calls with no barrier.
-**Source** — `{ entryStepName, batchStepName, seedSteps, batches }` stored under `barrier_source:<barrierId>` with a 1-day TTL.
+**Source** — `{ entryStepName, batchStepName, seedSteps, batchSize, batches }` stored under `barrier_source:<barrierId>` with a 1-day TTL.
 Deleted on release, on cancel and when dispatch gives up.
 **Claim** — a signal is claimed when its `refId` holds its child run id. _Unclaimed_ means `PENDING` with no
 `refId` (`unclaimedSignalWhere`).
 **Chunk** — one transaction: the barrier `FOR SHARE`, the next 25 unclaimed signals `FOR UPDATE SKIP LOCKED`, the
 claim, and the child rows.
-**Entry step** — `entryStepName`, the action a child run starts at, with the parent's steps seeded as SUCCEEDED.
+**Entry step** — `entryStepName`, the body's first action, where a child run starts. The child is seeded with the
+parent steps its body references, and with the batch step as SUCCEEDED, its `items` set to that child's batch.
 It is written into the child's execution-state log, so a resume re-enters it. It must be an action.
 **Give-up** — the `fan-out-give-up` job (`give-up-<barrierId>`). The barrier worker's `failed` handler queues it on
 exhausted attempts or an `UnrecoverableError`. It deletes the source, then marks the unclaimed signals `NOT_DISPATCHED`,

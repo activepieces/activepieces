@@ -295,6 +295,8 @@ const ActionsCell = ({
           variant="ghost"
           size="icon-sm"
           disabled={!userHasPermissionToDelete}
+          aria-label={t('Remove')}
+          data-testid="project-member-remove"
         >
           <Trash2 className="h-4 w-4 text-danger-11" />
         </Button>

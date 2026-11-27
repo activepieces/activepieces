@@ -17,14 +17,17 @@ Manages user identity, platform membership, roles, and session security. A `User
 
 ### Session management
 - JWTs: 7-day for users, 100-year for engine/worker.
-- `tokenVersion` on UserIdentity: incrementing invalidates all issued tokens. Logout increments it → all sessions invalidated.
-- Validation checks: status ACTIVE + identity verified + tokenVersion match.
+- `tokenVersion` on UserIdentity: a new value ends every issued token. A password change sets a new random value. There is no server-side logout.
+- Every request re-checks the user (`assertUserSession`): status ACTIVE + identity verified + tokenVersion match.
 
 ### Endpoints
-- `GET /v1/users/me`, `POST /v1/users/me` (update firstName/lastName/profilePicture) — CE.
-- Platform admin CRUD (list, update role/status, delete) via `platform-user-controller.ts` — EE/Cloud.
+Both controllers are registered in every edition; the web gates the Users page.
+- `GET /v1/users/:id` (any user or API key of the same platform), `POST /v1/users/me` (profile picture only), `DELETE /v1/users/me/profile-picture`.
+- `GET /v1/users` (list), `POST /v1/users/:id` (role, status, externalId), `DELETE /v1/users/:id` via `platform-user-controller.ts`.
 
 ### Gotchas
+- **Deactivation takes effect on the next request.** Sign-in answers 403 `USER_IS_INACTIVE`, and an open session answers 403 `SESSION_EXPIRED`, because `assertUserSession` reads the user on each request. Reactivation runs `checkUsersExceededLimit` first, so it fails when the plan has no free seat.
+- **The Users page has no search, filter or pagination.** One request lists up to 2,000 users (`limit: 2000`) plus the pending platform invitations, so a larger platform does not show every user.
 - **Deleting a user also deletes its `UserIdentity`** on self-hosted (CE/EE), but only when no `User` row on any platform still references that identity. Skip that cleanup and the orphaned identity keeps the email claimed: re-inviting the same person dead-ends with `EXISTING_USER` / `INVITATION_ONLY_SIGN_UP` on sign-up and `INVALID_CREDENTIALS` on sign-in, and CE has no reset-password path to recover from it. `otp` rows cascade away with the identity.
 - **Cloud takes the other branch.** `platform-user-controller.ts` routes Cloud to `removeFromPlatform`, which nulls `platformId` and keeps the identity, since the same person may belong to other platforms. Only the CE/EE `delete` path removes identities.
 - **`userIdentityService.create` matches email globally**, ignoring platform, so any identity left behind with no `User` row blocks sign-up for that email on every platform. Installs that deleted users before this cleanup existed still carry those orphans; clearing them needs `DELETE FROM user_identity ui WHERE NOT EXISTS (SELECT 1 FROM "user" u WHERE u."identityId" = ui.id)`.
@@ -38,11 +41,13 @@ Manages user identity, platform membership, roles, and session security. A `User
 Entry point: `userService`, a log-scoped factory in `user/user-service.ts` that most callers across the API import directly.
 
 - `packages/server/api/src/app/user/` — user service and the User/UserIdentity entities
-- `packages/server/api/src/app/user/platform/` — EE platform admin user endpoints, registered as `platformUserModule` in `app.ts`
-- `packages/server/api/src/app/ee/users/` — the `/v1/users/me` controller and module
+- `packages/server/api/src/app/user/platform/` — list, update and delete endpoints, registered as `platformUserModule` in `app.ts`
+- `packages/server/api/src/app/ee/users/` — the `/v1/users/:id` and `/v1/users/me` controller, registered as `userModule`
 - `packages/core/shared/src/lib/core/user/` — User and UserWithMetaInformation schemas, PlatformRole and UserStatus enums
 - `packages/web/src/app/routes/platform/users/` — platform admin user list page and table columns
 - `packages/web/src/app/routes/platform/users/actions/` — row action menu, edit role/status dialog, toggle status, delete
+- `packages/web/src/app/routes/platform/security/project-role/` — the Roles & Access page at `/platform/users/roles`
+- `packages/tests-e2e/scenarios/ee/admin/` — `users-roles.spec.ts`, the E2E spec of this page and of custom project roles
 - `packages/web/src/features/authentication/` — sign-in, sign-up, change-password forms and the auth React Query hooks
 
-Paths verified 2026-07-17.
+Paths verified 2026-11-22.

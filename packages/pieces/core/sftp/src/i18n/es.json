@@ -67,5 +67,6 @@
   "Trigger when a new file is created or modified.": "Activar cuando se crea o modifica un nuevo archivo.",
   "Path": "Ruta",
   "Ignore hidden files": "Ignorar archivos ocultos",
-  "The path to watch for new files": "La ruta para ver nuevos archivos"
+  "The path to watch for new files": "La ruta para ver nuevos archivos",
+  "FTP/SFTP": "FTP/SFTP"
 }

@@ -1,24 +1,11 @@
-import { TriggerStrategy, createTrigger, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
-import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { TriggerStrategy, createTrigger, AppConnectionValueForAuthProperty, isNil } from '@activepieces/pieces-framework';
 import { microsoftToDoAuth } from '../auth';
 import { TodoTaskList } from '@microsoft/microsoft-graph-types';
 import { createTodoClient } from '../common';
+import { todoApi } from '../common/todo-api';
 import { taskListOutputSchema } from '../output-schemas';
 
-const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftToDoAuth>, Record<string, never>> = {
-    strategy: DedupeStrategy.LAST_ITEM,
-    items: async ({ auth }) => {
-        const client = createTodoClient(auth);
-
-        const response = await client.api('/me/todo/lists').get();
-        const lists = response.value as TodoTaskList[];
-
-        return lists.map((list) => ({
-            id: list.id!,
-            data: list,
-        }));
-    },
-};
+const SEEN_LIST_IDS_KEY = 'seenListIds';
 
 export const newListCreatedTrigger = createTrigger({
     auth: microsoftToDoAuth,
@@ -42,15 +29,25 @@ export const newListCreatedTrigger = createTrigger({
     },
 
     async onEnable(context) {
-        await pollingHelper.onEnable(polling, context as any);
+        if (context.isRepublish && !isNil(await context.store.get<string[]>(SEEN_LIST_IDS_KEY))) {
+            return;
+        }
+        const lists = await fetchAllLists(context.auth);
+        await context.store.put<string[]>(SEEN_LIST_IDS_KEY, listIds(lists));
     },
 
     async onDisable(context) {
-        await pollingHelper.onDisable(polling, context as any);
-        },
+        await context.store.delete(SEEN_LIST_IDS_KEY);
+    },
 
     async run(context) {
-        return await pollingHelper.poll(polling, context as any);
+        const lists = await fetchAllLists(context.auth);
+        const seenIds = await context.store.get<string[]>(SEEN_LIST_IDS_KEY);
+        await context.store.put<string[]>(SEEN_LIST_IDS_KEY, listIds(lists));
+        if (isNil(seenIds)) {
+            return [];
+        }
+        return lists.filter((list) => !seenIds.includes(list.id!));
     },
 
     async test(context) {
@@ -65,3 +62,11 @@ export const newListCreatedTrigger = createTrigger({
         }
     },
 });
+
+async function fetchAllLists(auth: AppConnectionValueForAuthProperty<typeof microsoftToDoAuth>): Promise<TodoTaskList[]> {
+    return todoApi.listAll<TodoTaskList>({ client: createTodoClient(auth), path: '/me/todo/lists' });
+}
+
+function listIds(lists: TodoTaskList[]): string[] {
+    return lists.map((list) => list.id!);
+}

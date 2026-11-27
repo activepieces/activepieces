@@ -16,21 +16,21 @@ Data flows from parent steps to the children (Children steps have access to the 
 
 This flow has 3 steps, they can access data as follows:
 
-- **Step 1** is the main data producer to be used in the next steps. Data produced by Step 1 will be accessible in Steps 2 and 3. Some triggers don't produce data though, like Schedules.
+- **Step 1** is the main data producer to be used in the next steps. Data produced by Step 1 will be accessible in Steps 2 and 3. Some triggers produce little data though, like Schedules, which output only their schedule settings.
 
 - **Step 2** can access data produced by Step 1. After execution, this step will also produce data to be used in the next step(s).
 
 - **Step 3** can access data produced by Steps 1 and 2 as they're its parent steps. This step can produce data but since it's the last step in the flow, it can't be used by other ones.
 
-## Data to Insert Panel
+## Data Selector Panel
 
-In order to use data from a previous step in your current step, place your cursor in any input, the **Data selector** panel will pop up.
+In order to use data from a previous step in your current step, place your cursor in any input, the **Data Selector** panel will pop up.
 
 <video src="https://cdn.activepieces.com/videos/docs/insert-panel.mp4" controls />
 
 This panel shows the accessible steps and their data. You can expand the data items to view their content, and you can click the items to insert them in your current settings input.
 
-If an item in this panel has a caret **(›)** to the right, it means you can click on the item to expand its child properties. You can select the parent item or its properties as you need.
+If an item in this panel has a caret **(›)** next to it, it means you can click on the item to expand its child properties. You can select the parent item or its properties as you need: to insert the parent item itself, hover over it and click **Insert**.
 
 When you insert data from this panel, it gets inserted at the cursor's position in the input. This means you can combine static text and dynamic data in any field.
 
@@ -40,13 +40,13 @@ We generally recommend that you expand the items before inserting them to unders
 
 ## Testing Steps 
 
-While building flows, we require you to test each step you add before moving to the next step.
+While building flows, test each step you add before moving to the next step.
 
 This enables you to access the data in the previous step and use it in the next step
 
 This approach protects you from selecting the wrong data and breaking your flows after publishing them.
 
-If a tigger or a step is not tested , you will see a **Test me** on top of it. Click that step to open the side bar and test the step.
+If a trigger or a step is not tested, or has changed since its last test, you will see a **Test me** on top of it. Click that step to open the side bar and test the step.
 
 For triggers here is what it looks like:
 
@@ -85,7 +85,7 @@ supported actions, storage requirements, and size limits.
 
 ### Accessing data by path
 
-If you can't find the data you're looking for in the **Data to Insert** panel but you'd like to use it, you can write a JSON path instead.
+If you can't find the data you're looking for in the **Data Selector** panel but you'd like to use it, you can write a JSON path instead.
 
 Use the following syntax to write JSON paths:
 

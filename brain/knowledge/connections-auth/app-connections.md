@@ -7,7 +7,7 @@ icon: 🔗
 Encrypted credential records (OAuth2 tokens, API keys, basic/custom auth, OIDC props) that flow steps use to call external services. Support automatic OAuth2 refresh with distributed locking, a project-or-platform scope model, and a project-scoped "replace" that rewires flow references from one connection to another.
 
 ### Entity
-`AppConnection`: id, displayName, externalId (stable ref in flow settings, survives rename), type, status (ACTIVE/EXPIRED/ERROR), value (encrypted AES-256), platformId, pieceName/Version, projectIds[], scope (PROJECT/PLATFORM), preSelectForNewProjects.
+`AppConnection`: id, displayName, externalId (stable ref in flow settings, survives rename), type, status (ACTIVE/MISSING/ERROR), value (encrypted AES-256), platformId, pieceName/Version, projectIds[], scope (PROJECT/PLATFORM), preSelectForNewProjects.
 
 ### Connection types (8)
 `OAUTH2`, `CLOUD_OAUTH2` (exchanged via `secrets.activepieces.com`), `PLATFORM_OAUTH2` (platform-managed OAuth app), `SECRET_TEXT`, `BASIC_AUTH`, `CUSTOM_AUTH` (opt-in refresh callback), `NO_AUTH`, `OIDC`.
@@ -18,13 +18,14 @@ Encrypted credential records (OAuth2 tokens, API keys, basic/custom auth, OIDC p
 - **OIDC**: AP acts as an OIDC identity provider so pieces get short-lived cloud creds (e.g. AWS `AssumeRoleWithWebIdentity`). Engine calls `POST /api/v1/worker/oidc-token` with `{audience, expiresInSeconds?}` → RS256 JWT `sub: platform:{id}:project:{id}`, TTL default/cap 1h. Public discovery: `/.well-known/openid-configuration` + `/jwks.json`; `kid` is an RFC 7638 SHA-256 thumbprint. Signing key auto-generated + persisted (encrypted) to the shared `flag` table with first-writer-wins (`INSERT ... ON CONFLICT DO NOTHING`), no env var needed.
 
 ### Endpoints
-`POST /v1/app-connections` (upsert, validates via worker EXECUTE_VALIDATION), `POST /:id` (update meta), `GET` (filters), `GET /owners`, `POST /replace`, `DELETE /:id`, `POST /oauth2/authorization-url` (optional scope subset).
+`POST /v1/app-connections` (upsert, validates via worker EXECUTE_VALIDATION), `POST /:id` (update meta), `GET` (filters; `displayName` is a case-insensitive substring match), `GET /:id`, `POST /:id/revalidate` (the Recheck button), `GET /owners`, `POST /replace`, `DELETE /:id`, `POST /oauth2/authorization-url` (optional scope subset).
 
 ### Gotchas
 - Deleting a PLATFORM-scope connection via the project route is rejected `403` — delete those via platform admin `DELETE /v1/global-connections/:id`.
 - Replace: platform/global connections can be the source, but `deleteSourceConnection` on a platform source → `403`; deleting a project source while a published version still references it → `409`. Draft versions always updated; published only when requested.
 - Deleting a connection does NOT cascade to flows; they fail at runtime with a validation error.
 - Global (platform-scope) connections require `globalConnectionsEnabled`; bulk-delete in the project UI skips them client-side.
+- Every `SECRET_TEXT`, `BASIC_AUTH`, `CUSTOM_AUTH`, `OIDC` or `OAUTH2` create runs an `EXECUTE_VALIDATION` job on the worker, whether or not the piece has a `validate`; `NO_AUTH` skips it. In a sandboxed worker each job holds a slot for about 10 s, so E2E fixtures seed `NO_AUTH` connections: 18 custom-auth seeds starved the flow runs of a parallel spec in CI.
 - `AP_ENFORCE_CONNECTION_PIECE_BINDING` (default `false`) makes a step resolve only connections whose `pieceName` equals the step's own piece; a mismatch raises a USER-level `ConnectionPieceMismatchError`. The check lives in the **engine's** `connection-resolver`, not the worker endpoint. Set the var on the **app** container — the engine cannot read `process.env` (sandbox env is an allowlist), so the flag rides `WorkerSettings` → `SandboxSettings` → sandbox env, the same path as `AP_DEV_PIECES`. Code / loop / router steps have no piece, so a missing name is a denial — they lose connection access entirely, and enabling the flag breaks flows that feed a connection into custom JS.
 - `metadata.accountIdentifier` (the "which account is this" label) must be **rewritten on every upsert, never left untouched** — `spreadIfDefined` omits the column and TypeORM `upsert(connection, ['id'])` then leaves the old value in place, so a reconnect that fails to resolve would keep labelling the connection with an account it no longer authenticates as. `mergeConnectionMetadata` also strips the key from caller-supplied `metadata`, because `metadata` is a caller-owned jsonb bag: without that, any `WRITE_APP_CONNECTION` holder can forge the label. Note `POST /:id` (update) still replaces the whole bag.
 

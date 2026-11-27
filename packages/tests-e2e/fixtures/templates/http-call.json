@@ -1,0 +1,61 @@
+{
+  "name": "HTTP call",
+  "flows": [
+    {
+      "displayName": "HTTP call",
+      "schemaVersion": null,
+      "notes": null,
+      "trigger": {
+        "name": "trigger",
+        "type": "PIECE_TRIGGER",
+        "valid": true,
+        "displayName": "Catch Webhook",
+        "settings": {
+          "pieceName": "@activepieces/piece-webhook",
+          "pieceVersion": "0.1.43",
+          "triggerName": "catch_webhook",
+          "input": {
+            "authType": "none"
+          },
+          "propertySettings": {}
+        },
+        "nextAction": {
+          "name": "step_1",
+          "type": "PIECE",
+          "valid": true,
+          "displayName": "Send HTTP request",
+          "settings": {
+            "pieceName": "@activepieces/piece-http",
+            "pieceVersion": "0.13.3",
+            "actionName": "send_request",
+            "input": {
+              "method": "GET",
+              "url": "{{trigger['output']['queryParams']['target']}}",
+              "headers": {},
+              "queryParams": {},
+              "authType": "NONE",
+              "authFields": {},
+              "body_type": "none",
+              "body": {},
+              "response_is_binary": false,
+              "use_proxy": false,
+              "followRedirects": false,
+              "failureMode": "continue_none"
+            },
+            "propertySettings": {},
+            "errorHandlingOptions": {
+              "continueOnFailure": {
+                "value": false
+              },
+              "retryOnFailure": {
+                "value": false
+              }
+            }
+          },
+          "lastUpdatedDate": "2026-11-18T00:00:00.000Z"
+        },
+        "lastUpdatedDate": "2026-11-18T00:00:00.000Z"
+      }
+    }
+  ]
+}

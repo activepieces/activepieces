@@ -1,0 +1,27 @@
+{
+  "name": "Schedule bad cron",
+  "flows": [
+    {
+      "displayName": "Schedule bad cron",
+      "schemaVersion": null,
+      "notes": null,
+      "trigger": {
+        "name": "trigger",
+        "type": "PIECE_TRIGGER",
+        "valid": true,
+        "displayName": "Cron Expression",
+        "settings": {
+          "pieceName": "@activepieces/piece-schedule",
+          "pieceVersion": "0.1.22",
+          "triggerName": "cron_expression",
+          "input": {
+            "cronExpression": "not a cron",
+            "timezone": "UTC"
+          },
+          "propertySettings": {}
+        },
+        "lastUpdatedDate": "2026-11-16T00:00:00.000Z"
+      }
+    }
+  ]
+}

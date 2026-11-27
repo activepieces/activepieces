@@ -1,0 +1,85 @@
+{
+  "name": "Wait for webhook",
+  "flows": [
+    {
+      "displayName": "Wait for webhook",
+      "schemaVersion": null,
+      "notes": null,
+      "trigger": {
+        "name": "trigger",
+        "type": "PIECE_TRIGGER",
+        "valid": true,
+        "displayName": "Catch Webhook",
+        "settings": {
+          "pieceName": "@activepieces/piece-webhook",
+          "pieceVersion": "0.1.43",
+          "triggerName": "catch_webhook",
+          "input": {
+            "authType": "none"
+          },
+          "propertySettings": {}
+        },
+        "nextAction": {
+          "name": "step_1",
+          "type": "PIECE",
+          "valid": true,
+          "displayName": "Respond and wait for the next webhook",
+          "settings": {
+            "pieceName": "@activepieces/piece-webhook",
+            "pieceVersion": "0.1.43",
+            "actionName": "return_response_and_wait_for_next_webhook",
+            "input": {
+              "responseType": "json",
+              "fields": {
+                "status": 200,
+                "headers": {},
+                "body": "{\"waiting\": true}"
+              }
+            },
+            "propertySettings": {},
+            "errorHandlingOptions": {
+              "continueOnFailure": {
+                "value": false
+              },
+              "retryOnFailure": {
+                "value": false
+              }
+            }
+          },
+          "lastUpdatedDate": "2026-11-18T00:00:00.000Z",
+          "nextAction": {
+            "name": "step_2",
+            "type": "PIECE",
+            "valid": true,
+            "displayName": "Return what the next webhook sent",
+            "settings": {
+              "pieceName": "@activepieces/piece-webhook",
+              "pieceVersion": "0.1.43",
+              "actionName": "return_response",
+              "input": {
+                "responseType": "json",
+                "respond": "stop",
+                "fields": {
+                  "status": 200,
+                  "headers": {},
+                  "body": "{\"resumedWith\": \"{{step_1['output']['body']['value']}}\"}"
+                }
+              },
+              "propertySettings": {},
+              "errorHandlingOptions": {
+                "continueOnFailure": {
+                  "value": false
+                },
+                "retryOnFailure": {
+                  "value": false
+                }
+              }
+            },
+            "lastUpdatedDate": "2026-11-18T00:00:00.000Z"
+          }
+        },
+        "lastUpdatedDate": "2026-11-18T00:00:00.000Z"
+      }
+    }
+  ]
+}

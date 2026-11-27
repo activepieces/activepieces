@@ -2,6 +2,7 @@ import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-f
 import { slackAuth } from '../auth';
 import { getTeamId, getUserId, SlackAuthValue } from '../common/auth-helpers';
 import { appWebhookSetupInfo } from '../common/props';
+import { isNewMessageEvent } from '../common/utils';
 import { newDirectMessageTriggerOutputSchema } from '../output-schemas';
 
 
@@ -57,15 +58,16 @@ export const newDirectMessageTrigger = createTrigger({
 
 	async run(context) {
 		const payloadBody = context.payload.body as PayloadBody;
-		const userId = await getUserId(context.auth as SlackAuthValue)
 
-		if (payloadBody.event.channel_type !== 'im') {
+		if (payloadBody.event.channel_type !== 'im' || !isNewMessageEvent(payloadBody.event)) {
 			return [];
 		}
-		// check for bot messages
+		if (context.propsValue.ignoreBots && payloadBody.event.bot_id) {
+			return [];
+		}
 		if (
-			(context.propsValue.ignoreBots && payloadBody.event.bot_id) ||
-			(context.propsValue.ignoreSelfMessages && payloadBody.event.user === userId)
+			context.propsValue.ignoreSelfMessages &&
+			payloadBody.event.user === (await getUserId(context.auth as SlackAuthValue))
 		) {
 			return [];
 		}
@@ -80,5 +82,7 @@ type PayloadBody = {
 		bot_id?: string;
 		user: string;
 		channel_type: string;
+		subtype?: string;
+		hidden?: boolean;
 	};
 };

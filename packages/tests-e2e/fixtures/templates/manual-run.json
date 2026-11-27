@@ -1,0 +1,46 @@
+{
+  "name": "Manual run",
+  "flows": [
+    {
+      "displayName": "Manual run",
+      "schemaVersion": null,
+      "notes": null,
+      "trigger": {
+        "name": "trigger",
+        "type": "PIECE_TRIGGER",
+        "valid": true,
+        "displayName": "Manual Trigger",
+        "settings": {
+          "pieceName": "@activepieces/piece-manual-trigger",
+          "pieceVersion": "0.0.8",
+          "triggerName": "manual_trigger",
+          "input": {},
+          "propertySettings": {}
+        },
+        "nextAction": {
+          "name": "step_1",
+          "type": "CODE",
+          "valid": true,
+          "displayName": "Say hello",
+          "settings": {
+            "sourceCode": {
+              "code": "export const code = async () => {\n  return { greeting: 'hello from a manual run' };\n};",
+              "packageJson": "{}"
+            },
+            "input": {},
+            "errorHandlingOptions": {
+              "continueOnFailure": {
+                "value": false
+              },
+              "retryOnFailure": {
+                "value": false
+              }
+            }
+          },
+          "lastUpdatedDate": "2026-11-18T00:00:00.000Z"
+        },
+        "lastUpdatedDate": "2026-11-18T00:00:00.000Z"
+      }
+    }
+  ]
+}

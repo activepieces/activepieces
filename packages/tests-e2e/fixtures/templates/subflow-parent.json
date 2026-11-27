@@ -1,0 +1,57 @@
+{
+  "name": "Subflow parent",
+  "flows": [
+    {
+      "displayName": "Subflow parent",
+      "schemaVersion": null,
+      "notes": null,
+      "trigger": {
+        "name": "trigger",
+        "type": "PIECE_TRIGGER",
+        "valid": true,
+        "displayName": "Catch Webhook",
+        "settings": {
+          "pieceName": "@activepieces/piece-webhook",
+          "pieceVersion": "0.1.43",
+          "triggerName": "catch_webhook",
+          "input": {
+            "authType": "none"
+          },
+          "propertySettings": {}
+        },
+        "nextAction": {
+          "name": "step_1",
+          "type": "PIECE",
+          "valid": true,
+          "displayName": "Call Flow",
+          "settings": {
+            "pieceName": "@activepieces/piece-subflows",
+            "pieceVersion": "0.7.0",
+            "actionName": "callFlow",
+            "input": {
+              "flowId": "SUBFLOW_EXTERNAL_ID",
+              "mode": "simple",
+              "flowProps": {
+                "payload": {
+                  "value": "{{trigger['output']['queryParams']['value']}}"
+                }
+              },
+              "waitForResponse": true
+            },
+            "propertySettings": {},
+            "errorHandlingOptions": {
+              "continueOnFailure": {
+                "value": false
+              },
+              "retryOnFailure": {
+                "value": false
+              }
+            }
+          },
+          "lastUpdatedDate": "2026-11-18T00:00:00.000Z"
+        },
+        "lastUpdatedDate": "2026-11-18T00:00:00.000Z"
+      }
+    }
+  ]
+}

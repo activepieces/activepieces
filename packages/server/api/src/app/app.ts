@@ -1,7 +1,7 @@
 import { isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { PieceMetadata } from '@activepieces/pieces-framework'
-import { aiCostReporter, aiObservability, apDayjs, apVersionUtil, onCallService, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
-import { AddAllowedEmbedOriginsRequestBody, ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, ApplicationEventName, AuditLogRetentionUpdatedEvent, ConnectionDeletedEvent, ConnectionUpsertedEvent, Flow, FlowActivatedEvent, FlowCreatedEvent, FlowDeactivatedEvent, FlowDeletedEvent, FlowPiecesRevertedEvent, FlowPiecesUpgradedEvent, FlowPublishedEvent, FlowRun, FlowRunFinishedEvent, FlowRunRetriedEvent, FlowRunStartedEvent, FlowUpdatedEvent, Folder, FolderCreatedEvent, FolderDeletedEvent, FolderUpdatedEvent, GitRepoWithoutSensitiveData, ProjectMember, ProjectRelease, ProjectReleaseEvent, ProjectRoleEvent, ProjectWithLimits, SigningKeyEvent, SignUpEvent, Template, UserEmailVerifiedEvent, UserInvitation, UserInvitationEvent, UserPasswordResetEvent, UserSignedInEvent, UserWithMetaInformation, VariableWithoutSensitiveData } from '@activepieces/shared'
+import { aiCostReporter, aiObservability, apDayjs, apVersionUtil, onCallService, posthogConfig, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
+import { AddAllowedEmbedOriginsRequestBody, ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, ApplicationEventName, AuditLogRetentionUpdatedEvent, ConnectionDeletedEvent, ConnectionUpsertedEvent, Flow, FlowActivatedEvent, FlowCreatedEvent, FlowDeactivatedEvent, FlowDeletedEvent, FlowPiecesRevertedEvent, FlowPiecesUpgradedEvent, FlowPublishedEvent, FlowRun, FlowRunFinishedEvent, FlowRunRetriedEvent, FlowRunStartedEvent, FlowUpdatedEvent, Folder, FolderCreatedEvent, FolderDeletedEvent, FolderUpdatedEvent, GitRepoWithoutSensitiveData, OfficialPieceAddedEvent, OfficialPieceMinorVersionAddedEvent, OfficialPiecePatchVersionAddedEvent, ProjectMember, ProjectRelease, ProjectReleaseEvent, ProjectRoleEvent, ProjectWithLimits, SigningKeyEvent, SignUpEvent, Template, UserEmailVerifiedEvent, UserInvitation, UserInvitationEvent, UserPasswordResetEvent, UserSignedInEvent, UserWithMetaInformation, VariableWithoutSensitiveData } from '@activepieces/shared'
 import replyFrom from '@fastify/reply-from'
 import swagger from '@fastify/swagger'
 import { createAdapter } from '@socket.io/redis-adapter'
@@ -57,6 +57,7 @@ import { flowApprovalModule } from './ee/flows/flow-approval/flow-approval.modul
 import { eeFlowPublishHook } from './ee/flows/flow-approval/flow-publish-hook'
 import { globalConnectionModule } from './ee/global-connections/global-connection-module'
 import { appearanceHelper } from './ee/helper/appearance-helper'
+import { inviteRewardService } from './ee/invite-reward/invite-reward.service'
 import { licenseKeyUsageReportModule } from './ee/license-key-usage-report/license-key-usage-report-module'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
 import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
@@ -133,6 +134,7 @@ import { appEventRoutingModule } from './trigger/app-event-routing/app-event-rou
 import { triggerModule } from './trigger/trigger.module'
 import { platformUserModule } from './user/platform/platform-user-module'
 import { userHooks } from './user/user-hooks'
+import { userInvitationHooks } from './user-invitations/user-invitation-hooks'
 import { invitationModule } from './user-invitations/user-invitation.module'
 import { variableModule } from './variable/variable.module'
 import { resumePageHooks } from './waitpoints/resume-page-hooks'
@@ -244,7 +246,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(flagModule)
     await app.register(storeEntryModule)
     await app.register(folderModule)
-    await pieceSyncService(app.log).setup()
     toolSearchReindexJob(app.log).register()
     // Boot backfill: build the tool-search index if the flag is on but it is empty or only partially
     // embedded (a populated deployment fires no sync delta, and a build that failed midway leaves rows
@@ -412,6 +413,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             eventDestinationHooks.set(eventDestinationEntitlementHooks)
             exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
             systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PLATFORM, (data) => platformTeardownJobs(app.log).hardDeletePlatformHandler(data))
+            userInvitationHooks.set((log) => ({ onInvitedUserJoined: (params) => inviteRewardService(log).grantOnJoin(params) }))
             break
         case ApEdition.ENTERPRISE:
             await app.register(denoMigrationModule)
@@ -468,6 +470,8 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             break
     }
 
+    await pieceSyncService(app.log).setup()
+
     const isCanaryApp = system.getBoolean(AppSystemProp.IS_CANARY_APP) ?? false
     if (isCanaryApp) {
         app.log.info('[setupApp] Skipping system jobs worker on canary app instance')
@@ -516,7 +520,7 @@ The application started on ${await domainHelper.getPublicApiUrl({ path: '' })}, 
     const pieces = process.env.AP_DEV_PIECES
 
     assertReleaseReadable(app.log)
-    aiObservability.init({ enabled: system.getEdition() === ApEdition.CLOUD })
+    aiObservability.init({ enabled: system.getEdition() === ApEdition.CLOUD, projectToken: posthogConfig.projectToken() })
     aiCostReporter.install({
         log: app.log,
         report: (request) => aiUsageService(app.log).report(request),
@@ -613,6 +617,9 @@ function registerOpenApiSchemas() {
     globalRegistry.add(ProjectRoleEvent, { id: ApplicationEventName.PROJECT_ROLE_CREATED })
     globalRegistry.add(UserInvitationEvent, { id: ApplicationEventName.USER_INVITATION_SENT })
     globalRegistry.add(ProjectReleaseEvent, { id: ApplicationEventName.PROJECT_RELEASE_CREATED })
+    globalRegistry.add(OfficialPieceAddedEvent, { id: ApplicationEventName.OFFICIAL_PIECE_ADDED })
+    globalRegistry.add(OfficialPieceMinorVersionAddedEvent, { id: ApplicationEventName.OFFICIAL_PIECE_MINOR_VERSION_ADDED })
+    globalRegistry.add(OfficialPiecePatchVersionAddedEvent, { id: ApplicationEventName.OFFICIAL_PIECE_PATCH_VERSION_ADDED })
     globalRegistry.add(Template, { id: 'template' })
     globalRegistry.add(Folder, { id: 'folder' })
     globalRegistry.add(UserWithMetaInformation, { id: 'user' })

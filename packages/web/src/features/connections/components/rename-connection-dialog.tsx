@@ -72,6 +72,8 @@ const RenameConnectionDialog = forwardRef<
               <Button
                 variant="ghost"
                 size="sm"
+                aria-label={t('Rename')}
+                data-testid="connection-rename"
                 disabled={!userHasPermissionToRename}
                 onClick={(e) => {
                   e.stopPropagation();

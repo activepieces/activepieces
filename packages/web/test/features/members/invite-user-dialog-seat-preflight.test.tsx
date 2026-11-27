@@ -25,7 +25,7 @@ vi.mock('@/lib/error-reporting', () => ({
   errorReporting: { report: vi.fn() },
 }));
 
-vi.mock('@/features/billing', () => ({
+vi.mock('@/features/billing/hooks/use-seat-limit-guard', () => ({
   useSeatLimitGuard: () => ({
     handleSeatLimitError: () => false,
     ensureSeatsAvailable: mocks.ensureSeatsAvailable,
@@ -78,6 +78,10 @@ vi.mock('@/features/projects/stores/project-collection', () => ({
   },
 }));
 
+vi.mock(
+  '@/features/members/components/invite-reward/invite-reward-hint',
+  () => ({ InviteRewardHint: () => null }),
+);
 vi.mock('@/features/members/hooks/user-invitations-hooks', () => ({
   userInvitationsHooks: { useInvitations: () => ({ refetch: vi.fn() }) },
 }));

@@ -107,7 +107,7 @@ const ChangePasswordForm = () => {
                       />
                     </PopoverContent>
                   </Popover>
-                  <FormMessage />
+                  <FormMessage data-testid="reset-password-error" />
                 </FormItem>
               )}
             />

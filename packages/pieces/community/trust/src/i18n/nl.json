@@ -90,8 +90,8 @@
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
   "HEAD": "HOOFD",
-  "Request": "Request",
-  "Data to send": "Data to send",
+  "Request": "Aanvraag",
+  "Data to send": "Gegevens om te verzenden",
   "New Testimonial Created": "New Testimonial Created",
   "Triggers when a new testimonial is created in your Trust workspace.": "Triggers when a new testimonial is created in your Trust workspace."
 }

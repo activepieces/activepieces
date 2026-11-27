@@ -45,8 +45,8 @@
   "Continue flow on all errors": "Doorgaan met flow op alle fouten",
   "Continue flow on 4xx errors": "Doorgaan met stroom op 4xx fouten",
   "Do not continue (stop the flow)": "Ga niet verder (stop de stroom)",
-  "Request": "Request",
-  "Credentials": "Credentials",
-  "Data to send": "Data to send",
+  "Request": "Verzoek",
+  "Credentials": "Inloggegevens",
+  "Data to send": "Gegevens om te verzenden",
   "HTTP": "HTTP"
 }

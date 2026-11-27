@@ -1,4 +1,4 @@
-import { unlink, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { inspect } from 'node:util'
@@ -29,7 +29,10 @@ const THROWING_BODIES: ThrowingBody[] = [
 ]
 
 async function resolveStepError({ sandbox, wrap, extension, body }: ResolveStepErrorParams): Promise<FriendlyPieceError> {
-    const codeFilePath = path.join(os.tmpdir(), `ap-error-contract-${apId()}.${extension}`)
+    const flowDir = await mkdtemp(path.join(os.tmpdir(), `ap-error-contract-${apId()}-`))
+    const stepDir = path.join(flowDir, 'step')
+    await mkdir(stepDir)
+    const codeFilePath = path.join(stepDir, `index.${extension}`)
     await writeFile(codeFilePath, wrap(body), 'utf8')
     try {
         await sandbox.runCodeModule({ codeFilePath, inputs: {} })
@@ -39,7 +42,7 @@ async function resolveStepError({ sandbox, wrap, extension, body }: ResolveStepE
         return formatPieceError(error, { raw: inspect(error) })
     }
     finally {
-        await unlink(codeFilePath).catch(() => undefined)
+        await rm(flowDir, { recursive: true, force: true })
     }
 }
 

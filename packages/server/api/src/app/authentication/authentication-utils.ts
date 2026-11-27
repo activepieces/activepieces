@@ -186,7 +186,7 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
         provider,
     }: AssertEmailAuthIsEnabledParams): Promise<void> {
         const edition = system.getEdition()
-        if (edition === ApEdition.COMMUNITY) {
+        if (edition !== ApEdition.ENTERPRISE) {
             return
         }
         const platform = await platformService(log).getOneWithPlanOrThrow(platformId)

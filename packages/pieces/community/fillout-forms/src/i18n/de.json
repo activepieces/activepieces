@@ -56,8 +56,8 @@
   "PUT": "PUT",
   "DELETE": "LÖSCHEN",
   "HEAD": "HEAD",
-  "Request": "Request",
-  "Data to send": "Data to send",
+  "Request": "Anfrage",
+  "Data to send": "Zu sendende Daten",
   "New Form Response": "Neue Formular-Antwort",
   "Triggers when a new submission is received for a selected Fillout form.": "Wird ausgelöst, wenn eine neue Einreichung für ein ausgewähltes Fillout-Formular empfangen wird."
 }

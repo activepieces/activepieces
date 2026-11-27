@@ -15,4 +15,5 @@ export type MarkDownProperty = BasePropertySchema &
     false
   > & {
     variant?: MarkdownVariant;
+    selfHostedOnly?: boolean;
   };

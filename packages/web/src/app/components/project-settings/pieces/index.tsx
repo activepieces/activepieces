@@ -115,7 +115,11 @@ const PiecesSettings = () => {
               "This project's pieces are controlled by a Piece Set. Contact a platform admin to change it.",
             )}
             {!isNil(pieceSet) && (
-              <Badge variant="outline" className="ml-1 font-medium">
+              <Badge
+                variant="outline"
+                className="ml-1 font-medium"
+                data-testid="project-settings-piece-set"
+              >
                 {pieceSet.name}
               </Badge>
             )}

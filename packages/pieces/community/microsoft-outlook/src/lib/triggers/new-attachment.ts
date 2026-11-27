@@ -9,6 +9,7 @@ import {
 	isNil,
 	Property,
 	Store,
+	tryCatch,
 } from '@activepieces/pieces-framework';
 
 import { outlookAtomicCommon } from '../common/atomic-common';
@@ -22,6 +23,7 @@ const TEST_SAMPLE_SIZE = 5;
 const TEST_MAX_MESSAGES = 100;
 const POLL_CURSOR_KEY = 'pollCursor';
 const LEGACY_LAST_POLL_KEY = 'lastPoll';
+const FILE_SIZE_ERROR_NAME = 'FileSizeError';
 
 export const newAttachmentTrigger = createTrigger({
 	auth: microsoftOutlookAuth,
@@ -308,13 +310,17 @@ async function enrichAttachments({
 						attachmentId: attachment.id!,
 				  });
 
-			const file = await files.write({
-				fileName: attachment.name,
-				data,
-			});
+			const fileName = attachment.name;
+			const { data: file, error: fileError } = await tryCatch(() =>
+				files.write({ fileName, data }),
+			);
+			if (!isNil(fileError) && fileError.name !== FILE_SIZE_ERROR_NAME) {
+				throw fileError;
+			}
 
 			attachments.push({
 				file,
+				...(isNil(fileError) ? {} : { fileError: fileError.message }),
 				messageId: message.id!,
 				messageSubject: message.subject,
 				messageSender: message.sender,

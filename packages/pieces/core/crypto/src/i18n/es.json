@@ -52,9 +52,9 @@
   "Alphanumeric": "Alphanumeric",
   "With Symbols": "With Symbols",
   "Hash": "Hash",
-  "Signing key": "Signing key",
-  "Signature": "Signature",
+  "Signing key": "Clave de firma",
+  "Signature": "Firma",
   "Password": "Contraseña",
-  "Encrypt for recipient": "Encrypt for recipient",
+  "Encrypt for recipient": "Cifrar para el destinatario",
   "Crypto": "Crypto"
 }

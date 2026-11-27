@@ -1,9 +1,8 @@
 import { isNil } from '@activepieces/core-utils';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
-import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { CircleAlert, TriangleAlert, X } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/providers/embed-provider';
@@ -22,7 +21,11 @@ import { CreditsActionButton } from './credits-action-button';
 
 const PROJECT_PATH_PREFIX = '/projects/';
 
-export const CreditsUsageAlert = React.memo(() => {
+export const CreditsUsageAlert = React.memo(CreditsUsageAlertContent);
+
+CreditsUsageAlert.displayName = 'CreditsUsageAlert';
+
+function CreditsUsageAlertContent({ extraAction }: CreditsUsageAlertProps) {
   const {
     platformId,
     usage,
@@ -36,9 +39,7 @@ export const CreditsUsageAlert = React.memo(() => {
   const location = useLocation();
   const { embedState } = useEmbedding();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const [dismissedAt, setDismissedAt] = useState(() =>
-    creditsAlertDismissal.read({ platformId }),
-  );
+  const alertDismissal = creditsAlertDismissal.useDismissal({ platformId });
 
   const visible = billingUtils.shouldShowCreditsAlert({
     edition,
@@ -47,7 +48,7 @@ export const CreditsUsageAlert = React.memo(() => {
     isUnlimited,
     isBillingEnforced,
     severity,
-    isDismissalActive: creditsAlertDismissal.isActive({ dismissedAt }),
+    isDismissalActive: alertDismissal.isDismissed,
   });
   const { data: info } = billingQueries.usePlatformSubscription(
     platformId,
@@ -79,12 +80,6 @@ export const CreditsUsageAlert = React.memo(() => {
       : [t('Contact a platform admin to get more credits.')]),
   ].join(' ');
 
-  const dismissAlert = () => {
-    const timestamp = dayjs().toISOString();
-    setDismissedAt(timestamp);
-    creditsAlertDismissal.write({ platformId, dismissedAt: timestamp });
-  };
-
   return (
     <div className={cn(DASHBOARD_CONTENT_PADDING_X, 'w-full pt-3')}>
       <Alert
@@ -99,6 +94,7 @@ export const CreditsUsageAlert = React.memo(() => {
           {message}
         </AlertDescription>
         <div className="ms-auto flex shrink-0 items-center gap-1">
+          {extraAction}
           <CreditsActionButton />
           {!isDanger && (
             <Button
@@ -106,7 +102,7 @@ export const CreditsUsageAlert = React.memo(() => {
               size="icon-xs"
               aria-label={t('Dismiss')}
               className="text-current"
-              onClick={dismissAlert}
+              onClick={alertDismissal.dismiss}
             >
               <X className="size-3.5" />
             </Button>
@@ -115,6 +111,8 @@ export const CreditsUsageAlert = React.memo(() => {
       </Alert>
     </div>
   );
-});
+}
 
-CreditsUsageAlert.displayName = 'CreditsUsageAlert';
+type CreditsUsageAlertProps = {
+  extraAction?: ReactNode;
+};

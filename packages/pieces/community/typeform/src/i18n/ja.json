@@ -205,7 +205,19 @@
   "PUT": "PUT",
   "DELETE": "削除",
   "HEAD": "頭",
+  "New form": "新規フォーム",
+  "Form content": "フォームのコンテンツ",
+  "Original": "オリジナル",
+  "The copy": "コピー",
+  "Target": "ターゲット",
+  "Changes": "変更",
+  "Search in": "検索対象",
+  "Filters": "絞り込み",
+  "Results": "結果",
+  "Request": "リクエスト",
+  "Data to send": "送信するデータ",
   "New Submission": "新しい提出",
   "Triggers when someone submits the form.": "Triggers when someone submits the form.",
-  "A webhook is added to this form in Typeform when you publish the flow, and removed when you turn it off.": "A webhook is added to this form in Typeform when you publish the flow, and removed when you turn it off."
+  "A webhook is added to this form in Typeform when you publish the flow, and removed when you turn it off.": "A webhook is added to this form in Typeform when you publish the flow, and removed when you turn it off.",
+  "Watch": "監視"
 }

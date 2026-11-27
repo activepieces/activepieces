@@ -1,0 +1,130 @@
+name: Benchmark Compare
+
+# Runs a baseline image and a candidate image in turns on one runner, so a change between them is the
+# code and not the runner hardware. Report only: the job fails when a run breaks, never on a slower result.
+on:
+  workflow_call:
+    inputs:
+      baseline_image:
+        description: 'Image to compare against, e.g. ghcr.io/activepieces/activepieces-cloud:<tag>'
+        type: string
+        required: true
+      candidate_image:
+        description: 'Image under test'
+        type: string
+        required: true
+  workflow_dispatch:
+    inputs:
+      baseline_image:
+        description: 'Image to compare against. Empty uses the newest self-hosted release.'
+        type: string
+        default: ''
+      candidate_image:
+        description: 'Image under test. Empty builds the checked-out commit. The baseline image here measures the noise (A/A).'
+        type: string
+        default: ''
+      rounds:
+        description: 'Rounds per side'
+        type: string
+        default: '3'
+  pull_request:
+    paths:
+      - .github/workflows/benchmark-compare.yml
+      - benchmark/run-compare.sh
+      - benchmark/compare-results.mjs
+      - benchmark/setup.ts
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  compare:
+    runs-on: depot-ubuntu-24.04-32
+    timeout-minutes: 75
+    env:
+      AP_FILE_STORAGE_LOCATION: ${{ secrets.AP_FILE_STORAGE_LOCATION }}
+      AP_S3_BUCKET: ${{ secrets.AP_S3_BUCKET }}
+      AP_S3_ACCESS_KEY_ID: ${{ secrets.AP_S3_ACCESS_KEY_ID }}
+      AP_S3_SECRET_ACCESS_KEY: ${{ secrets.AP_S3_SECRET_ACCESS_KEY }}
+      AP_S3_ENDPOINT: ${{ secrets.AP_S3_ENDPOINT }}
+      AP_S3_REGION: ${{ secrets.AP_S3_REGION }}
+      AP_S3_USE_SIGNED_URLS: ${{ secrets.AP_S3_USE_SIGNED_URLS }}
+      AP_EXECUTION_MODE: SANDBOX_PROCESS
+      APP_REPLICAS: 1
+      WORKER_REPLICAS: 28
+      WORKER_CPUS: '0.5'
+      WORKER_MEMORY: 1G
+      WORKER_HEAP_MB: 768
+      AP_WORKER_CONCURRENCY: 1
+      AP_REUSE_SANDBOX: 'false'
+      CONCURRENCY: 28
+      ROUNDS: ${{ inputs.rounds || '3' }}
+      OUT_DIR: /tmp/bench-compare
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install monorepo deps (for the CLI)
+        run: bun install --frozen-lockfile
+
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Resolve the images
+        id: images
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASELINE_INPUT: ${{ inputs.baseline_image }}
+          CANDIDATE_INPUT: ${{ inputs.candidate_image }}
+        run: |
+          BASELINE="$BASELINE_INPUT"
+          if [ -z "$BASELINE" ]; then
+            BASELINE="ghcr.io/activepieces/activepieces:$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName)"
+          fi
+          docker pull "$BASELINE"
+          CANDIDATE="$CANDIDATE_INPUT"
+          if [ -z "$CANDIDATE" ]; then
+            CANDIDATE="bench-candidate:${GITHUB_SHA::10}"
+            docker build -t "$CANDIDATE" .
+          else
+            docker pull "$CANDIDATE"
+          fi
+          echo "baseline=$BASELINE" >> "$GITHUB_OUTPUT"
+          echo "candidate=$CANDIDATE" >> "$GITHUB_OUTPUT"
+
+      - name: Run both images in turns
+        env:
+          BASELINE_IMAGE: ${{ steps.images.outputs.baseline }}
+          CANDIDATE_IMAGE: ${{ steps.images.outputs.candidate }}
+        run: bash benchmark/run-compare.sh
+
+      - name: Compare
+        env:
+          BASELINE_IMAGE: ${{ steps.images.outputs.baseline }}
+          CANDIDATE_IMAGE: ${{ steps.images.outputs.candidate }}
+        run: |
+          set -o pipefail
+          node benchmark/compare-results.mjs "$OUT_DIR" "$BASELINE_IMAGE" "$CANDIDATE_IMAGE" | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the results
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: benchmark-compare
+          path: /tmp/bench-compare
+          if-no-files-found: ignore
+
+      - name: Show container logs on failure
+        if: failure()
+        run: docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.ci.yml logs --tail=100
+
+      - name: Teardown
+        if: always()
+        run: docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.ci.yml down -v

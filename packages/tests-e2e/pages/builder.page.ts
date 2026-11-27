@@ -1,15 +1,9 @@
-import { expect, Locator, Page } from '@playwright/test';
+import { expect, Locator } from '@playwright/test';
+import { e2eApi } from '../fixtures/api';
 import { BasePage } from './base';
 
 export class BuilderPage extends BasePage {
   url = `/flows`;
-
-  private readonly describeRun: (runId: string) => Promise<string>;
-
-  constructor({ page, describeRun }: { page: Page; describeRun: (runId: string) => Promise<string> }) {
-    super(page);
-    this.describeRun = describeRun;
-  }
 
   async nameNewFlow(name: string) {
     const breadcrumb = this.page.getByRole('navigation', { name: 'breadcrumb' });
@@ -30,10 +24,90 @@ export class BuilderPage extends BasePage {
     await this.page.getByTestId(`rf__node-${stepName}`).click();
   }
 
+  async visitFlow(flowId: string) {
+    await this.page.goto(`/flows/${flowId}`);
+    await expect(this.step('trigger')).toBeVisible();
+  }
+
+  step(stepName: string) {
+    return this.page.getByTestId(`rf__node-${stepName}`);
+  }
+
   async addStep({ after, piece, action }: { after: string; piece: string; action: string }) {
-    await this.page.locator(`[data-testid="add-action-button"][data-parent-step="${after}"]`).click();
+    await this.addStepAt({ slot: { parent: after, location: 'AFTER' }, piece, action });
+  }
+
+  async addStepAt({ slot, piece, action }: { slot: StepSlot; piece: string; action: string }) {
+    await this.fitToView();
+    await this.page.locator(slotSelector({ testId: 'add-action-button', slot })).click();
     await this.page.getByTestId('pieces-search-input').fill(piece);
     await this.page.getByTestId(`action-or-trigger-${action}`).click();
+    await expect(this.page.getByTestId('pieces-search-input')).toBeHidden();
+  }
+
+  async moveStep({ stepName, to }: { stepName: string; to: StepSlot }) {
+    await this.fitToView();
+    await this.step(stepName).hover();
+    const node = await this.step(stepName).boundingBox();
+    if (!node) {
+      throw new Error(`Step ${stepName} is not on the canvas`);
+    }
+    await this.page.mouse.down();
+    await this.page.mouse.move(node.x + node.width / 2 + 30, node.y + node.height / 2 + 30, { steps: 5 });
+    const zone = this.page.locator(slotSelector({ testId: 'step-drop-zone', slot: to }));
+    await expect(zone).toBeVisible();
+    const target = await zone.boundingBox();
+    const viewport = this.page.viewportSize();
+    if (!target || !viewport || target.y + target.height > viewport.height || target.x + target.width > viewport.width) {
+      throw new Error(`The drop zone of ${JSON.stringify(to)} is outside the viewport, and the canvas would scroll during the drag. Use a taller viewport.`);
+    }
+    await this.page.mouse.move(target.x + target.width / 2, target.y + target.height / 2, { steps: 10 });
+    await this.page.mouse.up();
+    await expect(zone).toBeHidden();
+  }
+
+  async duplicateStep(stepName: string) {
+    await this.clickStepMenuItem({ stepName, item: 'Duplicate' });
+  }
+
+  async deleteStep(stepName: string) {
+    await this.clickStepMenuItem({ stepName, item: 'Delete' });
+    await expect(this.step(stepName)).toBeHidden();
+  }
+
+  async copyStep(stepName: string) {
+    await this.clickStepMenuItem({ stepName, item: 'Copy' });
+  }
+
+  async pasteAfter(stepName: string) {
+    await this.clickStepMenuItem({ stepName, item: 'Paste After' });
+  }
+
+  async addNote(content: string) {
+    await this.page.getByRole('button', { name: 'Add note', exact: true }).click();
+    const canvas = await this.page.getByTestId('rf__wrapper').boundingBox();
+    if (!canvas) {
+      throw new Error('The canvas has no box');
+    }
+    await this.page.mouse.move(canvas.x + canvas.width * 0.2, canvas.y + canvas.height * 0.3, { steps: 5 });
+    await this.page.getByTestId('note-drag-overlay').click();
+    await expect(this.note()).toBeVisible();
+    await this.editNote(content);
+  }
+
+  async editNote(content: string) {
+    await this.note().dblclick();
+    await this.page.keyboard.press('ControlOrMeta+a');
+    await this.page.keyboard.insertText(content);
+    await this.page.keyboard.press('Escape');
+  }
+
+  note() {
+    return this.page.getByTestId('canvas-note');
+  }
+
+  publishButton() {
+    return this.page.getByRole('button', { name: 'Publish' });
   }
 
   async webhookUrl(): Promise<string> {
@@ -70,6 +144,10 @@ export class BuilderPage extends BasePage {
     await this.replaceText({ field: this.sidebar().getByRole('textbox', { name, exact: true }), text: value });
   }
 
+  async expectStepPanelText(text: string) {
+    await expect(this.sidebar().getByText(text)).toBeVisible({ timeout: 60000 });
+  }
+
   async setJsonBody(json: string) {
     await this.replaceEditorText({ testId: 'json-editor', text: json });
   }
@@ -103,7 +181,7 @@ export class BuilderPage extends BasePage {
     const succeeded = this.sidebar().getByText('Tested Successfully');
     await succeeded.or(this.sidebar().getByText('Test Failed')).first().waitFor({ timeout: 60000 }).catch(() => undefined);
     if (!(await succeeded.isVisible())) {
-      throw new Error(`The step test did not succeed: ${await this.describeRun(run.id)}`);
+      throw new Error(`The step test did not succeed: ${await e2eApi.describeRun({ request: this.page.request, session: e2eApi.readSession(), runId: run.id })}`);
     }
   }
 
@@ -148,11 +226,20 @@ export class BuilderPage extends BasePage {
       .toEqual({ status: 200, body: expected });
   }
 
-  private stepOutput() {
+  private async fitToView() {
+    await this.page.getByRole('button', { name: 'Fit to view', exact: true }).click();
+  }
+
+  private async clickStepMenuItem({ stepName, item }: { stepName: string; item: string }) {
+    await this.step(stepName).click({ button: 'right' });
+    await this.page.getByRole('menuitem').filter({ has: this.page.getByText(item, { exact: true }) }).click();
+  }
+
+  protected stepOutput() {
     return this.sidebar().getByRole('tabpanel', { name: 'Friendly View' });
   }
 
-  private sidebar() {
+  protected sidebar() {
     return this.page.getByTestId('right-sidebar');
   }
 
@@ -175,5 +262,14 @@ export class BuilderPage extends BasePage {
   }
 }
 
+function slotSelector({ testId, slot }: { testId: string; slot: StepSlot }) {
+  const branch = slot.location === 'INSIDE_BRANCH' ? `[data-branch-index="${slot.branchIndex}"]` : '';
+  return `[data-testid="${testId}"][data-parent-step="${slot.parent}"][data-step-location="${slot.location}"]${branch}`;
+}
+
 const FLOW_SAVE = /\/api\/v1\/flows\/[^/]+$/;
 const STEP_TEST = '/api/v1/sample-data/test-step';
+
+export type StepSlot =
+  | { parent: string; location: 'AFTER' | 'INSIDE_LOOP' }
+  | { parent: string; location: 'INSIDE_BRANCH'; branchIndex: number };

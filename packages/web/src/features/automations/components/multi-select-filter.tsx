@@ -118,6 +118,7 @@ export const MultiSelectFilter = ({
                   onClick={() => toggleValue(option.value)}
                 >
                   <Checkbox
+                    aria-label={option.label}
                     checked={selectedValues.includes(option.value)}
                     onCheckedChange={() => toggleValue(option.value)}
                   />

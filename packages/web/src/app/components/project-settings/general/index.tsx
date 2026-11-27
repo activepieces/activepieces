@@ -152,6 +152,7 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
                     <Input
                       {...field}
                       id="projectName"
+                      data-testid="project-settings-name"
                       placeholder={t('Project Name')}
                       className="rounded-l-none border-l-0"
                       disabled={form.formState.disabled}

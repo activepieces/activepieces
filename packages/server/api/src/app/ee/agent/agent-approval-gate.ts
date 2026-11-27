@@ -1,3 +1,4 @@
+import { AgentAbortReason } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { distributedStore } from '../../database/redis-connections'
 import { pubsub } from '../../helper/pubsub'
@@ -89,17 +90,17 @@ async function waitForDecision({ gateId, timeoutMs }: { gateId: string, timeoutM
     })
 }
 
-async function requestCancel({ conversationId, runId }: { conversationId: string, runId?: string }): Promise<void> {
-    const key = runId ? `${CANCEL_KEY_PREFIX}${conversationId}:${runId}` : `${CANCEL_KEY_PREFIX}${conversationId}`
-    await distributedStore.put(key, { cancelled: true }, CANCEL_TTL_SECONDS)
+function cancelKey({ conversationId, runId }: { conversationId: string, runId?: string }): string {
+    return runId ? `${CANCEL_KEY_PREFIX}${conversationId}:${runId}` : `${CANCEL_KEY_PREFIX}${conversationId}`
 }
 
-async function isCancelled({ conversationId, runId }: { conversationId: string, runId?: string }): Promise<boolean> {
-    const key = runId
-        ? `${CANCEL_KEY_PREFIX}${conversationId}:${runId}`
-        : `${CANCEL_KEY_PREFIX}${conversationId}`
-    const raw = await distributedStore.get<{ cancelled: boolean }>(key)
-    return raw?.cancelled === true
+async function requestCancel({ conversationId, runId, reason }: { conversationId: string, runId?: string, reason: AgentAbortReason }): Promise<void> {
+    const keys = runId ? [cancelKey({ conversationId }), cancelKey({ conversationId, runId })] : [cancelKey({ conversationId })]
+    await Promise.all(keys.map((key) => distributedStore.put(key, { cancelled: true, reason }, CANCEL_TTL_SECONDS)))
+}
+
+async function getCancel({ conversationId, runId }: { conversationId: string, runId?: string }): Promise<{ reason?: string } | null> {
+    return distributedStore.get<{ reason?: string }>(cancelKey({ conversationId, runId }))
 }
 
 async function clearCancel({ conversationId }: { conversationId: string }): Promise<void> {
@@ -170,7 +171,7 @@ export const agentApprovalGate = {
     consumeApproval,
     waitForDecision,
     requestCancel,
-    isCancelled,
+    getCancel,
     clearCancel,
     storeAvailableConnections,
     getAvailableConnections,

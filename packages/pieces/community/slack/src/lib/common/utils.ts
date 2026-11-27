@@ -163,7 +163,7 @@ export function parseCommand(
  }
 
  // Extract the text after the mention
- const commandText = mentionMatch[1].trim();
+ const commandText = decodeSlackText(mentionMatch[1].trim());
 
  // Split into command and arguments (first word is command, rest are args)
  const parts = commandText.split(/\s+/);
@@ -171,7 +171,8 @@ export function parseCommand(
  const args = parts.slice(1);
 
  // Check if it's a valid command
- if (!validCommands.includes(command)) {
+ const normalizedCommands = validCommands.map((validCommand) => validCommand.trim().toLowerCase());
+ if (!normalizedCommands.includes(command)) {
    return null;
  }
 
@@ -180,6 +181,26 @@ export function parseCommand(
    args,
  };
 }
+
+export function isNewMessageEvent(event: { subtype?: string; hidden?: boolean }): boolean {
+  return !event.hidden && !NOT_NEW_MESSAGE_SUBTYPES.includes(event.subtype ?? '');
+}
+
+export function isChannelNoticeEvent(event: { subtype?: string }): boolean {
+  return CHANNEL_NOTICE_SUBTYPES.includes(event.subtype ?? '');
+}
+
+function decodeSlackText(text: string): string {
+  return text
+    .replace(/<([a-z][a-z0-9+.-]*:[^|>]+)(?:\|[^>]*)?>/gi, (_, target: string) => target.replace(/^mailto:/i, ''))
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&');
+}
+
+const NOT_NEW_MESSAGE_SUBTYPES = ['message_changed', 'message_deleted', 'message_replied'];
+
+const CHANNEL_NOTICE_SUBTYPES = ['channel_join', 'channel_leave', 'channel_topic', 'channel_purpose', 'channel_name', 'channel_archive', 'channel_unarchive', 'group_join', 'group_leave', 'group_topic', 'group_purpose', 'group_name', 'group_archive', 'group_unarchive'];
 
 const THREAD_REPLIES_PAGE_SIZE = 200;
 const THREAD_REPLIES_MAX_PAGES = 50;

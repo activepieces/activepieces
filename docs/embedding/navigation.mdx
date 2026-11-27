@@ -67,19 +67,20 @@ Here is the list for routes the sdk can navigate to:
 
 ## Navigate to Initial Route
 
-You can call the `navigate` method after initializing the sdk using the `configure` sdk:
+Set `embedding.initialRoute` to open the iframe on a route (SDK 0.14.0 or later). `navigate` works only when `embedding.containerId` is set, because without it the SDK creates no iframe.
 
 ```js
 const flowId = '1234';
 const instanceUrl = 'YOUR_INSTANCE_URL';
 const jwtToken = 'YOUR_GENERATED_JWT_TOKEN';
+const containerId = 'YOUR_CONTAINER_ID';
 activepieces.configure({
 	instanceUrl,
 	jwtToken,
-}).then(() => {
-	activepieces.navigate({
-		route: `/flows/${flowId}`
-	})
+	embedding: {
+		containerId,
+		initialRoute: `/flows/${flowId}`
+	}
 });
 ```
 

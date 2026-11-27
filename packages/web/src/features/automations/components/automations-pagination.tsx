@@ -69,6 +69,7 @@ export const AutomationsPagination = ({
           size="sm"
           onClick={onNextPage}
           disabled={currentPage >= maxPages - 1}
+          data-testid="automations-next-page"
           className="gap-1"
         >
           {t('Next')}

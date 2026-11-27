@@ -4,7 +4,7 @@
   "Scopes": "Scopes",
   "Where you sign in to approve access.": "Where you sign in to approve access.",
   "Where the access token is requested.": "Where the access token is requested.",
-  "Separate scopes with spaces.": "Separate scopes with spaces.",
+  "Separate scopes with spaces. Leave empty if your provider does not use scopes; no scope is sent then.": "Separate scopes with spaces. Leave empty if your provider does not use scopes; no scope is sent then.",
   "Copy the authorize URL, token URL and scopes from the provider's API docs. When you sign in through the provider, add the Redirect URL to its app settings.": "Copy the authorize URL, token URL and scopes from the provider's API docs. When you sign in through the provider, add the Redirect URL to its app settings.",
   "Send an OAuth2 Request": "OAuth2 Anfrage senden",
   "Call any URL with the OAuth2 token from your connection.": "Call any URL with the OAuth2 token from your connection.",
@@ -18,11 +18,11 @@
   "Proxy Settings": "Proxy-Einstellungen",
   "Return Error as Output": "Return Error as Output",
   "Timeout": "Timeout",
-  "The full URL to call, including https:// or http://": "The full URL to call, including https:// or http://",
-  "GET reads data, POST creates it.": "GET reads data, POST creates it.",
+  "The full URL to call, including https:// or http://": "Die vollständige URL zum Aufrufen, einschließlich https:// oder http://",
+  "GET reads data, POST creates it.": "GET liest Daten, POST erstellt sie.",
   "Authorization headers are injected automatically from your connection.": "Autorisierungs-Header werden automatisch von Ihrer Verbindung injiziert.",
   "Appended to the URL as ?key=value.": "Wird als ?key=value an die URL angehängt.",
-  "How to encode the request body.": "How to encode the request body.",
+  "How to encode the request body.": "Wie der Anfragetext kodiert werden soll.",
   "Route this request through an HTTP proxy.": "Route this request through an HTTP proxy.",
   "On a failed request, output the error instead of failing the step.": "Bei einer fehlgeschlagenen Anfrage den Fehler ausgeben, statt den Schritt abzubrechen.",
   "Seconds to wait for a response. Empty: up to the flow limit (10 min).": "Sekunden bis zur Antwort. Leer: bis zum Flow-Limit (10 Min.).",
@@ -31,6 +31,6 @@
   "PUT": "PUT",
   "PATCH": "PATCH",
   "DELETE": "LÖSCHEN",
-  "Request": "Request",
-  "Data to send": "Data to send"
+  "Request": "Anfrage",
+  "Data to send": "Daten zum Senden"
 }

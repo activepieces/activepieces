@@ -10,9 +10,9 @@ How Activepieces' AI and MCP surfaces fit together. One subsection per feature.
 
 Exposes a project as a Model Context Protocol server so AI clients (Claude Desktop, Cursor, agent piece) can drive flows/tables/connections/runs via typed tools.
 
-- **Entities/services**: one `McpServer` per project (UNIQUE projectId, 72-char bearer token, `disabledTools[]` JSONB). `mcp-service.ts` builds the server per-request; `mcp-server-controller.ts` for endpoints.
-- **Tools**: locked (always-on reads: list/structure/validate/research pieces) + controllable (toggleable writes: create/build/publish flows, tables, runs) + dynamic flow-tools (any flow using the `@activepieces/piece-mcp` trigger, named `{toolName}_{flowId[0..4]}`).
-- **Integration/gotchas**: auth via Bearer or `?token=`; OAuth 2.0 PKCE for clients that need it. StreamableHTTP is the main endpoint (`/v1/mcp/:projectId/http`). All editions. `x-ap-conversation-id` header lets EE chat re-scope the server to a conversation's project (token-scoped so it can't widen access). 401s carry RFC 9728 `WWW-Authenticate` for discovery.
+- **Entities/services**: one `McpServer` row per project (UNIQUE projectId, `disabledTools[]` JSONB) and one per platform. Its `token` column is dead: nothing authenticates with it. `buildMcpServer` builds the server per request; `mcp-server-controller.ts` for the config endpoints.
+- **Tools**: locked (always-on reads: list/structure/validate/research pieces) + controllable (toggleable writes: create/build/publish flows, tables, runs) + dynamic flow-tools (any enabled flow using the `@activepieces/piece-mcp` trigger, only on the project server `/mcp`).
+- **Integration/gotchas**: auth is OAuth 2.0 PKCE only. Two StreamableHTTP endpoints at the domain root: `/mcp` (one project, chosen on the consent page) and `/mcp/platform` (every project the user can reach, picked with `ap_set_project_context`). All editions. `x-ap-conversation-id` header lets EE chat re-scope the server to a conversation's project (token-scoped so it can't widen access). 401s carry RFC 9728 `WWW-Authenticate` for discovery. Details: [MCP Server](./mcp-server.md).
 
 ### AI Providers
 

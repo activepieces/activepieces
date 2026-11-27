@@ -33,41 +33,38 @@ The Users tab is a dedicated place for your platform admin to manage, delete, ac
 
 #### <br /><br />Default Roles
 
-Activepieces comes with four standard roles out of the box. The table below shows the permissions for each role:
+Activepieces comes with three project roles out of the box. The table below shows what each role can view (V) and edit (E) in a project:
 
-| Permission | Admin | Editor | Operator | Viewer |
-| --- | :-: | :-: | :-: | :-: |
-| **Flows** |  |  |  |  |
-| View Flows | ✓ | ✓ | ✓ | ✓ |
-| Edit Flows | ✓ | ✓ |  |  |
-| Publish / Toggle Flows | ✓ | ✓ | ✓ |  |
-| **Runs** |  |  |  |  |
-| View Runs | ✓ | ✓ | ✓ | ✓ |
-| Retry Runs | ✓ | ✓ | ✓ |  |
-| **Connections** |  |  |  |  |
-| View Connections | ✓ | ✓ | ✓ | ✓ |
-| Edit Connections | ✓ | ✓ | ✓ |  |
-| **Team** |  |  |  |  |
-| View Project Members | ✓ | ✓ | ✓ | ✓ |
-| Add/Remove Project Members | ✓ |  |  |  |
-| **Git Sync** |  |  |  |  |
-| Configure Git Repo | ✓ |  |  |  |
-| Pull Flows from Git | ✓ |  |  |  |
-| Push Flows to Git | ✓ |  |  |  |
+| Permission | Admin | Editor | Viewer |
+| --- | :-: | :-: | :-: |
+| Flows | V, E | V, E | V |
+| Flow status (turn a flow on or off) | E | E |  |
+| Folders, tables, agents, knowledge base, variables, MCP servers | V, E | V, E | V |
+| Runs (view, retry) | V, E | V, E | V |
+| Alerts | V, E |  |  |
+| App connections | V, E | V, E | V |
+| Replace connections | E | E |  |
+| Project releases and Git Sync | V, E | V, E |  |
+| Project members | V, E | V | V |
+| Invitations | V, E | V | V |
+| Project settings | V, E | V | V |
 
 #### Custom Roles
 
 If the default roles don't fit your needs, you can create custom roles with specific permissions.
 
 <Steps>
-  <Step title="Navigate to Project Roles">
-    Go to **Platform Admin** → **Security** → **Project Roles**
+  <Step title="Open Roles & Access">
+    In the platform admin, go to **Users** → **Roles & Access**
   </Step>
   <Step title="Create a New Role">
-    Click **Create Role** and give it a name
+    Click **New role** and give it a name. The name must differ from every other role, including the default ones.
   </Step>
   <Step title="Configure Permissions">
-    Select the specific permissions you want to grant to this role
+    Pick a starting point (**Nothing**, **Viewer** or **Editor**), tick or untick the permissions you want, and click **Create role**
+  </Step>
+  <Step title="Give the Role to a Member">
+    Open the project, open its members, and pick the new role in the member's role list. The member gets the permissions of the role at once.
   </Step>
 </Steps>
 
@@ -87,12 +84,12 @@ If the default roles don't fit your needs, you can create custom roles with spec
 
 **_NB_**: 
 
-- If you **Deactivate a user**, they will lose access but won't lose all their data. You can always activate them again.
+- If you **Deactivate a user**, they will lose access but won't lose all their data. They cannot sign in, and a session they already have open stops working. You can activate them again when your plan has a free seat.
 - However, if you **Delete** a user, all their data will be deleted as well.
 
 ### **Managing users in larger organizations**
 
-For larger teams, managing users one by one can quickly become difficult. Instead, you can use [**Single Sign-On (SSO)**](https://app.mintlify.com/activepieces/activepieces/editor/ginika%2Fdraft-aug-31/~/dbcb5d11-21d1-444b-bd97-4a062786a2ec) to let users sign in with your organization’s identity provider and [**SCIM**](https://app.mintlify.com/activepieces/activepieces/editor/ginika%2Fdraft-aug-31/~/e1d21d0e-a53d-478d-9f6b-d788b5f01576) to automate user provisioning and deprovisioning.
+For larger teams, managing users one by one can quickly become difficult. Instead, you can use [**Single Sign-On (SSO)**](/admin-guide/guides/sso) to let users sign in with your organization’s identity provider and [**SCIM**](/admin-guide/guides/scim/overview) to automate user provisioning and deprovisioning.
 
 This makes it easier to manage access as your organization grows without manually inviting, activating, or deactivating every user.
 

@@ -17,9 +17,17 @@ export class PasswordResetPage extends BasePage {
   }
 
   async setNewPassword({ link, password }: { link: URL; password: string }) {
+    await this.submitNewPassword({ link, password });
+    await this.page.waitForURL((url) => url.pathname === '/sign-in');
+  }
+
+  async submitNewPassword({ link, password }: { link: URL; password: string }) {
     await this.page.goto(`${link.pathname}${link.search}`);
     await this.page.getByTestId('reset-password-new-password').fill(password);
     await this.page.getByTestId('reset-password-confirm').click();
-    await this.page.waitForURL((url) => url.pathname === '/sign-in');
+  }
+
+  newPasswordError() {
+    return this.page.getByTestId('reset-password-error');
   }
 }

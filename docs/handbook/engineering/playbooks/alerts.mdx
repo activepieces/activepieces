@@ -7,6 +7,10 @@ Automated reports and alerts that tell us something is wrong before a customer d
 
 Every alert below except the AI chat alerts ends up in **Box**. Box groups repeats of the same alert into one issue by fingerprint and starts a Claude agent only for a new issue, or for a resolved one that comes back. The agent investigates, files the Linear ticket for the team that owns the cause, and opens a pull request when the fix is small. Resolve the Box issue once its fix has shipped, and never ignore one: an ignored issue never starts an agent again.
 
+## Agent Prompts
+
+Each alert source in Box (Cloudflare, Better Stack, the generic Errors API) has its own agent prompt, set on that source's page under **Integrations**. A source with an empty prompt starts agents that know nothing about our servers or Linear routing, so fill it in when you add a source. Agents are on our tailnet, but they only know to `ssh root@ap-devops` and hop to a host if the prompt tells them.
+
 ## Enterprise OOM Report
 
 Runs that run out of memory end with status `MEMORY_LIMIT_EXCEEDED`. They are not failed queue jobs, so queue alerts never see them. This report surfaces them so we can reach out with a fix (bigger dedicated workers, flow optimization) before the customer escalates.
@@ -44,7 +48,7 @@ The `Benchmark` GitHub Actions workflow (`.github/workflows/benchmark.yml`) runs
 - **Results:** each scheduled run stores one row per shape in ClickHouse. The **Nightly Benchmark** dashboard in HyperDX charts throughput, latency, queue wait and worker resources over time.
 - **Regression alert:** `benchmark/detect-regression.mjs` compares the run with the median of the last 14 runs and, when a metric is more than 5% worse on 2 runs in a row, sends a signal to Box's Errors API, which starts a Claude agent to find the culprit commit. The signal carries its own investigation prompt and the trailing runs with their SHAs. It stays silent until a shape has 3 runs of history.
 - **Pipeline alert:** on scheduled runs only, when anything in the job fails, its last step sends a `bench-pipeline-<shape>` signal to Box so an agent reads the failed logs.
-- **Dedup:** Box groups signals by fingerprint (`bench-regression-<shape>`, `bench-pipeline-<shape>`), so a regression that persists starts one agent, not one per night. Resolve the Box issue once the fix has shipped. An accepted regression stays open until the 14-run baseline absorbs it (about 7 nights), then gets resolved; resolving earlier reopens it and starts a new agent. Never ignore a bench issue: ignored issues never start an agent, so that shape would go silent for good.
+- **Dedup:** each signal carries a fingerprint per shape (`bench-regression-<shape>`, `bench-pipeline-<shape>`), but Box also merges similar signals, so both shapes' regressions from one night land in a single `nightly-benchmark` issue. A regression that persists adds to that issue instead of starting one agent per night. Resolve the Box issue once the fix has shipped. An accepted regression stays open until the 14-run baseline absorbs it (about 7 nights), then gets resolved; resolving earlier reopens it and starts a new agent. Never ignore a bench issue: ignored issues never start an agent, and because both shapes share the issue, the whole benchmark would go silent for good.
 
 <Warning>
 Manual runs (`workflow_dispatch`) skip the ClickHouse writes and both Box signal steps. A green manual run does not prove these steps work. Check the next scheduled run after changing them or their secrets.

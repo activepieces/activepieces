@@ -15,7 +15,7 @@ Unless you're happy with that, use [Self hosting](/install/options/docker-compos
 Run this anywhere:
 
 ```bash
-docker run -d --name activepieces -p 8080:80 \
+docker run -d --name activepieces -p 8080:80 --stop-timeout 705 \
   -v ~/.activepieces:/root/.activepieces \
   -e AP_DB_TYPE=PGLITE \
   -e AP_REDIS_TYPE=MEMORY \
@@ -26,7 +26,7 @@ docker run -d --name activepieces -p 8080:80 \
 Or hand it to your AI assistant:
 
 <Prompt description="Install Activepieces with an AI assistant" icon="sparkles" actions={["copy", "cursor"]}>
-Install Activepieces on this machine for personal use with a single Docker container. Run `docker run -d --name activepieces -p 8080:80 -v ~/.activepieces:/root/.activepieces -e AP_DB_TYPE=PGLITE -e AP_REDIS_TYPE=MEMORY -e AP_FRONTEND_URL="http://localhost:8080" activepieces/activepieces:latest`. If port 8080 is already in use, pick a free port and change both the `-p` mapping and `AP_FRONTEND_URL` to match. When it finishes, wait until `curl http://localhost:8080/api/v1/health` responds, then tell me the URL to open.
+Install Activepieces on this machine for personal use with a single Docker container. Run `docker run -d --name activepieces -p 8080:80 --stop-timeout 705 -v ~/.activepieces:/root/.activepieces -e AP_DB_TYPE=PGLITE -e AP_REDIS_TYPE=MEMORY -e AP_FRONTEND_URL="http://localhost:8080" activepieces/activepieces:latest`. If port 8080 is already in use, pick a free port and change both the `-p` mapping and `AP_FRONTEND_URL` to match. When it finishes, wait until `curl http://localhost:8080/api/v1/health` responds, then tell me the URL to open.
 </Prompt>
 
 <Info>
@@ -70,6 +70,8 @@ Back up first, since the container is replaced:
 docker stop activepieces
 cp -r ~/.activepieces ~/.activepieces-backup
 ```
+
+`--stop-timeout 705` lets `docker stop` wait for a flow that is still running, up to the default 600 s flow timeout plus 105 s. Without it Docker kills the container after 10 s and the run starts again from its first step. An idle container stops right away either way.
 
 Then pull the new image and start a fresh container with the same command you used to install:
 

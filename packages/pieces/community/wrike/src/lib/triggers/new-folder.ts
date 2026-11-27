@@ -1,12 +1,7 @@
 import { Property } from '@activepieces/pieces-framework';
 import { wrikeAuth } from '../common/auth';
-import {
-  HttpMethod,
-  HttpRequest,
-  httpClient,
-} from '@activepieces/pieces-common';
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
-import { wrikeCommon } from '../common/client';
+import { WEBHOOK_ID_KEY, wrikeWebhook } from '../common/webhook';
 
 export const newFolder = createTrigger({
   name: 'new_folder',
@@ -15,6 +10,7 @@ export const newFolder = createTrigger({
   aiMetadata: {
     description: 'Fires when a new folder or project is created in Wrike, registered via a webhook on the FolderCreated event; can be scoped to a single parent folder so it only fires for folders created underneath it.',
   },
+  classification: 'READ',
   auth: wrikeAuth,
   type: TriggerStrategy.WEBHOOK,
   props: {
@@ -34,67 +30,23 @@ export const newFolder = createTrigger({
   },
 
   onEnable: async (context) => {
-    const webhookUrl = context.webhookUrl;
-    const { parentFolderId } = context.propsValue;
-
-    const webhookData: Record<string, any> = {
-      hookUrl: webhookUrl,
-    };
-
-    if (parentFolderId) {
-      webhookData['folderId'] = parentFolderId;
-    }
-
-    const request: HttpRequest = {
-      method: HttpMethod.POST,
-      url: `${wrikeCommon.baseUrl}/webhooks`,
-      body: webhookData,
-      headers: {
-        Authorization: `Bearer ${context.auth.access_token}`,
-        'Content-Type': 'application/json',
-      },
-    };
-
-    const { status, body } = await httpClient.sendRequest(request);
-    if (status !== 200) {
-      throw new Error(
-        `Failed to register webhook. Status: ${status}, Body: ${JSON.stringify(
-          body
-        )}`
-      );
-    }
-
-    await context.store.put('webhook_id', body.data[0].id);
+    const webhookId = await wrikeWebhook.register({
+      auth: context.auth,
+      webhookUrl: context.webhookUrl,
+      eventType: 'FolderCreated',
+      folderId: context.propsValue.parentFolderId || undefined,
+    });
+    await context.store.put(WEBHOOK_ID_KEY, webhookId);
   },
 
   onDisable: async (context) => {
-    const webhookId = await context.store.get('webhook_id');
-
-    if (webhookId) {
-      const request: HttpRequest = {
-        method: HttpMethod.DELETE,
-        url: `${wrikeCommon.baseUrl}/webhooks/${webhookId}`,
-        headers: {
-          Authorization: `Bearer ${context.auth.access_token}`,
-        },
-      };
-
-      try {
-        await httpClient.sendRequest(request);
-        await context.store.delete('webhook_id');
-      } catch (error) {
-        console.warn('Failed to unregister webhook:', error);
-      }
-    }
+    await wrikeWebhook.unregister({ auth: context.auth, store: context.store });
   },
 
   run: async (context) => {
-    const payload = context.payload.body as any;
-
-    if (payload && payload.eventType === 'FolderCreated') {
-      return payload;
-    }
-
-    return [];
+    return wrikeWebhook.eventsOfType({
+      body: context.payload.body,
+      eventType: 'FolderCreated',
+    });
   },
 });

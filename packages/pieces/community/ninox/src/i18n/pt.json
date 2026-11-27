@@ -51,8 +51,8 @@
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
   "HEAD": "CABEÇA",
-  "Request": "Request",
-  "Data to send": "Data to send",
+  "Request": "Solicitação",
+  "Data to send": "Dados para enviar",
   "New Record": "Novo Registro",
   "Triggers when a new record is created in a table.": "Dispara quando um novo registro é criado em uma tabela."
 }

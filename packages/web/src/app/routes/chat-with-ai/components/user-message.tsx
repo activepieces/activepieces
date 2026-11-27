@@ -11,6 +11,7 @@ import {
   MessageContent as PromptKitMessageContent,
 } from '@/components/prompt-kit/message';
 import { ChatUIMessage } from '@/features/chat/lib/chat-types';
+import { MOTION } from '@/features/workspace/lib/chat-layout';
 import { cn } from '@/lib/utils';
 
 import { getTextFromParts } from '../lib/message-parsers';
@@ -42,9 +43,9 @@ export const UserMessage = memo(function UserMessage({
   return (
     <motion.div
       className="flex justify-end py-3 group/msg"
-      initial={isFromHistory ? false : { opacity: 0, x: 16 }}
+      initial={isFromHistory ? false : { opacity: 0, x: 8 }}
       animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.25 }}
+      transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
     >
       <div className="max-w-[80%]">
         <Message className="flex-row-reverse">
@@ -69,7 +70,7 @@ export const UserMessage = memo(function UserMessage({
         </Message>
         <MessageActions
           className={cn(
-            'justify-end mt-1 transition-opacity',
+            'justify-end mt-1 transition-opacity duration-(--dur-micro) ease-[ease]',
             isLastMessage
               ? 'opacity-100'
               : 'opacity-0 group-hover/msg:opacity-100 focus-within:opacity-100',

@@ -32,7 +32,7 @@ export const ImageMessage: React.FC<ImageMessageProps> = ({
           }}
           data-theme="dark"
           aria-label={t('Download')}
-          className="absolute top-2 right-2 bg-scrim/70 rounded-full p-1 hover:bg-scrim transition-opacity opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+          className="absolute top-2 right-2 bg-scrim/70 rounded-full p-1 hover:bg-scrim transition-opacity duration-(--dur-micro) ease-[ease] opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
         >
           <Download className="h-4 w-4 text-gray-12" />
         </button>

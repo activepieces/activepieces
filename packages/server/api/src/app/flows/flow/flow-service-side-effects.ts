@@ -1,9 +1,10 @@
 import { FlowId, isNil, PlatformId, ProjectId, tryCatch } from '@activepieces/core-utils'
-import { ApplicationEventName, FileType, Flow, FlowDraftUpdatedEvent, FlowOperationRequest, FlowOperationType, FlowStatus, FlowVersion, PopulatedFlow, WebsocketClientEvent } from '@activepieces/shared'
+import { ApplicationEventName, FileType, Flow, FlowDraftUpdatedEvent, FlowOperationRequest, FlowOperationType, FlowStatus, FlowVersion, PopulatedFlow, ResourceChangeOp, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { applicationEvents, MetaInformation } from '../../helper/application-events'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
 import { sampleDataService } from '../step-run/sample-data.service'
+import { editorSession } from './editor-session'
 
 export const flowSideEffects = (log: FastifyBaseLogger) => ({
     async preUpdateStatus({
@@ -114,10 +115,10 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async onDraftWritten({ flowId, projectId, editorSessionId }: OnDraftWrittenParams): Promise<void> {
+    async onDraftWritten({ flowId, projectId, editorSessionId, op = ResourceChangeOp.UPDATE }: OnDraftWrittenParams): Promise<void> {
         const { error } = await tryCatch(async () => {
             const { websocketService } = await import('../../core/websockets.service')
-            const event: FlowDraftUpdatedEvent = { flowId, editorSessionId }
+            const event: FlowDraftUpdatedEvent = { flowId, editorSessionId: editorSessionId ?? editorSession.current(), op }
             websocketService.to(projectId).emit(WebsocketClientEvent.FLOW_DRAFT_UPDATED, event)
         })
         if (!isNil(error)) {
@@ -176,6 +177,7 @@ type OnDraftWrittenParams = {
     flowId: FlowId
     projectId: ProjectId
     editorSessionId: string | null
+    op?: ResourceChangeOp
 }
 
 type OnDisabledByWorkerParams = {

@@ -1,6 +1,7 @@
 import { SeekPage } from '@activepieces/core-utils';
 import {
   AgentMessageSource,
+  AgentPageContext,
   type AgentFeedbackReason,
   type AgentHistoryMessage,
   type PersistedAgentMessage,
@@ -18,10 +19,18 @@ import {
 
 import { api } from '@/lib/api';
 
-async function createConversation(
-  request: CreateAgentConversationRequest,
-): Promise<AgentConversation> {
-  return api.post<AgentConversation>('/v1/agents/conversations', request);
+async function createConversation({
+  request,
+  signal,
+}: {
+  request: CreateAgentConversationRequest;
+  signal?: AbortSignal;
+}): Promise<AgentConversation> {
+  return api.any<AgentConversation>('/v1/agents/conversations', {
+    method: 'POST',
+    data: request,
+    signal,
+  });
 }
 
 async function listConversations({
@@ -63,22 +72,34 @@ async function deleteConversation(id: string): Promise<void> {
   return api.delete<void>(`/v1/agents/conversations/${id}`);
 }
 
+function deleteConversationOnExit(id: string): void {
+  api
+    .any<void>(`/v1/agents/conversations/${id}`, {
+      method: 'DELETE',
+      adapter: 'fetch',
+      fetchOptions: { keepalive: true },
+    })
+    .catch(() => undefined);
+}
+
 async function sendMessage({
   conversationId,
   content,
   runId,
   files,
   messageSource,
+  pageContext,
 }: {
   conversationId: string;
   content: string;
   runId?: string;
   files?: Array<{ name: string; mimeType: string; data: string }>;
   messageSource?: AgentMessageSource;
+  pageContext?: AgentPageContext;
 }): Promise<{ conversationId: string; runId?: string }> {
   return api.post<{ conversationId: string; runId?: string }>(
     `/v1/agents/conversations/${conversationId}/messages`,
-    { content, runId, files, messageSource },
+    { content, runId, files, messageSource, pageContext },
   );
 }
 
@@ -180,6 +201,7 @@ export const chatApi = {
   getMessages,
   updateConversation,
   deleteConversation,
+  deleteConversationOnExit,
   sendMessage,
   approveToolCall,
   cancelConversation,

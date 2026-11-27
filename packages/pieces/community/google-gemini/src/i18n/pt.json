@@ -152,13 +152,13 @@
   "HEAD": "CABEÇA",
   "Message": "mensagem",
   "Settings": "Configurações",
-  "Search in": "Search in",
-  "History": "History",
+  "Search in": "Pesquisar em",
+  "History": "Histórico",
   "Script": "Script",
-  "Speaker": "Speaker",
+  "Speaker": "Locutor",
   "Video": "Vídeo",
   "Output": "Saída",
   "Content": "Conteúdo",
-  "Request": "Request",
-  "Data to send": "Data to send"
+  "Request": "Solicitação",
+  "Data to send": "Dados a enviar"
 }

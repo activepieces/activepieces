@@ -1,5 +1,5 @@
 import { apId } from '@activepieces/core-utils'
-import { EDITOR_SESSION_ID_HEADER, FieldType, FilterOperator, TableWebhookEventType, WebsocketClientEvent } from '@activepieces/shared'
+import { EDITOR_SESSION_ID_HEADER, FieldType, FilterOperator, ResourceChangeOp, TableWebhookEventType, WebsocketClientEvent } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -577,7 +577,7 @@ describe('Record API', () => {
             })
 
             expect(response.statusCode).toBe(StatusCodes.CREATED)
-            expect(pushes).toEqual([{ room: ctx.project.id, payload: { tableId: table.id, editorSessionId } }])
+            expect(pushes).toEqual([{ room: ctx.project.id, payload: { tableId: table.id, editorSessionId, op: ResourceChangeOp.UPDATE } }])
         })
 
         it('tells the project when columns are reordered', async () => {
@@ -588,7 +588,7 @@ describe('Record API', () => {
             const response = await ctx.post('/v1/fields/reorder', { tableId: table.id, fieldIds: [field.id] })
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(pushes).toEqual([{ room: ctx.project.id, payload: { tableId: table.id, editorSessionId: null } }])
+            expect(pushes).toEqual([{ room: ctx.project.id, payload: { tableId: table.id, editorSessionId: null, op: ResourceChangeOp.UPDATE } }])
         })
 
         it('stays quiet when an update changes nothing', async () => {
