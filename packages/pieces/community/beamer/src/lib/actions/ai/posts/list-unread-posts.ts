@@ -14,7 +14,7 @@ export const listUnreadPostsAction = createAction({
   displayName: 'List Unread Posts',
   description: 'Lists the published posts an end user has not read yet.',
   audience: 'ai',
-  classification: 'SEARCH',
+  classification: 'WRITE',
   aiMetadata: {
     description:
       'Lists the live posts (no drafts, archived, expired or scheduled ones) that one end user has not read, at most 10 per page. By default it asks Beamer to mark the returned posts as read; on plans without cross-device sync Beamer may not keep that, so the posts can show as unread again. Set Mark As Read to "false" to only look. Use Count Unread Posts for just the number.',
