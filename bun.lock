@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "activepieces",
@@ -4923,6 +4922,19 @@
         "vitest": "5.0.5",
       },
     },
+    "packages/pieces/community/jobvetta": {
+      "name": "@activepieces/piece-jobvetta",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/jogg-ai": {
       "name": "@activepieces/piece-jogg-ai",
       "version": "0.1.8",
@@ -8746,7 +8758,7 @@
     },
     "packages/pieces/community/slack": {
       "name": "@activepieces/piece-slack",
-      "version": "0.23.6",
+      "version": "0.24.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -12313,6 +12325,8 @@
     "@activepieces/piece-jira-data-center": ["@activepieces/piece-jira-data-center@workspace:packages/pieces/community/jira-data-center"],
 
     "@activepieces/piece-jira-service-management": ["@activepieces/piece-jira-service-management@workspace:packages/pieces/community/jira-service-management"],
+
+    "@activepieces/piece-jobvetta": ["@activepieces/piece-jobvetta@workspace:packages/pieces/community/jobvetta"],
 
     "@activepieces/piece-jogg-ai": ["@activepieces/piece-jogg-ai@workspace:packages/pieces/community/jogg-ai"],
 

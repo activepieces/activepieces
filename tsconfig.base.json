@@ -244,6 +244,9 @@
       "@activepieces/piece-google-workspace": [
         "packages/pieces/community/google-workspace/src/index.ts"
       ],
+      "@activepieces/piece-jobvetta": [
+        "packages/pieces/community/jobvetta/src/index.ts"
+      ],
       "@activepieces/piece-rounded-studio": [
         "packages/pieces/community/rounded-studio/src/index.ts"
       ],
