@@ -18,7 +18,7 @@ export const createWebhook = createAction({
   classification: 'WRITE',
   outputSchema: kitWebhookOutputSchema,
   displayName: 'Add Webhook',
-  description: 'Create a webhook automation',
+  description: 'Send a Kit event to a URL of your choice.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -50,7 +50,7 @@ export const deleteWebhook = createAction({
   name: 'destroy_webhook',
   classification: 'DESTRUCTIVE',
   displayName: 'Delete Webhook',
-  description: 'Delete a webhook automation',
+  description: 'Delete a webhook so Kit stops sending its event.',
   audience: 'human',
   aiMetadata: {
     description:

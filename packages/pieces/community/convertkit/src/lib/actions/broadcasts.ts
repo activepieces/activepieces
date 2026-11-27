@@ -1,4 +1,8 @@
-import { createAction } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  MarkdownVariant,
+  Property,
+} from '@activepieces/pieces-framework';
 import { HttpMethod, HttpRequest } from '@activepieces/pieces-common';
 import { convertkitAuth } from '../auth';
 import { kitHttp } from '../common/http';
@@ -32,7 +36,7 @@ export const listBroadcasts = createAction({
   classification: 'SEARCH',
   outputSchema: kitBroadcastListOutputSchema,
   displayName: 'List Broadcasts',
-  description: 'List all broadcasts',
+  description: 'Get one page of broadcasts.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -54,24 +58,47 @@ export const createBroadcast = createAction({
   classification: 'WRITE',
   outputSchema: kitBroadcastOutputSchema,
   displayName: 'Create Broadcast',
-  description: 'Create a new broadcast',
+  description: 'Create a broadcast email, or schedule it.',
   audience: 'human',
   aiMetadata: {
     description:
       'Creates a new email broadcast (one-off email), optionally scheduled via the send-at field; without it the broadcast is saved unsent. Not idempotent — every call creates another broadcast, so do not retry blindly.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'email',
+      display: 'section',
+      label: 'Email',
+      icon: 'text',
+      props: ['subject', 'content', 'emailAddress'],
+    },
+    {
+      key: 'schedule',
+      display: 'section',
+      label: 'Schedule',
+      icon: 'calendar',
+      props: ['sendAt'],
+    },
+    {
+      key: 'publicPost',
+      display: 'section',
+      label: 'Public Post',
+      icon: 'inbox',
+      props: ['isPublic', 'publishedAt', 'thumbnailUrl', 'thumbnailAlt'],
+    },
+  ],
   props: {
+    subject,
     content: broadcastContent,
-    description,
     emailAddress: broadcastEmailAddress,
-    emailLayoutTemplate,
+    sendAt,
     isPublic,
     publishedAt,
-    sendAt,
-    subject,
-    thumbnailAlt,
     thumbnailUrl,
+    thumbnailAlt,
+    emailLayoutTemplate: { ...emailLayoutTemplate, advanced: true },
+    description: { ...description, advanced: true },
   },
   async run(context) {
     const {
@@ -126,7 +153,7 @@ export const getBroadcastById = createAction({
   classification: 'READ',
   outputSchema: kitBroadcastOutputSchema,
   displayName: 'Get Broadcast',
-  description: 'Get a broadcast',
+  description: "Get one broadcast's details.",
   audience: 'human',
   aiMetadata: {
     description:
@@ -161,25 +188,64 @@ export const updateBroadcast = createAction({
   classification: 'WRITE',
   outputSchema: kitBroadcastOutputSchema,
   displayName: 'Update Broadcast',
-  description: 'Update a broadcast',
+  description: "Change a broadcast's content, schedule or public post.",
   audience: 'human',
   aiMetadata: {
     description:
       'Updates the content, subject, scheduling, or other fields of an existing broadcast by broadcast ID. Idempotent — repeating the same update leaves the broadcast in the same state. Requires a valid broadcast ID from List Broadcasts.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'broadcast',
+      display: 'section',
+      label: 'Broadcast',
+      icon: 'send',
+      props: ['changesInfo', 'broadcastId'],
+    },
+    {
+      key: 'email',
+      display: 'section',
+      label: 'Email',
+      icon: 'text',
+      props: ['subject', 'content', 'emailAddress'],
+    },
+    {
+      key: 'schedule',
+      display: 'section',
+      label: 'Schedule',
+      icon: 'calendar',
+      props: ['sendAt'],
+    },
+    {
+      key: 'publicPost',
+      display: 'section',
+      label: 'Public Post',
+      icon: 'inbox',
+      props: ['isPublic', 'publishedAt', 'thumbnailUrl', 'thumbnailAlt'],
+    },
+  ],
   props: {
+    changesInfo: Property.MarkDown({
+      value: 'Empty fields keep their current value.',
+      variant: MarkdownVariant.INFO,
+    }),
     broadcastId: broadcastId,
-    content: broadcastContent,
-    description,
-    emailAddress: broadcastEmailAddress,
-    emailLayoutTemplate,
-    isPublic,
-    publishedAt,
-    sendAt,
     subject,
-    thumbnailAlt,
+    content: broadcastContent,
+    emailAddress: broadcastEmailAddress,
+    sendAt,
+    isPublic: Property.Checkbox({
+      displayName: 'Public',
+      description:
+        'On publishes the post; left untouched keeps its current setting.',
+      required: false,
+    }),
+    publishedAt,
     thumbnailUrl,
+    thumbnailAlt,
+    emailLayoutTemplate: { ...emailLayoutTemplate, advanced: true },
+    description: { ...description, advanced: true },
   },
 
   async run(context) {
@@ -237,7 +303,7 @@ export const broadcastStats = createAction({
   classification: 'READ',
   outputSchema: kitBroadcastStatsOutputSchema,
   displayName: 'Broadcast Stats',
-  description: 'Get broadcast stats',
+  description: 'Get open, click and unsubscribe stats for a broadcast.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -272,7 +338,7 @@ export const deleteBroadcast = createAction({
   classification: 'DESTRUCTIVE',
   outputSchema: kitRequestStatusOutputSchema,
   displayName: 'Delete Broadcast',
-  description: 'Delete a broadcast',
+  description: 'Delete a broadcast.',
   audience: 'human',
   aiMetadata: {
     description:

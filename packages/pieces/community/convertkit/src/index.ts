@@ -193,6 +193,12 @@ export const convertkit = createPiece({
         assertKitUrl(propsValue);
         return { api_secret: auth.secret_text };
       },
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${CONVERTKIT_API_URL}`,
+          placeholder: '/subscribers',
+        },
+      },
     }),
   ],
   triggers: [
