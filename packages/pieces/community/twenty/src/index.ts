@@ -12,6 +12,14 @@ import { updateCompanyAction } from './lib/actions/update-company';
 import { twentyAiActions } from './lib/actions/ai';
 import { newPersonTrigger } from './lib/triggers/new-person';
 import { newCompanyTrigger } from './lib/triggers/new-company';
+import { findRecords } from './lib/actions/find-records';
+import { updateRecord } from './lib/actions/update-record';
+import { createRecord } from './lib/actions/create-record';
+import { createOrUpdateRecords } from './lib/actions/create-or-update-records';
+import { deleteRecords } from './lib/actions/delete-records';
+import { newRecordTrigger } from './lib/triggers/new-record';
+import { updatedRecordTrigger } from './lib/triggers/updated-record';
+import { deletedRecordTrigger } from './lib/triggers/deleted-record';
 
 export { twentyAuth };
 
@@ -22,15 +30,20 @@ export const twenty = createPiece({
   minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/twenty.png',
   categories: [PieceCategory.SALES_AND_CRM],
-  authors: ['Akash5908'],
+  authors: ['Akash5908', 'bjacobs42'],
   actions: [
+    createRecord,
     createContactAction,
     createCompanyAction,
     createOpportunityAction,
+    createOrUpdateRecords,
+    findRecords,
     findPersonAction,
     findCompanyAction,
+    updateRecord,
     updatePersonAction,
     updateCompanyAction,
+    deleteRecords,
     ...twentyAiActions,
     createCustomApiCallAction({
       baseUrl: (auth) => (auth ? twentyClient.baseUrl({ auth }) : ''),
@@ -40,5 +53,11 @@ export const twenty = createPiece({
       }),
     }),
   ],
-  triggers: [newPersonTrigger, newCompanyTrigger],
+  triggers: [
+    newPersonTrigger,
+    newCompanyTrigger,
+    newRecordTrigger,
+    updatedRecordTrigger,
+    deletedRecordTrigger,
+  ],
 });

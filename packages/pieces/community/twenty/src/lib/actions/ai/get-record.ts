@@ -3,12 +3,10 @@ import { createAction } from '@activepieces/pieces-framework';
 import { twentyAuth } from '../../auth';
 import { twentyAiProps } from '../../common/ai-props';
 import { twentyApi } from '../../common/api';
-import { twentyGetRecordOutputSchema } from '../../output-schemas';
 
 export const getRecordAction = createAction({
 	auth: twentyAuth,
 	name: 'twenty_get_record',
-	outputSchema: twentyGetRecordOutputSchema,
 	displayName: 'Get Record',
 	description: 'Gets one record of any object by its id.',
 	audience: 'ai',

@@ -3,12 +3,10 @@ import { createAction } from '@activepieces/pieces-framework';
 import { twentyAuth } from '../../auth';
 import { twentyAiProps } from '../../common/ai-props';
 import { twentyApi } from '../../common/api';
-import { twentyUpdateRecordOutputSchema } from '../../output-schemas';
 
 export const updateRecordAction = createAction({
 	auth: twentyAuth,
 	name: 'twenty_update_record',
-	outputSchema: twentyUpdateRecordOutputSchema,
 	displayName: 'Update Record',
 	description: 'Updates fields on one record of any object.',
 	audience: 'ai',
@@ -30,6 +28,6 @@ export const updateRecordAction = createAction({
 	},
 	async run(context) {
 		const { objectNamePlural, recordId, record } = context.propsValue;
-		return await twentyApi.updateRecord({ auth: context.auth, objectNamePlural, recordId, record });
+		return await twentyApi.updateRecord({ auth: context.auth, objectNamePlural, recordId, recordValues: record });
 	},
 });
