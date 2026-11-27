@@ -6,7 +6,7 @@ import { PieceCategory } from '@activepieces/pieces-framework';
 export const mcp = createPiece({
   displayName: "MCP",
   auth: PieceAuth.None(),
-  minimumSupportedRelease: '0.50.2',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: "https://cdn.activepieces.com/pieces/new-core/mcp.svg",
   authors: ['Gamal72', 'hazemadelkhalel'],
   description: 'Connect to your hosted MCP Server using any MCP client to communicate with tools',
