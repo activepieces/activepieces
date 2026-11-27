@@ -1282,6 +1282,9 @@
       "@activepieces/piece-short-io": [
         "packages/pieces/community/short-io/src/index.ts"
       ],
+      "@activepieces/piece-shotstack": [
+        "packages/pieces/community/shotstack/src/index.ts"
+      ],
       "@activepieces/piece-simplepdf": [
         "packages/pieces/community/simplepdf/src/index.ts"
       ],
