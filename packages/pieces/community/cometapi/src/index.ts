@@ -1,7 +1,8 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { BASE_URL, cometApiAuth } from './lib/common/auth';
+import { cometApiAuth } from './lib/auth';
+import { cometApiClient } from './lib/common/client';
 import { askCometApiAction } from './lib/actions/ask-cometapi';
 
 export const cometapi = createPiece({
@@ -16,7 +17,7 @@ export const cometapi = createPiece({
   actions: [
     askCometApiAction,
     createCustomApiCallAction({
-      baseUrl: () => BASE_URL,
+      baseUrl: () => cometApiClient.baseUrl(),
       auth: cometApiAuth,
       authMapping: async (auth) => {
         return {
