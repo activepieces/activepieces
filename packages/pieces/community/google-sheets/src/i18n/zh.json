@@ -390,8 +390,8 @@
   "Triggers when a new spreadsheet is created.": "创建新的电子表格时触发。",
   "Triggers when a worksheet is created in a spreadsheet.": "当工作表在电子表格中创建时触发.",
   "Trigger Column": "触发列",
-  "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.\n\nRows that only move (insert, delete, sort) and format-only changes do not fire. With a Trigger Column, a new row fires once that column is filled.": "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.\n\nRows that only move (insert, delete, sort) and format-only changes do not fire. With a Trigger Column, a new row fires once that column is filled.",
+  "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.\n\nRows that only move (insert, delete, sort) and format-only changes do not fire. With a Trigger Column, a new row fires once that column is filled.": "请注意，由于 Google 的延迟，触发器触发可能会有最多 3 分钟的延迟。\n\n仅移动（插入、删除、排序）和仅格式更改的行不会触发。对于触发列，当新行中的该列被填充后，触发器才会触发。",
   "Fire only when this column changes. Any Column fires on any cell.": "Fire only when this column changes. Any Column fires on any cell.",
-  "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.\n\nOnly rows added below the last row fire. Rows inserted higher up, sorting and edits do not.": "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.\n\nOnly rows added below the last row fire. Rows inserted higher up, sorting and edits do not.",
+  "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.\n\nOnly rows added below the last row fire. Rows inserted higher up, sorting and edits do not.": "请注意，由于 Google 的延迟，触发器触发可能会有最多 3 分钟的延迟。\n\n只有在最后一行下方添加的行才会触发。插入到更高位置的行、排序和编辑都不会触发。",
   "The spreadsheet to watch for new worksheets.": "The spreadsheet to watch for new worksheets."
 }
