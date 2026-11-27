@@ -40,37 +40,53 @@ export const agentCreate = createAction({
   auth: straicoAuth,
   name: 'agent-create',
   displayName: 'Create Agent',
-  description: 'Creates a new agent in the database for the user.',
+  description: 'Create a reusable agent with its own instructions and model.',
   aiMetadata: { description: 'Registers a new reusable Straico agent, a stored persona pairing a custom system prompt with a default chat LLM and optional tags, and returns its id for later prompting. Use it once when a persona should persist across runs; prefer Ask AI for a throwaway completion, Update Agent to change one that already exists, and Add RAG to Agent afterwards to ground it in documents. Requires a name, description, custom prompt and default LLM; it does not attach any knowledge base by itself. Not idempotent: each call creates another agent, duplicate names included.', idempotent: false },
+  propertyGroups: [
+    {
+      key: 'agent',
+      display: 'section',
+      label: 'Agent',
+      icon: 'user',
+      props: ['name', 'description', 'tags'],
+    },
+    {
+      key: 'behaviour',
+      display: 'section',
+      label: 'Behavior',
+      icon: 'text',
+      props: ['default_llm', 'custom_prompt'],
+    },
+  ],
   props: {
     name: Property.ShortText({
       displayName: 'Name',
       required: true,
-      description: 'A name for the agent',
+      description: 'A name to find the agent by.',
     }),
     description: Property.LongText({
       displayName: 'Description',
       required: true,
-      description: 'A brief description of what the model does',
+      description: 'What the agent is for.',
     }),
     custom_prompt: Property.LongText({
-      displayName: 'Custom Prompt',
+      displayName: 'Instructions',
       required: true,
-      description: 'A model that the agent will use for processing prompts',
+      description: 'What the agent should always do, like a system prompt.',
     }),
     default_llm: Property.Dropdown({
   auth: straicoAuth,
 
       displayName: 'Default LLM',
       required: true,
-      description: 'The language model which the agent will use for processing prompts',
+      description: 'The chat model the agent uses.',
       refreshers: [],
       defaultValue: 'openai/gpt-4o-mini',
       options: async ({ auth }) => {
         if (!auth) {
           return {
             disabled: true,
-            placeholder: 'Enter your API key first',
+            placeholder: 'Connect your Straico account first',
             options: [],
           };
         }
@@ -112,7 +128,7 @@ export const agentCreate = createAction({
     tags: Property.Array({
       displayName: 'Tags',
       required: false,
-      description: 'An array of tags for the agent. Example: ["assistant","tag"]',
+      description: 'Labels to organize your agents.',
     }),
   },
   async run({ auth, propsValue }) {

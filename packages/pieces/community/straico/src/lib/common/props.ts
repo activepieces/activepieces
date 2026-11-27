@@ -14,7 +14,7 @@ export const agentIdDropdown =(displayName:string, desc:string)=> Property.Dropd
         if (!auth) {
           return {
             disabled: true,
-            placeholder: 'Please authenticate first',
+            placeholder: 'Connect your Straico account first',
             options: [],
           };
         }

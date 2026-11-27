@@ -12,13 +12,14 @@ export const deleteRag = createAction({
   auth: straicoAuth,
   name: 'delete_rag',
   displayName: 'Delete RAG',
-  description: 'Delete a specific RAG (Retrieval-Augmented Generation) base by its ID.',
+  description: 'Permanently delete a knowledge base.',
   aiMetadata: { description: 'Permanently deletes a RAG knowledge base and its indexed documents from the account. Use it to retire a corpus entirely; there is no action to remove a single file from a base, so rebuilding a smaller base means Create RAG again. Requires a raw RAG id typed as text, obtainable from List RAGs, and any agent still pointing at that base will lose its grounding. Idempotent: the base ends up gone regardless of how many times it is called.', idempotent: true },
   props: {
     ragId: Property.ShortText({
       displayName: 'RAG ID',
       required: true,
-      description: 'The ID of the RAG base to delete',
+      description: 'The knowledge base (RAG) ID. Find it with the List RAGs action.',
+      placeholder: 'e.g. 66a1f0c2b3d4e5f6a7b8c9d0',
     }),
   },
   async run({ auth, propsValue }) {

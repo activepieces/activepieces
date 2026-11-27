@@ -13,19 +13,19 @@ export const updateRag = createAction({
   auth: straicoAuth,
   name: 'update_rag',
   displayName: 'Update RAG',
-  description: 'Update an existing RAG (Retrieval-Augmented Generation) base with additional files.',
+  description: 'Add a file to an existing knowledge base.',
   aiMetadata: { description: 'Adds one more document to an existing RAG knowledge base, re-indexing it so later RAG Prompt Completion calls can draw on the new content. Despite the name it only appends a file and cannot rename a base or change its chunking settings, and it cannot remove content; use Create RAG to start a fresh base with different settings. Requires a raw RAG id typed as text and a file with a supported extension (pdf, docx, csv, txt, xlsx or py). Not idempotent: sending the same file twice ingests it again and spends credits each time.', idempotent: false },
   props: {
     ragId: Property.ShortText({
       displayName: 'RAG ID',
       required: true,
-      description: 'The ID of the RAG base to update.',
+      description: 'The knowledge base (RAG) ID. Find it with the List RAGs action.',
+      placeholder: 'e.g. 66a1f0c2b3d4e5f6a7b8c9d0',
     }),
     file: Property.File({
 			displayName: 'File',
 			required: true,
-			description:
-				'Represents the file to be attached. Accepted file extensions are: pdf, docx, csv, txt, xlsx, py.',
+			description: 'A PDF, DOCX, CSV, TXT, XLSX or PY file to add.',
 		}),
   },
   async run({ auth, propsValue }) {
