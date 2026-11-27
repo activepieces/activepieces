@@ -50,7 +50,7 @@ export const microsoftOneDrive = createPiece({
   displayName: 'Microsoft OneDrive',
   description: 'Cloud storage by Microsoft',
   auth: oneDriveAuth,
-  minimumSupportedRelease: '0.87.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/oneDrive.png',
   categories: [PieceCategory.CONTENT_AND_FILES],
   authors: ['BastienMe', 'kishanprmr', 'MoShizzle', 'abuaboud', 'ikus060'],
@@ -103,6 +103,12 @@ export const microsoftOneDrive = createPiece({
       authMapping: async (auth) => ({
         Authorization: `Bearer ${auth.access_token}`,
       }),
+      props: {
+        url: {
+          description: 'Full URL, or a path relative to graph.microsoft.com/v1.0/me/drive.',
+          placeholder: '/root/children',
+        },
+      },
     }),
   ],
   triggers: [newFile],
