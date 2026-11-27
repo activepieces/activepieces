@@ -505,6 +505,7 @@
   "Update Piece Version": "Update Piece Version",
   "Current": "Current",
   "Latest": "Latest",
+  "Hotfix {tag} is available on your line": "Hotfix {tag} is available on your line",
   "Latest patch": "Latest patch",
   "Patch versions only": "Patch versions only",
   "Show all versions": "Show all versions",

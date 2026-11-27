@@ -126,6 +126,7 @@ import { piecesReportModule } from './platform/pieces-report/pieces-report.modul
 import { platformConfigurationModule } from './platform/platform-configuration.module'
 import { platformModule } from './platform/platform.module'
 import { projectHooks } from './project/project-hooks'
+import { releaseFeedModule } from './release-feed/release-feed.module'
 import { storeEntryModule } from './store-entry/store-entry.module'
 import { tablesModule } from './tables/tables.module'
 import { templateModule } from './template/template.module'
@@ -417,6 +418,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             break
         case ApEdition.ENTERPRISE:
             await app.register(denoMigrationModule)
+            await app.register(releaseFeedModule)
             await app.register(pieceUpgradeModule)
             await app.register(platformPlanModule)
             await app.register(platformProjectModule)
@@ -464,6 +466,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             break
         case ApEdition.COMMUNITY:
             await app.register(denoMigrationModule)
+            await app.register(releaseFeedModule)
             await app.register(platformProjectModule)
             await app.register(communityPiecesModule)
             await app.register(otpModule)

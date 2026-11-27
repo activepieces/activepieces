@@ -22,6 +22,7 @@ export * from './lib/core/support-url'
 export * from './lib/core/feedback-url'
 export * from './lib/core/health'
 export * from './lib/core/breaking-change'
+export * from './lib/core/release-feed'
 // Foundation utilities/types live in @activepieces/core-utils; shared re-exports the whole
 // surface here once (instead of via per-file `export *` shim files under lib/core/common).
 // The local ./lib/form-errors file remains for internal relative imports only.

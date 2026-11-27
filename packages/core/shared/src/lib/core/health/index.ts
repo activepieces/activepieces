@@ -25,7 +25,8 @@ export const BackgroundMigrationsHealth = z.object({
 })
 
 export const GetSystemHealthChecksResponse = z.object({
-    latestVersion: z.string(),
+    latestVersion: z.string().nullable(),
+    hotfixOnYourLine: z.string().nullable(),
     appCpu: z.boolean(),
     appRam: z.boolean(),
     disk: z.boolean(),

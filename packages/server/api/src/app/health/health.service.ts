@@ -8,6 +8,7 @@ import { s3Helper } from '../file/s3-helper'
 import { appMachineCache } from '../helper/app-machine-cache'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
+import { releaseFeedService } from '../release-feed/release-feed.service'
 import { machineService } from '../workers/machine/machine-service'
 
 let workerHealthStatus = false
@@ -46,17 +47,18 @@ export const healthStatusService = (log: FastifyBaseLogger) => ({
         return buildReleaseHealth(log, workerVersions)
     },
     getSystemHealthChecks: async (platformId: string): Promise<GetSystemHealthChecksResponse> => {
-        const [workers, databaseHealthy, latestVersion, backgroundMigrations] = await Promise.all([
+        const [workers, databaseHealthy, releaseFeed, backgroundMigrations] = await Promise.all([
             machineService(log).list(platformId),
             healthStatusService(log).checkDatabaseHealth(),
-            apVersionUtil.getLatestRelease(),
+            releaseFeedService(log).get(),
             backgroundMigrationRunner.getStatus(),
         ])
         const hasWorkers = workers.length > 0
         const release = buildReleaseHealth(log, workers.map(worker => worker.information.workerProps.version))
 
         return {
-            latestVersion,
+            latestVersion: apVersionUtil.getLatestRelease({ entries: releaseFeed.entries }),
+            hotfixOnYourLine: apVersionUtil.getHotfixOnLine({ entries: releaseFeed.entries, current: release.current }),
             appCpu: await systemUsage.getCpuCores() >= APP_MIN_CPU_CORES,
             appRam: (await systemUsage.getContainerMemoryUsage()).totalRamInBytes >= gigaBytes(APP_MIN_RAM_GB),
             disk: (await systemUsage.getDiskInfo()).total >= gigaBytes(APP_MIN_DISK_GB),

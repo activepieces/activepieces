@@ -26,7 +26,7 @@ jobs:
 
       - name: Test the breaking-changes scripts
         run: |
-          bun test tools/scripts/breaking-changes-rollover.test.ts tools/scripts/breaking-changes-render.test.ts
+          bun test tools/scripts/breaking-changes-rollover.test.ts tools/scripts/breaking-changes-render.test.ts tools/scripts/release-feed.test.ts
           bun tools/scripts/breaking-change-check.ts --self-check
 
       - name: Check breaking-change declaration
@@ -34,4 +34,5 @@ jobs:
           GITHUB_BASE_REF: ${{ github.event.pull_request.base.ref }}
           PR_BODY: ${{ github.event.pull_request.body }}
           PR_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
         run: bun tools/scripts/breaking-change-check.ts

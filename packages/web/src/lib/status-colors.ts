@@ -86,6 +86,7 @@ function colorsOf(status: Status): StatusColors {
     case WorkerHealth.EMPTY:
     case HealthCheckStatus.LOADING:
     case HealthCheckStatus.NOT_APPLICABLE:
+    case HealthCheckStatus.UNKNOWN:
     case SecretManagerStatus.NOT_CONFIGURED:
     case BatchChildStatus.PENDING:
     case BatchChildStatus.NEVER_STARTED:

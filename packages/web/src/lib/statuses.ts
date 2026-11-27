@@ -53,6 +53,7 @@ export enum HealthCheckStatus {
   PASSED = 'PASSED',
   FAILED = 'FAILED',
   NOT_APPLICABLE = 'NOT_APPLICABLE',
+  UNKNOWN = 'UNKNOWN',
 }
 
 export enum WorkerHealth {

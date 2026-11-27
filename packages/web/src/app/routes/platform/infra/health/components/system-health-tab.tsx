@@ -44,12 +44,15 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
   const isCloud = edition === ApEdition.CLOUD;
   const { data: systemHealth, isPending } = healthQueries.useSystemHealth();
   const latestVersion = systemHealth?.latestVersion;
+  const hotfixOnYourLine = systemHealth?.hotfixOnYourLine;
   const release = systemHealth?.release;
   const currentVersion = release?.current;
 
-  const isVersionUpToDate = React.useMemo(() => {
-    if (!currentVersion || !latestVersion) return false;
-    return semver.gte(currentVersion, latestVersion);
+  const versionStatus = React.useMemo(() => {
+    if (!currentVersion || !latestVersion) return HealthCheckStatus.UNKNOWN;
+    return semver.gte(currentVersion, latestVersion)
+      ? HealthCheckStatus.PASSED
+      : HealthCheckStatus.FAILED;
   }, [currentVersion, latestVersion]);
 
   const releaseIntegrityOk =
@@ -86,9 +89,7 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
       id: 'version',
       title: t('Version'),
       icon: <Package className="size-4" />,
-      status: isVersionUpToDate
-        ? HealthCheckStatus.PASSED
-        : HealthCheckStatus.FAILED,
+      status: versionStatus,
       link: 'https://github.com/activepieces/activepieces/releases',
       message: (
         <span className="flex flex-wrap items-center gap-x-2">
@@ -99,6 +100,16 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
           <span>
             {t('Latest')} {latestVersion || t('Unknown')}
           </span>
+          {hotfixOnYourLine && (
+            <>
+              <span className="size-1 rounded-full bg-gray-6" />
+              <span>
+                {t('Hotfix {tag} is available on your line', {
+                  tag: hotfixOnYourLine,
+                })}
+              </span>
+            </>
+          )}
         </span>
       ),
     },
@@ -276,6 +287,7 @@ const STATUS_LABEL: Record<HealthCheckStatus, () => string> = {
   [HealthCheckStatus.PASSED]: () => t('Passed'),
   [HealthCheckStatus.FAILED]: () => t('Needs attention'),
   [HealthCheckStatus.NOT_APPLICABLE]: () => t('Not applicable'),
+  [HealthCheckStatus.UNKNOWN]: () => t('Unknown'),
 };
 
 type HealthRow = {

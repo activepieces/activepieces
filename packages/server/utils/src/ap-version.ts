@@ -1,4 +1,5 @@
-import { isNil } from '@activepieces/core-utils';
+import { isNil } from '@activepieces/core-utils'
+import { ReleaseFeedEntry, ReleaseKind } from '@activepieces/shared'
 import fs from 'fs'
 import path from 'path'
 import { apLogger } from './ap-logger'
@@ -29,25 +30,44 @@ function readCurrentRelease(): string {
     return cachedCurrentRelease
 }
 
+function highestTag({ entries }: { entries: ReleaseFeedEntry[] }): string | null {
+    return entries.reduce<string | null>((highest, entry) => isNil(highest) || compareTags({ a: entry.tag, b: highest }) > 0 ? entry.tag : highest, null)
+}
+
+function compareTags({ a, b }: { a: string, b: string }): number {
+    const [coreA, preA] = a.split('-', 2)
+    const [coreB, preB] = b.split('-', 2)
+    const partsA = coreA.split('.').map(Number)
+    const partsB = coreB.split('.').map(Number)
+    for (let i = 0; i < 3; i++) {
+        if (partsA[i] !== partsB[i]) {
+            return partsA[i] - partsB[i]
+        }
+    }
+    if (preA === preB) {
+        return 0
+    }
+    if (preA === undefined) {
+        return -1
+    }
+    if (preB === undefined) {
+        return 1
+    }
+    return preA.localeCompare(preB, undefined, { numeric: true })
+}
+
 export const apVersionUtil = {
     getCurrentRelease(): string {
         return readCurrentRelease()
     },
-    async getLatestRelease(): Promise<string> {
-        try {
-            const response = await fetch(
-                'https://raw.githubusercontent.com/activepieces/activepieces/main/package.json',
-                {
-                    signal: AbortSignal.timeout(5000),
-                },
-            )
-            const data = await response.json() as PackageJson
-            return data.version
-        }
-        catch (ex) {
-            return UNKNOWN_VERSION
-        }
+    getLatestRelease({ entries }: { entries: ReleaseFeedEntry[] }): string | null {
+        return highestTag({ entries: entries.filter((entry) => LATEST_RELEASE_KINDS.includes(entry.kind)) })
     },
+    getHotfixOnLine({ entries, current }: { entries: ReleaseFeedEntry[], current: string }): string | null {
+        const line = current.split('.').slice(0, 2).join('.')
+        return highestTag({ entries: entries.filter((entry) => entry.kind === ReleaseKind.HOTFIX && entry.line === line && compareTags({ a: entry.tag, b: current }) > 0) })
+    },
+    compareTags,
     //could be null if the other is running on something older than 0.85.0
     versionsAreCompatible({ versionA, versionB }: { versionA: string | undefined, versionB: string | undefined }): boolean {
         if (isNil(versionA) || isNil(versionB)) {
@@ -59,6 +79,8 @@ export const apVersionUtil = {
         return versionA === versionB
     },
 }
+
+const LATEST_RELEASE_KINDS: ReleaseKind[] = [ReleaseKind.MINOR, ReleaseKind.PATCH]
 
 export const UNKNOWN_VERSION = '0.0.0'
 
