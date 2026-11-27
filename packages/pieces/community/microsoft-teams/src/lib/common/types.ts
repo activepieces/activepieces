@@ -41,11 +41,11 @@ export type MicrosoftTeamsGraphError = {
   code?: string;
   message?: string;
   requestId?: string;
-  headers?: Record<string, string>;
+  headers?: Record<string, string> | Headers;
   response?: {
     status?: number;
     statusCode?: number;
-    headers?: Record<string, string>;
+    headers?: Record<string, string> | Headers;
   };
   error?: MicrosoftTeamsGraphErrorBody;
   body?: { error?: MicrosoftTeamsGraphErrorBody };
