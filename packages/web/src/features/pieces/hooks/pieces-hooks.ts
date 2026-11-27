@@ -1,5 +1,6 @@
-import { LocalesEnum } from '@activepieces/core-utils';
+import { isNil, LocalesEnum } from '@activepieces/core-utils';
 import {
+  getAuthPropertyForValue,
   PieceMetadataModel,
   PieceMetadataModelSummary,
   PropertyType,
@@ -8,6 +9,8 @@ import {
 import {
   AddPieceRequestBody,
   ApEdition,
+  AppConnectionType,
+  AppConnectionWithoutSensitiveData,
   FlowActionType,
   flowPieceUtil,
   PieceAudienceFilter,
@@ -105,6 +108,11 @@ type UsePiecesSearchProps = {
   type: 'action' | 'trigger';
   shouldCaptureEvent: boolean;
   hiddenStepTypes?: FlowActionType[];
+};
+type UsePieceForReconnectProps = {
+  connection: AppConnectionWithoutSensitiveData | null;
+  enabled?: boolean;
+  audience?: PieceAudienceFilter;
 };
 
 export const pieceQueryKey = ({
@@ -515,6 +523,40 @@ export const piecesHooks = {
       staleTime: Infinity,
     });
   },
+  usePieceForReconnect: ({
+    connection,
+    enabled = true,
+    audience,
+  }: UsePieceForReconnectProps) => {
+    const isOAuth2Connection =
+      !isNil(connection) && OAUTH2_CONNECTION_TYPES.includes(connection.type);
+    const stored = piecesHooks.usePiece({
+      name: connection?.pieceName ?? '',
+      version: connection?.pieceVersion,
+      enabled: enabled && !isNil(connection),
+      audience,
+    });
+    const latest = piecesHooks.usePiece({
+      name: connection?.pieceName ?? '',
+      enabled: enabled && isOAuth2Connection,
+      audience,
+    });
+    const isLoading = stored.isLoading || latest.isLoading;
+    if (isLoading || isNil(connection)) {
+      return { pieceModel: undefined, isLoading };
+    }
+    const reconnectAtLatest =
+      isOAuth2Connection &&
+      canReconnectAtLatest({
+        connectionType: connection.type,
+        stored: stored.pieceModel,
+        latest: latest.pieceModel,
+      });
+    return {
+      pieceModel: reconnectAtLatest ? latest.pieceModel : stored.pieceModel,
+      isLoading,
+    };
+  },
 };
 
 export const piecesMutations = {
@@ -532,6 +574,44 @@ export const piecesMutations = {
     });
   },
 };
+
+function canReconnectAtLatest({
+  connectionType,
+  stored,
+  latest,
+}: {
+  connectionType: AppConnectionType;
+  stored: PieceMetadataModel | undefined;
+  latest: PieceMetadataModel | undefined;
+}): boolean {
+  if (
+    isNil(stored) ||
+    isNil(latest) ||
+    semver.lt(latest.version, stored.version)
+  ) {
+    return false;
+  }
+  const storedAuth = getAuthPropertyForValue({
+    authValueType: connectionType,
+    pieceAuth: stored.auth,
+  });
+  const latestAuth = getAuthPropertyForValue({
+    authValueType: connectionType,
+    pieceAuth: latest.auth,
+  });
+  if (
+    storedAuth?.type !== PropertyType.OAUTH2 ||
+    latestAuth?.type !== PropertyType.OAUTH2
+  ) {
+    return false;
+  }
+  const storedPropNames = Object.keys(storedAuth.props ?? {});
+  const latestPropNames = Object.keys(latestAuth.props ?? {});
+  return (
+    storedPropNames.length === latestPropNames.length &&
+    storedPropNames.every((name) => latestPropNames.includes(name))
+  );
+}
 
 const isPieceNotFoundError = (error: unknown) =>
   api.isError(error) && error.response?.status === 404;
@@ -753,5 +833,10 @@ function piecesQueryOptions({
 
 const SEARCH_RESULTS_STALE_TIME_MS = 5 * 60 * 1000;
 const PROJECT_ID_KEY_INDEX = 1;
+const OAUTH2_CONNECTION_TYPES = [
+  AppConnectionType.OAUTH2,
+  AppConnectionType.CLOUD_OAUTH2,
+  AppConnectionType.PLATFORM_OAUTH2,
+];
 
 export const pieceQueryOptions = { latest: latestPieceQueryOptions };
