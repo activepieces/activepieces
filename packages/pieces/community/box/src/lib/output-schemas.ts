@@ -284,6 +284,7 @@ const emailAliasFields: OutputSchema['fields'] = [
 ];
 
 const metadataInstanceFields: OutputSchema['fields'] = [
+  { key: 'values', label: 'All Metadata Values', value: '', dynamicKey: true },
   { key: '$id', label: 'Metadata Instance ID' },
   { key: '$type', label: 'Type Key' },
   { key: '$template', label: 'Template Key' },
@@ -603,7 +604,7 @@ const markerPageFields: OutputSchema['fields'] = [
   { key: 'limit', label: 'Limit', format: 'number' },
   { key: 'next_marker', label: 'Next Marker' },
   { key: 'prev_marker', label: 'Previous Marker' },
-  { key: 'entries', label: 'Templates' },
+  { key: 'entries', label: 'Entries' },
 ];
 
 const sharedLinkItemFields: OutputSchema['fields'] = [
@@ -675,11 +676,7 @@ export const boxAiExtractOutputSchema: OutputSchema = {
 
 export const boxAiExtractStructuredOutputSchema: OutputSchema = {
   fields: [
-    {
-      key: 'answer',
-      label: 'Answer',
-      children: [{ key: 'summary', label: 'Summary' }],
-    },
+    { key: 'answer', label: 'Extracted Fields', dynamicKey: true },
     {
       key: 'ai_agent_info',
       label: 'AI Agent Info',
@@ -687,20 +684,7 @@ export const boxAiExtractStructuredOutputSchema: OutputSchema = {
     },
     { key: 'created_at', label: 'Created At', format: 'datetime' },
     { key: 'completion_reason', label: 'Completion Reason' },
-    {
-      key: 'confidence_score',
-      label: 'Confidence Score',
-      children: [
-        {
-          key: 'summary',
-          label: 'Summary',
-          children: [
-            { key: 'level', label: 'Level' },
-            { key: 'score', label: 'Score', format: 'number' },
-          ],
-        },
-      ],
-    },
+    { key: 'confidence_score', label: 'Confidence Scores', dynamicKey: true },
   ],
 };
 
@@ -1646,6 +1630,7 @@ export const boxListFolderItemsOutputSchema: OutputSchema = {
     },
     { key: 'limit', label: 'Limit', format: 'number' },
     { key: 'order', label: 'Sort Order', listItems: sortOrderFields },
+    { key: 'next_marker', label: 'Next Marker' },
   ],
 };
 
@@ -1849,6 +1834,7 @@ export const boxListMetadataTemplateFieldOptionsOutputSchema: OutputSchema = {
       label: 'Total Result Count',
       format: 'number',
     },
+    { key: 'next_marker', label: 'Next Marker' },
   ],
 };
 
@@ -1941,6 +1927,7 @@ export const boxQueryMetadataOutputSchema: OutputSchema = {
       ],
     },
     { key: 'limit', label: 'Limit', format: 'number' },
+    { key: 'next_marker', label: 'Next Marker' },
   ],
 };
 
