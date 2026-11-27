@@ -12,6 +12,15 @@ import {
 } from '../common/helper';
 import { updateColumnValuesOfItemActionOutputSchema } from '../output-schemas';
 
+function isEmptyColumnValue(value: unknown): boolean {
+  return (
+    value === '' ||
+    value === null ||
+    value === undefined ||
+    (Array.isArray(value) && value.length === 0)
+  );
+}
+
 export const updateColumnValuesOfItemAction = createAction({
   auth: mondayAuth,
   name: 'monday_update_column_values_of_item',
@@ -46,7 +55,7 @@ export const updateColumnValuesOfItemAction = createAction({
     const columnIdTypeMap = generateColumnIdTypeMap(columns);
 
     Object.keys(columnValuesInput).forEach((key) => {
-      if (columnValuesInput[key] !== '') {
+      if (!isEmptyColumnValue(columnValuesInput[key])) {
         const columnType: string = columnIdTypeMap[key];
         mondayColumnValues[key] = convertPropValueToMondayColumnValue(
           columnType,
