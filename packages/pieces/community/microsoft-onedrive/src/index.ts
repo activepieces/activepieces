@@ -105,7 +105,7 @@ export const microsoftOneDrive = createPiece({
       }),
       props: {
         url: {
-          description: 'Full URL, or a path relative to graph.microsoft.com/v1.0/me/drive.',
+          description: 'Full URL, or a path relative to your drive (/v1.0/me/drive).',
           placeholder: '/root/children',
         },
       },
