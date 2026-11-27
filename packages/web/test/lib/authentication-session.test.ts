@@ -98,6 +98,15 @@ describe('authenticationSession', () => {
     expect(authenticationSession.getProjectId()).toBe('project-b');
   });
 
+  it('reads a malformed token as signed out instead of throwing', () => {
+    window.localStorage.setItem('token', 'not-a-jwt');
+
+    expect(authenticationSession.getCurrentUserId()).toBeNull();
+    expect(authenticationSession.getPlatformId()).toBeNull();
+    expect(authenticationSession.isOnboarding()).toBe(false);
+    expect(authenticationSession.isLoggedIn()).toBe(false);
+  });
+
   it('follows another tab that switched platform', () => {
     signIn({ platformId: 'platform-a', projectId: 'project-a' });
 

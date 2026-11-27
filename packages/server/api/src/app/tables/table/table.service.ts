@@ -1,6 +1,6 @@
 import { Readable } from 'node:stream'
 import { ActivepiecesError, apId, ErrorCode, isNil, SeekPage, spreadIfDefined } from '@activepieces/core-utils'
-import { CreateTableRequest, CreateTableWebhookRequest, ExportTableResponse, Field, FileCompression, FileType, PopulatedTable, SharedTemplate, Table, TableDataState, TableImportDataType, TableTemplate, TableWebhook, TableWebhookEventType, TemplateStatus, TemplateType, UncategorizedFolderId, UpdateTableRequest, UserWithMetaInformation } from '@activepieces/shared'
+import { CreateTableRequest, CreateTableWebhookRequest, ExportTableResponse, Field, FileCompression, FileType, PopulatedTable, ResourceChangeOp, SharedTemplate, Table, TableDataState, TableImportDataType, TableTemplate, TableWebhook, TableWebhookEventType, TemplateStatus, TemplateType, UncategorizedFolderId, UpdateTableRequest, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { ArrayContains, ILike, In, IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -46,6 +46,7 @@ export const tableService = {
                 await fieldService.createFromState({ projectId, field, tableId: table.id, position })
             }))
         }
+        await tableSideEffects.onTableChanged({ projectId, tableId: table.id, op: ResourceChangeOp.CREATE })
         return table
     },
     async list({ projectId, cursor, limit, name, externalIds, folderId, folderIds, includeRowCount, sortBy, order }: ListParams): Promise<SeekPage<Table & { rowCount?: number }>> {
@@ -209,7 +210,7 @@ export const tableService = {
             projectId,
             id,
         })
-        await tableSideEffects.onTableChanged({ projectId, tableId: id, editorSessionId })
+        await tableSideEffects.onTableChanged({ projectId, tableId: id, editorSessionId, op: ResourceChangeOp.DELETE })
     },
 
     async exportTable({

@@ -1,0 +1,37 @@
+name: i18n scripts test
+
+on:
+  pull_request:
+    paths:
+      - 'tools/i18n/**'
+      - 'packages/core/piece-types/src/lib/piece.ts'
+      - 'package.json'
+      - 'bun.lock'
+      - '.github/workflows/i18n-scripts-test.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  i18n-scripts-test:
+    name: i18n scripts test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Cache dependencies
+        uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock', 'package.json') }}
+          restore-keys: bun-
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile --ignore-scripts
+
+      - name: Test the i18n scripts
+        run: bun test ./tools/i18n

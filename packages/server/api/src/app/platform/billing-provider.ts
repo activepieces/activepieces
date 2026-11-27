@@ -170,6 +170,7 @@ export function emptyBillingOverview({ startDate, endDate, unavailable = false }
         seatsFeature: null,
         includedSeats: null,
         additionalSeats: null,
+        rewardedInvitesLeft: null,
         unavailable,
     }
 }
@@ -374,6 +375,7 @@ export type BillingOverview = BillingInfo & {
     seatsFeature: SeatsBillableFeature | null
     includedSeats: number | null
     additionalSeats: number | null
+    rewardedInvitesLeft: number | null
     unavailable: boolean
 }
 

@@ -249,7 +249,9 @@ async function pollAndExecute(apiClient: WorkerToApiContract, runtime: Runtime, 
     const workerLog = logger.child({ workerIndex })
     workerLog.info('Polling worker started')
 
-    while (polling && connectionGeneration === generation) {
+    const isCurrentConnection = (): boolean => polling && connectionGeneration === generation
+
+    while (isCurrentConnection()) {
         markPollLoopIteration({ workerIndex, busy: false })
         if (!versionChecker.connectedAppVersionIsCompatible(workerLog)) {
             await sleep(VERSION_MISMATCH_POLL_PAUSE_MS)
@@ -261,6 +263,10 @@ async function pollAndExecute(apiClient: WorkerToApiContract, runtime: Runtime, 
             workerLog.error({ error: machineError }, 'Failed to build machine info')
             await sleep(20000)
             continue
+        }
+
+        if (!isCurrentConnection()) {
+            break
         }
 
         const { data: job, error: pollError } = await tryCatch(() => apiClient.poll(machineInfo))
@@ -467,7 +473,7 @@ async function fetchAndStoreSettings(sock: Socket): Promise<void> {
                 }
             }
             workerSettings.set(response)
-            aiObservability.init({ enabled: response.EDITION === ApEdition.CLOUD })
+            aiObservability.init({ enabled: response.EDITION === ApEdition.CLOUD, projectToken: response.POSTHOG_PROJECT_TOKEN ?? null })
             logger.info({ environment: response.ENVIRONMENT, executionMode: response.EXECUTION_MODE, sandboxMemoryLimitKb: response.SANDBOX_MEMORY_LIMIT }, 'Worker settings loaded')
             resolve()
         })

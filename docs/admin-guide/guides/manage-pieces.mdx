@@ -31,7 +31,14 @@ There are **two levels** of piece management:
 
 ## Platform-Level Management
 
-Platform administrators can manage pieces for the entire Activepieces instance from **Platform Admin → Catalogue → Pieces**.
+Platform administrators can manage pieces for the entire Activepieces instance from **Platform Admin → Catalogue → Pieces**. On this page you can:
+
+- Install a piece from the npm registry or from a private archive (see [Install Private Pieces](#install-private-pieces)).
+- Pin a piece, so it shows first in the piece picker of the builder.
+- Set your own OAuth2 app for a piece.
+- Delete a private piece. You can delete it only when no flow uses it.
+
+To hide a piece from users, turn it off in a piece set. To hide it from every project that you have not assigned to a set, turn it off in the **Default** set.
 
 ## Piece Sets
 
@@ -46,7 +53,7 @@ Manage piece sets from **Platform Admin → Catalogue → Pieces → Piece Sets*
     Click **New Piece Set**, give it a name, and open it.
   </Step>
   <Step title="Assign projects">
-    Click the **Assigned** button and select the projects that use this set. A project can use only one set, so a project that already uses another set moves to this one. The dialog shows each project's current set and warns you before a project moves.
+    Next to **Assigned projects**, click the projects button, select the projects that use this set, and click **Save**. A project can use only one set, so a project that already uses another set moves to this one. The dialog shows each project's current set and warns you before a project moves.
   </Step>
 </Steps>
 
@@ -59,11 +66,11 @@ Manage piece sets from **Platform Admin → Catalogue → Pieces → Piece Sets*
   - **Triggers only**: all triggers and no actions.
 
   Use **Exclude** to remove them from the set.
-- **Auto-Include · New pieces** decides whether pieces installed later are visible in this set. It doesn't change the pieces you've already chosen.
+- **Include new pieces** decides whether pieces installed later are visible in this set. It doesn't change the pieces you've already chosen.
 
 ### Choose the Actions and Triggers of a Piece
 
-Click a piece row to open **Actions & triggers**:
+Click a piece row to open **Actions & triggers**. A piece that is not in the set asks you to include it first.
 
 - **All** makes every current and future action and trigger of the piece available.
 - **Only selected** makes only the checked items available. Actions and triggers added to the piece later stay hidden until you check them. Use **Select all** to check or clear every item at once.
@@ -123,16 +130,16 @@ If you've built a custom piece for your organization, you can upload it directly
     npm run pieces -- build --name=your-piece-name
     ```
 
-    This generates a tarball in `dist/packages/pieces/your-piece-name`.
+    This bundles the piece into one file and packs it as a tarball in the `dist` folder of the piece, for example `packages/pieces/custom/your-piece-name/dist`.
   </Step>
   <Step title="Navigate to Pieces Settings">
     Go to **Platform Admin → Catalogue → Pieces** and click **Install Piece**.
   </Step>
-  <Step title="Select File Upload">
-    Choose **Upload File** as the installation source.
+  <Step title="Choose the Archive">
+    Under **Package Type**, choose **Packed Archive (.tgz)**. Then select the `.tgz` file from your build output. Activepieces reads the piece name and version from the `package.json` in the archive.
   </Step>
-  <Step title="Upload the Tarball">
-    Select the `.tgz` file from your build output and upload it.
+  <Step title="Install">
+    Click **Install**. The piece shows in the list, and every project that can see it can use it in the builder.
   </Step>
 </Steps>
 

@@ -37,9 +37,17 @@ export class VersionsPage extends BasePage {
     await this.page.getByRole('menuitem', { name: 'Versions' }).click();
   }
 
+  versionCard(versionNumber: number) {
+    return this.page.getByTestId('flow-version-card').filter({ hasText: new RegExp(`Version #${versionNumber}(?!\\d)`) });
+  }
+
+  async scrollVersionsDownFrom(versionNumber: number) {
+    await this.versionCard(versionNumber).hover();
+    await this.page.mouse.wheel(0, 5000);
+  }
+
   async useAsDraft(versionNumber: number) {
-    const card = this.page.getByTestId('flow-version-card').filter({ hasText: new RegExp(`Version #${versionNumber}(?!\\d)`) });
-    await card.getByTestId('flow-version-menu').click();
+    await this.versionCard(versionNumber).getByTestId('flow-version-menu').click();
     await this.page.getByRole('menuitem', { name: 'Use as Draft' }).click();
     const dialog = this.page.getByRole('dialog', { name: 'Overwrite Draft' });
     const overwritten = this.waitForFlowOperation('USE_AS_DRAFT');

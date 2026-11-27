@@ -29,14 +29,7 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
                     break
                 }
                 case OAuth2GrantType.CLIENT_CREDENTIALS:
-                    if (request.scope) {
-                        body.scope = resolveValueFromProps(request.props, request.scope)
-                    }
-                    if (request.props) {
-                        Object.entries(request.props).forEach(([key, value]) => {
-                            body[key] = value
-                        })
-                    }
+                    Object.assign(body, buildClientCredentialsParams({ scopeTemplate: request.scope, props: request.props }))
                     break
             }
             if (request.codeVerifier) {
@@ -134,14 +127,9 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
             }
             case OAuth2GrantType.CLIENT_CREDENTIALS: {
                 body.grant_type = OAuth2GrantType.CLIENT_CREDENTIALS
-                if (appConnection.scope) {
-                    body.scope = resolveValueFromProps(appConnection.props, appConnection.scope)
-                }
-                if (appConnection.props) {
-                    Object.entries(appConnection.props).forEach(([key, value]) => {
-                        body[key] = String(value)
-                    })
-                }
+                Object.entries(buildClientCredentialsParams({ scopeTemplate: appConnection.scope, props: appConnection.props })).forEach(([key, value]) => {
+                    body[key] = String(value)
+                })
                 break
             }
             default:
@@ -206,4 +194,30 @@ function mergeNonNull(
         ...appConnection,
         ...formattedOAuth2Response,
     }
+}
+
+function resolveScope({ scopeTemplate, props }: { scopeTemplate: string | undefined, props: Record<string, unknown> | undefined }): string | undefined {
+    if (isNil(scopeTemplate) || scopeTemplate.trim() === '') {
+        return undefined
+    }
+    const scope = resolveValueFromProps(props ?? {}, scopeTemplate)
+        .split(/\s+/)
+        .filter(part => part !== '' && !/\{[A-Za-z0-9_]+\}/.test(part))
+        .join(' ')
+    return scope === '' ? undefined : scope
+}
+
+function buildClientCredentialsParams({ scopeTemplate, props }: { scopeTemplate: string | undefined, props: Record<string, unknown> | undefined }): Record<string, unknown> {
+    const params: Record<string, unknown> = {}
+    const scope = resolveScope({ scopeTemplate, props })
+    if (!isNil(scope)) {
+        params.scope = scope
+    }
+    Object.entries(props ?? {}).forEach(([key, value]) => {
+        if (isNil(value) || String(value).trim() === '') {
+            return
+        }
+        params[key] = value
+    })
+    return params
 }

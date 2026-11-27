@@ -193,7 +193,7 @@ export function FlowsDetails({
         cell: ({ row }) => (
           <div className="flex items-center gap-1.5">
             <Clock className="h-3.5 w-3.5" />
-            <span>
+            <span data-testid="impact-details-time-saved">
               {formatUtils.formatToHoursAndMinutes(row.original.minutesSaved)}
             </span>
           </div>
@@ -261,6 +261,8 @@ export function FlowsDetails({
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-11" />
           <Input
             placeholder={t('Search flows')}
+            aria-label={t('Search flows')}
+            data-testid="impact-details-search"
             value={filters.searchQuery}
             onChange={(e) => filters.setSearchQuery(e.target.value)}
             className="pl-9 pr-8"

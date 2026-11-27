@@ -5,10 +5,11 @@ import { createSharedScriptSession, SharedScriptSession } from '../core/code/sha
 import { utils } from '../utils'
 
 export const scriptEvaluator = {
-    initSession(): SharedScriptSession {
+    initSession({ flowVersionDir }: InitSessionParams = {}): SharedScriptSession {
         return createSharedScriptSession(async () => ({
             scriptContext: {},
             functions: { flattenNestedKeys },
+            flowVersionDir,
         }))
     },
     async evaluate({ script, scriptContext, scriptSession }: EvaluateParams): Promise<unknown> {
@@ -49,6 +50,10 @@ function flattenNestedKeys(data: unknown, pathToMatch: string[]): unknown[] {
         return [data]
     }
     return []
+}
+
+type InitSessionParams = {
+    flowVersionDir?: string
 }
 
 type EvaluateParams = {

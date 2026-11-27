@@ -42,6 +42,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
@@ -67,6 +72,10 @@ const InstallPieceDialog = ({
 }: InstallPieceDialogProps) => {
   const { platform } = platformHooks.useCurrentPlatform();
   const isEnabled = platform.plan.managePiecesEnabled;
+  const lockedOnPlan = !platform.plan.customPiecesEnabled;
+  const lockedReason = t(
+    'Installing custom pieces is not available on your plan.',
+  );
   const [isOpen, setIsOpen] = useState(false);
 
   const { data: privatePiecesEnabled } = flagsHooks.useFlag<boolean>(
@@ -172,16 +181,40 @@ const InstallPieceDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => setIsOpen(open)}>
-      <DialogTrigger asChild>
-        <AnimatedIconButton
-          {...adminControl(AdminControl.PIECES_INSTALL_OPEN)}
-          icon={PlusIcon}
-          iconSize={16}
-          size="sm"
-        >
-          {t('Install Piece')}
-        </AnimatedIconButton>
-      </DialogTrigger>
+      {lockedOnPlan ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span
+              className="inline-flex"
+              tabIndex={0}
+              role="button"
+              aria-disabled
+              aria-label={lockedReason}
+            >
+              <AnimatedIconButton
+                icon={PlusIcon}
+                iconSize={16}
+                size="sm"
+                disabled
+              >
+                {t('Install Piece')}
+              </AnimatedIconButton>
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>{lockedReason}</TooltipContent>
+        </Tooltip>
+      ) : (
+        <DialogTrigger asChild>
+          <AnimatedIconButton
+            {...adminControl(AdminControl.PIECES_INSTALL_OPEN)}
+            icon={PlusIcon}
+            iconSize={16}
+            size="sm"
+          >
+            {t('Install Piece')}
+          </AnimatedIconButton>
+        </DialogTrigger>
+      )}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t('Install a piece')}</DialogTitle>
@@ -223,7 +256,10 @@ const InstallPieceDialog = ({
                     }}
                     defaultValue={PackageType.REGISTRY}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger
+                      id="packageType"
+                      data-testid="install-piece-package-type"
+                    >
                       <SelectValue defaultValue={PackageType.REGISTRY} />
                     </SelectTrigger>
                     <SelectContent>
@@ -302,6 +338,7 @@ const InstallPieceDialog = ({
                     <Input
                       {...fieldProps}
                       id="pieceArchive"
+                      data-testid="install-piece-archive"
                       type="file"
                       onChange={(event) => {
                         const file = event.target.files?.[0];

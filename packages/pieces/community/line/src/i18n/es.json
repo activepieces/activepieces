@@ -1,6 +1,6 @@
 {
   "Build chatbots for LINE": "Construir chatbots para LINE",
-  "\nTo get your channel access token:\n1. Open the [LINE Developers Console](https://developers.line.biz/console/) and pick your Messaging API channel.\n2. Go to the **Messaging API** tab.\n3. Under **Channel access token (long-lived)**, click **Issue** and copy the token.\n": "\nTo get your channel access token:\n1. Open the [LINE Developers Console](https://developers.line.biz/console/) and pick your Messaging API channel.\n2. Go to the **Messaging API** tab.\n3. Under **Channel access token (long-lived)**, click **Issue** and copy the token.\n",
+  "\nTo get your channel access token:\n1. Open the [LINE Developers Console](https://developers.line.biz/console/) and pick your Messaging API channel.\n2. Go to the **Messaging API** tab.\n3. Under **Channel access token (long-lived)**, click **Issue** and copy the token.\n": "\nPara obtener tu token de acceso del canal:\n1. Abre la [LINE Developers Console](https://developers.line.biz/console/) y selecciona tu canal de Messaging API.\n2. Ve a la pestaña **Messaging API**.\n3. En **Channel access token (long-lived)**, haz clic en **Issue** y copia el token.\n",
   "Send Message": "Send Message",
   "Custom API Call": "Llamada API personalizada",
   "Send a text message to a LINE user or group chat.": "Send a text message to a LINE user or group chat.",
@@ -18,8 +18,8 @@
   "Timeout": "Timeout",
   "Follow redirects": "Seguir redirecciones",
   "User, group or room ID. Map it from Source in the New Message trigger.": "User, group or room ID. Map it from Source in the New Message trigger.",
-  "Plain text, up to 5,000 characters.": "Plain text, up to 5,000 characters.",
-  "Each person who gets the message, including every group member, counts toward your LINE plan's monthly message limit.": "Each person who gets the message, including every group member, counts toward your LINE plan's monthly message limit.",
+  "Plain text, up to 5,000 characters.": "Texto sin formato, de hasta 5.000 caracteres.",
+  "Each person who gets the message, including every group member, counts toward your LINE plan's monthly message limit.": "Cada persona que recibe el mensaje, incluido cada miembro del grupo, cuenta para el límite mensual de mensajes de tu plan de LINE.",
   "Authorization headers are injected automatically from your connection.": "Las cabeceras de autorización se inyectan automáticamente desde tu conexión.",
   "Appended to the URL as ?key=value.": "Se añade a la URL como ?key=value.",
   "Enable for files like PDFs, images, etc.": "Activar para archivos como PDFs, imágenes, etc.",
@@ -32,11 +32,11 @@
   "PUT": "PUT",
   "DELETE": "BORRAR",
   "HEAD": "LIMPIO",
-  "Send to": "Send to",
+  "Send to": "Enviar a",
   "Message": "Mensaje",
-  "Request": "Request",
-  "Data to send": "Data to send",
+  "Request": "Solicitud",
+  "Data to send": "Datos para enviar",
   "New Message": "Nuevo mensaje",
   "Starts the flow when your LINE bot receives a message.": "Starts the flow when your LINE bot receives a message.",
-  "\n**Connect this trigger to your LINE bot**\n\n1. **Publish this flow first.** LINE checks the URL when you click **Verify**.\n2. Open the [LINE Developers Console](https://developers.line.biz/console/), pick your Messaging API channel and go to the **Messaging API** tab.\n3. Under **Webhook settings**, click **Edit** and paste this URL:\n\n   ```text\n   {{webhookUrl}}\n   ```\n\n4. Click **Verify**, then turn on **Use webhook**.\n\nA channel has one webhook URL, so only the flow whose URL you paste receives messages.\n": "\n**Connect this trigger to your LINE bot**\n\n1. **Publish this flow first.** LINE checks the URL when you click **Verify**.\n2. Open the [LINE Developers Console](https://developers.line.biz/console/), pick your Messaging API channel and go to the **Messaging API** tab.\n3. Under **Webhook settings**, click **Edit** and paste this URL:\n\n   ```text\n   {{webhookUrl}}\n   ```\n\n4. Click **Verify**, then turn on **Use webhook**.\n\nA channel has one webhook URL, so only the flow whose URL you paste receives messages.\n"
+  "\n**Connect this trigger to your LINE bot**\n\n1. **Publish this flow first.** LINE checks the URL when you click **Verify**.\n2. Open the [LINE Developers Console](https://developers.line.biz/console/), pick your Messaging API channel and go to the **Messaging API** tab.\n3. Under **Webhook settings**, click **Edit** and paste this URL:\n\n   ```text\n   {{webhookUrl}}\n   ```\n\n4. Click **Verify**, then turn on **Use webhook**.\n\nA channel has one webhook URL, so only the flow whose URL you paste receives messages.\n": "\n**Conecta este disparador a tu bot de LINE**\n\n1. **Publica este flujo primero.** LINE comprueba la URL cuando haces clic en **Verify**.\n2. Abre la [LINE Developers Console](https://developers.line.biz/console/), selecciona tu canal de Messaging API y ve a la pestaña **Messaging API**.\n3. En **Webhook settings**, haz clic en **Edit** y pega esta URL:\n\n   ```text\n   {{webhookUrl}}\n   ```\n\n4. Haz clic en **Verify**, luego activa **Use webhook**.\n\nUn canal tiene una sola URL de webhook, así que solo el flujo cuya URL pegues recibe mensajes.\n"
 }

@@ -14,7 +14,10 @@ const NoResultsFound = () => {
   const showRequestPieceButton = showCommunityLinks && !isEmbedding;
 
   return (
-    <div className="flex flex-col items-center justify-center gap-3 h-full px-6 text-center">
+    <div
+      className="flex flex-col items-center justify-center gap-3 h-full px-6 text-center"
+      data-testid="pieces-selector-no-results"
+    >
       <div className="flex items-center justify-center size-12 rounded-full bg-gray-3">
         <SearchXIcon className="size-6 text-gray-11" />
       </div>

@@ -50,5 +50,7 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "LÖSCHEN",
-  "HEAD": "HEAD"
+  "HEAD": "HEAD",
+  "Request": "Anfrage",
+  "Data to send": "Zu sendende Daten"
 }

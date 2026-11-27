@@ -31,7 +31,7 @@ Exposes an Activepieces project as an MCP server so AI clients (Claude, ChatGPT,
 
 ### How it works
 
-- Main protocol endpoint: `POST /mcp` at the domain root, plus `POST /mcp/platform` (StreamableHTTP), both registered in `server.ts`. Config lives under the project API (`GET/POST` on the project MCP server route).
+- Main protocol endpoint: `POST /mcp` at the domain root, plus `POST /mcp/platform` (StreamableHTTP), both registered in `server.ts`. Project config lives under the project API (`GET/POST /v1/projects/:projectId/mcp-server`); the platform `disabledTools` list lives on `GET/POST /v1/mcp-server`, platform admin only, which `/platform/mcp` edits (`/platform/mcp/tools` only redirects there).
 - Auth is **OAuth-only**: `resolveIdentity` accepts an `Authorization: Bearer` value only if `mcpOAuthTokenService.verifyAccessToken` verifies it as a signed JWT with audience `JwtAudience.MCP_OAUTH_ACCESS`, *and* the Revocation List does not name its grant. It returns three outcomes — `ok`, `invalid` (`401`), and `unavailable` (`503`, the list could not be read). There is no static-token authenticator and no `?token=` query path.
 - AI pieces consume MCP tools over three transports: `SIMPLE_HTTP`, `STREAMABLE_HTTP`, `SSE`.
 - Embed SDK adds `authorizeMcp()` (in-embed OAuth consent), `mcpSettings()`, and `generateMcpToken()` (mints `{ mcpServerUrl, mcpToken }` with no OAuth flow, backed by `POST /v1/projects/:projectId/mcp-server/token` — a short-lived 15-min project-scoped token).

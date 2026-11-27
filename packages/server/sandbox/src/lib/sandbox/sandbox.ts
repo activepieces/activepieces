@@ -1,5 +1,6 @@
 import { ChildProcess } from 'child_process'
 import { randomBytes, timingSafeEqual } from 'crypto'
+import { chmod, mkdir } from 'fs/promises'
 import { createServer, Server as HttpServer } from 'http'
 import path from 'path'
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
@@ -7,6 +8,7 @@ import { createNotifyServer, createRpcClient, createRpcServer, EngineContract, E
 import { Socket, Server as SocketIOServer } from 'socket.io'
 import treeKill from 'tree-kill'
 import { cacheUtils } from '../cache/cache-paths'
+import { codeCache } from '../cache/flow/code/code-cache'
 import { assertSafeCodeNamespace, assertSafePathSegment } from '../utils/path-safety'
 import { Sandbox, SandboxInitOptions, SandboxLogger, SandboxMount, SandboxOptions, SandboxProcessMaker, SandboxResult } from './types'
 
@@ -47,6 +49,18 @@ function buildCodeMount({ flowVersionId, reusable, basePath }: { flowVersionId: 
     return null
 }
 
+function buildDenoCacheMount({ flowVersionId, reusable, basePath }: { flowVersionId: string | undefined, reusable: boolean, basePath: string }): SandboxMount | null {
+    if (reusable || isNil(flowVersionId)) {
+        return null
+    }
+    const hostPath = codeCache(cacheUtils(basePath).getGlobalCodeCachePath()).denoCacheDir(flowVersionId)
+    return {
+        hostPath,
+        sandboxPath: `/root/codes/${flowVersionId}/${path.basename(hostPath)}`,
+        rw: true,
+    }
+}
+
 export function createSandbox(
     log: SandboxLogger,
     sandboxId: string,
@@ -60,6 +74,7 @@ export function createSandbox(
     let wsRpcToken: string | null = null
     let busy = false
     let killedByShutdown = false
+    let shutdownCount = 0
     let nativeStdOut = ''
     let nativeStdError = ''
 
@@ -135,6 +150,25 @@ export function createSandbox(
         })
     }
 
+    async function abortStartIfShutDown({ shutdownCountAtStart, createdProcess }: { shutdownCountAtStart: number, createdProcess?: ChildProcess }): Promise<void> {
+        if (shutdownCount === shutdownCountAtStart) {
+            return
+        }
+        if (!isNil(createdProcess)) {
+            await killProcess(createdProcess, log)
+        }
+        if (io) {
+            // eslint-disable-next-line @typescript-eslint/await-thenable
+            await io.close()
+            io = null
+        }
+        const reason = `Sandbox ${sandboxId} was shut down while starting`
+        throw new ActivepiecesError({
+            code: ErrorCode.SANDBOX_INTERNAL_ERROR,
+            params: { reason, standardOutput: '', standardError: '' },
+        }, reason)
+    }
+
     function isReady(): boolean {
         return !isNil(connectedSocket) && connectedSocket.connected && !isNil(childProcess) && childProcess.exitCode === null
     }
@@ -152,9 +186,16 @@ export function createSandbox(
             }, 'Starting sandbox')
 
             wsRpcToken = randomBytes(32).toString('hex')
+            const shutdownCountAtStart = shutdownCount
             const port = await createSocketServer()
+            await abortStartIfShutDown({ shutdownCountAtStart })
 
             const codeMount = buildCodeMount({ flowVersionId, reusable: options.reusable, basePath: options.basePath })
+            const denoCacheMount = buildDenoCacheMount({ flowVersionId, reusable: options.reusable, basePath: options.basePath })
+            if (denoCacheMount) {
+                await mkdir(denoCacheMount.hostPath, { recursive: true })
+                await chmod(denoCacheMount.hostPath, 0o777)
+            }
             const customPieceMounts: SandboxMount[] = []
             if (platformId) {
                 assertSafePathSegment(platformId, 'platformId')
@@ -169,6 +210,7 @@ export function createSandbox(
             const allMounts: SandboxMount[] = [
                 ...(options.baseMounts ?? []),
                 ...(codeMount ? [codeMount] : []),
+                ...(denoCacheMount ? [denoCacheMount] : []),
                 ...mounts,
                 ...customPieceMounts,
             ]
@@ -176,7 +218,7 @@ export function createSandbox(
                 assertSandboxPathUnderRoot(mount)
             }
 
-            childProcess = await processMaker.create({
+            const createdProcess = await processMaker.create({
                 sandboxId,
                 command: options.command ?? [],
                 mounts: allMounts,
@@ -184,6 +226,7 @@ export function createSandbox(
                     ...options.env,
                     AP_SANDBOX_WS_PORT: String(port),
                     AP_SANDBOX_WS_TOKEN: wsRpcToken,
+                    ...(denoCacheMount ? { AP_DENO_CACHE_MOUNTED: 'true' } : {}),
                     ...(customPieceMounts.length > 0
                         ? { AP_CUSTOM_PIECES_PATHS: '/root/custom_pieces' }
                         : {}),
@@ -194,6 +237,8 @@ export function createSandbox(
                     timeLimitSeconds: options.timeLimitSeconds,
                 },
             })
+            await abortStartIfShutDown({ shutdownCountAtStart, createdProcess })
+            childProcess = createdProcess
 
             nativeStdOut = ''
             nativeStdError = ''
@@ -316,6 +361,7 @@ export function createSandbox(
         getPid: () => childProcess?.pid ?? null,
         isBusy: () => busy,
         shutdown: async () => {
+            shutdownCount++
             if (!isNil(childProcess)) {
                 killedByShutdown = true
                 log.debug({ sandbox: { id: sandboxId } }, 'Shutting down sandbox')

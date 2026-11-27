@@ -3,7 +3,7 @@
   "Server URL": "URL del servidor",
   "API Token": "API Token",
   "Kimai Instance URL (e.g. https://demo.kimai.org)": "URL de Kimai Instance (ej. https://demo.kimai.org)",
-  "Kimai API Token": "Kimai API Token",
+  "Kimai API Token": "Token API de Kimai",
   "\n  To configure API access:\n\n  1. Go to Kimai Web UI;\n  2. Click on your user profile and then go to \"API Access\";\n  3. Generate an API token.\n  ": "\n  To configure API access:\n\n  1. Go to Kimai Web UI;\n  2. Click on your user profile and then go to \"API Access\";\n  3. Generate an API token.\n  ",
   "Create Timesheet": "Crear Hoja de Tiempo",
   "Custom API Call": "Llamada API personalizada",
@@ -40,6 +40,6 @@
   "PUT": "PUT",
   "DELETE": "BORRAR",
   "HEAD": "LIMPIO",
-  "Request": "Request",
-  "Data to send": "Data to send"
+  "Request": "Solicitud",
+  "Data to send": "Datos a enviar"
 }

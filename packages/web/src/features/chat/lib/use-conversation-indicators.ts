@@ -10,6 +10,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSocket } from '@/components/providers/socket-provider';
 
 import { chatApi } from './chat-api';
+import { chatQueryKeys } from './chat-query-keys';
 
 export function useConversationIndicators({
   conversations,
@@ -68,7 +69,9 @@ export function useConversationIndicators({
     const knownStreaming = new Set<string>();
 
     const invalidateList = () => {
-      void queryClient.invalidateQueries({ queryKey: ['chat-conversations'] });
+      queryClient
+        .invalidateQueries({ queryKey: chatQueryKeys.allConversationLists() })
+        .catch(() => undefined);
     };
 
     const handler = (event: SocketEvent) => {
@@ -82,9 +85,9 @@ export function useConversationIndicators({
           break;
         case AgentEventType.ACTION_PREVIEW:
         case AgentEventType.ACTION_RECEIPT:
-          void queryClient.invalidateQueries({
-            queryKey: ['chat-pending-gate', convId],
-          });
+          queryClient
+            .invalidateQueries({ queryKey: ['chat-pending-gate', convId] })
+            .catch(() => undefined);
           invalidateList();
           break;
         case AgentEventType.CHUNK:

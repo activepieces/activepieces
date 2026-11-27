@@ -97,7 +97,12 @@ export const NewSigningKeyDialog = ({
                 render={({ field }) => (
                   <FormItem className="grid space-y-4">
                     <Label htmlFor="displayName">{t('Name')}</Label>
-                    <Input {...field} required id="displayName" />
+                    <Input
+                      {...field}
+                      required
+                      id="displayName"
+                      data-testid="embedding-signing-key-name"
+                    />
                     <FormMessage />
                   </FormItem>
                 )}
@@ -118,6 +123,7 @@ export const NewSigningKeyDialog = ({
               </Button>
               <Button
                 {...adminControl(AdminControl.EMBEDDING_SIGNING_KEY_NEW_SUBMIT)}
+                data-testid="embedding-signing-key-save"
                 disabled={isPending || !form.formState.isValid}
                 loading={isPending}
                 onClick={() => mutate()}

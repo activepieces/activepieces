@@ -366,6 +366,9 @@ export const flowOperations = {
                 if (operation.request.action.type === FlowActionType.PIECE) {
                     operation.request.action.settings.pieceVersion = flowPieceUtil.getExactVersion(operation.request.action.settings.pieceVersion)
                 }
+                if (operation.request.action.type === FlowActionType.CODE) {
+                    operation.request.action.settings.useDeno = true
+                }
                 clonedVersion = _addAction(clonedVersion, operation.request)
                 break
             }
@@ -391,6 +394,9 @@ export const flowOperations = {
             case FlowOperationType.UPDATE_ACTION: {
                 if (operation.request.type === FlowActionType.PIECE) {
                     operation.request.settings.pieceVersion = flowPieceUtil.getExactVersion(operation.request.settings.pieceVersion)
+                }
+                if (operation.request.type === FlowActionType.CODE) {
+                    operation.request.settings.useDeno = true
                 }
                 clonedVersion = _updateAction(clonedVersion, operation.request)
                 break

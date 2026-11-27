@@ -103,6 +103,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 conversationId, runId, platformId, userId, userMessage, modelName, files,
                 ...spreadIfDefined('source', jobSource),
                 ...spreadIfDefined('messageSource', data.messageSource),
+                ...spreadIfDefined('pageContext', data.pageContext),
                 ...spreadIfDefined('agentId', data.agentId),
                 ...spreadIfDefined('flowRunId', flowRunId),
                 ...spreadIfDefined('waitpointId', waitpointId),
@@ -141,6 +142,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             wideEvent.set({
                 ...spreadIfDefined('user', isNil(userId) ? undefined : { id: userId }),
                 ...spreadIfDefined('project', isNil(billing.projectId) ? undefined : { id: billing.projectId }),
+                agentRun: { source, tierId: config.platformTier?.id ?? config.tier.id, tierModel: config.modelId },
             })
             const metadata: ModelMetadata = { platformId, conversationId, runId, surface: source === AgentRunSource.AGENT || source === AgentRunSource.FLOW_STEP ? 'agent' : 'chat' }
             const model = aiUtils.createModel({
@@ -221,6 +223,9 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
 
             const phaseState: { phase: AgentPhase } = { phase: 'discovery' }
             const taintState = agentWorkerTools.createTaintState({ carried: source === AgentRunSource.FLOW_STEP || agentWorkerTools.previousReplyReadData(config.previousUiMessages) })
+            if (config.readsData === true) {
+                taintState.tainted = true
+            }
 
             const readImage = async (fileId: string) => toResolvedAiFile({
                 stored: await ctx.apiClient.readAgentFile({ platformId, conversationId, fileId, ...spreadIfDefined('projectId', projectId ?? undefined) }),

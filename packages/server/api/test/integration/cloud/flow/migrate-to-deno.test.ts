@@ -1,5 +1,5 @@
 import { apId, spreadIfDefined } from '@activepieces/core-utils'
-import { CodeAction, Flow, FlowAction, FlowActionType, FlowStatus, flowStructureUtil, FlowTrigger, FlowTriggerType, FlowVersion, FlowVersionState } from '@activepieces/shared'
+import { CodeAction, Flow, FlowAction, FlowActionType, FlowStatus, flowStructureUtil, FlowTrigger, FlowTriggerType, FlowVersion, FlowVersionState, ResourceChangeOp } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -271,8 +271,8 @@ describe('Draft Push after the Deno migration', () => {
         expect(response.statusCode).toBe(StatusCodes.OK)
         expect(pushes).toHaveLength(2)
         expect(pushes).toEqual(expect.arrayContaining([
-            { room: ctx.project.id, payload: { flowId: firstFlow.id, editorSessionId: null } },
-            { room: ctx.project.id, payload: { flowId: secondFlow.id, editorSessionId: null } },
+            { room: ctx.project.id, payload: { flowId: firstFlow.id, editorSessionId: null, op: ResourceChangeOp.UPDATE } },
+            { room: ctx.project.id, payload: { flowId: secondFlow.id, editorSessionId: null, op: ResourceChangeOp.UPDATE } },
         ]))
     })
 
@@ -284,7 +284,7 @@ describe('Draft Push after the Deno migration', () => {
         const response = await postMigrateToDeno({ flowIds: [flow.id] })
 
         expect(response.statusCode).toBe(StatusCodes.OK)
-        expect(pushes).toEqual([{ room: ctx.project.id, payload: { flowId: flow.id, editorSessionId: null } }])
+        expect(pushes).toEqual([{ room: ctx.project.id, payload: { flowId: flow.id, editorSessionId: null, op: ResourceChangeOp.UPDATE } }])
     })
 
     it('sends no push when the migration changes only the published version', async () => {
@@ -308,7 +308,7 @@ describe('Draft Push after the Deno migration', () => {
         const response = await postRevertFromDeno({ flowIds: [flow.id] })
 
         expect(response.statusCode).toBe(StatusCodes.OK)
-        expect(pushes).toEqual([{ room: ctx.project.id, payload: { flowId: flow.id, editorSessionId: null } }])
+        expect(pushes).toEqual([{ room: ctx.project.id, payload: { flowId: flow.id, editorSessionId: null, op: ResourceChangeOp.UPDATE } }])
     })
 
     it('sends a Draft Push when the published version fails after the draft was migrated', async () => {
@@ -327,7 +327,7 @@ describe('Draft Push after the Deno migration', () => {
         const response = await postMigrateToDeno({ flowIds: [flow.id] })
 
         expect(response.statusCode).toBe(StatusCodes.INTERNAL_SERVER_ERROR)
-        expect(pushes).toEqual([{ room: ctx.project.id, payload: { flowId: flow.id, editorSessionId: null } }])
+        expect(pushes).toEqual([{ room: ctx.project.id, payload: { flowId: flow.id, editorSessionId: null, op: ResourceChangeOp.UPDATE } }])
     })
 
     it('sends no push when a second run changes nothing', async () => {

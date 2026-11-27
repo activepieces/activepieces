@@ -247,6 +247,6 @@
   "PUT": "PUT",
   "DELETE": "LÖSCHEN",
   "HEAD": "HEAD",
-  "Request": "Request",
-  "Data to send": "Data to send"
+  "Request": "Anfrage",
+  "Data to send": "Daten zum Senden"
 }

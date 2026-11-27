@@ -47,13 +47,13 @@ function MultiChoiceInput({
             onClick={() => toggle(option.label)}
             aria-pressed={selected}
             className={cn(
-              'group flex items-center gap-3 rounded-xl border border-gray-6/60 px-3 py-2 text-start text-sm transition-colors hover:bg-gray-3',
+              'group flex items-center gap-3 rounded-xl border border-gray-6/60 px-3 py-2 text-start text-sm transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-3',
               selected && 'border-accent-7 bg-accent-3',
             )}
           >
             <span
               className={cn(
-                'flex size-5 shrink-0 items-center justify-center rounded-md border border-gray-6 transition-colors',
+                'flex size-5 shrink-0 items-center justify-center rounded-md border border-gray-6 transition-colors duration-(--dur-micro) ease-[ease]',
                 selected && 'border-accent-9 bg-accent-9 text-on-accent',
               )}
             >
@@ -150,7 +150,7 @@ function ColorInput({
               aria-label={hex}
               onClick={() => onChange(hex)}
               className={cn(
-                'size-8 rounded-full border border-gray-6/60 transition-transform hover:scale-110',
+                'size-8 rounded-full border border-gray-6/60 transition-transform duration-(--dur-micro) ease-[ease] hover:scale-110',
                 value.toLowerCase() === hex.toLowerCase() &&
                   'ring-2 ring-accent-9 ring-offset-2 ring-offset-gray-1',
               )}

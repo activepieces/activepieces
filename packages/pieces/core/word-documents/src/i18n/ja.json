@@ -1,0 +1,23 @@
+{
+  "Read Word documents (.docx) and fill Word templates in your flow, no Microsoft account needed.": "Word文書（.docx）を読み取り、フロー内でWordテンプレートに入力します。Microsoftアカウントは不要です。",
+  "Extract Text": "テキストを抽出",
+  "Fill Template": "テンプレートに入力",
+  "Get the text, headers and footers of a Word document (.docx).": "Word文書（.docx）のテキスト、ヘッダー、フッターを取得します。",
+  "Fill the {{placeholders}} in a Word template (.docx) and get a new document.": "Word テンプレート (.docx) の {{placeholders}} を埋め、新しいドキュメントを取得します。",
+  "Word Document": "Word文書",
+  "Password": "Password",
+  "Markdown": "Markdown",
+  "Word Template": "Wordテンプレート",
+  "Fields": "レコードのデータ",
+  "Data (JSON)": "データ（JSON）",
+  "File Name": "ファイル名",
+  "Pick a .docx file from an earlier step, such as an email attachment, or paste a URL to download.": "以前のステップ、たとえばメールの添付ファイルから .docx ファイルを選択するか、ダウンロードするURLを貼り付けます。",
+  "Only needed when the document is password-protected.": "文書がパスワードで保護されている場合にのみ必要です。",
+  "Type placeholders in your Word template with double braces:\n- `{{name}}` is replaced by the \"name\" value. `{{customer.city}}` reads a nested value.\n- `{{#items}}` ... `{{/items}}` repeats a table row or paragraph for each entry of the \"items\" list. Inside it, use the entry's fields, like `{{description}}`.\n- `{{#paid}}` ... `{{/paid}}` shows the text only when \"paid\" is true; `{{^paid}}` ... `{{/paid}}` only when it is false or empty.": "Wordテンプレートで、二重波括弧を使ってプレースホルダーを入力します:\n- `{{name}}` は \"name\" の値に置き換えられます。`{{customer.city}}` はネストされた値を読み取ります。\n- `{{#items}}` ... `{{/items}}` は、\"items\" リストの各項目について、表の行または段落を繰り返します。その中では、`{{description}}` のように各項目のフィールドを使用します。\n- `{{#paid}}` ... `{{/paid}}` は、\"paid\" が true の場合のみテキストを表示します。`{{^paid}}` ... `{{/paid}}` は、false または空の場合のみ表示します。",
+  "A .docx file with {{placeholders}}, from an earlier step or a URL.": ".docx ファイルに {{placeholders}} を含む、以前のステップまたはURLからのもの。",
+  "One field per placeholder in the template. They appear once the template is set, or mapped from a step you have tested.": "テンプレート内のプレースホルダーごとに 1 つのフィールドがあります。テンプレートが設定されると表示されるか、テスト済みのステップからマップされます。",
+  "Optional. A JSON object with values for the placeholders. It overrides the fields above, and is needed for a list inside a list.": "省略可能。プレースホルダーの値を含むJSONオブジェクトです。上記のフィールドを上書きし、リストの中のリストに必要です。",
+  "Name of the new document. Leave empty to use the template's name.": "新しい文書の名前。空欄のままにするとテンプレート名を使用します。",
+  "Document": "ドキュメント",
+  "Word Documents": "Word文書"
+}

@@ -247,8 +247,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
-  "Request": "Request",
-  "Data to send": "Data to send",
+  "Request": "要求する",
+  "Data to send": "送信するデータ",
   "Monitor Event (Webhook)": "モニターイベント（Webhook）",
   "Triggers once per signal (signal_first mode) or once per company (company_first mode) when a Pubrio monitor fires. Copy the webhook URL into your Pubrio monitor destination configuration.": "Pubrioが発火したときに信号ごとに1回、または会社ごとに1回(company_firstモード)トリガーします。 Webhook URLをPubrioモニターの宛先設定にコピーします。"
 }

@@ -36,6 +36,9 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
     ApFlagId.ENVIRONMENT,
   );
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const { data: posthogProjectToken } = flagsHooks.useFlag<string | null>(
+    ApFlagId.POSTHOG_PROJECT_TOKEN,
+  );
   const { embedState } = useEmbedding();
 
   const isCloud = edition === ApEdition.CLOUD;
@@ -50,7 +53,9 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
   const devTelemetryAllowed =
     isPosthogDevOptIn() || (!isRunningCloudInDevMode && !isDevEnvironment);
   const telemetryEnabled =
-    (isPreLoginCloudFunnel || isSignedInWithAnalyticsOn) && devTelemetryAllowed;
+    !isNil(posthogProjectToken) &&
+    (isPreLoginCloudFunnel || isSignedInWithAnalyticsOn) &&
+    devTelemetryAllowed;
   const deployment = resolveDeploymentKind({
     edition,
     environment: flagEnvironment,
@@ -64,12 +69,17 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
     }
     const isEmbedded =
       embedState.isEmbedded || window.location.pathname.startsWith('/embed');
-    if (!telemetryEnabled || isEmbedded || isNil(edition)) {
+    if (
+      !telemetryEnabled ||
+      isEmbedded ||
+      isNil(edition) ||
+      isNil(posthogProjectToken)
+    ) {
       return;
     }
     posthogInitialized.current = true;
 
-    posthog.init('phc_7F92HoXJPeGnTKmYv0eOw62FurPMRW9Aqr0TPrDzvHh', {
+    posthog.init(posthogProjectToken, {
       // Same-origin reverse proxy (/ingest) so ad blockers don't drop ingestion.
       api_host: '/ingest',
       ui_host: 'https://us.posthog.com',
@@ -109,7 +119,14 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
     if (isCloud && isInRecordingSample(posthog.get_distinct_id())) {
       posthog.startSessionRecording();
     }
-  }, [telemetryEnabled, embedState.isEmbedded, edition, isCloud, deployment]);
+  }, [
+    telemetryEnabled,
+    embedState.isEmbedded,
+    edition,
+    isCloud,
+    deployment,
+    posthogProjectToken,
+  ]);
 
   useEffect(() => {
     if (!posthogInitialized.current) {

@@ -144,7 +144,7 @@ const BranchLabel = (props: BaseBranchLabel) => {
           }}
         >
           <div className="truncate">
-            {props.label === 'Otherwise' ? t('Otherwise') : props.label}
+            {flowCanvasUtils.getBranchDisplayName(props.label)}
           </div>
 
           {!isOtherwiseBranch &&

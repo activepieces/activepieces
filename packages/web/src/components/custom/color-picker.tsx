@@ -68,6 +68,8 @@ const ColorPicker = forwardRef<
           <Input
             size="sm"
             className="font-mono"
+            aria-label={props['aria-label']}
+            data-testid="color-picker-hex"
             maxLength={7}
             onChange={(e) => {
               onChange(e?.currentTarget?.value);

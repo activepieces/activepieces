@@ -177,6 +177,8 @@
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
   "HEAD": "HOOFD",
+  "Request": "Verzoek",
+  "Data to send": "Gegevens om te verzenden",
   "New Database Record": "Nieuwe Database Record",
   "Triggers when a new record is added.": "Triggert wanneer een nieuw record wordt toegevoegd."
 }

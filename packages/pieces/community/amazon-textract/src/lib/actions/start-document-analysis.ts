@@ -39,8 +39,8 @@ export const startDocumentAnalysis = createAction({
     }),
     clientRequestToken: Property.ShortText({
       displayName: 'Deduplication Token (Optional)',
-      description:
-        'A unique string you choose (e.g. "job-invoice-2024-01"). If you submit the same token within 5 minutes, AWS returns the original job ID instead of starting a new job — preventing duplicate work.',
+      description: 'Same token and inputs within 7 days return the first job ID.',
+      placeholder: 'job-invoice-2024-01',
       required: false,
     }),
     outputS3Bucket: Property.ShortText({

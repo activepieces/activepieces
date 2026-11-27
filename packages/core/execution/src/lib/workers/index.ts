@@ -139,6 +139,7 @@ export const WorkerSettingsResponse = z.object({
     SSRF_ALLOW_LIST: z.array(z.string()),
     ENFORCE_CONNECTION_PIECE_BINDING: z.boolean(),
     PAGE_ONCALL_WEBHOOK: z.string().optional(),
+    POSTHOG_PROJECT_TOKEN: z.string().nullable().optional(),
     APP_VERSION: z.string().optional(),
     PROJECT_WORKER: z.boolean().optional(),
 })

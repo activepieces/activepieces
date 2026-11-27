@@ -639,3 +639,70 @@ export const sendMessageToMultipleUsersOutputSchema: OutputSchema = {
     },
   ],
 };
+
+export const newButtonClickTriggerOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'type', label: 'Interaction Type' },
+    { key: 'trigger_id', label: 'Trigger ID' },
+    { key: 'api_app_id', label: 'App ID' },
+    { key: 'response_url', label: 'Response URL' },
+    {
+      key: 'team',
+      label: 'Team',
+      children: [
+        { key: 'id', label: 'Team ID' },
+        { key: 'domain', label: 'Team Domain' },
+      ],
+    },
+    {
+      key: 'user',
+      label: 'User',
+      children: [
+        { key: 'id', label: 'User ID' },
+        { key: 'username', label: 'Username' },
+        { key: 'name', label: 'Name' },
+        { key: 'team_id', label: 'Team ID' },
+      ],
+    },
+    {
+      key: 'channel',
+      label: 'Channel',
+      children: [
+        { key: 'id', label: 'Channel ID' },
+        { key: 'name', label: 'Channel Name' },
+      ],
+    },
+    {
+      key: 'message',
+      label: 'Message',
+      children: [
+        { key: 'ts', label: 'Message Timestamp' },
+        { key: 'thread_ts', label: 'Thread Timestamp' },
+        { key: 'text', label: 'Text' },
+      ],
+    },
+    {
+      key: 'container',
+      label: 'Container',
+      children: [
+        { key: 'type', label: 'Container Type' },
+        { key: 'message_ts', label: 'Message Timestamp' },
+        { key: 'channel_id', label: 'Channel ID' },
+        { key: 'is_ephemeral', label: 'Is Ephemeral' },
+      ],
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
+      labelKey: 'action_id',
+      listItems: [
+        { key: 'action_id', label: 'Action ID' },
+        { key: 'block_id', label: 'Block ID' },
+        { key: 'value', label: 'Value' },
+        { key: 'text', label: 'Button Text', children: [{ key: 'text', label: 'Text' }] },
+        { key: 'type', label: 'Action Type' },
+        { key: 'action_ts', label: 'Action Timestamp' },
+      ],
+    },
+  ],
+};

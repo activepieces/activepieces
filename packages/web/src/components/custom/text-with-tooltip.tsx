@@ -10,12 +10,14 @@ import { cn } from '@/lib/utils';
 
 interface TextWithTooltipProps {
   tooltipMessage: string;
+  delayDuration?: number;
   children: React.ReactElement<
     React.HTMLAttributes<HTMLDivElement> & { ref?: React.Ref<HTMLDivElement> }
   >;
 }
 export const TextWithTooltip = ({
   tooltipMessage,
+  delayDuration,
   children,
 }: TextWithTooltipProps) => {
   const textRef = useRef<HTMLDivElement>(null);
@@ -65,7 +67,7 @@ export const TextWithTooltip = ({
 
   return (
     <TooltipProvider>
-      <Tooltip>
+      <Tooltip delayDuration={delayDuration}>
         <TooltipTrigger asChild>{childWithRef}</TooltipTrigger>
         <TooltipContent className="max-w-md wrap-break-word whitespace-normal">
           <p>{tooltipMessage}</p>
