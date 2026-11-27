@@ -4,291 +4,29 @@ description: "This list shows all versions that include breaking changes and how
 icon: "hammer"
 ---
 
-## 0.94.0
-
-### What has changed?
-
-All breaking changes in this release are in pieces.
-
-<Accordion title="Pieces (21 changes)">
-
-#### Google Sheets 0.21.0: row triggers fire for more changes, and Trigger Column must be a column letter
-
-From Google Sheets 0.21.0, **New Row Added** and **New or Updated Row** also run the flow in three cases where they stayed silent before:
-
-- A cell changed back to an earlier value within 30 seconds. Before, the second change was dropped as a duplicate of the first. The one exception: a change identical to one already delivered in the last 10 minutes (same row, same old and new values, for example a cell flipped `open` → `closed` → `open` → `closed`, or a row deleted and appended again unchanged) runs the flow only once.
-- Rows changed while the trigger renews its Google watch channel (every 12 hours). Before, that change was lost.
-- Notifications where Google reports a content change together with another change type, for example `content, permissions`. Before, these were ignored.
-
-**New or Updated Row** events now include cells past the last header column, labelled by their column letter, the same as New Row Added and the Test sample. Before, those cells were left out, and every cell was left out when row 1 was blank.
-
-**Trigger Column** must now be a column letter, such as `B` or `aa`. Lower-case letters now work. A header name like `Status` is rejected with a clear message when the flow is turned on; before, the flow turned on but never ran.
-
-#### What you need to do
-
-If a flow uses New or Updated Row with a Trigger Column, open the trigger and check that the value is a column letter, not a header name, then turn the flow on again. If a flow after a row trigger can't handle a run for a value that was changed back, or for extra keys past the last header, add a Branch step to filter those runs.
-
-#### Fireflies.ai 0.2.0: three find actions are no longer AI agent tools, and Upload Audio returns a smaller output
-
-**Find Meeting by ID**, **Find Recent Meeting** and **Find Meeting by Call Details** are now shown only in the flow builder. AI agents and MCP clients get **Get Meeting**, **Get Meeting Summary** and **Find Meetings** instead.
-
-After you upgrade:
-
-- **Upload Audio** returns `{ success, title, message }` instead of the raw `{ data: { uploadAudio: { ... } } }` response, and it fails the step when Fireflies rejects the upload (for example `paid_required` on the Free plan) instead of showing it as a successful step.
-- **Find Meeting by Call Details** reads at most 1,000 meetings (20 pages of 50). If more meetings match, the step fails and asks you to narrow the filters, instead of paging through the whole account. Its **Date** filter now covers the 24 hours starting at the date and time you give, instead of the UTC calendar day, so meetings no longer go missing when your time zone is ahead of UTC.
-- **Find Meeting by Call Details** now fails before calling Fireflies when Host Email and Participant Email are both set. Fireflies already rejected that combination, so these steps were failing before; fill in only one of the two.
-- Every action fails the step when Fireflies returns a GraphQL error, instead of returning an empty or null result.
-
-#### What you need to do
-
-- Agents that used the three find actions as tools: switch to Get Meeting, Get Meeting Summary or Find Meetings.
-- Steps that read `data.uploadAudio.success`, `data.uploadAudio.title` or `data.uploadAudio.message` from Upload Audio: read `success`, `title` and `message` instead.
-- Find Meeting by Call Details steps on large accounts: add a date range or another filter.
-
-#### Fireberry 0.2.0: record actions are no longer AI agent tools, and their output changes
-
-**Create Record**, **Update Record**, **Delete Records** and **Find Records** are now shown only in the flow builder. AI agents and MCP clients get a separate set of agent actions instead: List Object Types, List Object Fields, List Picklist Values, Search Records, Get Record, Create Record, Update Record and Delete Record.
-
-After you upgrade a step:
-
-- Create Record and Update Record return `{ id, objectSystemName, record }` instead of the raw batch response.
-- Delete Records returns `{ deletedIds, deletedCount }`.
-- The **Record Created or Updated** trigger ignores its lookback setting (it is kept only so saved flows still load). It now tracks Fireberry's own timestamps, so it no longer re-sends records changed earlier the same day. Publishing the upgraded flow starts tracking at the newest record, so records created or updated between the last poll on 0.1.x and the publish are not sent. If more than 500 records change in the same second, Fireberry's API can return only the first 500 of them; the trigger sends those, skips the rest of that second, and the next poll fails once with an error that names the second.
-
-#### What you need to do
-
-- Agents that used the old Fireberry actions as tools: switch to the new agent actions.
-- If a later step read fields from the old Create or Update output, map `id` or `record` instead.
-
-Steps keep running on the version they were built with until you upgrade them.
-
-#### ManyChat 0.2.0: Set Custom Field is no longer an agent tool
-
-From ManyChat 0.2.0, **Set Custom Field** is no longer offered to AI agents and MCP clients. It stays available as a flow step with the same inputs. Agents use the new **Set Subscriber Custom Fields** tool instead, which sets 1 to 20 fields in one call by field ID or name. Set Custom Field steps upgraded to 0.2.0 send date values as `YYYY-MM-DD` and date-time values with an explicit time zone offset, as ManyChat documents. The piece needs Activepieces 0.86.4 or later.
-
-#### What you need to do
-
-Point any Run Agent step or MCP client that used Set Custom Field at **Set Subscriber Custom Fields**. Flows that use Set Custom Field as a step keep working unchanged.
-
-#### Postgres 0.7.0: New Row no longer runs again for updated rows
-
-**New Row** now runs once per row. Before, updating a row ran the flow again for it. Rows that share the same order value as the last one delivered now run the flow instead of being skipped, rows with an empty order value are skipped instead of stopping the trigger, and timestamp columns without a time zone are compared in the database, so workers west of UTC no longer skip rows. Each check delivers at most 500 rows; the rest follow on the next checks. With Descending order on a `timestamptz` or `date` column, a row dated after the database's current time waits until that time; `timestamp` columns (without a time zone) are not held back. When upgrading, rows at the last delivered value that are already in the table don't run again.
-
-#### What you need to do
-
-Nothing for most flows; the trigger keeps its place when upgraded. If a flow relied on New Row running again when a row is updated, use a separate trigger or schedule for updates.
-
-#### RSS 0.8.0: New Item in Feed and New Items in Multiple Feeds fire on a different set of items
-
-From RSS 0.8.0, both RSS triggers keep a separate cursor for each feed URL instead of one shared marker. The output of each run is the same feed item as before, with the same keys and one value change listed below. What changes is mostly which items start a run:
-
-- Items published in the same second as the last delivered item now fire. Before, they were dropped.
-- An article that appears in two of the watched feeds (same guid, or for short ids like `42` the same guid and the same link) fires once, not once per feed.
-- Feeds that list items oldest first now fire only the new items. Before, they could fire old items again, or miss new ones.
-- A slow feed no longer holds up the other feeds: each feed gets 20 seconds. A feed that fails or times out is skipped (only the trigger log shows it) and is checked again on the next poll, without re-sending its old items. The poll fails only when every feed fails.
-- Turning a trigger off and on again starts from the feed's current items, so old items are not replayed.
-- An item whose link is relative (for example `posts/1`) in a feed that has no site link now returns a full link, resolved against the feed URL. Before, the relative path was returned.
-- Turning on New Items in Multiple Feeds now fails when none of the feeds can be loaded at that moment. Before, it turned on anyway. Turn it on again once at least one feed answers.
-- A feed served in a legacy encoding (for example ISO-8859-1 or Shift_JIS, declared in the HTTP header or the XML declaration) now returns readable text. Before, accented and non-Latin characters arrived as "�".
-- A feed (or, for Find Site Feeds, a web page) larger than 20 MB now fails with a "too large" error in both triggers and in the Read Feed, Read Multiple Feeds and Find Site Feeds actions. In New Items in Multiple Feeds only that feed is skipped.
-
-#### What you need to do
-
-Nothing is required. When an existing RSS trigger is upgraded to 0.8.0, its old marker is carried over to each feed, so items published after the last delivered one fire on the next poll and older items do not fire again. On self-hosted servers older than 0.93.0, the previous version deletes its publish-date marker when the flow is republished for the upgrade, so only the feed that holds the last delivered item carries over; the other feeds start from their current items and skip what they published since the last poll. If a flow relied on one article firing once per feed, or on old items replaying after a feed came back from an outage, change that flow.
-
-#### HubSpot 0.14.0: polling triggers fire for changes they used to miss
-
-From HubSpot 0.14.0, the polling triggers change which items they fire for:
-- Property-change triggers also fire when the watched property is cleared, and their output includes the object's default properties next to the watched one.
-- Updated Deal Stage fires for a deal that entered the stage and moved on before the next check. On custom pipelines where HubSpot has no per-stage entry date, it keeps the old behaviour.
-- New COS Blog Article set to "Both" fires again when a draft is published.
-- Search triggers deliver every record when more than 10,000 change between two checks, oldest first, across several checks.
-- Testing a trigger shows the newest item in the builder.
-
-#### What you need to do
-
-Nothing. Flows may see runs they did not get before, so check any flow that assumed a cleared property or a published draft would not start it.
-
-#### Google Calendar 0.14.0: Google Calendar triggers fire once per event and no longer miss events
-
-From Google Calendar 0.14.0, **New Event Matching Search** reads every result page and fires once for each new matching event. A new recurring series fires once, not once per occurrence. Cancelled events never fire. An event that was edited within seconds of being created still counts as new: the trigger no longer requires the created and updated times to be within 5 seconds of each other.
-
-**New Event** fires only for your own events created after the trigger was turned on. Edits, reschedules, renames, cancellations and moved occurrences of a recurring series no longer fire it, and a new series fires once.
-
-Both triggers also fire once for each new invitation from another organizer that you have not answered yet, including an invitation to a meeting created before the trigger was turned on and an invitation to a single occurrence of someone else's series. An invitation you accept or decline before the trigger sees it does not fire, and later edits, replies and republishes do not fire it again. Invitations you receive through a group address follow the own-event rule: they fire only when the meeting was created after the trigger was turned on.
-
-After upgrading, New Event Matching Search, New or Updated Event and Event Cancelled continue from where the old version stopped, but look back at most 24 hours: anything older is skipped and logged. Within those 24 hours, New Event Matching Search may fire once, late, for matching events that the old version skipped (it only read the first page of results). Invitations to meetings created before the old version's last check do not fire after the upgrade, so an invitation the old version already sent does not fire again.
-
-**New or Updated Event** no longer fires for deleted or cancelled events. Every saved change fires once, including a second edit of an event that already fired. After a long quiet period it keeps working instead of failing on Google's "too old" error. A flow that was off for so long that Google rejects its saved position restarts from now and logs the skipped period.
-
-**Event Cancelled** fires once when a whole recurring series is deleted, not once per occurrence. With **Cancellation Reasons**, each cancellation now belongs to exactly one reason, checked in this order: rescheduled, declined, deleted, other. "Event Deleted" now includes your own deleted meetings that kept their title, and "Other Cancellations" only matches what no other reason covers. With **Target Specific Event**, a cancellation fires even when Google leaves out the update time, and an event that no longer exists fires once as deleted. If Google can't be reached to read the selected event when Event Cancelled with **Target Specific Event** is turned on, the flow still turns on: the next check reads the event, records its status without firing, and fails visibly while Google keeps rejecting the request (an event that no longer exists counts as cancelled). Google errors now fail the check instead of being skipped silently.
-
-**Event Start (Time Before)** no longer fires a reminder before it is due (the old version could fire up to 5 minutes early). A reminder whose check ran late or failed fires at the next check if the event hasn't started yet; once the event has started, its reminder is dropped (with Time Before above 0). An event booked after its reminder time fires at the next check if it hasn't started. Time Before = 0 fires when the event starts, a rescheduled event fires again for its new start, and a negative Time Before is an error.
-
-With **Target Specific Event** ticked and no event selected, **Event Cancelled**, **Event Ends** and **Event Start (Time Before)** now refuse to turn on and fail each check with "Select the event to watch, or untick Target Specific Event", instead of staying on and never running. These three triggers and **New Event Matching Search** now list calendars shared with you read-only.
-
-**New Event** keeps its position across a republish of the same calendar, so meetings created just before or during the publish fire once. **New Calendar** no longer fires for a calendar that was hidden from the list and shown again.
-
-**Event Ends** fires once for every event that ends between checks, including more than one page of events and events that end at the same moment.
-
-After upgrading, Event Start (Time Before) and Event Ends do not repeat anything the old version already fired, and they fire once for all-day ends and reminders it had not fired yet. A reminder or event end that the old version skipped in the 14 hours before the upgrade may fire once, late, at the first check after the upgrade; older ones are not sent.
-
-For **Event Start (Time Before)** and **Event Ends**, all-day events start and end at midnight in the calendar's time zone, not UTC. With **Target Specific Event**, a cancelled event no longer fires, and a read error fails the check (the reminder fires at the next check) instead of being hidden.
-
-**New Calendar** fires only for calendars added after the trigger was turned on. Calendars that already existed no longer fire when you widen the filters later, or when they are renamed or their access changes so that they start to match. If you widen the filters in the same publish as this upgrade, an existing calendar that now matches can fire once.
-
-#### What you need to do
-
-If a flow relied on New Event or New Event Matching Search firing for each occurrence of a series or for edits, use **New or Updated Event** instead. If a flow used New or Updated Event to catch deletions, use **Event Cancelled**. If a flow filters Event Cancelled by reason, check the new reason order. Other flows keep working without changes.
-
-#### Gmail 0.19.0: New Email and Send Email no longer return HTTP request details
-
-This is a security fix. The output of the **New Email** trigger and the **Send Email** action included the raw HTTP request, which could expose proxy credentials. From Gmail 0.19.0, the New Email `thread` field contains only `data`; the `config`, `headers`, `request` and `status` keys are removed. Send Email now returns only `data`, `status` and `statusText`.
-
-#### What you need to do
-
-If a flow reads `thread.config`, `thread.headers`, `thread.request` or `thread.status` from New Email, or any key other than `data`, `status` and `statusText` from Send Email, update it to read from `data` instead.
-
-#### Google Drive 0.14.0: file triggers, downloads and search across shared drives
-
-From Google Drive 0.14.0, the **New File** trigger with **Include File Content** on fires for a file whose download fails. That run has a `contentError` field with the reason instead of `content`. Before, one failed download (for example a Google Form, which Drive can't download) failed the whole poll, and every new file in that poll was lost. The trigger's output can now carry the `content` and `contentError` keys.
-
-New File downloads up to 5 files at a time and stops at a deadline, so the poll ends before the trigger timeout. A file still downloading at the deadline gets a `contentError`. All three Drive triggers now detect an incomplete search across shared drives and search each drive on its own, instead of skipping files in drives Google didn't search. When one check can't search every drive in time, the next checks carry on with the drives that are left.
-
-- Exported Google Docs, Sheets and Slides are now saved as `.docx`, `.xlsx` and `.pptx`. Before, they were saved as `.gdoc`, `.gsheet` or `.gslides`, or with no extension when a name was given. In Download File, the export extension is now added to the name you give, so `invoice.pdf` for a Google Doc is saved as `invoice.pdf.docx`. This applies to Download File, Download File Content, List Files, List Folder Contents, Set Public Access and the trigger file content. A failed file lookup now fails with Google's own message.
-- The three Drive triggers now send a large backlog over several checks, oldest first: at most 500 files per check, or 50 with Include File Content on. They also fire for files that Google lists a few minutes late, except while a large backlog is still being sent.
-- With Include Team Drives on, Find File or Folder and the agent tool Search Files and Folders return files from every shared drive. When Google can't search a drive, they fail with a clear error instead of returning a partial list. Both search actions now stop with an error after 120 seconds, where before they had no limit. List Files and List Folder Contents now report `incompleteSearch` as `true` when Google could not search the whole folder.
-- Export Folder as Zip now fails when Google can't search the whole folder, instead of building a zip with files missing.
-- Search Files and Folders now escapes the search value. A value escaped by hand, like `O\'Brien`, now searches for a literal backslash: type `O'Brien` instead.
-- Find File or Folder and Search Files and Folders now fail with an error when Search By or Match isn't a Drive search term, instead of sending it to Google.
-
-#### What you need to do
-
-If a flow after New File reads `content`, check for `contentError` first (for example with a Branch step), because a run can now arrive without `content`.
-
-If a flow matches on the name of a downloaded Google Doc, Sheet or Slides file, update it for the new extension.
-
-#### Google Sheets 0.20.0: row triggers match rows by content, and the Test sample has no header row
-
-**New or Updated Row** now compares rows by their content instead of their position. Inserting, deleting or sorting rows, and changing only a column's display format, no longer runs the flow for every row below the change. A row whose cells are all cleared now runs the flow once with blank values, unless it is the last row of data. With a Trigger Column, a new row runs the flow once that column is filled, not while it is still empty. **New Row Added** runs only for rows added below the last row it has seen; rows inserted higher up, sorting and edits do not run it. Both row triggers now work on tabs named like a cell (for example `Q1` or `FY24`), and their Test sample no longer shows the header row as data. **New Worksheet** no longer runs for the spreadsheet's first tab when the flow is turned on. **Get Next Rows** no longer skips rows after a blank row, the last row of a full sheet, or a batch that failed to read.
-
-#### What you need to do
-
-Nothing for most flows. Upgrading republishes the flow, which takes a fresh baseline of the sheet, so a change made while the flow is being republished does not run it (same as today). If a flow relied on New or Updated Row running for every row after a sort or insert, or on New Row Added running for edited rows, use New or Updated Row with a Trigger Column instead.
-
-#### Google Tasks 0.8.0: New Task can ignore edits
-
-**New Task** has a new **Run on** setting. **New tasks only** runs the flow once per task; renaming, editing, moving or completing a task no longer runs it again. **New and edited tasks** keeps the old behaviour. Steps keep running the old code until you upgrade them to 0.8.0. On upgraded steps, tasks found in one check are delivered newest first, and an edit made within a minute of the previous check is no longer lost.
-
-#### What you need to do
-
-Upgrading a New Task step to 0.8.0 in the builder pre-selects **New tasks only**. To keep running the flow on edits, choose **New and edited tasks** when you upgrade the step.
-
-#### GitHub 0.12.0: Update Issue (Agent) no longer clears labels and assignees
-
-When an AI agent used **Update Issue (Agent)** to change something else, such as the title, the agent path filled the **Labels** and **Assignees** lists it left out with empty lists and sent them. Each such update removed every label and every assignee from the issue. From GitHub 0.12.0 an empty Labels or Assignees list is not sent, so the issue keeps its current labels and assignees. Two new fields, **Clear Labels** and **Clear Assignees**, remove them on purpose.
-
-#### What you need to do
-
-If an agent or a flow step relied on an empty Labels or Assignees list to clear an issue, set **Clear Labels** or **Clear Assignees** instead. If an agent ran this action on an earlier GitHub version, check that your issues still have the labels and assignees you expect. Agents run the latest GitHub version available on your instance, so existing agents switch to the new behaviour as soon as GitHub 0.12.0 is installed, without an upgrade.
-
-#### beehiiv 0.5.0: four subscription actions are no longer agent tools, and List Posts returns posts
-
-From beehiiv 0.5.0, **Create Subscription**, **Update Subscription**, **Delete Subscription** and **List Subscriptions** are no longer offered to AI agents and MCP clients. They stay available as flow steps. Agents use the new tools instead: **Create Subscription (AI)**, **Update Subscription (AI)**, **Unsubscribe Subscriber**, **Delete Subscription (AI)** and **List Subscriptions (AI)**, which take plain publication and subscription IDs or emails. **List Publications** returns the publication ID. **Add Subscription to Automation**, **List Automations** and **List Posts** stay available to both flows and agents.
-
-Steps upgraded to 0.5.0 also behave differently. **List Posts** now returns posts (before, it returned automations), as an object with `items` and paging fields. **List Automations** and **List Posts** with Limit and Page empty fail past 10,000 items (1,000 for List Posts when Expand Results includes content) instead of silently stopping. **Create Subscription** and **Add Subscription to Automation** reject a Double Opt-in Override other than `on`, `off` or `not_set`. **List Subscriptions** with Limit and Cursor empty fails when more than 5,000 subscribers match. **Delete Subscription** returns `deleted` and `subscription_id` instead of an empty result. The piece needs Activepieces 0.88.2 or later.
-
-#### What you need to do
-
-Point any Run Agent step or MCP client that used the four subscription actions at the matching new tool. Update flows that read List Posts output to use `items`, and set Limit and Page or Cursor on list steps that read very large lists.
-
-#### Google Forms 0.8.0: New Response can ignore edited responses
-
-**New Response** has a new **Run on** setting. **New responses only** runs the flow once per response, even when the respondent edits it later. **New and edited responses** keeps the old behaviour. Steps saved before 0.8.0 keep running on edits.
-
-#### What you need to do
-
-Upgrading a New Response step to 0.8.0 in the builder pre-selects **New responses only**. To keep running the flow when a respondent edits an answer, choose **New and edited responses** when you upgrade the step.
-
-#### Buffer 0.2.0: Create Post is no longer an agent tool
-
-From Buffer 0.2.0, **Create Post** is no longer offered to AI agents and MCP clients. It stays available as a flow step with the same inputs and the same `posts` output. Agents use the new **Create a Post** tool instead, which creates one post on one channel per call and takes a strict ISO 8601 schedule time.
-
-Create Post steps upgraded to 0.2.0 also send **Link URL** differently, because Buffer removes link assets on December 15, 2026. On Facebook, LinkedIn, Threads, Bluesky and Substack posts without images, the link is sent as a link card; on other services, or when images are attached, it is appended to the post text. Facebook posts are now sent as the `post` type.
-
-#### What you need to do
-
-Point any Run Agent step or MCP client that used Create Post at **Create a Post**, calling it once per channel. Check flows that set Link URL, since the link now shows as a card or as text at the end of the post.
-
-#### Stability AI 0.4.0: Text to Image is no longer an AI agent tool
-
-**Text to Image** (the legacy SDXL 1.0 action) is now shown only in the flow builder. AI agents and MCP clients get the new **Generate Image** tool (`generate_image`) instead, which uses Stable Image Ultra, Core or Stable Diffusion 3.5. Text to Image also now rejects `steps` above 50, `samples` outside 1–10 and width × height pairs SDXL 1.0 does not support before calling Stability AI, and it sends a `weight` of 0 instead of replacing it with 1. The engine picker offers only SDXL 1.0; the other six engines are no longer in Stability AI's documentation.
-
-#### What you need to do
-
-If a Run Agent step or MCP client uses Text to Image as a tool, switch it to Generate Image. If a flow uses an engine other than `stable-diffusion-xl-1024-v1-0`, choose SDXL 1.0 or move the step to Generate Image. Steps keep running on the version they were built with until you upgrade them.
-
-#### YouTrack 0.3.0: calls to YouTrack now verify the TLS certificate
-
-From YouTrack 0.3.0, the piece checks the certificate of your YouTrack server on the connection check, triggers, dropdowns and every dedicated action, including attachment downloads. Before, certificate checks were skipped, so a self-hosted YouTrack Server behind a self-signed, private-CA or expired certificate worked. With 0.3.0 these calls fail with a certificate error for such servers. The **Custom API Call** action is the exception: it still uses the shared HTTP client and does not check the certificate. YouTrack Cloud (`*.youtrack.cloud`) and servers with a publicly trusted certificate are not affected.
-
-#### What you need to do
-
-If you self-host YouTrack on a self-signed or private-CA certificate, give it a publicly trusted certificate (for example from Let's Encrypt), or add your CA to Activepieces before upgrading YouTrack steps or connections to 0.3.0. To add the CA, set both `NODE_EXTRA_CA_CERTS` and `AP_SANDBOX_PROPAGATED_ENV_VARS=NODE_EXTRA_CA_CERTS` on the container. Only the path is passed to the engine, so the file must be readable at that path where pieces run.
-
-With `AP_EXECUTION_MODE` set to `SANDBOX_PROCESS` or `SANDBOX_CODE_AND_PROCESS`, pieces run in an isolate sandbox that sees only `/bin`, `/lib`, `/usr/bin`, `/usr/lib`, `/usr/local` and `/usr/src/node_modules` from the container, and its `/etc` is replaced. Put the CA file under `/usr/local` in the image, for example:
-
-```dockerfile
-FROM activepieces/activepieces:<version>
-COPY my-ca.pem /usr/local/share/ca-certificates/my-ca.pem
-ENV NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/my-ca.pem
-ENV AP_SANDBOX_PROPAGATED_ENV_VARS=NODE_EXTRA_CA_CERTS
-```
-
-In the other execution modes, any path in the container works.
-
-#### Spotify 0.7.0: Update Playlist is no longer an agent tool, and Get Playback State returns an object when nothing is playing
-
-From Spotify 0.7.0, **Update Playlist** is no longer offered to AI agents and MCP clients. It stays available as a flow step with the same inputs and outputs. Agents use the new **Update Playlist Details** tool instead, which takes Public and Collaborative as yes/no choices and leaves any field it is not given unchanged.
-
-Once a **Get Playback State** step is upgraded to 0.7.0, it returns `{ "is_playing": false, "device": null, "item": null }` when nothing is playing, instead of an empty string.
-
-#### What you need to do
-
-Point any Run Agent step or MCP client that used Update Playlist at **Update Playlist Details**. If a flow checks Get Playback State for an empty result, check `is_playing` (or `item` being empty) instead before upgrading the step to 0.7.0.
-
-#### ActiveCampaign 0.2.0: the existing actions are no longer AI agent tools, and webhook triggers skip duplicate deliveries
-
-The 7 existing ActiveCampaign actions are now shown only in the flow builder: Create Contact, Update Contact, Add Tag to Contact, Add Contact to Account, Create Account, Update Account and Subscribe or Unsubscribe Contact From List. AI agents and MCP clients get new tools instead: **Create or Update Contact (AI)** (replaces Create Contact and Update Contact), **Add Tag to Contact (AI)**, **Associate Contact with Account (AI)**, **Create Account (AI)**, **Update Account (AI)**, and **Subscribe Contact to List** plus **Unsubscribe Contact from List** (together they replace Subscribe or Unsubscribe Contact From List). The new tools take IDs as text and accept a contact's email in place of its ID.
-
-The ActiveCampaign webhook triggers now ignore a delivery whose content is identical to one received in the previous 15 minutes (every field, including the event time and the record's values). Each trigger remembers up to 5,000 deliveries, so a trigger that receives more than 5,000 events within 15 minutes can run a late retry again. ActiveCampaign sends no delivery ID, so two genuinely separate events with identical content in the same second now run the flow once.
-
-ActiveCampaign requests now always verify the server's TLS certificate, and an API URL that starts with `http://` is sent to `https://` on the same host.
-
-#### What you need to do
-
-- If an agent or MCP client used one of the 7 actions as a tool, switch it to the matching new tool listed above.
-- If your self-hosted instance reaches ActiveCampaign through a proxy that inspects TLS traffic, add the proxy's CA certificate to `NODE_EXTRA_CA_CERTS`, or ActiveCampaign steps fail with a certificate error.
-- Flow steps that use these actions keep working unchanged. Steps keep running on the version they were built with until you upgrade them.
-
-#### Microsoft Dynamics CRM 0.5.0: four actions are no longer AI agent tools
-
-Microsoft Dynamics CRM "Create Record", "Get Record", "Update Record" and "Delete Record" are now available in the flow builder only, not as agent/MCP tools. Agents should use the new AI tools instead: "List Entities", "Describe Entity", "Search Records", "Get Record", "Create Record", "Update Record" and "Delete Record" (AI versions), which look up the entity and its columns first.
-
-"Update Record" now fails with a "record not found" error when the record ID does not exist. Before, it silently created a new record.
-
-#### What you need to do
-
-- If an agent or MCP client used one of the 4 actions as a tool, switch it to the matching new AI tool listed above.
-- If a flow relied on "Update Record" creating a missing record, use "Create Record" for that case instead.
-- If your self-hosted instance reaches Dynamics 365 through a proxy that inspects TLS traffic, add the proxy's CA certificate to `NODE_EXTRA_CA_CERTS`, or Dynamics CRM steps fail with a certificate error.
-- Flow steps that use these actions keep working unchanged otherwise. Steps keep running on the version they were built with until you upgrade them.
-
-</Accordion>
+{/* Generated from install/reference/breaking-changes/entries by tools/scripts/breaking-changes-render.ts. Edit the entry files, not this page. */}
 
 ## 0.93.0
 
 ### What has changed?
+
+#### Agent MCP tools no longer follow redirects to another host, and the built-in MCP server limits request size
+
+Agents no longer follow a redirect from an external MCP server to a different scheme, host or port, so API keys never reach a host you didn't configure. Redirects on the same host still work.
+
+The built-in MCP server (`/mcp` and `/mcp/platform`) rejects request bodies over 4 MiB with `413 Payload Too Large`. It returns a tool error, and does not run the tool, when the arguments hold more than 50,000 values (array items and object keys combined).
+
+#### What you need to do
+
+If an agent's MCP tool uses an `http://` URL or an old domain that redirects, replace it with the server's final `https://` URL. Split very large MCP tool calls into smaller ones.
+
+#### Republishing no longer restarts polling triggers
+
+When you republish a flow and its polling trigger is unchanged (same piece, version, trigger and inputs), the trigger keeps running. `onDisable` and `onEnable` don't run, and the stored state is kept. When the piece moves to a newer version with the same inputs, only the new version's `onEnable` runs, with `context.isRepublish` set to `true`. The old version's `onDisable` doesn't run.
+
+#### What you need to do
+
+Nothing for official pieces. If a custom polling piece creates something outside the store in `onEnable`, such as a resource in a third-party app, save its ID in the store and reuse it when `context.isRepublish` is `true`. Otherwise each upgrade creates a second one. To reset a polling trigger with bad state, turn the flow off and on. Republishing no longer resets it.
 
 #### Background migrations need a dedicated Postgres role when a `statement_timeout` applies
 
@@ -341,822 +79,22 @@ persistence:
 
 A direct `helm upgrade` needs no change.
 
-#### Republishing no longer restarts polling triggers
-
-When you republish a flow and its polling trigger is unchanged (same piece, version, trigger and inputs), the trigger keeps running. `onDisable` and `onEnable` don't run, and the stored state is kept. When the piece moves to a newer version with the same inputs, only the new version's `onEnable` runs, with `context.isRepublish` set to `true`. The old version's `onDisable` doesn't run.
-
-#### What you need to do
-
-Nothing for official pieces. If a custom polling piece creates something outside the store in `onEnable`, such as a resource in a third-party app, save its ID in the store and reuse it when `context.isRepublish` is `true`. Otherwise each upgrade creates a second one. To reset a polling trigger with bad state, turn the flow off and on. Republishing no longer resets it.
-
-#### Agent MCP tools no longer follow redirects to another host, and the built-in MCP server limits request size
-
-Agents no longer follow a redirect from an external MCP server to a different scheme, host or port, so API keys never reach a host you didn't configure. Redirects on the same host still work.
-
-The built-in MCP server (`/mcp` and `/mcp/platform`) rejects request bodies over 4 MiB with `413 Payload Too Large`. It returns a tool error, and does not run the tool, when the arguments hold more than 50,000 values (array items and object keys combined).
-
-#### What you need to do
-
-If an agent's MCP tool uses an `http://` URL or an old domain that redirects, replace it with the server's final `https://` URL. Split very large MCP tool calls into smaller ones.
-
-<Accordion title="Pieces (63 changes)">
-
-#### Rendex 0.2.0: Render to Image is no longer an agent tool
-
-From Rendex 0.2.0, **Render to Image** is no longer offered to AI agents and MCP clients. It stays available as a flow step with the same inputs and outputs. Agents use the new **Render Screenshot** tool instead, which takes the page as one of URL, HTML or Markdown.
-
-Render to Image steps upgraded to 0.2.0 also wait for the page's load event (instead of network idle) when the source is HTML or Markdown, because Rendex timed out on inline content with the old wait.
-
-#### What you need to do
-
-Point any Run Agent step or MCP client that used Render to Image at **Render Screenshot**. Flow steps keep working as before after upgrading.
-
-#### Letmepost 0.2.0: Publish a Post is no longer an agent tool, and calls to Letmepost now verify the TLS certificate
-
-From Letmepost 0.2.0, **Publish a Post** is no longer offered to AI agents and MCP clients. It stays available as a flow step with the same inputs and outputs. Agents use the new **Publish or Schedule a Post** tool instead, which takes account IDs from **List Accounts** and publishes right away when no schedule time is given.
-
-The piece also checks the certificate of the Letmepost server on the connection check, triggers, dropdowns and every dedicated action. Before, certificate checks were skipped, so a self-hosted Letmepost behind a self-signed or private-CA certificate worked. The **Custom API Call** action is the exception: it still uses the shared HTTP client and does not check the certificate. The hosted `api.letmepost.dev` is not affected.
-
-#### What you need to do
-
-Point any Run Agent step or MCP client that used Publish a Post at **Publish or Schedule a Post**. If you point the piece at a self-hosted Letmepost on a self-signed or private-CA certificate, give it a publicly trusted certificate, or set both `NODE_EXTRA_CA_CERTS=/path/to/ca.pem` and `AP_SANDBOX_PROPAGATED_ENV_VARS=NODE_EXTRA_CA_CERTS` on the container before upgrading Letmepost steps or connections to 0.2.0.
-
-#### GoodMem 0.1.0: three actions leave the agent tool list
-
-Create Space, Create Memory and Retrieve Memories are now human-only; agents use the new AI actions instead (Create Space, Store Memory, Retrieve Memories, List Memories, List Models), which cover the same operations with agent-sized inputs. Flows are unaffected; MCP servers and agents that exposed the old three tools should switch to the AI actions.
-
-#### Quickzu 0.2.0: Order Created outputs the order, and the discount actions move to AI versions
-
-The **Order Created** trigger now outputs the order itself. Before, it output the whole webhook wrapper (`body`, `headers`, `queryParams`), so order fields sat under `body`. The existing **Create Product Discount** and **Create Promo/Coupon Code** actions are no longer offered to AI agents; they keep working in flows. In **Update Product**, Availability, Exclude Tax, Enable Variants, Status and the new Non-Veg setting are now Yes/No choices, and a setting left empty keeps the product's current value instead of being set to off.
-
-#### What you need to do
-
-If a flow maps fields from Order Created, re-map them without the `body` prefix (for example `payload.id` instead of `body.payload.id`). Agents that used the discount actions get new agent versions named **Create Product Discount** and **Create Promo Code**, which take plain IDs and values.
-
-Open existing **Update Product** steps and pick Availability, Exclude Tax, Enable Variants and Status again. Steps saved before this version still send the value they stored, but the builder now shows "Keep current setting" for those four fields.
-
-#### Letta 0.2.0: three actions are no longer agent tools, New Agent returns less, and Get Identities respects Limit
-
-**Send Message to Agent** is now shown only in the flow builder. AI agents and MCP clients get the new **Send Message** tool (`letta_send_message`) instead, which takes the agent ID as text.
-
-**Create Identity** and **Get Identities** are no longer offered as agent tools, and there is no agent-tool replacement. Letta Cloud removed the `/v1/identities` API, so these actions no longer work on Letta Cloud.
-
-The **New Message** trigger also fires on replies from current Letta agents (`assistant_message`), not only on `send_message` tool calls, so upgraded flows may run more often.
-
-The **New Agent** trigger now returns a short agent summary instead of the full agent record. It keeps only these 12 fields: `id`, `name`, `agent_type`, `model`, `embedding`, `description`, `tags`, `created_at`, `updated_at`, `last_run_completion`, `last_stop_reason` and `system`. Every other field of the agent record is gone, for example `secrets`, `tool_exec_environment_variables`, `llm_config`, `message_ids`, `metadata`, `project_id`, `embedding_config`, `tool_rules` and `timezone`. **Get Agent** does not return the secret fields either. They were removed on purpose so that secrets do not leak into flow data.
-
-**Get Identities** now respects its **Limit** field (default 100, maximum 1000). Before, it fetched every page and ignored Limit, so a server with 250 identities returned all 250 and now returns 100 unless you raise Limit. A saved Limit above 1000 now fails with a validation error.
-
-#### What you need to do
-
-If a Run Agent step or MCP client uses Send Message to Agent as a tool, switch it to Send Message (`letta_send_message`). Remove Create Identity and Get Identities from agents and MCP clients, and from flows that run against Letta Cloud. If a later step reads a New Agent field outside the 12 listed above, change that step: use **Get Agent** for the agent's blocks, tools and identity IDs, and note that no Letta action returns the secret fields any more. If a flow relies on Get Identities returning every identity, set Limit to the number you need (up to 1000). Steps keep running on the version they were built with until you upgrade them.
-
-#### Trello 0.9.0: Update Card (Agent) no longer unarchives cards or clears their labels
-
-When an AI agent used **Update Card (Agent)** to change something else, such as the name, the agent path filled **Archived** with `false` and **Label IDs** with an empty list and sent both. Each such update could unarchive an archived card and remove all of its labels. From Trello 0.9.0 Archived is a dropdown with **Yes**, **No** and **Leave unchanged**. Archived left out, or set to Leave unchanged, is not sent, so the card stays archived or unarchived. An empty Label IDs list is not sent either, so the card keeps its labels; use **Remove Label From Card (Agent)** to drop a label.
-
-#### What you need to do
-
-- If an agent tool pins **Archived** to a fixed value, open the tool and pick Yes, No or Leave unchanged again. A value saved from the old checkbox is no longer accepted and the call fails until you do.
-- If an agent ran this action on an earlier Trello version, check that archived cards are still archived and still carry their labels.
-
-#### Bigin by Zoho CRM 0.2.0: the existing actions are no longer AI agent tools
-
-The 16 existing Bigin actions are now shown only in the flow builder: Create Company, Update Company, Create Contact, Update Contact, Create Task, Update Task, Create Event, Update Event, Create Pipeline, Update Pipeline, Create Call, Search Company Record, Search Contact Record, Search Pipeline Record, Search Product Record and Search User. AI agents and MCP clients get the new "(Agent)" actions instead: Search, Get and List Records, Create and Update Contact, Company, Deal, Task and Event, Log Call, List Users and List Pipelines, plus Add Note and Delete Record.
-
-#### What you need to do
-
-- Agents that used the old Bigin actions as tools: switch to the new "(Agent)" actions.
-- Flow steps keep working unchanged.
-
-Steps keep running on the version they were built with until you upgrade them.
-
-#### Gender API 0.2.0: the Country Code input is now applied
-
-Before 0.2.0, **Get Gender by First Name** and **Get Gender by Full Name** sent the Country Code under a key Gender API ignores, so it had no effect. From 0.2.0 it is sent as `country` and applied, on those two actions and on the new **Get Gender by Email**. After you upgrade one of these steps, a country code can change the result (for example Andrea with IT now returns male), and a value that is not a two-letter ISO code, such as `USA` or `Germany`, now fails the step with Gender API's `invalid-country-code` error.
-
-#### What you need to do
-
-Use two-letter country codes such as `US` or `DE` in the Country Code input, or leave it empty. Steps keep running on the version they were built with until you upgrade them.
-
-#### Anthropic Claude 0.9.0: retired models are replaced at run time, and Extended Thinking Mode uses Claude Sonnet 5.5
-
-Anthropic has retired several Claude models, so steps that still pointed at them failed. From Anthropic Claude 0.9.0, **Ask Claude**, **Extract Structured Data** and **Count Tokens** switch a retired model to the current model of the same family when the step runs:
-
-- Claude Sonnet 4, Sonnet 3.7, Sonnet 3.5, Sonnet 3 and Claude 2.x run on `claude-sonnet-5-5`.
-- Claude Sonnet 4.5 is deprecated, not retired yet (Anthropic retires it on 2026-11-30). It is switched to `claude-sonnet-5-5` early, so steps keep working after that date.
-- Claude Opus 4.1, Opus 4 and Opus 3 run on `claude-opus-5-5`.
-- Claude Haiku 3.5 and Haiku 3 run on `claude-haiku-5-5`.
-
-Other changes once a step is upgraded to 0.9.0:
-
-- **Extended Thinking Mode** in Ask Claude now runs on `claude-sonnet-5-5` with adaptive thinking, instead of the retired Claude Sonnet 3.7. The **Budget Tokens** field is removed, because Claude sets its own thinking budget.
-- The Claude 5.5 models think by default, and Maximum Tokens covers the thinking and the reply together. When Extended Thinking Mode is off, Ask Claude and Extract Structured Data ask these models for low thinking effort (`output_config.effort: low`), so most of Maximum Tokens stays free for the reply.
-- **Temperature** is sent only to models that accept it: Claude Sonnet 4.6, Opus 4.6, Opus 4.5, Haiku 4.5, Sonnet 4.5 and older. On newer models the field is ignored.
-- On Claude Sonnet 5.5, Opus 5.5, Fable 5.1 and Mythos 5.1, Extract Structured Data lets the model choose the extraction tool (`tool_choice: auto`) and tells it to call that tool, because these models do not accept a forced tool choice. If the model replies with text only, the step asks once more before it fails. Haiku 5.5 and older models are still forced to call the tool.
-- A **Roles** list that ends with an assistant turn (prefill) now fails with a 400 error on the Claude 5.5 models, because they do not accept prefill. End Roles with a user turn instead.
-
-#### What you need to do
-
-If you want a different model than the replacement, open the step and pick a model explicitly. Answers, extracted data and token cost can differ on the newer models, so check flows whose later steps depend on the exact output. If a long reply on a 5.5 model is cut off, raise Maximum Tokens. Steps keep running on the version they were built with until you upgrade them.
-
-#### Loops 0.2.0: Find Contact is no longer an AI agent tool
-
-**Find Contact** is now shown only in the flow builder. AI agents and MCP clients get **Find Contact by Email** and **Find Contact by User ID** instead.
-
-After you upgrade:
-
-- **Delete Contact** now fails with a clear message when both Email and User ID are filled, instead of sending both and getting a Loops error. Steps that fill only one of them keep working.
-- **Send Event** ignores `eventName`, `email`, `userId`, `eventProperties` and `mailingLists` if they appear inside Contact Properties.
-- **Create Contact**'s subscription option now reads Default / Subscribed / Unsubscribed instead of "No Change".
-
-#### What you need to do
-
-- Agents that used Find Contact as a tool: switch to Find Contact by Email or Find Contact by User ID.
-- If a Send Event step relied on Contact Properties to set one of those reserved fields, set the field directly.
-
-Steps keep running on the version they were built with until you upgrade them.
-
-#### Leexi 0.3.0: Get Call is no longer an AI agent tool
-
-**Get Call** is now shown only in the flow builder. AI agents and MCP clients get **Fetch Call Details** instead, which takes up to 20 call IDs at once.
-
-#### What you need to do
-
-- Agents that used Get Call as a tool: switch to Fetch Call Details.
-- Flows using the **New Call Created** trigger: after you upgrade the step and publish, the next polls emit every call created since the flow was first turned on (up to 2,000 per poll) until they catch up, because the old trigger never moved its checkpoint forward. Expect a burst of runs after the upgrade, or turn the flow off and on again to start from now.
-
-Steps keep running on the version they were built with until you upgrade them.
-
-#### Help Scout 0.3.0: five actions are no longer AI agent tools, and Find Conversation searches every status and applies Tags
-
-**Create Conversation**, **Send Reply**, **Add Note**, **Update Customer Properties** and **Find Conversation** are now shown only in the flow builder. AI agents and MCP clients get new ID-based actions instead, including Search Conversations, Get Conversation, Update Conversation and the list actions for mailboxes, users and tags.
-
-When Status is left empty, **Find Conversation** now searches every status. It used to fall back to Help Scout's default of active only, so closed and pending conversations were never found.
-
-**Find Conversation** now applies the Tags filter. It used to send the tags under a name Help Scout ignores, so the filter never applied. A step with Tags set now returns only conversations that carry those tags, so it can find a different conversation or none.
-
-#### What you need to do
-
-- Agents that used the old Help Scout actions as tools: switch to the new agent actions.
-- If a flow relied on Find Conversation returning only active conversations, set Status to Active.
-- If a Find Conversation step has Tags set, check that the tags match the conversations you expect, or clear Tags to keep the old results.
-
-#### Knack 0.3.0: Create, Update and Find Record are no longer AI agent tools
-
-**Create Record**, **Update Record** and **Find Record** are now shown only in the flow builder. AI agents and MCP clients get **Create Record (Agent)**, **Update Record (Agent)**, **Search Records (Agent)** and **Get Record (Agent)** instead, plus **List Objects (Agent)** and **Get Object Fields (Agent)** to discover an app's tables and field keys.
-
-After you upgrade:
-
-- **Find Record** sends its filter in the documented `{ match, rules }` format.
-- **Delete Record** keeps Knack's `delete: true` and adds `deleted` and `id`. It now fails with a not-found error when Knack does not confirm the delete.
-- Error messages now show Knack's own error text and the HTTP status.
-
-#### What you need to do
-
-- Agents that used Create, Update or Find Record as tools: switch to the (Agent) actions.
-
-#### Base44 0.2.0: Find or Create Entity is no longer an AI agent tool, and the Entity Event trigger changes
-
-**Find or Create Entity** is now shown only in the flow builder. AI agents and MCP clients find a record with **Find Entity** or **List Entity Records** and create one with **Create Entity**.
-
-- **Entity Event** in **Updated** mode no longer fires for brand-new records. On 0.1.9 a new record fired it, because its updated date was newer than the last check. From 0.2.0 it fires only once a record is edited after it was created. Use **Created** mode, or a second trigger, to catch new records.
-- Record dates (`created_date`, `updated_date`) now end in `Z`, so they read as UTC (for example `2026-11-01T12:56:20.141000Z`).
-- Search Query, Entity Data, Create Data and Update Data must be a JSON object. A list or other value now fails the step. Before, it was read as `{}`, so Find or Create Entity returned an unrelated record and Create Entity made an empty one.
-
-#### What you need to do
-
-- Agents that used Find or Create Entity as a tool: use Find Entity, then Create Entity.
-- Flows that use Entity Event in Updated mode to catch every change: add a Created-mode trigger for new records.
-- Flows that parse record dates as text: expect the trailing `Z`.
-- Other flow steps keep working unchanged.
-
-Steps keep running on the version they were built with until you upgrade them.
-
-#### Twitch 0.2.0: connections must be reconnected for the new actions
-
-Twitch 0.2.0 adds actions for your channel, chat, moderation, schedule, ads, clips and stream markers, and followers. Many of them, including reads such as subscriptions, followed channels and streams, polls, predictions, chatters, followers, VIPs and moderators, need Twitch scopes that the connection now asks for. Twitch connections made before 0.2.0 don't have them.
-
-The **Stream Started** trigger also changes once upgraded: it ignores blank entries and fails if no valid channel name is left, instead of watching Twitch's top live streams.
-
-#### What you need to do
-
-Reconnect your Twitch connection before you use any of the new actions, including the ones that only read data. Existing Stream Started triggers keep working on the old connection.
-
-#### Pushbullet 0.3.0: Send a Note and Send a Link are no longer agent tools
-
-**Send a Note** and **Send a Link** are now shown only in the flow builder. AI agents and MCP clients get **Send Note** and **Send Link** instead, plus new tools to list pushes, devices and chats, dismiss or delete a push, and read the current user. Both builder actions also gain an optional target (a device or an email).
-
-#### What you need to do
-
-If a Run Agent step or MCP client uses Send a Note or Send a Link as a tool, switch it to Send Note or Send Link. Flow steps keep working and stay on the version they were built with until you upgrade them.
-
-#### Streak 0.2.0: Update Box is no longer an agent tool and now saves custom fields, and triggers output an object
-
-**Update Box** is now shown only in the flow builder. AI agents and MCP clients get a separate agent version of **Update Box**, which takes the box key and a list of `{field_key, value}` updates as plain text. Update Box also now saves custom field values through Streak's field endpoint (before, they were sent in the box update and silently ignored), returns the box as it is after the update, and has a new Clear Notes option.
-
-Streak sends its webhook body as a JSON string. Up to 0.1.1, every Streak trigger passed that raw string to the flow as the trigger output. From 0.2.0, the triggers parse it and output the event as an object, so you can map its fields (for example `{{trigger.boxKey}}`) directly.
-
-#### What you need to do
-
-If a Code step after a Streak trigger runs `JSON.parse` on the trigger output, remove the parse and map the fields directly once you upgrade the trigger to 0.2.0, because the output is already an object and parsing it again fails. If a Run Agent step or MCP client uses Update Box as a tool, add the new agent version of Update Box to it. Flow steps keep working and stay on the version they were built with until you upgrade them; after upgrading, check that custom field values you set are the ones you want saved, because they now reach Streak.
-
-#### Bexio 0.3.0: the existing actions are no longer agent tools
-
-All 23 existing Bexio actions are now shown only in the flow builder. AI agents and MCP clients get new `bexio_` tools instead, which take IDs as text and cover the same jobs and more.
-
-Once a step is upgraded to Bexio 0.3.0:
-
-- **Update Product** ignores the **In Stock** field. Bexio only accepts it when a product is created and rejects it on edit, so the action no longer sends it. Set stock management in **Create Product** instead.
-- **Update Person** edits the contact with POST instead of PATCH, which Bexio treats as a restore.
-- **New Product** now reads the newest products first. The first time the flow is enabled or republished on 0.3.0, the trigger starts again from the current newest product, so it does not fire for products created before the upgrade. Without this, accounts with more than 500 products would get one run for every old product above the stored position. A product created between the last check on the old version and the upgrade does not fire.
-
-#### What you need to do
-
-If a Run Agent step or MCP client uses a Bexio action as a tool, switch it to the matching `bexio_` tool. Flow steps that use these actions keep working. Steps keep running on the version they were built with until you upgrade them.
-
-#### Folk 0.2.0: eight Folk actions are no longer agent tools, and Update Person/Company behave differently
-
-From Folk 0.2.0, **Create Person**, **Create Company**, **Get Person**, **Get Company**, **List People**, **Find Company**, **Update Person** and **Update Company** (the existing flow-builder actions) are no longer offered to AI agents and MCP clients. They stay available as flow steps. Agents get new tools instead: **Create Person**, **Create Company**, **Get Person**, **Get Company**, **Search People** (replaces List People), **Search Companies** (replaces Find Company), **Update Person** and **Update Company** (the `*_ai` actions, which take IDs and plain lists).
-
-Once a step is upgraded to Folk 0.2.0:
-
-- **Update Company** no longer clears Emails, Phones, URLs or Addresses when the list is left empty; an empty list now keeps the current values.
-- **Update Person** and **Update Company** fail with "Nothing to update" when no field is filled in, instead of sending an empty update.
-
-#### What you need to do
-
-Point any Run Agent step or MCP client that used these eight actions at the new agent tools listed above. Flow steps keep running on the version they were built with until you upgrade them; when you upgrade, make sure Update Person and Update Company steps always fill in at least one field, and use the Folk app (or Custom API Call) if a flow relied on an empty list to clear a Company field.
-
-#### Formbricks 0.4.0: calls to Formbricks now verify the TLS certificate
-
-From Formbricks 0.4.0, the piece checks the certificate of your Formbricks server on the connection check, triggers, dropdowns and every dedicated action. Before, certificate checks were skipped, so a self-hosted Formbricks behind a self-signed or private-CA certificate worked. With 0.4.0 these calls fail with a certificate error for such servers. The **Custom API Call** action is the exception: it still uses the shared HTTP client and does not check the certificate. Formbricks Cloud and servers with a publicly trusted certificate are not affected.
-
-#### What you need to do
-
-If you self-host Formbricks on a self-signed or private-CA certificate, give it a publicly trusted certificate (for example from Let's Encrypt), or add your CA to Activepieces before upgrading Formbricks steps or connections to 0.4.0. To add the CA, set both `NODE_EXTRA_CA_CERTS=/path/to/ca.pem` and `AP_SANDBOX_PROPAGATED_ENV_VARS=NODE_EXTRA_CA_CERTS` on the container. The engine that runs pieces only receives variables listed in `AP_SANDBOX_PROPAGATED_ENV_VARS`, so `NODE_EXTRA_CA_CERTS` alone has no effect.
-
-#### Hunter 0.2.0: four lead and campaign actions leave the agent tool list, and Verify Email waits for a result
-
-From Hunter 0.2.0, these actions are no longer offered as tools to AI agents and MCP clients. They still work as normal flow steps, with the same inputs and outputs. Agents use the replacement instead:
-- **Get Lead** → **Get Lead by ID**
-- **Update Lead** → **Update Lead by ID**
-- **Delete Lead** → **Delete Lead by ID**
-- **Add Recipients** → **Add Campaign Recipients by ID**
-
-Once a **Verify Email** step is upgraded to 0.2.0, it no longer returns right away when Hunter answers that the check is still running (HTTP 202). It waits up to 60 seconds for the result, and then fails asking you to run it again.
-
-#### What you need to do
-
-If a Run Agent step or MCP client uses Get Lead, Update Lead, Delete Lead or Add Recipients as a tool, switch it to the "by ID" action listed above. Flow steps that use them keep working. If a flow relied on Verify Email returning a pending result, expect the step to take up to 60 seconds, and handle a failed step for emails Hunter cannot finish checking in time.
-
-#### ChargeKeep 0.4.0: actions return mapped records, triggers start one run per event, and some inputs changed
-
-Add or Update Contact, Add or Update Contact (Extended), Add or Update Subscription, Create Invoice, Create Product and Get Contact Details used to return the raw response as `{ status, body }`. From ChargeKeep 0.4.0 they return the record itself: `contactId` and `leadId` for contact imports, the saved invoice (`invoiceId`, `number`, `lines`, ...), the saved product (`productId`, `priceOptions`, ...), the contact for Get Contact Details, and `{ contactId, subscription }` for subscriptions. Steps also fail when ChargeKeep reports an error in a 200 response.
-
-New Lead, New Payment and New Subscription used to start one run per delivery with the whole delivery (an array of events) as the trigger output. They now start one run per event, with the event object as the output, and skip events they have already processed. Replacing a subscription sends two events, so New Subscription starts two runs.
-
-Create Invoice's **Invoice No.** is now text instead of a number, and Get Contact Details' **User Email** is now a single-line text input. Add or Update Contact (Extended) now defaults **Create User** and **Send Welcome Email** to No.
-
-**Add or Update Contact**, **Add or Update Contact (Extended)** and **Create Invoice** are no longer offered as tools to AI agents and MCP clients. They still work as normal flow steps. Agents get **Create or Update Contact** and **Create or Update Invoice** instead.
-
-#### What you need to do
-
-Update later steps that read `{{step.body.result...}}` or `{{step.status}}` to the new fields, for example `{{step.contactId}}` instead of `{{step.body.result.contactId}}`. Update steps after a ChargeKeep trigger that read `{{trigger[0]...}}` to read the event fields directly, for example `{{trigger.id}}`. Re-enter a numeric Invoice No. if the step shows it as empty, and turn Create User and Send Welcome Email on in new Extended contact steps if you want portal users and welcome emails. Create Invoice steps built before 0.4.0 saved **Quantity** as 0 and a fixed **Date** and **Transaction Date** (the old default was taken when the step was created): set a real quantity, and clear or map the dates if each run should use the current date. Remove Add or Update Contact, Add or Update Contact (Extended) and Create Invoice from any agent's tool list and give it Create or Update Contact and Create or Update Invoice. Steps keep running on the version they were built with until you upgrade them.
-
-#### Figma 0.7.0: agents use Get File Outline instead of Get File, and the connection needs new scopes
-
-**Get File** is no longer offered as a tool to AI agents, because it returns the whole document tree, which can be many megabytes. Agents now get **Get File Outline (Agent)**, which returns the pages and top-level frames with a depth limit. Get File still works as a normal flow step.
-
-The Figma connection now asks for four new scopes: `current_user:read`, `file_versions:read`, `library_content:read` and `webhooks:write`. The trigger webhooks now check Figma's passcode.
-
-#### What you need to do
-
-If you self-host with your own Figma OAuth app, add `current_user:read`, `file_versions:read`, `library_content:read` and `webhooks:write` to that app's scopes in Figma before anyone reconnects. Figma rejects a consent request that asks for scopes the app does not declare.
-
-Reconnect existing Figma connections so they get the new scopes; a step that needs a missing scope stops with a message that says to reconnect. Re-enable flows that use a Figma trigger so their webhook gets a passcode. Agents that used Get File now get Get File Outline. Steps keep running on the version they were built with until you upgrade them.
-
-#### Webflow 0.4.0: moves to Webflow API v2, connections need reconnecting, and step outputs change
-
-Webflow switched off its v1 API, which every Webflow action and the New Submission trigger used. They now call v2, and the connection asks for the v2 permissions (CMS, sites, pages, forms, assets, custom code, comments, components and ecommerce).
-
-After you upgrade a Webflow step:
-
-- Collection item steps return `id`, `isDraft`, `isArchived` and the field values under `fieldData` (before: `_id`, `_draft`, `_archived` and the fields at the top level). Find Collection Item returns items in the same shape.
-- List Sites and List Collections return `id` and `displayName` instead of `_id` and `name`.
-- Delete Collection Item returns `success` and `collectionItemId`.
-- Update Collection Item changes only the fields you fill in, instead of replacing the whole item.
-- New Submission delivers `siteId`, `submittedAt`, `id` and `formId` (before: `site`, `d` and `_id`). The submitted values stay under `data`.
-- List Sites, List Collections and the collection item actions are now shown only in the flow builder; AI agents and MCP clients get the new Webflow AI actions instead.
-
-#### What you need to do
-
-- Reconnect each Webflow connection once, and pick the sites it may reach on the Webflow consent screen.
-- Remap later steps that read `_id`, `name`, `_draft`, `_archived`, `site`, `d` or item fields at the top level.
-- Turn flows that use New Submission off and on again so the webhook is registered through v2.
-
-Steps keep running on the version they were built with until you upgrade them.
-
-#### RabbitMQ 0.2.0: the Send Message actions are no longer AI agent tools, and their output changes
-
-**Send Message to Queue** and **Send Message to Exchange** (shown before as `sendMessageToQueue` and `sendMessageToExchange`) are now shown only in the flow builder. AI agents and MCP clients get **Publish to Queue** and **Publish to Exchange** instead.
-
-After you upgrade a Send Message step:
-
-- The step returns an object (`success`, `queue`, `exchange`, `routingKey`, `sizeBytes`, `persistent`, `contentType`) instead of `true`.
-- Messages are persistent by default and carry a content type (`application/json`, or `text/plain` for text).
-- The username, password and virtual host in the connection are now URL-encoded for you. If you encoded them by hand to work around the old behavior, enter them as plain text.
-
-#### What you need to do
-
-- Agents that used the Send Message actions as tools: switch to Publish to Queue or Publish to Exchange.
-- If a later step checked the old `true` output, map `success` instead.
-- If your connection holds a hand-encoded password or virtual host (for example `%2F`), edit it to the plain value.
-
-Steps keep running on the version they were built with until you upgrade them.
-
-#### Actual Budget 0.2.0: four actions are no longer agent tools, and imports fail when nothing is imported
-
-From Actual Budget 0.2.0, **Get Accounts**, **Get Budget**, **Get Categories** and **Import Transaction** are shown only in the flow builder. AI agents and MCP clients no longer find them by name. They get **List Accounts**, **Get Budget Month**, **List Categories** and **Add Transaction** instead.
-
-Once a step is upgraded to Actual Budget 0.2.0, **Import Transaction** and **Import Transactions** fail the step when Actual imports nothing (they used to report success), and bulk import amounts must be integer cents, as a number or an integer string such as `"-1250"`.
-
-#### What you need to do
-
-Point any Run Agent step or MCP client that used the four actions at their agent versions. Flow steps keep working. Steps keep running on the version they were built with until you upgrade them; when you upgrade, check that Import Transactions sends amounts in cents (for example `-1250` for -12.50), not decimals.
-
-#### Workable 0.3.0: Move Candidate is no longer an agent tool, and some step outputs change
-
-**Move Candidate** is now shown only in the flow builder. AI agents and MCP clients get **Move Candidate (by IDs)** instead, which takes the candidate ID and the target stage as text.
-
-Once a step is upgraded to Workable 0.3.0, these outputs change:
-
-- **Get Candidate** returns the candidate itself, without the `candidate` wrapper.
-- **Move Candidate** and **Rate Candidate** return `{success, candidate_id, ...}` instead of `{status, headers, body}`.
-- **Get Members** returns `nextCursor` and `hasMore` instead of `paging`, and refuses a Limit above 100.
-- **New Candidate** ignores webhook deliveries that are unsigned or that arrive more than 6 hours after Workable fired them.
-
-#### What you need to do
-
-If a Run Agent step or MCP client uses Move Candidate as a tool, switch it to Move Candidate (by IDs). Flow steps that use Move Candidate keep working. Steps keep running on the version they were built with until you upgrade them; when you upgrade, update any later step that reads `candidate.*` from Get Candidate, `body` from Move Candidate or Rate Candidate, or `paging` from Get Members.
-
-#### iLoveAPI 0.1.0: Create Signature Request is no longer an agent tool, and triggers need a Webhook Secret
-
-iLoveAPI 0.1.0 changes what an existing step does once it is upgraded to that version. Steps keep running on the version they were built with until you upgrade them.
-
-**Create Signature Request** is no longer offered as a tool to AI agents. It still works as a normal flow step. Agents should use **Send PDF for Signature** instead, which takes the PDFs as URLs. Create Signature Request also checks its input more strictly: a signature element with a missing field, or with an email that matches no signer, used to be skipped and now fails the step.
-
-Every iLoveAPI trigger now has a required **Webhook Secret**, and a delivery whose URL does not carry that secret is ignored without an error.
-
-#### What you need to do
-
-Point any agent that used Create Signature Request at Send PDF for Signature. When you upgrade an iLoveAPI trigger, fill in a Webhook Secret of at least 16 characters, then change the endpoint URL in the iLoveAPI developer dashboard to `<trigger URL>?ap_secret=<secret>`. Until you do, deliveries are dropped and the flow stops running. Check that Create Signature Request steps give every signature element all its fields and use signer emails that match a signer.
-
-#### SendIt 0.3.0: two scheduled-post actions leave AI agents, and publishing checks inputs before sending
-
-From SendIt 0.3.0, **Cancel Scheduled Post** and **Trigger Scheduled Post Now** are no longer offered to AI agents and MCP clients. They stay available as flow steps. An agent or MCP client that called them by name no longer finds them.
-
-SendIt 0.3.0 also changes what an existing **Publish Post** or **Schedule Post** step does once it is upgraded to that version. Steps keep running on the version they were built with until you upgrade them.
-
-- A media URL that starts with `http://` now stops the step. Media URLs must be public `https://` URLs.
-- A post that targets Instagram, Pinterest, TikTok or YouTube without a media URL now stops the whole step before anything is sent, including to the other selected platforms. Before, a text-only post to LinkedIn and Instagram still reached SendIt.
-
-#### What you need to do
-
-For agents and MCP clients, use **Cancel Scheduled Post by ID** instead of Cancel Scheduled Post, and **Publish Scheduled Post Now** instead of Trigger Scheduled Post Now. Before you upgrade a Publish Post or Schedule Post step to 0.3.0, make sure its media URLs use `https://`, and add a media URL or remove Instagram, Pinterest, TikTok and YouTube from posts that have none.
-
-#### Pastefy 0.4.0: six actions leave the agent tool list, and existing steps change behavior
-
-Pastefy 0.4.0 changes what an existing step does once it is upgraded to that version. Steps keep running on the version they were built with until you upgrade them.
-
-These actions are no longer offered as tools to AI agents and MCP clients. They still work as normal flow steps. Agents use the replacement instead:
-- **Create Paste** → **Create Paste (by Folder ID)**
-- **Edit Paste** → **Update Paste (by IDs)**
-- **Create Folder** → **Create Folder (by Parent ID)**
-- **Get Folder** → **Get Folder (by ID)**
-- **Get Folder Hierarchy** → **List Folders**
-- **Delete Folder** → **Delete Folder (by ID)**
-
-**Edit Paste** now returns the updated paste, and **Delete Paste** and **Delete Folder** return `{ deleted, id }`. All three used to return `{ success }`, so a later step that reads `{{step.success}}` gets nothing after the upgrade.
-
-Every action and the **Paste Changed** trigger now call the connection's **Instance URL**. Before, they always called pastefy.app. An Instance URL that is not a plain http(s) URL now fails the step. TLS certificates are now checked, so a self-hosted Pastefy with a self-signed certificate fails (Custom API Call and the folder dropdowns already reached that server before). **Custom API Call** only accepts URLs under `<instance>/api/v2`.
-
-**Get Paste** with a wrong password now fails, and so does **Edit Paste** when it changes an encrypted paste's text without the password. **Delete Paste** on a paste that does not exist now returns `deleted: false` instead of failing.
-
-#### What you need to do
-
-Give agents the replacement actions listed above. Change later steps that read `success` from Edit Paste, Delete Paste or Delete Folder to read the paste fields or `deleted`. Check that the connection's Instance URL is the server you want, and give a self-hosted server a certificate from a trusted authority. Point Custom API Call steps at paths under `/api/v2`.
-
-#### SmartLead 0.2.0: four actions are builder-only, and Update Campaign Settings skips empty settings
-
-**Create Campaign**, **Add Leads to Campaign**, **Get Campaign Statistics** and **Update Campaign Settings** are no longer offered to AI agents. They keep working in flows with the same names and inputs, but an agent or MCP server that used them as tools loses them after the upgrade.
-
-From SmartLead 0.2.0 the builder's **Update Campaign Settings** skips empty settings. Track Opens, Track Clicks, Enable AI ESP Matching and Send as Plain Text are now an **On** / **Off** dropdown; left empty, the setting keeps its current value. Before, an untouched checkbox was sent as off and overwrote the campaign. The legacy Stop Lead Condition values are no longer listed, but a step that already uses one keeps working.
-
-#### What you need to do
-
-Agents that used these actions as tools switch to their agent versions, which have the same names: Create Campaign, Add Leads to Campaign, Get Campaign Statistics and Update Campaign Settings. Add them to the Run Agent step or MCP server again after the upgrade. If a flow step had a Yes/No setting ticked on, open it after upgrading and set that setting to On. Flow steps keep running on the version they were built with until you upgrade them.
-
-#### Canva 0.3.0: nine actions are builder-only, and Export, Upload and Import wait for the job
-
-Create Design, Export Design, Find Design, Get Asset, Get Design, Get Folder, Import Design, Move Folder Item and Upload Asset are no longer offered to AI agents. They keep working in flows, but an agent or MCP client that used them as tools loses them after the upgrade.
-
-**Export Design**, **Upload Asset** and **Import Design** now wait for Canva's job to finish (up to 120 seconds by default) and return the finished result. The step fails when Canva reports the job failed or the wait runs out. Before, they returned the running job right away. The `next_steps` field is no longer in their output.
-
-#### What you need to do
-
-- Agents that used these actions as tools switch to the new agent tools: **Create Design**, **Export Design**, **Get Design**, **Get Asset** and **Move Folder Item** (same names), **List Designs** for Find Design, **List Folder Items** for Get Folder, and **Upload Asset From URL** and **Import Design From URL** for the two file actions (they take a public URL, not a file).
-- To keep the old behaviour of Export Design, Upload Asset or Import Design, turn off **Wait for Completion** and check the job later with **Get Job Status**. If a later step read `next_steps`, remove that mapping.
-
-Flow steps keep running on the version they were built with until you upgrade them.
-
-#### NinjaPipe 0.2.0: 17 actions are builder-only, outputs change shape, and fields the API rejected or ignored are removed
-
-NinjaPipe 0.2.0 changes what existing steps take and return once they are upgraded to that version. Steps keep running on the version they were built with until you upgrade them, but AI agents lose the old tools as soon as 0.2.0 is published.
-
-**Actions no longer offered to AI agents.** Create Contact, Get Contact, List Contacts, Update Contact, Create Company, Get Company, List Companies, Update Company, Create Deal, Get Deal, List Deals, Update Deal, Create Task, List Tasks, Update Task, List Projects and List Pipelines keep working in flows but are no longer agent tools. Agents get new AI versions instead: Create Contact (`ai_create_contact`), Get Contact (`ai_get_contact`), Search Contacts (`ai_search_contacts`), Update Contact (`ai_update_contact`), Create Company (`ai_create_company`), Get Company (`ai_get_company`), Search Companies (`ai_search_companies`), Update Company (`ai_update_company`), Create Deal (`ai_create_deal`), Get Deal (`ai_get_deal`), Search Deals (`ai_search_deals`), Update Deal (`ai_update_deal`), Create Task (`ai_create_task`), List Tasks (`ai_list_tasks`), Update Task (`ai_update_task`), List Projects (`ai_list_projects`) and List Pipelines (`ai_list_pipelines`).
-
-**Removed fields** (the API rejected or silently ignored them):
-- Create Contact, Update Contact and Upsert Contact: Address, City, ZIP, Country, State, Notes and the Company text field. A Company dropdown replaces the text field.
-- Create and Update Company: Address, City, ZIP, Country, State and Notes.
-- Create and Update Deal: Title, Currency, Pipeline and Notes.
-- Create and Update Project: Contact and Settings JSON.
-- Create and Update Order, Create and Update Task: Settings JSON.
-- Create and Update Product: Custom Fields.
-- List Pipelines: Search. List Projects: Owner filter.
-
-**Changed inputs.** Owner and Assignee are now a dropdown of workspace members instead of a text field.
-
-**Changed outputs.**
-- The List steps (Contacts, Companies, Deals, Products, Orders, Budgets, Projects, Pipelines) return `{ items, count, total, hasMore, nextPage }` instead of a plain array. List Tasks returns `{ items, count }`.
-- Get, Create and Update steps return the record's own fields (`id`, `name`, …) instead of `data_id`, `data_name`, …. Create Contact in Skip mode (the email already exists) returns `{ action: "skipped", ...existing contact fields }` instead of `{ skipped, reason, email, existing_id }`.
-- Delete steps return `{ deleted, id, name, message }` instead of `{ success, deleted_id }`.
-- Send to Databin returns `{ status, response }` instead of the raw response body.
-- The triggers emit the nested record as NinjaPipe returns it instead of flattened `fields_*` keys.
-
-**Changed behaviour.**
-- Custom API Call only calls the connected NinjaPipe host and refuses any other host.
-- Update steps with nothing to change fail with "Nothing to update" instead of sending an empty update.
-- Return All stops at 5,000 items.
-
-#### What you need to do
-
-After upgrading a NinjaPipe step, remap later steps that used the List output (map `items` instead of the array), a `data_*` field (map the plain field name), the Delete or Send to Databin output, or a trigger's `fields_*` key (map the nested field). Re-select the company in contact steps that used the old Company text field, and re-select Owner and Assignee from the dropdown. Custom API Call steps that called another host should use an HTTP step instead. Agents that used the old actions as tools: add the AI versions listed above to the agent.
-
-#### Campaign Monitor 0.2.0: Add Subscriber and Update Subscriber are builder-only
-
-Add Subscriber and Update Subscriber are no longer offered to AI agents. They keep working in flows, but an agent that used them as tools loses them after the upgrade.
-
-Find Subscriber now fails with an error when Campaign Monitor returns a real error, such as an invalid API key or an outage. It used to return `found: false` in those cases; it still returns `found: false` when the subscriber does not exist.
-
-#### What you need to do
-
-Agents that used these actions switch to their twins: Add Subscriber (JSON fields) and Update Subscriber (JSON fields). Flows that read `found: false` from Find Subscriber to mean "not found" keep working; a run that hits a bad key or an outage now fails instead of taking the not-found branch. Flow steps keep running on the version they were built with until you upgrade them.
-
-#### Bannerbear 0.6.0: Create Image is builder-only, returns the normalized image, and Custom API Call is asynchronous
-
-From Bannerbear 0.6.0, **Create Image** is no longer offered as a tool to AI agents; it still works as a normal flow step. Agents use the new **Create Image from JSON** action instead. Create Image now returns the same normalized image as the other Bannerbear actions: the template ID is in `template_uid` instead of `template`, and `modifications`, `width` and `height` are no longer returned. **Custom API Call** no longer goes through `sync.api.bannerbear.com`; it now uses `api.bannerbear.com`, so a `POST /images` call returns the image while it is still `pending` instead of waiting for it to finish rendering.
-
-#### What you need to do
-
-Steps keep running on the version they were built with until you upgrade them. After upgrading, change any later step that reads `template` from Create Image to read `template_uid`, and stop reading `modifications`, `width` or `height`. Point Run Agent steps that used Create Image at **Create Image from JSON**. If a Custom API Call creates images, poll **Get Image** (or use the **New Image Completed** trigger) until the image is completed before using its URL.
-
-#### Apache Kafka 0.1.0: Publish messages is no longer an AI agent tool
-
-**Publish messages** (several messages in one request) is no longer offered to AI agents as a tool; flow steps that use it keep working unchanged. Agents publish with **Publish message**, one message per call, so there is one agent tool for publishing.
-
-#### What you need to do
-
-If a Run Agent step or MCP server used Publish messages as a tool, switch it to Publish message.
-
-#### PandaDoc 0.3.0: seven actions are builder-only, and the triggers now fire
-
-Create Document from Template, Create Attachment, Create or Update Contact, Find Document(s), Get Document Attachment, Get Document and Download Document are no longer offered to AI agents. They keep working in flows, but an agent that used them as tools loses them after the upgrade.
-
-The PandaDoc triggers did not fire before this version; after you upgrade and re-enable a flow they start runs. The trigger output is now a flat document (`id`, `name`, `status`, `template_id`, `folder_uuid`, `recipients`, ...) instead of the old sample data's `data` / `template.id` shape. The filter on **Document Updated** is still shown but is ignored, so the trigger runs for every update. **Create Document from Template** now sends template fields by their merge-field key, so a step that used to fail with a 401 now fills the fields. Checkbox template fields are now a Checked / Unchecked dropdown; left empty, the template default is kept.
-
-#### What you need to do
-
-Agents that used these actions switch to their twins: Create Document from Template (AI), Add Document Attachment (AI), Create Contact (AI) or Update Contact (AI), Search Documents (AI), List Document Attachments (AI), Get Document (AI) and Download Document (AI). Flow steps keep running on the version they were built with until you upgrade them.
-
-After upgrading a PandaDoc trigger, turn the flow off and on again so PandaDoc signs its deliveries. If a flow mapped fields from the old trigger sample data, re-map them from the new output (for example `template_id` instead of `template.id`). If a flow used the Document Updated filter, add a Router or Branch step after the trigger to keep only the updates you need.
-
-#### Cognito Forms 0.3.0: Update Entry skips empty fields, and the entry actions move to new AI versions
-
-From Cognito Forms 0.3.0 the **Update Entry** action only sends the fields you fill in. Before, empty values (blank text, null, empty lists) were sent too, which cleared the value stored on the entry. Now an empty field keeps its current value, and the step fails with "Fill in at least one field to update." when every field is empty. Yes/No fields in Update Entry are now a **Yes** / **No** dropdown; left empty, the field keeps its current value. Before, an untouched Yes/No checkbox was sent as No and overwrote the entry. **Create Entry** also leaves out empty fields, so the form's own default values apply.
-
-The builder's **Delete Entry** now succeeds when the entry is already gone and returns `deleted` and `already_deleted` instead of Cognito's raw response. A wrong form ID or any other not-found error still fails the step.
-
-**Create Entry**, **Update Entry**, **Get Entry** and **Delete Entry** are no longer offered to AI agents. Agents get **Create Entry (by Form ID)**, **Update Entry (by IDs)**, **Get Entry (by IDs)** and **Delete Entry (by IDs)** instead, which take the form ID, entry ID and field values directly.
-
-#### What you need to do
-
-- Update Entry: to clear a field, use **Custom API Call** with a `PATCH` to `/forms/{formId}/entries/{entryId}` and set the field to `null`.
-- Update Entry steps with Yes/No fields: open the step after upgrading and set each Yes/No field you want to change; the rest are left unchanged.
-- Delete Entry: if a later step read Cognito's raw delete response, map `deleted` / `already_deleted` instead.
-- Agents that used the old entry actions as tools: add the new "(by IDs)" versions to the agent.
-
-Steps keep running on the version they were built with until you upgrade them.
-
-#### Mindee 0.4.0: the piece moves to the Mindee v2 API, and Predict Document is builder-only
-
-Mindee 0.4.0 adds actions for the Mindee v2 API (app.mindee.com). The old action is renamed **Predict Document (Legacy v1)** and keeps calling the v1 API, but it is no longer offered as a tool to AI agents. Steps keep running on the version they were built with until you upgrade them.
-
-The legacy action no longer reads a local file path from the server's disk. Pass a file, a public URL or a Base64 string instead. A URL in **File URL or Base64** is now sent to Mindee, which downloads it itself, instead of Activepieces downloading it first. A URL Mindee cannot reach, such as a file URL from a self-hosted instance on a private network, stops working after the upgrade; map the file into the **File** field instead.
-
-New connections must use a v2 API key. A legacy v1 key from platform.mindee.com is rejected when you create or re-test a connection. Existing connections keep working with Predict Document (Legacy v1).
-
-**Custom API Call** now uses `https://api-v2.mindee.net/v2` as its base URL. A step that used a relative v1 path now calls the v2 API. It only calls `https://api-v2.mindee.net` and `https://api.mindee.net` and refuses any other host, and every Mindee request now verifies the TLS certificate.
-
-#### What you need to do
-
-Agents that used Predict Document switch to Extract Document (AI) with a v2 API key and a model ID from app.mindee.com. If a legacy step passed a local file path, or a URL Mindee cannot reach from the internet, pass the file itself in the **File** field. If a Custom API Call step used a v1 path, enter the full `https://api.mindee.net/v1/...` URL or move it to the matching v2 endpoint.
-
-#### Alai 0.3.0: three actions are no longer AI agent tools, and Custom API Call only calls the Alai API
-
-**Generate Presentation**, **Add Slide** and **Export Presentation** are no longer offered to AI agents as tools; flow steps that use them keep working unchanged. Agents get **Generate Presentation (Agent)**, **Add Slide (Agent)** and **Export Presentation (Agent)** instead: they take plain IDs and return a `generation_id` at once, which the agent polls with **Get Generation**. **Custom API Call** now sends the API key only to `https://slides-api.getalai.com/api` and refuses any other host or a path that escapes it.
-
-#### What you need to do
-
-If a Run Agent step or MCP server used one of the three actions as a tool, switch it to the matching (Agent) tool. Custom API Call steps that point at another host have to use the HTTP piece instead.
-
-#### Tarvent 0.2.0: actions return the record itself, and Tarvent errors now fail the step
-
-Tarvent actions used to return the raw GraphQL envelope, so later steps read values like `data.createContact.id` or `data.audiences.nodes`. From Tarvent 0.2.0 actions return the record itself (for example `id`), and searches return `items`, `hasMore` and `nextCursor`. Tarvent reports errors with HTTP 200, and earlier versions treated those as success; upgraded steps now fail with Tarvent's message, and a connection with a wrong API key or account ID no longer saves. These 11 actions are no longer offered to AI agents as tools: **Create/Update Contact**, **Find Contact**, **Add/Remove Contact Tag**, **Add/Remove Contact From Audience Group**, **Add/Remove A Contact From A Journey**, **Start/Stop Journey**, **Create An Audience Group**, **Find Audience Group**, **Generate A Custom Event**, **Send A Transactional Email** and **Send Campaign**. Agents get new **(AI)** tools that take plain IDs instead; **Send A Transactional Email (AI)** always respects suppression filters, and **Create or Update Contact (AI)** never replaces existing groups or tags. Searches now return up to 50 results per call with paging: **Find Audience**, **Find Campaign** and **Find Audience Group** used to return up to 100, and **Find Journey** returned only 1. Step settings are unchanged. Existing connections keep working: the API key is now a masked secret under the same field.
-
-#### What you need to do
-
-When you upgrade a Tarvent step, re-map the fields later steps use from its output (drop the `data.<operation>` prefix; searches use `items`). If a Run Agent step or MCP server used one of the demoted actions as a tool, switch it to the matching (AI) tool. Steps keep running on the version they were built with until you upgrade them.
-
-#### Asana 0.8.0 Create Task sends a plain date as an all-day due date and fails on unknown tags
-
-Asana 0.8.0 changes what an existing **Create Task** step does once it is upgraded to that version. Steps keep running on the version they were built with until you upgrade them.
-
-A Due Date written as a plain date (`2026-12-31`) is now sent as an all-day due date. Before, it was sent as midnight on the server's clock, so the task got a due time and, for anyone west of that time zone, showed the previous day. A Due Date that includes a time (`2026-12-31T14:00:00Z`) is still sent as a due time, and a value that is not a date now stops the step with a clear message instead of "Invalid time value".
-
-Tags typed by name that match no tag in the workspace now stop the step with a "No tag named …" error. Before, they were skipped and the task was created without them.
-
-#### What you need to do
-
-Before you upgrade a Create Task step to 0.8.0, check that every tag name it types exists in the workspace. If a later step reads the created task's `due_at`, read `due_on` instead when the Due Date is a plain date.
-
-#### GitHub 0.11.0: Update Repository (Agent) no longer makes private repositories public
-
-When an AI agent used **Update Repository (Agent)** to change something else, such as the description, the agent path filled the three toggles it left out (**Private**, **Has Issues** and **Archived**) with `false` and sent them. Each such update could make a private repository public, turn off Issues and unarchive an archived repository. From GitHub 0.11.0 these three fields are dropdowns with **Yes**, **No** and **Leave unchanged**. A field the agent leaves out, or sets to Leave unchanged, is not sent, so the repository keeps its current setting.
-
-#### What you need to do
-
-Nothing to configure. Agents read the new options themselves, and a Run Agent tool that already sets one of these fields to true or false keeps sending that value. If an agent ran this action on an earlier GitHub version, check that your private repositories are still private, that Issues are on where you expect them, and that archived repositories are still archived. Run Agent steps keep running on the version they were built with until you upgrade them.
-
-#### Shopify 0.11.0: Update Customer toggles that are off no longer unverify or unsubscribe the customer
-
-Update Customer sent **Verified Email**, **Send Email Invite** and **Accepts Marketing** on every run. A fresh step saves an untouched toggle as `false`, so every update marked the customer's email as unverified and unsubscribed them from email marketing, whatever the rest of the step changed. From Shopify 0.11.0 a toggle that is off sends nothing and the customer's current setting is kept; a toggle that is on still verifies the email, sends the invite or subscribes the customer. New Update Customer steps no longer start with Verified Email switched on.
-
-#### What you need to do
-
-Nothing for flows that only ever verify or subscribe customers. A flow that relied on Update Customer to unsubscribe a customer or mark their email as unverified can no longer do it from this action; use **Custom API Call** with `PUT /customers/{id}.json` and a body of `{"customer": {"email_marketing_consent": {"state": "unsubscribed", "opt_in_level": "unknown"}}}` (or `"verified_email": false`). Steps keep running on the version they were built with until you upgrade them.
-
-#### PostHog requires https hosts, and agents can no longer create projects
-
-PostHog 0.7.0 changes what an existing step does once it is upgraded to that version. Steps keep running on the version they were built with until you upgrade them.
-
-The PostHog host on a connection must now start with `https://`. A plain `http://` host is accepted only for `localhost`, so a connection that points at a self-hosted PostHog over plain http fails on upgraded steps. Inputs are also validated more strictly before the request is sent, so a step that used to send an empty or malformed value now stops with a clear error instead.
-
-**Create Project** is no longer offered as a tool to AI agents. It still works as a normal flow step.
-
-The **New Event** trigger now follows up to 10 pages of new events per poll instead of only the first 100 events, so a busy project can start more runs per poll. **Capture Event** returns extra fields next to the unchanged `status`.
-
-**Custom API Call** now only calls the API Host set on the connection. A step that points at a full URL on another host fails after the upgrade.
-
-#### What you need to do
-
-If your PostHog host uses plain http, serve it over https and update the connection's host. Remove Create Project from any agent's tool list and use a flow step instead.
-
-If a Custom API Call step targets a host other than your PostHog API Host, change it to a path on the API Host, or use an HTTP step for the other host.
-
-#### PDFMonkey 0.3.0: Generate Document, Find Document and Delete Document are builder-only
-
-Generate Document, Find Document and Delete Document are no longer offered to AI agents. They keep working in flows, but an agent that used them as tools loses them after the upgrade.
-
-#### What you need to do
-
-Agents that used these actions switch to their twins: Generate Document (AI), Get Document (AI) and Delete Document (AI). Flow steps keep running on the version they were built with until you upgrade them.
-
-#### Netlify 0.2.0: Start Deploy returns a build, and four actions are builder-only
-
-Start Deploy used to return a deploy. From Netlify 0.2.0 it starts a build through `/sites/{id}/builds` and returns that build: `id` is now the build ID, the deploy fields are gone, and the new `deploy_id` points to the deploy the build creates.
-
-Get Site, List Files, List Site Deploys and Start Deploy are no longer offered to AI agents. They keep working in flows.
-
-#### What you need to do
-
-If a later step reads `{{start_deploy.id}}` or other deploy fields, read `deploy_id` instead, and use Get Deploy with it for the deploy's details. Agents that used these actions switch to Get Site by ID, List Files by Site ID, List Site Deploys by Site ID and Start Deploy by Site ID. Steps keep running on the version they were built with until you upgrade them.
-
-#### Invoice Ninja 0.5.0: Get Report returns columns and rows, the existing actions are builder-only, and some text inputs changed type
-
-Get Report used to send a GET to `/api/v1/reports/<type>`, which does not return report data, and returned whatever came back (or an error message as a successful step). From Invoice Ninja 0.5.0 it runs the report and returns `{ reportType, columns, rows, rowCount }`, where each row is keyed by column key (for example `client.name`). It also gains a date range and fails the step on API errors.
-
-Create Task, Check Task Existence, Get Client Details from e-mail, Get Invoices, Get Report, Create Invoice, Create Recurring Invoice and Perform Action on Recurring Invoice are now builder-only. AI agents use their twins: Create Task (by IDs), List Tasks, Find Clients, List Invoices, Run Report, Create Invoice (from line items), Create Recurring Invoice (from line items), and Start, Stop, Send Now or Delete Recurring Invoice.
-
-Several single-line inputs (client name and address, task number, client email, recurring invoice ID) moved from long text to short text, Private Notes moved to long text, and Invoice Discount is now a number, and the Client ID text box on Get Invoices and Get Report is now a Client dropdown. Values saved by older steps still parse. The API token is now a secret and the connection is checked when it is saved.
-
-TLS certificates are now checked on every request. A self-hosted Invoice Ninja server with a self-signed or expired certificate fails after the upgrade.
-
-#### What you need to do
-
-If a later step reads Get Report's output, map it to `rows` and `columns`. If you self-host Invoice Ninja with a self-signed certificate, give the server a certificate from a trusted authority (for example Let's Encrypt). Agents that used the builder actions as tools switch to the twins above. Steps keep running on the version they were built with until you upgrade them.
-
-#### Gotify 0.5.0: Send Notification returns the message, and server URLs are checked
-
-Send Notification used to return the whole HTTP response, `{ status, headers, body }`. From Gotify 0.5.0 it returns the created message itself (`id`, `appid`, `message`, `title`, `priority`, `extras`, `date`), which was `body` before. The app token is now sent in the `X-Gotify-Key` header instead of the URL query string, and a priority of `0` is sent as `0` instead of being dropped.
-
-The connection's server URL must now be an `http` or `https` URL without a username, password, query string or fragment (a sub-path such as `https://example.com/gotify` is kept). Connections are checked against the server's `/health` endpoint when saved. TLS certificates are now checked on every request; the old Send Notification skipped this check, so a Gotify server with a self-signed certificate fails after the upgrade.
-
-#### What you need to do
-
-If a later step reads `body.id` or another field under `body` from Send Notification, read it from the top level instead (`id`). A connection whose server URL has credentials or a query string must be updated to the plain server URL. A server with a self-signed certificate needs a certificate from a trusted authority (for example Let's Encrypt), or its CA added to the trust store of the machine running Activepieces (`NODE_EXTRA_CA_CERTS`). Steps keep running on the version they were built with until you upgrade them.
-
-#### Discourse 0.3.0: the forum URL must use https and a public address, and actions return flat fields
-
-The Discourse connection used to send your API key to whatever URL was entered, including plain `http://` and local or private network addresses. From 0.3.0 the Website URL must start with `https://` and must not point to `localhost` or a private/LAN IP address; such connections now fail with a clear error, and new connections are checked when you save them.
-
-Create Post, Create Topic, Change User Trust Level and Send Private Message used to return the raw HTTP response (`{status, headers, body}`). From 0.3.0 they return the result fields directly (for example `id`, `topic_id`, `url`), so a reference such as `{{step.body.id}}` no longer resolves after the upgrade.
-
-Add Users to Group used to return Discourse's response as is (`success: "OK"` and `usernames` and `emails` as lists). From 0.3.0 it returns `{ group_id, success, usernames, skipped_usernames, emails }`, where `success` is `true` and the names and emails are comma-separated text.
-
-#### What you need to do
-
-If your Discourse forum is reached over `http://` or on a private network, serve it over https at a public address and update the connection's Website URL. After upgrading a step that uses Create Post, Create Topic, Change User Trust Level or Send Private Message, change later references from `{{step.body.<field>}}` to `{{step.<field>}}` (for example `{{step.body.id}}` becomes `{{step.id}}`). Change User Trust Level nested its fields under `user`, so `{{step.body.user.trust_level}}` becomes `{{step.trust_level}}`, `{{step.body.user.username}}` becomes `{{step.username}}`, and the user's ID is `{{step.user_id}}`. Steps keep running on the version they were built with until you upgrade them. If a later step reads Add Users to Group's output, use `{{step.usernames}}` (now comma-separated text) instead of the `usernames` list, and check `{{step.skipped_usernames}}` for users that were not added.
-
-#### Matrix 0.6.0: Send Message returns the event ID, is builder-only, and the Home Server must be the server's own URL
-
-Send Message used to return the raw HTTP response of the send call (`status`, `headers` and a `body` holding `event_id`). From Matrix 0.6.0 it returns `{ eventId, roomId, transactionId }`. The room is now picked from a dropdown of joined rooms (Room Alias stays as an optional fallback), and the action is builder-only: AI agents use the new **Send Text Message** action instead.
-
-The connection's **Home Server** is now checked when it is saved and on every run. It must be an `https` URL of the homeserver itself, such as `https://matrix-client.matrix.org` (plain `http` is accepted only for `localhost`). An Element web link such as `https://app.element.io/#/home` is rejected with a message that says which URL to use instead.
-
-Custom API Call now only accepts URLs on the connection's homeserver. A step that pointed it at another host fails after the upgrade.
-
-#### What you need to do
-
-If a later step reads `body.event_id` from Send Message, read `eventId` instead. If a Custom API Call step calls another host, point it at your homeserver or use the HTTP piece. Agents that used Send Message as a tool switch to Send Text Message. If a Matrix connection fails with the Home Server message, reconnect it with your homeserver's URL (shown in Element under Settings, Help & About). Steps keep running on the version they were built with until you upgrade them.
-
-#### Close 0.3.0: Find Lead and Find Contact drop the "Starts With" and "Ends With" match options
-
-Find Lead and Find Contact no longer offer the **Starts With** and **Ends With** match options. They never worked: Close's search ignored them, so a step using one did not filter as its label said. A step upgraded to Close 0.3.0 with one of these options saved fails validation until a supported option is picked.
-
-The New Lead, New Contact and other Close webhook triggers now drop duplicate deliveries of the same Close event, so a flow runs once per event. Opportunity **Value** is now labelled as cents, which is what Close always expected.
-
-#### What you need to do
-
-Steps keep running on the version they were built with until you upgrade them. When you upgrade a Find Lead or Find Contact step that used Starts With or Ends With, switch its Match Type to **All Words (any order)** or **Exact Phrase**.
-
-#### Snowflake 0.4.0: Update Row needs a WHERE condition, stricter limits, query timeout and stage paths
-
-From Snowflake 0.4.0 several actions validate their inputs where they used to pass them straight to Snowflake:
-
-- **Update Row** fails when the WHERE condition is empty, instead of updating every row in the table. A new **Update All Rows** toggle allows it.
-- **Search Rows** fails when **Row Limit** is not a whole number between 1 and 10,000. Before, any value went into `LIMIT`.
-- **Run Query** and **Run Multiple Queries**: the **Query Timeout (ms)** value used to be passed to the Snowflake driver as its connection timeout, so long queries were not stopped. It now sets Snowflake's `STATEMENT_TIMEOUT_IN_SECONDS`, which cancels any query that runs longer than the value (30 seconds by default, at most 540 seconds).
-- **Load Data from Stage**: the stage path is now parsed and checked. User (`@~`) and table (`@%`) stages are rejected, the stage name must be a valid (optionally qualified) name, and the folder part may only contain letters, digits, spaces and `- _ . / = + % ~` (no `..`).
-
-#### What you need to do
-
-- Update Row: if a step is meant to change every row, turn on **Update All Rows**; otherwise add a WHERE condition.
-- Search Rows: keep **Row Limit** between 1 and 10,000. For more rows, use **Run Query** with your own `LIMIT`.
-- Run Query and Run Multiple Queries: if a query takes longer than 30 seconds, raise **Query Timeout (ms)** (up to 540 000). Queries that need more than 540 seconds should run outside the flow, for example as a Snowflake task.
-- Load Data from Stage: use a named stage (`@stage_name/folder/` or `@schema.stage_name/folder/`). For user or table stages, or paths with other characters, use **Run Query** with your own `COPY INTO`.
-
-Steps keep running on the version they were built with until you upgrade them.
-
-#### Pdfcrowd 0.3.0: Convert URL to PDF and Convert HTML to PDF are builder-only
-
-Convert URL to PDF and Convert HTML to PDF are no longer offered to AI agents. They keep working in flows, but an agent that used them as tools loses them after the upgrade.
-
-#### What you need to do
-
-Agents that used these actions switch to Convert to PDF, which takes a URL or HTML. Flow steps keep running on the version they were built with until you upgrade them.
-
-#### Retell AI 0.3.0: New Call fires only when a call starts, and webhooks must be signed
-
-The **New Call** trigger used to run the flow on every Retell webhook event for a call (started, ended and analyzed), so one call could start the flow three times. From Retell AI 0.3.0 it runs once per call, on the `call_started` event. Deliveries are also checked against Retell's `X-Retell-Signature` header (signed with your API key), and unsigned, forged, stale or repeated deliveries are ignored.
-
-#### What you need to do
-
-To react to a finished call or its analysis, use the new **Call Ended** or **Call Analyzed** trigger. Make sure the API key in your connection is the one with the webhook badge in Retell, or deliveries will not pass the signature check. Steps keep running on the version they were built with until you upgrade them.
-
-#### WordPress Update Post keeps a post's categories and tags when those fields are empty
-
-Update Post used to send an empty list when **Categories** or **Tags** was cleared or mapped to an empty list. WordPress then reset the post to the default category and removed all of its tags. From WordPress 0.9.0, an empty Categories or Tags field leaves the post's current categories and tags as they are, like every other empty field on the form. Steps keep running on the version they were built with until you upgrade them.
-
-#### What you need to do
-
-Nothing for most flows. If a flow cleared a post's tags or categories by sending an empty list, it no longer does: pick the categories to keep instead, or use the Custom API Call with `POST /posts/<id>` and `{"tags": []}` in the body.
-
-#### Firecrawl's Scrape Website stops reusing cached pages, and Crawl keeps its pages when a screenshot fails
-
-Three changes in Firecrawl 0.6.0 alter what an existing step does once it is upgraded to that version. Steps keep running on the version they were built with until you upgrade them.
-
-Scrape Website has a new **Store In Cache** checkbox, off by default. When it is off, the step asks Firecrawl for a fresh copy of the page and tells Firecrawl not to keep one. A step upgraded from 0.5.0 or earlier keeps its saved inputs, which have no value for the checkbox, so it is treated as off: a step that used to be served Firecrawl's cached copy of a page now scrapes it fresh on every run. Runs are slower, and each one costs a full scrape in Firecrawl credits.
-
-Crawl with the Screenshot output format used to leave the raw Firecrawl screenshot link in a page's `screenshot` when saving that screenshot failed, and logged the failure only to the server console. That page now has no `screenshot` and carries a `screenshotError` saying why. The rest of the crawl is returned as before.
-
-Saved screenshot files are now named `firecrawl-<id>.png` instead of `screenshot-<id>.png`. The `fileName` and `fileUrl` keys are unchanged.
-
-#### What you need to do
-
-Nothing to configure or migrate, and no existing step stops working. If a Scrape Website step scrapes the same pages repeatedly and does not need them fresh, tick **Store In Cache** to get the old speed and cost back. If a flow reads `screenshot` from Crawl's pages, check `screenshotError` on pages where it is missing. Only a flow that matches on a saved file's name needs changing.
-
-#### SmartSuite 0.3.0: Upload File returns the file list, and record and selector actions are builder-only
-
-Upload File used to return the record's fields keyed by field label. From SmartSuite 0.3.0 it returns `{ recordId, field, fileName, files }`, where `files` is the field's file list (handle, name and metadata) after the upload.
-
-Create Record, Update Record, Find Records, Get Record, Delete Record and Upload File, and the new actions that pick a solution, table, record, field or member, are now builder-only. AI agents use their twins that take plain IDs and field slugs, such as Get Record (by ID), Create Record (by Table ID), Update Record Fields, List Records and the other `*_by_id` actions.
-
-#### What you need to do
-
-If a later step reads fields from Upload File's output, read the record with Get Record after the upload, or use the new `files` list. Agents that used the builder actions as tools switch to the `*_by_id` twins. Steps keep running on the version they were built with until you upgrade them.
-
-#### Brevo 0.5.0: an unticked unsubscribe toggle no longer re-subscribes the contact
-
-On Create or Update Contact, the two blacklist toggles (now labelled **Unsubscribe From Email** and **Unsubscribe From SMS**) promised that leaving them untouched kept the contact's current setting. A fresh step saves an untouched toggle as `false`, so every run sent `emailBlacklisted: false` and `smsBlacklisted: false` and silently re-subscribed contacts who had opted out. Unsubscribe Contact did the same when one of its toggles was unticked. From 0.5.0 an unticked toggle sends nothing and the contact's setting is left as it is; a ticked toggle still unsubscribes. Unsubscribe Contact now fails with a clear message when nothing is ticked and no list is picked, instead of sending an empty update.
-
-#### What you need to do
-
-Nothing for flows that only ever unsubscribe contacts. A flow that relied on Create or Update Contact or Unsubscribe Contact to put a contact back on email or SMS can no longer do it from these actions; use **Custom API Call** with `PUT /contacts/{email}` and a body of `{"emailBlacklisted": false}` (or `smsBlacklisted`). Steps keep running on the version they were built with until you upgrade them.
-
-#### Telegram Bot Get Chat and Get Chat Member fail on Telegram errors, and Get File no longer returns the bot token
-
-Get Chat and Get Chat Member used to return Telegram's error response, such as `{ "ok": false, "description": "Bad Request: chat not found" }`, as a **successful** step. From Telegram Bot 0.8.0 the step fails with that error instead, so a wrong chat or user ID stops the flow where it happened.
-
-Get File used to return a `file_url` that contained the bot token, which put the token in the run's step output. From 0.8.0 the output no longer has `file_url`. With **Download File** on, it still returns the content as `file_content_base64`.
-
-#### What you need to do
-
-If a flow branches on Get Chat or Get Chat Member returning `ok: false`, handle the failure with the step's error handling options instead. If a later step reads Get File's `file_url`, turn on **Download File** and use `file_content_base64`. Steps keep running on the version they were built with until you upgrade them.
-
-#### Zoho CRM Read File and Custom API Call only send the token to the connection's Zoho CRM hosts
-
-Read File used to send the connection's Zoho access token to whatever URL it was given, including hosts outside Zoho. From Zoho CRM 0.4.0 it only fetches `https` URLs on the connection's own Zoho API host under `/crm/` (for example `https://www.zohoapis.com/crm/bulk/v8/read/<job>/result`), or on that data centre's download hosts (for example `https://download-accl.zoho.com/v2/crm/...` for a data backup). Custom Zoho function URLs (`/crm/.../functions/...`) and URLs in another data centre are refused. Any other URL fails before a request is made. Redirects are followed only to those same hosts; a redirect anywhere else stops the download before that host is requested. The file is streamed, so the deployment's file size limit (`AP_MAX_FILE_SIZE_MB`) applies.
-
-Custom API Call keeps working with paths such as `/Leads` and with full URLs on the connection's own API host (for example `https://www.zohoapis.com/crm/v8/...`). A full URL on any other host, including other Zoho hosts, now fails before a request is made instead of receiving the token.
-
-#### What you need to do
-
-Nothing if your Read File steps point at Zoho CRM backup, bulk-read or API file URLs of the connected account, and your Custom API Call steps use a path or a URL on the connection's API host. If a step calls any other URL, replace it with the HTTP piece's Send HTTP Request action. Steps keep running on the version they were built with until you upgrade them.
-
-#### Instagram for Business no longer reports success when a reel fails to publish
-
-Publishing a reel uploads the video to Instagram and then waits for Instagram to finish processing it before the post goes live. The piece used to give up after about a hundred seconds and return the boolean `false`, which the flow recorded as a **successful** step. Anything downstream carried on with `false` where a media id was expected, and nothing in the run said the post had not been published.
-
-Upload Reel now throws when Instagram reports an error, and waits up to five minutes, which is the window Instagram's own guidance describes. Upload Photo waits for the same signal instead of publishing blind, so a container Instagram rejects now surfaces as a failed step rather than a confusing error from the next call.
-
-The piece also moves from Graph API v17.0, which expired on 12 September 2025, to v23.0.
-
-#### What you need to do
-
-If a flow branches on the output of Upload Reel being `false`, that branch will no longer be taken — the step fails instead. Handle the failure with the step's error handling options, or with a branch on the run status.
-
-Reconnect your Instagram connections. The piece now requests the permissions needed for comments, insights, content management, direct messages and Page metadata, and a token issued before this release does not carry them. Steps that were saved earlier will also ask you to select the Page again, because messaging needs the Facebook Page id that the Page dropdown now stores.
-
-#### WhatsApp Business' Send Message and Send Media return the API response instead of the HTTP envelope
-
-The WhatsApp Business piece returned two different shapes depending on which action you used. `Send Template Message` returned the WhatsApp Cloud API payload directly, while `Send Message` and `Send Media` returned the whole HTTP response, so the same payload sat one level down under `body`, alongside `status` and `headers`.
-
-Both actions now return the API payload directly, matching `Send Template Message` and every other action in the piece. A step that produced
-
-```json
-{ "status": 200, "headers": { }, "body": { "messaging_product": "whatsapp", "messages": [{ "id": "wamid.…" }] } }
-```
-
-now produces
-
-```json
-{ "messaging_product": "whatsapp", "contacts": [{ "input": "…", "wa_id": "…" }], "messages": [{ "id": "wamid.…" }] }
-```
-
-The whole piece also moves to Graph API `v23.0`, via a single `WHATSAPP_API_BASE` constant. It previously split between `v17.0` (expired September 2025) and `v20.0` (expires 24 September 2026).
-
-#### What you need to do
-
-Update any step that reads the output of `Send Message` or `Send Media`. Drop the `body.` prefix: `{{step.body.messages[0].id}}` becomes `{{step.messages[0].id}}`. Steps that only send and ignore the output need no change, and no connection has to be re-authorised.
-
-</Accordion>
-
 ## 0.92.0
 
 ### What has changed?
 
-#### The AI provider config endpoint is removed
+#### Applying a release or a project replace now updates changed connection references
 
-`GET /v1/ai-providers/:provider/config` returned a provider's decrypted credentials so that an AI step running inside the engine could build the model itself and call the provider directly. AI steps no longer work that way: the worker resolves the credentials and makes the call, which is what lets Activepieces charge managed AI on what the call actually cost. Nothing in the product calls the endpoint any more, and it now returns `404`.
+Applying a release (Environments / Git Sync) or running Project Replace used to keep whatever connection the destination step already pointed at. A step whose connection changed in the source silently kept the old one, and the connection the release created for it stayed unreferenced with status `MISSING`. Two things change:
 
-The route only ever accepted an engine token, so it was never reachable with a user token, an API key or from the browser. `GET /v1/ai-providers` and `GET /v1/ai-providers/:provider/models` are unchanged.
+- A changed connection reference is now a change the diff sees, so a flow whose only edit is its connection is applied instead of being reported as unchanged.
+- The destination's connection is kept only when the incoming step carries no connection of its own, and only when the step is still the same piece. Swapping a step to a different piece no longer grafts the old piece's connection onto it.
+
+Connection secrets still never cross instances. Only the reference travels, and a reference to a connection that does not exist in the destination yet lands as a `MISSING` connection for someone to authorize there.
 
 #### What you need to do
 
-Nothing on a normal upgrade. Every flow is moved to the AI piece version that runs on the worker the first time its version is read, before it can run.
-
-If you serve pieces from your own registry, make sure it carries the AI piece at `0.11.0` or later. A flow left on an earlier version would still try to fetch its provider credentials over this endpoint and fail.
+Nothing on upgrade if your source project is the source of truth for connections, which is the intended model. If instead you deliberately re-point a step in the destination project at a different connection than the source uses, that re-point is now overwritten on the next apply. Either point the source at the connection you want, or clear the connection on the source step so the destination wiring is preserved.
 
 #### AI steps are billed on what each call costs, not on a fixed price per model
 
@@ -1192,71 +130,47 @@ The limit is per file, not per step, so several large files in one step are fine
 
 Nothing unless an AI step handles files larger than 25 MB. Those steps now fail with a size error naming the limit. Raise `AP_MAX_FILE_SIZE_MB` on a self-hosted installation if you need more.
 
-#### Applying a release or a project replace now updates changed connection references
+#### The AI provider config endpoint is removed
 
-Applying a release (Environments / Git Sync) or running Project Replace used to keep whatever connection the destination step already pointed at. A step whose connection changed in the source silently kept the old one, and the connection the release created for it stayed unreferenced with status `MISSING`. Two things change:
+`GET /v1/ai-providers/:provider/config` returned a provider's decrypted credentials so that an AI step running inside the engine could build the model itself and call the provider directly. AI steps no longer work that way: the worker resolves the credentials and makes the call, which is what lets Activepieces charge managed AI on what the call actually cost. Nothing in the product calls the endpoint any more, and it now returns `404`.
 
-- A changed connection reference is now a change the diff sees, so a flow whose only edit is its connection is applied instead of being reported as unchanged.
-- The destination's connection is kept only when the incoming step carries no connection of its own, and only when the step is still the same piece. Swapping a step to a different piece no longer grafts the old piece's connection onto it.
-
-Connection secrets still never cross instances. Only the reference travels, and a reference to a connection that does not exist in the destination yet lands as a `MISSING` connection for someone to authorize there.
+The route only ever accepted an engine token, so it was never reachable with a user token, an API key or from the browser. `GET /v1/ai-providers` and `GET /v1/ai-providers/:provider/models` are unchanged.
 
 #### What you need to do
 
-Nothing on upgrade if your source project is the source of truth for connections, which is the intended model. If instead you deliberately re-point a step in the destination project at a different connection than the source uses, that re-point is now overwritten on the next apply. Either point the source at the connection you want, or clear the connection on the source step so the destination wiring is preserved.
+Nothing on a normal upgrade. Every flow is moved to the AI piece version that runs on the worker the first time its version is read, before it can run.
 
-#### Seven actions are no longer offered to agents
-
-The Pinterest piece advertised its six original actions to AI agents as `audience: 'both'`, but they identify boards and Pins through dynamic dropdowns that an agent has no way to drive. They are now `human`, alongside the Trello `add_card_attachment` action, whose only input is a file an agent cannot produce.
-
-An agent that currently holds one of these tools stops seeing it. Every one has a replacement among the new agent actions that takes plain IDs instead: Create Pin from Media, Create New Board, Update Board Details, Delete Pin by ID, Search Boards, Search Pins, and Add Card Attachment from URL.
-
-The flow builder is unaffected. All seven actions keep working exactly as before for human users, and no saved step changes.
-
-#### What you need to do
-
-Nothing for flows. If you have an agent configured with one of the seven actions above, point it at the corresponding agent action listed there. MCP clients should refresh their tool list.
-
-#### Pinterest Update Board can no longer clear a description
-
-Update Board and its agent twin Update Board Details treat a blank or whitespace-only description as "keep the current one", matching the help text the field always carried. Previously a blank description was sent to Pinterest and wiped the board's description on every run.
-
-Clearing a description from this action is therefore no longer possible; that is the intended reading. A call that supplies only a blank description now fails with "At least one field (name, description, or privacy) must be provided to update the board." instead of silently doing nothing.
-
-#### What you need to do
-
-Nothing unless a flow or an agent relied on a blank description to clear a board's description, which previously happened on every run whether or not it was intended. Clear it from Pinterest directly.
+If you serve pieces from your own registry, make sure it carries the AI piece at `0.11.0` or later. A flow left on an earlier version would still try to fetch its provider credentials over this endpoint and fail.
 
 ## 0.91.0
 
 ### What has changed?
 
-#### WhatsScale media actions take a file input, capping media at the instance file-size limit
+#### Worker group runs no longer fall back to shared workers
 
-The 17 WhatsScale actions that send media — image, video, document and audio sends across the contact, group, channel and CRM-contact variants, plus the image and video Status posts — used to take a plain text URL and hand it straight to WhatsScale, which fetched it itself. Those fields are now file inputs: the engine resolves whatever you pass (a URL, or a file from a previous step) into a file, stores it on your instance, and gives WhatsScale that copy to fetch.
-
-The field keys are unchanged (`imageUrl`, `videoUrl`, `documentUrl`, `audioUrl`), so existing flows keep their configured value and a stored URL still works. Two behaviour changes come with the new path:
-
-- **Media is now capped by `AP_MAX_FILE_SIZE_MB` — 10 MB on Cloud, 25 MB by default self-hosted.** The file travels through your instance instead of going vendor-to-vendor, so a URL pointing at something larger than that limit now fails where it previously sent. This mostly affects video and document sends. Streaming does not lift the ceiling: writing into storage is counted against the cap either way, and producing a URL for WhatsScale to fetch requires writing into storage. See [Limits](/install/reference/limits).
-- **The URL WhatsScale fetches is now one your instance serves.** It is a signed, expiring link on your public API URL. An instance that is not reachable from the internet cannot hand WhatsScale a URL it can fetch, so media sends need a publicly resolvable `AP_FRONTEND_URL` on self-hosted installs.
+Runs for a project assigned to a worker group used to fall back to the shared queue whenever the group had no online workers, so shared workers would execute them. Runs now always stay on the group's dedicated queue (`project-<group-name>-jobs`) and wait there until a worker carrying the matching `AP_WORKER_GROUP_ID` connects — shared workers never pick them up.
 
 #### What you need to do
 
-Nothing if your media is comfortably under the cap and your instance is reachable from the internet. On Cloud that cap is 10 MB, so check any flow that forwards video or large documents.
+If you assign projects to worker groups, keep at least one worker online per assigned group. If a group is down, reassign the project to another group or unassign it (set its `workerGroupId` to `null`) — any assignment change moves the project's waiting runs to the new queue.
 
-If you send files larger than the cap on a self-hosted install, raise `AP_MAX_FILE_SIZE_MB` to cover the largest media you send and redeploy. On Cloud the 10 MB cap is not configurable. If your instance is not publicly reachable, keep media sends on a host that is, or leave these actions unused; there is no way for WhatsScale to fetch a file from a private address.
+#### The legacy product-embed connection-key and app-credential endpoints are removed
 
-#### WhatsScale "Add a Tag to a CRM Contact" now takes a list of tags
+The original product-embed flow is gone. It let a host application store per-project OAuth client credentials and a public key, then mint an app connection by presenting a token signed with the matching private key. These endpoints are removed:
 
-The two add-tag actions ("Add Tags to a CRM Contact" and its By-ID twin) accepted a single tag in a text field named `tag`. They now accept a list, in a field named `tags`, and send one request per tag so existing tags are kept.
+- `GET`, `POST` and `DELETE` `/v1/connection-keys/app-connections`
+- `GET`, `POST` and `DELETE` `/v1/connection-keys`
+- `GET`, `POST` and `DELETE` `/v1/app-credentials`
 
-Because the field was renamed, **a step configured before this release loses its tag value** and shows "Tags" as an empty required field. The field could not keep its old name: a stored single string does not validate as a list.
+They were registered on the Cloud edition only, so a self-hosted installation never served them, on either Community or Enterprise. The user interface that drove them was removed several releases ago and no SDK or documented flow referenced them. They now return `404`.
 
-Adding several tags is **not atomic** — each tag is its own request, so a failure part-way through leaves the earlier tags applied. Re-running is safe: adding a tag a contact already has converges on the same set.
+The current embedding stack is unaffected: signing keys, managed authentication, JWT user provisioning and the embed SDK are a separate feature and continue to work unchanged.
 
 #### What you need to do
 
-Re-enter the tag on any flow that uses either add-tag action, as a list entry rather than free text. The removal actions are unchanged and still take one tag at a time.
+Nothing for a self-hosted installation, and no environment variable or migration. The `app_credential` and `connection_key` tables are left in place by this release and are simply no longer read; a later release drops them.
+
+If you call one of the endpoints above against Activepieces Cloud, move to the current embedding flow, which provisions users and connections through a platform signing key. See [Embedding](/embedding/overview).
 
 #### A custom AI provider is now checked when you save it
 
@@ -1277,52 +191,6 @@ An agent step, saved agent, or agent run that names a model outside the offered 
 #### What you need to do
 
 Nothing, if your agent steps use the model picker. If a flow, a saved agent, or an API call names a model id directly while running on Activepieces AI credits, switch it to one of the offered models or to your own provider key. The error message lists the available ids.
-
-#### The legacy product-embed connection-key and app-credential endpoints are removed
-
-The original product-embed flow is gone. It let a host application store per-project OAuth client credentials and a public key, then mint an app connection by presenting a token signed with the matching private key. These endpoints are removed:
-
-- `GET`, `POST` and `DELETE` `/v1/connection-keys/app-connections`
-- `GET`, `POST` and `DELETE` `/v1/connection-keys`
-- `GET`, `POST` and `DELETE` `/v1/app-credentials`
-
-They were registered on the Cloud edition only, so a self-hosted installation never served them, on either Community or Enterprise. The user interface that drove them was removed several releases ago and no SDK or documented flow referenced them. They now return `404`.
-
-The current embedding stack is unaffected: signing keys, managed authentication, JWT user provisioning and the embed SDK are a separate feature and continue to work unchanged.
-
-#### What you need to do
-
-Nothing for a self-hosted installation, and no environment variable or migration. The `app_credential` and `connection_key` tables are left in place by this release and are simply no longer read; a later release drops them.
-
-If you call one of the endpoints above against Activepieces Cloud, move to the current embedding flow, which provisions users and connections through a platform signing key. See [Embedding](/embedding/overview).
-
-#### Kimai connections now authenticate with an API token instead of a username and API password
-
-Kimai is deprecating its legacy `X-AUTH-USER` / `X-AUTH-TOKEN` authentication (API passwords), with removal planned no later than July 2026 — see [Kimai's announcement](https://www.kimai.org/en/blog/2026/removing-api-passwords). The Kimai piece's connection now sends `Authorization: Bearer <token>` instead, matching Kimai's current API. This also fixes the Activity dropdown on the Create Timesheet action, which ignored the selected project because it tried to filter on a GET request body that the piece's HTTP client cannot send.
-
-The connection's `Username` and `API Password` fields are removed and replaced with a single `API Token` field.
-
-#### What you need to do
-
-Only if you have an existing Kimai connection. Reconnect it: in your Kimai instance, generate an API token from your user profile's "API Access" page, then re-enter your Kimai connection in Activepieces with the Server URL and that token. Existing connections using the old username/API-password fields will fail to authenticate until reconnected.
-
-#### Worker group runs no longer fall back to shared workers
-
-Runs for a project assigned to a worker group used to fall back to the shared queue whenever the group had no online workers, so shared workers would execute them. Runs now always stay on the group's dedicated queue (`project-<group-name>-jobs`) and wait there until a worker carrying the matching `AP_WORKER_GROUP_ID` connects — shared workers never pick them up.
-
-#### What you need to do
-
-If you assign projects to worker groups, keep at least one worker online per assigned group. If a group is down, reassign the project to another group or unassign it (set its `workerGroupId` to `null`) — any assignment change moves the project's waiting runs to the new queue.
-
-#### Airtable's Find Record returns up to 1000 matches and the Record picker lists up to 500 records
-
-Find Record used to return only the first page Airtable sent back, 100 records, and silently dropped the rest. It now follows Airtable's paging and returns up to 1000 matching records. The Record dropdown on Get Record by ID listed the first 50 records of a table; it now lists up to 500.
-
-Update Record and Clean Record now send `typecast: true`, as Create Record always has. Airtable then converts text into the field's type instead of rejecting it: a date typed as text is parsed, a select value that does not exist yet is created as a new option, and a linked-record name is resolved to the record. Before, those requests failed with `INVALID_VALUE_FOR_COLUMN`.
-
-#### What you need to do
-
-Nothing to configure or migrate. Check any Update Record or Clean Record step that writes to a single-select or multiple-select field: a value that used to fail because the option did not exist now creates that option in Airtable. Review flows that loop over Find Record's output or count its rows: a search that matched more than 100 records now returns more rows than before, and each extra page is one more request against Airtable's limit of 5 requests per second per base.
 
 ## 0.90.4
 
@@ -1362,15 +230,19 @@ Only if you use the IAM Role / OIDC method on an AWS piece. Allow outbound HTTPS
 
 ### What has changed?
 
-#### Front's Attachments field takes files instead of URLs
+#### A failed run on a synchronous webhook answers with 500 instead of 408 after the full timeout
 
-The Front piece's Send Message, Send Reply, Create Draft and Create Draft Reply actions described `Attachments` as a list of attachment URLs and sent those strings inside a JSON body. Front only accepts attachments on a `multipart/form-data` request, as the bytes of the file, so it took the message and dropped the attachments — HTTP 202, no error, no attachment. The field is now a list of files, the same shape the Gmail and Discord pieces use, and the request is sent as multipart when a message carries attachments.
+A `/sync` webhook call whose flow run fails used to hold the connection open for the whole `AP_WEBHOOK_TIMEOUT_SECONDS` (30 seconds by default) and then answer `408 Request Timeout` with an empty body, no matter how quickly the run had actually failed. Nothing reported a terminal run status back to the waiting request, so the caller only ever saw the timeout fallback.
 
-A URL is still all you need to supply: the engine downloads it and hands the piece the resolved file. A step that already holds a file — an earlier download, a trigger's attachment — can be wired straight in. An entry whose file cannot be resolved is skipped rather than failing the send.
+A run that ends in `FAILED`, `INTERNAL_ERROR`, `TIMEOUT`, `MEMORY_LIMIT_EXCEEDED` or `LOG_SIZE_EXCEEDED` now answers immediately with `500` and a body of `{"message": "The flow has failed and there is no response returned"}`. For `FAILED`, `INTERNAL_ERROR` and `MEMORY_LIMIT_EXCEEDED` this restores the behaviour from before 0.80.0, where they answered `500` (`TIMEOUT` answered `504` then; it is `500` now, like the rest). `LOG_SIZE_EXCEEDED` never had a response of its own in any earlier release, so it gains one here.
+
+Between 0.80.0 and 0.85.x the same failures answered `204 No Content` rather than `408`, which many HTTP clients read as success. If you integrated against an Activepieces in that range and concluded a synchronous webhook "returns 204 when it fails", that is the behaviour being replaced.
+
+Two cases are deliberately unchanged. A run that succeeds without reaching a Return Response step still waits out the timeout and answers `408`, exactly as it did before 0.80.0. A run blocked on credits still answers `402` before it starts.
 
 #### What you need to do
 
-Re-pick the attachment in any Front step that used the field. The stored value is a plain string and the field now holds a file, so it does not carry across. A flow that never set Attachments is unaffected and keeps its JSON request path. Nothing to configure on the server, and no new environment variable.
+Nothing to configure or migrate. If you have a caller or reverse proxy that treats `408` as the signal for a failed synchronous flow, or retry logic keyed on `408`, switch it to `5xx` — a failed run no longer produces a `408`, and the reply now arrives in seconds rather than after the timeout.
 
 #### A file URL that fails to download is no longer treated as a file
 
@@ -1422,51 +294,46 @@ locked out in between.
 If you script or test the sign-in page, note that the emailed-code step is gone and the two endpoints above
 answer `404`.
 
-#### A failed run on a synchronous webhook answers with 500 instead of 408 after the full timeout
-
-A `/sync` webhook call whose flow run fails used to hold the connection open for the whole `AP_WEBHOOK_TIMEOUT_SECONDS` (30 seconds by default) and then answer `408 Request Timeout` with an empty body, no matter how quickly the run had actually failed. Nothing reported a terminal run status back to the waiting request, so the caller only ever saw the timeout fallback.
-
-A run that ends in `FAILED`, `INTERNAL_ERROR`, `TIMEOUT`, `MEMORY_LIMIT_EXCEEDED` or `LOG_SIZE_EXCEEDED` now answers immediately with `500` and a body of `{"message": "The flow has failed and there is no response returned"}`. For `FAILED`, `INTERNAL_ERROR` and `MEMORY_LIMIT_EXCEEDED` this restores the behaviour from before 0.80.0, where they answered `500` (`TIMEOUT` answered `504` then; it is `500` now, like the rest). `LOG_SIZE_EXCEEDED` never had a response of its own in any earlier release, so it gains one here.
-
-Between 0.80.0 and 0.85.x the same failures answered `204 No Content` rather than `408`, which many HTTP clients read as success. If you integrated against an Activepieces in that range and concluded a synchronous webhook "returns 204 when it fails", that is the behaviour being replaced.
-
-Two cases are deliberately unchanged. A run that succeeds without reaching a Return Response step still waits out the timeout and answers `408`, exactly as it did before 0.80.0. A run blocked on credits still answers `402` before it starts.
-
-#### What you need to do
-
-Nothing to configure or migrate. If you have a caller or reverse proxy that treats `408` as the signal for a failed synchronous flow, or retry logic keyed on `408`, switch it to `5xx` — a failed run no longer produces a `408`, and the reply now arrives in seconds rather than after the timeout.
-
 ## 0.89.0
 
 ### What has changed?
 
-#### Piece builds fail when piece code uses `__dirname` without declaring `bundleForkedEntries`
+#### Sign-up addresses are checked with ZeroBounce instead of a bundled blocklist
 
-The piece bundler now emits files a piece loads by path at runtime (for example a `child_process.fork` target) beside the main bundle, when they are declared in a `bundleForkedEntries` array in the piece's `package.json`, and it keeps dependencies that only those files import in the published manifest. Because an undeclared `__dirname`-relative file access always breaks after publishing — this is exactly how `@activepieces/piece-oracle-database` 0.1.11/0.1.12 shipped with every new connection failing — the build now fails loudly when a piece's source references `__dirname` and declares no forked entries. Previously such a piece built successfully and shipped broken.
+The bundled list of disposable-email domains introduced in 0.88.2 is gone. Sign-up now asks ZeroBounce about the address, on every password sign-up and on the emailed-code path only when the address has no account yet, and refuses it when ZeroBounce reports it as disposable, a spam trap, abusive, or on a global suppression list. The refusal is silent, so the response looks the same as a successful one. When ZeroBounce cannot be reached, or the key is invalid or out of credits, the address is let through and the reason is logged.
 
-#### What you need to do
-
-Nothing for catalog pieces — oracle-database is the only piece that forks a sibling file, and this change fixes it (0.1.13). If you build custom pieces and one references `__dirname`, either declare the runtime-loaded file in `bundleForkedEntries` (see [Bundling Pieces](/build-pieces/misc/bundling-pieces)) or remove the `__dirname` usage. Already-published pieces keep working; the check runs at build time only.
-
-#### A new workspace is named after the company in the sign-up email
-
-Completing sign-up used to always name the new platform after the person, as `"Ahmad's Platform"`. It now reads the email domain first: `ahmad@activepieces.com` creates a platform called `Activepieces`, and the project alongside it becomes `Activepieces's Project`.
-
-The person-based name is still what you get from a consumer address. `ahmad@gmail.com` continues to produce `"Ahmad's Platform"`, as do the other common providers (Outlook, Yahoo, iCloud, Proton, GMX, QQ and similar). Whether an address counts as a work address is decided by a denylist of consumer providers, so anything not on that list is treated as a company.
-
-This only affects platforms created from here on. Existing platforms keep their names, and renaming stays available in settings.
+The check runs only when `AP_ZEROBOUNCE_API_KEY` is set. `AP_ALLOW_DISPOSABLE_EMAILS` is removed; the key is the switch. An instance without a key accepts throwaway addresses again, as it did before 0.88.2.
 
 #### What you need to do
 
-Nothing. No configuration, no new environment variable, and nothing to migrate. If you script or test first-run sign-up and assert on the generated platform or project name, update that assertion: a work-domain address no longer yields `"<FirstName>'s Platform"`.
+Nothing, unless you relied on the 0.88.2 blocklist to keep throwaway addresses out. To keep refusing them, create a ZeroBounce account and set `AP_ZEROBOUNCE_API_KEY` on the app container. Remove `AP_ALLOW_DISPOSABLE_EMAILS` from your configuration if you set it; it is ignored. See [Environment Variables](/install/reference/environment-variables).
 
-#### Workers no longer pre-warm the flow cache on startup by default
+#### `AP_FLOW_TIMEOUT_SECONDS` now also bounds a single action run
 
-Since 0.86.2 every worker pre-filled its local piece and code cache on startup by resolving and compiling every enabled flow on the platform. That warm-up costs memory and CPU proportional to the number of enabled flows: on instances with many flows it pinned each worker at its CPU limit for the duration and spiked memory enough to OOM-kill small workers, especially during upgrades when all workers restart at once. The warm-up is now opt-in behind the new `AP_PREWARM_CACHE_ON_STARTUP` worker environment variable, which defaults to `false`. When disabled, caches fill lazily on each flow's first run after a worker starts, exactly as they did before 0.86.2.
+An action run — an agent's configured piece tool, a chat action, or MCP `ap_run_action` — used to be capped at a hardcoded 120 seconds, and a flow run started as an MCP tool at a hardcoded 300 seconds. Neither could be changed. Any agent tool whose action took longer than a minute failed outright with `RPC [executePieceTool] failed (timeout: 60000ms)`, because a second hardcoded limit in the worker cut it off first.
+
+Both hardcoded limits are gone. All of them now follow `AP_FLOW_TIMEOUT_SECONDS`, the same setting that bounds a flow run, which defaults to 600 seconds. An action run therefore gets the same budget as a flow step.
+
+The limit going up is the change to be aware of: a slow or hung action now occupies a worker slot for up to `AP_FLOW_TIMEOUT_SECONDS` instead of 120 seconds, and action runs are not covered by the per-project concurrency limiter. On a small worker pool, several slow actions can hold execution capacity for longer than they used to.
 
 #### What you need to do
 
-Nothing, unless you want to keep the warm-up behaviour of 0.86.2 through 0.88.4. Set `AP_PREWARM_CACHE_ON_STARTUP=true` on your worker containers to restore it — recommended only if your instance has a modest number of enabled flows and your workers have memory headroom. See [Environment Variables](/install/reference/environment-variables) for details.
+Nothing to configure or migrate, and no new environment variable — a default installation gets the fix with no action. Two things to consider if they apply to you. If you raised `AP_FLOW_TIMEOUT_SECONDS` for long flows, note that agent tools, chat actions and MCP action runs now inherit that same ceiling; lower it if you do not want them held that long. If you put Activepieces behind a reverse proxy and use MCP `ap_run_action`, an action that runs past the proxy's read timeout (nginx defaults to 60 seconds, Cloudflare to 100) returns a gateway error to the MCP client while the action keeps running — raise `proxy_read_timeout` if you rely on long action runs over MCP.
+
+#### A Run Agent step whose turn dies now fails its flow run
+
+A Run Agent step whose turn died — no AI provider configured for the chosen vendor, a revoked API key, a model the provider no longer serves — used to report success. The step returned the failed agent result rather than raising it, so the step read SUCCEEDED, the run completed SUCCEEDED, and later steps acted on a payload that carried the failure inside it. Such a run is now FAILED, and the agent's error message is the step's error.
+
+Two cases are deliberately unaffected, because the agent did produce usable output:
+
+- A turn that finished but had a single tool call error. The agent may have recovered from it and reported on it, so those runs keep succeeding exactly as before.
+- A turn that was cut short by the output limit or the run's usage budget. It still returns the work it completed, and the flow still continues.
+
+#### What you need to do
+
+Nothing to configure or migrate, and no new environment variable. Two things to check if either applies to you. If a flow relied on continuing past a dead agent step, tick **Continue on failure** on that step — it now takes effect, where previously the step never failed for it to apply to. If a flow branches on the agent result (a Router reading the step's `status`), that branch no longer runs when the turn dies, because the step raises instead of returning; move that handling onto the step's failure path.
+
+If you alert on run status, expect agent flows that were silently completing on a misconfigured provider to start showing as failed. That is the misconfiguration surfacing, not new breakage.
 
 #### The Microsoft Teams Bot piece no longer needs a server-side installation record
 
@@ -1484,80 +351,37 @@ If you already have a flow using **Microsoft Teams Bot** piece version `0.0.2`, 
 
 Optionally repoint the **Messaging endpoint** on your Azure Bot resource from `/api/v1/teams-bot/webhook` to `/api/v1/app-events/microsoft-teams-bot`; an endpoint left on the old path returns 404 and is otherwise harmless. If you call `/v1/teams-bot/send` directly from your own code, switch to the piece's **Send Channel Message as Bot** action.
 
-#### Brevo's Create or Update Contact stops clearing blacklist flags and attributes it was not given
+#### Workers no longer pre-warm the flow cache on startup by default
 
-Four changes to the Brevo (formerly Sendinblue) piece's Create or Update Contact action alter what an existing, unchanged step does.
-
-The action used to strip every falsy value from the request before sending it, so `Email Blacklisted` and `SMS Blacklisted` could be switched on but never switched back off — the `false` was dropped and the contact stayed blacklisted with no error. Those flags are now sent when you set them, and neither checkbox defaults to off any more, so a checkbox you never touched is omitted from the request instead of quietly un-blacklisting the contact on every run.
-
-The `Attributes` field used to come pre-filled with nine empty values (`FIRST_NAME`, `LAST_NAME`, `SMS`, `CIV`, `DOB`, `ADDRESS`, `ZIP_CODE`, `CITY`, `AREA`). Because they were sent on every call, running the step overwrote whatever those attributes held in Brevo with empty strings. The default is removed, and only the attributes you list are written.
-
-`List IDs` was a free-text list of numbers and is now a dropdown of the lists in your account. A stored numeric id is still sent exactly as before, so existing steps keep working unchanged.
-
-The `SMTP Blacklist Sender` checkbox is replaced by a `Blocked Sender Addresses` list. Brevo expects a list of sender email addresses here, not a true or false, and rejects a boolean outright with *"Invalid smtpBlacklistSender format"* — so ticking that checkbox always failed the step, and leaving it clear did nothing at all. The field never worked. It is now a list of addresses, which Brevo accepts, and any value your step already had is ignored rather than sent.
+Since 0.86.2 every worker pre-filled its local piece and code cache on startup by resolving and compiling every enabled flow on the platform. That warm-up costs memory and CPU proportional to the number of enabled flows: on instances with many flows it pinned each worker at its CPU limit for the duration and spiked memory enough to OOM-kill small workers, especially during upgrades when all workers restart at once. The warm-up is now opt-in behind the new `AP_PREWARM_CACHE_ON_STARTUP` worker environment variable, which defaults to `false`. When disabled, caches fill lazily on each flow's first run after a worker starts, exactly as they did before 0.86.2.
 
 #### What you need to do
 
-Nothing to configure or migrate, and no existing step stops working. Review any flow whose Create or Update Contact step relied on the old behaviour: a step that was silently wiping attributes will now leave them intact, and a step you were relying on to blacklist contacts must have the checkbox explicitly ticked. To block a sender for a contact, list that sender's address in `Blocked Sender Addresses` — it must be an active sender in your Brevo account, or Brevo answers *"One of the sender is invalid or inactive"*.
+Nothing, unless you want to keep the warm-up behaviour of 0.86.2 through 0.88.4. Set `AP_PREWARM_CACHE_ON_STARTUP=true` on your worker containers to restore it — recommended only if your instance has a modest number of enabled flows and your workers have memory headroom. See [Environment Variables](/install/reference/environment-variables) for details.
 
-#### A Run Agent step whose turn dies now fails its flow run
+#### A new workspace is named after the company in the sign-up email
 
-A Run Agent step whose turn died — no AI provider configured for the chosen vendor, a revoked API key, a model the provider no longer serves — used to report success. The step returned the failed agent result rather than raising it, so the step read SUCCEEDED, the run completed SUCCEEDED, and later steps acted on a payload that carried the failure inside it. Such a run is now FAILED, and the agent's error message is the step's error.
+Completing sign-up used to always name the new platform after the person, as `"Ahmad's Platform"`. It now reads the email domain first: `ahmad@activepieces.com` creates a platform called `Activepieces`, and the project alongside it becomes `Activepieces's Project`.
 
-Two cases are deliberately unaffected, because the agent did produce usable output:
+The person-based name is still what you get from a consumer address. `ahmad@gmail.com` continues to produce `"Ahmad's Platform"`, as do the other common providers (Outlook, Yahoo, iCloud, Proton, GMX, QQ and similar). Whether an address counts as a work address is decided by a denylist of consumer providers, so anything not on that list is treated as a company.
 
-- A turn that finished but had a single tool call error. The agent may have recovered from it and reported on it, so those runs keep succeeding exactly as before.
-- A turn that was cut short by the output limit or the run's usage budget. It still returns the work it completed, and the flow still continues.
-
-#### What you need to do
-
-Nothing to configure or migrate, and no new environment variable. Two things to check if either applies to you. If a flow relied on continuing past a dead agent step, tick **Continue on failure** on that step — it now takes effect, where previously the step never failed for it to apply to. If a flow branches on the agent result (a Router reading the step's `status`), that branch no longer runs when the turn dies, because the step raises instead of returning; move that handling onto the step's failure path.
-
-If you alert on run status, expect agent flows that were silently completing on a misconfigured provider to start showing as failed. That is the misconfiguration surfacing, not new breakage.
-
-#### `AP_FLOW_TIMEOUT_SECONDS` now also bounds a single action run
-
-An action run — an agent's configured piece tool, a chat action, or MCP `ap_run_action` — used to be capped at a hardcoded 120 seconds, and a flow run started as an MCP tool at a hardcoded 300 seconds. Neither could be changed. Any agent tool whose action took longer than a minute failed outright with `RPC [executePieceTool] failed (timeout: 60000ms)`, because a second hardcoded limit in the worker cut it off first.
-
-Both hardcoded limits are gone. All of them now follow `AP_FLOW_TIMEOUT_SECONDS`, the same setting that bounds a flow run, which defaults to 600 seconds. An action run therefore gets the same budget as a flow step.
-
-The limit going up is the change to be aware of: a slow or hung action now occupies a worker slot for up to `AP_FLOW_TIMEOUT_SECONDS` instead of 120 seconds, and action runs are not covered by the per-project concurrency limiter. On a small worker pool, several slow actions can hold execution capacity for longer than they used to.
+This only affects platforms created from here on. Existing platforms keep their names, and renaming stays available in settings.
 
 #### What you need to do
 
-Nothing to configure or migrate, and no new environment variable — a default installation gets the fix with no action. Two things to consider if they apply to you. If you raised `AP_FLOW_TIMEOUT_SECONDS` for long flows, note that agent tools, chat actions and MCP action runs now inherit that same ceiling; lower it if you do not want them held that long. If you put Activepieces behind a reverse proxy and use MCP `ap_run_action`, an action that runs past the proxy's read timeout (nginx defaults to 60 seconds, Cloudflare to 100) returns a gateway error to the MCP client while the action keeps running — raise `proxy_read_timeout` if you rely on long action runs over MCP.
+Nothing. No configuration, no new environment variable, and nothing to migrate. If you script or test first-run sign-up and assert on the generated platform or project name, update that assertion: a work-domain address no longer yields `"<FirstName>'s Platform"`.
 
-#### Sign-up addresses are checked with ZeroBounce instead of a bundled blocklist
+#### Piece builds fail when piece code uses `__dirname` without declaring `bundleForkedEntries`
 
-The bundled list of disposable-email domains introduced in 0.88.2 is gone. Sign-up now asks ZeroBounce about the address, on every password sign-up and on the emailed-code path only when the address has no account yet, and refuses it when ZeroBounce reports it as disposable, a spam trap, abusive, or on a global suppression list. The refusal is silent, so the response looks the same as a successful one. When ZeroBounce cannot be reached, or the key is invalid or out of credits, the address is let through and the reason is logged.
-
-The check runs only when `AP_ZEROBOUNCE_API_KEY` is set. `AP_ALLOW_DISPOSABLE_EMAILS` is removed; the key is the switch. An instance without a key accepts throwaway addresses again, as it did before 0.88.2.
+The piece bundler now emits files a piece loads by path at runtime (for example a `child_process.fork` target) beside the main bundle, when they are declared in a `bundleForkedEntries` array in the piece's `package.json`, and it keeps dependencies that only those files import in the published manifest. Because an undeclared `__dirname`-relative file access always breaks after publishing — this is exactly how `@activepieces/piece-oracle-database` 0.1.11/0.1.12 shipped with every new connection failing — the build now fails loudly when a piece's source references `__dirname` and declares no forked entries. Previously such a piece built successfully and shipped broken.
 
 #### What you need to do
 
-Nothing, unless you relied on the 0.88.2 blocklist to keep throwaway addresses out. To keep refusing them, create a ZeroBounce account and set `AP_ZEROBOUNCE_API_KEY` on the app container. Remove `AP_ALLOW_DISPOSABLE_EMAILS` from your configuration if you set it; it is ignored. See [Environment Variables](/install/reference/environment-variables).
+Nothing for catalog pieces — oracle-database is the only piece that forks a sibling file, and this change fixes it (0.1.13). If you build custom pieces and one references `__dirname`, either declare the runtime-loaded file in `bundleForkedEntries` (see [Bundling Pieces](/build-pieces/misc/bundling-pieces)) or remove the `__dirname` usage. Already-published pieces keep working; the check runs at build time only.
 
 ## 0.88.2
 
 ### What has changed?
-
-#### The container no longer bundles PM2 — crashes exit the container
-
-The Docker image used to run the app and worker under PM2, which restarted a crashed process *inside* the container. PM2 is removed; the entrypoint now launches the processes with plain `node`. When a process crashes (or is OOM-killed), the container exits instead of silently recycling the process in place, and your orchestrator restarts it.
-
-#### What you need to do
-
-Nothing if you deploy with Docker Compose, Kubernetes/Helm, or any orchestrator that already restarts failed containers (all official deployments do). If you run the image with a bare `docker run` and relied on PM2 to keep the container alive across process crashes, add a restart policy: `docker run --restart unless-stopped ...`.
-
-#### Table record filters compare date columns chronologically
-
-The `gt`, `gte`, `lt` and `lte` operators on `GET /v1/records` used to parse every cell value as a number. On a Date column that meant `2026-08-12T14:30:00Z` was read as `2026`, so two dates in the same year always compared equal and a range filter matched nothing. Those four operators now compare Date and Date & Time columns as instants.
-
-This affects the Tables piece's Find Records action and any direct API call that filters a Date column with a range operator. `eq`, `neq` and `co` are unchanged and still compare the stored text exactly, so two spellings of the same instant (`...T14:30:00Z` and `...T14:30:00.000Z`) do not match each other.
-
-#### What you need to do
-
-Nothing on upgrade. Re-check any flow or API integration that filters a Date column with `gt`, `gte`, `lt` or `lte` — it now returns the rows the filter actually describes, which may be more or fewer than before.
 
 #### Official piece bundles are served from npm again by default
 
@@ -1566,33 +390,6 @@ Nothing on upgrade. Re-check any flow or API integration that filters a Date col
 #### What you need to do
 
 If your network policy restricts outbound traffic, allow `registry.npmjs.org`: it is the default source, and it stays the fallback for any bundle the CDN does not have even when `AP_USE_CDN_FOR_BUNDLES=true`. Set the flag to `true` to prefer the CDN, and allow `cdn.activepieces.com` as well in that case. Otherwise nothing.
-
-#### MCP OAuth: revoking a token requires a client identity, and registration issues a usable secret
-
-Two changes to the MCP OAuth endpoints:
-
-- `POST /revoke` used to revoke a refresh token for a caller that presented no client identity at all, so anyone who learned a refresh token could disconnect its owner. It now requires the request to identify the client, and a confidential client to authenticate, per RFC 7009. A revocation that sends only `token` now returns `400 invalid_client`.
-- Dynamic client registration (`POST /register`) that omits `token_endpoint_auth_method` now records the client as `client_secret_basic` and issues a client secret, per RFC 7591. It previously issued a secret but recorded the client as public, so that secret was never checked. A client registered from now on must present it when calling `/token` and `/revoke`. Concretely: a client that omits `token_endpoint_auth_method` **and** discards the `client_secret` it is handed now gets `400 invalid_client` at `/token`, where it previously succeeded. Such a client must either store and send that secret, or register explicitly with `token_endpoint_auth_method: "none"` to stay public.
-
-#### What you need to do
-
-Nothing for already-connected clients. A client's authentication method is read from the row it registered with, so existing registrations are untouched, including the ones created before this fix that hold a secret while recorded as public. Those keep working whether or not they send it.
-
-Claude, Cursor and anything else built on the MCP SDK are unaffected: the SDK stores and sends the `client_secret` it is given, and it never calls the revocation endpoint. A confidential client's secret is accepted from either the request body or the `Authorization: Basic` header, so a client is never rejected for choosing one over the other.
-
-If you maintain your own MCP OAuth client, check two things before upgrading: that it sends `client_id` when it revokes a token, and that it stores and presents the `client_secret` that `/register` returns. Note that disconnecting and re-adding an MCP server creates a fresh registration, so an existing user meets the new behaviour when they reconnect rather than at upgrade.
-
-#### Disposable email addresses can no longer sign up
-
-Sign-up now refuses addresses from throwaway providers such as `mailinator.com` and `guerrillamail.com`, on both the emailed-code flow and the password form. Federated sign-in (Google, SAML, JWT), managed authentication and SCIM provisioning are unaffected, since those addresses come from an identity provider you already trust.
-
-#### What you need to do
-
-Only if your members sign up with addresses from a disposable email provider. On 0.88.2 through 0.88.4, set `AP_ALLOW_DISPOSABLE_EMAILS=true` to keep accepting them.
-
-<Note>
-Superseded in 0.89.0: the bundled blocklist was replaced by a ZeroBounce check that runs only when `AP_ZEROBOUNCE_API_KEY` is set, and `AP_ALLOW_DISPOSABLE_EMAILS` is no longer read. See the 0.89.0 entry.
-</Note>
 
 #### Sign-in and sign-up are one screen, and an emailed code signs people in wherever SMTP is configured
 
@@ -1636,6 +433,51 @@ Nothing, and no new configuration: the key is derived from a secret your instanc
 
 Rolling back costs at most the codes issued after the deploy: the older build cannot read those, so whoever holds one asks for a fresh code. Nothing is rewritten and nothing is deleted, so no cleanup is needed either way.
 
+#### Disposable email addresses can no longer sign up
+
+Sign-up now refuses addresses from throwaway providers such as `mailinator.com` and `guerrillamail.com`, on both the emailed-code flow and the password form. Federated sign-in (Google, SAML, JWT), managed authentication and SCIM provisioning are unaffected, since those addresses come from an identity provider you already trust.
+
+#### What you need to do
+
+Only if your members sign up with addresses from a disposable email provider. On 0.88.2 through 0.88.4, set `AP_ALLOW_DISPOSABLE_EMAILS=true` to keep accepting them.
+
+<Note>
+Superseded in 0.89.0: the bundled blocklist was replaced by a ZeroBounce check that runs only when `AP_ZEROBOUNCE_API_KEY` is set, and `AP_ALLOW_DISPOSABLE_EMAILS` is no longer read. See the 0.89.0 entry.
+</Note>
+
+#### MCP OAuth: revoking a token requires a client identity, and registration issues a usable secret
+
+Two changes to the MCP OAuth endpoints:
+
+- `POST /revoke` used to revoke a refresh token for a caller that presented no client identity at all, so anyone who learned a refresh token could disconnect its owner. It now requires the request to identify the client, and a confidential client to authenticate, per RFC 7009. A revocation that sends only `token` now returns `400 invalid_client`.
+- Dynamic client registration (`POST /register`) that omits `token_endpoint_auth_method` now records the client as `client_secret_basic` and issues a client secret, per RFC 7591. It previously issued a secret but recorded the client as public, so that secret was never checked. A client registered from now on must present it when calling `/token` and `/revoke`. Concretely: a client that omits `token_endpoint_auth_method` **and** discards the `client_secret` it is handed now gets `400 invalid_client` at `/token`, where it previously succeeded. Such a client must either store and send that secret, or register explicitly with `token_endpoint_auth_method: "none"` to stay public.
+
+#### What you need to do
+
+Nothing for already-connected clients. A client's authentication method is read from the row it registered with, so existing registrations are untouched, including the ones created before this fix that hold a secret while recorded as public. Those keep working whether or not they send it.
+
+Claude, Cursor and anything else built on the MCP SDK are unaffected: the SDK stores and sends the `client_secret` it is given, and it never calls the revocation endpoint. A confidential client's secret is accepted from either the request body or the `Authorization: Basic` header, so a client is never rejected for choosing one over the other.
+
+If you maintain your own MCP OAuth client, check two things before upgrading: that it sends `client_id` when it revokes a token, and that it stores and presents the `client_secret` that `/register` returns. Note that disconnecting and re-adding an MCP server creates a fresh registration, so an existing user meets the new behaviour when they reconnect rather than at upgrade.
+
+#### Table record filters compare date columns chronologically
+
+The `gt`, `gte`, `lt` and `lte` operators on `GET /v1/records` used to parse every cell value as a number. On a Date column that meant `2026-08-12T14:30:00Z` was read as `2026`, so two dates in the same year always compared equal and a range filter matched nothing. Those four operators now compare Date and Date & Time columns as instants.
+
+This affects the Tables piece's Find Records action and any direct API call that filters a Date column with a range operator. `eq`, `neq` and `co` are unchanged and still compare the stored text exactly, so two spellings of the same instant (`...T14:30:00Z` and `...T14:30:00.000Z`) do not match each other.
+
+#### What you need to do
+
+Nothing on upgrade. Re-check any flow or API integration that filters a Date column with `gt`, `gte`, `lt` or `lte` — it now returns the rows the filter actually describes, which may be more or fewer than before.
+
+#### The container no longer bundles PM2 — crashes exit the container
+
+The Docker image used to run the app and worker under PM2, which restarted a crashed process *inside* the container. PM2 is removed; the entrypoint now launches the processes with plain `node`. When a process crashes (or is OOM-killed), the container exits instead of silently recycling the process in place, and your orchestrator restarts it.
+
+#### What you need to do
+
+Nothing if you deploy with Docker Compose, Kubernetes/Helm, or any orchestrator that already restarts failed containers (all official deployments do). If you run the image with a bare `docker run` and relied on PM2 to keep the container alive across process crashes, add a restart policy: `docker run --restart unless-stopped ...`.
+
 ## 0.88.0
 
 ### What has changed?
@@ -1665,46 +507,74 @@ Two license-key endpoints are removed: `GET /v1/license-keys/:licenseKey` and `P
 
 Four feature flags no longer appear in `GET /v1/flags`: `SHOW_BILLING_PAGE`, `CAN_BUY_ACTIVE_FLOWS`, `CAN_BUY_AI_CREDITS` and `SHOW_BILLING_LIMITS_ON_SIDEBAR`. Whether the billing page appears is now decided from the edition and plan instead.
 
+#### What you need to do
+
+- Only if you call `GET /v1/license-keys/:licenseKey` or `POST /v1/license-keys/verify`. Both are removed — use `POST /v1/platform-billing/activate` instead.
+- Only if you read `SHOW_BILLING_PAGE`, `CAN_BUY_ACTIVE_FLOWS`, `CAN_BUY_AI_CREDITS` or `SHOW_BILLING_LIMITS_ON_SIDEBAR` from `GET /v1/flags`. They no longer exist.
+- No database action is required. The migration only adds columns and leaves the existing ones in place.
+
 #### Enterprise instances without a license key are placed on the free plan
+
 An Enterprise-edition instance with no license key previously ran with no credit enforcement. It is now enrolled on the free plan, so credit limits apply to it. Entering your license key restores your contracted limits.
 
+#### What you need to do
+
+Only if you run the Enterprise edition without a license key. Enter your key so your contracted limits apply instead of the free plan's.
+
 #### Running out of credits now stops production flow runs
+
 When a platform has no credits left, new production runs are recorded with the `QUOTA_EXCEEDED` status instead of executing, and synchronous webhooks respond with HTTP 402. Such a run keeps its trigger payload, so it can be retried once credits are available. Test runs are unaffected.
 
 #### The AI piece offers only the named model tiers for Activepieces-provided AI
+
 In the AI piece, picking the Activepieces-provided AI now lists only the named tiers (Fast, Expert, Heavy) rather than the full upstream model catalogue. Existing steps keep running on the model they already have, but that model no longer appears in the dropdown, so re-saving the step moves it onto one of the tiers.
 
-### Do you need to take action?
-- Only if you run the Enterprise edition without a license key. Enter your key so your contracted limits apply instead of the free plan's.
-- Only if you call `GET /v1/license-keys/:licenseKey` or `POST /v1/license-keys/verify`. Both are removed — use `POST /v1/platform-billing/activate` instead.
-- Only if you read `SHOW_BILLING_PAGE`, `CAN_BUY_ACTIVE_FLOWS`, `CAN_BUY_AI_CREDITS` or `SHOW_BILLING_LIMITS_ON_SIDEBAR` from `GET /v1/flags`. They no longer exist.
-- Only if a flow uses Activepieces-provided AI on a model outside the Fast/Expert/Heavy tiers. Choose a tier the next time you edit that step.
-- No database action is required. The migration only adds columns and leaves the existing ones in place.
+#### What you need to do
+
+Only if a flow uses Activepieces-provided AI on a model outside the Fast/Expert/Heavy tiers. Choose a tier the next time you edit that step.
 
 #### Official piece bundles are served from the Activepieces CDN by default
-`AP_USE_CDN_FOR_BUNDLES` now defaults to `true`. When an official piece bundle is not already cached in your own S3 bucket, the engine is redirected to `cdn.activepieces.com` for the tarball instead of `registry.npmjs.org`. If the CDN does not have that piece version, the download falls back to npm automatically, so installs keep working either way. Custom pieces and pieces from a private registry never use the CDN and are unaffected.
 
-### Do you need to take action?
-- Only if your network policy restricts outbound traffic. Allow `cdn.activepieces.com`, or set `AP_USE_CDN_FOR_BUNDLES=false` to keep serving official bundles from npm.
+`AP_USE_CDN_FOR_BUNDLES` now defaults to `true`. When an official piece bundle is not already cached in your own S3 bucket, the engine is redirected to `cdn.activepieces.com` for the tarball instead of `registry.npmjs.org`. If the CDN does not have that piece version, the download falls back to npm automatically, so installs keep working either way. Custom pieces and pieces from a private registry never use the CDN and are unaffected.
 
 <Note>
 Reverted in 0.88.2: `AP_USE_CDN_FOR_BUNDLES` defaults to `false` again, so official bundles are served from npm by default. Set it to `true` to opt back into the CDN. The S3 cache mentioned above was removed in the same release.
 </Note>
+
+#### What you need to do
+
+Only if your network policy restricts outbound traffic. Allow `cdn.activepieces.com`, or set `AP_USE_CDN_FOR_BUNDLES=false` to keep serving official bundles from npm.
 
 ## 0.86.0
 
 ### What has changed?
 
 #### Log fields are now grouped by entity
+
 Log fields are now grouped under the entity they belong to, so each thing has one name. A flow run id is `flowRun.id` (it used to appear as `runId`, `flowRunId`, or a bare `id`), and other ids follow the same shape (`flow.id`, `project.id`, `job.id`, …). Errors are logged under `error`. This only changes how logs look — nothing about the API, database, or flows changes.
 
+#### What you need to do
+
+Only if you build dashboards or alerts on Activepieces logs. Update them to the new grouped names, e.g. `runId` → `flowRun.id` and `err` → `error`.
+
 #### Google SSO is configured via environment variables only
+
 "Sign in with Google" can no longer be enabled from the SSO page in the admin panel — that setting has been removed. It is now controlled solely by the `AP_GOOGLE_CLIENT_ID` and `AP_GOOGLE_CLIENT_SECRET` environment variables. The button only appears when both are set (and the platform's Google auth toggle is enabled).
 
+#### What you need to do
+
+Only if you set up Google SSO from the admin panel. Move your Google OAuth2 credentials into the `AP_GOOGLE_CLIENT_ID` and `AP_GOOGLE_CLIENT_SECRET` environment variables.
+
 #### Pieces are now self-contained bundles
+
 Each piece is now built into a single self-contained bundle — its own code, the Activepieces framework, and its third-party dependencies are inlined into one artifact, so the engine provisions a piece by downloading one file instead of installing a dependency tree at runtime. As part of this, the shared libraries (`@activepieces/shared`, `@activepieces/pieces-framework`, `@activepieces/pieces-common`, `@activepieces/core-*`) are no longer published to npm, and pieces import only from `@activepieces/pieces-framework` (which re-exports the foundation symbols that used to come from `@activepieces/shared`). Built-in pieces are unaffected — this only matters for custom pieces.
 
+#### What you need to do
+
+Only if you maintain **custom pieces** (in a fork or built outside the repo). Migrate each one to the bundle model — run `npm run cli -- pieces migrate <piece-name>` (or `--all`), or follow the [migration guide](/build-pieces/misc/migrate-pieces-to-bundles). Pieces that still import `@activepieces/shared` or depend on the now-unpublished libraries will fail to build.
+
 #### `AP_PRE_WARM_CACHE` removed
+
 The `AP_PRE_WARM_CACHE` environment variable no longer exists. It used to make a worker install pieces into its cache on startup. The worker is now its own sandbox and fills its cache lazily on first use, so the flag has no effect and setting it does nothing. Cache warmth now comes from running long-lived worker replicas rather than an up-front install step.
 
 The up-front install is no longer needed because piece installs are now fast: each piece is a self-contained bundle fetched as a single file. If you have S3 enabled, official piece bundles are cached to your S3 bucket on first use and served from there via signed links — so when your bucket is co-located in the same region as your workers, subsequent installs are a low-latency download from a nearby object store instead of a registry round-trip.
@@ -1713,49 +583,64 @@ The up-front install is no longer needed because piece installs are now fast: ea
 Removed in 0.88.2: bundles are no longer mirrored into your S3 bucket. Every download goes to npm or, with `AP_USE_CDN_FOR_BUNDLES=true`, to the CDN.
 </Note>
 
-### Do you need to take action?
-- Only if you set up Google SSO from the admin panel. Move your Google OAuth2 credentials into the `AP_GOOGLE_CLIENT_ID` and `AP_GOOGLE_CLIENT_SECRET` environment variables.
-- Only if you build dashboards or alerts on Activepieces logs. Update them to the new grouped names, e.g. `runId` → `flowRun.id` and `err` → `error`.
-- Only if you maintain **custom pieces** (in a fork or built outside the repo). Migrate each one to the bundle model — run `npm run cli -- pieces migrate <piece-name>` (or `--all`), or follow the [migration guide](/build-pieces/misc/migrate-pieces-to-bundles). Pieces that still import `@activepieces/shared` or depend on the now-unpublished libraries will fail to build.
-- Only if your deployment sets `AP_PRE_WARM_CACHE`. Remove it from your environment — it is no longer read. Nothing else is required.
+#### What you need to do
+
+Only if your deployment sets `AP_PRE_WARM_CACHE`. Remove it from your environment — it is no longer read. Nothing else is required.
 
 ## 0.85.4
+
 ### What has changed?
 
 #### Observability: OpenTelemetry replaced with evlog
+
 Logging moved from pino + OpenTelemetry to [evlog](https://evlog.dev). Logs are now one rich event per request/job instead of many small lines, so the JSON shape changed.
 
 **Traces and metrics are no longer exported.** OpenTelemetry tracing produced a huge volume of low-value spans — far more data (and cost) than it was worth — so we dropped it in favour of these wide events, which carry the same context in one place. `AP_OTEL_ENABLED=true` now sends **logs** only, over OTLP.
 
 New optional env vars: `AP_LOG_SAMPLE_RATE_INFO` (percent of info logs to keep, default `100`) and `AP_LOG_KEEP_SLOW_MS` (always keep requests slower than this, default `2000`). Drain settings (`AP_AXIOM_*`, `AP_BETTERSTACK_*`, `AP_LOKI_*`, `AP_HYPERDX_TOKEN`) are unchanged.
 
-**Action:** only if you ingest Activepieces telemetry — update log dashboards to the new shape, and move any trace- or metric-based monitoring to logs.
+#### What you need to do
+
+Only if you ingest Activepieces telemetry — update log dashboards to the new shape, and move any trace- or metric-based monitoring to logs.
 
 #### Referencing step outputs
+
 Previously if you had a step called step_1 you would had to reference it "step_1['the_property_you_want']" but now you must reference it as "step_1['output']['the_property_you_want']", there is already a migration that will take care of this for you, but if you must abide by this new syntax if you are writing/editing step references manually not through the builder.
 You can now also reference the step error via "step_1['error']", these changes come with the error handling feature.
 Also step names there were shown on hover in the builder are now removed, you can right click the step and copy its reference instead.
 
 #### Enforcing same version of docker image on both worker and app servers
+
 Previously if your worker was on a different version of your app server, the worker would work fine most of the time, but because some changes we do will require both of them to be on the same version we added this safeguard.
 
 ## 0.84.0
 
 ### What has changed?
 
-#### Flow Run Log Size Enforcement
+#### Flow run logs have a size cap enforced per run
+
 This is an important behavior change in how flow run logs are stored and capped, but **no action is required** — the existing default (`AP_MAX_FLOW_RUN_LOG_SIZE_MB=50`) is preserved.
 
 - Large step outputs are now offloaded to object storage instead of sitting inline in worker memory, controlled by the new `AP_FLOW_RUN_LOG_SLICE_THRESHOLD_KB` env var (default `32`).
 - Large step input values are replaced with a `(truncated, original size <N>)` placeholder in the log via the new `AP_FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB` env var (default `2`). The step still receives the full value at runtime.
 - Runs whose combined step inputs and outputs exceed `AP_MAX_FLOW_RUN_LOG_SIZE_MB` now terminate with the new `LOG_SIZE_EXCEEDED` status instead of silently trimming inputs. Offloaded outputs still count their original size against the cap.
 - See [Limits → Files & flow run logs](/install/reference/limits#files-flow-run-logs) for the full behavior, environment variables, and defaults.
-- Embedding now requires setting allowed embed origins, which means only the domains listed in the field can embed the app (wildcards are supported). There is also a new env variable `AP_ALLOWED_EMBED_ORIGINS` for setting pre-allowed origins, and a new endpoint for adding these origins — [check docs](/endpoints/embedding/add-allowed-embed-origins).
-- "Sign in with Google" can no longer be enabled from the SSO page in the admin panel — that setting has been removed. It is now controlled solely by the `AP_GOOGLE_CLIENT_ID` and `AP_GOOGLE_CLIENT_SECRET` environment variables. The button only appears when both are set (and the platform's Google auth toggle is enabled).
 
-### Do you need to take action?
-- **Embedding** — if you are embedding your self-hosted activepieces somewhere make sure it's on the allow list
-- Only if you set up Google SSO from the admin panel. Move your Google OAuth2 credentials into the `AP_GOOGLE_CLIENT_ID` and `AP_GOOGLE_CLIENT_SECRET` environment variables.
+#### Embedding requires allowed embed origins
+
+Embedding now requires setting allowed embed origins, which means only the domains listed in the field can embed the app (wildcards are supported). There is also a new env variable `AP_ALLOWED_EMBED_ORIGINS` for setting pre-allowed origins, and a new endpoint for adding these origins — [check docs](/endpoints/embedding/add-allowed-embed-origins).
+
+#### What you need to do
+
+If you are embedding your self-hosted activepieces somewhere make sure it's on the allow list.
+
+#### Sign in with Google is set by environment variables, not the SSO page
+
+"Sign in with Google" can no longer be enabled from the SSO page in the admin panel — that setting has been removed. It is now controlled solely by the `AP_GOOGLE_CLIENT_ID` and `AP_GOOGLE_CLIENT_SECRET` environment variables. The button only appears when both are set (and the platform's Google auth toggle is enabled).
+
+#### What you need to do
+
+Only if you set up Google SSO from the admin panel. Move your Google OAuth2 credentials into the `AP_GOOGLE_CLIENT_ID` and `AP_GOOGLE_CLIENT_SECRET` environment variables.
 
 ## 0.83.0
 
@@ -1766,52 +651,75 @@ When creating a project now, the platform owner email doesn't automatically get 
 
 ### What has changed?
 
-#### Piece Versions Are Now Pinned
+#### Piece versions are now pinned
+
 - Piece versions are no longer stored with wildcards (`~1.2.0`, `^1.2.0`). All piece steps now use exact versions (e.g. `1.2.0`).
 - A migration automatically strips wildcard prefixes from all existing flow versions on upgrade.
 - The `LOCK_AND_PUBLISH` operation no longer resolves piece versions at publish time — steps run with the exact version stored in the flow.
 - A new **version switcher** UI in the builder lets users upgrade or downgrade piece versions manually.
 
-#### REST API
+In the REST API:
+
 - `ADD_ACTION`, `UPDATE_ACTION`, and `UPDATE_TRIGGER` now strip wildcard prefixes (`~`, `^`) from `pieceVersion` before saving. If you were relying on wildcard versions to auto-resolve on publish, your steps will now be pinned to the base version (e.g. `~1.2.0` becomes `1.2.0`).
 - `LOCK_AND_PUBLISH` no longer modifies `pieceVersion` on any step. The version in the draft is the version that will run.
 - A new endpoint `GET /v1/pieces/:name/versions` is available to list all versions of a piece, useful for building custom version selection.
 
-#### Concurrent Jobs Env Var Renamed
-- `AP_MAX_CONCURRENT_JOBS_PER_PROJECT` → `AP_DEFAULT_CONCURRENT_JOBS_LIMIT`. Default drops from `100` to `5`.
+#### What you need to do
+
+If you create or update flows via the REST API with wildcard versions (`~` or `^`), switch to exact versions; wildcards are silently stripped. If your publish flow relied on `LOCK_AND_PUBLISH` resolving wildcards, set the exact version on each step before publishing. Use `GET /v1/pieces/:name/versions` to list available versions.
+
+#### `AP_MAX_CONCURRENT_JOBS_PER_PROJECT` is renamed and its default drops to 5
+
+`AP_MAX_CONCURRENT_JOBS_PER_PROJECT` → `AP_DEFAULT_CONCURRENT_JOBS_LIMIT`. Default drops from `100` to `5`.
+
+#### What you need to do
+
+Rename `AP_MAX_CONCURRENT_JOBS_PER_PROJECT` to `AP_DEFAULT_CONCURRENT_JOBS_LIMIT`. To keep the old cap, set `AP_DEFAULT_CONCURRENT_JOBS_LIMIT=100`.
 
 #### Outbound HTTP is SSRF-filtered
-- Server-side HTTP (OAuth, Vault, Conjur, event destinations, on-call pager, MCP validator) now blocks private, loopback, and cloud-metadata IPs. Reach internal hosts by adding their IP/CIDR to `AP_SSRF_ALLOW_LIST`.
 
-### Do you need to take action?
-- **Pinned piece versions** — if you create or update flows via the REST API with wildcard versions (`~` or `^`), switch to exact versions; wildcards are silently stripped. If your publish flow relied on `LOCK_AND_PUBLISH` resolving wildcards, set the exact version on each step before publishing. Use `GET /v1/pieces/:name/versions` to list available versions.
-- **Concurrent jobs** — rename `AP_MAX_CONCURRENT_JOBS_PER_PROJECT` to `AP_DEFAULT_CONCURRENT_JOBS_LIMIT`. To keep the old cap, set `AP_DEFAULT_CONCURRENT_JOBS_LIMIT=100`.
-- **SSRF filter** — if you self-host Vault, Conjur, an OAuth2 token endpoint, or any internal webhook on a private IP, set `AP_SSRF_ALLOW_LIST` (comma-separated IPs or CIDRs, e.g. `10.0.5.12,192.168.10.0/24`) before upgrading.
+Server-side HTTP (OAuth, Vault, Conjur, event destinations, on-call pager, MCP validator) now blocks private, loopback, and cloud-metadata IPs. Reach internal hosts by adding their IP/CIDR to `AP_SSRF_ALLOW_LIST`.
 
+#### What you need to do
+
+If you self-host Vault, Conjur, an OAuth2 token endpoint, or any internal webhook on a private IP, set `AP_SSRF_ALLOW_LIST` (comma-separated IPs or CIDRs, e.g. `10.0.5.12,192.168.10.0/24`) before upgrading.
 
 ## 0.80.0
 
 ### What has changed?
 
-#### Infrastructure
-- A new environment variable `AP_MAX_WEBHOOK_PAYLOAD_SIZE_MB` has been introduced to control the maximum allowed webhook payload size. The default is `25` MB. Webhooks exceeding this limit will be rejected with a `413 Request Too Long` response.
-- Nginx has been removed from the Docker image. Fastify now serves both the API and the React frontend directly. All API routes are now under the `/api` prefix natively. If you were using `/v1/health` as a health check endpoint (e.g. in Kubernetes probes or load balancer checks), update it to `/api/v1/health`.
-- Secret managers has been refactored, the version in **0.79.0** no longer is supported, it was not used by anyone but it's worth to mention to upgrade to **0.80.0** before considering using the feature
+#### Webhook payloads over 25 MB are rejected
 
-#### API
+A new environment variable `AP_MAX_WEBHOOK_PAYLOAD_SIZE_MB` has been introduced to control the maximum allowed webhook payload size. The default is `25` MB. Webhooks exceeding this limit will be rejected with a `413 Request Too Long` response.
+
+#### What you need to do
+
+If you want to restrict webhook payload sizes below the new `25` MB default, set `AP_MAX_WEBHOOK_PAYLOAD_SIZE_MB` to your desired limit.
+
+#### Nginx is removed and API routes move under `/api`
+
+Nginx has been removed from the Docker image. Fastify now serves both the API and the React frontend directly. All API routes are now under the `/api` prefix natively. If you were using `/v1/health` as a health check endpoint (e.g. in Kubernetes probes or load balancer checks), update it to `/api/v1/health`.
+
+#### What you need to do
+
+If you have custom health checks pointing to `/v1/health`, update them to `/api/v1/health`.
+
+#### Secret managers from 0.79.0 are no longer supported
+
+Secret managers has been refactored, the version in **0.79.0** no longer is supported, it was not used by anyone but it's worth to mention to upgrade to **0.80.0** before considering using the feature
+
+#### Sample data is updated with `UPDATE_SAMPLE_DATA_INFO`
+
 - A new `UPDATE_SAMPLE_DATA_INFO` flow operation has been introduced to handle sample data updates independently.
 - `UPDATE_ACTION` and `UPDATE_TRIGGER` no longer accept or apply changes to `sampleData` in step settings. Any `sampleData` fields sent in these requests will be ignored and the existing sample data will be preserved.
-- A new required `lastUpdatedDate` field has been added to all actions and triggers, tracked automatically by the server. It is not accepted in `UPDATE_ACTION` or `UPDATE_TRIGGER` requests.
 
+#### What you need to do
 
-### Do you need to take action?
-- If you want to restrict webhook payload sizes below the new `25` MB default, set `AP_MAX_WEBHOOK_PAYLOAD_SIZE_MB` to your desired limit.
-- If you are using the API to update sample data on steps via `UPDATE_ACTION` or `UPDATE_TRIGGER`, switch to the new `UPDATE_SAMPLE_DATA_INFO` operation instead.
-- If you have custom health checks pointing to `/v1/health`, update them to `/api/v1/health`.
+If you are using the API to update sample data on steps via `UPDATE_ACTION` or `UPDATE_TRIGGER`, switch to the new `UPDATE_SAMPLE_DATA_INFO` operation instead.
 
+#### Actions and triggers have a server-managed `lastUpdatedDate`
 
-
-
+A new required `lastUpdatedDate` field has been added to all actions and triggers, tracked automatically by the server. It is not accepted in `UPDATE_ACTION` or `UPDATE_TRIGGER` requests.
 
 ## 0.78.1
 
@@ -1822,6 +730,7 @@ When creating a project now, the platform owner email doesn't automatically get 
 - Only if you want to restrict Operators from having editor access to every project. Review your Operator permissions as needed.
 
 ## 0.78.0
+
 ### What has changed?
 
 - The `usageCount` field has been removed from both the template API responses and the database—it's no longer available.
@@ -1831,8 +740,8 @@ When creating a project now, the platform owner email doesn't automatically get 
 
 - If you're using the Todos feature, update your flows to use the new approvals channels available from the approvals tab in the piece selector.
 
-
 ## 0.77.0
+
 ### What has changed?
 
 - For Embed Plan users: the "Use a Template" dialog no longer appears when clicking the "New Flow" button.
@@ -1868,7 +777,6 @@ When creating a project now, the platform owner email doesn't automatically get 
 - **If you are using `AP_DB_TYPE=SQLITE3`:** Update your configuration to use `AP_DB_TYPE=PGLITE` instead.
 - **If you are using templates:** Wait for the next patch release to fix the template IDs.
 
-
 ## 0.73.0
 
 ### What has changed?
@@ -1878,7 +786,6 @@ When creating a project now, the platform owner email doesn't automatically get 
 ### Do you need to take action?
 - If you are currently using MCP, review the linked announcement for important migration details and upgrade guidance.
 - If you are below 0.73.0 and plan to switch `AP_EDITION` from `ce` to `ee`, upgrade to 0.73.0 on your current edition first, then switch. Edition-gated migrations are recorded as run without executing, so switching earlier leaves the schema incomplete.
-
 
 ## 0.71.0
 
@@ -1919,13 +826,11 @@ When creating a project now, the platform owner email doesn't automatically get 
 
 - If you use embedding the embedding SDK, please upgrade to version 0.6.0, `embedding.dashboard.hideSidebar` used to hide the navbar above the flows table in the dashboard now it relies on `embedding.dashboard.hideFlowsPageNavbar`
 
-
 ## 0.64.0
 
 ### What has changed?
 
 - MCP management is removed from the embedding SDK.
-
 
 ## 0.63.0
 
@@ -1985,7 +890,6 @@ When creating a project now, the platform owner email doesn't automatically get 
 
 ### When is action necessary?
 - If you are dealing with large files in the actions, consider increasing the `AP_MAX_FILE_SIZE_MB` to a higher value, and make sure the storage system (database/S3) has enough capacity for the files.
-
 
 ## 0.30.0
 

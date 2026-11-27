@@ -1,103 +1,21 @@
-import { execSync } from 'child_process'
-import { readFileSync, writeFileSync } from 'fs'
+import { execFileSync } from 'child_process'
+import { readdirSync, readFileSync, writeFileSync } from 'fs'
+import { basename, join } from 'path'
+import { breakingChangesRender, ENTRIES_DIR, PUBLISHED_DOC, UNRELEASED_DOC } from './breaking-changes-render'
 
-function isEntryHeading({ line }: { line: string }): boolean {
-    return line.startsWith('#### ') && !line.startsWith('#### What you need to do')
-}
-
-function trimTrailingBlanks({ lines }: { lines: string[] }): string[] {
-    const copy = [...lines]
-    while (copy.length > 0 && copy[copy.length - 1].trim() === '') {
-        copy.pop()
-    }
-    return copy
-}
-
-function parseEntries({ text }: { text: string }): ParsedPage {
-    const lines = text.split('\n')
-    const firstEntry = lines.findIndex((line) => isEntryHeading({ line }))
-    if (firstEntry === -1) {
-        return { preamble: trimTrailingBlanks({ lines }), blocks: [] }
-    }
-    const blocks: string[][] = []
-    for (const line of lines.slice(firstEntry)) {
-        if (isEntryHeading({ line })) {
-            blocks.push([line])
-            continue
-        }
-        blocks[blocks.length - 1].push(line)
-    }
+function rollover({ files, idsAtTag, tag }: { files: EntryFile[], idsAtTag: Set<string>, tag: string }): RolloverResult {
+    const moving = files
+        .map((file) => ({ file, entry: breakingChangesRender.parseEntryFile({ fileName: file.fileName, text: file.text }) }))
+        .filter(({ entry }) => entry.meta.release === undefined && idsAtTag.has(entry.meta.id))
     return {
-        preamble: trimTrailingBlanks({ lines: lines.slice(0, firstEntry) }),
-        blocks: blocks.map((block) => trimTrailingBlanks({ lines: block })),
+        updated: moving.map(({ file }) => ({ fileName: file.fileName, text: breakingChangesRender.setRelease({ text: file.text, release: tag }) })),
+        moved: moving.map(({ entry }) => entry.meta.title),
     }
 }
 
-function joinBlocks({ blocks }: { blocks: string[][] }): string[] {
-    return blocks.flatMap((block, index) => (index === 0 ? block : ['', ...block]))
-}
-
-function renderHidden({ preamble, blocks }: ParsedPage): string {
-    const body = blocks.length === 0 ? [] : ['', ...joinBlocks({ blocks })]
-    return [...preamble, ...body, ''].join('\n')
-}
-
-function insertUnderVersion({ published, tag, blocks }: { published: string, tag: string, blocks: string[][] }): string {
-    const lines = published.split('\n')
-    const heading = `## ${tag}`
-    const existing = lines.indexOf(heading)
-    if (existing !== -1) {
-        let at = existing + 1
-        while (at < lines.length && (lines[at].trim() === '' || lines[at].startsWith('### What has changed?'))) {
-            at += 1
-        }
-        return [...lines.slice(0, at), ...joinBlocks({ blocks }), '', ...lines.slice(at)].join('\n')
-    }
-    const frontmatterEnd = lines.indexOf('---', 1)
-    const at = frontmatterEnd + 1
-    const section = ['', heading, '', '### What has changed?', '', ...joinBlocks({ blocks })]
-    return [...lines.slice(0, at), ...section, ...lines.slice(at)].join('\n')
-}
-
-function duplicateTitles({ blocks }: { blocks: string[][] }): string[] {
-    const seen = new Set<string>()
-    const duplicates = new Set<string>()
-    for (const block of blocks) {
-        const title = block[0].trim()
-        if (seen.has(title)) {
-            duplicates.add(title)
-        }
-        seen.add(title)
-    }
-    return [...duplicates]
-}
-
-function rollover({ hidden, snapshot, published, tag }: RolloverParams): RolloverResult {
-    const current = parseEntries({ text: hidden })
-    const duplicates = duplicateTitles({ blocks: current.blocks })
-    if (duplicates.length > 0) {
-        throw new Error(`Duplicate entry titles on ${UNRELEASED_DOC}; make them unique before releasing: ${duplicates.join(' | ')}`)
-    }
-    const shipped = new Set(parseEntries({ text: snapshot }).blocks.map((block) => block[0].trim()))
-    const moving = current.blocks.filter((block) => shipped.has(block[0].trim()))
-    if (moving.length === 0) {
-        return { hidden, published, moved: [] }
-    }
-    const staying = current.blocks.filter((block) => !shipped.has(block[0].trim()))
-    return {
-        hidden: renderHidden({ preamble: current.preamble, blocks: staying }),
-        published: insertUnderVersion({ published, tag, blocks: moving }),
-        moved: moving.map((block) => block[0].slice(5).trim()),
-    }
-}
-
-function readSnapshot({ tag }: { tag: string }): string {
-    try {
-        return execSync(`git show ${tag}:${UNRELEASED_DOC}`, { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] })
-    }
-    catch {
-        return ''
-    }
+function readIdsAtTag({ tag }: { tag: string }): Set<string> {
+    const listing = execFileSync('git', ['ls-tree', '--name-only', tag, `${ENTRIES_DIR}/`], { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] })
+    return new Set(listing.split('\n').filter((path) => path.endsWith('.md')).map((path) => basename(path, '.md')))
 }
 
 function main(): void {
@@ -111,17 +29,10 @@ function main(): void {
         console.log(`${tag} is a release candidate, nothing to roll over.`)
         return
     }
-    const snapshot = readSnapshot({ tag })
-    if (snapshot === '') {
-        console.log(`No ${UNRELEASED_DOC} at ${tag}, nothing to roll over.`)
-        return
-    }
-    const result = rollover({
-        hidden: readFileSync(UNRELEASED_DOC, 'utf-8'),
-        snapshot,
-        published: readFileSync(PUBLISHED_DOC, 'utf-8'),
-        tag,
-    })
+    const files = readdirSync(ENTRIES_DIR)
+        .filter((fileName) => fileName.endsWith('.md'))
+        .map((fileName) => ({ fileName, text: readFileSync(join(ENTRIES_DIR, fileName), 'utf-8') }))
+    const result = rollover({ files, idsAtTag: readIdsAtTag({ tag }), tag })
     if (result.moved.length === 0) {
         console.log(`No unreleased entry is contained in ${tag}.`)
         return
@@ -132,30 +43,23 @@ function main(): void {
     if (dryRun) {
         return
     }
-    writeFileSync(UNRELEASED_DOC, result.hidden)
-    writeFileSync(PUBLISHED_DOC, result.published)
+    for (const file of result.updated) {
+        writeFileSync(join(ENTRIES_DIR, file.fileName), file.text)
+    }
+    const pages = breakingChangesRender.renderPages({ entries: breakingChangesRender.readEntries({ dir: ENTRIES_DIR }) })
+    writeFileSync(PUBLISHED_DOC, pages.published)
+    writeFileSync(UNRELEASED_DOC, pages.unreleased)
 }
 
-export const breakingChangesRollover = { parseEntries, rollover }
+export const breakingChangesRollover = { rollover }
 
-export const UNRELEASED_DOC = 'docs/install/reference/breaking-changes-unreleased.mdx'
-export const PUBLISHED_DOC = 'docs/install/reference/breaking-changes.mdx'
-
-type ParsedPage = {
-    preamble: string[]
-    blocks: string[][]
-}
-
-type RolloverParams = {
-    hidden: string
-    snapshot: string
-    published: string
-    tag: string
+type EntryFile = {
+    fileName: string
+    text: string
 }
 
 type RolloverResult = {
-    hidden: string
-    published: string
+    updated: EntryFile[]
     moved: string[]
 }
 

@@ -21,9 +21,12 @@ jobs:
         with:
           bun-version: latest
 
+      - name: Install dependencies
+        run: bun install --frozen-lockfile --ignore-scripts
+
       - name: Test the breaking-changes scripts
         run: |
-          bun test tools/scripts/breaking-changes-rollover.test.ts
+          bun test tools/scripts/breaking-changes-rollover.test.ts tools/scripts/breaking-changes-render.test.ts
           bun tools/scripts/breaking-change-check.ts --self-check
 
       - name: Check breaking-change declaration

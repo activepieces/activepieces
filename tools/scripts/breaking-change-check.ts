@@ -1,15 +1,14 @@
 import assert from 'assert'
-import { execSync } from 'child_process'
+import { execFileSync } from 'child_process'
+import { existsSync, readFileSync } from 'fs'
+import { basename } from 'path'
+import { breakingChangesRender, ENTRIES_DIR, PUBLISHED_DOC, UNRELEASED_DOC } from './breaking-changes-render'
 
 const BREAKING_LABEL = '⛓️‍💥 breaking-change'
-const UNRELEASED_DOC = 'docs/install/reference/breaking-changes-unreleased.mdx'
-const PUBLISHED_DOC = 'docs/install/reference/breaking-changes.mdx'
-const UNRELEASED_HEADING = /^##\s+Unreleased\b/i
+const ENTRIES_REQUIRING_IMPACT_FROM = '2026-11-25'
 
 type TemplateChoice = 'yes' | 'no' | 'unset' | 'multiple'
 
-// Both the "Breaking change?" and "Security impact?" sections use no/yes checkboxes,
-// so each section is parsed in isolation — a global scan would conflate the two.
 function sectionChoice({ body, heading }: { body: string, heading: RegExp }): TemplateChoice {
     const match = heading.exec(body)
     if (!match) {
@@ -31,28 +30,31 @@ function sectionChoice({ body, heading }: { body: string, heading: RegExp }): Te
     return checked[0] === 'yes' ? 'yes' : 'no'
 }
 
-// The PR's added lines in `file`, stripped and cleared of blanks and HTML comments —
-// neither may satisfy the "documented the breaking change" requirement.
-function addedDocLines({ baseRef, file }: { baseRef: string, file: string }): string[] {
-    const diff = execSync(
-        `git diff origin/${baseRef}...HEAD -- ${file}`,
-        { encoding: 'utf-8' },
-    )
-    return diff
-        .split('\n')
-        .filter((line) => line.startsWith('+') && !line.startsWith('+++'))
-        .map((line) => line.slice(1).trim())
-        .filter((line) => line.length > 0 && !line.startsWith('<!--'))
+function changedFiles({ baseRef, filter, path }: { baseRef: string, filter: string, path?: string }): string[] {
+    const args = ['diff', '--name-only', `--diff-filter=${filter}`, `origin/${baseRef}...HEAD`, ...(path ? ['--', path] : [])]
+    return execFileSync('git', args, { encoding: 'utf-8' }).split('\n').filter((line) => line.length > 0)
 }
 
-// A real entry has the shape the doc uses: a `####` heading naming what changed, plus
-// at least one line of description/action beneath it. A bare heading, a `---` separator,
-// a version bump, or a stray sentence on its own is not an entry — so a labelled PR
-// cannot pass the docs gate by adding generic content.
-function hasBreakingEntry(added: string[]): boolean {
-    const hasTitle = added.some((line) => /^#{4}\s+\S/.test(line))
-    const hasBody = added.some((line) => !/^#{1,6}\s/.test(line) && !/^[-*_]{3,}$/.test(line))
-    return hasTitle && hasBody
+function isPieceOnly({ files }: { files: string[] }): boolean {
+    return files.length > 0 && files.every((file) => file.startsWith('packages/pieces/'))
+}
+
+function readEntry({ file }: { file: string }): CheckedEntry {
+    try {
+        const entry = breakingChangesRender.parseEntryFile({ fileName: basename(file), text: readFileSync(file, 'utf-8') })
+        return { file, isCurrent: !entry.meta.legacy && entry.meta.added >= ENTRIES_REQUIRING_IMPACT_FROM, missing: ['impact', 'affects'].filter((field) => !(field in entry.meta)), error: undefined }
+    }
+    catch (error) {
+        return { file, isCurrent: true, missing: [], error: error instanceof Error ? error.message : String(error) }
+    }
+}
+
+function stalePages(): string[] {
+    const pages = breakingChangesRender.renderPages({ entries: breakingChangesRender.readEntries({ dir: ENTRIES_DIR }) })
+    return [
+        { file: PUBLISHED_DOC, text: pages.published },
+        { file: UNRELEASED_DOC, text: pages.unreleased },
+    ].filter((page) => readFileSync(page.file, 'utf-8') !== page.text).map((page) => page.file)
 }
 
 function main(): void {
@@ -63,12 +65,13 @@ function main(): void {
     const hasBreakingLabel = labels.includes(BREAKING_LABEL)
     const templateChoice = sectionChoice({ body, heading: /^#{2,3}\s*Breaking change\?/im })
     const securityChoice = sectionChoice({ body, heading: /^#{2,3}\s*Security impact\?/im })
-    const docAdded = hasBreakingEntry(addedDocLines({ baseRef, file: UNRELEASED_DOC }))
-    const publishedAdded = addedDocLines({ baseRef, file: PUBLISHED_DOC })
+    const addedFiles = changedFiles({ baseRef, filter: 'A', path: `${ENTRIES_DIR}/` }).filter((file) => file.endsWith('.md'))
+    const touchedEntries = changedFiles({ baseRef, filter: 'AM', path: `${ENTRIES_DIR}/` }).filter((file) => file.endsWith('.md') && existsSync(file)).map((file) => readEntry({ file }))
+    const addedEntries = touchedEntries.filter((entry) => addedFiles.includes(entry.file) && entry.isCurrent)
+    const pieceOnly = isPieceOnly({ files: changedFiles({ baseRef, filter: 'ACDMR' }) })
 
     const errors: string[] = []
 
-    // R1 — the author must make an explicit breaking-change choice in the PR template.
     if (templateChoice === 'unset') {
         errors.push('The "Breaking change?" section in the PR description is not filled in — tick exactly one box (no / yes-technical / yes-functional).')
     }
@@ -76,7 +79,6 @@ function main(): void {
         errors.push('The "Breaking change?" section has more than one box ticked — tick exactly one.')
     }
 
-    // R2 — the author must explicitly declare security impact (declaration only, no label coupling).
     if (securityChoice === 'unset') {
         errors.push('The "Security impact?" section in the PR description is not filled in — tick exactly one box (no / yes-security-sensitive).')
     }
@@ -84,15 +86,11 @@ function main(): void {
         errors.push('The "Security impact?" section has more than one box ticked — tick exactly one.')
     }
 
-    // R3 — the breaking label, the template answer, and the docs entry must agree.
-    if (hasBreakingLabel && !docAdded) {
-        errors.push(`PR carries the "${BREAKING_LABEL}" label but adds no entry to ${UNRELEASED_DOC}. Document the change (what changed + required action) at the top of that page; the release moves it onto ${PUBLISHED_DOC}.`)
+    if (hasBreakingLabel && addedEntries.length === 0 && !pieceOnly) {
+        errors.push(`PR carries the "${BREAKING_LABEL}" label but adds no entry file to ${ENTRIES_DIR}/. Add one (what changed + What you need to do), then run: bun tools/scripts/breaking-changes-render.ts`)
     }
-    if (docAdded && !hasBreakingLabel) {
-        errors.push(`PR adds an entry to ${UNRELEASED_DOC} but is missing the "${BREAKING_LABEL}" label. Apply the label so it lands in the release notes.`)
-    }
-    if (publishedAdded.some((line) => UNRELEASED_HEADING.test(line))) {
-        errors.push(`"## Unreleased" no longer exists on ${PUBLISHED_DOC}. Add the entry to ${UNRELEASED_DOC} instead; the release rolls it under the version that ships it.`)
+    if (addedEntries.length > 0 && !hasBreakingLabel) {
+        errors.push(`PR adds an entry to ${ENTRIES_DIR}/ but is missing the "${BREAKING_LABEL}" label. Apply the label so it lands in the release notes.`)
     }
     if (templateChoice === 'yes' && !hasBreakingLabel) {
         errors.push(`The PR template declares a breaking change but the "${BREAKING_LABEL}" label is missing. Apply it.`)
@@ -100,13 +98,29 @@ function main(): void {
     if (templateChoice === 'no' && hasBreakingLabel) {
         errors.push(`The PR template declares "not breaking" but carries the "${BREAKING_LABEL}" label — reconcile the two.`)
     }
+    for (const entry of touchedEntries) {
+        if (entry.error) {
+            errors.push(entry.error)
+        }
+    }
+    for (const entry of touchedEntries) {
+        if (entry.isCurrent && !entry.error && entry.missing.length > 0) {
+            errors.push(`${entry.file}: an entry added on or after ${ENTRIES_REQUIRING_IMPACT_FROM} needs ${entry.missing.join(' and ')}.`)
+        }
+    }
+    if (errors.length === 0) {
+        const stale = stalePages()
+        if (stale.length > 0) {
+            errors.push(`${stale.join(' and ')} no longer match the entry files. Run: bun tools/scripts/breaking-changes-render.ts`)
+        }
+    }
 
     if (errors.length > 0) {
         console.error('❌ Breaking-change check failed:\n')
         for (const error of errors) {
             console.error(`   - ${error}`)
         }
-        console.error(`\nSee ${UNRELEASED_DOC} and the PR template for guidance.`)
+        console.error(`\nSee ${ENTRIES_DIR}/ and the PR template for guidance.`)
         process.exit(1)
     }
 
@@ -114,14 +128,20 @@ function main(): void {
 }
 
 function runSelfCheck(): void {
-    assert(hasBreakingEntry(['#### AP_FOO removed', 'It is gone — remove it from your env.']) === true, 'titled entry with a body is a real entry')
-    assert(hasBreakingEntry(['#### AP_FOO removed']) === false, 'a bare heading with no body is not an entry')
-    assert(hasBreakingEntry(['---']) === false, 'a separator is not an entry')
-    assert(hasBreakingEntry(['## 0.87.0', 'Set AP_FOO is gone.']) === false, 'a version bump without a #### title is not an entry')
-    assert(hasBreakingEntry(['Just a stray sentence.']) === false, 'placeholder prose without a title is not an entry')
-    assert(UNRELEASED_HEADING.test('## Unreleased') === true, 'a hand-written Unreleased heading is detected')
-    assert(UNRELEASED_HEADING.test('## 0.92.0') === false, 'a version heading is not an Unreleased heading')
+    assert(isPieceOnly({ files: ['packages/pieces/community/github/src/index.ts', 'packages/pieces/community/github/package.json'] }) === true, 'a PR that only touches pieces is piece-only')
+    assert(isPieceOnly({ files: ['packages/pieces/community/github/src/index.ts', 'packages/server/api/src/app/app.ts'] }) === false, 'a PR that also touches the server is not piece-only')
+    assert(isPieceOnly({ files: [] }) === false, 'an empty diff is not piece-only')
+    assert(sectionChoice({ body: '### Breaking change?\n- [x] no — reviewed\n- [ ] yes — technical', heading: /^#{2,3}\s*Breaking change\?/im }) === 'no', 'a single ticked box is read')
+    assert(sectionChoice({ body: '### Breaking change?\n- [x] no\n- [x] yes — technical', heading: /^#{2,3}\s*Breaking change\?/im }) === 'multiple', 'two ticked boxes are rejected')
+    assert(ENTRIES_REQUIRING_IMPACT_FROM > '2026-11-09', 'converted entries stay exempt from impact and affects')
     console.log('breaking-change-check self-check passed')
+}
+
+type CheckedEntry = {
+    file: string
+    isCurrent: boolean
+    missing: string[]
+    error: string | undefined
 }
 
 if (process.argv.includes('--self-check')) {
