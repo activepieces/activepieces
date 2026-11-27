@@ -1,5 +1,7 @@
 import {
   DynamicPropsValue,
+  MarkdownVariant,
+  Property,
   createAction,
 } from '@activepieces/pieces-framework';
 import { mondayAuth } from '../auth';
@@ -14,8 +16,8 @@ export const updateColumnValuesOfItemAction = createAction({
   auth: mondayAuth,
   name: 'monday_update_column_values_of_item',
   classification: 'WRITE',
-  displayName: 'Update Column Values of Specific Item',
-  description: 'Updates multiple columns values of specific item.',
+  displayName: 'Update Item Column Values',
+  description: 'Changes column values of an existing item.',
   audience: 'human',
   aiMetadata: { description: 'Updates one or more column values on an existing monday.com item identified by board and item id; provided values are auto-coerced to each column\'s type. Use to edit an item\'s fields. Idempotent: re-applying the same values leaves the item in the same state.', idempotent: true },
   outputSchema: updateColumnValuesOfItemActionOutputSchema,
@@ -23,6 +25,10 @@ export const updateColumnValuesOfItemAction = createAction({
     workspace_id: mondayCommon.workspace_id(true),
     board_id: mondayCommon.board_id(true),
     item_id: mondayCommon.item_id(true),
+    info: Property.MarkDown({
+      value: 'Columns you leave empty keep their current value.',
+      variant: MarkdownVariant.INFO,
+    }),
     column_values: mondayCommon.columnValues,
   },
   async run(context) {

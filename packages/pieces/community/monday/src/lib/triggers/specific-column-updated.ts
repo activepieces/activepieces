@@ -1,4 +1,5 @@
 import {
+  MarkdownVariant,
   Property,
   TriggerStrategy,
   createTrigger,
@@ -16,26 +17,36 @@ export const specificColumnValueUpdatedTrigger = createTrigger({
   auth: mondayAuth,
   name: 'monday_specific_column_updated',
   classification: 'READ',
-  displayName: 'Specific Column Value Updated in Board',
-  description: 'Triggers when a specific column value is updated in board.',
+  displayName: 'Column Value Updated',
+  description: 'Fires when a chosen column changes on a board.',
   aiMetadata: {
     description: 'Fires when the value of one chosen column changes on the selected monday.com board. Represents a single-column update event, carrying both the new and previous values for that column.',
   },
   outputSchema: specificColumnUpdatedTriggerOutputSchema,
   props: {
+    info: Property.MarkDown({
+      value: 'Runs each time the chosen column changes, once the flow is published.',
+      variant: MarkdownVariant.INFO,
+    }),
     workspace_id: mondayCommon.workspace_id(true),
     board_id: mondayCommon.board_id(true),
     column_id: Property.Dropdown({
       auth: mondayAuth,
-      displayName: 'Column ID',
+      displayName: 'Column',
       required: true,
       refreshers: ['board_id'],
       options: async ({ auth, board_id }) => {
-        if (!auth || !board_id) {
+        if (!auth) {
           return {
             disabled: true,
-            placeholder:
-              'connect your account first and select workspace board.',
+            placeholder: 'Connect your monday.com account first.',
+            options: [],
+          };
+        }
+        if (!board_id) {
+          return {
+            disabled: true,
+            placeholder: 'Select a board first.',
             options: [],
           };
         }

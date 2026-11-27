@@ -8,7 +8,7 @@ export const updateItemNameAction = createAction({
   name: 'monday_update_item_name',
   classification: 'WRITE',
   displayName: 'Update Item Name',
-  description: 'Updates an item name.',
+  description: 'Renames an item.',
   audience: 'human',
   aiMetadata: { description: 'Renames an existing monday.com item identified by board and item id. Use to change an item\'s title. Idempotent: re-applying the same name leaves the item unchanged.', idempotent: true },
   outputSchema: updateItemNameActionOutputSchema,
@@ -17,7 +17,7 @@ export const updateItemNameAction = createAction({
     board_id: mondayCommon.board_id(true),
     item_id: mondayCommon.item_id(true),
     name: Property.ShortText({
-      displayName: 'New Item name',
+      displayName: 'New Item Name',
       required: true,
     }),
   },
