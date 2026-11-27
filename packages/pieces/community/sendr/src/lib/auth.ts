@@ -17,7 +17,7 @@ Need help? Contact Sendr support at https://sendr.io/support`,
       await httpClient.sendRequest({
         method: HttpMethod.GET,
         url:  'https://api.sendr.io/seat/me',
-        headers: { Authorization: `Bearer ${auth}` },
+        headers: { 'X-API-Key': auth },
       });
       return { valid: true };
     } catch (e) {

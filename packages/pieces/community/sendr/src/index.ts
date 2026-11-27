@@ -61,7 +61,7 @@ export const sendr = createPiece({
       baseUrl: () => BASE_URL,
       auth: sendrAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth.secret_text}`,
+        'X-API-Key': auth.secret_text,
       }),
     }),
   ],
