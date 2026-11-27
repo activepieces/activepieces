@@ -1,5 +1,6 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { beamerAuth } from '../auth';
+import { createNewCommentOutputSchema } from '../output-schemas';
 import { beamerClient } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 
@@ -14,6 +15,7 @@ export const createCommentAction = createAction({
     description: 'Posts a comment on an existing Beamer feature request, identified by its numeric feature request ID. Optionally attributes the comment to a user via user ID or email. Use to add discussion or replies to a feedback item. Appends a new comment on each call (not idempotent).',
     idempotent: false,
   },
+  outputSchema: createNewCommentOutputSchema,
   props: {
     featureRequestId: Property.Number({
       displayName: 'ID',

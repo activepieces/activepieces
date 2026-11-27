@@ -1,4 +1,5 @@
 import { beamerAuth } from '../auth';
+import { createNewFeatureRequestOutputSchema } from '../output-schemas';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { beamerClient } from '../common/client';
@@ -14,6 +15,7 @@ export const createFeatureRequestAction = createAction({
     description: 'Creates a feature request on a Beamer feedback board, attributed to a user by email, with a category (bug, feature request, or improvement), a status (under review, planned, in progress, or completed), and public or internal visibility. Use to log product feedback or roadmap items. Creates a new request on each call (not idempotent).',
     idempotent: false,
   },
+  outputSchema: createNewFeatureRequestOutputSchema,
   props: {
     title: Property.ShortText({
       displayName: 'Title',

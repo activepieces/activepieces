@@ -1,5 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { beamerAuth } from '../auth';
+import { createVoteOutputSchema } from '../output-schemas';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { beamerClient } from '../common/client';
 
@@ -14,6 +15,7 @@ export const createVoteAction = createAction({
     description: 'Casts a vote on an existing Beamer feature request, identified by its numeric feature request ID, optionally attributed to a voter by first name and email. Use to register user support for a feedback item. Records a vote on each call (not idempotent).',
     idempotent: false,
   },
+  outputSchema: createVoteOutputSchema,
   props: {
     featureRequestId: Property.Number({
       displayName: 'Feature ID',

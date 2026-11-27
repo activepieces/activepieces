@@ -2,14 +2,16 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { beamerAuth } from '../auth';
 import { beamerClient } from '../common/client';
+import { createBeamerPostOutputSchema } from '../output-schemas';
 
 export const createPostAction = createAction({
   auth: beamerAuth,
   name: 'create_beamer_post',
+  outputSchema: createBeamerPostOutputSchema,
   classification: 'WRITE',
   displayName: 'Create Beamer Post ',
   description: 'Create a new post in Beamer',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description: 'Publishes a new announcement post to a Beamer account, attributed to a user by email and tagged with a category (new, fix, coming soon, announcement, or improvement). Use to broadcast product news or changelog entries to users. Creates a distinct post on each call (not idempotent).',
     idempotent: false,
