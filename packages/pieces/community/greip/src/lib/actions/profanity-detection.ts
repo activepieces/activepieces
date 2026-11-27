@@ -1,9 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { greipAuth } from '../common/auth';
-import { greipApiCall } from '../common/client';
+import { greipAuth } from '../auth';
+import { greipClient } from '../common/client';
+import { greipProps } from '../common/props';
 
-export const profanityDetection = createAction({
+export const profanityDetectionAction = createAction({
   auth: greipAuth,
   name: 'profanity_detection',
   classification: 'READ',
@@ -54,23 +55,8 @@ export const profanityDetection = createAction({
         ],
       },
     }),
-    mode: Property.StaticDropdown({
-      displayName: 'Environment',
-      description: 'Environment mode for testing or production',
-      required: false,
-      defaultValue: 'live',
-      options: {
-        options: [
-          { label: 'Live', value: 'live' },
-          { label: 'Test', value: 'test' },
-        ],
-      },
-    }),
-    callback: Property.ShortText({
-      displayName: 'JSONP Callback',
-      description: 'Function name for JSONP response format',
-      required: false,
-    }),
+    mode: greipProps.mode({ required: false }),
+    callback: greipProps.callback({ required: false }),
   },
   async run(context) {
     const { text, scoreOnly, listBadWords, format, mode, callback } = context.propsValue;
@@ -99,10 +85,10 @@ export const profanityDetection = createAction({
       queryParams['callback'] = callback;
     }
 
-    return await greipApiCall({
+    return await greipClient.request({
       method: HttpMethod.GET,
       path: '/scoring/profanity',
-      queryParams,
+      query: queryParams,
       auth: context.auth,
     });
   },

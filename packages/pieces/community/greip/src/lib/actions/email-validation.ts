@@ -1,9 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { greipAuth } from '../common/auth';
-import { greipApiCall } from '../common/client';
+import { greipAuth } from '../auth';
+import { greipClient } from '../common/client';
+import { greipProps } from '../common/props';
 
-export const emailValidation = createAction({
+export const emailValidationAction = createAction({
   auth: greipAuth,
   name: 'email_validation',
   classification: 'READ',
@@ -17,42 +18,10 @@ export const emailValidation = createAction({
       description: 'The email address to validate',
       required: true,
     }),
-    format: Property.StaticDropdown({
-      displayName: 'Response Format',
-      description: 'Format of the response',
-      required: false,
-      defaultValue: 'JSON',
-      options: {
-        options: [
-          { label: 'JSON', value: 'JSON' },
-          { label: 'XML', value: 'XML' },
-          { label: 'CSV', value: 'CSV' },
-          { label: 'Newline', value: 'Newline' },
-        ],
-      },
-    }),
-    mode: Property.StaticDropdown({
-      displayName: 'Environment',
-      description: 'Environment mode for testing or production',
-      required: false,
-      defaultValue: 'live',
-      options: {
-        options: [
-          { label: 'Live', value: 'live' },
-          { label: 'Test', value: 'test' },
-        ],
-      },
-    }),
-    userID: Property.ShortText({
-      displayName: 'User Identifier',
-      description: 'Identify requests from specific users for monitoring (e.g., email, phone, user ID)',
-      required: false,
-    }),
-    callback: Property.ShortText({
-      displayName: 'JSONP Callback',
-      description: 'Function name for JSONP response format',
-      required: false,
-    }),
+    format: greipProps.format({ required: false }),
+    mode: greipProps.mode({ required: false }),
+    userID: greipProps.userID({ required: false }),
+    callback: greipProps.callback({ required: false }),
   },
   async run(context) {
     const { email, format, mode, userID, callback } = context.propsValue;
@@ -77,10 +46,10 @@ export const emailValidation = createAction({
       queryParams['callback'] = callback;
     }
 
-    return await greipApiCall({
+    return await greipClient.request({
       method: HttpMethod.GET,
       path: '/scoring/email',
-      queryParams,
+      query: queryParams,
       auth: context.auth,
     });
   },

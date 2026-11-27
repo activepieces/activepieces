@@ -1,12 +1,12 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
-import { greipAuth } from './lib/common/auth';
-import { asnLookup } from './lib/actions/asn-lookup';
-import { binLookup } from './lib/actions/bin-lookup';
-import { ipLookup } from './lib/actions/ip-lookup';
-import { emailValidation } from './lib/actions/email-validation';
-import { profanityDetection } from './lib/actions/profanity-detection';
-import { phoneValidation } from './lib/actions/phone-validation';
+import { greipAuth } from './lib/auth';
+import { asnLookupAction } from './lib/actions/asn-lookup';
+import { binLookupAction } from './lib/actions/bin-lookup';
+import { ipLookupAction } from './lib/actions/ip-lookup';
+import { emailValidationAction } from './lib/actions/email-validation';
+import { profanityDetectionAction } from './lib/actions/profanity-detection';
+import { phoneValidationAction } from './lib/actions/phone-validation';
 import { proxyConnectionDetectedTrigger } from './lib/triggers/proxy-connection-detected';
 import { fraudulentPaymentDetectedTrigger } from './lib/triggers/fraudulent-payment-detected';
 import { profanityTextDetectedTrigger } from './lib/triggers/profanity-text-detected';
@@ -21,7 +21,7 @@ export const greip = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/greip.png',
   categories: [PieceCategory.DEVELOPER_TOOLS],
   authors: ["onyedikachi-david"],
-  actions: [asnLookup, binLookup, ipLookup, emailValidation, profanityDetection, phoneValidation],
+  actions: [asnLookupAction, binLookupAction, ipLookupAction, emailValidationAction, profanityDetectionAction, phoneValidationAction],
   triggers: [
     proxyConnectionDetectedTrigger,
     fraudulentPaymentDetectedTrigger,

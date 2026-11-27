@@ -1,9 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { greipAuth } from '../common/auth';
-import { greipApiCall } from '../common/client';
+import { greipAuth } from '../auth';
+import { greipClient } from '../common/client';
+import { greipProps } from '../common/props';
 
-export const ipLookup = createAction({
+export const ipLookupAction = createAction({
   auth: greipAuth,
   name: 'ip_lookup',
   classification: 'READ',
@@ -22,20 +23,7 @@ export const ipLookup = createAction({
       description: 'Comma-separated list of modules to include: security, currency, timezone, location (e.g., "security,timezone,currency")',
       required: false,
     }),
-    format: Property.StaticDropdown({
-      displayName: 'Response Format',
-      description: 'Format of the response',
-      required: false,
-      defaultValue: 'JSON',
-      options: {
-        options: [
-          { label: 'JSON', value: 'JSON' },
-          { label: 'XML', value: 'XML' },
-          { label: 'CSV', value: 'CSV' },
-          { label: 'Newline', value: 'Newline' },
-        ],
-      },
-    }),
+    format: greipProps.format({ required: false }),
     lang: Property.StaticDropdown({
       displayName: 'Response Language',
       description: 'Language for the response',
@@ -54,28 +42,9 @@ export const ipLookup = createAction({
         ],
       },
     }),
-    mode: Property.StaticDropdown({
-      displayName: 'Environment',
-      description: 'Environment mode for testing or production',
-      required: false,
-      defaultValue: 'live',
-      options: {
-        options: [
-          { label: 'Live', value: 'live' },
-          { label: 'Test', value: 'test' },
-        ],
-      },
-    }),
-    userID: Property.ShortText({
-      displayName: 'User Identifier',
-      description: 'Identify requests from specific users for monitoring (e.g., email, phone, user ID)',
-      required: false,
-    }),
-    callback: Property.ShortText({
-      displayName: 'JSONP Callback',
-      description: 'Function name for JSONP response format',
-      required: false,
-    }),
+    mode: greipProps.mode({ required: false }),
+    userID: greipProps.userID({ required: false }),
+    callback: greipProps.callback({ required: false }),
   },
   async run(context) {
     const { ip, params, format, lang, mode, userID, callback } = context.propsValue;
@@ -108,10 +77,10 @@ export const ipLookup = createAction({
       queryParams['callback'] = callback;
     }
 
-    return await greipApiCall({
+    return await greipClient.request({
       method: HttpMethod.GET,
       path: '/lookup/ip',
-      queryParams,
+      query: queryParams,
       auth: context.auth,
     });
   },

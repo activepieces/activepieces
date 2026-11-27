@@ -1,9 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { greipAuth } from '../common/auth';
-import { greipApiCall } from '../common/client';
+import { greipAuth } from '../auth';
+import { greipClient } from '../common/client';
+import { greipProps } from '../common/props';
 
-export const asnLookup = createAction({
+export const asnLookupAction = createAction({
   auth: greipAuth,
   name: 'asn_lookup',
   classification: 'READ',
@@ -17,37 +18,9 @@ export const asnLookup = createAction({
       description: 'The AS Number to lookup (e.g., AS6167 or 6167)',
       required: true,
     }),
-    format: Property.StaticDropdown({
-      displayName: 'Response Format',
-      description: 'Format of the response',
-      required: false,
-      defaultValue: 'JSON',
-      options: {
-        options: [
-          { label: 'JSON', value: 'JSON' },
-          { label: 'XML', value: 'XML' },
-          { label: 'CSV', value: 'CSV' },
-          { label: 'Newline', value: 'Newline' },
-        ],
-      },
-    }),
-    mode: Property.StaticDropdown({
-      displayName: 'Environment',
-      description: 'Environment mode for testing or production',
-      required: false,
-      defaultValue: 'live',
-      options: {
-        options: [
-          { label: 'Live', value: 'live' },
-          { label: 'Test', value: 'test' },
-        ],
-      },
-    }),
-    callback: Property.ShortText({
-      displayName: 'JSONP Callback',
-      description: 'Function name for JSONP response format',
-      required: false,
-    }),
+    format: greipProps.format({ required: false }),
+    mode: greipProps.mode({ required: false }),
+    callback: greipProps.callback({ required: false }),
   },
   async run(context) {
     const { asn, format, mode, callback } = context.propsValue;
@@ -68,10 +41,10 @@ export const asnLookup = createAction({
       queryParams['callback'] = callback;
     }
 
-    return await greipApiCall({
+    return await greipClient.request({
       method: HttpMethod.GET,
       path: '/lookup/asn',
-      queryParams,
+      query: queryParams,
       auth: context.auth,
     });
   },
