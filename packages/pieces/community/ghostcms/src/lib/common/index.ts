@@ -6,10 +6,14 @@ import { ghostAuth } from '../auth';
 
 export const common = {
   properties: {
-    newsletters: (required = true) => {
+    newsletters: ({
+      required = true,
+      description = 'Newsletters the member is subscribed to.',
+    }: { required?: boolean; description?: string } = {}) => {
       return Property.MultiSelectDropdown({
         auth: ghostAuth,
         displayName: 'Newsletters',
+        description,
         required: required,
         refreshers: [],
         options: async ({ auth }) => {
@@ -39,6 +43,7 @@ export const common = {
       return Property.Dropdown({
         auth: ghostAuth,
         displayName: 'Member',
+        description: 'The member to change.',
         required: required,
         refreshers: [],
         options: async ({ auth }) => {
@@ -67,6 +72,8 @@ export const common = {
     author: Property.Dropdown({
       auth: ghostAuth,
       displayName: 'Author',
+      description: "Staff user shown as the post's author.",
+      width: 'half',
       required: true,
       refreshers: [],
       options: async ({ auth }) => {
@@ -94,6 +101,7 @@ export const common = {
     tags: Property.MultiSelectDropdown({
       auth: ghostAuth,
       displayName: 'Tags',
+      description: 'Existing tags to add to the post.',
       required: false,
       refreshers: [],
       options: async ({ auth }) => {
@@ -169,6 +177,7 @@ export const common = {
       headers: {
         Authorization: `Ghost ${common.jwtFromApiKey(auth.props.apiKey)}`,
       },
+      queryParams: { limit: '100' },
     });
 
     return response.body;
@@ -181,6 +190,7 @@ export const common = {
       headers: {
         Authorization: `Ghost ${common.jwtFromApiKey(auth.props.apiKey)}`,
       },
+      queryParams: { limit: '100' },
     });
 
     return response.body;
@@ -193,6 +203,7 @@ export const common = {
       headers: {
         Authorization: `Ghost ${common.jwtFromApiKey(auth.props.apiKey)}`,
       },
+      queryParams: { limit: '100' },
     });
 
     return response.body;
@@ -205,6 +216,7 @@ export const common = {
       headers: {
         Authorization: `Ghost ${common.jwtFromApiKey(auth.props.apiKey)}`,
       },
+      queryParams: { limit: '100' },
     });
 
     return response.body;

@@ -17,17 +17,20 @@ export const createMember = createAction({
   props: {
     email: Property.ShortText({
       displayName: 'Email',
+      placeholder: 'jane@example.com',
       required: true,
     }),
     name: Property.ShortText({
       displayName: 'Full Name',
+      placeholder: 'Jane Doe',
       required: false,
     }),
     note: Property.ShortText({
       displayName: 'Note',
+      description: 'Private note, visible only to staff.',
       required: false,
     }),
-    newsletters: common.properties.newsletters(false),
+    newsletters: common.properties.newsletters({ required: false }),
   },
 
   async run(context) {

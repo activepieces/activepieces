@@ -18,6 +18,7 @@ export const findMember = createAction({
   props: {
     email: Property.ShortText({
       displayName: 'Email',
+      placeholder: 'jane@example.com',
       required: true,
     }),
   },
