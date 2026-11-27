@@ -11,3 +11,9 @@ export type BoxWebhook = {
 };
 
 export type BoxWebhookTarget = { id: number | string; type: string };
+
+export type BoxEventsPage = {
+  chunk_size?: number;
+  next_stream_position?: string | number;
+  entries?: unknown[];
+};
