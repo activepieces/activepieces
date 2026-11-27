@@ -4,36 +4,35 @@ import { fetchTags, fetchForms, fetchSequences } from '../service';
 import { convertkitAuth } from '../../auth';
 
 export const initiatorValue = Property.ShortText({
-  displayName: 'Initiator Value URL',
-  description: 'The initiator value URL that will trigger the webhook',
+  displayName: 'Link URL',
+  description: 'The link in your email to watch for clicks.',
+  placeholder: 'https://example.com/offer',
   required: true,
 });
 
 export const webhookId = Property.Number({
-  displayName: 'Webhook Id',
-  description: 'The webhook rule id',
+  displayName: 'Webhook ID',
+  description: 'The ID Kit returned when the webhook was created.',
   required: true,
 });
 
 export const targetUrl = Property.ShortText({
   displayName: 'Target URL',
-  description: 'The URL that will be called when the webhook is triggered',
+  description: 'Kit sends the event here.',
+  placeholder: 'https://example.com/kit-webhook',
   required: true,
 });
 
 export const eventParameter = Property.DynamicProperties({
-  displayName: 'Event Parameter',
-  description: 'The required parameter for the event',
+  displayName: 'Event Filter',
+  description:
+    'The tag, form, sequence, product or link the event applies to.',
   required: false,
   refreshers: ['auth', 'event'],
   auth: convertkitAuth,
   props: async ({ auth, event }) => {
     if (!event || !auth) {
-      return {
-        disabled: true,
-        placeholder: 'Select event first',
-        options: [],
-      };
+      return {};
     }
 
     const fields: DynamicPropsValue = {};
@@ -62,7 +61,6 @@ export const eventParameter = Property.DynamicProperties({
       });
       fields[required_parameter] = Property.StaticDropdown({
         displayName: 'Tag',
-        description: 'Choose a Tag',
         required: true,
         options: {
           options,
@@ -81,7 +79,6 @@ export const eventParameter = Property.DynamicProperties({
       });
       fields[required_parameter] = Property.StaticDropdown({
         displayName: 'Form',
-        description: 'Choose a Form',
         required: true,
         options: {
           options,
@@ -100,7 +97,6 @@ export const eventParameter = Property.DynamicProperties({
       });
       fields[required_parameter] = Property.StaticDropdown({
         displayName: 'Sequence',
-        description: 'Choose a Sequence',
         required: true,
         options: {
           options,
@@ -111,7 +107,6 @@ export const eventParameter = Property.DynamicProperties({
 
     const field = {
       displayName: param_label,
-      description: `The ${param_label} parameter for the event`,
       required: true,
     };
 
@@ -128,84 +123,84 @@ export const eventParameter = Property.DynamicProperties({
 
 export const createWebhookParameterOptions: EventOption[] = [
   {
-    label: 'Subscriber activated',
+    label: 'Subscriber Activated',
     value: EventType.subscriberActivate,
     required_parameter: null,
     param_label: null,
     type: null,
   },
   {
-    label: 'Subscriber unsubscribed',
+    label: 'Subscriber Unsubscribed',
     value: EventType.subscriberUnsubscribe,
     required_parameter: null,
     param_label: null,
     type: null,
   },
   {
-    label: 'Subscriber bounced',
+    label: 'Subscriber Bounced',
     value: EventType.subscriberBounce,
     required_parameter: null,
     param_label: null,
     type: null,
   },
   {
-    label: 'Subscriber complained',
+    label: 'Subscriber Complained',
     value: EventType.subscriberComplain,
     required_parameter: null,
     param_label: null,
     type: null,
   },
   {
-    label: 'Form subscribed',
+    label: 'Form Subscribed',
     value: EventType.formSubscribe,
     required_parameter: 'form_id',
-    param_label: 'Form Id',
+    param_label: 'Form ID',
     type: 'number',
   },
   {
-    label: 'Sequence subscribed',
+    label: 'Sequence Subscribed',
     value: EventType.courseSubscribe,
     required_parameter: 'sequence_id',
-    param_label: 'Sequence Id',
+    param_label: 'Sequence ID',
     type: 'number',
   },
   {
-    label: 'Sequence completed',
+    label: 'Sequence Completed',
     value: EventType.courseComplete,
     required_parameter: 'sequence_id',
-    param_label: 'Sequence Id',
+    param_label: 'Sequence ID',
     type: 'number',
   },
   {
-    label: 'Link clicked',
+    label: 'Link Clicked',
     value: EventType.linkClick,
     required_parameter: 'initiator_value',
-    param_label: 'Initiator Value',
+    param_label: 'Link URL',
     type: 'string',
   },
   {
-    label: 'Product purchased',
+    label: 'Product Purchased',
     value: EventType.productPurchase,
     required_parameter: 'product_id',
-    param_label: 'Product Id',
+    param_label: 'Product ID',
     type: 'number',
   },
   {
-    label: 'Tag added to subscriber',
+    label: 'Tag Added To Subscriber',
     value: EventType.tagAdd,
     required_parameter: 'tag_id',
-    param_label: 'Tag Id',
+    param_label: 'Tag ID',
     type: 'number',
   },
   {
-    label: 'Tag removed from subscriber',
+    label: 'Tag Removed From Subscriber',
     value: EventType.tagRemove,
     required_parameter: 'tag_id',
-    param_label: 'Tag Id',
+    param_label: 'Tag ID',
     type: 'number',
   },
   {
-    label: 'Purchase created',
+    label: 'Purchase Created',
     value: EventType.purchaseCreate,
     required_parameter: null,
     param_label: null,
@@ -215,7 +210,7 @@ export const createWebhookParameterOptions: EventOption[] = [
 
 export const event = Property.StaticDropdown({
   displayName: 'Event',
-  description: 'The event that will trigger the webhook',
+  description: 'The Kit event that sends the webhook.',
   required: true,
   options: {
     options: createWebhookParameterOptions,

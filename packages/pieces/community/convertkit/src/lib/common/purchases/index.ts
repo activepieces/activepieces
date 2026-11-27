@@ -2,33 +2,34 @@ import { Property } from '@activepieces/pieces-framework';
 
 export const purchaseId = Property.ShortText({
   displayName: 'Purchase ID',
-  description: 'The purchase ID',
+  description: 'The ID Kit returned when the purchase was created.',
+  placeholder: '1234567',
   required: true,
 });
 
 export const purchaserEmailAddress = Property.ShortText({
-  displayName: 'Email Address',
-  description: 'The email address of the subscriber',
+  displayName: 'Email',
+  description: "The buyer's email address.",
+  placeholder: 'jane@example.com',
   required: true,
 });
 
 export const purchasesPageNumber = Property.Number({
   displayName: 'Page',
-  description:
-    'Page number. Each page of results will contain up to 50 purchases.',
+  description: 'Up to 50 purchases per page.',
   required: true,
   defaultValue: 1,
 });
 
 export const transactionId = Property.Number({
   displayName: 'Transaction ID',
-  description: 'The transaction ID',
+  description: "Your store's ID for this order.",
   required: true,
 });
 
 export const productId = Property.Number({
   displayName: 'Product ID',
-  description: 'The product ID',
+  description: "Your store's ID for the product.",
   required: true,
 });
 
@@ -36,20 +37,20 @@ export const productId = Property.Number({
 
 export const status = Property.StaticDropdown({
   displayName: 'Status',
-  description: 'The status of the purchase',
+  description: 'Payment status of the order.',
   required: false,
   options: {
     options: [
-      { label: 'paid', value: 'paid' },
-      { label: 'pending', value: 'pending' },
-      { label: 'failed', value: 'failed' },
+      { label: 'Paid', value: 'paid' },
+      { label: 'Pending', value: 'pending' },
+      { label: 'Failed', value: 'failed' },
     ],
   },
 });
 
 export const currency = Property.StaticDropdown({
   displayName: 'Currency',
-  description: 'The currency of the purchase',
+  description: 'Currency of every amount on this purchase.',
   required: true,
   options: {
     options: [
@@ -89,76 +90,70 @@ export const currency = Property.StaticDropdown({
 
 export const transactionTime = Property.DateTime({
   displayName: 'Transaction Time',
-  description: 'The transaction time',
+  description: 'When the order was placed.',
+  placeholder: '2026-01-31',
   required: false,
 });
 
 export const subtotal = Property.Number({
   displayName: 'Subtotal',
-  description: 'The subtotal',
   required: false,
 });
 
 export const shipping = Property.Number({
   displayName: 'Shipping',
-  description: 'The shipping',
   required: false,
 });
 
 export const discount = Property.Number({
   displayName: 'Discount',
-  description: 'The discount',
   required: false,
 });
 
 export const tax = Property.Number({
   displayName: 'Tax',
-  description: 'The tax',
   required: false,
 });
 
 export const total = Property.Number({
   displayName: 'Total',
-  description: 'The total',
+  description: 'The amount the buyer paid.',
   required: false,
 });
 
 export const products = {
   pid: Property.Number({
     displayName: 'Product ID',
-    description: 'The product ID',
+    description: "Your store's ID for the product.",
     required: true,
   }),
   lid: Property.Number({
     displayName: 'Line Item ID',
-    description: 'The line item ID',
+    description: "Your store's ID for this order line.",
     required: true,
   }),
   name: Property.ShortText({
-    displayName: 'Name',
-    description: 'The name of the product',
+    displayName: 'Product Name',
     required: true,
   }),
   sku: Property.ShortText({
     displayName: 'SKU',
-    description: 'The SKU of the product',
     required: false,
   }),
   unit_price: Property.Number({
     displayName: 'Unit Price',
-    description: 'The unit price of the product',
     required: true,
   }),
   quantity: Property.Number({
     displayName: 'Quantity',
-    description: 'The quantity of the product',
     required: true,
   }),
 };
 
 export const multipleProducts = Property.Json({
   displayName: 'Products',
-  description: 'The products',
+  description:
+    'A JSON list; each item needs pid, lid, name, unit_price and quantity.',
   required: true,
   defaultValue: [
     {
