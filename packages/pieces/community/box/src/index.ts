@@ -1,22 +1,10 @@
-import {
-  createPiece,
-  OAuth2PropertyValue,
-  PieceAuth,
-} from '@activepieces/pieces-framework';
-
+import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/pieces-framework';
-import { common } from './lib/common';
-import { newComment } from './lib/triggers/new-comment';
-import { newFile } from './lib/triggers/new-file';
-import { newFolder } from './lib/triggers/new-folder';
-
-export const boxAuth = PieceAuth.OAuth2({
-  required: true,
-  authUrl: 'https://account.box.com/api/oauth2/authorize',
-  tokenUrl: 'https://api.box.com/oauth2/token',
-  scope: ['manage_webhook', 'root_readonly', 'root_readwrite'],
-});
+import { boxAuth } from './lib/auth';
+import { boxClient } from './lib/common/client';
+import { newCommentTrigger } from './lib/triggers/new-comment';
+import { newFileTrigger } from './lib/triggers/new-file';
+import { newFolderTrigger } from './lib/triggers/new-folder';
 
 export const box = createPiece({
   displayName: 'Box',
@@ -29,12 +17,12 @@ export const box = createPiece({
   authors: ["kishanprmr","MoShizzle","abuaboud"],
   actions: [
     createCustomApiCallAction({
-      baseUrl: () => common.baseUrl,
+      baseUrl: () => boxClient.baseUrl(),
       auth: boxAuth,
       authMapping: async (auth) => ({
         Authorization: `Bearer ${auth.access_token}`,
       }),
     }),
   ],
-  triggers: [newFile, newFolder, newComment],
+  triggers: [newFileTrigger, newFolderTrigger, newCommentTrigger],
 });
