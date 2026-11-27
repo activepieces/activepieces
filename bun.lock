@@ -10507,6 +10507,19 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/zenrows": {
+      "name": "@activepieces/piece-zenrows",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/zeplin": {
       "name": "@activepieces/piece-zeplin",
       "version": "0.1.2",
@@ -13149,6 +13162,8 @@
     "@activepieces/piece-zendesk": ["@activepieces/piece-zendesk@workspace:packages/pieces/community/zendesk"],
 
     "@activepieces/piece-zendesk-sell": ["@activepieces/piece-zendesk-sell@workspace:packages/pieces/community/zendesk-sell"],
+
+    "@activepieces/piece-zenrows": ["@activepieces/piece-zenrows@workspace:packages/pieces/community/zenrows"],
 
     "@activepieces/piece-zeplin": ["@activepieces/piece-zeplin@workspace:packages/pieces/community/zeplin"],
 
