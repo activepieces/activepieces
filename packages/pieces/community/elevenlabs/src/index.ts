@@ -93,7 +93,7 @@ import { updateTool } from './lib/actions/ai/update-tool';
 import { getApiKey, getRegionApiUrl } from './lib/common';
 
 const customApiCallDescription = `
-Check [Elevenlabs API reference](https://elevenlabs.io/docs/api-reference/introduction)
+Check [ElevenLabs API reference](https://elevenlabs.io/docs/api-reference/introduction)
 for the list of available endpoints.
 `
 
@@ -195,17 +195,19 @@ export const elevenlabs = createPiece({
     updateSecret,
     updateTool,
     createCustomApiCallAction({
-      // it would be more useful to have hint for URL
       description: customApiCallDescription,
-      // missing propsValue to not override url when credentials are changed
-      // @see packages/pieces/common/src/lib/helpers/index.ts:65
+      props: {
+        url: {
+          description: "Full URL, or a path relative to your region's ElevenLabs API address.",
+          placeholder: '/v1/voices',
+        },
+      },
       baseUrl: (auth) => {
         return getRegionApiUrl(auth?.props.region)
       },
       auth: elevenlabsAuth,
       authMapping: async (auth) => {
         return ({
-          // keep old plain value for bc
           'xi-api-key': `${getApiKey(auth.props.apiKey)}`,
         })
       },
