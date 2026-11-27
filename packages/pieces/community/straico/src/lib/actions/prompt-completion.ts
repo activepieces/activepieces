@@ -16,23 +16,45 @@ export const promptCompletion = createAction({
   name: 'prompt_completion',
   displayName: 'Ask AI',
   description:
-    'Enables users to generate prompt completion based on a specified model.',
+    'Send a question or instruction to a Straico model and get a text reply.',
   aiMetadata: { description: 'Sends a single prompt to any chat model in the Straico catalog and returns the completion text, optionally grounding it in attached context: up to four file URLs, up to four YouTube video URLs and image URLs, with transcripts returned when requested. This is the general-purpose text action; prefer RAG Prompt Completion to search an indexed knowledge base, Agent Prompt Completion to reuse a saved persona, and Image Generation for pictures. Requires a model and a prompt; attached files and images must first be hosted by Upload File, and enabling transcripts without a file or YouTube URL fails. Not idempotent: each call spends credits and returns a fresh completion.', idempotent: false },
+  propertyGroups: [
+    {
+      key: 'settings',
+      display: 'section',
+      label: 'Settings',
+      icon: 'sliders',
+      props: ['model', 'temperature', 'maxTokens'],
+    },
+    {
+      key: 'message',
+      display: 'section',
+      label: 'Message',
+      icon: 'text',
+      props: ['prompt'],
+    },
+    {
+      key: 'attachments',
+      display: 'section',
+      label: 'Attachments',
+      icon: 'paperclip',
+      props: ['fileUrls', 'youtubeUrls', 'imageUrls', 'displayTranscripts'],
+    },
+  ],
   props: {
     model: Property.Dropdown({
   auth: straicoAuth,
 
       displayName: 'Model',
       required: true,
-      description:
-        'The model which will generate the completion. Some models are suitable for natural language tasks, others specialize in code.',
+      description: 'The Straico chat model that writes the reply.',
       refreshers: [],
       defaultValue: 'openai/gpt-4o-mini',
       options: async ({ auth }) => {
         if (!auth) {
           return {
             disabled: true,
-            placeholder: 'Enter your API key first',
+            placeholder: 'Connect your Straico account first',
             options: [],
           };
         }
@@ -72,40 +94,43 @@ export const promptCompletion = createAction({
       },
     }),
     prompt: Property.LongText({
-      displayName: 'Prompt',
+      displayName: 'Question',
       required: true,
-      description: 'The prompt text for which completions are requested',
+      description: 'What you want the model to answer or do.',
+      placeholder: 'e.g. Summarize this email in three bullet points',
     }),
     fileUrls: Property.Array({
       displayName: 'File URLs',
       required: false,
-      description: 'URLs of files to be processed by the model (maximum 4 URLs), previously uploaded via the File Upload endpoint',
+      description: 'Up to 4 file URLs, such as the output of Upload File.',
     }),
     youtubeUrls: Property.Array({
       displayName: 'YouTube URLs',
       required: false,
-      description: 'URLs of YouTube videos to be processed by the model (maximum 4 URLs)',
+      description: 'Up to 4 YouTube video URLs for the model to watch.',
     }),
     imageUrls: Property.Array({
       displayName: 'Image URLs',
       required: false,
-      description: 'URLs of images to be processed by the model, previously uploaded via the File Upload endpoint',
+      description: 'Image URLs for the model to look at, such as from Upload File.',
     }),
     displayTranscripts: Property.Checkbox({
-      displayName: 'Display Transcripts',
+      displayName: 'Return Transcripts',
       required: false,
-      description: 'If true, returns transcripts of the files. Note: Either File URLs or YouTube URLs are required when this is enabled',
+      description: 'Also return the transcripts of the files or YouTube videos.',
       defaultValue: false,
     }),
     temperature: Property.Number({
       displayName: 'Temperature',
       required: false,
-      description: 'This setting influences the variety in the model\'s responses (0-2)',
+      width: 'half',
+      description: 'From 0 to 2. Lower is more focused, higher is more varied.',
     }),
     maxTokens: Property.Number({
-      displayName: 'Max Tokens',
+      displayName: 'Maximum Tokens',
       required: false,
-      description: 'Set the limit for the number of tokens the model can generate in response',
+      width: 'half',
+      description: 'Longest reply in tokens. Empty: model default.',
     }),
   },
   async run({ auth, propsValue }) {

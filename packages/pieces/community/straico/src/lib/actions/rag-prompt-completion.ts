@@ -12,32 +12,43 @@ export const ragPromptCompletion = createAction({
   auth: straicoAuth,
   name: 'rag_prompt_completion',
   displayName: 'RAG Prompt Completion',
-  description: 'Send a prompt to a specific RAG (Retrieval-Augmented Generation) model.',
+  description: "Ask a question answered from a knowledge base's files.",
   aiMetadata: { description: 'Answers a question from the documents indexed in one specific RAG knowledge base, returning the answer together with the source passages it was drawn from, and letting retrieval run as plain similarity, MMR for diversity or a similarity score threshold. Pick it when the reply must come from uploaded documents rather than model memory; prefer Ask AI when no document grounding is needed and Agent Prompt Completion when a saved agent already carries the model, persona and knowledge base. Requires a raw RAG id typed as text plus a prompt and an explicit chat model. Not idempotent: each call spends credits and returns a fresh answer.', idempotent: false },
+  propertyGroups: [
+    {
+      key: 'query',
+      display: 'section',
+      label: 'Query',
+      icon: 'send',
+      props: ['ragId', 'model', 'prompt'],
+    },
+  ],
   props: {
     ragId: Property.ShortText({
       displayName: 'RAG ID',
       required: true,
-      description: 'The ID of the RAG base to query',
+      description: 'The knowledge base (RAG) ID. Find it with the List RAGs action.',
+      placeholder: 'e.g. 66a1f0c2b3d4e5f6a7b8c9d0',
     }),
     prompt: Property.LongText({
-      displayName: 'Prompt',
+      displayName: 'Question',
       required: true,
-      description: 'A text prompt for the RAG model',
+      description: 'What to ask the knowledge base.',
+      placeholder: 'e.g. What is our refund policy?',
     }),
     model: Property.Dropdown({
   auth: straicoAuth,
 
       displayName: 'Model',
       required: true,
-      description: 'The specific LLM to be used',
+      description: 'The chat model that writes the answer.',
       refreshers: [],
       defaultValue: 'openai/gpt-4o-mini',
       options: async ({ auth }) => {
         if (!auth) {
           return {
             disabled: true,
-            placeholder: 'Enter your API key first',
+            placeholder: 'Connect your Straico account first',
             options: [],
           };
         }
@@ -81,7 +92,8 @@ export const ragPromptCompletion = createAction({
     searchType: Property.StaticDropdown({
       displayName: 'Search Type',
       required: false,
-      description: 'Type of search to perform',
+      advanced: true,
+      description: 'How passages are picked. Empty: Similarity.',
       options: {
         options: [
           { label: 'Similarity', value: 'similarity' },
@@ -91,24 +103,28 @@ export const ragPromptCompletion = createAction({
       },
     }),
     k: Property.Number({
-      displayName: 'Number of Documents',
+      displayName: 'Number of Passages',
       required: false,
-      description: 'Number of documents to return',
+      advanced: true,
+      description: 'How many passages to use.',
     }),
     fetchK: Property.Number({
       displayName: 'Fetch K',
       required: false,
-      description: 'Amount of documents to pass to MMR algorithm',
+      advanced: true,
+      description: 'MMR only. Passages considered before picking.',
     }),
     lambdaMult: Property.Number({
       displayName: 'Lambda Mult',
       required: false,
-      description: 'Diversity of results return by MMR (1 for minimum and 0 for maximum)',
+      advanced: true,
+      description: 'MMR only. From 0 to 1. Lower gives more varied passages.',
     }),
     scoreThreshold: Property.Number({
       displayName: 'Score Threshold',
       required: false,
-      description: 'Minimum relevance threshold for similarity_score_threshold',
+      advanced: true,
+      description: 'Similarity Score Threshold only. Minimum relevance, 0 to 1.',
     }),
   },
   async run({ auth, propsValue }) {
