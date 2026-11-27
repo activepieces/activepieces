@@ -260,6 +260,8 @@
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
   "HEAD": "HOOFD",
+  "Request": "Aanvraag",
+  "Data to send": "Gegevens om te verzenden",
   "New Link Created": "Nieuwe link aangemaakt",
   "Fires when a new short link is created on a domain. Useful to sync newly created links to other systems.": "Vuurt wanneer er een nieuwe korte link wordt gemaakt op een domein. Handig om nieuwe koppelingen te synchroniseren met andere systemen.",
   "Polling Interval": "Polling Interval",

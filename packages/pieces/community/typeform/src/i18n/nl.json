@@ -205,7 +205,19 @@
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
   "HEAD": "HOOFD",
+  "New form": "Nieuw formulier",
+  "Form content": "Formuliervulling",
+  "Original": "Origineel",
+  "The copy": "De kopie",
+  "Target": "Doel",
+  "Changes": "Wijzigingen",
+  "Search in": "Zoeken in",
+  "Filters": "Filters",
+  "Results": "Resultaten",
+  "Request": "Aanvraag",
+  "Data to send": "Gegevens om te verzenden",
   "New Submission": "Nieuwe inzending",
   "Triggers when someone submits the form.": "Triggers when someone submits the form.",
-  "A webhook is added to this form in Typeform when you publish the flow, and removed when you turn it off.": "A webhook is added to this form in Typeform when you publish the flow, and removed when you turn it off."
+  "A webhook is added to this form in Typeform when you publish the flow, and removed when you turn it off.": "A webhook is added to this form in Typeform when you publish the flow, and removed when you turn it off.",
+  "Watch": "Bekijken"
 }

@@ -41,14 +41,18 @@
   "PUT": "PUT",
   "DELETE": "削除",
   "HEAD": "頭",
-  "Request": "Request",
-  "Data to send": "Data to send",
+  "Request": "リクエストキー",
+  "Data to send": "送信するデータ",
   "New Response": "新しい回答",
-  "Triggers when someone submits or edits a response to the form.": "Triggers when someone submits or edits a response to the form.",
+  "Triggers when someone submits a response to the form. Can also trigger when a respondent edits their response.": "Triggers when someone submits a response to the form. Can also trigger when a respondent edits their response.",
   "Markdown": "Markdown",
   "Form": "フォーム",
   "Include Shared Drives": "Include Shared Drives",
-  "Checks the form every few minutes. A response starts the flow when it is sent or edited after the flow is published.": "Checks the form every few minutes. A response starts the flow when it is sent or edited after the flow is published.",
+  "Run On": "実行時に",
+  "Checks the form every few minutes. With **New responses only**, each response starts the flow once, when it is first sent. With **New and edited responses**, it also starts the flow again every time the respondent edits and resends it (respondents can only edit when **Allow response editing** is on in the form settings). Only responses sent after the flow is published count. Upgrading the piece version in the builder pre-selects **New responses only**; choose **New and edited responses** to keep the old beh": "フォームを数分おきに確認します。**New responses only** を選ぶと、各回答は最初に送信されたときに1回だけフローを開始します。**New and edited responses** を選ぶと、回答者が回答を編集して再送信するたびに、フローが再び開始されます（回答者が編集できるのは、フォーム設定で **Allow response editing** がオンのときだけです）。フローが公開された後に送信された回答のみがカウントされます。ビルダーで piece のバージョンをアップグレードすると、**New responses only** があらかじめ選択されます。以前の動作を維持するには、**New and edited responses** を選択してください。",
   "The form to watch for new responses.": "The form to watch for new responses.",
-  "Also include forms stored in shared drives.": "Also include forms stored in shared drives."
+  "Also include forms stored in shared drives.": "Also include forms stored in shared drives.",
+  "Choose whether an edited response starts the flow again.": "編集された回答でフローを再度開始するかどうかを選択します。",
+  "New responses only": "新しい回答のみ",
+  "New and edited responses": "新しい回答と編集済みの回答"
 }

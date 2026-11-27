@@ -5,17 +5,14 @@ import {
 	AppConnectionValueForAuthProperty,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
+import { Client } from '@microsoft/microsoft-graph-client';
 import { microsoftTeamsProps } from '../common/props';
 import { microsoftTeamsClient } from '../common/client';
+import { microsoftTeamsUtils } from '../common/utils';
 import type { ChatMessage, MicrosoftTeamsPage } from '../common/types';
 import dayjs from 'dayjs';
 
-import { isNil } from '@activepieces/pieces-framework';
 import { newChatMessageOutputSchema } from '../output-schemas';
-
-type Props = {
-	chatId: string;
-};
 
 export const newChatMessageTrigger = createTrigger({
 	auth: microsoftTeamsAuth,
@@ -83,42 +80,16 @@ export const newChatMessageTrigger = createTrigger({
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftTeamsAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
-	async items({ auth, propsValue, lastFetchEpochMS, store }) {
+	async items({ auth, propsValue, lastFetchEpochMS }) {
 		const { chatId } = propsValue;
 		const client = microsoftTeamsClient.create({ auth });
 
-		const messages: ChatMessage[] = [];
+		const messages =
+			lastFetchEpochMS === 0
+				? await listLatestMessages({ client, chatId })
+				: await listMessagesChangedSince({ client, chatId, since: lastFetchEpochMS });
 
-		if (lastFetchEpochMS === 0) {
-			const response: MicrosoftTeamsPage<ChatMessage> = await microsoftTeamsClient.withRetry(() =>
-				client.api(`/chats/${chatId}/messages`).top(5).get(),
-			);
-
-			if (!isNil(response.value)) {
-				messages.push(...response.value);
-			}
-		} else {
-			const requestUrl =
-				(await store.get<string>('deltalink')) ?? `/chats/${chatId}/messages/delta`;
-			let nextLink: string | null = requestUrl;
-			while (nextLink) {
-				const url = nextLink;
-				const response: MicrosoftTeamsPage<ChatMessage> = await microsoftTeamsClient.withRetry(() => client.api(url).get());
-				const chatMessages = response.value;
-
-				if (Array.isArray(chatMessages)) {
-					messages.push(...chatMessages);
-				}
-
-				nextLink = response['@odata.nextLink'] ?? null;
-
-				if (response['@odata.deltaLink']) {
-					await store.put<string>('deltalink', response['@odata.deltaLink']);
-				}
-			}
-		}
-
-		return messages.map((message: ChatMessage) => {
+		return messages.filter(microsoftTeamsUtils.isPostedMessage).map((message: ChatMessage) => {
 			return {
 				epochMilliSeconds: dayjs(message.createdDateTime).valueOf(),
 				data: message,
@@ -127,4 +98,42 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftTeamsAu
 	},
 };
 
+async function listLatestMessages({ client, chatId }: { client: Client; chatId: string }): Promise<ChatMessage[]> {
+	const response: MicrosoftTeamsPage<ChatMessage> = await microsoftTeamsClient.withRetry(() =>
+		client.api(`/chats/${chatId}/messages`).top(5).get(),
+	);
+	return response.value ?? [];
+}
 
+async function listMessagesChangedSince({
+	client,
+	chatId,
+	since,
+}: {
+	client: Client;
+	chatId: string;
+	since: number;
+}): Promise<ChatMessage[]> {
+	const messages: ChatMessage[] = [];
+	let response: MicrosoftTeamsPage<ChatMessage> = await microsoftTeamsClient.withRetry(() =>
+		client
+			.api(`/chats/${chatId}/messages`)
+			.filter(`lastModifiedDateTime gt ${new Date(since).toISOString()}`)
+			.orderby('lastModifiedDateTime desc')
+			.top(PAGE_SIZE)
+			.get(),
+	);
+	messages.push(...(response.value ?? []));
+	while (response['@odata.nextLink']) {
+		const nextLink = response['@odata.nextLink'];
+		response = await microsoftTeamsClient.withRetry(() => client.api(nextLink).get());
+		messages.push(...(response.value ?? []));
+	}
+	return messages;
+}
+
+const PAGE_SIZE = 50;
+
+type Props = {
+	chatId: string;
+};

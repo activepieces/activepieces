@@ -3,19 +3,19 @@ import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-com
 import {
 	createTrigger,
 	AppConnectionValueForAuthProperty,
+	Store,
 	TriggerStrategy,
+	tryCatch,
 } from '@activepieces/pieces-framework';
+import { Client } from '@microsoft/microsoft-graph-client';
 import { microsoftTeamsProps } from '../common/props';
 import { microsoftTeamsClient } from '../common/client';
+import { microsoftTeamsUtils } from '../common/utils';
 import type { ChatMessage, MicrosoftTeamsPage } from '../common/types';
 import dayjs from 'dayjs';
 
 import { isNil } from '@activepieces/pieces-framework';
 import { newChannelMessageOutputSchema } from '../output-schemas';
-type Props = {
-	teamId: string;
-	channelId: string;
-};
 
 export const newChannelMessageTrigger = createTrigger({
 	auth: microsoftTeamsAuth,
@@ -36,6 +36,7 @@ export const newChannelMessageTrigger = createTrigger({
 		await pollingHelper.onEnable(polling, context);
 	},
 	async onDisable(context) {
+		await context.store.delete(DELTA_LINK_KEY);
 		await pollingHelper.onDisable(polling, context);
 	},
 	async test(context) {
@@ -92,43 +93,83 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftTeamsAu
 		const { teamId, channelId } = propsValue;
 		const client = microsoftTeamsClient.create({ auth });
 
-		const messages: ChatMessage[] = [];
+		const messages =
+			lastFetchEpochMS === 0
+				? await listLatestMessages({ client, teamId, channelId })
+				: await readChannelDelta({ client, store, teamId, channelId, since: lastFetchEpochMS });
 
-		if (lastFetchEpochMS === 0) {
-			const response: MicrosoftTeamsPage<ChatMessage> = await microsoftTeamsClient.withRetry(() =>
-				client.api(`/teams/${teamId}/channels/${channelId}/messages`).top(5).get(),
-			);
-
-			if (!isNil(response.value)) {
-				messages.push(...response.value);
-			}
-		} else {
-			const requestUrl =
-				(await store.get<string>('deltalink')) ??
-				`/teams/${teamId}/channels/${channelId}/messages/delta`;
-			let nextLink: string | null = requestUrl;
-			while (nextLink) {
-				const url = nextLink;
-				const response: MicrosoftTeamsPage<ChatMessage> = await microsoftTeamsClient.withRetry(() => client.api(url).get());
-				const channelMessages = response.value;
-
-				if (Array.isArray(channelMessages)) {
-					messages.push(...channelMessages);
-				}
-
-				nextLink = response['@odata.nextLink'] ?? null;
-
-				if (response['@odata.deltaLink']) {
-					await store.put<string>('deltalink', response['@odata.deltaLink']);
-				}
-			}
-		}
-
-		return messages.map((message: ChatMessage) => {
+		return messages.filter(microsoftTeamsUtils.isPostedMessage).map((message: ChatMessage) => {
 			return {
 				epochMilliSeconds: dayjs(message.createdDateTime).valueOf(),
 				data: message,
 			};
 		});
 	},
+};
+
+async function listLatestMessages({ client, teamId, channelId }: ChannelParams): Promise<ChatMessage[]> {
+	const response: MicrosoftTeamsPage<ChatMessage> = await microsoftTeamsClient.withRetry(() =>
+		client.api(`/teams/${teamId}/channels/${channelId}/messages`).top(5).get(),
+	);
+	return response.value ?? [];
+}
+
+async function readChannelDelta({
+	client,
+	store,
+	teamId,
+	channelId,
+	since,
+}: ChannelParams & { store: Store; since: number }): Promise<ChatMessage[]> {
+	const startUrl = `/teams/${teamId}/channels/${channelId}/messages/delta?$filter=lastModifiedDateTime gt ${new Date(since).toISOString()}`;
+	const savedLink = await store.get<string>(DELTA_LINK_KEY);
+	const resumeLink =
+		!isNil(savedLink) && decodeURIComponent(savedLink).includes(`/teams/${teamId}/channels/${channelId}/`) ? savedLink : null;
+	if (isNil(resumeLink)) {
+		return readDeltaPages({ client, store, url: startUrl });
+	}
+	const { data, error } = await tryCatch(() => readDeltaPages({ client, store, url: resumeLink }));
+	if (error === null) {
+		return data;
+	}
+	if (!REJECTED_LINK_STATUS_CODES.includes(microsoftTeamsClient.errorStatusCode({ error }))) {
+		throw error;
+	}
+	await store.delete(DELTA_LINK_KEY);
+	return readDeltaPages({ client, store, url: startUrl });
+}
+
+async function readDeltaPages({ client, store, url }: { client: Client; store: Store; url: string }): Promise<ChatMessage[]> {
+	const startedAt = Date.now();
+	const messages: ChatMessage[] = [];
+	let nextUrl: string | undefined = url;
+	while (nextUrl) {
+		const requestUrl: string = nextUrl;
+		const response: MicrosoftTeamsPage<ChatMessage> = await microsoftTeamsClient.withRetry(() => client.api(requestUrl).get());
+		messages.push(...(response.value ?? []));
+		nextUrl = response['@odata.nextLink'];
+		const deltaLink = response['@odata.deltaLink'];
+		if (deltaLink) {
+			await store.put<string>(DELTA_LINK_KEY, deltaLink);
+		} else if (nextUrl && Date.now() - startedAt > TIME_BUDGET_MS) {
+			await store.put<string>(DELTA_LINK_KEY, nextUrl);
+			return messages;
+		}
+	}
+	return messages;
+}
+
+const DELTA_LINK_KEY = 'deltalink';
+const TIME_BUDGET_MS = 40_000;
+const REJECTED_LINK_STATUS_CODES = [400, 404, 410];
+
+type Props = {
+	teamId: string;
+	channelId: string;
+};
+
+type ChannelParams = {
+	client: Client;
+	teamId: string;
+	channelId: string;
 };

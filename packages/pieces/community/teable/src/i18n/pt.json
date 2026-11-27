@@ -141,6 +141,8 @@
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
   "HEAD": "CABEÇA",
+  "Request": "Solicitação",
+  "Data to send": "Dados a enviar",
   "New Record": "Novo Registro",
   "Updated Record": "Updated Record",
   "Triggers when a new record is created in a table.": "Triggers when a new record is created in a table.",

@@ -37,16 +37,17 @@ async function withRetry<T>(requestFn: () => Promise<T>): Promise<T> {
       const error: MicrosoftTeamsGraphError = typeof e === 'object' && e !== null ? e : {};
       const status = extractStatusCode({ error });
       const code = error.body?.error?.code ?? error.error?.code ?? error.code;
-      if (attempt < MAX_RETRIES && shouldRetry({ statusCode: status, code })) {
-        const retryAfterMs = parseRetryAfterMs({ error });
-        await delay({ ms: Math.min(retryAfterMs ?? delayMs, MAX_DELAY_MS) });
+      const retryAfterMs = parseRetryAfterMs({ error });
+      const canWaitRequestedTime = retryAfterMs === null || retryAfterMs <= MAX_DELAY_MS;
+      if (attempt < MAX_RETRIES && canWaitRequestedTime && shouldRetry({ statusCode: status, code })) {
+        await delay({ ms: retryAfterMs ?? delayMs });
         attempt++;
-        if (!retryAfterMs) {
+        if (retryAfterMs === null) {
           delayMs = Math.min(delayMs * 2, MAX_DELAY_MS);
         }
         continue;
       }
-      throw new Error(buildGraphErrorMessage({ error }));
+      throw Object.assign(new Error(buildGraphErrorMessage({ error })), { statusCode: status });
     }
   }
   throw new Error('Unexpected error occured');
@@ -143,7 +144,7 @@ async function delay({ ms }: { ms: number }): Promise<void> {
 
 function parseRetryAfterMs({ error }: { error: MicrosoftTeamsGraphError }): number | null {
   const headers = error.headers ?? error.response?.headers ?? undefined;
-  const retryAfter = headers?.['Retry-After'] ?? headers?.['retry-after'];
+  const retryAfter = headers instanceof Headers ? headers.get('Retry-After') : (headers?.['Retry-After'] ?? headers?.['retry-after']);
   if (!retryAfter) return null;
   const asNumber = Number(retryAfter);
   if (!Number.isNaN(asNumber)) return asNumber * 1000;
@@ -152,6 +153,12 @@ function parseRetryAfterMs({ error }: { error: MicrosoftTeamsGraphError }): numb
     return Math.max(0, retryDate - Date.now());
   }
   return null;
+}
+
+function errorStatusCode({ error }: { error: unknown }): number {
+  return typeof error === 'object' && error !== null && 'statusCode' in error && typeof error.statusCode === 'number'
+    ? error.statusCode
+    : 0;
 }
 
 function extractStatusCode({ error }: { error: MicrosoftTeamsGraphError }): number {
@@ -181,7 +188,7 @@ function buildGraphErrorMessage({ error }: { error: MicrosoftTeamsGraphError }):
   return `Graph error (${status}${code ? ` ${code}` : ''})${requestId ? ` [request-id: ${requestId}]` : ''}: ${message}`;
 }
 
-export const microsoftTeamsClient = { graphUrl, baseUrl, create, withRetry, paginate, list, getText, getBase64, signedInUser };
+export const microsoftTeamsClient = { graphUrl, baseUrl, create, withRetry, paginate, list, getText, getBase64, signedInUser, errorStatusCode };
 
 const COMMERCIAL_LOGIN_HOST = 'login.microsoftonline.com';
 

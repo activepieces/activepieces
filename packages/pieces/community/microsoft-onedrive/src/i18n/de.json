@@ -252,8 +252,8 @@
   "PUT": "PUT",
   "DELETE": "LÖSCHEN",
   "HEAD": "HEAD",
-  "Request": "Request",
-  "Data to send": "Data to send",
+  "Request": "Anfrage",
+  "Data to send": "Daten zum Senden",
   "New File": "Neue Datei",
   "Trigger when a new file is uploaded.": "Auslösen wenn eine neue Datei hochgeladen wird."
 }

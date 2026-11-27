@@ -22,5 +22,6 @@
   "Separator between added values, use \\n for newlines": "Trennzeichen zwischen den hinzugefügten Werten verwenden Sie \\n für Zeilenumbrüche",
   "Project": "Projekt",
   "Flow": "Ablauf",
-  "Run": "Ausführung"
+  "Run": "Ausführung",
+  "Storage": "Speicher"
 }

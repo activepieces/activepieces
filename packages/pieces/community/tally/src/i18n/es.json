@@ -122,10 +122,8 @@
   "PUT": "PUT",
   "DELETE": "BORRAR",
   "HEAD": "LIMPIO",
-  "None": "Ninguna",
-  "JSON": "JSON",
-  "Form Data": "Datos de Formulario",
-  "Raw": "Rápido",
+  "Request": "Solicitud",
+  "Data to send": "Datos para enviar",
   "New Submission": "Nuevo envío",
   "Triggers when someone submits the selected form": "Triggers when someone submits the selected form"
 }

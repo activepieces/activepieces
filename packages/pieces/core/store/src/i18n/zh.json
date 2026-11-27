@@ -22,5 +22,6 @@
   "Separator between added values, use \\n for newlines": "添加值之间的分隔符，换行符为 \\n",
   "Project": "项目",
   "Flow": "流",
-  "Run": "运行"
+  "Run": "运行",
+  "Storage": "存储"
 }
