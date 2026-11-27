@@ -390,8 +390,8 @@
   "Triggers when a new spreadsheet is created.": "新しいスプレッドシートが作成されたときに、フローを開始します。",
   "Triggers when a worksheet is created in a spreadsheet.": "スプレッドシートにワークシートが作成されたときに、フローを開始します。",
   "Trigger Column": "変更を確認する列",
-  "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.\n\nRows that only move (insert, delete, sort) and format-only changes do not fire. With a Trigger Column, a new row fires once that column is filled.": "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.\n\nRows that only move (insert, delete, sort) and format-only changes do not fire. With a Trigger Column, a new row fires once that column is filled.",
+  "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.\n\nRows that only move (insert, delete, sort) and format-only changes do not fire. With a Trigger Column, a new row fires once that column is filled.": "Google の遅延により、トリガーが発火するまで最大 3 分の遅延が発生する場合があることにご注意ください。\n\n移動のみの行（挿入、削除、並べ替え）および書式のみの変更では発火しません。トリガー列がある場合は、その列が入力されると新しい行が 1 回発火します。",
   "Fire only when this column changes. Any Column fires on any cell.": "この列の値が変わったときだけ、フローを開始します。「Any Column」を選ぶと、行のどのセルが変わっても開始します。",
-  "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.\n\nOnly rows added below the last row fire. Rows inserted higher up, sorting and edits do not.": "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.\n\nOnly rows added below the last row fire. Rows inserted higher up, sorting and edits do not.",
+  "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.\n\nOnly rows added below the last row fire. Rows inserted higher up, sorting and edits do not.": "Google の遅延により、トリガーが発火するまで最大 3 分の遅延が発生する場合があることにご注意ください。\n\n最後の行より下に追加された行のみが発火します。上の方に挿入された行、並べ替え、編集は発火しません。",
   "The spreadsheet to watch for new worksheets.": "新しいワークシートの追加を確認するスプレッドシートです。"
 }
