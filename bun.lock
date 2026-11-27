@@ -2327,7 +2327,7 @@
     },
     "packages/pieces/community/convertkit": {
       "name": "@activepieces/piece-convertkit",
-      "version": "0.4.3",
+      "version": "0.5.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
