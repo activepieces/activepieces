@@ -1,38 +1,41 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import jsonata from 'jsonata';
 
 export const runJsonataQuery = createAction({
   name: 'run_jsonata_query',
   classification: 'READ',
   displayName: 'Run JSONata Query',
-  description: 'Use the JSONata language to filter, map, and transform complex JSON payloads natively in JavaScript.',
+  description: 'Filter, pick or reshape JSON data with a JSONata expression.',
   audience: 'both',
   aiMetadata: { description: 'Evaluate a JSONata expression against a JSON object, array, or JSON string to filter, extract, group, or reshape it in a single step, covering transformations that would otherwise need custom code. Requires a syntactically valid JSONata expression — an invalid one fails the step, while a valid query that matches nothing returns null. Prefer merge_json to fold an array of objects into one, or convert_text_to_json / convert_json_to_text for plain parsing and stringifying. Read-only and idempotent.', idempotent: true },
   props: {
     json: Property.Json({
       displayName: 'JSON Data',
-      description: 'Map the array or object you want to manipulate.',
+      description: 'The object or array to query, usually from an earlier step.',
       required: true,
       defaultValue: {},
     }),
+    syntax: Property.MarkDown({
+      value: 'Learn the query syntax at [docs.jsonata.org](https://docs.jsonata.org).',
+      variant: MarkdownVariant.INFO,
+    }),
     query: Property.ShortText({
       displayName: 'JSONata Query',
-      description: 'Write a JSONata expression to manipulate your data. You can filter arrays, extract specific fields, group items, or reshape the JSON. (e.g., $[status="active"])',
+      description: 'The step returns the result; no match returns null.',
+      placeholder: '$[status="active"].name',
       required: true,
     }),
   },
   async run(context) {
     const { json, query } = context.propsValue;
 
-    try {
-      const parsedJson = typeof json === 'string' ? JSON.parse(json) : json;
+    const parsedJson = typeof json === 'string' ? parseData(json) : json;
 
+    try {
       const expression = jsonata(query);
 
       const result = await expression.evaluate(parsedJson);
 
-      // JSONata returns `undefined` if a query yields no matches. 
-      // We convert this to `null` so Activepieces receives valid, serializable JSON.
       return result === undefined ? null : result;
     } catch (error) {
       const message = error instanceof Error ? error.message : JSON.stringify(error);
@@ -40,3 +43,11 @@ export const runJsonataQuery = createAction({
     }
   },
 });
+
+function parseData(data: string): unknown {
+  try {
+    return JSON.parse(data);
+  } catch {
+    throw new Error('JSON Data is not valid JSON.');
+  }
+}
