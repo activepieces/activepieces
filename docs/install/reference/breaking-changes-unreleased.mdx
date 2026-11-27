@@ -8,13 +8,10 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
-#### ConvertKit 0.5.0: Link Clicked and Product Purchased run the flow once, and Update Broadcast keeps the public setting
+#### ConvertKit 0.5.0: Link Clicked and Product Purchased run the flow once per event
 
-From ConvertKit 0.5.0:
-
-- **Link Clicked** and **Product Purchased** run the flow once per event, with the subscriber as the trigger output. Before, each event also started a second run whose trigger output was only the watched link URL or the product ID.
-- **Update Broadcast** no longer sends `public: false` when the **Public** toggle is left untouched, so updating a broadcast no longer makes a public post private. Steps saved on an earlier version still store `false` for Public and keep unpublishing until the toggle is switched on.
+From ConvertKit 0.5.0, **Link Clicked** and **Product Purchased** run the flow once per event, with the subscriber as the trigger output. Before, each event also started a second run whose trigger output was only the watched link URL or the product ID.
 
 #### What you need to do
 
-If a flow on Link Clicked or Product Purchased handled that second run on purpose, read the link URL or product ID from the trigger's settings instead. Open saved Update Broadcast steps for public posts and switch Public on to keep them published.
+If a flow on Link Clicked or Product Purchased handled that second run on purpose, read the link URL or product ID from the trigger's settings instead.

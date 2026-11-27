@@ -235,12 +235,10 @@ export const updateBroadcast = createAction({
     content: broadcastContent,
     emailAddress: broadcastEmailAddress,
     sendAt,
-    isPublic: Property.Checkbox({
-      displayName: 'Public',
-      description:
-        'On publishes the post; left untouched keeps its current setting.',
-      required: false,
-    }),
+    isPublic: {
+      ...isPublic,
+      description: 'On publishes the post; off makes it private.',
+    },
     publishedAt,
     thumbnailUrl,
     thumbnailAlt,
