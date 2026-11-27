@@ -13,7 +13,7 @@ export const jsonAuth = PieceAuth.SecretText({
 
 export const json = createPiece({
   displayName: "JSON",
-  description: "Convert JSON to text and vice versa",
+  description: "Parse, stringify, query and merge JSON data",
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.30.0',
   logoUrl: "https://cdn.activepieces.com/pieces/new-core/json-helper.svg",

@@ -16,13 +16,13 @@ export const mergeJson = createAction({
     jsonArray: Property.Json({
       displayName: 'Objects to Merge',
       description:
-        'An array of JSON objects to merge, e.g. [{"title":"Q1","total":10},{"total":12,"author":"Jane"}]. Map the array output of a previous step here.',
+        'A list of objects, usually the list output of an earlier step.',
       required: true,
     }),
     defaultStrategy: Property.StaticDropdown({
       displayName: 'Default Strategy',
       description:
-        'How to resolve any field not listed below. "Last found" mirrors a plain object merge where later objects win.',
+        'Used for unlisted fields. Last found means later objects win.',
       required: true,
       defaultValue: 'last',
       options: buildStrategyOptions(),
@@ -30,12 +30,13 @@ export const mergeJson = createAction({
     fieldStrategies: Property.Array({
       displayName: 'Field Strategies',
       description:
-        'Override the default strategy for specific fields. Each row maps one field name to a strategy.',
+        'Use a different strategy for specific fields.',
       required: false,
       properties: {
         field: Property.ShortText({
           displayName: 'Field Name',
-          description: 'The exact key to apply this strategy to, e.g. "total".',
+          description: 'Must match the key exactly, case included.',
+          placeholder: 'total',
           required: true,
         }),
         strategy: Property.StaticDropdown({
