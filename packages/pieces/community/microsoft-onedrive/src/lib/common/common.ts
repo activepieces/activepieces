@@ -14,14 +14,13 @@ export const oneDriveCommon = {
 
   folderDropdown: createFolderDropdown,
 
-  parentFolder: createFolderDropdown({ displayName: 'Parent Folder' }),
+  parentFolder: createFolderDropdown({
+    displayName: 'Parent Folder',
+    description: 'Leave empty to use the root of your OneDrive.',
+  }),
    parentFolderInfo : Property.MarkDown({
     value: 
-      `**Note**: If you can't find the folder in the dropdown list (which fetches up to 1000 folders), please click on the **(F)** and type the folder ID directly.\n
-
-      you can find the folder ID in the OneDrive URL after **?id=**, e.g., "onedrive.live.com/?id=**folder-id**&cid=some-other-id"
-
-    `,
+      'Folder not listed? The list shows up to 1,000 folders. Click ƒ on the field and paste the folder ID from the OneDrive URL (the part after `?id=`).',
     variant:MarkdownVariant.INFO
   }),
 
@@ -73,11 +72,12 @@ export const oneDriveCommon = {
   },
 };
 
-function createFolderDropdown({ displayName, description }: { displayName: string; description?: string }) {
+function createFolderDropdown({ displayName, description, width }: { displayName: string; description?: string; width?: 'half' | 'full' }) {
   return Property.Dropdown({
     auth: oneDriveAuth,
     displayName,
     description,
+    width,
     required: false,
     refreshers: ['auth'],
     options: async ({ auth }) => {
@@ -85,7 +85,7 @@ function createFolderDropdown({ displayName, description }: { displayName: strin
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please authenticate first',
+          placeholder: 'Please connect your account first',
         };
       }
 
