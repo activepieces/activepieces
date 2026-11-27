@@ -390,6 +390,14 @@ describe('flattenPropertyValue — all 24 types', () => {
 });
 
 describe('flattenProperties', () => {
+  it('keeps a column named __proto__ as an own field', () => {
+    const props = JSON.parse(
+      '{"__proto__":{"id":"x","type":"rich_text","rich_text":[{"plain_text":"INV-42"}]}}'
+    );
+    const flat = flattenProperties(props);
+    expect(Object.hasOwn(flat, '__proto__')).toBe(true);
+    expect(JSON.parse(JSON.stringify(flat))['__proto__']).toBe('INV-42');
+  });
   it('flattens a whole property bag, keeping column names (incl. spaces)', () => {
     const props = {
       Name: prop('title', { title: [rt('fIX ERROR ')] }),

@@ -186,14 +186,15 @@ export function flattenPropertyValue(
 export function flattenProperties(
   properties: Record<string, NotionProperty> | null | undefined
 ): Record<string, unknown> {
-  const out: Record<string, unknown> = {};
   if (!properties || typeof properties !== 'object') {
-    return out;
+    return {};
   }
-  for (const key of Object.keys(properties)) {
-    out[key] = flattenPropertyValue(properties[key]);
-  }
-  return out;
+  return Object.fromEntries(
+    Object.entries(properties).map(([key, prop]) => [
+      key,
+      flattenPropertyValue(prop),
+    ])
+  );
 }
 
 export function enrichPage<

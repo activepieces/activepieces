@@ -180,12 +180,12 @@ const getUpdatedPages = async (
   authentication: NotionAuthValue,
   startDate?: Date
 ) => {
-  const searchOptions = startDate ? { editedAfter: startDate } : undefined;
-  const sortOptions = {
-    property: 'last_edited_time',
-    direction: 'descending' as const,
-  };
-
-  const pages = await getPages(authentication, searchOptions, sortOptions);
-  return pages;
+  const pages = await getPages(authentication, { editedSince: startDate });
+  if (!startDate) {
+    return pages;
+  }
+  return pages.filter(
+    (page: { last_edited_time: string }) =>
+      !dayjs(page.last_edited_time).isBefore(startDate)
+  );
 };

@@ -1,20 +1,8 @@
-import {
-  DedupeStrategy,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
-import {
-  createTrigger,
-  TriggerStrategy,
-  AppConnectionValueForAuthProperty,
-} from '@activepieces/pieces-framework';
-import dayjs from 'dayjs';
-import { getNotionToken, NotionAuthValue, notionCommon } from '../common';
-import { Client } from '@notionhq/client';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { notionCommon } from '../common';
+import { notionDatabasePolling } from '../common/database-polling';
 import { notionAuth } from '../auth';
-import { isNil } from '@activepieces/pieces-framework';
 import { newDatabaseItemTriggerOutputSchema } from '../output-schemas';
-import { enrichPage } from '../common/enrich-page';
 
 export const newDatabaseItem = createTrigger({
   auth: notionAuth,
@@ -118,89 +106,30 @@ export const newDatabaseItem = createTrigger({
 
   type: TriggerStrategy.POLLING,
   async test(ctx) {
-    return await pollingHelper.test(polling, ctx);
+    return notionDatabasePolling.sample({
+      auth: ctx.auth,
+      databaseId: ctx.propsValue.database_id!,
+      timestamp: 'created_time',
+    });
   },
   async onEnable(ctx) {
-    await pollingHelper.onEnable(polling, ctx);
+    await notionDatabasePolling.enable({
+      auth: ctx.auth,
+      store: ctx.store,
+      databaseId: ctx.propsValue.database_id!,
+      timestamp: 'created_time',
+      isRepublish: ctx.isRepublish,
+    });
   },
-  async onDisable(ctx) {
-    await pollingHelper.onDisable(polling, ctx);
+  async onDisable() {
+    return;
   },
   async run(ctx) {
-    return await pollingHelper.poll(polling, ctx);
+    return notionDatabasePolling.poll({
+      auth: ctx.auth,
+      store: ctx.store,
+      databaseId: ctx.propsValue.database_id!,
+      timestamp: 'created_time',
+    });
   },
 });
-
-const polling: Polling<
-  AppConnectionValueForAuthProperty<typeof notionAuth>,
-  { database_id: string | undefined }
-> = {
-  strategy: DedupeStrategy.LAST_ITEM,
-  items: async ({ auth, propsValue, lastItemId }) => {
-    const lastItem = lastItemId as string;
-    let lastCreatedDate: string | null;
-
-    if (lastItem) {
-      const lastUpdatedEpochMS = Number(lastItem.split('|')[1]);
-      lastCreatedDate = dayjs(lastUpdatedEpochMS).toISOString();
-    } else {
-      lastCreatedDate = lastItem;
-    }
-
-    const items = await getResponse(
-      auth,
-      propsValue.database_id!,
-      lastCreatedDate
-    );
-    return items.map((item: any) => {
-      const object = item as { created_time: string; id: string };
-      return {
-        id: object.id + '|' + dayjs(object.created_time).valueOf(),
-        data: enrichPage(item),
-      };
-    });
-  },
-};
-
-const getResponse = async (
-  authentication: NotionAuthValue,
-  database_id: string,
-  startDate: string | null
-) => {
-  const notion = new Client({
-    auth: getNotionToken(authentication),
-    notionVersion: '2022-02-22',
-  });
-  let cursor;
-  let hasMore = true;
-  const results = [];
-
-  do {
-    const response = await notion.databases.query({
-      start_cursor: cursor,
-      database_id,
-      filter:
-        startDate == null
-          ? undefined
-          : {
-              timestamp: 'created_time',
-              created_time: {
-                on_or_after: startDate,
-              },
-            },
-      sorts: [
-        {
-          timestamp: 'created_time',
-          direction: 'descending',
-        },
-      ],
-    });
-
-    hasMore = response.has_more;
-    cursor = response.next_cursor ?? undefined;
-
-    results.push(...response.results);
-  } while (hasMore && !isNil(startDate));
-
-  return results;
-};

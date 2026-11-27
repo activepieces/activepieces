@@ -1,16 +1,14 @@
 import {
-  DedupeStrategy,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
-import {
   createTrigger,
+  isNil,
+  Store,
   TriggerStrategy,
-  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import { getNotionToken, NotionAuthValue, notionCommon } from '../common';
-import { Client } from '@notionhq/client';
+import { Client, collectPaginatedAPI, isFullComment } from '@notionhq/client';
+import { CommentObjectResponse } from '@notionhq/client/build/src/api-endpoints';
+import { CheckpointItem, notionCheckpoint } from '../common/checkpoint';
 import { notionAuth } from '../auth';
 import { newCommentTriggerOutputSchema } from '../output-schemas';
 
@@ -68,98 +66,92 @@ export const newComment = createTrigger({
   },
   type: TriggerStrategy.POLLING,
   async test(ctx) {
-    return await pollingHelper.test(polling, ctx);
+    const comments = await listComments({
+      auth: ctx.auth,
+      pageId: ctx.propsValue.page_id ?? '',
+    });
+    return comments.slice(0, SAMPLE_SIZE).map((item) => item.data);
   },
   async onEnable(ctx) {
-    await pollingHelper.onEnable(polling, ctx);
+    await enable({
+      auth: ctx.auth,
+      store: ctx.store,
+      pageId: ctx.propsValue.page_id ?? '',
+      isRepublish: ctx.isRepublish,
+    });
   },
-  async onDisable(ctx) {
-    await pollingHelper.onDisable(polling, ctx);
+  async onDisable() {
+    return;
   },
   async run(ctx) {
-    return await pollingHelper.poll(polling, ctx);
+    const pageId = ctx.propsValue.page_id ?? '';
+    const checkpoint = await notionCheckpoint.load({ store: ctx.store });
+    if (isNil(checkpoint)) {
+      await enable({ auth: ctx.auth, store: ctx.store, pageId });
+      return [];
+    }
+    const { fresh, checkpoint: advanced } = notionCheckpoint.advance({
+      checkpoint,
+      items: await listComments({ auth: ctx.auth, pageId }),
+    });
+    await notionCheckpoint.save({ store: ctx.store, checkpoint: advanced });
+    return fresh.map((item) => item.data);
   },
 });
 
-const polling: Polling<
-  AppConnectionValueForAuthProperty<typeof notionAuth>,
-  { page_id: string | undefined }
-> = {
-  strategy: DedupeStrategy.LAST_ITEM,
-  items: async ({ auth, propsValue, lastItemId }) => {
-    const lastItem = lastItemId as string;
-    let lastCreatedDate: string | null;
+async function enable({
+  auth,
+  store,
+  pageId,
+  isRepublish,
+}: {
+  auth: NotionAuthValue;
+  store: Store;
+  pageId: string;
+  isRepublish?: boolean;
+}): Promise<void> {
+  await notionCheckpoint.enable({
+    store,
+    isRepublish,
+    fetchLatest: () => listComments({ auth, pageId }),
+  });
+}
 
-    if (lastItem) {
-      const lastUpdatedEpochMS = Number(lastItem.split('|')[1]);
-      lastCreatedDate = dayjs(lastUpdatedEpochMS).toISOString();
-    } else {
-      lastCreatedDate = lastItem;
-    }
-
-    const items = await getComments(
-      auth,
-      propsValue.page_id || '',
-      lastCreatedDate
-    );
-    return items.map((item) => {
-      const comment = item as { created_time: string; id: string };
-      return {
-        id: comment.id + '|' + dayjs(comment.created_time).valueOf(),
-        data: item,
-      };
-    });
-  },
-};
-
-const getComments = async (
-  authentication: NotionAuthValue,
-  page_id: string,
-  startDate: string | null
-) => {
+async function listComments({
+  auth,
+  pageId,
+}: {
+  auth: NotionAuthValue;
+  pageId: string;
+}): Promise<CheckpointItem[]> {
   const notion = new Client({
-    auth: getNotionToken(authentication),
+    auth: getNotionToken(auth),
     notionVersion: '2022-02-22',
   });
-
-  let cursor;
-  let hasMore = true;
-  let shouldContinue = true;
-
-  const results = [];
-
-  do {
-    try {
-      const response = await notion.comments.list({
-        start_cursor: cursor,
-        block_id: page_id,
-      });
-
-      hasMore = response.has_more;
-      cursor = response.next_cursor ?? undefined;
-
-      for (const comment of response.results) {
-        if (
-          startDate &&
-          !dayjs(comment.created_time).isAfter(dayjs(startDate))
-        ) {
-          shouldContinue = false;
-          break;
-        }
-        results.push(comment);
-      }
-    } catch (error) {
-      if ((error as Error).message?.includes('permissions')) {
-        throw new Error(
-          'Integration lacks required "read comments" capability.'
-        );
-      }
-      throw error;
+  try {
+    const comments = await collectPaginatedAPI(notion.comments.list, {
+      block_id: pageId,
+    });
+    return comments
+      .filter(isFullComment)
+      .map(toItem)
+      .sort((a, b) => b.time - a.time);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('permissions')) {
+      throw new Error('Integration lacks required "read comments" capability.');
     }
-  } while (hasMore && shouldContinue);
+    throw error;
+  }
+}
 
-  return results.sort(
-    (a: { created_time: string }, b: { created_time: string }) =>
-      dayjs(b.created_time).valueOf() - dayjs(a.created_time).valueOf()
-  );
-};
+function toItem(comment: CommentObjectResponse): CheckpointItem {
+  const id = notionCheckpoint.fingerprint([comment.id]);
+  return {
+    id,
+    version: id,
+    time: dayjs(comment.created_time).valueOf(),
+    data: comment,
+  };
+}
+
+const SAMPLE_SIZE = 5;
