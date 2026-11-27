@@ -48,11 +48,11 @@
   "Markdown": "Markdown",
   "Form": "Form",
   "Include Shared Drives": "Include Shared Drives",
-  "Run On": "Run On",
-  "Checks the form every few minutes. With **New responses only**, each response starts the flow once, when it is first sent. With **New and edited responses**, it also starts the flow again every time the respondent edits and resends it (respondents can only edit when **Allow response editing** is on in the form settings). Only responses sent after the flow is published count. Upgrading the piece version in the builder pre-selects **New responses only**; choose **New and edited responses** to keep the old beh": "Checks the form every few minutes. With **New responses only**, each response starts the flow once, when it is first sent. With **New and edited responses**, it also starts the flow again every time the respondent edits and resends it (respondents can only edit when **Allow response editing** is on in the form settings). Only responses sent after the flow is published count. Upgrading the piece version in the builder pre-selects **New responses only**; choose **New and edited responses** to keep the old behaviour.",
+  "Run On": "執行於",
+  "Checks the form every few minutes. With **New responses only**, each response starts the flow once, when it is first sent. With **New and edited responses**, it also starts the flow again every time the respondent edits and resends it (respondents can only edit when **Allow response editing** is on in the form settings). Only responses sent after the flow is published count. Upgrading the piece version in the builder pre-selects **New responses only**; choose **New and edited responses** to keep the old beh": "每隔幾分鐘檢查表單一次。使用**僅限新回覆**時，每筆回覆在首次送出時只會觸發流程一次。使用**新回覆和已編輯回覆**時，每當回覆者編輯並重新送出時，也會再次觸發流程（回覆者只有在表單設定中開啟**允許編輯回覆**時才能編輯）。只有在流程發佈後送出的回覆才會計入。於建構器中升級 piece 版本時會預設選取**僅限新回覆**；若要保留舊行為，請選擇**新回覆和已編輯回覆**。",
   "The form to watch for new responses.": "The form to watch for new responses.",
   "Also include forms stored in shared drives.": "Also include forms stored in shared drives.",
-  "Choose whether an edited response starts the flow again.": "Choose whether an edited response starts the flow again.",
-  "New responses only": "New responses only",
-  "New and edited responses": "New and edited responses"
+  "Choose whether an edited response starts the flow again.": "選擇已編輯的回覆是否要再次觸發流程。",
+  "New responses only": "僅限新回覆",
+  "New and edited responses": "新回覆和已編輯回覆"
 }
