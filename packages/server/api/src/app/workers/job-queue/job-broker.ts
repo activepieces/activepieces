@@ -4,6 +4,7 @@ import { Worker as BullMQWorker, Job, UnrecoverableError } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
+import { redisErrorLogger } from '../../database/redis/redis-error-logger'
 import { redisConnections } from '../../database/redis-connections'
 import { engineResponseWatcher } from '../engine-response-watcher'
 import { QueueName } from '../job'
@@ -36,11 +37,12 @@ function ensureBullMQWorker(queueName: string, log: FastifyBaseLogger): Promise<
 }
 
 async function createBullMQWorker(queueName: string, log: FastifyBaseLogger): Promise<BullMQWorker> {
+    const connection = await redisConnections.create()
     const worker = new BullMQWorker(
         queueName,
         undefined,
         {
-            connection: await redisConnections.create(),
+            connection,
             concurrency: 500,
             autorun: false,
             lockDuration: LOCK_DURATION_MS,
@@ -49,6 +51,13 @@ async function createBullMQWorker(queueName: string, log: FastifyBaseLogger): Pr
             drainDelay: DRAIN_DELAY_SECONDS,
         },
     )
+    redisErrorLogger.attachToBullmq({
+        emitter: worker,
+        connection,
+        queueName,
+        role: 'worker',
+        log,
+    })
     await worker.waitUntilReady()
     await worker.startStalledCheckTimer()
 

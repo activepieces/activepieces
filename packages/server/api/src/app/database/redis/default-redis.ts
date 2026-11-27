@@ -1,6 +1,7 @@
 import fs from 'fs'
 import { assertNotNullOrUndefined, isNil } from '@activepieces/core-utils'
 import Redis, { RedisOptions } from 'ioredis'
+import { redisErrorLogger } from './redis-error-logger'
 import { baseRedisOptions } from './redis-options'
 import { RedisConnectionSettings } from './types'
 
@@ -21,6 +22,7 @@ function createRedisConnectionUsingUrl(settings: RedisConnectionSettings, config
     const url = settings.REDIS_URL
     assertNotNullOrUndefined(url, 'URL is required')
     const client = new Redis(url, config)
+    redisErrorLogger.attachToRedisClient({ client, source: 'default' })
     return client
 }
 
@@ -48,7 +50,7 @@ function createStandaloneRedisConnection(settings: RedisConnectionSettings, conf
             ca: readCAFile(sslCaFile),
         } : undefined,
     })
-
+    redisErrorLogger.attachToRedisClient({ client, source: 'default' })
 
     return client
 }

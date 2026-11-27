@@ -3,6 +3,7 @@ import { apDayjsDuration, memoryLock } from '@activepieces/server-utils'
 import { EventDestinationJobData, ExecuteAgentRunJobData, ExecuteAiJobData, ExecuteFlowJobData, ExecutePersonalizationResearchJobData, getDefaultJobPriority, JOB_PRIORITY, JobData, PollingJobData, RenewWebhookJobData, ScheduleOptions, TriggerSourceScheduleType, UserInteractionJobData, WebhookJobData, WorkerJobType } from '@activepieces/shared'
 import { Job, Queue } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
+import { redisErrorLogger } from '../../database/redis/redis-error-logger'
 import { redisConnections } from '../../database/redis-connections'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
@@ -177,8 +178,9 @@ async function ensureQueueExists({ log, queueName }: { log: FastifyBaseLogger, q
                 return existingQueue
             }
 
+            const connection = await redisConnections.create()
             const queue = new Queue(queueName, {
-                connection: await redisConnections.create(),
+                connection,
                 defaultJobOptions: {
                     attempts: 2,
                     backoff: {
@@ -191,6 +193,13 @@ async function ensureQueueExists({ log, queueName }: { log: FastifyBaseLogger, q
                         count: REDIS_FAILED_JOB_RETRY_COUNT,
                     },
                 },
+            })
+            redisErrorLogger.attachToBullmq({
+                emitter: queue,
+                connection,
+                queueName,
+                role: 'queue',
+                log,
             })
 
             await queue.removeGlobalConcurrency()

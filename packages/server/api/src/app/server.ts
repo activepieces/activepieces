@@ -54,7 +54,7 @@ export const setupServer = async (): Promise<FastifyInstance> => {
             cors: { origin: '*' },
             maxHttpBufferSize: maxSocketHttpBufferSizeBytes(system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB)),
             path: '/api/socket.io',
-            ...spreadIfDefined('adapter', await getAdapter()),
+            ...spreadIfDefined('adapter', await getAdapter(app.log)),
             transports: ['websocket'],
         })
         app.io.use((socket: Socket, next: (err?: Error) => void) => {

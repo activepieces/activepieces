@@ -1,6 +1,7 @@
 import fs from 'fs'
 import { assertNotNullOrUndefined, isNil } from '@activepieces/core-utils'
 import Redis, { RedisOptions } from 'ioredis'
+import { redisErrorLogger } from './redis-error-logger'
 import { baseRedisOptions } from './redis-options'
 import { RedisConnectionSettings } from './types'
 
@@ -36,6 +37,7 @@ export async function createSentinelRedisConnection(settings: RedisConnectionSet
     }
 
     const client = new Redis(redisOptions)
+    redisErrorLogger.attachToRedisClient({ client, source: 'sentinel' })
     return client
 }
 

@@ -34,6 +34,7 @@ import { rateLimitModule } from './core/security/rate-limit'
 import { authenticationMiddleware } from './core/security/v2/authn/authentication-middleware'
 import { authorizationMiddleware } from './core/security/v2/authz/authorization-middleware'
 import { backgroundMigrationRunner } from './database/background-migration-runner'
+import { redisErrorLogger } from './database/redis/redis-error-logger'
 import { distributedLock, redisConnections } from './database/redis-connections'
 import { agentConversationCreditsHooks } from './ee/agent/agent-conversation-credits'
 import { agentEvalModule } from './ee/agent/agent-eval-controller'
@@ -494,10 +495,12 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
 
 
 
-export async function getAdapter() {
+export async function getAdapter(log?: FastifyBaseLogger) {
     const redisConnectionInstance = await redisConnections.useExisting()
     const sub = redisConnectionInstance.duplicate()
     const pub = redisConnectionInstance.duplicate()
+    redisErrorLogger.attachToRedisClient({ client: pub, source: 'socket-io-pub', log })
+    redisErrorLogger.attachToRedisClient({ client: sub, source: 'socket-io-sub', log })
     return createAdapter(pub, sub, {
         requestsTimeout: 30000,
     })

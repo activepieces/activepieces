@@ -2,6 +2,7 @@ import { isNil } from '@activepieces/core-utils'
 import { BeginExecuteFlowJobData, ExecuteFlowJobData, LATEST_JOB_DATA_SCHEMA_VERSION, StreamStepProgress, WebhookJobData, WorkerJobType } from '@activepieces/shared'
 import { Job, Queue } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
+import { redisErrorLogger } from '../../database/redis/redis-error-logger'
 import { redisConnections } from '../../database/redis-connections'
 import { flowVersionRepo } from '../../flows/flow-version/flow-version.service'
 import { projectService } from '../../project/project-service'
@@ -117,8 +118,15 @@ async function migrateWebhookJobs(log: FastifyBaseLogger): Promise<boolean> {
 }
 
 async function migrateQueue<T>(name: string, migrationFn: (job: Job<T>) => Promise<void>): Promise<boolean> {
+    const connection = await redisConnections.create()
     const legacyQueue = new Queue<T>(name, {
-        connection: await redisConnections.create(),
+        connection,
+    })
+    redisErrorLogger.attachToBullmq({
+        emitter: legacyQueue,
+        connection,
+        queueName: name,
+        role: 'queue',
     })
 
     const waitingJobs = await legacyQueue.getJobs(['waiting', 'delayed', 'active', 'prioritized'])
@@ -132,8 +140,15 @@ async function migrateQueue<T>(name: string, migrationFn: (job: Job<T>) => Promi
 }
 
 async function cleanQueue(name: string) {
+    const connection = await redisConnections.create()
     const queue = new Queue(name, {
-        connection: await redisConnections.create(),
+        connection,
+    })
+    redisErrorLogger.attachToBullmq({
+        emitter: queue,
+        connection,
+        queueName: name,
+        role: 'queue',
     })
     await queue.obliterate({
         force: true,

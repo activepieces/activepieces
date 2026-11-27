@@ -1,5 +1,6 @@
 import Redis from 'ioredis'
 import { RedisMemoryServer } from 'redis-memory-server'
+import { redisErrorLogger } from './redis-error-logger'
 
 let redisMemoryServer: RedisMemoryServer | null = null
 
@@ -12,6 +13,7 @@ export async function createMemoryRedisConnection(): Promise<Redis> {
         host,
         port,
     })
+    redisErrorLogger.attachToRedisClient({ client, source: 'memory' })
     return client
 }
 

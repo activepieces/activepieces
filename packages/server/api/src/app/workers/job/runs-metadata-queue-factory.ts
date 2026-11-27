@@ -4,6 +4,7 @@ import { FailedStep, FlowRunStatus, RunEnvironment } from '@activepieces/shared'
 import { Queue } from 'bullmq'
 import Redis from 'ioredis'
 import { DistributedStore } from '../../database/redis/distributed-store-factory'
+import { redisErrorLogger } from '../../database/redis/redis-error-logger'
 import { QueueName } from './index'
 
 export const redisMetadataKey = ({ projectId, runId }: RedisMetadataKeyParams): string => `runs_metadata:${projectId}:${runId}`
@@ -20,8 +21,9 @@ export const runsMetadataQueueFactory = ({
 
     return {
         async init(config: RunsMetadataQueueConfig): Promise<void> {
+            const connection = await createRedisConnection()
             queueInstance = new Queue<RunsMetadataJobData>(QueueName.RUNS_METADATA, {
-                connection: await createRedisConnection(),
+                connection,
                 defaultJobOptions: {
                     attempts: 5,
                     backoff: {
@@ -34,6 +36,12 @@ export const runsMetadataQueueFactory = ({
                         count: config.redisFailedJobRetentionMaxCount,
                     },
                 },
+            })
+            redisErrorLogger.attachToBullmq({
+                emitter: queueInstance,
+                connection,
+                queueName: QueueName.RUNS_METADATA,
+                role: 'queue',
             })
             await queueInstance.waitUntilReady()
         },

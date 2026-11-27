@@ -3,6 +3,7 @@ import { apDayjs, apDayjsDuration, wideEvent } from '@activepieces/server-utils'
 import { DelayedError, Job, JobsOptions, JobState, Queue, Worker } from 'bullmq'
 import { Dayjs } from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
+import { redisErrorLogger } from '../../database/redis/redis-error-logger'
 import { redisConnections } from '../../database/redis-connections'
 import { jobFailureLogger } from '../../workers/job-queue/job-failure-logger'
 import { exceptionHandler } from '../exception-handler'
@@ -22,8 +23,9 @@ let systemJobWorker: Worker<SystemJobData, unknown, SystemJobName>
 
 export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule => ({
     async init(): Promise<void> {
+        const connection = await redisConnections.create()
         const queueConfig = {
-            connection: await redisConnections.create(),
+            connection,
             defaultJobOptions: {
                 attempts: 2,
                 backoff: {
@@ -38,6 +40,13 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
         }
 
         systemJobsQueue = new Queue(SYSTEM_JOB_QUEUE, queueConfig)
+        redisErrorLogger.attachToBullmq({
+            emitter: systemJobsQueue,
+            connection,
+            queueName: SYSTEM_JOB_QUEUE,
+            role: 'queue',
+            log,
+        })
         await systemJobsQueue.waitUntilReady()
 
         const { error } = await tryCatch(async () => removeDeprecatedJobs(log))
@@ -47,6 +56,7 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
     },
 
     async startWorker(): Promise<void> {
+        const connection = await redisConnections.create()
         systemJobWorker = new Worker(
             SYSTEM_JOB_QUEUE,
             async (job, token) => {
@@ -70,13 +80,20 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
                 })
             },
             {
-                connection: await redisConnections.create(),
+                connection,
                 concurrency: 5,
                 settings: {
                     backoffStrategy: instantBurstThenExponentialBackoff,
                 },
             },
         )
+        redisErrorLogger.attachToBullmq({
+            emitter: systemJobWorker,
+            connection,
+            queueName: SYSTEM_JOB_QUEUE,
+            role: 'worker',
+            log,
+        })
 
         systemJobWorker.on('failed', (job, err) => {
             const attemptsUsed = job?.attemptsMade ?? 0

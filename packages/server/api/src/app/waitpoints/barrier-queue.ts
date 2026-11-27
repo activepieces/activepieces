@@ -2,6 +2,7 @@ import { isNil } from '@activepieces/core-utils'
 import { wideEvent } from '@activepieces/server-utils'
 import { Job, Queue, Worker } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
+import { redisErrorLogger } from '../database/redis/redis-error-logger'
 import { redisConnections } from '../database/redis-connections'
 import { exceptionHandler } from '../helper/exception-handler'
 import { system } from '../helper/system/system'
@@ -22,6 +23,7 @@ export const barrierQueue = (log: FastifyBaseLogger) => ({
             redisFailedJobRetentionMaxCount: system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT),
         }
         await barrierQueueInstance.init(config)
+        const connection = await redisConnections.create()
         barrierWorker = new Worker<BarrierJobData>(
             QueueName.BARRIER_EVALUATION,
             async (job) => {
@@ -35,11 +37,18 @@ export const barrierQueue = (log: FastifyBaseLogger) => ({
                 })
             },
             {
-                connection: await redisConnections.create(),
+                connection,
                 concurrency: system.getNumberOrThrow(AppSystemProp.RUNS_METADATA_UPDATE_CONCURRENCY),
                 autorun: true,
             },
         )
+        redisErrorLogger.attachToBullmq({
+            emitter: barrierWorker,
+            connection,
+            queueName: QueueName.BARRIER_EVALUATION,
+            role: 'worker',
+            log,
+        })
         barrierWorker.on('failed', (job, error) => {
             if (isNil(job) || job.name !== BarrierJobName.FAN_OUT_DISPATCH) {
                 return

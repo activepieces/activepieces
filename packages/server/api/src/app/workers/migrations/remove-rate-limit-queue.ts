@@ -2,6 +2,7 @@ import { isNil } from '@activepieces/core-utils'
 import { RATE_LIMIT_PRIORITY } from '@activepieces/shared'
 import { Queue } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
+import { redisErrorLogger } from '../../database/redis/redis-error-logger'
 import { redisConnections } from '../../database/redis-connections'
 import { jobQueue } from '../job-queue/job-queue'
 
@@ -15,8 +16,16 @@ export const removeRateLimitJobsQueue = (log: FastifyBaseLogger) => ({
             log.info('[removeRateLimitJobsQueue] Already migrated, skipping')
             return
         }
+        const connection = await redisConnections.create()
         const queue = new Queue('rateLimitJobs', {
-            connection: await redisConnections.create(),
+            connection,
+        })
+        redisErrorLogger.attachToBullmq({
+            emitter: queue,
+            connection,
+            queueName: 'rateLimitJobs',
+            role: 'queue',
+            log,
         })
         const jobs = await queue.getJobs(['waiting', 'delayed', 'active', 'prioritized'])
         for (const job of jobs) {

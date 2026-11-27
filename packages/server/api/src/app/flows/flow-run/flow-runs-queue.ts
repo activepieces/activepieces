@@ -3,6 +3,7 @@ import { wideEvent } from '@activepieces/server-utils'
 import { BarrierSignalStatus, FlowRun, FlowRunStatus, isFlowRunStateTerminal, RunTimeline } from '@activepieces/shared'
 import { Job, Queue, Worker } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
+import { redisErrorLogger } from '../../database/redis/redis-error-logger'
 import { distributedLock, distributedStore, redisConnections } from '../../database/redis-connections'
 import { domainHelper } from '../../helper/domain-helper'
 import { exceptionHandler } from '../../helper/exception-handler'
@@ -32,6 +33,7 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
             redisFailedJobRetentionMaxCount: system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT),
         }
         await queue.init(config)
+        const connection = await redisConnections.create()
         runsMetadataWorker = new Worker<RunsMetadataJobData>(
             queueName,
             async (job) => {
@@ -47,11 +49,18 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                 })
             },
             {
-                connection: await redisConnections.create(),
+                connection,
                 concurrency: system.getNumberOrThrow(AppSystemProp.RUNS_METADATA_UPDATE_CONCURRENCY),
                 autorun: true,
             },
         )
+        redisErrorLogger.attachToBullmq({
+            emitter: runsMetadataWorker,
+            connection,
+            queueName,
+            role: 'worker',
+            log,
+        })
 
         runsMetadataWorker.on('failed', (job, err) => {
             const attemptsUsed = job?.attemptsMade ?? 0

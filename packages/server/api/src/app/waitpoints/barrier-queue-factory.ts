@@ -1,6 +1,7 @@
 import { apDayjsDuration } from '@activepieces/server-utils'
 import { Queue } from 'bullmq'
 import Redis from 'ioredis'
+import { redisErrorLogger } from '../database/redis/redis-error-logger'
 import { QueueName } from '../workers/job'
 
 export const barrierSourceKey = (barrierId: string): string => `barrier_source:${barrierId}`
@@ -19,8 +20,9 @@ export const barrierQueueFactory = ({ createRedisConnection }: BarrierQueueFacto
 
     return {
         async init(config: BarrierQueueConfig): Promise<void> {
+            const connection = await createRedisConnection()
             queueInstance = new Queue<BarrierJobData>(QueueName.BARRIER_EVALUATION, {
-                connection: await createRedisConnection(),
+                connection,
                 defaultJobOptions: {
                     attempts: 5,
                     backoff: {
@@ -33,6 +35,12 @@ export const barrierQueueFactory = ({ createRedisConnection }: BarrierQueueFacto
                         count: config.redisFailedJobRetentionMaxCount,
                     },
                 },
+            })
+            redisErrorLogger.attachToBullmq({
+                emitter: queueInstance,
+                connection,
+                queueName: QueueName.BARRIER_EVALUATION,
+                role: 'queue',
             })
             await queueInstance.waitUntilReady()
         },
