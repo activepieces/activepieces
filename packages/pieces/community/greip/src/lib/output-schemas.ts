@@ -301,7 +301,7 @@ export const ipLookupOutputSchema: OutputSchema = {
 export const greipBulkLookupIpsOutputSchema: OutputSchema = {
   fields: [
     { key: 'success', label: 'Success', format: 'boolean' },
-    { key: 'data', label: 'IP Results', dynamicKey: true, labelKey: 'ip.address', children: ipLookupDataFields },
+    { key: 'data', label: 'IP Results', dynamicKey: true, labelKey: 'ip.address' },
     { key: 'execution_ms', label: 'Processing Time (ms)', format: 'number' },
   ],
 };

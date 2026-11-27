@@ -15,7 +15,7 @@ export const lookupAsnAction = createAction({
   classification: 'READ',
   aiMetadata: {
     description:
-      'Get details of an Autonomous System by its number, e.g. 15169 or AS15169. Look Up IP with the ASN module returns the ASN of an address.',
+      'Get details of an Autonomous System by its number, e.g. 15169 or AS15169.',
     idempotent: true,
   },
   props: {
