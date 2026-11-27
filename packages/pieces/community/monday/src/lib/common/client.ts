@@ -1,7 +1,7 @@
 import { isNil } from '@activepieces/pieces-framework';
 import mondaySdk from 'monday-sdk-js';
 import { MondayClientSdk } from 'monday-sdk-js/types/client-sdk.interface';
-import { Board, MondayColumn, User } from './models';
+import { Board, Item, MondayColumn, User } from './models';
 import { mondayGraphQLMutations } from './mutations';
 import { mondayGraphQLQueries } from './queries';
 export class mondayClient {
@@ -73,6 +73,32 @@ export class mondayClient {
       { variables: variables }
     );
   }
+  async getAllBoardItemValues({
+    boardId,
+    columnIds,
+  }: {
+    boardId: string;
+    columnIds?: string[];
+  }): Promise<Item[]> {
+    const firstPage = await this.client.api<{
+      boards: { items_page: ItemsPage }[];
+    }>(mondayGraphQLQueries.getBoardItemValues, {
+      variables: { boardId, columnIds },
+    });
+    const firstItemsPage = firstPage.data.boards[0]?.items_page;
+    const items: Item[] = [...(firstItemsPage?.items ?? [])];
+    let cursor = firstItemsPage?.cursor ?? null;
+    while (!isNil(cursor)) {
+      const nextPage = await this.client.api<{
+        next_items_page: ItemsPage;
+      }>(mondayGraphQLQueries.nextBoardItemValues, {
+        variables: { cursor, columnIds },
+      });
+      items.push(...nextPage.data.next_items_page.items);
+      cursor = nextPage.data.next_items_page.cursor ?? null;
+    }
+    return items;
+  }
   async getItemColumnValues(variables: object) {
     return await this.client.api<{ boards: Board[] }>(
       mondayGraphQLQueries.getItemColumnValues,
@@ -139,3 +165,5 @@ function extractErrorMessage(response: unknown): string | null {
 }
 
 export const MONDAY_AI_API_VERSION = '2026-07';
+
+type ItemsPage = { cursor: string | null; items: Item[] };

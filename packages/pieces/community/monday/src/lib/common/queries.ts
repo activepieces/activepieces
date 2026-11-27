@@ -48,7 +48,7 @@ export const mondayGraphQLQueries = {
     {
         boards(ids: [$boardId])
         {
-            items_page
+            items_page(limit: 500)
             {
                 items{
                     id
@@ -116,8 +116,9 @@ export const mondayGraphQLQueries = {
   {
     boards(ids: [$boardId])
     {
-      items_page(query_params: {order_by: {column_id: "__last_updated__",direction: desc}})
+      items_page(limit: 500, query_params: {order_by: {column_id: "__last_updated__",direction: desc}})
       {
+        cursor
         items{
           id
           name
@@ -152,6 +153,48 @@ export const mondayGraphQLQueries = {
           }
           }
         }
+      }
+    }
+  }`,
+  nextBoardItemValues: `
+  query nextBoardItemValues($cursor: String!,$columnIds: [String!])
+  {
+    next_items_page(limit: 500, cursor: $cursor)
+    {
+      cursor
+      items{
+          id
+          name
+          column_values(ids: $columnIds){
+            id
+            type
+            value
+            text
+            ... on ButtonValue{
+              label
+            }
+            ... on StatusValue{
+              label
+            }
+            ... on VoteValue{
+              vote_count
+            }
+            ... on TagsValue{
+              tags{
+                  name
+              }
+          }
+          ... on BoardRelationValue {
+            linked_item_ids
+          }
+          ... on DependencyValue {
+            linked_item_ids
+          }
+          ... on WeekValue {
+            start_date
+            end_date
+          }
+          }
       }
     }
   }`,
