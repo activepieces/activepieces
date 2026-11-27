@@ -8,14 +8,12 @@ import { initiatorValue } from '../common/webhooks';
 import { kitWebhookLifecycle } from '../common/service';
 
 const sampleData = {
-  rule: {
-    id: 1,
-    account_id: 2,
-    event: {
-      name: 'course_complete',
-      sequence_id: 3,
-    },
-  },
+  id: 1234567,
+  first_name: 'Jane',
+  email_address: 'jane@example.com',
+  state: 'active',
+  created_at: '2026-01-31T14:30:00.000Z',
+  fields: {},
 };
 
 // Tested
@@ -23,8 +21,8 @@ export const addTag = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_subscriber_tag_add',
   classification: 'READ',
-  displayName: 'Tag added to subscriber',
-  description: 'Trigger when a tag is added to a subscriber',
+  displayName: 'Tag Added To Subscriber',
+  description: 'Fires when a tag is added to a subscriber.',
   aiMetadata: {
     description:
       'Fires when the selected tag is added to a subscriber in ConvertKit (Kit), via webhook. Returns the tagged subscriber record; use it to react to segmentation changes such as enrolling the subscriber elsewhere or syncing the tag to another system.',
@@ -70,8 +68,8 @@ export const removeTag = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_subscriber_tag_remove',
   classification: 'READ',
-  displayName: 'Tag removed from subscriber',
-  description: 'Trigger when a tag is removed from a subscriber',
+  displayName: 'Tag Removed From Subscriber',
+  description: 'Fires when a tag is removed from a subscriber.',
   aiMetadata: {
     description:
       'Fires when the selected tag is removed from a subscriber in ConvertKit (Kit), via webhook. Returns the affected subscriber record; useful for reversing automations or updating external systems when a subscriber leaves a segment.',
@@ -117,9 +115,8 @@ export const subscriberActivated = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_subscriber_activated',
   classification: 'READ',
-  displayName: 'Subscriber activated',
-  description:
-    'Trigger when a subscriber is activated. This happens when a subscriber confirms their subscription.',
+  displayName: 'Subscriber Activated',
+  description: 'Fires when a subscriber confirms their subscription.',
   aiMetadata: {
     description:
       'Fires when a subscriber becomes active in ConvertKit (Kit), i.e. they confirm their subscription (double opt-in), via webhook. Returns the activated subscriber record; use it to welcome new confirmed subscribers or add them to downstream systems.',
@@ -160,8 +157,8 @@ export const subscriberUnsubscribed = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_subscriber_unsubscribed',
   classification: 'READ',
-  displayName: 'Subscriber unsubscribed',
-  description: 'Trigger when a subscriber is unsubscribed',
+  displayName: 'Subscriber Unsubscribed',
+  description: 'Fires when a subscriber unsubscribes.',
   aiMetadata: {
     description:
       'Fires when a subscriber unsubscribes from the ConvertKit (Kit) account, via webhook. Returns the unsubscribed subscriber record; use it to suppress the contact in other tools or record the opt-out.',
@@ -202,9 +199,8 @@ export const subscriberBounced = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_subscriber_bounced',
   classification: 'READ',
-  displayName: 'Subscriber bounced',
-  description:
-    'Trigger when a subscriber bounced. This happens when an email is sent to a subscriber and the email bounces.',
+  displayName: 'Subscriber Bounced',
+  description: 'Fires when an email to a subscriber bounces.',
   aiMetadata: {
     description:
       "Fires when an email sent to a subscriber bounces in ConvertKit (Kit), marking the subscriber as bounced, via webhook. Returns the bounced subscriber record; use it to clean lists or flag invalid email addresses.",
@@ -248,9 +244,8 @@ export const subscriberComplained = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_subscriber_complained',
   classification: 'READ',
-  displayName: 'Subscriber complained',
-  description:
-    'Trigger when a subscriber complained. This happens when a subscriber marks an email as spam.',
+  displayName: 'Subscriber Complained',
+  description: 'Fires when a subscriber marks an email as spam.',
   aiMetadata: {
     description:
       'Fires when a subscriber marks an email as spam, putting them in the complained state in ConvertKit (Kit), via webhook. Returns the complaining subscriber record; use it to suppress the contact and protect sender reputation.',
@@ -291,8 +286,8 @@ export const formSubscribed = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_form_subscribed',
   classification: 'READ',
-  displayName: 'Form subscribed',
-  description: 'Trigger when a form is subscribed',
+  displayName: 'New Form Subscriber',
+  description: 'Fires when someone subscribes through a form.',
   aiMetadata: {
     description:
       'Fires when someone subscribes through the selected ConvertKit (Kit) form, via webhook. Returns the new subscriber record; use it to start onboarding sequences or sync new sign-ups to a CRM.',
@@ -338,8 +333,8 @@ export const sequenceSubscribed = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_sequence_subscribed',
   classification: 'READ',
-  displayName: 'Sequence subscribed',
-  description: 'Trigger when a sequence is subscribed',
+  displayName: 'New Sequence Subscriber',
+  description: 'Fires when someone is added to a sequence.',
   aiMetadata: {
     description:
       'Fires when a subscriber is added to the selected email sequence (course) in ConvertKit (Kit), via webhook. Returns the enrolled subscriber record; use it to track enrollments or mirror them in other systems.',
@@ -385,8 +380,8 @@ export const sequenceCompleted = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_sequence_completed',
   classification: 'READ',
-  displayName: 'Sequence completed',
-  description: 'Trigger when a sequence is completed',
+  displayName: 'Sequence Completed',
+  description: 'Fires when a subscriber finishes a sequence.',
   aiMetadata: {
     description:
       'Fires when a subscriber finishes the last email of the selected sequence (course) in ConvertKit (Kit), via webhook. Returns the subscriber record; use it to follow up after a course ends, e.g. with an offer or a next sequence.',
@@ -432,11 +427,11 @@ export const linkClicked = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_link_clicked',
   classification: 'READ',
-  displayName: 'Link clicked',
-  description: 'Trigger when a link is clicked',
+  displayName: 'Link Clicked',
+  description: 'Fires when a subscriber clicks a link in an email.',
   aiMetadata: {
     description:
-      'Fires when a subscriber clicks the specified link URL in a ConvertKit (Kit) email, via webhook. Returns the clicking subscriber record plus the watched link URL; use it to score engagement or trigger interest-based follow-ups.',
+      'Fires when a subscriber clicks the specified link URL in a ConvertKit (Kit) email, via webhook. Returns the clicking subscriber record; use it to score engagement or trigger interest-based follow-ups.',
   },
   type: TriggerStrategy.WEBHOOK,
   props: {
@@ -469,9 +464,8 @@ export const linkClicked = createTrigger({
     });
   },
   async run(context) {
-    const { initiatorValue } = context.propsValue;
     const body = context.payload.body as { subscriber: unknown };
-    return [body.subscriber, initiatorValue];
+    return [body.subscriber];
   },
 });
 
@@ -481,11 +475,11 @@ export const productPurchased = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_product_purchased',
   classification: 'READ',
-  displayName: 'Product purchased',
-  description: 'Trigger when a product is purchased',
+  displayName: 'Product Purchased',
+  description: 'Fires when a subscriber buys a specific product.',
   aiMetadata: {
     description:
-      'Fires when a subscriber purchases the selected ConvertKit (Kit) Commerce product, via webhook. Returns the purchasing subscriber record plus the product ID; use it to deliver the product, tag buyers, or record the sale elsewhere.',
+      'Fires when a subscriber purchases the selected ConvertKit (Kit) Commerce product, via webhook. Returns the purchasing subscriber record; use it to deliver the product, tag buyers, or record the sale elsewhere.',
   },
   type: TriggerStrategy.WEBHOOK,
   props: {
@@ -517,9 +511,8 @@ export const productPurchased = createTrigger({
     });
   },
   async run(context) {
-    const { productId } = context.propsValue;
     const body = context.payload.body as { subscriber: unknown };
-    return [body.subscriber, productId];
+    return [body.subscriber];
   },
 });
 
@@ -528,8 +521,8 @@ export const purchaseCreated = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_purchase_created',
   classification: 'READ',
-  displayName: 'Purchase created',
-  description: 'Trigger when a purchase is created',
+  displayName: 'New Purchase',
+  description: 'Fires on any new purchase.',
   aiMetadata: {
     description:
       'Fires when any new purchase record is created in the ConvertKit (Kit) account (across all products), via webhook. Returns the subscriber associated with the purchase; use it for account-wide sales notifications or bookkeeping.',
