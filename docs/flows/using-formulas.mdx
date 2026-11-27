@@ -29,7 +29,7 @@ Once inserted, a function looks like this in the input:
 <img width="450" src="/resources/using-formulas-anatomy.png" alt="A function badge with function name, argument slots, and semicolon separators" />
 
 - The **function name** appears as a pill on the left.
-- Arguments are separated by **semicolons (`;`)**, not commas.
+- Arguments are separated by **semicolons (`;`)**, not commas. Type `;` inside a function to add another argument, such as an optional separator.
 - A matching pill closes the function on the right.
 - A **preview panel** below the input shows the evaluated result while you edit. If the function has a type problem (e.g. passing text where a number is expected), the panel shows the error.
 
@@ -39,28 +39,30 @@ You can mix plain text, mentions, and functions in the same input. The function'
 
 For text arguments, **quotes are optional**. The editor accepts both styles and gives you the same result:
 
-- Without quotes: `combine(John; Smith; -)` → `John-Smith`
+- Without quotes: `combine(John;Smith;-)` → `John-Smith`
 - With quotes: `combine("John"; "Smith"; "-")` → `John-Smith`
+
+Unquoted text keeps any spaces you type around it, so don't type a space after the `;` separator.
 
 Use whichever feels natural. Quotes are useful when:
 
 - The text contains a semicolon (which would otherwise be read as the next argument's separator)
 - You want to be explicit about where the text starts and ends
 
-**Empty or whitespace-only values are the one case where quotes are required.** Without quotes, the editor treats an empty slot as "no argument" and trims any whitespace, so:
+**Empty or whitespace-only values are the one case where quotes are required.** Without quotes, the editor treats an empty or blank slot as a missing value, so:
 
-- For an **empty string**, write `""` — e.g. `coalesce(""; John)` → `John`
-- For a **single space** as a separator, write `" "` — e.g. `combine(John; Smith; " ")` → `John Smith`
+- For an **empty string**, write `""` — e.g. `coalesce("";John)` → `John`
+- For a **single space** as a separator, write `" "` — e.g. `combine(John;Smith;" ")` → `John Smith`
 
-Without quotes, `combine(John; Smith;  )` would treat the third argument as missing and fall back to no separator.
+Without quotes, `combine(John;Smith; )` shows the error *combine() is missing value 3 — fill in all values*.
 
 ## Recipes
 
 ### Combine a first and last name
 
-`combine(first_name; " "; last_name)` → `"Sara Mitchell"`
+`combine(first_name; last_name; " ")` → `"Sara Mitchell"`
 
-Use `combine` whenever you need to glue several values together with a separator.
+Use `combine` whenever you need to glue two values together with a separator. Nest one `combine` inside another to join more.
 
 ### Capitalize a customer name
 
@@ -70,9 +72,9 @@ Use `uppercase` if you want everything in caps (`"SARA MITCHELL"`), or `lowercas
 
 ### Format a date for display
 
-`format_date(order.created_at; MMM DD, YYYY)` → `"Jan 15, 2025"`
+`format_date(order.created_at; "MMM DD, YYYY")` → `"Jan 15, 2025"`
 
-For a fully written-out date, use `format_date_long(order.created_at)` → `"Friday, January 15, 2025"`.
+For a fully written-out date, use `format_date_long(order.created_at)` → `"Wednesday, January 15, 2025"`.
 
 ### Get the first item of a list
 
@@ -106,7 +108,7 @@ The second argument is how many decimal places to keep.
 
 ### Sum a number field across a list
 
-`sum(line_items; amount)` → adds up the `amount` field of every item in the list. Use `average` for the mean, or `max_in_list` / `min_in_list` for extremes.
+`sum(line_items; "amount")` → adds up the `amount` field of every item in the list. Use `average` for the mean, or `max_in_list` / `min_in_list` for extremes.
 
 ### Compute days between two dates
 
@@ -114,13 +116,13 @@ The second argument is how many decimal places to keep.
 
 ### Map a value through a lookup
 
-`switch(country_code; "US"; "North America"; "DE"; "Europe"; "JP"; "Asia")` → returns `"North America"` for `"US"`. Write the pairs inline.
+`switch(country_code; "US"; "North America"; "DE"; "Europe"; "JP"; "Asia")` → returns `"North America"` for `"US"`. Write the pairs inline. Add one more value at the end to use it when no key matches.
 
 ## Advanced tips
 
 ### Nesting functions
 
-Any function can take another function as one of its arguments. Read them inside-out: `uppercase(trim(customer_name))` first trims, then uppercases. The hover popover on each badge shows what type each argument expects.
+Any function can take another function as one of its arguments. Read them inside-out: `uppercase(trim(customer_name))` first trims, then uppercases. The hover popover on each badge shows the arguments the function expects and an example.
 
 ### Mixing static text with functions
 
@@ -134,11 +136,12 @@ Mentions like `{{step.field}}` work as function arguments. Drop a mention into a
 
 If you see a red error message under the input, it usually means one of:
 
+- **Missing value** — an argument slot is empty. Fill it in, or write `""` for empty text.
 - **Wrong number of values** — you have too few or too many arguments. Check the hover popover for the expected count.
 - **Type mismatch** — you passed text where a number is expected, or similar. Wrap the value in `to_number(...)` or `to_date(...)` if it needs converting.
 - **Unknown function** — the function name was renamed or removed. Re-insert it with `/` to pick a current name.
 
-The flow won't run a step whose function is in error — fix it before publishing.
+An error does not block publishing, but if the function still fails when the flow runs, the step fails — fix it before publishing.
 
 ## See also
 

@@ -352,6 +352,49 @@ describe('Flow Operations API', () => {
             expect(body.version.trigger.type).toBe(FlowTriggerType.PIECE)
             expect(body.version.trigger.settings.pieceName).toBe('@activepieces/piece-schedule')
         })
+
+        it('should save a checkbox or option sent as text as the type the field declares', async () => {
+            const ctx = await createTestContext(app!)
+            await db.save('piece_metadata', createMockPieceMetadata({
+                name: '@activepieces/piece-test-typed',
+                version: '0.1.0',
+                pieceType: PieceType.OFFICIAL,
+                packageType: PackageType.REGISTRY,
+                triggers: {
+                    every_day: {
+                        name: 'every_day',
+                        displayName: 'Every Day',
+                        description: 'Every day',
+                        requireAuth: false,
+                        props: {
+                            hour_of_the_day: { type: 'STATIC_DROPDOWN', displayName: 'Hour', required: true, options: { options: [{ label: '11 am', value: 11 }] } },
+                            run_on_weekends: { type: 'CHECKBOX', displayName: 'Run on weekends', required: true },
+                        },
+                    },
+                },
+            }))
+            const flow: PopulatedFlow = (await ctx.post('/v1/flows', { displayName: 'typed', projectId: ctx.project.id }, { query: { projectId: ctx.project.id } }))?.json()
+
+            const response = await ctx.post(`/v1/flows/${flow.id}`, {
+                type: FlowOperationType.UPDATE_TRIGGER,
+                request: {
+                    type: FlowTriggerType.PIECE,
+                    settings: {
+                        pieceName: '@activepieces/piece-test-typed',
+                        pieceVersion: '0.1.0',
+                        input: { hour_of_the_day: '11', run_on_weekends: 'false' },
+                        triggerName: 'every_day',
+                        propertySettings: {},
+                    },
+                    valid: false,
+                    name: 'trigger',
+                    displayName: 'Every Day',
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().version.trigger.settings.input).toEqual({ hour_of_the_day: 11, run_on_weekends: false })
+        })
     })
 
     describeWithAuth('POST /v1/flows/:id ADD_ACTION', () => app!, (setup) => {

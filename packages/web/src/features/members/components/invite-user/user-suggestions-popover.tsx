@@ -126,6 +126,8 @@ function UserSuggestionsPopover({
         <TagInput
           key={tagInputKey}
           ref={inputRef}
+          id="emails"
+          data-testid="invite-user-emails"
           value={value}
           onChange={onChange}
           type="email"

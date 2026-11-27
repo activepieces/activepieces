@@ -144,6 +144,8 @@ Property.MarkDown({
   markdown snippet.
 </Tip>
 
+Set `selfHostedOnly: true` only when the whole snippet is about setup that Activepieces Cloud already does for its users, such as Slack's App Webhook configuration. The builder then hides the snippet on Cloud. Do not set it on a snippet that also holds information every user needs; split that snippet into two instead.
+
 ### DateTime
 
 This property collects a date and time from the user.

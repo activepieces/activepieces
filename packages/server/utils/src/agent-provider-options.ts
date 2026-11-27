@@ -4,14 +4,14 @@ import { AnthropicLanguageModelOptions } from '@ai-sdk/anthropic'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { SystemModelMessage } from 'ai'
 
-function buildProviderOptions({ provider, tier, modelId, disableThinking = false }: { provider: AIProviderName, tier: { id: string, thinkingBudget: number }, modelId: string, disableThinking?: boolean }): SharedV3ProviderOptions {
+function buildProviderOptions({ provider, thinkingBudget, modelId, disableThinking = false }: { provider: AIProviderName, thinkingBudget: number, modelId: string, disableThinking?: boolean }): SharedV3ProviderOptions {
     switch (provider) {
         case AIProviderName.ANTHROPIC:
         case AIProviderName.BEDROCK:
-            return { anthropic: anthropicThinking({ thinkingBudget: tier.thinkingBudget, modelId, disableThinking }) }
+            return { anthropic: anthropicThinking({ thinkingBudget, modelId, disableThinking }) }
         case AIProviderName.ACTIVEPIECES:
         case AIProviderName.OPENROUTER:
-            return { openrouter: { cache_control: { type: 'ephemeral' }, reasoning: openRouterReasoning({ thinkingBudget: tier.thinkingBudget, modelId, disableThinking }) } }
+            return { openrouter: { cache_control: { type: 'ephemeral' }, reasoning: openRouterReasoning({ thinkingBudget, modelId, disableThinking }) } }
         default:
             return {}
     }

@@ -316,8 +316,8 @@
   "PUT": "PUT",
   "DELETE": "BORRAR",
   "HEAD": "LIMPIO",
-  "Request": "Request",
-  "Data to send": "Data to send",
+  "Request": "Solicitud",
+  "Data to send": "Datos para enviar",
   "New Ad in Spyder": "Nuevo anuncio en Spyder",
   "New Ad in Board": "Nuevo anuncio en el foro",
   "New Swipefile Ad": "Nuevo anuncio de Swipefile",
@@ -329,7 +329,7 @@
   "Polling Interval (minutes)": "Intervalo de encuesta (minutos)",
   "Board": "Tablero",
   "A brand from your Spyder watchlist.": "A brand from your Spyder watchlist.",
-  "How many of the newest ads to check per page (1 to 50, default 10). Foreplay charges 1 credit per ad returned. A quiet poll costs one page; if a whole page is new, the trigger reads further pages until it reaches an ad it has already seen, up to 5 pages per poll (worst case 5 × this many credits), and carries on from where it stopped on the next poll so no ad is skipped.": "How many of the newest ads to check per page (1 to 50, default 10). Foreplay charges 1 credit per ad returned. A quiet poll costs one page; if a whole page is new, the trigger reads further pages until it reaches an ad it has already seen, up to 5 pages per poll (worst case 5 × this many credits), and carries on from where it stopped on the next poll so no ad is skipped.",
+  "How many of the newest ads to check per page (1 to 50, default 10). Foreplay charges 1 credit per ad returned. A quiet poll costs one page; if a whole page is new, the trigger reads further pages until it reaches an ad it has already seen, up to 5 pages per poll (worst case 5 × this many credits), and carries on from where it stopped on the next poll so no ad is skipped.": "Cuántos de los anuncios más recientes revisar por página (1 a 50, predeterminado 10). Foreplay cobra 1 crédito por anuncio devuelto. Una consulta silenciosa cuesta una página; si una página completa es nueva, el trigger lee páginas posteriores hasta llegar a un anuncio que ya ha visto, hasta 5 páginas por consulta (peor caso 5 × esta cantidad de créditos), y continúa desde donde se detuvo en la siguiente consulta para que no se omita ningún anuncio.",
   "No longer used; Activepieces sets the polling schedule.": "No longer used; Activepieces sets the polling schedule.",
   "The board to watch.": "The board to watch."
 }

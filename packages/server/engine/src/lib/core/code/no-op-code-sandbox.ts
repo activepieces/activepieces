@@ -108,7 +108,7 @@ export const noOpCodeSandbox: CodeSandbox = {
     },
 
     async createScriptSession({ scriptContext, functions }) {
-        const newContext: Record<string, unknown> = {
+        let newContext: Record<string, unknown> = {
             ...scriptContext,
             ...functions,
         }
@@ -127,6 +127,12 @@ export const noOpCodeSandbox: CodeSandbox = {
                     return
                 }
                 newContext[key] = value
+            },
+            reset: async () => {
+                newContext = {
+                    ...scriptContext,
+                    ...functions,
+                }
             },
             dispose: () => {
                 disposed = true

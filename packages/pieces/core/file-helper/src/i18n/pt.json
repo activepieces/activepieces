@@ -128,10 +128,10 @@
   "CD Audio": "Áudio do CD",
   "MPEG Transport Stream": "Transporte MPEG - Transporte",
   "Opus Audio in Ogg Container": "Opus Audio no Recipiente Ogg",
-  "Output": "Output",
-  "Source": "Source",
-  "Match": "Match",
-  "Archive": "Archive",
-  "Password": "Password",
-  "Files Helper": "Files Helper"
+  "Output": "Saída",
+  "Source": "fonte",
+  "Match": "Combinar",
+  "Archive": "Arquivar",
+  "Password": "Senha",
+  "Files Helper": "Auxiliar de arquivos"
 }

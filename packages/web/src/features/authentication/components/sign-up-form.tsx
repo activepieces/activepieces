@@ -395,7 +395,7 @@ const SignUpForm = ({
           )}
 
           {form?.formState?.errors?.root?.serverError && (
-            <FormMessage>
+            <FormMessage role="alert" data-testid="sign-up-server-error">
               {form.formState.errors.root.serverError.message}
             </FormMessage>
           )}

@@ -10,8 +10,11 @@ export const pieceTranslation = {
     if (!translations) {
       return piece
     }
-    const tree = isCorePiece(piece.categories) ? coreTranslationTree : translationTree
-    return translateNode({ node: piece, tree, translations })
+    return translateNode({ node: piece, tree: translationTreeFor(piece.categories), translations })
+  },
+
+  translatableTextByJsonPath: ({ piece }: TranslatableTextByJsonPathParams): Record<string, string> => {
+    return Object.fromEntries(collectText({ node: piece, tree: translationTreeFor(piece.categories), jsonPath: '' }))
   },
 
   pathsToTranslate: (categories?: PieceCategory[]): string[] => {
@@ -77,6 +80,10 @@ function isCorePiece(categories: PieceCategory[] | undefined): boolean {
   return categories?.includes(PieceCategory.CORE) ?? false
 }
 
+function translationTreeFor(categories: PieceCategory[] | undefined): TranslationTree {
+  return isCorePiece(categories) ? coreTranslationTree : translationTree
+}
+
 function addPath({ tree, keys: [key, ...rest] }: AddPathParams): TranslationTree {
   return { ...tree, [key]: rest.length === 0 ? null : addPath({ tree: tree[key] ?? {}, keys: rest }) }
 }
@@ -105,6 +112,53 @@ function translateValue({ value, translations }: TranslateValueParams): unknown 
     return value
   }
   return translations[value.slice(0, MAX_KEY_LENGTH_FOR_CORWDIN)] || value
+}
+
+function collectText({ node, tree, jsonPath }: CollectTextParams): TextAtJsonPath[] {
+  if (!isRecord(node)) {
+    return []
+  }
+  return Object.entries(tree).flatMap<TextAtJsonPath>(([key, subtree]) => {
+    const children = key === '*' ? childrenWithSegments(node) : [{ segment: key, child: node[key] }]
+    return children.flatMap<TextAtJsonPath>(({ segment, child }) => {
+      const childPath = appendSegment({ jsonPath, segment })
+      if (subtree === null) {
+        return typeof child === 'string' && child.length > 0 ? [[childPath, child]] : []
+      }
+      return collectText({ node: child, tree: subtree, jsonPath: childPath })
+    })
+  })
+}
+
+function childrenWithSegments(node: Record<string, unknown>): ChildWithSegment[] {
+  if (!Array.isArray(node)) {
+    return Object.entries(node).map(([segment, child]) => ({ segment, child }))
+  }
+  const identities = node.map((child: unknown) => elementIdentity(child))
+  return node.map((child: unknown, index: number) => {
+    const identity = identities[index]
+    const unique = identity !== undefined && identities.indexOf(identity) === identities.lastIndexOf(identity)
+    return { segment: unique ? `[${identity}]` : `[${index}]`, child }
+  })
+}
+
+function elementIdentity(child: unknown): string | undefined {
+  if (!isRecord(child)) {
+    return undefined
+  }
+  const field = ELEMENT_IDENTITY_FIELDS.find((name) => child[name] !== undefined)
+  if (field === undefined) {
+    return undefined
+  }
+  const value = child[field]
+  return `${field}=${typeof value === 'string' ? value : JSON.stringify(value)}`
+}
+
+function appendSegment({ jsonPath, segment }: AppendSegmentParams): string {
+  if (jsonPath.length === 0) {
+    return segment
+  }
+  return segment.startsWith('[') ? `${jsonPath}${segment}` : `${jsonPath}.${segment}`
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -139,6 +193,8 @@ const readLocaleFile = async (locale: LocalesEnum, pieceOutputPath: string) => {
   }
 }
 
+const ELEMENT_IDENTITY_FIELDS = ['value', 'key']
+
 type TranslatePieceParams<T extends PieceMetadataModelSummary | PieceMetadataModel> = {
   piece: T
   locale?: LocalesEnum
@@ -162,4 +218,26 @@ type TranslateNodeParams<N> = {
 type TranslateValueParams = {
   value: unknown
   translations: Record<string, string>
+}
+
+type TranslatableTextByJsonPathParams = {
+  piece: { categories?: PieceCategory[] } & object
+}
+
+type TextAtJsonPath = [jsonPath: string, text: string]
+
+type CollectTextParams = {
+  node: unknown
+  tree: TranslationTree
+  jsonPath: string
+}
+
+type ChildWithSegment = {
+  segment: string
+  child: unknown
+}
+
+type AppendSegmentParams = {
+  jsonPath: string
+  segment: string
 }

@@ -29,7 +29,7 @@ export const getWorksheetColumnsAction = createAction({
 
         const client = createMSGraphClient(context.auth.access_token, cloud);
         const response = await client
-            .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='A1:ZZ1')/usedRange`)
+            .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${encodeURIComponent(worksheetId)}/range(address='A1:ZZ1')/usedRange`)
             .get();
 
         const columns = response.values?.[0] ?? [];

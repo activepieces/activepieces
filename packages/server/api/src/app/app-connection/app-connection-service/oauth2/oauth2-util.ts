@@ -140,7 +140,7 @@ export const oauth2Util = (log: FastifyBaseLogger) => ({
             authProps: pieceAuth.props,
         })
         const authUrl = resolveValueFromProps(templateProps, pieceAuth.authUrl)
-        const scope = resolveValueFromProps(templateProps, selectedScopes.join(' '))
+        const scope = resolveValueFromProps(templateProps, selectedScopes.join(' ')).trim()
 
         const queryParams: Record<string, string> = {
             response_type: 'code',

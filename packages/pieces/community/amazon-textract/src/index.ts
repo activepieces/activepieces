@@ -13,7 +13,7 @@ export const amazonTextract = createPiece({
     'Extract text, forms, tables, signatures, and structured data from documents using AWS Textract.',
   logoUrl: 'https://cdn.activepieces.com/pieces/amazon-textract.png',
   minimumSupportedRelease: '0.90.1',
-  authors: ["AhmadTash"],
+  authors: ["AhmadTash", "ibrahim-abuznaid"],
   categories: [PieceCategory.DEVELOPER_TOOLS],
   auth: amazonTextractAuth,
   actions: [

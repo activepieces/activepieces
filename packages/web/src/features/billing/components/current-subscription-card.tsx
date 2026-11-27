@@ -35,7 +35,7 @@ export const CurrentSubscriptionCard = ({
 }: CurrentSubscriptionCardProps) => {
   const isPaid = billingUtils.isPaidPlan(info.plan.plan);
   const isYearly = billingUtils.isYearlyPlan(info);
-  const planName = info.autumnPlanName ?? (isPaid ? info.plan.plan : t('Free'));
+  const planName = billingUtils.planDisplayName(info);
   const { platform } = platformHooks.useCurrentPlatform();
   const trial = platform.selfServeTrial;
   if (trial?.state === SelfServeTrialState.ACTIVE) {

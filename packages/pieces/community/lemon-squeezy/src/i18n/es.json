@@ -281,6 +281,8 @@
   "PUT": "PUT",
   "DELETE": "BORRAR",
   "HEAD": "LIMPIO",
+  "Request": "Solicitud",
+  "Data to send": "Datos a enviar",
   "Order Created": "Orden creada",
   "Order Refunded": "Pedido reembolsado",
   "Subscription Created": "Suscripción creada",

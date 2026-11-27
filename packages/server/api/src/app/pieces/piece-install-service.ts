@@ -21,7 +21,7 @@ export const pieceInstallService = (log: FastifyBaseLogger) => ({
                 platformId,
             }, log)
             const archiveId = piecePackage.packageType === PackageType.ARCHIVE ? piecePackage.archiveId : undefined
-            const savedPiece = await pieceMetadataService(log).create({
+            const { piece: savedPiece } = await pieceMetadataService(log).create({
                 pieceMetadata: {
                     ...pieceInformation,
                     minimumSupportedRelease:

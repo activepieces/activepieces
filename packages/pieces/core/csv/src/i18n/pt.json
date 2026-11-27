@@ -53,12 +53,12 @@
   "CSV Texts": "CSV Texts",
   "Rows per Chunk": "Rows per Chunk",
   "Repeat Header Row": "Repeat Header Row",
-  "Paste the CSV, or map text from an earlier step.": "Paste the CSV, or map text from an earlier step.",
-  "On: rows become objects keyed by column name. Off: lists of values.": "On: rows become objects keyed by column name. Off: lists of values.",
+  "Paste the CSV, or map text from an earlier step.": "Cole o CSV, ou mapeie o texto de uma etapa anterior.",
+  "On: rows become objects keyed by column name. Off: lists of values.": "Ativado: as linhas se tornam objetos indexados pelo nome da coluna. Desativado: listas de valores.",
   "The character that separates columns in your CSV.": "The character that separates columns in your CSV.",
   "Each object becomes a row and each key a column; missing keys stay blank. Nested fields become columns named with dots, like `address.city`.": "Each object becomes a row and each key a column; missing keys stay blank. Nested fields become columns named with dots, like `address.city`.",
   "A list of objects, one per row. Map it from an earlier step.": "A list of objects, one per row. Map it from an earlier step.",
-  "The character that separates columns in the CSV output.": "The character that separates columns in the CSV output.",
+  "The character that separates columns in the CSV output.": "O caractere que separa as colunas na saída CSV.",
   "The Excel file (.xlsx or .xls) to convert to CSV.": "The Excel file (.xlsx or .xls) to convert to CSV.",
   "Name of the sheet to convert. Leave blank to use the first sheet.": "Name of the sheet to convert. Leave blank to use the first sheet.",
   "The .csv file to read. Map a file from an earlier step, or upload one.": "The .csv file to read. Map a file from an earlier step, or upload one.",
@@ -92,7 +92,7 @@
   "Start every chunk with the column names.": "Start every chunk with the column names.",
   "Comma": "Vírgula",
   "Tab": "Tab",
-  "Semicolon": "Semicolon",
+  "Semicolon": "Ponto e vírgula",
   "Auto-detect": "Auto-detect",
   "Comma (,)": "Comma (,)",
   "Semicolon (;)": "Semicolon (;)",
@@ -118,5 +118,5 @@
   "Last occurrence": "Last occurrence",
   "Keep only these columns": "Keep only these columns",
   "Remove these columns": "Remove these columns",
-  "CSV": "CSV"
+  "CSV": "Csv"
 }

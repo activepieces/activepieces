@@ -14,7 +14,7 @@ To achieve this, the backend will generate a signed token that contains all the 
 
 <Steps>
   <Step title="Step 1: Obtain Signing Key">
-    You can generate a signing key by going to **Platform Settings -> Signing Keys -> Generate Signing Key**.
+    You can generate a signing key in **Platform Admin -> Developers -> Embedding**: open the **Add signing keys** step and click **New Signing Key**.
 
     This will generate a public and private key pair. The public key will be used by Activepieces to verify the signature of the JWT tokens you send. The private key will be used by you to sign the JWT tokens.
 
@@ -25,12 +25,12 @@ To achieve this, the backend will generate a signed token that contains all the 
   </Step>
 
   <Step title="Step 2: Generate a JWT">
-    The signing key will be used to generate JWT tokens for the currently logged-in user on your website, which will then be sent to the Activepieces Iframe as a query parameter to authenticate the user and exchange the token for a longer lived token.
+    The signing key will be used to generate JWT tokens for the currently logged-in user on your website. You pass the token to the embed SDK (`jwtToken` in `activepieces.configure`), and the Activepieces iframe exchanges it for a longer lived token.
 
     To generate these tokens, you will need to add code in your backend to generate the token using the RS256 algorithm, so the JWT header would look like this:
 
     <Tip>
-      To obtain the `SIGNING_KEY_ID`, refer to the signing key table and locate the value in the first column.
+      To obtain the `SIGNING_KEY_ID`, find the key in the signing keys list: its id shows as `kid` under its name.
        ![Signing Key ID](../resources/screenshots/signing-key-id.png)
     </Tip>
 
@@ -52,17 +52,14 @@ To achieve this, the backend will generate a signed token that contains all the 
       "lastName": "Doe",
       "role": "EDITOR",
       "piecesFilterType": "NONE",
-      "exp": 1856563200,
-      "tasks": 50000,
-      "aiCredits": 250
+      "exp": 1856563200
     }
     ```
 
     | Claim             | Description                                     |
     |-------------------|-------------------------------------------------|
     | externalUserId    | Unique identification of the user in **your** software |
-    | externalProjectId | Unique identification of the user's project in **your** software |
-    | projectDisplayName| Display name of the user's project |
+    | externalProjectId | Unique identification of the user's project in **your** software. A new project also takes it as its display name |
     | firstName         | First name of the user                           |
     | lastName          | Last name of the user                            |
     | role              | Role of the user in the Activepieces project (e.g., **EDITOR**, **VIEWER**, **ADMIN**)           |
@@ -71,8 +68,6 @@ To achieve this, the backend will generate a signed token that contains all the 
     | pieceSet          | (v4) Key of the piece set to assign to the project, check [customize pieces](/embedding/customize-pieces)  |
     | piecesFilterType  | (v3, legacy) Customize the project pieces, check [customize pieces](/embedding/customize-pieces)  |
     | piecesTags        | (v3, legacy) Customize the project pieces, check [customize pieces](/embedding/customize-pieces)  |
-    | tasks             | Customize the tasks limit for your user's project |
-    | aiCredits         | Customize the ai credits limit for your user's project |
     | concurrencyPoolKey   | Pool identifier. Projects sharing the same key share the same concurrency limit. Must be used with `concurrencyPoolLimit`. See [Manage Concurrency](/admin-guide/guides/manage-concurrency) |
     | concurrencyPoolLimit | Maximum concurrent flow runs for the pool. Must be used with `concurrencyPoolKey`. |
 

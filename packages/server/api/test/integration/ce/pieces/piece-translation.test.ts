@@ -35,7 +35,7 @@ describe('piece translations stored per locale', () => {
                 [LocalesEnum.GERMAN]: { 'Send a message': 'Eine Nachricht senden' },
             },
         })
-        const saved = await pieceMetadataService(mockLog).create({
+        const { piece: saved } = await pieceMetadataService(mockLog).create({
             pieceMetadata: syncedMetadata,
             packageType: PackageType.REGISTRY,
             pieceType: PieceType.OFFICIAL,
@@ -58,7 +58,7 @@ describe('piece translations stored per locale', () => {
     })
 
     it('are returned for every locale by the single route when no locale is requested, so self-hosted sync keeps them', async () => {
-        const saved = await pieceMetadataService(mockLog).create({
+        const { piece: saved } = await pieceMetadataService(mockLog).create({
             pieceMetadata: createMockPieceMetadata({
                 name: 'synced-with-all-locales',
                 pieceType: PieceType.OFFICIAL,
@@ -90,7 +90,7 @@ describe('piece translations stored per locale', () => {
     })
 
     it('fall back to the legacy i18n column for the single route when no piece_translation rows exist', async () => {
-        const saved = await pieceMetadataService(mockLog).create({
+        const { piece: saved } = await pieceMetadataService(mockLog).create({
             pieceMetadata: createMockPieceMetadata({ name: 'legacy-i18n-only', pieceType: PieceType.OFFICIAL, packageType: PackageType.REGISTRY }),
             packageType: PackageType.REGISTRY,
             pieceType: PieceType.OFFICIAL,
@@ -107,7 +107,7 @@ describe('piece translations stored per locale', () => {
     })
 
     it('are saved with characters Postgres jsonb rejects stripped from keys and values', async () => {
-        const saved = await pieceMetadataService(mockLog).create({
+        const { piece: saved } = await pieceMetadataService(mockLog).create({
             pieceMetadata: createMockPieceMetadata({
                 name: 'translations-with-nul',
                 i18n: { [LocalesEnum.GERMAN]: { 'Send\u0000 a message': 'Eine\u0000 Nachricht senden' } },
@@ -125,7 +125,7 @@ describe('piece translations stored per locale', () => {
             name: 'deleted-with-translations',
             i18n: { [LocalesEnum.GERMAN]: { 'Send a message': 'Eine Nachricht senden' } },
         })
-        const saved = await pieceMetadataService(mockLog).create({
+        const { piece: saved } = await pieceMetadataService(mockLog).create({
             pieceMetadata: piece,
             packageType: PackageType.REGISTRY,
             pieceType: PieceType.OFFICIAL,

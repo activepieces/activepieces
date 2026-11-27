@@ -44,7 +44,7 @@ Older integrations select pieces by tag using a **v3** token. New integrations s
     <Step title="Add Tags to Provision Token">
        You need to specify the tags of pieces in the token, check how to generate token in [provisioning users](./provision-users).
 
-        You should specify the `pieces` claim like this:
+        You should specify the `piecesFilterType` and `piecesTags` claims like this:
         ```json
         {
             /// Other claims
@@ -54,9 +54,6 @@ Older integrations select pieces by tag using a **v3** token. New integrations s
         }
         ```
 
-        Each time the token is used by the embedding SDK, it will sync all pieces with these tags to the token's project. 
-        The project will only contain the pieces that contain these tags.
-
-        Only the **first** tag is honored, and it is matched against a piece set whose key equals the tag name.
+        Each time the token is used by the embedding SDK, the token's project is assigned the piece set whose key equals the **first** tag. Other tags are ignored. If no set has that key, the project falls back to the platform's default set.
     </Step>
 </Steps>

@@ -1,10 +1,11 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
-import { ActivepiecesAiBilling, ActivepiecesError, AIProviderName, ErrorCode, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, ActivepiecesError, AIProviderName, ErrorCode } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
 import { aiProviderUtils } from '@activepieces/shared'
 import { generateText, LanguageModel, ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
+import { agentPageContextNote } from './prompt/agent-page-context-note'
 
 const COMPACTION_THRESHOLD = 0.7
 const RECENT_WINDOW_RATIO = 0.3
@@ -13,17 +14,22 @@ const MIN_MESSAGES_BEFORE_COMPACTION = 6
 const MAX_TOOL_RESULT_CHARS_FOR_SUMMARY = 2_000
 const SUMMARY_OUTPUT_RESERVE_TOKENS = 4_000
 const COMPACTION_TIMEOUT_MS = 35_000
+const MAX_SUMMARY_INPUT_TOKENS_PER_PASS = 32_000
 
 const COMPACTION_SYSTEM_PROMPT = readFileSync(
     path.resolve('packages/server/api/src/assets/prompts/chat-compaction-prompt.md'),
     'utf8',
 )
 
-function estimateTokenCount({ messages, systemPromptLength }: {
+function estimateTokenCount({ messages, summary, summarizedUpToIndex, systemPromptLength }: {
     messages: ModelMessage[]
+    summary: string | null
+    summarizedUpToIndex: number | null
     systemPromptLength: number
 }): number {
-    return tokensIn(JSON.stringify(messages)) + Math.ceil(systemPromptLength / CHARS_PER_TOKEN_ESTIMATE)
+    const unsummarized = summary ? messages.slice(summarizedUpToIndex ?? 0) : messages
+    const summaryTokens = summary ? tokensIn(JSON.stringify(summaryBlockFor({ summary }))) : 0
+    return summaryTokens + tokensIn(JSON.stringify(unsummarized)) + Math.ceil(systemPromptLength / CHARS_PER_TOKEN_ESTIMATE)
 }
 
 function contextBudget({ provider, reservedTokens }: { provider: AIProviderName, reservedTokens: number }): number {
@@ -69,27 +75,30 @@ function snapToSafeMessageBoundary({ messages, rawCutoff }: {
     return idx
 }
 
-async function compactMessages({ messages, existingSummary, summarizedUpToIndex, provider, reservedTokens, model, log, billing }: {
+async function compactMessages({ messages, existingSummary, summarizedUpToIndex, provider, reservedTokens, model, summarizer, log, billing, deadline = startDeadline() }: {
     messages: ModelMessage[]
     existingSummary: string | null
     summarizedUpToIndex: number | null
     provider: AIProviderName
     reservedTokens: number
     model: LanguageModel
+    summarizer: { provider: AIProviderName, modelId: string }
     log: FastifyBaseLogger
     billing?: ActivepiecesAiBilling
+    deadline?: AbortSignal
 }): Promise<{ summary: string, summarizedUpToIndex: number }> {
     const recentWindowSize = recentWindowSizeFor({
         messages,
         targetTokens: contextBudget({ provider, reservedTokens }) * RECENT_WINDOW_RATIO,
     })
     const rawCutoff = messages.length - recentWindowSize
-    const newCutoffIndex = snapToSafeMessageBoundary({ messages, rawCutoff })
+    const windowCutoffIndex = snapToSafeMessageBoundary({ messages, rawCutoff })
 
     const startIndex = summarizedUpToIndex ?? 0
-    if (newCutoffIndex <= startIndex) {
+    if (windowCutoffIndex <= startIndex) {
         return { summary: existingSummary ?? '', summarizedUpToIndex: startIndex }
     }
+    const { end: newCutoffIndex, texts } = cutoffForOnePass({ messages, startIndex, windowCutoffIndex })
     const messagesToSummarize = messages.slice(startIndex, newCutoffIndex)
 
     let contentToSummarize = ''
@@ -97,8 +106,10 @@ async function compactMessages({ messages, existingSummary, summarizedUpToIndex,
         contentToSummarize += `Previous conversation summary:\n${existingSummary}\n\nNew messages since last summary:\n`
     }
 
-    const texts = messagesToSummarize.map((msg) => extractTextContent(msg))
-    const summaryInputTokens = contextBudget({ provider, reservedTokens: SUMMARY_OUTPUT_RESERVE_TOKENS }) * COMPACTION_THRESHOLD
+    const summaryInputTokens = Math.min(
+        contextBudget({ provider, reservedTokens: SUMMARY_OUTPUT_RESERVE_TOKENS }) * COMPACTION_THRESHOLD,
+        MAX_SUMMARY_INPUT_TOKENS_PER_PASS,
+    )
         - tokensIn(COMPACTION_SYSTEM_PROMPT)
         - tokensIn(contentToSummarize)
     const perMessageTokens = fairShareCap({ lengths: texts.map(tokensIn), budget: summaryInputTokens })
@@ -113,24 +124,47 @@ async function compactMessages({ messages, existingSummary, summarizedUpToIndex,
         totalMessages: messages.length,
         messagesToSummarize: messagesToSummarize.length,
         newCutoffIndex,
+        windowCutoffIndex,
         recentWindowSize,
         hadExistingSummary: !!existingSummary,
     }, 'Compacting chat messages')
 
-    const { data, error } = await tryCatch(() => generateText({
+    const { text } = await generateText({
         model,
         instructions: COMPACTION_SYSTEM_PROMPT,
         ...agentAiUtils.buildTelemetry({ functionId: 'agent-compaction', billing }),
         prompt: contentToSummarize,
+        providerOptions: agentAiUtils.buildProviderOptions({ provider: summarizer.provider, thinkingBudget: 0, modelId: summarizer.modelId, disableThinking: true }),
         maxOutputTokens: SUMMARY_OUTPUT_RESERVE_TOKENS,
-        abortSignal: AbortSignal.timeout(COMPACTION_TIMEOUT_MS),
-    }))
-    if (error) {
-        log.warn({ error }, 'Compaction failed or timed out, keeping previous summary')
-        return { summary: existingSummary ?? '', summarizedUpToIndex: startIndex }
-    }
+        abortSignal: deadline,
+    })
 
-    return { summary: data.text, summarizedUpToIndex: newCutoffIndex }
+    return { summary: text, summarizedUpToIndex: newCutoffIndex }
+}
+
+function startDeadline(): AbortSignal {
+    return AbortSignal.timeout(COMPACTION_TIMEOUT_MS)
+}
+
+function cutoffForOnePass({ messages, startIndex, windowCutoffIndex }: {
+    messages: ModelMessage[]
+    startIndex: number
+    windowCutoffIndex: number
+}): { end: number, texts: string[] } {
+    let tokens = 0
+    let end = startIndex
+    const texts: string[] = []
+    while (end < windowCutoffIndex) {
+        const text = extractTextContent(messages[end])
+        const next = tokensIn(text)
+        if (end > startIndex && tokens + next > MAX_SUMMARY_INPUT_TOKENS_PER_PASS && messages[end].role !== 'tool') {
+            break
+        }
+        texts.push(text)
+        tokens += next
+        end++
+    }
+    return { end, texts }
 }
 
 function buildCompactedPayload({ messages, summary, summarizedUpToIndex, provider, reservedTokens }: {
@@ -141,7 +175,7 @@ function buildCompactedPayload({ messages, summary, summarizedUpToIndex, provide
     reservedTokens: number
 }): ModelMessage[] {
     const recentMessages = summary ? messages.slice(summarizedUpToIndex ?? 0) : messages
-    const summaryBlock = summary ? `[Previous conversation summary]\n${summary}\n[End of summary — conversation continues below]` : ''
+    const summaryBlock = summary ? summaryBlockFor({ summary }) : ''
 
     const budget = contextBudget({ provider, reservedTokens })
     const threshold = budget * COMPACTION_THRESHOLD
@@ -187,6 +221,10 @@ function buildCompactedPayload({ messages, summary, summarizedUpToIndex, provide
         : [{ role: 'user', content: summaryText }, ...trimmedRecent]
 
     return finalPayload
+}
+
+function summaryBlockFor({ summary }: { summary: string }): string {
+    return `[Previous conversation summary]\n${summary}\n[End of summary — conversation continues below]`
 }
 
 function fairShareCap({ lengths, budget }: { lengths: number[], budget: number }): number {
@@ -242,7 +280,7 @@ function extractTextContent(message: ModelMessage): string {
         }
         else if (typeof part === 'object' && part !== null && 'type' in part) {
             if (part.type === 'text' && 'text' in part) {
-                text += String(part.text)
+                text += agentPageContextNote.isNote(part) ? '' : String(part.text)
             }
             else if (part.type === 'tool-call' && 'toolName' in part) {
                 text += `[Tool call: ${String(part.toolName)}]`
@@ -261,4 +299,5 @@ export const agentCompaction = {
     shouldCompact,
     compactMessages,
     buildCompactedPayload,
+    startDeadline,
 }

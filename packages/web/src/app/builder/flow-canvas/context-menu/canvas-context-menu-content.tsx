@@ -40,6 +40,7 @@ import {
   pasteNodes,
   toggleSkipSelectedNodes,
 } from '../utils/bulk-actions';
+import { flowCanvasUtils as builderFlowCanvasUtils } from '../utils/flow-canvas-utils';
 
 import { CanvasContextMenuProps, ContextMenuType } from './canvas-context-menu';
 
@@ -329,7 +330,9 @@ export const CanvasContextMenuContent = ({
                         );
                       }}
                     >
-                      {branch.branchName}
+                      {builderFlowCanvasUtils.getBranchDisplayName(
+                        branch.branchName,
+                      )}
                     </ContextMenuItem>
                   ),
                 )}

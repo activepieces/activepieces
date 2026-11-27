@@ -62,7 +62,7 @@ export const clearRangeAction = createAction({
 
     const client = createMSGraphClient(access_token, cloud);
     await client
-      .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='${range}')/clear`)
+      .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${encodeURIComponent(worksheetId)}/range(address='${range}')/clear`)
       .post({ applyTo: applyTo });
 
     // A successful request returns a 200 OK with no body.

@@ -77,8 +77,8 @@
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
   "HEAD": "CABEÇA",
-  "Request": "Request",
-  "Data to send": "Data to send",
+  "Request": "Solicitação",
+  "Data to send": "Dados a enviar",
   "New Email Received": "Novo e-mail recebido",
   "Triggers when a new email is received in a specified folder (or inbox).": "Aciona quando um novo email é recebido em uma pasta especificada (ou caixa de entrada).",
   "Select the folder to watch. If empty, watches the inbox/all messages based on API default.": "Selecione a pasta para assistir. Se vazia, assiste à caixa de entrada/todas as mensagens baseadas no padrão da API."

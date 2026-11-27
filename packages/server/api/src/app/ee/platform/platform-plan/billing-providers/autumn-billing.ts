@@ -1,11 +1,12 @@
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjs, wideEvent } from '@activepieces/server-utils'
-import { AiCreditsAutoTopUpState, AppSumoCreditsBillableFeature, AutoTopUpConfig, ConsumableFeatureId, CreditsBillableFeature, FeatureId, isConsumableFeatureId, isEligibleForSelfServeTrial, notStartedSelfServeTrial, PlanName, SeatsBillableFeature, SelfServeTrialDates, SelfServeTrialInfo, SelfServeTrialState, UnconsumableFeatureId } from '@activepieces/shared'
+import { AiCreditsAutoTopUpState, ApEdition, AppSumoCreditsBillableFeature, AutoTopUpConfig, ConsumableFeatureId, CreditsBillableFeature, FeatureId, isConsumableFeatureId, isEligibleForSelfServeTrial, notStartedSelfServeTrial, PlanName, RewardFeatureId, SeatsBillableFeature, SelfServeTrialDates, SelfServeTrialInfo, SelfServeTrialState, UnconsumableFeatureId } from '@activepieces/shared'
 import { AutumnError, type GetCustomerResponse } from 'autumn-js'
 import { FastifyBaseLogger } from 'fastify'
 import { AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS, getAutumnEnrollLockKey, getBillingEnforcedKey, getBillingOverviewFetchLockKey, getBillingOverviewKey, getCustomerStateFetchLockKey, getCustomerStateMissKey, getCustomerStateRefreshKey, getEntitlementsRefreshKey, getSelfServeTrialEndedRefreshKey, getSelfServeTrialStartLockKey } from '../../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../../database/redis-connections'
 import { rejectedPromiseHandler } from '../../../../helper/promise-handler'
+import { system } from '../../../../helper/system/system'
 import { ActivateLicenseParams, ApplyAppSumoPlanParams, AppSumoAiCreditsUsage, BillingInfo, BillingOverview, BillingProvider, CreditCheckSpeed, CreditsAndAppSumoState, CreditsGateState, CreditsUsage, emptyBillingOverview, GetSelfServeTrialInfoParams, ShouldBlockOnCreditsParams, TrackFeatureParams } from '../../../../platform/billing-provider'
 import { platformPlanTelemetry } from '../platform-plan-telemetry'
 import { assertSeatsNotBelowActiveUsers, platformPlanService } from '../platform-plan.service'
@@ -362,6 +363,14 @@ function toCreditsResetInterval(items: AutumnPlanItems): string | null {
     return creditsItem?.reset?.interval ?? null
 }
 
+function toRewardedInvitesLeft(customer: GetCustomerResponse): number | null {
+    const rewardedInvites = customer.balances[RewardFeatureId.REWARDED_INVITES]
+    if (system.getEdition() !== ApEdition.CLOUD || isNil(rewardedInvites)) {
+        return null
+    }
+    return Math.max(0, rewardedInvites.granted - rewardedInvites.usage)
+}
+
 function toSeatBreakdown(customer: GetCustomerResponse): { includedSeats: number | null, additionalSeats: number | null } {
     const balance = customer.balances[UnconsumableFeatureId.USERS_LIMIT]
     if (isNil(balance)) {
@@ -597,6 +606,7 @@ async function fetchBillingOverview(log: FastifyBaseLogger, platformId: string):
         ...toBillingInfo(customer, monthStart, monthEnd),
         ...toSeatBreakdown(customer),
         ...toBillableFeatures(customer),
+        rewardedInvitesLeft: toRewardedInvitesLeft(customer),
         unavailable: false,
     }
     await distributedStore.put(getBillingOverviewKey(platformId), overview, BILLING_OVERVIEW_TTL_SECONDS)

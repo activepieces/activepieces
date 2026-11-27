@@ -1,0 +1,60 @@
+{
+  "name": "Subflow child",
+  "flows": [
+    {
+      "displayName": "Subflow child",
+      "schemaVersion": null,
+      "notes": null,
+      "trigger": {
+        "name": "trigger",
+        "type": "PIECE_TRIGGER",
+        "valid": true,
+        "displayName": "Callable Flow",
+        "settings": {
+          "pieceName": "@activepieces/piece-subflows",
+          "pieceVersion": "0.7.0",
+          "triggerName": "callableFlow",
+          "input": {
+            "mode": "simple",
+            "exampleData": {
+              "sampleData": {
+                "value": ""
+              }
+            }
+          },
+          "propertySettings": {}
+        },
+        "nextAction": {
+          "name": "step_1",
+          "type": "PIECE",
+          "valid": true,
+          "displayName": "Return Response",
+          "settings": {
+            "pieceName": "@activepieces/piece-subflows",
+            "pieceVersion": "0.7.0",
+            "actionName": "returnResponse",
+            "input": {
+              "mode": "simple",
+              "response": {
+                "response": {
+                  "echo": "{{trigger['output']['data']['value']}}"
+                }
+              }
+            },
+            "propertySettings": {},
+            "errorHandlingOptions": {
+              "continueOnFailure": {
+                "value": false
+              },
+              "retryOnFailure": {
+                "value": false
+              }
+            }
+          },
+          "lastUpdatedDate": "2026-11-18T00:00:00.000Z"
+        },
+        "lastUpdatedDate": "2026-11-18T00:00:00.000Z"
+      }
+    }
+  ]
+}

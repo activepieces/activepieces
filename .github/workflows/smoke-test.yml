@@ -77,6 +77,14 @@ jobs:
           chmod +x smoke-test/verify-delay.sh
           smoke-test/verify-delay.sh
 
+      # A worker stopped mid-run (SIGTERM) must finish its flow before it exits, not hand it
+      # back to start over from the first step.
+      - name: Run graceful stop smoke test (worker)
+        if: matrix.executionMode == 'SANDBOX_CODE_ONLY'
+        run: |
+          chmod +x smoke-test/verify-graceful-stop.sh
+          SERVICE=worker smoke-test/verify-graceful-stop.sh
+
       # NOTE: The SANDBOX_PROCESS filesystem-isolation gate runs LOCAL only.
       # The sandbox hides host paths (e.g. /usr/src/app) with mount namespaces, which need
       # privileged container capabilities that GitHub Actions runners don't grant — so the probe

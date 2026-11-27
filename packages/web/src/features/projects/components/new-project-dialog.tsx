@@ -127,6 +127,7 @@ const NewProjectForm = ({
       }),
     ),
     defaultValues: {
+      displayName: '',
       globalConnectionExternalIds: preselectedConnectionExternalIds,
       alertReceiverEmail: '',
       sensitive: false,
@@ -196,8 +197,10 @@ const NewProjectForm = ({
                 <Input
                   {...field}
                   id="displayName"
+                  data-testid="new-project-name"
                   placeholder={t('Project Name')}
                 />
+                <FormMessage data-testid="new-project-name-error" />
               </FormItem>
             )}
           />
@@ -297,6 +300,7 @@ const NewProjectForm = ({
             <Button
               disabled={isPending}
               loading={isPending}
+              data-testid="new-project-submit"
               {...adminControl(AdminControl.PROJECTS_NEW_SUBMIT)}
               onClick={(e) => {
                 e.stopPropagation();

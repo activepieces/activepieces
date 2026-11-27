@@ -11,7 +11,10 @@ export const AutomationsNoResultsState = ({
   onClearFilters,
 }: AutomationsNoResultsStateProps) => {
   return (
-    <div className="flex flex-col items-center justify-center py-16 px-4">
+    <div
+      className="flex flex-col items-center justify-center py-16 px-4"
+      data-testid="automations-no-results"
+    >
       <div className="w-12 h-12 rounded-full bg-gray-3 flex items-center justify-center mb-4">
         <SearchX className="h-6 w-6 text-gray-11" />
       </div>

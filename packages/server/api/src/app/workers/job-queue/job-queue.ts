@@ -143,13 +143,14 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
     async removeAllFlowRunJobs({ flowRunId, platformId, projectId, flowId }: RemoveAllFlowRunJobsParams): Promise<void> {
         const queueName = await workerGroupRouting.resolveQueueForJob({ platformId, projectId, flowId, jobType: WorkerJobType.EXECUTE_FLOW, log })
         const queue = await ensureQueueExists({ log, queueName })
-        const allJobs = await queue.getJobs(['waiting', 'delayed'])
-        const matching = allJobs.filter((j) => j.id?.startsWith(flowRunId))
-        const removalResults = await Promise.allSettled(matching.map((j) => j.remove()))
-        const removedJobIds = matching
-            .filter((_, index) => removalResults[index].status === 'fulfilled')
-            .map((j) => j.id)
-            .filter((id): id is string => !isNil(id))
+        const queuedJobIds = await queue.getRanges(['waiting', 'paused', 'delayed'], 0, -1)
+        const matchingJobIds = queuedJobIds.filter((jobId) => jobId.startsWith(flowRunId))
+        const removalResults = await Promise.allSettled(matchingJobIds.map((jobId) => queue.remove(jobId)))
+        const removedJobIds = matchingJobIds
+            .filter((_, index) => {
+                const result = removalResults[index]
+                return result.status === 'fulfilled' && result.value === 1
+            })
         await jobReclaimCount.clearMany({ jobIds: removedJobIds, log })
         log.info({ flowRun: { id: flowRunId }, queueName, removedIds: removedJobIds }, '[jobQueue#removeAllFlowRunJobs] done')
     },

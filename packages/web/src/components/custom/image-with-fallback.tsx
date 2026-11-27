@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 
-import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
 export const ImageWithFallback = ({
@@ -27,7 +26,7 @@ export const ImageWithFallback = ({
     >
       {isLoading && (
         <span className="absolute inset-0 flex items-center justify-center">
-          <Skeleton className="h-full w-full" />
+          <span className="block h-full w-full animate-pulse rounded-md bg-gray-3" />
         </span>
       )}
       {hasError ? (

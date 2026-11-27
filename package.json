@@ -1,6 +1,6 @@
 {
   "name": "activepieces",
-  "version": "0.94.0",
+  "version": "0.95.0",
   "packageManager": "bun@1.4.4",
   "trustedDependencies": [
     "sqlite3",
@@ -66,6 +66,7 @@
   "devDependencies": {
     "@commitlint/cli": "17.7.1",
     "@commitlint/config-conventional": "17.7.0",
+    "@crowdin/crowdin-api-client": "1.60.0",
     "@playwright/test": "1.64.1",
     "@types/node": "24.11.0",
     "@types/semver": "7.5.6",

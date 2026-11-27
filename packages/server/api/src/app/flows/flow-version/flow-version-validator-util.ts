@@ -234,9 +234,10 @@ function validateProps(
 ): ValidationResult {
     const propsSchema = piecePropertiesUtils.buildSchema(props, auth, requireAuth)
     const schemaKeys = Object.keys((propsSchema as unknown as z.ZodObject<z.ZodRawShape>).shape)
-    const cleanInput = !isNil(input) ? Object.fromEntries(
-        schemaKeys.map(key => [key, input?.[key]]),
-    ) : undefined
+    const cleanInput = !isNil(input) ? piecePropertiesUtils.coerceInput({
+        props,
+        input: Object.fromEntries(schemaKeys.map(key => [key, input?.[key]])),
+    }) : undefined
     const parsed = propsSchema.safeParse(cleanInput)
     return {
         valid: parsed.success,

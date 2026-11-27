@@ -215,11 +215,79 @@ describe('Sign-in method enforcement for governed people', () => {
     })
 })
 
+describe('Email off on Cloud applies only to people the platform governs', () => {
+    it('guest keeps a password on a verified platform with email off', async () => {
+        const { mockPlatform } = await saveGoverningPlatform({ emailAuthEnabled: false, googleAuthEnabled: true })
+        const { mockUserIdentity } = await mockBasicUser({
+            user: { platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER, status: UserStatus.ACTIVE },
+            userIdentity: { email: `leo@${uniqueDomain()}`, password: PASSWORD },
+        })
+
+        const response = await signInWithPassword({ email: mockUserIdentity.email, password: PASSWORD })
+
+        expect(response?.statusCode).toBe(StatusCodes.OK)
+        expect(decodeToken(response?.json()?.token)?.platform?.id).toBe(mockPlatform.id)
+    })
+
+    it('guest keeps the emailed code on a verified platform with email off', async () => {
+        const { mockPlatform } = await saveGoverningPlatform({ emailAuthEnabled: false, googleAuthEnabled: true })
+        const { mockUserIdentity } = await mockBasicUser({
+            user: { platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER, status: UserStatus.ACTIVE },
+            userIdentity: { email: `leo@${uniqueDomain()}` },
+        })
+
+        const response = await signInWithEmailedCode({ email: mockUserIdentity.email, identityId: mockUserIdentity.id })
+
+        expect(response?.statusCode).toBe(StatusCodes.OK)
+        expect(decodeToken(response?.json()?.token)?.platform?.id).toBe(mockPlatform.id)
+    })
+
+    it('unverified platform with email off accepts a password', async () => {
+        const { mockPlatform, mockUserIdentity } = await mockAndSaveBasicSetup({
+            userIdentity: { email: `tom@${uniqueDomain()}`, password: PASSWORD },
+            platform: { emailAuthEnabled: false },
+            plan: { ssoEnabled: true },
+        })
+
+        const response = await signInWithPassword({ email: mockUserIdentity.email, password: PASSWORD })
+
+        expect(response?.statusCode).toBe(StatusCodes.OK)
+        expect(decodeToken(response?.json()?.token)?.platform?.id).toBe(mockPlatform.id)
+    })
+
+    it('unverified platform with email off accepts the emailed code', async () => {
+        const { mockPlatform, mockUserIdentity } = await mockAndSaveBasicSetup({
+            userIdentity: { email: `tom@${uniqueDomain()}` },
+            platform: { emailAuthEnabled: false },
+            plan: { ssoEnabled: true },
+        })
+
+        const response = await signInWithEmailedCode({ email: mockUserIdentity.email, identityId: mockUserIdentity.id })
+
+        expect(response?.statusCode).toBe(StatusCodes.OK)
+        expect(decodeToken(response?.json()?.token)?.platform?.id).toBe(mockPlatform.id)
+    })
+})
+
 async function signInWithPassword({ email, password }: SignInWithPasswordParams) {
     return app?.inject({
         method: 'POST',
         url: '/api/v1/authentication/sign-in',
         body: createMockSignInRequest({ email, password }),
+    })
+}
+
+async function signInWithEmailedCode({ email, identityId }: SignInWithEmailedCodeParams) {
+    await app?.inject({
+        method: 'POST',
+        url: '/api/v1/authentication/otp/request',
+        headers: { 'x-real-ip': '10.9.0.2' },
+        body: { email },
+    })
+    return app?.inject({
+        method: 'POST',
+        url: '/api/v1/authentication/otp/verify',
+        body: { email, code: await deliveredCode(identityId) },
     })
 }
 
@@ -280,6 +348,11 @@ function uniqueDomain(): string {
 type SignInWithPasswordParams = {
     email: string
     password: string
+}
+
+type SignInWithEmailedCodeParams = {
+    email: string
+    identityId: string
 }
 
 type SaveGoverningPlatformParams = {

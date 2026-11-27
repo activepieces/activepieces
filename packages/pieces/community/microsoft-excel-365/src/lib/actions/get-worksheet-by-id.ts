@@ -32,7 +32,7 @@ export const getWorksheetAction = createAction({
         // which can be used to identify it in the API URL as per the documentation ({id|name}).
         const client = createMSGraphClient(access_token, cloud);
         const response = await client
-            .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}`)
+            .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${encodeURIComponent(worksheetId)}`)
             .get();
 
         // The response body contains the workbookWorksheet object with its metadata.

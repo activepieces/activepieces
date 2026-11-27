@@ -18,12 +18,14 @@ export const appWebhookSetupInfo = Property.MarkDown({
   value:
     "This trigger needs Slack's App Webhook manually configured on self-hosted instances before it will receive events, see the [setup guide](https://www.activepieces.com/docs/install/configure-operate/setup-app-webhooks#slack).",
   variant: MarkdownVariant.INFO,
+  selfHostedOnly: true,
 });
 
 export const interactivitySetupInfo = Property.MarkDown({
   value:
     "This trigger needs Slack's Interactivity & Shortcuts Request URL manually configured on self-hosted instances before it will receive events, see the [setup guide](https://www.activepieces.com/docs/install/configure-operate/setup-app-webhooks#slack).",
   variant: MarkdownVariant.INFO,
+  selfHostedOnly: true,
 });
 
 export const slackChannel = <R extends boolean>(required: R) =>

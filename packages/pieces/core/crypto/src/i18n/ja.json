@@ -51,10 +51,10 @@
   "SHA384": "SHA384",
   "Alphanumeric": "Alphanumeric",
   "With Symbols": "With Symbols",
-  "Hash": "Hash",
-  "Signing key": "Signing key",
-  "Signature": "Signature",
+  "Hash": "ハッシュ",
+  "Signing key": "署名キー",
+  "Signature": "署名",
   "Password": "Password",
-  "Encrypt for recipient": "Encrypt for recipient",
+  "Encrypt for recipient": "受信者用に暗号化",
   "Crypto": "Crypto"
 }

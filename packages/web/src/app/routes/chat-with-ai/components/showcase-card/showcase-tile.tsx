@@ -2,6 +2,7 @@ import { ArrowRight } from 'lucide-react';
 import { motion } from 'motion/react';
 
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
+import { MOTION } from '@/features/workspace/lib/chat-layout';
 import { cn } from '@/lib/utils';
 
 import { OptionIcon } from '../question-inputs/question-icon';
@@ -30,11 +31,11 @@ export function ShowcaseTile({
   const className = cn(
     'flex w-full items-start text-left',
     isList
-      ? 'items-center gap-4 px-4 py-4 sm:px-5'
+      ? 'items-center gap-4 px-4 py-4 @chat-sm/chat:px-5'
       : 'gap-3 rounded-xl border bg-gray-1 p-3',
     clickable &&
       cn(
-        'group cursor-pointer transition-colors duration-150',
+        'group cursor-pointer transition-colors duration-(--dur-micro) ease-[ease]',
         isList
           ? 'hover:bg-gray-3/50'
           : 'hover:border-accent-7 hover:bg-accent-3',
@@ -84,20 +85,20 @@ export function ShowcaseTile({
       {clickable && isList && (
         <ArrowRight
           aria-hidden
-          className="size-4 shrink-0 translate-x-1 text-accent-11 opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100"
+          className="size-4 shrink-0 translate-x-1 text-accent-11 opacity-0 transition-[opacity,translate] duration-(--dur-base) ease-(--ease-ap-out) group-hover:translate-x-0 group-hover:opacity-100"
         />
       )}
     </>
   );
 
   const motionProps = {
-    initial: animate && streaming ? { opacity: 0, y: 8 } : false,
+    initial: animate && streaming ? { opacity: 0, y: 4 } : false,
     animate: { opacity: 1, y: 0 },
     ...(clickable ? { whileTap: { scale: 0.995 } } : {}),
     transition: {
-      duration: 0.25,
-      delay: index * 0.05,
-      ease: 'easeOut' as const,
+      duration: MOTION.base,
+      delay: index * STAGGER_S,
+      ease: MOTION.easeOut,
     },
   };
 
@@ -129,3 +130,5 @@ export type ShowcaseTileData = {
   app?: string;
   icon?: string;
 };
+
+const STAGGER_S = 0.03;

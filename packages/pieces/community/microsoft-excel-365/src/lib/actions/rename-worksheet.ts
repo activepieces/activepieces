@@ -45,7 +45,7 @@ export const renameWorksheetAction = createAction({
     // which can be used to identify it in the API URL.
     const client = createMSGraphClient(access_token, cloud);
     const response = await client
-      .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}`)
+      .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${encodeURIComponent(worksheetId)}`)
       .patch({ name: new_name });
 
     return response;

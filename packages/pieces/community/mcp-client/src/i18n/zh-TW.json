@@ -1,0 +1,8 @@
+{
+  "Call tools on an external MCP server deterministically, without an LLM.": "Call tools on an external MCP server deterministically, without an LLM.",
+  "Call Tool": "Call Tool",
+  "Invoke a specific tool on an external MCP server and return its result.": "Invoke a specific tool on an external MCP server and return its result.",
+  "Tool": "Tool",
+  "Tool Inputs": "Tool Inputs",
+  "The tool to call. The list is loaded from the MCP server.": "The tool to call. The list is loaded from the MCP server."
+}

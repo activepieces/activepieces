@@ -191,6 +191,8 @@
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
   "HEAD": "CABEÇA",
+  "Request": "Solicitação",
+  "Data to send": "Dados a enviar",
   "New Record": "Novo Registro",
   "Updated Record": "Registro atualizado",
   "Triggers when a new record is created in the specified table": "Aciona quando um novo registro é criado na tabela especificada",

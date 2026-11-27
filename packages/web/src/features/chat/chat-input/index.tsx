@@ -92,7 +92,7 @@ const ChatInput = React.forwardRef<HTMLTextAreaElement, ChatInputProps>(
           <div className="rounded-xl border shadow-xs">
             {files.length > 0 && (
               <div
-                className="px-4 py-3 w-full transition-all overflow-hidden"
+                className="px-4 py-3 w-full overflow-hidden"
                 style={{
                   height: `${filesPreviewContainerSize.height}px`,
                 }}

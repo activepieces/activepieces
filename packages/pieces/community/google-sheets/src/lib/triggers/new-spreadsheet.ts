@@ -8,7 +8,7 @@ import {
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
 import * as z from 'zod/mini';
-import { drive as googleDrive } from '@googleapis/drive';
+import { drive as googleDrive, drive_v3 } from '@googleapis/drive';
 import { createGoogleClient, googleSheetsAuth, GoogleSheetsAuthValue } from '../common/common';
 import { driveListing, DriveFileListing } from '../common/drive-listing';
 import { includeTeamDrivesProp } from '../common/props';
@@ -17,6 +17,7 @@ import { newSpreadsheetTriggerOutputSchema } from '../output-schemas';
 const LAST_POLL_KEY = 'lastPoll';
 const HELD_WINDOW_KEY = 'heldWindow';
 const MAX_HELD_IDS = 5000;
+const SPREADSHEET_MIME_TYPE = 'application/vnd.google-apps.spreadsheet';
 
 const heldWindowSchema = z.object({
 	incompleteDrives: z.array(z.string()),
@@ -81,6 +82,10 @@ export const newSpreadsheetTrigger = createTrigger({
 	},
 });
 
+function isLiveSpreadsheet(file: drive_v3.Schema$File): boolean {
+	return file.trashed !== true && file.mimeType === SPREADSHEET_MIME_TYPE;
+}
+
 async function listSpreadsheets({
 	auth,
 	includeTeamDrives,
@@ -90,7 +95,7 @@ async function listSpreadsheets({
 	includeTeamDrives: boolean | undefined;
 	since: number;
 }): Promise<DriveFileListing> {
-	const q = ["mimeType='application/vnd.google-apps.spreadsheet'", 'trashed = false'];
+	const q = [`mimeType='${SPREADSHEET_MIME_TYPE}'`, 'trashed = false'];
 	if (since) {
 		q.push(`createdTime > '${dayjs(since).toISOString()}'`);
 	}
@@ -106,7 +111,8 @@ async function listSpreadsheets({
 			includeItemsFromAllDrives: includeTeamDrives,
 			corpora: includeTeamDrives ? 'allDrives' : 'user',
 		},
-		maxPages: since === 0 ? 1 : undefined,
+		maxPages: since === 0 ? driveListing.sampleMaxPages : undefined,
+		accept: since === 0 ? isLiveSpreadsheet : undefined,
 	});
 }
 

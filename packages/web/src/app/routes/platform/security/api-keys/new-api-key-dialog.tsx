@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/dialog';
 import {
   Form,
+  FormControl,
   FormField,
   FormItem,
   FormLabel,
@@ -129,11 +130,14 @@ export const NewApiKeyDialog = ({
                 render={({ field }) => (
                   <FormItem className="grid space-y-4">
                     <FormLabel>{t('Name')}</FormLabel>
-                    <Input
-                      {...field}
-                      required
-                      placeholder={t('API Key Name')}
-                    />
+                    <FormControl>
+                      <Input
+                        {...field}
+                        required
+                        placeholder={t('API Key Name')}
+                        data-testid="api-keys-name-input"
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}

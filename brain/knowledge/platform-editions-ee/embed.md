@@ -15,6 +15,8 @@ An RSA-4096 keypair generated server-side (`crypto.generateKeyPair`, PKCS#1 PEM 
 
 ### 🎫 External token
 The vendor's backend signs a JWT with `kid` = the signing key's id. `POST /v1/managed-authn/external-token` reads that `kid` (`external-token-extractor.ts`), fetches the public key, and verifies RS256. The token identifies a user + project; an existing pair is logged in rather than recreated. See [Managed Auth](../connections-auth/managed-auth.md).
+- A `kid` whose key was deleted gets 401 (`INVALID_BEARER_TOKEN`).
+- The payload is not schema-checked: unknown claims are dropped silently. `projectDisplayName` is never read, so a new project is named after `externalProjectId`. The `role` claim matches a project role name case-insensitively.
 
 ### 🌐 Embed Subdomain
 A Cloud-only custom hostname registered with Cloudflare so the embed is served from the customer's own domain. `cloudflareService.createCustomHostname` returns the DNS verification records the admin must publish.
@@ -22,7 +24,7 @@ A Cloud-only custom hostname registered with Cloudflare so the embed is served f
 
 ### 🛡️ Allowed embed origins
 The list that becomes `Content-Security-Policy: frame-ancestors`. Two sources, merged and de-duplicated per request:
-1. `platform.allowedEmbedOrigins` — set via `POST /v1/embed-subdomain/allowed-embed-origins`
+1. `platform.allowedEmbedOrigins` — the admin UI saves it through `POST /v1/platforms/:id`; `POST /v1/embed-subdomain/allowed-embed-origins` also sets it
 2. `AP_ALLOWED_EMBED_ORIGINS` — the env list (`AppSystemProp.ALLOWED_EMBED_ORIGINS`)
 
 Each entry must be a bare origin — validated by `new URL(v).origin === v`, so a value with a path or trailing slash is silently dropped.
@@ -50,7 +52,7 @@ That 3-minute TTL is the reason a freshly-added origin does not take effect imme
 
 ## Admin UI
 
-The Embed Onboarding stepper at `/platform/embedding`. Four steps exist as files — `hostname-step`, `dns-step`, `allowed-domains-step`, `signing-keys-step` — and Cloud walks all four; self-hosted skips the two Cloudflare ones because it serves the embed from `FRONTEND_URL`.
+The Embed Onboarding stepper at `/platform/embedding`. Four steps exist as files — `hostname-step`, `dns-step`, `allowed-domains-step`, `signing-keys-step` — and Cloud walks all four; self-hosted skips the two Cloudflare ones because it serves the embed from `FRONTEND_URL`. Steps unlock in order, and the allowed-domains step counts only `platform.allowedEmbedOrigins`: on self-hosted, the signing-keys step (and its key list) stays locked until a platform origin is saved, whatever `AP_ALLOWED_EMBED_ORIGINS` holds.
 
 ## Endpoints
 
@@ -76,6 +78,8 @@ The Embed Onboarding stepper at `/platform/embedding`. Four steps exist as files
 - **Embed analytics see one page per session.** The embedded app runs on a memory router, so `location` stays at `/embed` while the user moves between the flows list and the builder. GTM's History Change trigger and GA4's page_view therefore fire once at load, and Clarity records one long page. We push nothing but GTM's required `gtm.js` start event; DOM-level tracking (clicks, scroll, visibility) is the vendor's GTM configuration and needs no code from us. Route-level or app-semantic events (`route_change`, `flow_published`, …) would be small `dataLayer.push` calls mirroring what `handleClientNavigation` already posts to the vendor over `CLIENT_ROUTE_CHANGED` — not built until a customer asks.
 - **In app code, `window.location` is not the app route in the embed.** The memory router keeps `window.location` at `/embed`, so any check of `/runs` or a query param through it is always false there while the browser app works. Read the route from `react-router-dom` (`useLocation`, `useSearchParams`). Lint blocks `useLocation` from `react-use` in `packages/web`, but not a direct `window.location` read (ENG-1397 tracks one in the builder canvas).
 - **`VENDOR_INIT` trusts `event.source`, not `event.origin`.** The client accepts the message from `window.opener ?? window.parent`; the real trust gate is the external-token exchange succeeding. Gate anything sensitive (script injection, storage) on that `onSuccess`, not on receipt of `VENDOR_INIT`.
+- **The embed never shows the app sidebar.** `app-sidebar.tsx` hides it for any embedded session, so the SDK's `dashboard.hideSidebar` now hides only the dashboard tab bar, and `dashboard.hideFlowsPageNavbar` is read nowhere since the 2025-11 layout redesign.
+- **The E2E spec frames `/embed` from a host page on the instance's own origin.** A fresh platform has no allowed origins, so `frame-ancestors 'self'` blocks any other host. `pages/embed.page.ts` serves the host page with `page.route` and speaks the SDK's postMessage half itself, because the SDK bundle exists only on the CDN. It fakes `allowedEmbedOrigins` in the browser's platform response to reach the signing-keys step, so the spec changes no platform setting.
 - **Links to activepieces.com docs must be hidden in the embed.** The embed is white-labeled, so hide any in-app "Learn more" or docs link when `useEmbedding().embedState.isEmbedded` is true. Existing examples: the formula search popover's "See All", the pieces selector's request-piece button, the table import dialog's template-format link.
 
 ## Key Files
@@ -91,7 +95,8 @@ The Embed Onboarding stepper at `/platform/embedding`. Four steps exist as files
 - `packages/ee/embed-sdk/src/index.ts` — `ActivepiecesEmbedded`: the handshake, route deferral, and reconfigure teardown
 - `packages/ee/embed-sdk/test/index.test.ts` — vitest + jsdom, simulates the client half by dispatching `MessageEvent`s with controlled `source`/`origin`; runs in root `test-unit`
 - `packages/web/src/app/routes/embed/index.tsx` — the client half of the handshake
+- `packages/tests-e2e/fixtures/embed.ts` — E2E signing keys, the RS256 JWT signer (`node:crypto`, no library) and the token exchange
 
 Both modules are registered twice in `app.ts` — once for EE, once for Cloud.
 
-Verified against code 2026-07-26.
+Verified against code 2026-11-22.

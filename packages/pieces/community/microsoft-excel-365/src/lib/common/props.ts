@@ -532,7 +532,7 @@ export const commonProps = {
 					: `/sites/${siteId}/drives/${documentId}`;
 
 			const response: PageCollection = await client
-				.api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables`)
+				.api(`${drivePath}/items/${workbookId}/workbook/worksheets/${encodeURIComponent(String(worksheetId))}/tables`)
 				.select('id,name')
 				.get();
 

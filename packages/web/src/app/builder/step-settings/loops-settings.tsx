@@ -39,6 +39,7 @@ const LoopsSettings = React.memo(({ readonly }: LoopsSettingsProps) => {
             onChange={field.onChange}
             initialValue={field.value}
             placeholder={t('Select an array of items')}
+            ariaLabel={t('Items')}
           ></TextInputWithMentions>
           <LargeListWarning />
         </FormItem>

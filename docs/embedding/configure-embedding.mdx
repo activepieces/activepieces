@@ -36,11 +36,15 @@ On **Cloud**, all four steps below are required. On **self-hosted** Enterprise, 
   <Step title="Step 3: Add allowed websites">
     List the origins that are allowed to load your embed in an iframe (e.g. `https://app.acme.com`). All other origins are blocked by the browser.
 
-    ![Verify the DNS records](/resources/embed-screenshots/allowed-websites.png)
+    ![Add allowed websites](/resources/embed-screenshots/allowed-websites.png)
 
     <Tip>
       You can also pre-seed origins via the `AP_ALLOWED_EMBED_ORIGINS` environment variable on self-hosted instances. Origins set this way are merged with the ones configured in the UI.
     </Tip>
+
+    <Note>
+      Step 4 stays locked until you save at least one website here. Origins from `AP_ALLOWED_EMBED_ORIGINS` do not unlock it.
+    </Note>
   </Step>
 
   <Step title="Step 4: Add a signing key">

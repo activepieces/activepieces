@@ -1,8 +1,8 @@
 import { isNil } from '@activepieces/core-utils';
 import { Navigate, useLocation } from 'react-router-dom';
 
+import { useChatEnabled } from '@/features/workspace/lib/use-chat-on';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
   determineDefaultRoute,
@@ -10,7 +10,6 @@ import {
 } from '@/lib/route-utils';
 
 import { NoProjectsState } from '../components/no-projects-state';
-import { ProjectDashboardLayout } from '../components/project-layout';
 
 export const DefaultRoute = () => {
   const token = authenticationSession.getToken();
@@ -33,25 +32,21 @@ export const DefaultRoute = () => {
 
 const AuthenticatedDefaultRoute = () => {
   const { checkAccess } = useAuthorization();
-  const { platform } = platformHooks.useCurrentPlatform();
+  const chatOn = useChatEnabled();
   const location = useLocation();
   const currentProjectId = authenticationSession.getProjectId();
   const trialKey = new URLSearchParams(location.search).get(
     TRIAL_KEY_QUERY_PARAM,
   );
   if (isNil(currentProjectId)) {
-    return (
-      <ProjectDashboardLayout>
-        <NoProjectsState />
-      </ProjectDashboardLayout>
-    );
+    return <NoProjectsState />;
   }
   return (
     <Navigate
       to={{
         pathname: determineDefaultRoute({
           checkAccess,
-          chatEnabled: platform.plan.chatEnabled,
+          chatEnabled: chatOn,
         }),
         search: isNil(trialKey)
           ? ''

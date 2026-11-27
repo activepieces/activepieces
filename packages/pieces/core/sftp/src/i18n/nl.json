@@ -67,5 +67,6 @@
   "Trigger when a new file is created or modified.": "Trigger wanneer een nieuw bestand wordt gemaakt of gewijzigd.",
   "Path": "Pad",
   "Ignore hidden files": "Verborgen bestanden negeren",
-  "The path to watch for new files": "Het pad om nieuwe bestanden te bekijken"
+  "The path to watch for new files": "Het pad om nieuwe bestanden te bekijken",
+  "FTP/SFTP": "FTP/SFTP"
 }

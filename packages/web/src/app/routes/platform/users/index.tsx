@@ -28,7 +28,7 @@ import {
   useLockedFeature,
   useSeatLimitGuard,
 } from '@/features/billing';
-import { InviteUserDialog } from '@/features/members';
+import { InviteRewardHint, InviteUserDialog } from '@/features/members';
 import {
   platformUserHooks,
   platformUserMutations,
@@ -204,6 +204,7 @@ export default function UsersPage() {
           </Button>
         </LockedFeatureUsage>
       </AdminPageHeader>
+      <InviteRewardHint />
       <AdminDataTable
         emptyStateTextTitle={t('No users found')}
         emptyStateTextDescription={t('Start inviting users to your project')}
