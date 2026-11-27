@@ -10,7 +10,7 @@ export const createChannelAction = createAction({
 	outputSchema: microsoftTeamsCreateChannelOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Create Channel',
-	description: 'Create a new channel in Microsoft Teams.',
+	description: 'Creates a standard channel in a team.',
 	audience: 'human',
 	aiMetadata: {
 		description: 'Creates a new standard channel inside a Microsoft Teams team, identified by team ID, with a display name and optional description. Use to provision a shared channel; for a members-restricted channel use Create Private Channel instead. Not idempotent — each call adds another channel even with the same name.',
@@ -21,9 +21,11 @@ export const createChannelAction = createAction({
 		channelDisplayName: Property.ShortText({
 			displayName: 'Channel Name',
 			required: true,
+			placeholder: 'Marketing',
 		}),
 		channelDescription: Property.LongText({
-			displayName: 'Channel Description',
+			displayName: 'Description',
+			description: 'Shown under the channel name in Teams.',
 			required: false,
 		}),
 	},

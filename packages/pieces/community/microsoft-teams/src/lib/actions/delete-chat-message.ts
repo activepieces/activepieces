@@ -1,5 +1,5 @@
 import { microsoftTeamsAuth } from '../auth';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { microsoftTeamsProps } from '../common/props';
 import { microsoftTeamsClient } from '../common/client';
 import type { MicrosoftTeamsMe } from '../common/types';
@@ -11,13 +11,17 @@ export const deleteChatMessageAction = createAction({
     outputSchema: microsoftTeamsDeleteChatMessageOutputSchema,
     classification: 'DESTRUCTIVE',
     displayName: 'Delete Chat Message',
-    description: 'Soft-Deletes a message in chat.You can only delete messages you sent.',
+    description: 'Deletes a message from a chat.',
     audience: 'human',
     aiMetadata: {
         description: 'Soft-deletes a message in a Microsoft Teams chat, identified by chat ID and message ID, on behalf of the authenticated user. Only messages the current user sent can be deleted. Effectively idempotent — re-running on an already-deleted message leaves it deleted.',
         idempotent: true,
     },
     props: {
+        info: Property.MarkDown({
+            value: 'You can only delete messages you sent.',
+            variant: MarkdownVariant.INFO,
+        }),
         chatId: microsoftTeamsProps.chatId({ required: true }),
         messageId: Property.ShortText({
             displayName: 'Message ID',

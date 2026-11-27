@@ -10,7 +10,7 @@ export const getChannelMessageAction = createAction({
 	outputSchema: microsoftTeamsGetChannelMessageOutputSchema,
 	classification: 'READ',
 	displayName: 'Get Channel Message',
-	description: 'Fetch a specific channel message by team, channel, and message ID (optionally a reply).',
+	description: 'Gets a channel message, or one reply under it.',
 	audience: 'human',
 	aiMetadata: {
 		description: 'Retrieves a single channel message from Microsoft Teams by team ID, channel ID, and message ID; supply an optional reply ID to fetch a specific reply under that message instead. Use to read the content or metadata of a known channel post. Idempotent read-only lookup.',
@@ -22,12 +22,12 @@ export const getChannelMessageAction = createAction({
 		messageId: Property.ShortText({
 			displayName: 'Message ID',
 			required: true,
-			description: 'The ID of the channel message to retrieve.',
+			description: 'The ID of the message in the channel.',
 		}),
 		replyId: Property.ShortText({
-			displayName: 'Reply ID (optional)',
+			displayName: 'Reply ID',
 			required: false,
-			description: 'Provide to fetch a specific reply under the message.',
+			description: 'Fill in to get this reply instead of the message.',
 		}),
 	},
 	async run(context) {
