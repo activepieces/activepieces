@@ -3,12 +3,14 @@ import { createAction } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxRestoreFolderOutputSchema } from '../../../output-schemas';
 
 const BOOLEANS = ['true', 'false'];
 
 export const transferOwnedFoldersAction = createAction({
   auth: boxAuth,
   name: 'box_transfer_owned_folders',
+  outputSchema: boxRestoreFolderOutputSchema,
   displayName: 'Transfer Owned Folders',
   description: 'Moves everything a Box user owns into another user\'s account.',
   audience: 'ai',

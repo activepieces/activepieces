@@ -4,10 +4,12 @@ import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
 import { boxUtils } from '../../../common/utils';
+import { boxListSlackIntegrationMappingsOutputSchema } from '../../../output-schemas';
 
 export const listSlackIntegrationMappingsAction = createAction({
   auth: boxAuth,
   name: 'box_list_slack_integration_mappings',
+  outputSchema: boxListSlackIntegrationMappingsOutputSchema,
   displayName: 'List Slack Integration Mappings',
   description: 'Lists the mappings between Slack channels and Box folders.',
   audience: 'ai',

@@ -4,12 +4,14 @@ import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
 import { boxUtils } from '../../../common/utils';
+import { boxListDevicePinsOutputSchema } from '../../../output-schemas';
 
 const DIRECTIONS = ['ASC', 'DESC'];
 
 export const listDevicePinsAction = createAction({
   auth: boxAuth,
   name: 'box_list_device_pins',
+  outputSchema: boxListDevicePinsOutputSchema,
   displayName: 'List Device Pins',
   description: 'Lists the device pins in a Box enterprise.',
   audience: 'ai',

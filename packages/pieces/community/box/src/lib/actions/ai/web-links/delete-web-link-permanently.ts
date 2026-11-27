@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxDeleteWebLinkPermanentlyOutputSchema } from '../../../output-schemas';
 
 export const deleteWebLinkPermanentlyAction = createAction({
   auth: boxAuth,
   name: 'box_delete_web_link_permanently',
+  outputSchema: boxDeleteWebLinkPermanentlyOutputSchema,
   displayName: 'Delete Web Link Permanently',
   description: 'Permanently deletes a Box web link that is in the trash.',
   audience: 'ai',

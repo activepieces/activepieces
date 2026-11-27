@@ -4,10 +4,12 @@ import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
 import { boxUtils } from '../../../common/utils';
+import { boxListSignTemplatesOutputSchema } from '../../../output-schemas';
 
 export const listSignTemplatesAction = createAction({
   auth: boxAuth,
   name: 'box_list_sign_templates',
+  outputSchema: boxListSignTemplatesOutputSchema,
   displayName: 'List Sign Templates',
   description: 'Lists the Box Sign templates the user can use.',
   audience: 'ai',

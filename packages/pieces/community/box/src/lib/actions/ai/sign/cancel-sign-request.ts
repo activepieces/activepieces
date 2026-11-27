@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxCancelSignRequestOutputSchema } from '../../../output-schemas';
 
 export const cancelSignRequestAction = createAction({
   auth: boxAuth,
   name: 'box_cancel_sign_request',
+  outputSchema: boxCancelSignRequestOutputSchema,
   displayName: 'Cancel Sign Request',
   description: 'Cancels a Box Sign request.',
   audience: 'ai',

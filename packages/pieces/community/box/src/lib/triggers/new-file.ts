@@ -7,10 +7,12 @@ import {
 import { boxAuth } from '../auth';
 import { boxApi } from '../common/api';
 import type { BoxWebhook, BoxWebhookTarget } from '../common/types';
+import { newFileOutputSchema } from '../output-schemas';
 
 export const newFileTrigger = createTrigger({
   auth: boxAuth,
   name: 'new_file',
+  outputSchema: newFileOutputSchema,
   classification: 'READ',
   displayName: 'New File',
   description: 'Triggers when a file is uploaded',

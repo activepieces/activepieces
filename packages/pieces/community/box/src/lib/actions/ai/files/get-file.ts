@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxGetFileOutputSchema } from '../../../output-schemas';
 
 export const getFileAction = createAction({
   auth: boxAuth,
   name: 'box_get_file',
+  outputSchema: boxGetFileOutputSchema,
   displayName: 'Get File',
   description: 'Gets the details of a Box file.',
   audience: 'ai',

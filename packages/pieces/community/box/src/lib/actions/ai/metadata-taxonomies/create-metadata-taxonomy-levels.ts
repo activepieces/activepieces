@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxAppendMetadataTaxonomyLevelOutputSchema } from '../../../output-schemas';
 
 export const createMetadataTaxonomyLevelsAction = createAction({
   auth: boxAuth,
   name: 'box_create_metadata_taxonomy_levels',
+  outputSchema: boxAppendMetadataTaxonomyLevelOutputSchema,
   displayName: 'Create Metadata Taxonomy Levels',
   description: 'Creates the levels of a metadata taxonomy.',
   audience: 'ai',

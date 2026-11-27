@@ -4,10 +4,12 @@ import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
 import { boxUtils } from '../../../common/utils';
+import { boxListFileCommentsOutputSchema } from '../../../output-schemas';
 
 export const listFileCommentsAction = createAction({
   auth: boxAuth,
   name: 'box_list_file_comments',
+  outputSchema: boxListFileCommentsOutputSchema,
   displayName: 'List File Comments',
   description: 'Lists the comments on a Box file.',
   audience: 'ai',

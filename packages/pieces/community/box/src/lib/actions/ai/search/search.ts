@@ -4,12 +4,14 @@ import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
 import { boxUtils } from '../../../common/utils';
+import { boxSearchOutputSchema } from '../../../output-schemas';
 
 const TYPES = ['file', 'folder', 'web_link'];
 
 export const searchAction = createAction({
   auth: boxAuth,
   name: 'box_search',
+  outputSchema: boxSearchOutputSchema,
   displayName: 'Search',
   description: 'Searches Box for files, folders and web links.',
   audience: 'ai',

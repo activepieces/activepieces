@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxCreateUserOutputSchema } from '../../../output-schemas';
 
 export const getUserAction = createAction({
   auth: boxAuth,
   name: 'box_get_user',
+  outputSchema: boxCreateUserOutputSchema,
   displayName: 'Get User',
   description: 'Gets a Box user by ID.',
   audience: 'ai',

@@ -2,10 +2,12 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxClient } from '../../../common/client';
+import { boxAiExtractOutputSchema } from '../../../output-schemas';
 
 export const aiExtractAction = createAction({
   auth: boxAuth,
   name: 'box_ai_extract',
+  outputSchema: boxAiExtractOutputSchema,
   displayName: 'Extract with Box AI',
   description: 'Extracts information from Box files with Box AI, described in a free-form prompt.',
   audience: 'ai',

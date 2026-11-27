@@ -3,6 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxUpdateCollaborationOutputSchema } from '../../../output-schemas';
 
 const ROLES = ['editor', 'viewer', 'previewer', 'uploader', 'previewer uploader', 'viewer uploader', 'co-owner', 'owner'];
 const STATUSES = ['pending', 'accepted', 'rejected'];
@@ -10,6 +11,7 @@ const STATUSES = ['pending', 'accepted', 'rejected'];
 export const updateCollaborationAction = createAction({
   auth: boxAuth,
   name: 'box_update_collaboration',
+  outputSchema: boxUpdateCollaborationOutputSchema,
   displayName: 'Update Collaboration',
   description: 'Changes the role, status or expiry of a Box collaboration.',
   audience: 'ai',

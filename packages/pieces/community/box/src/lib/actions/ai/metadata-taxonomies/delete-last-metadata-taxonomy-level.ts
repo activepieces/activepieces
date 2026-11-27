@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxAppendMetadataTaxonomyLevelOutputSchema } from '../../../output-schemas';
 
 export const deleteLastMetadataTaxonomyLevelAction = createAction({
   auth: boxAuth,
   name: 'box_delete_last_metadata_taxonomy_level',
+  outputSchema: boxAppendMetadataTaxonomyLevelOutputSchema,
   displayName: 'Delete Last Metadata Taxonomy Level',
   description: 'Deletes the bottom level of a metadata taxonomy.',
   audience: 'ai',

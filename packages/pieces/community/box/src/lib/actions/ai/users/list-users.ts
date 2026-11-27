@@ -4,12 +4,14 @@ import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
 import { boxUtils } from '../../../common/utils';
+import { boxListUsersOutputSchema } from '../../../output-schemas';
 
 const USER_TYPES = ['all', 'managed', 'external'];
 
 export const listUsersAction = createAction({
   auth: boxAuth,
   name: 'box_list_users',
+  outputSchema: boxListUsersOutputSchema,
   displayName: 'List Users',
   description: 'Lists the users in the Box enterprise.',
   audience: 'ai',

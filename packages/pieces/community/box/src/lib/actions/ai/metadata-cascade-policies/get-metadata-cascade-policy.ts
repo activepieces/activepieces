@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxCreateMetadataCascadePolicyOutputSchema } from '../../../output-schemas';
 
 export const getMetadataCascadePolicyAction = createAction({
   auth: boxAuth,
   name: 'box_get_metadata_cascade_policy',
+  outputSchema: boxCreateMetadataCascadePolicyOutputSchema,
   displayName: 'Get Metadata Cascade Policy',
   description: 'Gets a Box metadata cascade policy.',
   audience: 'ai',

@@ -2,10 +2,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxDownloadFileOutputSchema } from '../../../output-schemas';
 
 export const getUserAvatarAction = createAction({
   auth: boxAuth,
   name: 'box_get_user_avatar',
+  outputSchema: boxDownloadFileOutputSchema,
   displayName: 'Get User Avatar',
   description: 'Gets the avatar image of a Box user.',
   audience: 'ai',

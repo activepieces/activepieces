@@ -2,10 +2,12 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxClient } from '../../../common/client';
+import { boxDeleteFolderLockOutputSchema } from '../../../output-schemas';
 
 export const deleteFolderLockAction = createAction({
   auth: boxAuth,
   name: 'box_delete_folder_lock',
+  outputSchema: boxDeleteFolderLockOutputSchema,
   displayName: 'Delete Folder Lock',
   description: 'Removes a lock from a Box folder.',
   audience: 'ai',

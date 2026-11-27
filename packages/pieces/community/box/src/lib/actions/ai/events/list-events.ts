@@ -5,12 +5,14 @@ import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
 import type { BoxEventsPage } from '../../../common/types';
 import { boxUtils } from '../../../common/utils';
+import { boxListEventsOutputSchema } from '../../../output-schemas';
 
 const STREAMS = ['all', 'changes', 'sync', 'admin_logs', 'admin_logs_streaming'];
 
 export const listEventsAction = createAction({
   auth: boxAuth,
   name: 'box_list_events',
+  outputSchema: boxListEventsOutputSchema,
   displayName: 'List Events',
   description: 'Lists Box user or enterprise events.',
   audience: 'ai',

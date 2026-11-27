@@ -2,10 +2,12 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxClient } from '../../../common/client';
+import { boxTerminateGroupSessionsOutputSchema } from '../../../output-schemas';
 
 export const terminateUserSessionsAction = createAction({
   auth: boxAuth,
   name: 'box_terminate_user_sessions',
+  outputSchema: boxTerminateGroupSessionsOutputSchema,
   displayName: 'Terminate User Sessions',
   description: 'Signs Box users out of all their sessions.',
   audience: 'ai',

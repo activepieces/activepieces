@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxDeleteMetadataTaxonomyNodeOutputSchema } from '../../../output-schemas';
 
 export const deleteMetadataTaxonomyNodeAction = createAction({
   auth: boxAuth,
   name: 'box_delete_metadata_taxonomy_node',
+  outputSchema: boxDeleteMetadataTaxonomyNodeOutputSchema,
   displayName: 'Delete Metadata Taxonomy Node',
   description: 'Deletes a node of a metadata taxonomy.',
   audience: 'ai',

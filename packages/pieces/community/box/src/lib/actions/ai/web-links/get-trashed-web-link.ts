@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxGetTrashedWebLinkOutputSchema } from '../../../output-schemas';
 
 export const getTrashedWebLinkAction = createAction({
   auth: boxAuth,
   name: 'box_get_trashed_web_link',
+  outputSchema: boxGetTrashedWebLinkOutputSchema,
   displayName: 'Get Trashed Web Link',
   description: 'Gets a Box web link that is in the trash.',
   audience: 'ai',

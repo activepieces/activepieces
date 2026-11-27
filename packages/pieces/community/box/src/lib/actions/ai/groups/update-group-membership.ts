@@ -3,6 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxGetGroupMembershipOutputSchema } from '../../../output-schemas';
 
 const ROLES = ['member', 'admin'];
 const CLEARABLE = ['configurable_permissions'];
@@ -10,6 +11,7 @@ const CLEARABLE = ['configurable_permissions'];
 export const updateGroupMembershipAction = createAction({
   auth: boxAuth,
   name: 'box_update_group_membership',
+  outputSchema: boxGetGroupMembershipOutputSchema,
   displayName: 'Update Group Membership',
   description: 'Changes a user\'s role or admin permissions in a Box group.',
   audience: 'ai',

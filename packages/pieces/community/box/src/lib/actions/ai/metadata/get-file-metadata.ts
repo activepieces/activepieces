@@ -3,12 +3,14 @@ import { createAction } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxCreateFolderMetadataOutputSchema } from '../../../output-schemas';
 
 const BOOLEANS = ['true', 'false'];
 
 export const getFileMetadataAction = createAction({
   auth: boxAuth,
   name: 'box_get_file_metadata',
+  outputSchema: boxCreateFolderMetadataOutputSchema,
   displayName: 'Get File Metadata',
   description: 'Gets one metadata instance on a Box file.',
   audience: 'ai',

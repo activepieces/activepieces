@@ -48,22 +48,6 @@ function marker<R extends boolean>({
   return Property.ShortText({ displayName, description, required });
 }
 
-function aiAgentId<R extends boolean>({
-  required,
-  displayName = 'Agent ID',
-  description = 'The AI agent ID, from List AI Agents.',
-}: PropParams<R>) {
-  return Property.ShortText({ displayName, description, required });
-}
-
-function allowedDomainEntryId<R extends boolean>({
-  required,
-  displayName = 'Entry ID',
-  description = 'Allowed domain entry ID (not the domain name). Get it from List Allowed Collaboration Domains or Add Allowed Collaboration Domain.',
-}: PropParams<R>) {
-  return Property.ShortText({ displayName, description, required });
-}
-
 function collaborationId<R extends boolean>({
   required,
   displayName = 'Collaboration ID',
@@ -88,22 +72,6 @@ function commentId<R extends boolean>({
   return Property.ShortText({ displayName, description, required });
 }
 
-function devicePinId<R extends boolean>({
-  required,
-  displayName = 'Device Pin ID',
-  description = 'Device pin ID. Get it from List Device Pins.',
-}: PropParams<R>) {
-  return Property.ShortText({ displayName, description, required });
-}
-
-function domainExemptionId<R extends boolean>({
-  required,
-  displayName = 'Exemption ID',
-  description = 'Exemption ID (not the user ID). Get it from List Collaboration Domain Exemptions or Create Collaboration Domain Exemption.',
-}: PropParams<R>) {
-  return Property.ShortText({ displayName, description, required });
-}
-
 function enterpriseId<R extends boolean>({
   required,
   displayName = 'Enterprise ID',
@@ -116,14 +84,6 @@ function etag<R extends boolean>({
   required,
   displayName = 'ETag',
   description = "The file's last seen etag (from Get File). The delete fails with 412 if the file changed since.",
-}: PropParams<R>) {
-  return Property.ShortText({ displayName, description, required });
-}
-
-function fileRequestId<R extends boolean>({
-  required,
-  displayName = 'File Request ID',
-  description = "The file request ID: the number in the web app's file request builder URL (https://*.app.box.com/filerequest/123), or from Copy File Request.",
 }: PropParams<R>) {
   return Property.ShortText({ displayName, description, required });
 }
@@ -148,30 +108,6 @@ function groupMembershipId<R extends boolean>({
   required,
   displayName = 'Group Membership ID',
   description = 'ID of the membership. Get it from Add User To Group, List Group Memberships or List User Memberships.',
-}: PropParams<R>) {
-  return Property.ShortText({ displayName, description, required });
-}
-
-function integrationMappingId<R extends boolean>({
-  required,
-  displayName = 'Integration Mapping ID',
-  description = 'The mapping ID, from List Teams Integration Mappings.',
-}: PropParams<R>) {
-  return Property.ShortText({ displayName, description, required });
-}
-
-function legalHoldPolicyAssignmentId<R extends boolean>({
-  required,
-  displayName = 'Legal Hold Policy Assignment ID',
-  description = 'Get it from List Legal Hold Policy Assignments or Assign Legal Hold Policy.',
-}: PropParams<R>) {
-  return Property.ShortText({ displayName, description, required });
-}
-
-function legalHoldPolicyId<R extends boolean>({
-  required,
-  displayName = 'Legal Hold Policy ID',
-  description = 'Get it from List Legal Hold Policies or Create Legal Hold Policy.',
 }: PropParams<R>) {
   return Property.ShortText({ displayName, description, required });
 }
@@ -208,54 +144,6 @@ function metadataTemplateKey<R extends boolean>({
   return Property.ShortText({ displayName, description, required });
 }
 
-function retentionPolicyAssignmentId<R extends boolean>({
-  required,
-  displayName = 'Retention Policy Assignment ID',
-  description = 'Get it from List Retention Policy Assignments or Assign Retention Policy.',
-}: PropParams<R>) {
-  return Property.ShortText({ displayName, description, required });
-}
-
-function retentionPolicyId<R extends boolean>({
-  required,
-  displayName = 'Retention Policy ID',
-  description = 'Get it from List Retention Policies or Create Retention Policy.',
-}: PropParams<R>) {
-  return Property.ShortText({ displayName, description, required });
-}
-
-function shieldBarrierId<R extends boolean>({
-  required,
-  displayName = 'Barrier ID',
-  description = 'Shield information barrier ID. Get it from List Shield Barriers or Create Shield Barrier.',
-}: PropParams<R>) {
-  return Property.ShortText({ displayName, description, required });
-}
-
-function shieldSegmentId<R extends boolean>({
-  required,
-  displayName = 'Segment ID',
-  description = 'Shield information barrier segment ID. Get it from List Shield Barrier Segments or Create Shield Barrier Segment.',
-}: PropParams<R>) {
-  return Property.ShortText({ displayName, description, required });
-}
-
-function shieldSegmentMemberId<R extends boolean>({
-  required,
-  displayName = 'Member ID',
-  description = 'Segment member ID (not the user ID). Get it from List Shield Barrier Segment Members or Create Shield Barrier Segment Member.',
-}: PropParams<R>) {
-  return Property.ShortText({ displayName, description, required });
-}
-
-function shieldSegmentRestrictionId<R extends boolean>({
-  required,
-  displayName = 'Restriction ID',
-  description = 'Segment restriction ID. Get it from List Shield Barrier Segment Restrictions or Create Shield Barrier Segment Restriction.',
-}: PropParams<R>) {
-  return Property.ShortText({ displayName, description, required });
-}
-
 function signRequestId<R extends boolean>({
   required,
   displayName = 'Sign Request ID',
@@ -276,22 +164,6 @@ function slackChannelId<R extends boolean>({
   required,
   displayName = 'Slack Channel ID',
   description = 'The Slack channel ID, e.g. "C12378991223".',
-}: PropParams<R>) {
-  return Property.ShortText({ displayName, description, required });
-}
-
-function storagePolicyAssignmentId<R extends boolean>({
-  required,
-  displayName = 'Storage Policy Assignment ID',
-  description = 'Get it from List Storage Policy Assignments or Assign Storage Policy.',
-}: PropParams<R>) {
-  return Property.ShortText({ displayName, description, required });
-}
-
-function storagePolicyId<R extends boolean>({
-  required,
-  displayName = 'Storage Policy ID',
-  description = 'Get it from List Storage Policies.',
 }: PropParams<R>) {
   return Property.ShortText({ displayName, description, required });
 }
@@ -324,22 +196,6 @@ function taxonomyNodeId<R extends boolean>({
   required,
   displayName = 'Node ID',
   description = "The node's id, a UUID, from List Metadata Taxonomy Nodes or Create Metadata Taxonomy Node.",
-}: PropParams<R>) {
-  return Property.ShortText({ displayName, description, required });
-}
-
-function teamsItemId<R extends boolean>({
-  required,
-  displayName = 'Teams Item ID',
-  description = 'ID of the Teams channel or team to map.',
-}: PropParams<R>) {
-  return Property.ShortText({ displayName, description, required });
-}
-
-function termsOfServiceId<R extends boolean>({
-  required,
-  displayName = 'Terms of Service ID',
-  description = 'Terms of service ID. Get it from List Terms of Service or Create Terms of Service.',
 }: PropParams<R>) {
   return Property.ShortText({ displayName, description, required });
 }
@@ -379,43 +235,25 @@ export const boxAiProps = {
   limit,
   offset,
   marker,
-  aiAgentId,
-  allowedDomainEntryId,
   collaborationId,
   collectionId,
   commentId,
-  devicePinId,
-  domainExemptionId,
   enterpriseId,
   etag,
-  fileRequestId,
   fileVersionId,
   groupId,
   groupMembershipId,
-  integrationMappingId,
-  legalHoldPolicyAssignmentId,
-  legalHoldPolicyId,
   metadataCascadePolicyId,
   metadataNamespace,
   metadataScope,
   metadataTemplateKey,
-  retentionPolicyAssignmentId,
-  retentionPolicyId,
-  shieldBarrierId,
-  shieldSegmentId,
-  shieldSegmentMemberId,
-  shieldSegmentRestrictionId,
   signRequestId,
   signTemplateId,
   slackChannelId,
-  storagePolicyAssignmentId,
-  storagePolicyId,
   taskAssignmentId,
   taskId,
   taxonomyKey,
   taxonomyNodeId,
-  teamsItemId,
-  termsOfServiceId,
   userId,
   webLinkId,
   zipDownloadId,

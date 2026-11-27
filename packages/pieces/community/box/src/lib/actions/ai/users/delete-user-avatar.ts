@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxDeleteUserOutputSchema } from '../../../output-schemas';
 
 export const deleteUserAvatarAction = createAction({
   auth: boxAuth,
   name: 'box_delete_user_avatar',
+  outputSchema: boxDeleteUserOutputSchema,
   displayName: 'Delete User Avatar',
   description: 'Removes the avatar image of a Box user.',
   audience: 'ai',

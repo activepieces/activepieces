@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxCreateWebLinkOutputSchema } from '../../../output-schemas';
 
 export const createWebLinkAction = createAction({
   auth: boxAuth,
   name: 'box_create_web_link',
+  outputSchema: boxCreateWebLinkOutputSchema,
   displayName: 'Create Web Link',
   description: 'Creates a web link (bookmark) in a Box folder.',
   audience: 'ai',

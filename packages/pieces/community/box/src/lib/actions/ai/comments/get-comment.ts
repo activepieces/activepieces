@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxCreateCommentOutputSchema } from '../../../output-schemas';
 
 export const getCommentAction = createAction({
   auth: boxAuth,
   name: 'box_get_comment',
+  outputSchema: boxCreateCommentOutputSchema,
   displayName: 'Get Comment',
   description: 'Gets a comment on a Box file.',
   audience: 'ai',

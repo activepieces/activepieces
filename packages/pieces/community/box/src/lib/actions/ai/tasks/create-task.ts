@@ -3,6 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxCreateTaskOutputSchema } from '../../../output-schemas';
 
 const ACTIONS = ['review', 'complete'];
 const COMPLETION_RULES = ['all_assignees', 'any_assignee'];
@@ -10,6 +11,7 @@ const COMPLETION_RULES = ['all_assignees', 'any_assignee'];
 export const createTaskAction = createAction({
   auth: boxAuth,
   name: 'box_create_task',
+  outputSchema: boxCreateTaskOutputSchema,
   displayName: 'Create Task',
   description: 'Creates a task on a Box file.',
   audience: 'ai',

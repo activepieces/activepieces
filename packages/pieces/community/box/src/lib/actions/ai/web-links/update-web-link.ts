@@ -3,12 +3,14 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxGetWebLinkOutputSchema } from '../../../output-schemas';
 
 const CLEARABLE = ['description'];
 
 export const updateWebLinkAction = createAction({
   auth: boxAuth,
   name: 'box_update_web_link',
+  outputSchema: boxGetWebLinkOutputSchema,
   displayName: 'Update Web Link',
   description: 'Changes the URL, name, description or folder of a Box web link.',
   audience: 'ai',

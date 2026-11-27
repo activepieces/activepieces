@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxDeleteFileVersionOutputSchema } from '../../../output-schemas';
 
 export const deleteFileVersionAction = createAction({
   auth: boxAuth,
   name: 'box_delete_file_version',
+  outputSchema: boxDeleteFileVersionOutputSchema,
   displayName: 'Delete File Version',
   description: 'Moves a past version of a Box file to the trash.',
   audience: 'ai',

@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxDeleteCommentOutputSchema } from '../../../output-schemas';
 
 export const deleteCommentAction = createAction({
   auth: boxAuth,
   name: 'box_delete_comment',
+  outputSchema: boxDeleteCommentOutputSchema,
   displayName: 'Delete Comment',
   description: 'Permanently deletes a Box comment.',
   audience: 'ai',

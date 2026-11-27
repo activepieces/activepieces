@@ -3,12 +3,14 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxGetTaskAssignmentOutputSchema } from '../../../output-schemas';
 
 const RESOLUTION_STATES = ['completed', 'incomplete', 'approved', 'rejected'];
 
 export const updateTaskAssignmentAction = createAction({
   auth: boxAuth,
   name: 'box_update_task_assignment',
+  outputSchema: boxGetTaskAssignmentOutputSchema,
   displayName: 'Update Task Assignment',
   description: 'Resolves or comments on a Box task assignment.',
   audience: 'ai',

@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxFindSharedItemOutputSchema } from '../../../output-schemas';
 
 export const findSharedItemAction = createAction({
   auth: boxAuth,
   name: 'box_find_shared_item',
+  outputSchema: boxFindSharedItemOutputSchema,
   displayName: 'Find Shared Item',
   description: 'Gets the file, folder or web link a Box shared link points to.',
   audience: 'ai',

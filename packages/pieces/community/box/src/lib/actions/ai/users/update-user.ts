@@ -3,6 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxCreateUserOutputSchema } from '../../../output-schemas';
 
 const ROLES = ['coadmin', 'user'];
 const STATUSES = ['active', 'inactive', 'cannot_delete_edit', 'cannot_delete_edit_upload'];
@@ -11,6 +12,7 @@ const CLEARABLE = ['job_title', 'phone', 'address', 'notification_email'];
 export const updateUserAction = createAction({
   auth: boxAuth,
   name: 'box_update_user',
+  outputSchema: boxCreateUserOutputSchema,
   displayName: 'Update User',
   description: 'Changes the details of a Box enterprise user.',
   audience: 'ai',

@@ -3,6 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxCreateUserOutputSchema } from '../../../output-schemas';
 
 const BOOLEANS = ['true', 'false'];
 const ROLES = ['coadmin', 'user'];
@@ -11,6 +12,7 @@ const STATUSES = ['active', 'inactive', 'cannot_delete_edit', 'cannot_delete_edi
 export const createUserAction = createAction({
   auth: boxAuth,
   name: 'box_create_user',
+  outputSchema: boxCreateUserOutputSchema,
   displayName: 'Create User',
   description: 'Creates a managed user or app user in the Box enterprise.',
   audience: 'ai',

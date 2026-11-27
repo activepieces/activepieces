@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxDeleteCollaborationOutputSchema } from '../../../output-schemas';
 
 export const deleteCollaborationAction = createAction({
   auth: boxAuth,
   name: 'box_delete_collaboration',
+  outputSchema: boxDeleteCollaborationOutputSchema,
   displayName: 'Delete Collaboration',
   description: 'Removes a user\'s or group\'s access to a Box file or folder.',
   audience: 'ai',

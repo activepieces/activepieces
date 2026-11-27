@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxListTaskAssignmentsOutputSchema } from '../../../output-schemas';
 
 export const listTaskAssignmentsAction = createAction({
   auth: boxAuth,
   name: 'box_list_task_assignments',
+  outputSchema: boxListTaskAssignmentsOutputSchema,
   displayName: 'List Task Assignments',
   description: 'Lists who a Box task is assigned to.',
   audience: 'ai',

@@ -4,10 +4,12 @@ import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
 import { boxUtils } from '../../../common/utils';
+import { boxListGlobalMetadataTemplatesOutputSchema } from '../../../output-schemas';
 
 export const listGlobalMetadataTemplatesAction = createAction({
   auth: boxAuth,
   name: 'box_list_global_metadata_templates',
+  outputSchema: boxListGlobalMetadataTemplatesOutputSchema,
   displayName: 'List Global Metadata Templates',
   description: 'Lists the global metadata templates Box provides to every enterprise.',
   audience: 'ai',

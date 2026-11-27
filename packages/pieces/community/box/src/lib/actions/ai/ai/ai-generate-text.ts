@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxAiExtractOutputSchema } from '../../../output-schemas';
 
 export const aiGenerateTextAction = createAction({
   auth: boxAuth,
   name: 'box_ai_generate_text',
+  outputSchema: boxAiExtractOutputSchema,
   displayName: 'Generate Text with Box AI',
   description: 'Generates text with Box AI using one Box file as context.',
   audience: 'ai',

@@ -3,6 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxUpdateGroupOutputSchema } from '../../../output-schemas';
 
 const LEVELS = ['admins_only', 'admins_and_members', 'all_managed_users'];
 const CLEARABLE = ['description'];
@@ -10,6 +11,7 @@ const CLEARABLE = ['description'];
 export const updateGroupAction = createAction({
   auth: boxAuth,
   name: 'box_update_group',
+  outputSchema: boxUpdateGroupOutputSchema,
   displayName: 'Update Group',
   description: 'Changes the details of a Box group.',
   audience: 'ai',

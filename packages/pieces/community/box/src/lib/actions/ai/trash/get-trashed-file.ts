@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxGetTrashedFileOutputSchema } from '../../../output-schemas';
 
 export const getTrashedFileAction = createAction({
   auth: boxAuth,
   name: 'box_get_trashed_file',
+  outputSchema: boxGetTrashedFileOutputSchema,
   displayName: 'Get Trashed File',
   description: 'Gets the details of a Box file in the trash.',
   audience: 'ai',

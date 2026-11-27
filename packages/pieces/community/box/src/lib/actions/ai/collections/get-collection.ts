@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxGetCollectionOutputSchema } from '../../../output-schemas';
 
 export const getCollectionAction = createAction({
   auth: boxAuth,
   name: 'box_get_collection',
+  outputSchema: boxGetCollectionOutputSchema,
   displayName: 'Get Collection',
   description: 'Gets a Box collection by ID.',
   audience: 'ai',

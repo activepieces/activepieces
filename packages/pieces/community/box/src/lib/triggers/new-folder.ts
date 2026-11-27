@@ -7,10 +7,12 @@ import {
 import { boxAuth } from '../auth';
 import { boxApi } from '../common/api';
 import type { BoxWebhook, BoxWebhookTarget } from '../common/types';
+import { newFolderOutputSchema } from '../output-schemas';
 
 export const newFolderTrigger = createTrigger({
   auth: boxAuth,
   name: 'new_folder',
+  outputSchema: newFolderOutputSchema,
   classification: 'READ',
   displayName: 'New Folder',
   description: 'Triggers when a folder is created',

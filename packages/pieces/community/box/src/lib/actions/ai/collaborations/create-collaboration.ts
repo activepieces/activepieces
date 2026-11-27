@@ -3,6 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxCreateCollaborationOutputSchema } from '../../../output-schemas';
 
 const ITEM_TYPES = ['file', 'folder'];
 const COLLABORATOR_TYPES = ['user', 'group'];
@@ -11,6 +12,7 @@ const ROLES = ['editor', 'viewer', 'previewer', 'uploader', 'previewer uploader'
 export const createCollaborationAction = createAction({
   auth: boxAuth,
   name: 'box_create_collaboration',
+  outputSchema: boxCreateCollaborationOutputSchema,
   displayName: 'Create Collaboration',
   description: 'Gives a user or group access to a Box file or folder.',
   audience: 'ai',

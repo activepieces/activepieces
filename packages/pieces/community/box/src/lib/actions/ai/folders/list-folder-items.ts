@@ -4,6 +4,7 @@ import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
 import { boxUtils } from '../../../common/utils';
+import { boxListFolderItemsOutputSchema } from '../../../output-schemas';
 
 const SORTS = ['id', 'name', 'date'];
 const DIRECTIONS = ['ASC', 'DESC'];
@@ -11,6 +12,7 @@ const DIRECTIONS = ['ASC', 'DESC'];
 export const listFolderItemsAction = createAction({
   auth: boxAuth,
   name: 'box_list_folder_items',
+  outputSchema: boxListFolderItemsOutputSchema,
   displayName: 'List Folder Items',
   description: 'Lists the files, folders and web links in a Box folder.',
   audience: 'ai',

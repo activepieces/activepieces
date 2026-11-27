@@ -4,10 +4,12 @@ import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
 import { boxUtils } from '../../../common/utils';
+import { boxListCollectionItemsOutputSchema } from '../../../output-schemas';
 
 export const listPendingCollaborationsAction = createAction({
   auth: boxAuth,
   name: 'box_list_pending_collaborations',
+  outputSchema: boxListCollectionItemsOutputSchema,
   displayName: 'List Pending Collaborations',
   description: 'Lists the collaboration invites waiting for the current user.',
   audience: 'ai',

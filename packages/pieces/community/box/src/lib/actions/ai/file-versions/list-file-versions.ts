@@ -4,10 +4,12 @@ import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
 import { boxUtils } from '../../../common/utils';
+import { boxListFileVersionsOutputSchema } from '../../../output-schemas';
 
 export const listFileVersionsAction = createAction({
   auth: boxAuth,
   name: 'box_list_file_versions',
+  outputSchema: boxListFileVersionsOutputSchema,
   displayName: 'List File Versions',
   description: 'Lists the past versions of a Box file.',
   audience: 'ai',

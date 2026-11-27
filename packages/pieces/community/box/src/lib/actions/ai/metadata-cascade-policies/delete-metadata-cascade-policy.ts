@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxDeleteMetadataCascadePolicyOutputSchema } from '../../../output-schemas';
 
 export const deleteMetadataCascadePolicyAction = createAction({
   auth: boxAuth,
   name: 'box_delete_metadata_cascade_policy',
+  outputSchema: boxDeleteMetadataCascadePolicyOutputSchema,
   displayName: 'Delete Metadata Cascade Policy',
   description: 'Deletes a Box metadata cascade policy.',
   audience: 'ai',

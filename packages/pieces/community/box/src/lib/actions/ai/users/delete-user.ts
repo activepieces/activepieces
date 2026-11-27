@@ -3,12 +3,14 @@ import { createAction } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxDeleteUserOutputSchema } from '../../../output-schemas';
 
 const BOOLEANS = ['true', 'false'];
 
 export const deleteUserAction = createAction({
   auth: boxAuth,
   name: 'box_delete_user',
+  outputSchema: boxDeleteUserOutputSchema,
   displayName: 'Delete User',
   description: 'Permanently deletes a Box enterprise user.',
   audience: 'ai',

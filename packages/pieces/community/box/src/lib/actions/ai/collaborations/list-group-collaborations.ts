@@ -4,10 +4,12 @@ import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
 import { boxUtils } from '../../../common/utils';
+import { boxListGroupCollaborationsOutputSchema } from '../../../output-schemas';
 
 export const listGroupCollaborationsAction = createAction({
   auth: boxAuth,
   name: 'box_list_group_collaborations',
+  outputSchema: boxListGroupCollaborationsOutputSchema,
   displayName: 'List Group Collaborations',
   description: 'Lists the files and folders a Box group has access to.',
   audience: 'ai',

@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxCopyFolderOutputSchema } from '../../../output-schemas';
 
 export const createFolderAction = createAction({
   auth: boxAuth,
   name: 'box_create_folder',
+  outputSchema: boxCopyFolderOutputSchema,
   displayName: 'Create Folder',
   description: 'Creates a folder in Box.',
   audience: 'ai',

@@ -3,12 +3,14 @@ import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
 import { boxUtils } from '../../../common/utils';
+import { boxDownloadFileOutputSchema } from '../../../output-schemas';
 
 const EXTENSIONS = ['png', 'jpg'];
 
 export const getFileThumbnailAction = createAction({
   auth: boxAuth,
   name: 'box_get_file_thumbnail',
+  outputSchema: boxDownloadFileOutputSchema,
   displayName: 'Get File Thumbnail',
   description: 'Gets a thumbnail image of a Box file.',
   audience: 'ai',

@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxCreateMetadataTemplateOutputSchema } from '../../../output-schemas';
 
 export const updateMetadataTemplateAction = createAction({
   auth: boxAuth,
   name: 'box_update_metadata_template',
+  outputSchema: boxCreateMetadataTemplateOutputSchema,
   displayName: 'Update Metadata Template',
   description: 'Changes the fields and options of a Box metadata template.',
   audience: 'ai',

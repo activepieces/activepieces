@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxDeleteFolderOutputSchema } from '../../../output-schemas';
 
 export const deleteFolderAction = createAction({
   auth: boxAuth,
   name: 'box_delete_folder',
+  outputSchema: boxDeleteFolderOutputSchema,
   displayName: 'Delete Folder',
   description: 'Moves a Box folder to the trash.',
   audience: 'ai',

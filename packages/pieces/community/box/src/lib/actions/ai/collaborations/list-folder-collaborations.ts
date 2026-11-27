@@ -4,10 +4,12 @@ import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
 import { boxUtils } from '../../../common/utils';
+import { boxListFolderCollaborationsOutputSchema } from '../../../output-schemas';
 
 export const listFolderCollaborationsAction = createAction({
   auth: boxAuth,
   name: 'box_list_folder_collaborations',
+  outputSchema: boxListFolderCollaborationsOutputSchema,
   displayName: 'List Folder Collaborations',
   description: 'Lists who has been invited to a Box folder.',
   audience: 'ai',

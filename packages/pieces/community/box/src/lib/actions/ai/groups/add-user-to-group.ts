@@ -3,12 +3,14 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxAddUserToGroupOutputSchema } from '../../../output-schemas';
 
 const ROLES = ['member', 'admin'];
 
 export const addUserToGroupAction = createAction({
   auth: boxAuth,
   name: 'box_add_user_to_group',
+  outputSchema: boxAddUserToGroupOutputSchema,
   displayName: 'Add User To Group',
   description: 'Adds a Box user to a group.',
   audience: 'ai',

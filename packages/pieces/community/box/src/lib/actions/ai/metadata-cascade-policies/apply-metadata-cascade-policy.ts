@@ -3,12 +3,14 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxApplyMetadataCascadePolicyOutputSchema } from '../../../output-schemas';
 
 const CONFLICT_RESOLUTIONS = ['none', 'overwrite'];
 
 export const applyMetadataCascadePolicyAction = createAction({
   auth: boxAuth,
   name: 'box_apply_metadata_cascade_policy',
+  outputSchema: boxApplyMetadataCascadePolicyOutputSchema,
   displayName: 'Apply Metadata Cascade Policy',
   description: 'Applies a folder\'s cascading metadata to all the items already inside it.',
   audience: 'ai',

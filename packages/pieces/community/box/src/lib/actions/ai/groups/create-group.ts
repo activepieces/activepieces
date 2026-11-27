@@ -3,12 +3,14 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxCreateGroupOutputSchema } from '../../../output-schemas';
 
 const LEVELS = ['admins_only', 'admins_and_members', 'all_managed_users'];
 
 export const createGroupAction = createAction({
   auth: boxAuth,
   name: 'box_create_group',
+  outputSchema: boxCreateGroupOutputSchema,
   displayName: 'Create Group',
   description: 'Creates a group in the Box enterprise.',
   audience: 'ai',

@@ -4,12 +4,14 @@ import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
 import { boxUtils } from '../../../common/utils';
+import { boxListMetadataTaxonomyNodesOutputSchema } from '../../../output-schemas';
 
 const BOOLEANS = ['true', 'false'];
 
 export const listMetadataTaxonomyNodesAction = createAction({
   auth: boxAuth,
   name: 'box_list_metadata_taxonomy_nodes',
+  outputSchema: boxListMetadataTaxonomyNodesOutputSchema,
   displayName: 'List Metadata Taxonomy Nodes',
   description: 'Lists or searches the nodes of a metadata taxonomy.',
   audience: 'ai',

@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxGetTaskOutputSchema } from '../../../output-schemas';
 
 export const getTaskAction = createAction({
   auth: boxAuth,
   name: 'box_get_task',
+  outputSchema: boxGetTaskOutputSchema,
   displayName: 'Get Task',
   description: 'Gets a task on a Box file.',
   audience: 'ai',

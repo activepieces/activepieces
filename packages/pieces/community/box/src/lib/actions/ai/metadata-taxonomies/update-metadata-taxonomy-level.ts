@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxUpdateMetadataTaxonomyLevelOutputSchema } from '../../../output-schemas';
 
 export const updateMetadataTaxonomyLevelAction = createAction({
   auth: boxAuth,
   name: 'box_update_metadata_taxonomy_level',
+  outputSchema: boxUpdateMetadataTaxonomyLevelOutputSchema,
   displayName: 'Update Metadata Taxonomy Level',
   description: 'Renames a level of a metadata taxonomy.',
   audience: 'ai',

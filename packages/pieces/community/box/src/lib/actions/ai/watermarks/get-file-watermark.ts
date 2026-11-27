@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxApplyFileWatermarkOutputSchema } from '../../../output-schemas';
 
 export const getFileWatermarkAction = createAction({
   auth: boxAuth,
   name: 'box_get_file_watermark',
+  outputSchema: boxApplyFileWatermarkOutputSchema,
   displayName: 'Get File Watermark',
   description: 'Gets the watermark on a Box file.',
   audience: 'ai',

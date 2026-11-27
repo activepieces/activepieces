@@ -4,10 +4,12 @@ import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
 import { boxUtils } from '../../../common/utils';
+import { boxQueryMetadataOutputSchema } from '../../../output-schemas';
 
 export const queryMetadataAction = createAction({
   auth: boxAuth,
   name: 'box_query_metadata',
+  outputSchema: boxQueryMetadataOutputSchema,
   displayName: 'Query Metadata',
   description: 'Finds Box files and folders by their metadata values.',
   audience: 'ai',

@@ -4,10 +4,12 @@ import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
 import { boxUtils } from '../../../common/utils';
+import { boxListSignRequestsOutputSchema } from '../../../output-schemas';
 
 export const listSignRequestsAction = createAction({
   auth: boxAuth,
   name: 'box_list_sign_requests',
+  outputSchema: boxListSignRequestsOutputSchema,
   displayName: 'List Sign Requests',
   description: 'Lists the Box Sign requests the user sent or collaborates on.',
   audience: 'ai',

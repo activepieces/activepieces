@@ -1408,7 +1408,7 @@
     },
     "packages/pieces/community/box": {
       "name": "@activepieces/piece-box",
-      "version": "0.2.3",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8746,7 +8746,7 @@
     },
     "packages/pieces/community/slack": {
       "name": "@activepieces/piece-slack",
-      "version": "0.23.6",
+      "version": "0.24.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",

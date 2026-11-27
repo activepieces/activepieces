@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxCopyFolderOutputSchema } from '../../../output-schemas';
 
 export const copyFolderAction = createAction({
   auth: boxAuth,
   name: 'box_copy_folder',
+  outputSchema: boxCopyFolderOutputSchema,
   displayName: 'Copy Folder',
   description: 'Copies a Box folder and its contents into another folder.',
   audience: 'ai',

@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxCreateWebLinkOutputSchema } from '../../../output-schemas';
 
 export const restoreWebLinkAction = createAction({
   auth: boxAuth,
   name: 'box_restore_web_link',
+  outputSchema: boxCreateWebLinkOutputSchema,
   displayName: 'Restore Web Link',
   description: 'Restores a Box web link from the trash.',
   audience: 'ai',

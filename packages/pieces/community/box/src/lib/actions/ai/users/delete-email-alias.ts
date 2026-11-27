@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxDeleteEmailAliasOutputSchema } from '../../../output-schemas';
 
 export const deleteEmailAliasAction = createAction({
   auth: boxAuth,
   name: 'box_delete_email_alias',
+  outputSchema: boxDeleteEmailAliasOutputSchema,
   displayName: 'Delete Email Alias',
   description: 'Removes an email alias from a Box user.',
   audience: 'ai',

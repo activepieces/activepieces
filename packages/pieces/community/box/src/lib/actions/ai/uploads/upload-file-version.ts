@@ -2,10 +2,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxUploadFileOutputSchema } from '../../../output-schemas';
 
 export const uploadFileVersionAction = createAction({
   auth: boxAuth,
   name: 'box_upload_file_version',
+  outputSchema: boxUploadFileOutputSchema,
   displayName: 'Upload File Version',
   description: 'Uploads new content for an existing Box file as a new version.',
   audience: 'ai',

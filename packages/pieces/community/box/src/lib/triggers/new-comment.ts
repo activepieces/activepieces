@@ -7,10 +7,12 @@ import {
 import { boxAuth } from '../auth';
 import { boxApi } from '../common/api';
 import type { BoxWebhook, BoxWebhookTarget } from '../common/types';
+import { newCommentOutputSchema } from '../output-schemas';
 
 export const newCommentTrigger = createTrigger({
   auth: boxAuth,
   name: 'new_comment',
+  outputSchema: newCommentOutputSchema,
   classification: 'READ',
   displayName: 'New Comment',
   description: 'Triggers when a comment is created',

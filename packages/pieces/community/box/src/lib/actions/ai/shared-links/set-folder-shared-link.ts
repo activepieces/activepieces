@@ -3,12 +3,14 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxSetFolderSharedLinkOutputSchema } from '../../../output-schemas';
 
 const ACCESS = ['open', 'company', 'collaborators'];
 
 export const setFolderSharedLinkAction = createAction({
   auth: boxAuth,
   name: 'box_set_folder_shared_link',
+  outputSchema: boxSetFolderSharedLinkOutputSchema,
   displayName: 'Set Folder Shared Link',
   description: 'Creates or updates the shared link of a Box folder.',
   audience: 'ai',

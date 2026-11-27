@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxCopyFileOutputSchema } from '../../../output-schemas';
 
 export const restoreFileAction = createAction({
   auth: boxAuth,
   name: 'box_restore_file',
+  outputSchema: boxCopyFileOutputSchema,
   displayName: 'Restore File',
   description: 'Restores a Box file from the trash.',
   audience: 'ai',

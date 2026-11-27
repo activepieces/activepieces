@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxDeleteFolderMetadataOutputSchema } from '../../../output-schemas';
 
 export const deleteFolderMetadataAction = createAction({
   auth: boxAuth,
   name: 'box_delete_folder_metadata',
+  outputSchema: boxDeleteFolderMetadataOutputSchema,
   displayName: 'Delete Folder Metadata',
   description: 'Removes a metadata instance from a Box folder.',
   audience: 'ai',

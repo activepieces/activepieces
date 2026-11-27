@@ -3,12 +3,14 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxCancelSignRequestOutputSchema } from '../../../output-schemas';
 
 const SIGNATURE_COLORS = ['blue', 'black', 'red'];
 
 export const createSignRequestAction = createAction({
   auth: boxAuth,
   name: 'box_create_sign_request',
+  outputSchema: boxCancelSignRequestOutputSchema,
   displayName: 'Create Sign Request',
   description: 'Sends Box files out for e-signature with Box Sign.',
   audience: 'ai',

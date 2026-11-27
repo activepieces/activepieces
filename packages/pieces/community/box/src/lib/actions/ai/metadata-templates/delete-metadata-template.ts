@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxDeleteMetadataTemplateOutputSchema } from '../../../output-schemas';
 
 export const deleteMetadataTemplateAction = createAction({
   auth: boxAuth,
   name: 'box_delete_metadata_template',
+  outputSchema: boxDeleteMetadataTemplateOutputSchema,
   displayName: 'Delete Metadata Template',
   description: 'Deletes a Box metadata template and all its instances.',
   audience: 'ai',

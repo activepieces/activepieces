@@ -3,6 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxCopyFolderOutputSchema } from '../../../output-schemas';
 
 const CLEARABLE = ['description', 'tags'];
 const SYNC_STATES = ['synced', 'not_synced', 'partially_synced'];
@@ -10,6 +11,7 @@ const SYNC_STATES = ['synced', 'not_synced', 'partially_synced'];
 export const updateFolderAction = createAction({
   auth: boxAuth,
   name: 'box_update_folder',
+  outputSchema: boxCopyFolderOutputSchema,
   displayName: 'Update Folder',
   description: 'Renames, moves or changes the details of a Box folder.',
   audience: 'ai',

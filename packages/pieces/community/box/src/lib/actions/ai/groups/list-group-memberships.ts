@@ -4,10 +4,12 @@ import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
 import { boxUtils } from '../../../common/utils';
+import { boxListGroupMembershipsOutputSchema } from '../../../output-schemas';
 
 export const listGroupMembershipsAction = createAction({
   auth: boxAuth,
   name: 'box_list_group_memberships',
+  outputSchema: boxListGroupMembershipsOutputSchema,
   displayName: 'List Group Memberships',
   description: 'Lists the members of a Box group.',
   audience: 'ai',

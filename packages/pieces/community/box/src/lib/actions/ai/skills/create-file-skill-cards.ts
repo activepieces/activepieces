@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxCreateFileSkillCardsOutputSchema } from '../../../output-schemas';
 
 export const createFileSkillCardsAction = createAction({
   auth: boxAuth,
   name: 'box_create_file_skill_cards',
+  outputSchema: boxCreateFileSkillCardsOutputSchema,
   displayName: 'Create File Skill Cards',
   description: 'Adds Box Skills cards to a Box file.',
   audience: 'ai',

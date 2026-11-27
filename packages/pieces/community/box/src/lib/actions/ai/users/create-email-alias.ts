@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxCreateEmailAliasOutputSchema } from '../../../output-schemas';
 
 export const createEmailAliasAction = createAction({
   auth: boxAuth,
   name: 'box_create_email_alias',
+  outputSchema: boxCreateEmailAliasOutputSchema,
   displayName: 'Create Email Alias',
   description: 'Adds an email alias to a Box user.',
   audience: 'ai',

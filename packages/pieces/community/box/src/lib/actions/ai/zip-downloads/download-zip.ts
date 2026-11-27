@@ -2,12 +2,14 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxDownloadFileOutputSchema } from '../../../output-schemas';
 
 const DOWNLOAD_HOST = 'https://dl.boxcloud.com/2.0';
 
 export const downloadZipAction = createAction({
   auth: boxAuth,
   name: 'box_download_zip',
+  outputSchema: boxDownloadFileOutputSchema,
   displayName: 'Download Zip',
   description: 'Downloads a zip archive created with Create Zip Download.',
   audience: 'ai',

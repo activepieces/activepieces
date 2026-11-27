@@ -4,10 +4,12 @@ import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
 import { boxUtils } from '../../../common/utils';
+import { boxListEnterpriseMetadataTemplatesOutputSchema } from '../../../output-schemas';
 
 export const listEnterpriseMetadataTemplatesAction = createAction({
   auth: boxAuth,
   name: 'box_list_enterprise_metadata_templates',
+  outputSchema: boxListEnterpriseMetadataTemplatesOutputSchema,
   displayName: 'List Enterprise Metadata Templates',
   description: 'Lists the metadata templates created in the user\'s Box enterprise.',
   audience: 'ai',

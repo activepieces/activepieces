@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxGetGroupOutputSchema } from '../../../output-schemas';
 
 export const getGroupAction = createAction({
   auth: boxAuth,
   name: 'box_get_group',
+  outputSchema: boxGetGroupOutputSchema,
   displayName: 'Get Group',
   description: 'Gets a Box group by ID.',
   audience: 'ai',

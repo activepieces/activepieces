@@ -2,10 +2,12 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxClient } from '../../../common/client';
+import { boxCreateMetadataTemplateOutputSchema } from '../../../output-schemas';
 
 export const getMetadataTemplateByIdAction = createAction({
   auth: boxAuth,
   name: 'box_get_metadata_template_by_id',
+  outputSchema: boxCreateMetadataTemplateOutputSchema,
   displayName: 'Get Metadata Template By ID',
   description: 'Gets a Box metadata template by its ID.',
   audience: 'ai',

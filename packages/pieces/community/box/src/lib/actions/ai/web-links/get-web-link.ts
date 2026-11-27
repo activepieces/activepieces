@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxGetWebLinkOutputSchema } from '../../../output-schemas';
 
 export const getWebLinkAction = createAction({
   auth: boxAuth,
   name: 'box_get_web_link',
+  outputSchema: boxGetWebLinkOutputSchema,
   displayName: 'Get Web Link',
   description: 'Gets the details of a Box web link.',
   audience: 'ai',

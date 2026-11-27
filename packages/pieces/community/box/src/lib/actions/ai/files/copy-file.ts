@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxCopyFileOutputSchema } from '../../../output-schemas';
 
 export const copyFileAction = createAction({
   auth: boxAuth,
   name: 'box_copy_file',
+  outputSchema: boxCopyFileOutputSchema,
   displayName: 'Copy File',
   description: 'Copies a Box file into a folder.',
   audience: 'ai',

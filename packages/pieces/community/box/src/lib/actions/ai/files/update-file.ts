@@ -3,12 +3,14 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxGetFileOutputSchema } from '../../../output-schemas';
 
 const CLEARABLE = ['description', 'tags'];
 
 export const updateFileAction = createAction({
   auth: boxAuth,
   name: 'box_update_file',
+  outputSchema: boxGetFileOutputSchema,
   displayName: 'Update File',
   description: 'Renames, moves or changes the details of a Box file.',
   audience: 'ai',

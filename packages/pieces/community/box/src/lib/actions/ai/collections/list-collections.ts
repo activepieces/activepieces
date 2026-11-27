@@ -4,10 +4,12 @@ import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
 import { boxUtils } from '../../../common/utils';
+import { boxListCollectionsOutputSchema } from '../../../output-schemas';
 
 export const listCollectionsAction = createAction({
   auth: boxAuth,
   name: 'box_list_collections',
+  outputSchema: boxListCollectionsOutputSchema,
   displayName: 'List Collections',
   description: 'Lists the user\'s Box collections.',
   audience: 'ai',

@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxRestoreFolderOutputSchema } from '../../../output-schemas';
 
 export const restoreFolderAction = createAction({
   auth: boxAuth,
   name: 'box_restore_folder',
+  outputSchema: boxRestoreFolderOutputSchema,
   displayName: 'Restore Folder',
   description: 'Restores a Box folder from the trash.',
   audience: 'ai',

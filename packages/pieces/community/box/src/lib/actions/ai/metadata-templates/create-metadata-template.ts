@@ -3,12 +3,14 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxCreateMetadataTemplateOutputSchema } from '../../../output-schemas';
 
 const BOOLEANS = ['true', 'false'];
 
 export const createMetadataTemplateAction = createAction({
   auth: boxAuth,
   name: 'box_create_metadata_template',
+  outputSchema: boxCreateMetadataTemplateOutputSchema,
   displayName: 'Create Metadata Template',
   description: 'Creates a metadata template in the Box enterprise.',
   audience: 'ai',

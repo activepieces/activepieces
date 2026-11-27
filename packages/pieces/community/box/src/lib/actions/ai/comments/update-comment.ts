@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxCreateCommentOutputSchema } from '../../../output-schemas';
 
 export const updateCommentAction = createAction({
   auth: boxAuth,
   name: 'box_update_comment',
+  outputSchema: boxCreateCommentOutputSchema,
   displayName: 'Update Comment',
   description: 'Changes the text of a Box comment.',
   audience: 'ai',

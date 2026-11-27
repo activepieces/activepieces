@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxListFolderLocksOutputSchema } from '../../../output-schemas';
 
 export const listFolderLocksAction = createAction({
   auth: boxAuth,
   name: 'box_list_folder_locks',
+  outputSchema: boxListFolderLocksOutputSchema,
   displayName: 'List Folder Locks',
   description: 'Lists the locks on a Box folder.',
   audience: 'ai',

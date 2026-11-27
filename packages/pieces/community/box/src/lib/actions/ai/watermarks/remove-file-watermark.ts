@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxRemoveFileWatermarkOutputSchema } from '../../../output-schemas';
 
 export const removeFileWatermarkAction = createAction({
   auth: boxAuth,
   name: 'box_remove_file_watermark',
+  outputSchema: boxRemoveFileWatermarkOutputSchema,
   displayName: 'Remove File Watermark',
   description: 'Removes the watermark from a Box file.',
   audience: 'ai',

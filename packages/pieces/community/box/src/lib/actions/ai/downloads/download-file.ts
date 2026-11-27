@@ -2,10 +2,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxDownloadFileOutputSchema } from '../../../output-schemas';
 
 export const downloadFileAction = createAction({
   auth: boxAuth,
   name: 'box_download_file',
+  outputSchema: boxDownloadFileOutputSchema,
   displayName: 'Download File',
   description: 'Downloads the content of a Box file.',
   audience: 'ai',

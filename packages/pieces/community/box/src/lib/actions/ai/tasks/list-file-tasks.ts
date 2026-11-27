@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxListFileTasksOutputSchema } from '../../../output-schemas';
 
 export const listFileTasksAction = createAction({
   auth: boxAuth,
   name: 'box_list_file_tasks',
+  outputSchema: boxListFileTasksOutputSchema,
   displayName: 'List File Tasks',
   description: 'Lists the tasks on a Box file.',
   audience: 'ai',

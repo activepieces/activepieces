@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxGetFileVersionOutputSchema } from '../../../output-schemas';
 
 export const getFileVersionAction = createAction({
   auth: boxAuth,
   name: 'box_get_file_version',
+  outputSchema: boxGetFileVersionOutputSchema,
   displayName: 'Get File Version',
   description: 'Gets one version of a Box file.',
   audience: 'ai',

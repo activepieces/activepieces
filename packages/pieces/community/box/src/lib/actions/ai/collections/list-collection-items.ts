@@ -4,10 +4,12 @@ import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
 import { boxUtils } from '../../../common/utils';
+import { boxListCollectionItemsOutputSchema } from '../../../output-schemas';
 
 export const listCollectionItemsAction = createAction({
   auth: boxAuth,
   name: 'box_list_collection_items',
+  outputSchema: boxListCollectionItemsOutputSchema,
   displayName: 'List Collection Items',
   description: 'Lists the files, folders and web links in a Box collection.',
   audience: 'ai',

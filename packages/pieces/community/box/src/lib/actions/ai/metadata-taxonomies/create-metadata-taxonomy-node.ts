@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxCreateMetadataTaxonomyNodeOutputSchema } from '../../../output-schemas';
 
 export const createMetadataTaxonomyNodeAction = createAction({
   auth: boxAuth,
   name: 'box_create_metadata_taxonomy_node',
+  outputSchema: boxCreateMetadataTaxonomyNodeOutputSchema,
   displayName: 'Create Metadata Taxonomy Node',
   description: 'Creates a node (a value) in a metadata taxonomy.',
   audience: 'ai',

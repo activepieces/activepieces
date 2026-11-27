@@ -4,10 +4,12 @@ import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
 import { boxUtils } from '../../../common/utils';
+import { boxListMetadataTaxonomiesOutputSchema } from '../../../output-schemas';
 
 export const listMetadataTaxonomiesAction = createAction({
   auth: boxAuth,
   name: 'box_list_metadata_taxonomies',
+  outputSchema: boxListMetadataTaxonomiesOutputSchema,
   displayName: 'List Metadata Taxonomies',
   description: 'Lists the metadata taxonomies in a namespace.',
   audience: 'ai',

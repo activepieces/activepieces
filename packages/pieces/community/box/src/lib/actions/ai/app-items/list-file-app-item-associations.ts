@@ -4,10 +4,12 @@ import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
 import { boxUtils } from '../../../common/utils';
+import { boxListFileAppItemAssociationsOutputSchema } from '../../../output-schemas';
 
 export const listFileAppItemAssociationsAction = createAction({
   auth: boxAuth,
   name: 'box_list_file_app_item_associations',
+  outputSchema: boxListFileAppItemAssociationsOutputSchema,
   displayName: 'List File App Item Associations',
   description: 'Lists the app items (such as Box Hubs) a Box file is associated with.',
   audience: 'ai',

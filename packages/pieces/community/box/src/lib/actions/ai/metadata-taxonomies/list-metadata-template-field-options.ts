@@ -4,12 +4,14 @@ import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
 import { boxUtils } from '../../../common/utils';
+import { boxListMetadataTemplateFieldOptionsOutputSchema } from '../../../output-schemas';
 
 const BOOLEANS = ['true', 'false'];
 
 export const listMetadataTemplateFieldOptionsAction = createAction({
   auth: boxAuth,
   name: 'box_list_metadata_template_field_options',
+  outputSchema: boxListMetadataTemplateFieldOptionsOutputSchema,
   displayName: 'List Metadata Template Field Options',
   description: 'Lists the taxonomy nodes a taxonomy field of a metadata template accepts.',
   audience: 'ai',

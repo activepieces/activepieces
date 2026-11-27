@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxCreateFolderMetadataOutputSchema } from '../../../output-schemas';
 
 export const updateFileMetadataAction = createAction({
   auth: boxAuth,
   name: 'box_update_file_metadata',
+  outputSchema: boxCreateFolderMetadataOutputSchema,
   displayName: 'Update File Metadata',
   description: 'Changes the values of a metadata instance on a Box file.',
   audience: 'ai',

@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxApplyFileWatermarkOutputSchema } from '../../../output-schemas';
 
 export const applyFolderWatermarkAction = createAction({
   auth: boxAuth,
   name: 'box_apply_folder_watermark',
+  outputSchema: boxApplyFileWatermarkOutputSchema,
   displayName: 'Apply Folder Watermark',
   description: 'Applies the default watermark to a Box folder.',
   audience: 'ai',

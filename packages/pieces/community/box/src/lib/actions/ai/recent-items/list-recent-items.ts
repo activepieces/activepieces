@@ -4,10 +4,12 @@ import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
 import { boxUtils } from '../../../common/utils';
+import { boxListRecentItemsOutputSchema } from '../../../output-schemas';
 
 export const listRecentItemsAction = createAction({
   auth: boxAuth,
   name: 'box_list_recent_items',
+  outputSchema: boxListRecentItemsOutputSchema,
   displayName: 'List Recent Items',
   description: 'Lists the items the user recently accessed in Box.',
   audience: 'ai',

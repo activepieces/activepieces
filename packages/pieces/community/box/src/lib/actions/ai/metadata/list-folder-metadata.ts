@@ -3,12 +3,14 @@ import { createAction } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxListFolderMetadataOutputSchema } from '../../../output-schemas';
 
 const BOOLEANS = ['true', 'false'];
 
 export const listFolderMetadataAction = createAction({
   auth: boxAuth,
   name: 'box_list_folder_metadata',
+  outputSchema: boxListFolderMetadataOutputSchema,
   displayName: 'List Folder Metadata',
   description: 'Lists all metadata instances on a Box folder.',
   audience: 'ai',

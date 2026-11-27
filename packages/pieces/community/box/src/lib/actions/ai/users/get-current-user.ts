@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxCreateUserOutputSchema } from '../../../output-schemas';
 
 export const getCurrentUserAction = createAction({
   auth: boxAuth,
   name: 'box_get_current_user',
+  outputSchema: boxCreateUserOutputSchema,
   displayName: 'Get Current User',
   description: 'Gets the Box user the connection belongs to.',
   audience: 'ai',

@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxDeleteFilePermanentlyOutputSchema } from '../../../output-schemas';
 
 export const deleteFileSkillCardsAction = createAction({
   auth: boxAuth,
   name: 'box_delete_file_skill_cards',
+  outputSchema: boxDeleteFilePermanentlyOutputSchema,
   displayName: 'Delete File Skill Cards',
   description: 'Removes all Box Skills cards from a Box file.',
   audience: 'ai',

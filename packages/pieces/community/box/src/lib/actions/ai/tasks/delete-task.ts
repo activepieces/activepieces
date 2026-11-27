@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxDeleteTaskOutputSchema } from '../../../output-schemas';
 
 export const deleteTaskAction = createAction({
   auth: boxAuth,
   name: 'box_delete_task',
+  outputSchema: boxDeleteTaskOutputSchema,
   displayName: 'Delete Task',
   description: 'Permanently deletes a task from a Box file.',
   audience: 'ai',

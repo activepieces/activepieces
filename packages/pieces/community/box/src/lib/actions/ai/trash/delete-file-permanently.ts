@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxDeleteFilePermanentlyOutputSchema } from '../../../output-schemas';
 
 export const deleteFilePermanentlyAction = createAction({
   auth: boxAuth,
   name: 'box_delete_file_permanently',
+  outputSchema: boxDeleteFilePermanentlyOutputSchema,
   displayName: 'Delete File Permanently',
   description: 'Permanently deletes a Box file that is in the trash.',
   audience: 'ai',

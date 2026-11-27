@@ -3,12 +3,14 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxSetFolderSharedLinkOutputSchema } from '../../../output-schemas';
 
 const ACCESS = ['open', 'company', 'collaborators'];
 
 export const setWebLinkSharedLinkAction = createAction({
   auth: boxAuth,
   name: 'box_set_web_link_shared_link',
+  outputSchema: boxSetFolderSharedLinkOutputSchema,
   displayName: 'Set Web Link Shared Link',
   description: 'Creates or updates the shared link of a Box web link.',
   audience: 'ai',

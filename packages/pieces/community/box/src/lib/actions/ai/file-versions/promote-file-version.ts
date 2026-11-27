@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxGetFileVersionOutputSchema } from '../../../output-schemas';
 
 export const promoteFileVersionAction = createAction({
   auth: boxAuth,
   name: 'box_promote_file_version',
+  outputSchema: boxGetFileVersionOutputSchema,
   displayName: 'Promote File Version',
   description: 'Makes a past version of a Box file the current version.',
   audience: 'ai',

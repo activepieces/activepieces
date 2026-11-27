@@ -4,10 +4,12 @@ import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
 import { boxUtils } from '../../../common/utils';
+import { boxListWorkflowsOutputSchema } from '../../../output-schemas';
 
 export const listWorkflowsAction = createAction({
   auth: boxAuth,
   name: 'box_list_workflows',
+  outputSchema: boxListWorkflowsOutputSchema,
   displayName: 'List Workflows',
   description: 'Lists the Box Relay workflows on a folder that can be started manually.',
   audience: 'ai',

@@ -2,12 +2,14 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxClient } from '../../../common/client';
+import { boxGetAiAgentDefaultConfigOutputSchema } from '../../../output-schemas';
 
 const MODES = ['ask', 'text_gen', 'extract', 'extract_structured'];
 
 export const getAiAgentDefaultConfigAction = createAction({
   auth: boxAuth,
   name: 'box_get_ai_agent_default_config',
+  outputSchema: boxGetAiAgentDefaultConfigOutputSchema,
   displayName: 'Get AI Agent Default Config',
   description: 'Gets the default Box AI agent configuration for a mode.',
   audience: 'ai',

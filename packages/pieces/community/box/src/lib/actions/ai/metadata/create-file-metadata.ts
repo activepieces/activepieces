@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxCreateFileMetadataOutputSchema } from '../../../output-schemas';
 
 export const createFileMetadataAction = createAction({
   auth: boxAuth,
   name: 'box_create_file_metadata',
+  outputSchema: boxCreateFileMetadataOutputSchema,
   displayName: 'Create File Metadata',
   description: 'Applies a metadata template to a Box file.',
   audience: 'ai',

@@ -4,6 +4,7 @@ import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
 import { boxUtils } from '../../../common/utils';
+import { boxListTrashedItemsOutputSchema } from '../../../output-schemas';
 
 const SORTS = ['name', 'date', 'size'];
 const DIRECTIONS = ['ASC', 'DESC'];
@@ -11,6 +12,7 @@ const DIRECTIONS = ['ASC', 'DESC'];
 export const listTrashedItemsAction = createAction({
   auth: boxAuth,
   name: 'box_list_trashed_items',
+  outputSchema: boxListTrashedItemsOutputSchema,
   displayName: 'List Trashed Items',
   description: 'Lists the files, folders and web links in the Box trash.',
   audience: 'ai',

@@ -3,12 +3,14 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxCreateCommentOutputSchema } from '../../../output-schemas';
 
 const ITEM_TYPES = ['file', 'comment'];
 
 export const createCommentAction = createAction({
   auth: boxAuth,
   name: 'box_create_comment',
+  outputSchema: boxCreateCommentOutputSchema,
   displayName: 'Create Comment',
   description: 'Adds a comment to a Box file, or a reply to a comment.',
   audience: 'ai',

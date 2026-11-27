@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxRemoveFileSharedLinkOutputSchema } from '../../../output-schemas';
 
 export const removeFileSharedLinkAction = createAction({
   auth: boxAuth,
   name: 'box_remove_file_shared_link',
+  outputSchema: boxRemoveFileSharedLinkOutputSchema,
   displayName: 'Remove File Shared Link',
   description: 'Removes the shared link of a Box file.',
   audience: 'ai',

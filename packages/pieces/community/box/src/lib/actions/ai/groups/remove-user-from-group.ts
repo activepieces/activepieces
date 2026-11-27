@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxRemoveUserFromGroupOutputSchema } from '../../../output-schemas';
 
 export const removeUserFromGroupAction = createAction({
   auth: boxAuth,
   name: 'box_remove_user_from_group',
+  outputSchema: boxRemoveUserFromGroupOutputSchema,
   displayName: 'Remove User From Group',
   description: 'Removes a user from a Box group.',
   audience: 'ai',

@@ -2,10 +2,12 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxClient } from '../../../common/client';
+import { boxFindMetadataTemplateByInstanceOutputSchema } from '../../../output-schemas';
 
 export const findMetadataTemplateByInstanceAction = createAction({
   auth: boxAuth,
   name: 'box_find_metadata_template_by_instance',
+  outputSchema: boxFindMetadataTemplateByInstanceOutputSchema,
   displayName: 'Find Metadata Template By Instance',
   description: 'Finds the metadata template a metadata instance was made from.',
   audience: 'ai',

@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxAiExtractStructuredOutputSchema } from '../../../output-schemas';
 
 export const aiExtractStructuredAction = createAction({
   auth: boxAuth,
   name: 'box_ai_extract_structured',
+  outputSchema: boxAiExtractStructuredOutputSchema,
   displayName: 'Extract Structured with Box AI',
   description: 'Extracts typed fields from Box files with Box AI, using a metadata template or a field list.',
   audience: 'ai',

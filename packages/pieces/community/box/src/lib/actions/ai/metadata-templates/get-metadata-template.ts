@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { boxAuth } from '../../../auth';
 import { boxAiProps } from '../../../common/ai-props';
 import { boxClient } from '../../../common/client';
+import { boxCreateMetadataTemplateOutputSchema } from '../../../output-schemas';
 
 export const getMetadataTemplateAction = createAction({
   auth: boxAuth,
   name: 'box_get_metadata_template',
+  outputSchema: boxCreateMetadataTemplateOutputSchema,
   displayName: 'Get Metadata Template',
   description: 'Gets a Box metadata template by scope and key.',
   audience: 'ai',

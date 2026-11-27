@@ -11,7 +11,6 @@ export const boxAuth = PieceAuth.OAuth2({
     'manage_managed_users',
     'manage_groups',
     'manage_enterprise_properties',
-    'manage_data_retention',
     'manage_triggers',
     'sign_requests.readwrite',
     'ai.readwrite',
