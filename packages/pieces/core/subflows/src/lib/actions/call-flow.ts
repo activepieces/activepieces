@@ -12,28 +12,33 @@ export const callFlow = createAction({
   name: 'callFlow',
   classification: 'WRITE',
   displayName: 'Call Flow',
-  description: 'Call a flow that has "Callable Flow" trigger',
+  description: 'Run another flow that starts with the Callable Flow trigger.',
   aiMetadata: { description: 'Dispatches a run of another flow in this project that starts with a "Callable Flow" trigger, passing a payload entered as key-value pairs or raw JSON, and can optionally wait for that subflow to send back a "Return Response". Pick it to reuse a flow as a subroutine; prefer Stream CSV to Subflows for large CSV input. The target flow must be published and enabled, and when Wait for Response is on, a subflow failure also fails this run; not idempotent, since every call starts a new subflow run.', idempotent: false },
   props: {
     flowId: subflowDropdown({
       displayName: 'Flow',
-      description: 'The flow to execute. Published flows with a "Callable Flow" trigger appear here; disabled flows are marked "(inactive)" and cannot be executed until they are enabled.',
+      description: 'Flows that start with Callable Flow. Enable inactive ones first.',
     }),
     mode: Property.StaticDropdown({
-      displayName: 'Mode',
+      displayName: 'Data Format',
       required: true,
-      description: 'Choose Simple for key-value or Advanced for JSON.',
+      description: 'How you enter the data: key-value pairs or raw JSON.',
       defaultValue: 'simple',
+      display: 'cards',
       options: {
         disabled: false,
         options: [
           {
             label: 'Simple',
             value: 'simple',
+            description: 'Key-value',
+            icon: 'sliders',
           },
           {
             label: 'Advanced',
             value: 'advanced',
+            description: 'Raw JSON',
+            icon: 'code',
           },
         ],
       },
@@ -59,6 +64,7 @@ export const callFlow = createAction({
           if (mode === 'simple') {
             fields['payload'] = Property.Object({
               displayName: 'Payload',
+              description: 'The data the subflow receives.',
               required: true,
               defaultValue: exampleData.sampleData,
             });
@@ -66,8 +72,7 @@ export const callFlow = createAction({
           else{
             fields['payload'] = Property.Json({
               displayName: 'Payload',
-              description:
-                'Provide the data to be passed to the flow',
+              description: 'The data the subflow receives.',
               required: true,
               defaultValue: exampleData.sampleData,
             });
@@ -78,10 +83,15 @@ export const callFlow = createAction({
     }),
     waitForResponse: Property.Checkbox({
       displayName: 'Wait for Response',
+      description: 'Wait for the subflow to return a response. Fails if the subflow fails.',
       required: false,
       defaultValue: false,
     }),
   },
+  propertyGroups: [
+    { key: 'flow', display: 'section', label: 'Flow to Call', icon: 'send', props: ['flowId', 'waitForResponse'] },
+    { key: 'payload', display: 'section', label: 'Data to Send', icon: 'code', props: ['mode', 'flowProps'] },
+  ],
   async run(context) {
     if (context.executionType === ExecutionType.RESUME) {
       const response = context.resumePayload.body as CallableFlowResponse;
