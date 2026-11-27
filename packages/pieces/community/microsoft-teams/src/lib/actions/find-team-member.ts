@@ -23,26 +23,28 @@ export const findTeamMemberAction = createAction({
 			displayName: 'Search By',
 			required: true,
 			defaultValue: 'email',
+			display: 'cards',
 			options: {
 				disabled: false,
 				options: [
-					{ label: 'Email', value: 'email' },
-					{ label: 'Name', value: 'name' },
+					{ label: 'Email', value: 'email', description: 'Exact email', icon: 'inbox' },
+					{ label: 'Name', value: 'name', description: 'Display name', icon: 'user' },
 				],
 			},
 		}),
 		searchValue: Property.ShortText({
-			displayName: 'searchValue',
+			displayName: 'Search Value',
 			required: true,
-			description: 'Email address or name to search for.',
+			description: 'The exact email address or display name to match.',
 		}),
 	},
 	async run(context) {
-		const { teamId, searchBy, searchValue } = context.propsValue 
+		const { teamId, searchBy, searchValue } = context.propsValue;
 
 		const client = microsoftTeamsClient.create({ auth: context.auth });
 
-		const filter = searchBy == 'email' ?`microsoft.graph.aadUserConversationMember/email eq '${searchValue}'`:`microsoft.graph.aadUserConversationMember/displayName eq  '${searchValue}'`;
+		const escapedSearchValue = searchValue.replace(/'/g, "''");
+		const filter = searchBy === 'email' ? `microsoft.graph.aadUserConversationMember/email eq '${escapedSearchValue}'` : `microsoft.graph.aadUserConversationMember/displayName eq '${escapedSearchValue}'`;
 
 		const response: MicrosoftTeamsPage<ConversationMember> = await client
 			.api(`/teams/${teamId}/members`)
