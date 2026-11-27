@@ -4,6 +4,7 @@ import {
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { greipAuth } from '../auth';
+import { profanityTextDetectedOutputSchema } from '../output-schemas';
 
 export const profanityTextDetectedTrigger = createTrigger({
   name: 'profanity_text_detected',
@@ -34,6 +35,7 @@ To use this trigger, you need to manually set up a webhook in your Greip account
     }),
   },
   type: TriggerStrategy.WEBHOOK,
+  outputSchema: profanityTextDetectedOutputSchema,
   sampleData: {
     event: 'profanity',
     text: '**** *****',

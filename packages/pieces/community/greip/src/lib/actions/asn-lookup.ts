@@ -3,6 +3,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { greipAuth } from '../auth';
 import { greipClient } from '../common/client';
 import { greipProps } from '../common/props';
+import { greipAsnOutputSchema } from '../output-schemas';
 
 export const asnLookupAction = createAction({
   auth: greipAuth,
@@ -10,8 +11,8 @@ export const asnLookupAction = createAction({
   classification: 'READ',
   displayName: 'ASN Lookup',
   description: 'Look up details of an Autonomous System Number (ASN)',
-  audience: 'both',
-  aiMetadata: { description: 'Look up registration and network details for an Autonomous System Number (ASN), accepting the number with or without the "AS" prefix (e.g. AS6167 or 6167). Use to identify the organization, allocation, or routing info behind an ASN. Read-only lookup; safe to repeat.', idempotent: true },
+  audience: 'human',
+  outputSchema: greipAsnOutputSchema,
   props: {
     asn: Property.ShortText({
       displayName: 'AS Number',
@@ -25,9 +26,7 @@ export const asnLookupAction = createAction({
   async run(context) {
     const { asn, format, mode, callback } = context.propsValue;
 
-    const queryParams: Record<string, string> = {
-      asn: asn,
-    };
+    const queryParams: Record<string, string> = {};
 
     if (format) {
       queryParams['format'] = format;
@@ -43,7 +42,7 @@ export const asnLookupAction = createAction({
 
     return await greipClient.request({
       method: HttpMethod.GET,
-      path: '/lookup/asn',
+      path: `/lookup/asn/${encodeURIComponent(asn)}`,
       query: queryParams,
       auth: context.auth,
     });

@@ -25,7 +25,7 @@ To get your API Key:
       greipClient.request({
         auth: { type: AppConnectionType.SECRET_TEXT, secret_text: auth },
         method: HttpMethod.GET,
-        path: '/geoip',
+        path: '/geo/ip',
       }),
     );
 

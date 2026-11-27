@@ -3,6 +3,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { greipAuth } from '../auth';
 import { greipClient } from '../common/client';
 import { greipProps } from '../common/props';
+import { greipBinOutputSchema } from '../output-schemas';
 
 export const binLookupAction = createAction({
   auth: greipAuth,
@@ -10,8 +11,8 @@ export const binLookupAction = createAction({
   classification: 'READ',
   displayName: 'BIN Lookup',
   description: 'Look up details of a Bank Identification Number (BIN) or Issuer Identification Number (IIN)',
-  audience: 'both',
-  aiMetadata: { description: 'Look up the issuing bank, card scheme, type, and country behind a payment card from its BIN/IIN (the leading digits). Accepts either the first 6+ digits or a full card number (only the leading digits are used). Use for card validation or fraud-screening enrichment. Read-only lookup; safe to repeat.', idempotent: true },
+  audience: 'human',
+  outputSchema: greipBinOutputSchema,
   props: {
     bin: Property.ShortText({
       displayName: 'BIN/IIN',
@@ -26,9 +27,7 @@ export const binLookupAction = createAction({
   async run(context) {
     const { bin, format, mode, userID, callback } = context.propsValue;
 
-    const queryParams: Record<string, string> = {
-      bin: bin,
-    };
+    const queryParams: Record<string, string> = {};
 
     if (format) {
       queryParams['format'] = format;
@@ -39,7 +38,7 @@ export const binLookupAction = createAction({
     }
 
     if (userID) {
-      queryParams['userID'] = userID;
+      queryParams['user_id'] = userID;
     }
 
     if (callback) {
@@ -48,7 +47,7 @@ export const binLookupAction = createAction({
 
     return await greipClient.request({
       method: HttpMethod.GET,
-      path: '/lookup/bin',
+      path: `/lookup/bin/${encodeURIComponent(bin)}`,
       query: queryParams,
       auth: context.auth,
     });

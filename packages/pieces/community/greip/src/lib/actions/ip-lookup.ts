@@ -3,15 +3,16 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { greipAuth } from '../auth';
 import { greipClient } from '../common/client';
 import { greipProps } from '../common/props';
+import { ipLookupOutputSchema } from '../output-schemas';
 
 export const ipLookupAction = createAction({
   auth: greipAuth,
   name: 'ip_lookup',
+  outputSchema: ipLookupOutputSchema,
   classification: 'READ',
   displayName: 'IP Lookup',
   description: 'Look up comprehensive information about an IP address including location, ISP, security, and risk factors',
-  audience: 'both',
-  aiMetadata: { description: 'Look up geolocation, ISP, timezone, currency, and security/risk signals for an IPv4 or IPv6 address. Optionally narrow the response to specific modules (security, currency, timezone, location) via a comma-separated list. Use to geolocate or fraud-screen an IP. Read-only lookup; safe to repeat.', idempotent: true },
+  audience: 'human',
   props: {
     ip: Property.ShortText({
       displayName: 'IP Address',
@@ -49,9 +50,7 @@ export const ipLookupAction = createAction({
   async run(context) {
     const { ip, params, format, lang, mode, userID, callback } = context.propsValue;
 
-    const queryParams: Record<string, string> = {
-      ip: ip,
-    };
+    const queryParams: Record<string, string> = {};
 
     if (params) {
       queryParams['params'] = params;
@@ -70,7 +69,7 @@ export const ipLookupAction = createAction({
     }
 
     if (userID) {
-      queryParams['userID'] = userID;
+      queryParams['user_id'] = userID;
     }
 
     if (callback) {
@@ -79,7 +78,7 @@ export const ipLookupAction = createAction({
 
     return await greipClient.request({
       method: HttpMethod.GET,
-      path: '/lookup/ip',
+      path: `/lookup/ip/${encodeURIComponent(ip)}`,
       query: queryParams,
       auth: context.auth,
     });

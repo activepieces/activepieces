@@ -4,6 +4,7 @@ import {
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { greipAuth } from '../auth';
+import { proxyConnectionDetectedOutputSchema } from '../output-schemas';
 
 export const proxyConnectionDetectedTrigger = createTrigger({
   name: 'proxy_connection_detected',
@@ -34,6 +35,7 @@ To use this trigger, you need to manually set up a webhook in your Greip account
     }),
   },
   type: TriggerStrategy.WEBHOOK,
+  outputSchema: proxyConnectionDetectedOutputSchema,
   sampleData: {
     event: 'proxy_detected',
     ip: '1.1.1.1',

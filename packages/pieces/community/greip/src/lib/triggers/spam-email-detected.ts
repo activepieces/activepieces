@@ -4,6 +4,7 @@ import {
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { greipAuth } from '../auth';
+import { spamEmailDetectedOutputSchema } from '../output-schemas';
 
 export const spamEmailDetectedTrigger = createTrigger({
   name: 'spam_email_detected',
@@ -34,6 +35,7 @@ To use this trigger, you need to manually set up a webhook in your Greip account
     }),
   },
   type: TriggerStrategy.WEBHOOK,
+  outputSchema: spamEmailDetectedOutputSchema,
   sampleData: {
     event: 'spam_email',
     email: 'name@domain.com',

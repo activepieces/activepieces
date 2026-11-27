@@ -2,7 +2,7 @@ import { HttpError, HttpMethod, httpClient, QueryParams } from '@activepieces/pi
 import type { GreipAuthValue, GreipErrorBody } from './types';
 
 function baseUrl(): string {
-  return 'https://greipapi.com';
+  return 'https://v2.greipapi.com';
 }
 
 async function request<T>({ auth, method, path, query, body }: RequestParams & { auth: GreipAuthValue }): Promise<T> {
@@ -19,7 +19,7 @@ async function request<T>({ auth, method, path, query, body }: RequestParams & {
     });
 
     const errorBody = toErrorBody({ body: response.body });
-    if (errorBody?.status === 'error') {
+    if (errorBody?.success === false) {
       throw new Error(errorBody.description || `Greip API error (code: ${errorBody.code || 'unknown'})`);
     }
 
@@ -37,7 +37,7 @@ function describeError({ error }: { error: unknown }): string {
     errorBody = errorBody.response.body;
   }
 
-  if (errorBody?.status === 'error') {
+  if (errorBody?.success === false) {
     const description = errorBody.description || getErrorMessageByCode({ code: errorBody.code });
     return description || `Greip API error (code: ${errorBody.code || 'unknown'})`;
   }

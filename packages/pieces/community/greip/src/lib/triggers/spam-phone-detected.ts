@@ -4,6 +4,7 @@ import {
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { greipAuth } from '../auth';
+import { spamPhoneDetectedOutputSchema } from '../output-schemas';
 
 export const spamPhoneDetectedTrigger = createTrigger({
   name: 'spam_phone_detected',
@@ -34,6 +35,7 @@ To use this trigger, you need to manually set up a webhook in your Greip account
     }),
   },
   type: TriggerStrategy.WEBHOOK,
+  outputSchema: spamPhoneDetectedOutputSchema,
   sampleData: {
     event: 'spam_phone',
     phone: '0555123456',
