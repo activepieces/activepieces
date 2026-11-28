@@ -1,10 +1,10 @@
+import { ErrorCode, isNil } from '@activepieces/core-utils';
 import {
-  PlatformWithoutSensitiveData,
-  SsoDomainVerificationRecord,
+  EmailDomain,
+  EmailDomainWithUsage,
   SsoDomainVerificationStatus,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
@@ -25,40 +25,42 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { samlSsoApi, ssoMutations } from '@/features/platform-admin';
+import { emailDomainMutations } from '@/features/platform-admin';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
 import { DomainVerificationStatus } from '@/lib/statuses';
 
 export const DomainVerification = ({
-  platform,
-  refetch,
+  emailDomain,
+  refetchPlatform,
+  onAdded,
   onVerified,
+  onLocked,
   secondaryAction,
   nextAction,
   showIntro = true,
 }: DomainVerificationProps) => {
-  const verification = platform.ssoDomainVerification;
-  if (!platform.ssoDomain || !verification) {
+  if (isNil(emailDomain)) {
     return (
       <DomainEntry
-        refetch={refetch}
+        onAdded={onAdded}
+        onLocked={onLocked}
         secondaryAction={secondaryAction}
         nextAction={nextAction}
       />
     );
   }
-  if (verification.status === SsoDomainVerificationStatus.VERIFIED) {
+  if (emailDomain.verificationStatus === SsoDomainVerificationStatus.VERIFIED) {
     return (
-      <VerifiedDomain domain={platform.ssoDomain} nextAction={nextAction} />
+      <VerifiedDomain domain={emailDomain.domain} nextAction={nextAction} />
     );
   }
   return (
     <PendingDomain
-      domain={platform.ssoDomain}
-      record={verification.record}
-      refetch={refetch}
+      emailDomain={emailDomain}
+      refetchPlatform={refetchPlatform}
       onVerified={onVerified}
+      onLocked={onLocked}
       secondaryAction={secondaryAction}
       nextAction={nextAction}
       showIntro={showIntro}
@@ -67,11 +69,13 @@ export const DomainVerification = ({
 };
 
 const DomainEntry = ({
-  refetch,
+  onAdded,
+  onLocked,
   secondaryAction,
   nextAction,
 }: {
-  refetch: () => Promise<void>;
+  onAdded: (emailDomain: EmailDomain) => void;
+  onLocked: () => void;
   secondaryAction?: ReactNode;
   nextAction?: ReactNode;
 }) => {
@@ -81,27 +85,29 @@ const DomainEntry = ({
     mode: 'onChange',
   });
 
-  const { mutate: saveDomain, isPending } = useMutation({
-    mutationFn: async ({ domain }: DomainFormValues) => {
-      await samlSsoApi.updateSsoDomain(domain);
-      await refetch();
-    },
-    onError: (error) => {
-      form.setError('root.serverError', {
-        type: 'manual',
-        message: api.extractServerErrorMessage(
-          error,
-          t("Couldn't save domain"),
-        ),
-      });
-    },
-  });
+  const { mutate: addDomain, isPending } =
+    emailDomainMutations.useAddEmailDomain({ onAdded, onLocked });
 
   return (
     <Form {...form}>
       <form
         className="flex flex-col gap-4"
-        onSubmit={form.handleSubmit((values) => saveDomain(values))}
+        onSubmit={form.handleSubmit((values) =>
+          addDomain(values.domain, {
+            onError: (error) => {
+              if (api.isApError(error, ErrorCode.FEATURE_DISABLED)) {
+                return;
+              }
+              form.setError('root.serverError', {
+                type: 'manual',
+                message: api.extractServerErrorMessage(
+                  error,
+                  t("Couldn't save domain"),
+                ),
+              });
+            },
+          }),
+        )}
       >
         <FormField
           control={form.control}
@@ -110,7 +116,16 @@ const DomainEntry = ({
             <FormItem className="grid space-y-2">
               <FormLabel>{t('Domain')}</FormLabel>
               <FormControl>
-                <Input {...field} placeholder="acme.com" autoFocus />
+                <Input
+                  {...field}
+                  data-testid="sso-domain-input"
+                  onChange={(event) => {
+                    form.clearErrors('root.serverError');
+                    field.onChange(event);
+                  }}
+                  placeholder="acme.com"
+                  autoFocus
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -125,6 +140,7 @@ const DomainEntry = ({
           {secondaryAction}
           <Button
             {...adminControl(AdminControl.SSO_SAML_DOMAIN_SUBMIT)}
+            data-testid="sso-domain-submit"
             type="submit"
             loading={isPending}
             disabled={!form.formState.isValid}
@@ -138,33 +154,35 @@ const DomainEntry = ({
 };
 
 const PendingDomain = ({
-  domain,
-  record,
-  refetch,
+  emailDomain,
+  refetchPlatform,
   onVerified,
+  onLocked,
   secondaryAction,
   nextAction,
   showIntro,
 }: {
-  domain: string;
-  record: SsoDomainVerificationRecord;
-  refetch: () => Promise<void>;
+  emailDomain: EmailDomainWithUsage;
+  refetchPlatform: () => Promise<void>;
   onVerified?: () => void;
+  onLocked: () => void;
   secondaryAction?: ReactNode;
   nextAction?: ReactNode;
   showIntro: boolean;
 }) => {
-  const { mutate: verifyDomain, isPending } = ssoMutations.useVerifySsoDomain({
-    refetch,
-    onVerified,
-  });
+  const { mutate: verifyDomain, isPending } =
+    emailDomainMutations.useVerifyEmailDomain({
+      refetchPlatform,
+      onVerified,
+      onLocked,
+    });
 
   return (
     <div className="flex flex-col gap-4">
       {showIntro && (
         <div className="flex flex-col gap-1">
           <h3 className="text-sm font-semibold text-gray-12">
-            {t('Verify {domain}', { domain })}
+            {t('Verify {domain}', { domain: emailDomain.domain })}
           </h3>
           <p className="text-sm text-gray-11">
             {t(
@@ -173,14 +191,15 @@ const PendingDomain = ({
           </p>
         </div>
       )}
-      <DomainDnsRecord record={record} />
+      <DomainDnsRecord emailDomain={emailDomain} />
       <FormActions trailing={nextAction}>
         {secondaryAction}
         <Button
           {...adminControl(AdminControl.SSO_DOMAIN_DNS_RUN)}
+          data-testid="sso-domain-verify"
           type="button"
           loading={isPending}
-          onClick={() => verifyDomain()}
+          onClick={() => verifyDomain(emailDomain.id)}
         >
           {t('Verify DNS')}
         </Button>
@@ -221,9 +240,11 @@ const DomainFormValues = z.object({ domain: domainSchema });
 type DomainFormValues = { domain: string };
 
 type DomainVerificationProps = {
-  platform: PlatformWithoutSensitiveData;
-  refetch: () => Promise<void>;
+  emailDomain: EmailDomainWithUsage | null;
+  refetchPlatform: () => Promise<void>;
+  onAdded: (emailDomain: EmailDomain) => void;
   onVerified?: () => void;
+  onLocked: () => void;
   secondaryAction?: ReactNode;
   nextAction?: ReactNode;
   showIntro?: boolean;

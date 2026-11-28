@@ -36,9 +36,6 @@ export const emailDomainService = (log: FastifyBaseLogger) => ({
         assertNotNullOrUndefined(added, 'added')
         return added
     },
-    async replace({ platformId, removedId, addedDomain, userId, ip }: ReplaceParams): Promise<void> {
-        await replaceDomain({ log, platformId, removedId, addedDomain, userId, ip })
-    },
     async verify({ platformId, id, userId, ip }: DomainParams): Promise<EmailDomain> {
         const emailDomain = await getOneOrThrow({ platformId, id })
         if (emailDomain.verificationStatus === SsoDomainVerificationStatus.VERIFIED) {

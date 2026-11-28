@@ -2,7 +2,7 @@ import { ApplicationEvent, ApplicationEventName, SsoDomainVerification, SsoDomai
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { auditLogRepo } from '../../../../src/app/ee/audit-logs/audit-event-service'
-import { emailDomainService } from '../../../../src/app/ee/authentication/email-domain/email-domain.service'
+import { emailDomainRepo, emailDomainService } from '../../../../src/app/ee/authentication/email-domain/email-domain.service'
 import { createTestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
@@ -135,8 +135,8 @@ describe('Authentication audit events', () => {
     it('records the SSO domain being added and its verification being cancelled', async () => {
         const ctx = await createTestContext(app!, { plan: { auditLogEnabled: true, ssoEnabled: true } })
 
-        await ctx.post(SSO_DOMAIN, { ssoDomain: 'pending.example.com' })
-        await ctx.post(SSO_DOMAIN, { ssoDomain: null })
+        const added = await ctx.post(EMAIL_DOMAINS, { domain: 'pending.example.com' })
+        await ctx.delete(`${EMAIL_DOMAINS}/${added.json().id}`)
         const events = await savedEvents({ platformId: ctx.platform.id, expectedCount: 2 })
 
         expect(events).toEqual(expect.arrayContaining([
@@ -155,7 +155,8 @@ describe('Authentication audit events', () => {
             },
         })
 
-        await ctx.post(SSO_DOMAIN, { ssoDomain: null })
+        const emailDomain = await emailDomainRepo().findOneByOrFail({ platformId: ctx.platform.id })
+        await ctx.delete(`${EMAIL_DOMAINS}/${emailDomain.id}`)
         const events = await savedEvents({ platformId: ctx.platform.id, expectedCount: 2 })
 
         expect(events.map((event) => event.action)).toEqual(expect.arrayContaining([
@@ -226,7 +227,7 @@ function verification({ domain, status }: { domain: string, status: SsoDomainVer
     }
 }
 
-const SSO_DOMAIN = '/v1/authn/saml/sso-domain'
+const EMAIL_DOMAINS = '/v1/email-domains'
 
 const SAML = {
     idpMetadata: '<EntityDescriptor />',

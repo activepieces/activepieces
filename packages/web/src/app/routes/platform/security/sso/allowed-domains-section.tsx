@@ -20,6 +20,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { emailDomainQueries } from '@/features/platform-admin';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
 
@@ -29,8 +30,10 @@ export const AllowedDomainsSection = ({
 }: AllowedDomainsSectionProps) => {
   const domains = platform.allowedAuthDomains;
   const restrictsJoining = useSignInMethods(platform).selfHosted;
+  const verifiedDomains = emailDomainQueries.useVerifiedDomains();
   const listsCompanyDomain =
-    !!platform.ssoDomain && domains.includes(platform.ssoDomain);
+    verifiedDomains.length > 0 &&
+    verifiedDomains.every((domain) => domains.includes(domain));
 
   return (
     <AdminSection

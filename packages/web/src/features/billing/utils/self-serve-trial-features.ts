@@ -358,7 +358,10 @@ export const selfServeTrialFeatures = {
 
 const HIGHLIGHT_COUNT = 6;
 
-const FEATURES_NOT_IN_TRIAL: FeatureKey[] = ['DEDICATED_WORKERS'];
+const FEATURES_NOT_IN_TRIAL: FeatureKey[] = [
+  'DEDICATED_WORKERS',
+  'MULTIPLE_EMAIL_DOMAINS',
+];
 
 type SelfServeTrialFeature = {
   icon: LucideIcon;

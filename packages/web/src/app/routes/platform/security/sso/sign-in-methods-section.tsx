@@ -37,7 +37,7 @@ export const SignInMethodsSection = ({
     selfHosted,
     cloud,
     locked,
-    verifiedDomain,
+    verifiedDomains,
     working,
     isOnlyWorkingMethod,
   } = useSignInMethods(platform);
@@ -70,7 +70,7 @@ export const SignInMethodsSection = ({
   return (
     <AdminSection
       title={t('Sign-in methods')}
-      description={describeWhoItAppliesTo({ cloud, verifiedDomain })}
+      description={describeWhoItAppliesTo({ cloud, verifiedDomains })}
       aside={
         locked && (
           <span className="flex items-center gap-1.5 text-sm text-gray-11">
@@ -257,14 +257,14 @@ export const SignInMethodsSection = ({
 
 function describeWhoItAppliesTo({
   cloud,
-  verifiedDomain,
+  verifiedDomains,
 }: DescribeWhoItAppliesToParams): string {
   if (!cloud) {
     return t('Applies to everyone who signs in.');
   }
-  if (verifiedDomain) {
+  if (verifiedDomains.length > 0) {
     return t('Applies to people at {domain}. Guests can use any method.', {
-      domain: verifiedDomain,
+      domain: verifiedDomains.join(', '),
     });
   }
   return t(
@@ -302,7 +302,7 @@ const MethodIcon = ({ on, children }: { on: boolean; children: ReactNode }) => (
 
 type DescribeWhoItAppliesToParams = {
   cloud: boolean;
-  verifiedDomain: string | null;
+  verifiedDomains: string[];
 };
 
 type SignInMethodsSectionProps = {

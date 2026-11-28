@@ -1,5 +1,6 @@
 import {
   ApFlagId,
+  EmailDomainWithUsage,
   formErrors,
   PlatformWithoutSensitiveData,
   SsoDomainVerificationStatus,
@@ -30,6 +31,7 @@ import { SamlDeletionWarning } from '@/app/routes/platform/security/sso/saml-del
 import { ssoPaths } from '@/app/routes/platform/security/sso/sso-paths';
 import { useSignInMethods } from '@/app/routes/platform/security/sso/use-sign-in-methods';
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -43,6 +45,7 @@ import {
 } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { emailDomainQueries } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
@@ -50,12 +53,36 @@ import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 export const SamlSetupPage = () => {
+  const {
+    data: domains,
+    isLoading,
+    isError,
+    refetch,
+  } = emailDomainQueries.useEmailDomains();
+  if (isLoading) {
+    return null;
+  }
+  if (isError && !domains) {
+    return (
+      <DataFetchErrorState entity={t('domains')} onRetry={() => refetch()} />
+    );
+  }
+  return <SamlSetup domains={domains ?? []} />;
+};
+
+const SamlSetup = ({ domains }: { domains: EmailDomainWithUsage[] }) => {
   const { platform, refetch } = platformHooks.useCurrentPlatform();
   const navigate = useNavigate();
   const connected = !!platform.federatedAuthProviders?.saml;
+  const shownDomain =
+    domains.find(
+      (emailDomain) =>
+        emailDomain.verificationStatus === SsoDomainVerificationStatus.VERIFIED,
+    ) ??
+    domains[0] ??
+    null;
   const domainVerified =
-    platform.ssoDomainVerification?.status ===
-    SsoDomainVerificationStatus.VERIFIED;
+    shownDomain?.verificationStatus === SsoDomainVerificationStatus.VERIFIED;
   const [step, setStep] = useState<WizardStep>(
     connected || domainVerified ? 'saml' : 'domain',
   );
@@ -71,6 +98,7 @@ export const SamlSetupPage = () => {
       <SettingsPanel>
         <SamlWizard
           platform={platform}
+          shownDomain={shownDomain}
           connected={connected}
           domainVerified={domainVerified}
           step={step}
@@ -164,6 +192,7 @@ const DisableSamlRow = ({
 
 const SamlWizard = ({
   platform,
+  shownDomain,
   connected,
   domainVerified,
   step,
@@ -172,6 +201,7 @@ const SamlWizard = ({
   onClose,
 }: {
   platform: PlatformWithoutSensitiveData;
+  shownDomain: EmailDomainWithUsage | null;
   connected: boolean;
   domainVerified: boolean;
   step: WizardStep;
@@ -189,7 +219,7 @@ const SamlWizard = ({
       />
       <div className={cn(step !== 'domain' && 'hidden')}>
         <DomainStep
-          platform={platform}
+          shownDomain={shownDomain}
           refetch={refetch}
           canContinue={samlUnlocked}
           onVerified={() => setStep('saml')}
@@ -273,27 +303,31 @@ const StepButton = ({
 );
 
 const DomainStep = ({
-  platform,
+  shownDomain,
   refetch,
   canContinue,
   onVerified,
   onNext,
 }: {
-  platform: PlatformWithoutSensitiveData;
+  shownDomain: EmailDomainWithUsage | null;
   refetch: () => Promise<void>;
   canContinue: boolean;
   onVerified: () => void;
   onNext: () => void;
 }) => {
   const verified =
-    !!platform.ssoDomain &&
-    platform.ssoDomainVerification?.status ===
-      SsoDomainVerificationStatus.VERIFIED;
+    shownDomain?.verificationStatus === SsoDomainVerificationStatus.VERIFIED;
 
   return (
     <DomainVerification
-      platform={platform}
-      refetch={refetch}
+      emailDomain={shownDomain}
+      refetchPlatform={refetch}
+      onAdded={() => undefined}
+      onLocked={() =>
+        toast.error(
+          t('Your plan includes one domain. Remove it to add another.'),
+        )
+      }
       onVerified={onVerified}
       nextAction={
         <Button

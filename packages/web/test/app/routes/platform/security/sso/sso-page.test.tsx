@@ -5,6 +5,7 @@
 import { SsoDomainVerificationStatus } from '@activepieces/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -18,7 +19,8 @@ import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 const {
   toastMock,
   platformApiMock,
-  samlSsoApiMock,
+  emailDomainApiMock,
+  domainState,
   platformState,
   refetchMock,
   flagState,
@@ -34,20 +36,22 @@ const {
     flagState: initialFlagState(),
     toastMock: { success: vi.fn(), error: vi.fn(), message: vi.fn() },
     platformApiMock: { update: vi.fn() },
-    samlSsoApiMock: {
-      discover: vi.fn(),
-      updateSsoDomain: vi.fn(),
-      verifySsoDomain: vi.fn(),
+    emailDomainApiMock: {
+      list: vi.fn(),
+      add: vi.fn(),
+      verify: vi.fn(),
+      remove: vi.fn(),
     },
+    domainState: { current: [] as unknown[] },
     platformState: state,
     refetchMock: vi.fn(async () => undefined),
   };
 });
 
 vi.mock('i18next', () => ({
-  t: (key: string, values?: Record<string, string>) =>
+  t: (key: string, values?: Record<string, string | number>) =>
     Object.entries(values ?? {}).reduce(
-      (text, [name, value]) => text.replace(`{${name}}`, value),
+      (text, [name, value]) => text.replace(`{${name}}`, String(value)),
       key,
     ),
 }));
@@ -58,13 +62,15 @@ vi.mock('@/lib/api', () => ({
   api: {
     extractServerErrorMessage: (error: unknown, fallback: string) =>
       error instanceof Error ? error.message : fallback,
+    isApError: (error: unknown, code: string) =>
+      error instanceof Error && error.message === code,
   },
 }));
 
 vi.mock('@/api/platforms-api', () => ({ platformApi: platformApiMock }));
 
-vi.mock('@/features/platform-admin/api/saml-sso-api', () => ({
-  samlSsoApi: samlSsoApiMock,
+vi.mock('@/features/platform-admin/api/email-domain-api', () => ({
+  emailDomainApi: emailDomainApiMock,
 }));
 
 vi.mock('@/hooks/platform-hooks', () => ({
@@ -183,15 +189,27 @@ vi.mock('@/components/ui/button', () => ({
 import { SSOPage } from '@/app/routes/platform/security/sso';
 import { SamlSetupPage } from '@/app/routes/platform/security/sso/saml-setup-page';
 
-const pendingVerification = {
-  status: SsoDomainVerificationStatus.PENDING_VERIFICATION,
-  record: { type: 'TXT', name: '_activepieces.acme.com', value: 'ap-verify=1' },
-  createdAt: '2026-10-14T00:00:00.000Z',
+const pendingDomain = {
+  id: 'domain-1',
+  created: '2026-10-14T00:00:00.000Z',
+  updated: '2026-10-14T00:00:00.000Z',
+  platformId: 'platform-1',
+  domain: 'acme.com',
+  verificationStatus: SsoDomainVerificationStatus.PENDING_VERIFICATION,
+  verificationRecordName: '_activepieces.acme.com',
+  verificationRecordValue: 'ap-verify=1',
+  peopleCount: 0,
 };
 
-const verifiedVerification = {
-  ...pendingVerification,
-  status: SsoDomainVerificationStatus.VERIFIED,
+const verifiedDomain = {
+  ...pendingDomain,
+  verificationStatus: SsoDomainVerificationStatus.VERIFIED,
+};
+
+const otherVerifiedDomain = {
+  ...verifiedDomain,
+  id: 'domain-2',
+  domain: 'ap.com',
 };
 
 const samlConfig = { idpMetadata: '<xml />', idpCertificate: 'cert' };
@@ -200,17 +218,15 @@ describe('SSOPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     platformApiMock.update.mockResolvedValue(undefined);
-    samlSsoApiMock.updateSsoDomain.mockResolvedValue({
-      ssoDomain: null,
-      ssoDomainVerification: null,
-    });
+    mockEmailDomainApi();
+    setDomains([]);
     setPlatform({});
     flagState.edition = 'ee';
     flagState.thirdPartyProviders = { google: false };
   });
 
-  it('shows the empty states when nothing is set up', () => {
-    mount();
+  it('shows the empty states when nothing is set up', async () => {
+    await mount();
 
     expect(screen.getByText('Authentication')).toBeDefined();
     expect(screen.getByText('No domain verified')).toBeDefined();
@@ -219,12 +235,12 @@ describe('SSOPage', () => {
     expect(screen.queryByText('Connected')).toBeNull();
   });
 
-  it('starts verifying a domain from its own dialog, not the SAML walkthrough', async () => {
-    mount();
+  it('adds a domain from its own dialog, not the SAML walkthrough', async () => {
+    await mount();
 
-    click(findButton('Verify domain'));
+    click(findButton('Add domain'));
     const dialog = screen.getByRole('dialog');
-    expect(within(dialog).getByText('Verify a domain')).toBeDefined();
+    expect(within(dialog).getByText('Add a domain')).toBeDefined();
     fireEvent.change(within(dialog).getByRole('textbox'), {
       target: { value: ' Acme.com ' },
     });
@@ -234,20 +250,69 @@ describe('SSOPage', () => {
     click(findButton('Continue', dialog));
 
     await waitFor(() =>
-      expect(samlSsoApiMock.updateSsoDomain).toHaveBeenCalledWith('acme.com'),
+      expect(emailDomainApiMock.add).toHaveBeenCalledWith({
+        domain: 'acme.com',
+      }),
     );
   });
 
-  it('shows a domain being verified and continues verifying from its menu', async () => {
+  it('lets the admin add a domain again after a refused add once the plan allows it', async () => {
     setPlatform({
-      ssoDomain: 'acme.com',
-      ssoDomainVerification: pendingVerification,
+      plan: { ssoEnabled: true, multipleEmailDomainsEnabled: true },
     });
-    samlSsoApiMock.verifySsoDomain.mockResolvedValue({
-      ssoDomain: 'acme.com',
-      ssoDomainVerification: pendingVerification,
+    setDomains([pendingDomain]);
+    emailDomainApiMock.add.mockRejectedValue(new Error('FEATURE_DISABLED'));
+    refetchMock.mockImplementation(async () => {
+      setPlatform({});
+      return undefined;
     });
-    mount();
+    await mount();
+
+    click(findButton('Add domain'));
+    const addDialog = screen.getByRole('dialog');
+    fireEvent.change(within(addDialog).getByRole('textbox'), {
+      target: { value: 'beta.com' },
+    });
+    await waitFor(() =>
+      expect(findButton('Continue', addDialog)?.disabled).toBe(false),
+    );
+    click(findButton('Continue', addDialog));
+    await waitFor(() => expect(refetchMock).toHaveBeenCalled());
+
+    setDomains([]);
+    click(menuItem('Cancel verification'));
+    click(findButton('Cancel verification', screen.getByRole('dialog')));
+    await waitFor(() => expect(screen.queryByText('acme.com')).toBeNull());
+
+    click(findButton('Add domain'));
+    expect(
+      within(screen.getByRole('dialog')).getByText('Add a domain'),
+    ).toBeDefined();
+  });
+
+  it('shows the domain another admin added and the upsell when an add is refused', async () => {
+    await mount();
+    setDomains([pendingDomain]);
+    emailDomainApiMock.add.mockRejectedValue(new Error('FEATURE_DISABLED'));
+
+    click(findButton('Add domain'));
+    const addDialog = screen.getByRole('dialog');
+    fireEvent.change(within(addDialog).getByRole('textbox'), {
+      target: { value: 'beta.com' },
+    });
+    await waitFor(() =>
+      expect(findButton('Continue', addDialog)?.disabled).toBe(false),
+    );
+    click(findButton('Continue', addDialog));
+
+    expect(await screen.findByText('acme.com')).toBeDefined();
+    expect(await screen.findByText('Unlock multiple domains')).toBeDefined();
+  });
+
+  it('shows a domain being verified and continues verifying from its menu', async () => {
+    setDomains([pendingDomain]);
+    emailDomainApiMock.verify.mockResolvedValue(pendingDomain);
+    await mount();
 
     expect(screen.getByText('acme.com')).toBeDefined();
     expect(screen.getByText('Verifying')).toBeDefined();
@@ -258,7 +323,7 @@ describe('SSOPage', () => {
     click(findButton('Verify DNS', dialog));
 
     await waitFor(() =>
-      expect(samlSsoApiMock.verifySsoDomain).toHaveBeenCalledTimes(1),
+      expect(emailDomainApiMock.verify).toHaveBeenCalledWith('domain-1'),
     );
     await waitFor(() =>
       expect(toastMock.message).toHaveBeenCalledWith(
@@ -268,11 +333,8 @@ describe('SSOPage', () => {
   });
 
   it('cancels a verification in progress', async () => {
-    setPlatform({
-      ssoDomain: 'acme.com',
-      ssoDomainVerification: pendingVerification,
-    });
-    mount();
+    setDomains([pendingDomain]);
+    await mount();
 
     click(menuItem('Cancel verification'));
     const dialog = screen.getByRole('dialog');
@@ -282,58 +344,46 @@ describe('SSOPage', () => {
     click(findButton('Cancel verification', dialog));
 
     await waitFor(() =>
-      expect(samlSsoApiMock.updateSsoDomain).toHaveBeenCalledWith(null),
+      expect(emailDomainApiMock.remove).toHaveBeenCalledWith('domain-1'),
     );
   });
 
-  it('shows which day of the 7-day window a pending domain is on', () => {
+  it('shows which day of the 7-day window a pending domain is on', async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     onTestFinished(() => {
       vi.useRealTimers();
     });
     vi.setSystemTime(new Date('2026-10-16T12:00:00.000Z'));
-    setPlatform({
-      ssoDomain: 'acme.com',
-      ssoDomainVerification: pendingVerification,
-    });
-    mount();
+    setDomains([pendingDomain]);
+    await mount();
 
     expect(screen.getByText('Waiting for DNS · day 3 of 7')).toBeDefined();
   });
 
-  it('stays on day 7 once the window has passed but the domain is not dropped yet', () => {
+  it('stays on day 7 once the window has passed but the domain is not dropped yet', async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     onTestFinished(() => {
       vi.useRealTimers();
     });
     vi.setSystemTime(new Date('2026-10-21T00:30:00.000Z'));
-    setPlatform({
-      ssoDomain: 'acme.com',
-      ssoDomainVerification: pendingVerification,
-    });
-    mount();
+    setDomains([pendingDomain]);
+    await mount();
 
     expect(screen.getByText('Waiting for DNS · day 7 of 7')).toBeDefined();
     expect(screen.queryByText('Waiting for DNS · day 8 of 7')).toBeNull();
   });
 
-  it('shows a verified domain without the DNS check', () => {
-    setPlatform({
-      ssoDomain: 'acme.com',
-      ssoDomainVerification: verifiedVerification,
-    });
-    mount();
+  it('shows a verified domain without the DNS check', async () => {
+    setDomains([verifiedDomain]);
+    await mount();
 
     expect(screen.getByText('Verified')).toBeDefined();
     expect(screen.queryByText('Check DNS again')).toBeNull();
   });
 
-  it('shows the TXT record from the domain menu', () => {
-    setPlatform({
-      ssoDomain: 'acme.com',
-      ssoDomainVerification: verifiedVerification,
-    });
-    mount();
+  it('shows the TXT record from the domain menu', async () => {
+    setDomains([verifiedDomain]);
+    await mount();
 
     click(menuItem('View DNS record'));
 
@@ -343,13 +393,12 @@ describe('SSOPage', () => {
   });
 
   it('removes the domain and turns off single sign-on in one request', async () => {
+    setDomains([verifiedDomain]);
     setPlatform({
       id: 'platform-1',
-      ssoDomain: 'acme.com',
-      ssoDomainVerification: verifiedVerification,
       federatedAuthProviders: { saml: samlConfig },
     });
-    mount();
+    await mount();
 
     click(menuItem('Remove domain'));
     const dialog = screen.getByRole('dialog');
@@ -370,20 +419,19 @@ describe('SSOPage', () => {
     click(findButton('Remove domain and disable SAML', dialog));
 
     await waitFor(() =>
-      expect(samlSsoApiMock.updateSsoDomain).toHaveBeenCalledWith(null),
+      expect(emailDomainApiMock.remove).toHaveBeenCalledWith('domain-1'),
     );
-    expect(samlSsoApiMock.updateSsoDomain).toHaveBeenCalledTimes(1);
+    expect(emailDomainApiMock.remove).toHaveBeenCalledTimes(1);
     expect(platformApiMock.update).not.toHaveBeenCalled();
   });
 
-  it('warns that no other sign-in method is on before removing a domain with SAML connected', () => {
+  it('warns that no other sign-in method is on before removing a domain with SAML connected', async () => {
+    setDomains([verifiedDomain]);
     setPlatform({
-      ssoDomain: 'acme.com',
-      ssoDomainVerification: verifiedVerification,
       federatedAuthProviders: { saml: samlConfig },
       emailAuthEnabled: false,
     });
-    mount();
+    await mount();
 
     click(menuItem('Remove domain'));
 
@@ -394,14 +442,13 @@ describe('SSOPage', () => {
     ).toBeDefined();
   });
 
-  it('blocks removing the domain when SAML is the only working sign-in method', () => {
+  it('blocks removing the domain when SAML is the only working sign-in method', async () => {
+    setDomains([verifiedDomain]);
     setPlatform({
-      ssoDomain: 'acme.com',
-      ssoDomainVerification: verifiedVerification,
       federatedAuthProviders: { saml: samlConfig },
       emailAuthEnabled: false,
     });
-    mount();
+    await mount();
 
     click(menuItem('Remove domain'));
     const dialog = screen.getByRole('dialog');
@@ -414,16 +461,15 @@ describe('SSOPage', () => {
     );
   });
 
-  it('does not warn about other sign-in methods while Google sign-in is on', () => {
+  it('does not warn about other sign-in methods while Google sign-in is on', async () => {
+    setDomains([verifiedDomain]);
     setPlatform({
-      ssoDomain: 'acme.com',
-      ssoDomainVerification: verifiedVerification,
       federatedAuthProviders: { saml: samlConfig },
       emailAuthEnabled: false,
       googleAuthEnabled: true,
     });
     flagState.thirdPartyProviders = { google: true };
-    mount();
+    await mount();
 
     click(menuItem('Remove domain'));
 
@@ -434,15 +480,14 @@ describe('SSOPage', () => {
     ).toBeNull();
   });
 
-  it('still warns when the Google switch is on but Google sign-in is not set up', () => {
+  it('still warns when the Google switch is on but Google sign-in is not set up', async () => {
+    setDomains([verifiedDomain]);
     setPlatform({
-      ssoDomain: 'acme.com',
-      ssoDomainVerification: verifiedVerification,
       federatedAuthProviders: { saml: samlConfig },
       emailAuthEnabled: false,
       googleAuthEnabled: true,
     });
-    mount();
+    await mount();
 
     click(menuItem('Remove domain'));
 
@@ -453,13 +498,12 @@ describe('SSOPage', () => {
     ).toBeDefined();
   });
 
-  it('drops the add-your-company-domain hint once the company domain is listed', () => {
+  it('drops the add-your-company-domain hint once the company domain is listed', async () => {
+    setDomains([verifiedDomain]);
     setPlatform({
-      ssoDomain: 'acme.com',
-      ssoDomainVerification: verifiedVerification,
       allowedAuthDomains: ['acme.com', 'contractors.io'],
     });
-    mount();
+    await mount();
 
     expect(
       screen.queryByText(
@@ -469,15 +513,12 @@ describe('SSOPage', () => {
   });
 
   it('shows the server error when removing the domain fails', async () => {
+    setDomains([verifiedDomain]);
     setPlatform({
-      ssoDomain: 'acme.com',
-      ssoDomainVerification: verifiedVerification,
       federatedAuthProviders: { saml: samlConfig },
     });
-    samlSsoApiMock.updateSsoDomain.mockRejectedValue(
-      new Error('Request failed'),
-    );
-    mount();
+    emailDomainApiMock.remove.mockRejectedValue(new Error('Request failed'));
+    await mount();
 
     click(menuItem('Remove domain'));
     typeToConfirm(screen.getByRole('dialog'), 'acme.com');
@@ -491,11 +532,8 @@ describe('SSOPage', () => {
   });
 
   it('removes a domain that has no SAML connection', async () => {
-    setPlatform({
-      ssoDomain: 'acme.com',
-      ssoDomainVerification: verifiedVerification,
-    });
-    mount();
+    setDomains([verifiedDomain]);
+    await mount();
 
     click(menuItem('Remove domain'));
     const dialog = screen.getByRole('dialog');
@@ -508,14 +546,61 @@ describe('SSOPage', () => {
     click(findButton('Remove domain', dialog));
 
     await waitFor(() =>
-      expect(samlSsoApiMock.updateSsoDomain).toHaveBeenCalledWith(null),
+      expect(emailDomainApiMock.remove).toHaveBeenCalledWith('domain-1'),
     );
     expect(platformApiMock.update).not.toHaveBeenCalled();
   });
 
-  it('shows a connected SAML provider as Manage', () => {
+  it('on Cloud, says members of a removed domain lose single sign-on while other domains keep it', async () => {
+    flagState.edition = 'cloud';
+    setDomains([{ ...verifiedDomain, peopleCount: 3 }, otherVerifiedDomain]);
     setPlatform({ federatedAuthProviders: { saml: samlConfig } });
-    mount();
+    await mount();
+
+    click(menuItem('Remove domain'));
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByText('Remove acme.com?')).toBeDefined();
+    expect(within(dialog).getByText('domainRemoveLosesSso')).toBeDefined();
+    expect(
+      within(dialog).getByText(
+        'People at acme.com stop following your sign-in rules. Single sign-on stays on for your other verified domains.',
+      ),
+    ).toBeDefined();
+  });
+
+  it('on self-hosted, says single sign-on stays on when other domains remain', async () => {
+    setDomains([{ ...verifiedDomain, peopleCount: 3 }, otherVerifiedDomain]);
+    setPlatform({ federatedAuthProviders: { saml: samlConfig } });
+    await mount();
+
+    click(menuItem('Remove domain'));
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).queryByText('domainRemoveLosesSso')).toBeNull();
+    expect(
+      within(dialog).getByText(
+        "Single sign-on stays on. To verify acme.com again, you'll need a new DNS record.",
+      ),
+    ).toBeDefined();
+  });
+
+  it('on self-hosted, still counts the members who lose single sign-on with the last domain', async () => {
+    setDomains([{ ...verifiedDomain, peopleCount: 3 }]);
+    setPlatform({ federatedAuthProviders: { saml: samlConfig } });
+    await mount();
+
+    click(menuItem('Remove domain'));
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByText('domainRemoveLosesSso')).toBeDefined();
+    expect(
+      within(dialog).getByText(
+        'This disables single sign-on and deletes its SAML connection.',
+      ),
+    ).toBeDefined();
+  });
+
+  it('shows a connected SAML provider as Manage', async () => {
+    setPlatform({ federatedAuthProviders: { saml: samlConfig } });
+    await mount();
 
     expect(screen.getByText('Connected')).toBeDefined();
     expect(findButton('Manage')).toBeDefined();
@@ -527,7 +612,7 @@ describe('SSOPage', () => {
       googleAuthEnabled: true,
       emailAuthEnabled: false,
     });
-    mount();
+    await mount();
 
     click(screen.getByRole('switch', { name: 'Continue with Google' }));
     expect(platformApiMock.update).not.toHaveBeenCalled();
@@ -556,7 +641,7 @@ describe('SSOPage', () => {
   it('refreshes the flags after changing Google so the sign-in checks use the new state', async () => {
     const invalidate = vi.spyOn(QueryClient.prototype, 'invalidateQueries');
     setPlatform({ id: 'platform-1' });
-    mount();
+    await mount();
 
     click(screen.getByRole('switch', { name: 'Continue with Google' }));
     click(findButton('Turn on', screen.getByRole('dialog')));
@@ -567,9 +652,9 @@ describe('SSOPage', () => {
     invalidate.mockRestore();
   });
 
-  it('says Google is not set up on a self-hosted server without Google credentials', () => {
+  it('says Google is not set up on a self-hosted server without Google credentials', async () => {
     setPlatform({ googleAuthEnabled: true });
-    mount();
+    await mount();
 
     expect(screen.getByText('Not set up')).toBeDefined();
     expect(
@@ -580,24 +665,24 @@ describe('SSOPage', () => {
     ).toBe('https://www.activepieces.com/docs/admin-guide/guides/sso#google');
   });
 
-  it('shows no Google note once Google sign-in works', () => {
+  it('shows no Google note once Google sign-in works', async () => {
     setPlatform({ googleAuthEnabled: true });
     flagState.thirdPartyProviders = { google: true };
-    mount();
+    await mount();
 
     expect(screen.queryByText('Not set up')).toBeNull();
   });
 
-  it('never shows the Google note on Cloud', () => {
+  it('never shows the Google note on Cloud', async () => {
     flagState.edition = 'cloud';
     setPlatform({ googleAuthEnabled: true });
-    mount();
+    await mount();
 
     expect(screen.queryByText('Not set up')).toBeNull();
   });
 
-  it('says what self-hosted needs when turning Google on', () => {
-    mount();
+  it('says what self-hosted needs when turning Google on', async () => {
+    await mount();
     click(screen.getByRole('switch', { name: 'Continue with Google' }));
     expect(
       within(screen.getByRole('dialog')).getByText(
@@ -607,13 +692,10 @@ describe('SSOPage', () => {
     ).toBeDefined();
   });
 
-  it('does not mention self-hosted setup when turning Google on in Cloud', () => {
+  it('does not mention self-hosted setup when turning Google on in Cloud', async () => {
     flagState.edition = 'cloud';
-    setPlatform({
-      ssoDomain: 'acme.com',
-      ssoDomainVerification: verifiedVerification,
-    });
-    mount();
+    setDomains([verifiedDomain]);
+    await mount();
     click(screen.getByRole('switch', { name: 'Continue with Google' }));
     expect(
       within(screen.getByRole('dialog')).queryByText(
@@ -623,9 +705,9 @@ describe('SSOPage', () => {
     ).toBeNull();
   });
 
-  it('blocks turning email off when it is the last working sign-in method', () => {
+  it('blocks turning email off when it is the last working sign-in method', async () => {
     setPlatform({ emailAuthEnabled: true, googleAuthEnabled: true });
-    mount();
+    await mount();
 
     click(screen.getByRole('switch', { name: 'Email and password' }));
     const dialog = screen.getByRole('dialog');
@@ -638,12 +720,12 @@ describe('SSOPage', () => {
     expect(findButton('Turn off', dialog)?.disabled).toBe(true);
   });
 
-  it('lets email be turned off when single sign-on is connected', () => {
+  it('lets email be turned off when single sign-on is connected', async () => {
     setPlatform({
       emailAuthEnabled: true,
       federatedAuthProviders: { saml: samlConfig },
     });
-    mount();
+    await mount();
 
     click(screen.getByRole('switch', { name: 'Email and password' }));
     const dialog = screen.getByRole('dialog');
@@ -656,10 +738,10 @@ describe('SSOPage', () => {
     expect(findButton('Turn off', dialog)?.disabled).toBe(false);
   });
 
-  it('lets email be turned off when Google sign-in works', () => {
+  it('lets email be turned off when Google sign-in works', async () => {
     setPlatform({ emailAuthEnabled: true, googleAuthEnabled: true });
     flagState.thirdPartyProviders = { google: true };
-    mount();
+    await mount();
 
     click(screen.getByRole('switch', { name: 'Email and password' }));
 
@@ -668,10 +750,10 @@ describe('SSOPage', () => {
     );
   });
 
-  it('blocks turning Google off when it works and is the last sign-in method', () => {
+  it('blocks turning Google off when it works and is the last sign-in method', async () => {
     setPlatform({ emailAuthEnabled: false, googleAuthEnabled: true });
     flagState.thirdPartyProviders = { google: true };
-    mount();
+    await mount();
 
     click(screen.getByRole('switch', { name: 'Continue with Google' }));
     const dialog = screen.getByRole('dialog');
@@ -684,9 +766,9 @@ describe('SSOPage', () => {
     expect(findButton('Turn off', dialog)?.disabled).toBe(true);
   });
 
-  it('lets Google be turned off when it does not actually work', () => {
+  it('lets Google be turned off when it does not actually work', async () => {
     setPlatform({ emailAuthEnabled: false, googleAuthEnabled: true });
-    mount();
+    await mount();
 
     click(screen.getByRole('switch', { name: 'Continue with Google' }));
     const dialog = screen.getByRole('dialog');
@@ -699,9 +781,9 @@ describe('SSOPage', () => {
     expect(findButton('Turn off', dialog)?.disabled).toBe(false);
   });
 
-  it('locks every sign-in method on Cloud until a domain is verified', () => {
+  it('locks every sign-in method on Cloud until a domain is verified', async () => {
     flagState.edition = 'cloud';
-    mount();
+    await mount();
 
     expect(screen.getByText('Verify your domain to unlock')).toBeDefined();
     expect(
@@ -727,13 +809,10 @@ describe('SSOPage', () => {
     ).toBeDefined();
   });
 
-  it('keeps the sign-in methods locked on Cloud while the domain is being verified', () => {
+  it('keeps the sign-in methods locked on Cloud while the domain is being verified', async () => {
     flagState.edition = 'cloud';
-    setPlatform({
-      ssoDomain: 'acme.com',
-      ssoDomainVerification: pendingVerification,
-    });
-    mount();
+    setDomains([pendingDomain]);
+    await mount();
 
     expect(screen.getByText('Verify your domain to unlock')).toBeDefined();
     expect(
@@ -743,13 +822,10 @@ describe('SSOPage', () => {
     ).toBe(true);
   });
 
-  it('unlocks the sign-in methods on Cloud and names the verified domain', () => {
+  it('unlocks the sign-in methods on Cloud and names the verified domain', async () => {
     flagState.edition = 'cloud';
-    setPlatform({
-      ssoDomain: 'acme.com',
-      ssoDomainVerification: verifiedVerification,
-    });
-    mount();
+    setDomains([verifiedDomain]);
+    await mount();
 
     expect(screen.queryByText('Verify your domain to unlock')).toBeNull();
     expect(
@@ -765,8 +841,20 @@ describe('SSOPage', () => {
     ).toBeDefined();
   });
 
-  it('never locks the sign-in methods on self-hosted', () => {
-    mount();
+  it('names every verified domain on Cloud', async () => {
+    flagState.edition = 'cloud';
+    setDomains([verifiedDomain, otherVerifiedDomain, { ...pendingDomain, id: 'domain-3', domain: 'later.com' }]);
+    await mount();
+
+    expect(
+      screen.getByText(
+        'Applies to people at acme.com, ap.com. Guests can use any method.',
+      ),
+    ).toBeDefined();
+  });
+
+  it('never locks the sign-in methods on self-hosted', async () => {
+    await mount();
 
     expect(screen.queryByText('Verify your domain to unlock')).toBeNull();
     expect(
@@ -782,9 +870,9 @@ describe('SSOPage', () => {
     ).toBeDefined();
   });
 
-  it('shows the self-hosted copy on Community', () => {
+  it('shows the self-hosted copy on Community', async () => {
     flagState.edition = 'ce';
-    mount();
+    await mount();
 
     expect(screen.queryByText('Verify your domain to unlock')).toBeNull();
     expect(screen.getByText('Applies to everyone who signs in.')).toBeDefined();
@@ -795,13 +883,10 @@ describe('SSOPage', () => {
     ).toBeDefined();
   });
 
-  it('says removing the domain on Cloud gives up control of how its people sign in', () => {
+  it('says removing the last domain on Cloud gives up control of how its people sign in', async () => {
     flagState.edition = 'cloud';
-    setPlatform({
-      ssoDomain: 'acme.com',
-      ssoDomainVerification: verifiedVerification,
-    });
-    mount();
+    setDomains([verifiedDomain]);
+    await mount();
 
     click(menuItem('Remove domain'));
 
@@ -812,14 +897,11 @@ describe('SSOPage', () => {
     ).toBeDefined();
   });
 
-  it('says removing the domain on Cloud also stops single sign-on when SAML is connected', () => {
+  it('says removing the last domain on Cloud also stops single sign-on when SAML is connected', async () => {
     flagState.edition = 'cloud';
-    setPlatform({
-      ssoDomain: 'acme.com',
-      ssoDomainVerification: verifiedVerification,
-      federatedAuthProviders: { saml: samlConfig },
-    });
-    mount();
+    setPlatform({ federatedAuthProviders: { saml: samlConfig } });
+    setDomains([verifiedDomain]);
+    await mount();
 
     click(menuItem('Remove domain'));
 
@@ -830,17 +912,17 @@ describe('SSOPage', () => {
     ).toBeDefined();
   });
 
-  it('shows no Google note while the edition is still loading', () => {
+  it('shows no Google note while the edition is still loading', async () => {
     flagState.edition = '';
     setPlatform({ googleAuthEnabled: true });
-    mount();
+    await mount();
 
     expect(screen.queryByText('Not set up')).toBeNull();
   });
 
-  it('changes nothing when a method change is cancelled', () => {
+  it('changes nothing when a method change is cancelled', async () => {
     setPlatform({ emailAuthEnabled: true });
-    mount();
+    await mount();
 
     click(screen.getByRole('switch', { name: 'Email and password' }));
     const dialog = screen.getByRole('dialog');
@@ -855,8 +937,8 @@ describe('SSOPage', () => {
     expect(platformApiMock.update).not.toHaveBeenCalled();
   });
 
-  it('says on self-hosted that allowed domains also limit who can join', () => {
-    mount();
+  it('says on self-hosted that allowed domains also limit who can join', async () => {
+    await mount();
 
     expect(
       screen.getByText(
@@ -870,10 +952,10 @@ describe('SSOPage', () => {
     ).toBeDefined();
   });
 
-  it('says on Cloud that allowed domains limit email and password sign-in only', () => {
+  it('says on Cloud that allowed domains limit email and password sign-in only', async () => {
     flagState.edition = 'cloud';
     setPlatform({ allowedAuthDomains: ['contractors.io', 'partners.io'] });
-    mount();
+    await mount();
 
     expect(
       screen.getByText(
@@ -895,11 +977,11 @@ describe('SSOPage', () => {
     ).toBeDefined();
   });
 
-  it('describes adding the first allowed domain on Cloud without mentioning joining', () => {
+  it('describes adding the first allowed domain on Cloud without mentioning joining', async () => {
     flagState.edition = 'cloud';
-    mount();
+    await mount();
 
-    click(findButton('Add domain'));
+    click(findLastButton('Add domain'));
     expect(
       within(screen.getByRole('dialog')).getByText(
         'Once a domain is on this list, only people at listed domains can sign in with email and password. Add your company domain too.',
@@ -912,7 +994,7 @@ describe('SSOPage', () => {
       id: 'platform-1',
       allowedAuthDomains: ['contractors.io', 'partners.io'],
     });
-    mount();
+    await mount();
 
     expect(screen.getByText('contractors.io')).toBeDefined();
     click(menuItem('Remove domain'));
@@ -931,7 +1013,7 @@ describe('SSOPage', () => {
 
   it('stops enforcing the list when the last allowed domain is removed', async () => {
     setPlatform({ id: 'platform-1', allowedAuthDomains: ['contractors.io'] });
-    mount();
+    await mount();
 
     click(menuItem('Remove domain'));
     const dialog = screen.getByRole('dialog');
@@ -951,13 +1033,10 @@ describe('SSOPage', () => {
   });
 
   it('adds the first allowed domain in one step and warns to add your company domain', async () => {
-    setPlatform({
-      ssoDomain: 'acme.com',
-      ssoDomainVerification: verifiedVerification,
-    });
-    mount();
+    setDomains([verifiedDomain]);
+    await mount();
 
-    click(findButton('Add domain'));
+    click(findLastButton('Add domain'));
     const dialog = screen.getByRole('dialog');
     expect(
       within(dialog).getByText(
@@ -981,14 +1060,13 @@ describe('SSOPage', () => {
   });
 
   it('appends a allowed domain to the existing list', async () => {
+    setDomains([verifiedDomain]);
     setPlatform({
-      ssoDomain: 'acme.com',
-      ssoDomainVerification: verifiedVerification,
       allowedAuthDomains: ['contractors.io'],
     });
-    mount();
+    await mount();
 
-    click(findButton('Add domain'));
+    click(findLastButton('Add domain'));
     const dialog = screen.getByRole('dialog');
     fireEvent.change(within(dialog).getByRole('textbox'), {
       target: { value: 'partners.io' },
@@ -1007,14 +1085,13 @@ describe('SSOPage', () => {
   });
 
   it('refuses a allowed domain that is already on the list', async () => {
+    setDomains([verifiedDomain]);
     setPlatform({
-      ssoDomain: 'acme.com',
-      ssoDomainVerification: verifiedVerification,
       allowedAuthDomains: ['contractors.io'],
     });
-    mount();
+    await mount();
 
-    click(findButton('Add domain'));
+    click(findLastButton('Add domain'));
     const dialog = screen.getByRole('dialog');
     fireEvent.change(within(dialog).getByRole('textbox'), {
       target: { value: 'contractors.io' },
@@ -1029,13 +1106,15 @@ describe('SamlSetupPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     platformApiMock.update.mockResolvedValue(undefined);
+    mockEmailDomainApi();
+    setDomains([]);
     setPlatform({});
     flagState.edition = 'ee';
     flagState.thirdPartyProviders = { google: false };
   });
 
-  it('is opened from the sign-in methods row as a page, not a dialog', () => {
-    mount();
+  it('is opened from the sign-in methods row as a page, not a dialog', async () => {
+    await mount();
 
     expect(
       screen.getByRole('link', { name: 'Set up' }).getAttribute('href'),
@@ -1043,12 +1122,11 @@ describe('SamlSetupPage', () => {
   });
 
   it('saves the SAML connection with the same request as before and returns to Authentication', async () => {
+    setDomains([verifiedDomain]);
     setPlatform({
       id: 'platform-1',
-      ssoDomain: 'acme.com',
-      ssoDomainVerification: verifiedVerification,
     });
-    mountSetupPage();
+    await mountSetupPage();
 
     fireEvent.change(screen.getByLabelText('IDP Metadata'), {
       target: { value: '<xml />' },
@@ -1076,11 +1154,8 @@ describe('SamlSetupPage', () => {
     platformApiMock.update.mockRejectedValue(
       new Error('SSO domain must be verified before configuring SAML'),
     );
-    setPlatform({
-      ssoDomain: 'acme.com',
-      ssoDomainVerification: verifiedVerification,
-    });
-    mountSetupPage();
+    setDomains([verifiedDomain]);
+    await mountSetupPage();
 
     fireEvent.change(screen.getByLabelText('IDP Metadata'), {
       target: { value: '<xml />' },
@@ -1099,13 +1174,12 @@ describe('SamlSetupPage', () => {
   });
 
   it('offers Disable on the SAML step only, and disables after confirming', async () => {
+    setDomains([verifiedDomain]);
     setPlatform({
       id: 'platform-1',
-      ssoDomain: 'acme.com',
-      ssoDomainVerification: verifiedVerification,
       federatedAuthProviders: { saml: samlConfig },
     });
-    mountSetupPage();
+    await mountSetupPage();
 
     expect(
       screen
@@ -1139,13 +1213,12 @@ describe('SamlSetupPage', () => {
     expect(await screen.findByText('authentication page')).toBeDefined();
   });
 
-  it('clears the typed confirmation when the Disable dialog is cancelled', () => {
+  it('clears the typed confirmation when the Disable dialog is cancelled', async () => {
+    setDomains([verifiedDomain]);
     setPlatform({
-      ssoDomain: 'acme.com',
-      ssoDomainVerification: verifiedVerification,
       federatedAuthProviders: { saml: samlConfig },
     });
-    mountSetupPage();
+    await mountSetupPage();
 
     click(findButton('Disable'));
     typeToConfirm(screen.getByRole('dialog'), 'disable');
@@ -1157,14 +1230,13 @@ describe('SamlSetupPage', () => {
     );
   });
 
-  it('blocks disabling single sign-on when it is the only working sign-in method', () => {
+  it('blocks disabling single sign-on when it is the only working sign-in method', async () => {
+    setDomains([verifiedDomain]);
     setPlatform({
-      ssoDomain: 'acme.com',
-      ssoDomainVerification: verifiedVerification,
       federatedAuthProviders: { saml: samlConfig },
       emailAuthEnabled: false,
     });
-    mountSetupPage();
+    await mountSetupPage();
 
     click(findButton('Disable'));
     const dialog = screen.getByRole('dialog');
@@ -1174,43 +1246,36 @@ describe('SamlSetupPage', () => {
     ).toBeNull();
     expect(findButton('Disable', dialog)?.disabled).toBe(true);
   });
-  it('shows no Disable when SAML is not connected', () => {
-    setPlatform({
-      ssoDomain: 'acme.com',
-      ssoDomainVerification: verifiedVerification,
-    });
-    mountSetupPage();
+  it('shows no Disable when SAML is not connected', async () => {
+    setDomains([verifiedDomain]);
+    await mountSetupPage();
 
     expect(findButton('Disable')).toBeUndefined();
     expect(screen.queryByText('Disable single sign-on')).toBeNull();
   });
 
-  it('shows the domain read-only on the first step', () => {
+  it('shows the domain read-only on the first step', async () => {
+    setDomains([verifiedDomain]);
     setPlatform({
-      ssoDomain: 'acme.com',
-      ssoDomainVerification: verifiedVerification,
       federatedAuthProviders: { saml: samlConfig },
     });
-    mountSetupPage();
+    await mountSetupPage();
 
     expect(screen.getByText('acme.com')).toBeDefined();
     expect(screen.queryByDisplayValue('acme.com')).toBeNull();
     expect(findButton('Next')).toBeDefined();
   });
 
-  it('names the domain being verified in the walkthrough', () => {
-    setPlatform({
-      ssoDomain: 'acme.com',
-      ssoDomainVerification: pendingVerification,
-    });
-    mountSetupPage();
+  it('names the domain being verified in the walkthrough', async () => {
+    setDomains([pendingDomain]);
+    await mountSetupPage();
 
     expect(screen.getByText('Verify acme.com')).toBeDefined();
     expect(screen.getByDisplayValue('_activepieces.acme.com')).toBeDefined();
   });
 
   it('verifies a domain inside the walkthrough when there is none yet', async () => {
-    mountSetupPage();
+    await mountSetupPage();
 
     fireEvent.change(screen.getByLabelText('Domain'), {
       target: { value: 'acme.com' },
@@ -1219,29 +1284,27 @@ describe('SamlSetupPage', () => {
     click(findButton('Continue'));
 
     await waitFor(() =>
-      expect(samlSsoApiMock.updateSsoDomain).toHaveBeenCalledWith('acme.com'),
+      expect(emailDomainApiMock.add).toHaveBeenCalledWith({
+        domain: 'acme.com',
+      }),
     );
   });
 
-  it('keeps the SAML step locked until the domain is verified', () => {
-    setPlatform({
-      ssoDomain: 'acme.com',
-      ssoDomainVerification: pendingVerification,
-    });
-    mountSetupPage();
+  it('keeps the SAML step locked until the domain is verified', async () => {
+    setDomains([pendingDomain]);
+    await mountSetupPage();
 
     expect(findButton('Next')?.disabled).toBe(true);
     expect(findButton('Verify DNS')?.disabled).toBe(false);
     expect(findButton('2SAML 2.0')?.disabled).toBe(true);
   });
 
-  it('opens the SAML step while the domain is pending when SAML is already connected', () => {
+  it('opens the SAML step while the domain is pending when SAML is already connected', async () => {
+    setDomains([pendingDomain]);
     setPlatform({
-      ssoDomain: 'acme.com',
-      ssoDomainVerification: pendingVerification,
       federatedAuthProviders: { saml: {} },
     });
-    mountSetupPage();
+    await mountSetupPage();
 
     expect(findButton('2SAML 2.0')?.disabled).toBe(false);
     click(findButton('Next'));
@@ -1253,12 +1316,9 @@ describe('SamlSetupPage', () => {
     expect(findButton('Save')?.disabled).toBe(true);
   });
 
-  it('moves between steps from the step labels', () => {
-    setPlatform({
-      ssoDomain: 'acme.com',
-      ssoDomainVerification: verifiedVerification,
-    });
-    mountSetupPage();
+  it('moves between steps from the step labels', async () => {
+    setDomains([verifiedDomain]);
+    await mountSetupPage();
 
     click(findButton('1SSO Domain'));
     expect(
@@ -1274,23 +1334,17 @@ describe('SamlSetupPage', () => {
     ).toBe('step');
   });
 
-  it('shows the values to copy into the identity provider', () => {
-    setPlatform({
-      ssoDomain: 'acme.com',
-      ssoDomainVerification: verifiedVerification,
-    });
-    mountSetupPage();
+  it('shows the values to copy into the identity provider', async () => {
+    setDomains([verifiedDomain]);
+    await mountSetupPage();
 
     expect(screen.getByDisplayValue('https://cloud.test/acs')).toBeDefined();
     expect(screen.getByDisplayValue('Activepieces')).toBeDefined();
   });
 
   it('says a cleared SAML field is required', async () => {
-    setPlatform({
-      ssoDomain: 'acme.com',
-      ssoDomainVerification: verifiedVerification,
-    });
-    mountSetupPage();
+    setDomains([verifiedDomain]);
+    await mountSetupPage();
 
     const metadata = screen.getByLabelText('IDP Metadata');
     fireEvent.change(metadata, { target: { value: 'x' } });
@@ -1303,13 +1357,40 @@ describe('SamlSetupPage', () => {
     expect(metadata.getAttribute('aria-describedby')).toContain(error.id);
   });
 
-  it('says the SAML values are saved instead of looking empty', () => {
+  it('shows an error instead of an empty domain step when the domains fail to load', async () => {
+    emailDomainApiMock.list.mockRejectedValue(new Error('Request failed'));
+    await mountSetupPage();
+
+    expect(screen.getByText('Trouble loading domains')).toBeDefined();
+    expect(screen.queryByLabelText('Domain')).toBeNull();
+  });
+
+  it('keeps the typed SAML values when a later refresh of the domains fails', async () => {
+    setDomains([verifiedDomain]);
+    const client = await mountSetupPage();
+    fireEvent.change(screen.getByLabelText('IDP Metadata'), {
+      target: { value: '<xml />' },
+    });
+
+    emailDomainApiMock.list.mockRejectedValue(new Error('Request failed'));
+    await act(async () => {
+      await client.refetchQueries({ queryKey: ['email-domains'] });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(client.getQueryState(['email-domains'])?.status).toBe('error');
+    expect(screen.queryByText('Trouble loading domains')).toBeNull();
+    expect(
+      screen.getByLabelText<HTMLTextAreaElement>('IDP Metadata').value,
+    ).toBe('<xml />');
+  });
+
+  it('says the SAML values are saved instead of looking empty', async () => {
+    setDomains([verifiedDomain]);
     setPlatform({
-      ssoDomain: 'acme.com',
-      ssoDomainVerification: verifiedVerification,
       federatedAuthProviders: { saml: samlConfig },
     });
-    mountSetupPage();
+    await mountSetupPage();
 
     expect(
       screen.getByText('To change the connection, paste both values again.'),
@@ -1337,11 +1418,21 @@ function typeToConfirm(dialog: HTMLElement, text: string) {
   });
 }
 
+function mockEmailDomainApi() {
+  emailDomainApiMock.list.mockImplementation(async () => domainState.current);
+  emailDomainApiMock.add.mockResolvedValue(pendingDomain);
+  emailDomainApiMock.verify.mockResolvedValue(pendingDomain);
+  emailDomainApiMock.remove.mockResolvedValue(undefined);
+}
+
+function setDomains(domains: unknown[]) {
+  domainState.current = domains;
+}
+
 function setPlatform(overrides: Record<string, unknown>) {
   platformState.current = {
     id: 'platform-1',
-    ssoDomain: null,
-    ssoDomainVerification: null,
+    plan: { ssoEnabled: true, multipleEmailDomainsEnabled: false },
     federatedAuthProviders: {},
     googleAuthEnabled: false,
     emailAuthEnabled: true,
@@ -1350,20 +1441,23 @@ function setPlatform(overrides: Record<string, unknown>) {
   };
 }
 
-function mount() {
+async function mount() {
+  const client = newQueryClient();
   render(
     <MemoryRouter>
-      <QueryClientProvider client={new QueryClient()}>
+      <QueryClientProvider client={client}>
         <SSOPage />
       </QueryClientProvider>
     </MemoryRouter>,
   );
+  await waitFor(() => expect(client.isFetching()).toBe(0));
 }
 
-function mountSetupPage() {
+async function mountSetupPage() {
+  const client = newQueryClient();
   render(
     <MemoryRouter initialEntries={['/platform/sso/saml']}>
-      <QueryClientProvider client={new QueryClient()}>
+      <QueryClientProvider client={client}>
         <Routes>
           <Route
             path="/platform/sso"
@@ -1374,6 +1468,12 @@ function mountSetupPage() {
       </QueryClientProvider>
     </MemoryRouter>,
   );
+  await waitFor(() => expect(client.isFetching()).toBe(0));
+  return client;
+}
+
+function newQueryClient() {
+  return new QueryClient({ defaultOptions: { queries: { retry: false } } });
 }
 
 function click(element: Element | null | undefined) {
@@ -1387,6 +1487,12 @@ function menuItem(text: string) {
   return screen
     .getAllByRole('menuitem')
     .find((item) => item.textContent === text);
+}
+
+function findLastButton(text: string) {
+  return Array.from(document.body.querySelectorAll('button'))
+    .filter((button) => button.textContent === text)
+    .at(-1);
 }
 
 function findButton(text: string, scope: ParentNode = document.body) {

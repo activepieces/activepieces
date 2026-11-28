@@ -1,6 +1,7 @@
 import { Platform, SsoDomainVerification, SsoDomainVerificationRecordType, SsoDomainVerificationStatus } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { emailDomainRepo } from '../../../../src/app/ee/authentication/email-domain/email-domain.service'
 import { platformRepo } from '../../../../src/app/platform/platform.service'
 import { createTestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
@@ -16,41 +17,33 @@ afterAll(async () => {
 })
 
 describe('Last sign-in method guard on self-hosted EE', () => {
-    it.each([
-        {
-            reason: 'disabling SSO when it is the only method, even with the domain still pending',
-            domain: 'ee-disable-sso.example.com',
-            status: SsoDomainVerificationStatus.PENDING_VERIFICATION,
-            path: 'platform',
-            body: { federatedAuthProviders: { saml: null } },
-        },
-        {
-            reason: 'removing a verified domain when SSO is the only method, because it also deletes SAML',
-            domain: 'ee-remove-domain.example.com',
-            status: SsoDomainVerificationStatus.VERIFIED,
-            path: 'sso-domain',
-            body: { ssoDomain: null },
-        },
-    ])('refuses $reason', async ({ domain, status, path, body }) => {
-        const ctx = await createTestContext(app, { platform: onlySso({ domain, status }), plan: { ssoEnabled: true } })
+    it('refuses disabling SSO when it is the only method, even with the domain still pending', async () => {
+        const ctx = await createTestContext(app, {
+            platform: onlySso({ domain: 'ee-disable-sso.example.com', status: SsoDomainVerificationStatus.PENDING_VERIFICATION }),
+            plan: { ssoEnabled: true },
+        })
         const before = await readSignInSettings({ platformId: ctx.platform.id })
 
-        const response = await ctx.post(path === 'platform' ? `/v1/platforms/${ctx.platform.id}` : SSO_DOMAIN, body)
+        const response = await ctx.post(`/v1/platforms/${ctx.platform.id}`, { federatedAuthProviders: { saml: null } })
 
         expect(response.statusCode).toBe(StatusCodes.CONFLICT)
         expect(response.json()).toEqual(expect.objectContaining({ code: 'VALIDATION', params: { message: LAST_METHOD_MESSAGE } }))
         expect(await readSignInSettings({ platformId: ctx.platform.id })).toEqual(before)
     })
 
-    it('allows changing the domain when SSO is the only method, because EE does not check the domain at sign-in', async () => {
+    it('refuses removing a verified domain when SSO is the only method, because it also deletes SAML', async () => {
         const ctx = await createTestContext(app, {
-            platform: onlySso({ domain: 'ee-change-domain.example.com', status: SsoDomainVerificationStatus.VERIFIED }),
+            platform: onlySso({ domain: 'ee-remove-domain.example.com', status: SsoDomainVerificationStatus.VERIFIED }),
             plan: { ssoEnabled: true },
         })
+        const before = await readSignInSettings({ platformId: ctx.platform.id })
+        const emailDomain = await emailDomainRepo().findOneByOrFail({ platformId: ctx.platform.id })
 
-        const response = await ctx.post(SSO_DOMAIN, { ssoDomain: 'ee-changed-domain.example.com' })
+        const response = await ctx.delete(`/v1/email-domains/${emailDomain.id}`)
 
-        expect(response.statusCode).toBe(StatusCodes.OK)
+        expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(response.json()).toEqual(expect.objectContaining({ code: 'VALIDATION', params: { message: LAST_METHOD_MESSAGE } }))
+        expect(await readSignInSettings({ platformId: ctx.platform.id })).toEqual(before)
     })
 })
 
@@ -74,8 +67,6 @@ async function readSignInSettings({ platformId }: { platformId: string }): Promi
         select: { id: true, emailAuthEnabled: true, googleAuthEnabled: true, ssoDomain: true, ssoDomainVerification: true, federatedAuthProviders: true },
     })
 }
-
-const SSO_DOMAIN = '/v1/authn/saml/sso-domain'
 
 const LAST_METHOD_MESSAGE = 'This is the only way left to sign in. Turn on another sign-in method first.'
 

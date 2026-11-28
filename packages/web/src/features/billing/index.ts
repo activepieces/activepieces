@@ -44,6 +44,10 @@ export { EnterprisePlanIndicator } from './components/self-serve-trial-sidebar';
 export { selfServeTrialHooks } from './hooks/self-serve-trial-hooks';
 export { selfServeTrialTime } from './utils/self-serve-trial-utils';
 export { LockedGem } from './components/locked-feature';
+export {
+  SelfServeTrialLockedActions,
+  LockedActionsSize,
+} from './components/locked-feature';
 export { PlanBadge } from './components/locked-feature';
 export { seatUtils } from './utils/billing-utils';
 export { LockedFeatureRow } from './components/locked-feature';

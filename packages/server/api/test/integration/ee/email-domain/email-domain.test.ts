@@ -130,6 +130,20 @@ describe('Email domains API', () => {
             expect((await findPlatform(ctx.platform.id)).ssoDomain).toBe('first-verified.example.com')
         })
 
+        it('leaves the domain pending when the TXT record differs', async () => {
+            const ctx = await createTestContext(app, {
+                plan: { ssoEnabled: true },
+                platform: withDomain({ domain: 'txt-mismatch.example.com', status: SsoDomainVerificationStatus.PENDING_VERIFICATION }),
+            })
+            const [pending] = await findDomains(ctx.platform.id)
+            vi.mocked(resolveTxt).mockResolvedValue([['activepieces-verify=someone-else']])
+
+            const response = await ctx.post(`${EMAIL_DOMAINS}/${pending.id}/verify`, {})
+
+            expect(response.statusCode).toBe(StatusCodes.OK)
+            expect(response.json()).toEqual(expect.objectContaining({ verificationStatus: SsoDomainVerificationStatus.PENDING_VERIFICATION }))
+        })
+
         it('refuses a second verified domain without the flag', async () => {
             const ctx = await createTestContext(app, {
                 plan: { ssoEnabled: true },
@@ -263,24 +277,60 @@ describe('Email domains API', () => {
             expect(response.statusCode).toBe(StatusCodes.NOT_FOUND)
             expect(await findDomains(owner.platform.id)).toHaveLength(1)
         })
-    })
 
-    describe('old /v1/authn/saml/sso-domain endpoint', () => {
-        it('changes only the domain shown in the platform columns', async () => {
+        it('keeps SAML when a pending domain is cancelled', async () => {
             const ctx = await createTestContext(app, {
-                plan: { ssoEnabled: true, multipleEmailDomainsEnabled: true },
-                platform: withDomain({ domain: 'shown.example.com', status: SsoDomainVerificationStatus.VERIFIED }),
+                plan: { ssoEnabled: true },
+                platform: { ...withDomain({ domain: 'cancel-pending.example.com', status: SsoDomainVerificationStatus.PENDING_VERIFICATION }), federatedAuthProviders: { saml: SAML } },
             })
-            await saveDomain({ platformId: ctx.platform.id, domain: 'hidden.example.com', status: SsoDomainVerificationStatus.VERIFIED })
+            const [pending] = await findDomains(ctx.platform.id)
 
-            await ctx.post(SSO_DOMAIN, { ssoDomain: null })
+            const response = await ctx.delete(`${EMAIL_DOMAINS}/${pending.id}`)
+            const platform = await findPlatform(ctx.platform.id)
 
-            expect((await findDomains(ctx.platform.id)).map((emailDomain) => emailDomain.domain)).toEqual(['hidden.example.com'])
-            expect((await findPlatform(ctx.platform.id)).ssoDomain).toBe('hidden.example.com')
+            expect(response.statusCode).toBe(StatusCodes.OK)
+            expect(platform.ssoDomain).toBeNull()
+            expect(platform.federatedAuthProviders.saml).toEqual(SAML)
+        })
+
+        it('needs a new DNS record when a removed domain is added back', async () => {
+            const ctx = await createTestContext(app, {
+                plan: { ssoEnabled: true },
+                platform: withDomain({ domain: 're-add.example.com', status: SsoDomainVerificationStatus.VERIFIED }),
+            })
+            const [removed] = await findDomains(ctx.platform.id)
+
+            await ctx.delete(`${EMAIL_DOMAINS}/${removed.id}`)
+            const response = await ctx.post(EMAIL_DOMAINS, { domain: 're-add.example.com' })
+
+            expect(response.json()).toEqual(expect.objectContaining({ verificationStatus: SsoDomainVerificationStatus.PENDING_VERIFICATION }))
+            expect(response.json().verificationRecordValue).not.toBe(TXT_VALUE)
         })
     })
 
     describe('expirePending', () => {
+        it('keeps a pending domain for 7 days, then drops it, and never drops a verified one', async () => {
+            const sixDays = await createTestContext(app, {
+                plan: { ssoEnabled: true },
+                platform: withDomain({ domain: 'six-days.example.com', status: SsoDomainVerificationStatus.PENDING_VERIFICATION, createdAt: daysAgo(6) }),
+            })
+            const eightDays = await createTestContext(app, {
+                plan: { ssoEnabled: true },
+                platform: withDomain({ domain: 'eight-days.example.com', status: SsoDomainVerificationStatus.PENDING_VERIFICATION, createdAt: daysAgo(8) }),
+            })
+            const verifiedLongAgo = await createTestContext(app, {
+                plan: { ssoEnabled: true },
+                platform: withDomain({ domain: 'verified-long-ago.example.com', status: SsoDomainVerificationStatus.VERIFIED, createdAt: daysAgo(30) }),
+            })
+
+            await emailDomainService(app.log).expirePending()
+
+            expect(await findDomains(sixDays.platform.id)).toHaveLength(1)
+            expect(await findDomains(eightDays.platform.id)).toHaveLength(0)
+            expect((await findPlatform(eightDays.platform.id)).ssoDomain).toBeNull()
+            expect(await findDomains(verifiedLongAgo.platform.id)).toHaveLength(1)
+        })
+
         it('drops a pending domain after 7 days and keeps the verified one in the platform columns', async () => {
             const ctx = await createTestContext(app, {
                 plan: { ssoEnabled: true, multipleEmailDomainsEnabled: true },
@@ -371,7 +421,6 @@ function daysAgo(days: number): string {
 }
 
 const EMAIL_DOMAINS = '/v1/email-domains'
-const SSO_DOMAIN = '/v1/authn/saml/sso-domain'
 const TXT_VALUE = 'activepieces-verify=test-token'
 
 const SAML = {

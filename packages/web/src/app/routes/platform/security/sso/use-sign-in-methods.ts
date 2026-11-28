@@ -2,10 +2,10 @@ import {
   ApEdition,
   ApFlagId,
   PlatformWithoutSensitiveData,
-  SsoDomainVerificationStatus,
   ThirdPartyAuthnProvidersToShowMap,
 } from '@activepieces/shared';
 
+import { emailDomainQueries } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
 export function useSignInMethods(
@@ -18,12 +18,8 @@ export function useSignInMethods(
     );
   const selfHosted = edition === ApEdition.ENTERPRISE;
   const cloud = edition === ApEdition.CLOUD;
-  const verifiedDomain =
-    platform.ssoDomainVerification?.status ===
-    SsoDomainVerificationStatus.VERIFIED
-      ? platform.ssoDomain ?? null
-      : null;
-  const domainVerified = verifiedDomain !== null;
+  const verifiedDomains = emailDomainQueries.useVerifiedDomains();
+  const domainVerified = verifiedDomains.length > 0;
   const working: Record<SignInMethod, boolean> = {
     email: platform.emailAuthEnabled,
     google: Boolean(providers?.google),
@@ -34,7 +30,7 @@ export function useSignInMethods(
     selfHosted,
     cloud,
     locked: cloud && !domainVerified,
-    verifiedDomain,
+    verifiedDomains,
     working,
     isOnlyWorkingMethod: (method) =>
       working[method] && Object.values(working).filter(Boolean).length === 1,
@@ -47,7 +43,7 @@ type SignInMethods = {
   selfHosted: boolean;
   cloud: boolean;
   locked: boolean;
-  verifiedDomain: string | null;
+  verifiedDomains: string[];
   working: Record<SignInMethod, boolean>;
   isOnlyWorkingMethod: (method: SignInMethod) => boolean;
 };

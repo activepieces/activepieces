@@ -1,6 +1,7 @@
 import { Platform, SsoDomainVerification, SsoDomainVerificationRecordType, SsoDomainVerificationStatus } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { emailDomainRepo } from '../../../../src/app/ee/authentication/email-domain/email-domain.service'
 import { platformRepo } from '../../../../src/app/platform/platform.service'
 import { createTestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
@@ -26,21 +27,18 @@ describe('Last sign-in method guard on Cloud', () => {
             reason: 'turning email off when it is the only method',
             platform: { emailAuthEnabled: true, googleAuthEnabled: false },
             googleKeys: false,
-            path: 'platform',
             body: { emailAuthEnabled: false },
         },
         {
             reason: 'turning email off when Google is on but the server has no Google keys',
             platform: { emailAuthEnabled: true, googleAuthEnabled: true },
             googleKeys: false,
-            path: 'platform',
             body: { emailAuthEnabled: false },
         },
         {
             reason: 'turning Google off when it is the only method',
             platform: { emailAuthEnabled: false, googleAuthEnabled: true },
             googleKeys: true,
-            path: 'platform',
             body: { googleAuthEnabled: false },
         },
         {
@@ -48,31 +46,30 @@ describe('Last sign-in method guard on Cloud', () => {
             platform: { emailAuthEnabled: false, googleAuthEnabled: false },
             ssoDomain: 'disable-sso.example.com',
             googleKeys: false,
-            path: 'platform',
             body: { federatedAuthProviders: { saml: null } },
         },
-        {
-            reason: 'removing the domain when SSO is the only method',
-            platform: { emailAuthEnabled: false, googleAuthEnabled: false },
-            ssoDomain: 'remove-domain.example.com',
-            googleKeys: false,
-            path: 'sso-domain',
-            body: { ssoDomain: null },
-        },
-        {
-            reason: 'changing the domain when SSO is the only method',
-            platform: { emailAuthEnabled: false, googleAuthEnabled: false },
-            ssoDomain: 'change-domain.example.com',
-            googleKeys: false,
-            path: 'sso-domain',
-            body: { ssoDomain: 'changed-domain.example.com' },
-        },
-    ])('refuses $reason', async ({ platform, ssoDomain, googleKeys, path, body }) => {
+    ])('refuses $reason', async ({ platform, ssoDomain, googleKeys, body }) => {
         setGoogleKeys({ configured: googleKeys })
         const ctx = await createTestContext(app, { platform: { ...platform, ...ssoOn({ domain: ssoDomain }) }, plan: { ssoEnabled: true } })
         const before = await readSignInSettings({ platformId: ctx.platform.id })
 
-        const response = await ctx.post(path === 'platform' ? `/v1/platforms/${ctx.platform.id}` : SSO_DOMAIN, body)
+        const response = await ctx.post(`/v1/platforms/${ctx.platform.id}`, body)
+
+        expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(response.json()).toEqual(expect.objectContaining({ code: 'VALIDATION', params: { message: LAST_METHOD_MESSAGE } }))
+        expect(await readSignInSettings({ platformId: ctx.platform.id })).toEqual(before)
+    })
+
+    it('refuses removing the domain when SSO is the only method', async () => {
+        setGoogleKeys({ configured: false })
+        const ctx = await createTestContext(app, {
+            platform: { emailAuthEnabled: false, googleAuthEnabled: false, ...ssoOn({ domain: 'remove-domain.example.com' }) },
+            plan: { ssoEnabled: true },
+        })
+        const before = await readSignInSettings({ platformId: ctx.platform.id })
+        const emailDomain = await emailDomainRepo().findOneByOrFail({ platformId: ctx.platform.id })
+
+        const response = await ctx.delete(`/v1/email-domains/${emailDomain.id}`)
 
         expect(response.statusCode).toBe(StatusCodes.CONFLICT)
         expect(response.json()).toEqual(expect.objectContaining({ code: 'VALIDATION', params: { message: LAST_METHOD_MESSAGE } }))
@@ -131,8 +128,6 @@ async function readSignInSettings({ platformId }: { platformId: string }): Promi
         select: { id: true, emailAuthEnabled: true, googleAuthEnabled: true, ssoDomain: true, ssoDomainVerification: true, federatedAuthProviders: true },
     })
 }
-
-const SSO_DOMAIN = '/v1/authn/saml/sso-domain'
 
 const LAST_METHOD_MESSAGE = 'This is the only way left to sign in. Turn on another sign-in method first.'
 
