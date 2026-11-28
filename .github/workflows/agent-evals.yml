@@ -86,6 +86,9 @@ jobs:
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       CHAT_EVAL_SCOPE: ${{ github.event.inputs.scope || (github.event.schedule == '0 7 * * 0' && 'all') || 'regression' }}
       CHAT_EVAL_REPEATS: 3
+      # Pin the judge the calibration set was labelled against. The runner default moved to
+      # typesafe/jev-1.13 in #16412 (Oct 13) and the gate has been red every night since.
+      CHAT_EVAL_JUDGE_MODEL: anthropic/claude-opus-4.8
       CHAT_EVAL_RESULTS_PATH: ${{ github.workspace }}/eval-results.json
     steps:
       - uses: actions/checkout@v5
