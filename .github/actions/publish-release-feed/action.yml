@@ -1,0 +1,77 @@
+name: Publish release feed
+description: Merges releases.json with the published copy by tag (the repo wins for tags it has, tags only the published copy has are kept), rebuilds releaseNotes and avoid from docs/install/reference/releases/, uploads it to https://cdn.activepieces.com/releases/releases.json and verifies it is served. Needs bun and the repo dependencies installed.
+
+inputs:
+  access-key-id:
+    description: CDN_S3_ACCESS_KEY_ID
+    required: true
+  secret-access-key:
+    description: CDN_S3_SECRET_ACCESS_KEY
+    required: true
+  bucket:
+    description: CDN_S3_BUCKET
+    required: true
+  endpoint:
+    description: CDN_S3_ENDPOINT
+    required: true
+  expect-tag:
+    description: A tag the published feed must contain after the upload. Empty skips the check.
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: Merge with the published copy
+      shell: bash
+      env:
+        AWS_ACCESS_KEY_ID: ${{ inputs.access-key-id }}
+        AWS_SECRET_ACCESS_KEY: ${{ inputs.secret-access-key }}
+        AWS_DEFAULT_REGION: us-east-1
+        AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+        AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+        BUCKET: ${{ inputs.bucket }}
+        ENDPOINT: ${{ inputs.endpoint }}
+      run: |
+        PUBLISHED="$RUNNER_TEMP/releases.published.json"
+        if ! aws s3 cp "s3://$BUCKET/releases/releases.json" "$PUBLISHED" --endpoint-url "$ENDPOINT" 2> "$RUNNER_TEMP/s3-download.err"; then
+          if grep -qE '\(404\)|NoSuchKey|does not exist' "$RUNNER_TEMP/s3-download.err"; then
+            echo "No published release feed yet, starting from an empty list."
+            echo '[]' > "$PUBLISHED"
+          else
+            cat "$RUNNER_TEMP/s3-download.err"
+            exit 1
+          fi
+        fi
+        bun tools/scripts/release-feed.ts merge --cdn "$PUBLISHED" --out "$RUNNER_TEMP/releases.merged.json"
+
+    - name: Upload to CDN
+      shell: bash
+      env:
+        AWS_ACCESS_KEY_ID: ${{ inputs.access-key-id }}
+        AWS_SECRET_ACCESS_KEY: ${{ inputs.secret-access-key }}
+        AWS_DEFAULT_REGION: us-east-1
+        AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+        AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+        BUCKET: ${{ inputs.bucket }}
+        ENDPOINT: ${{ inputs.endpoint }}
+      run: |
+        aws s3 cp "$RUNNER_TEMP/releases.merged.json" \
+          "s3://$BUCKET/releases/releases.json" \
+          --endpoint-url "$ENDPOINT" \
+          --content-type "application/json" \
+          --cache-control "max-age=300" \
+          --acl public-read
+
+    - name: Verify publish
+      shell: bash
+      env:
+        EXPECT_TAG: ${{ inputs.expect-tag }}
+      run: |
+        URL="https://cdn.activepieces.com/releases/releases.json?run=$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+        STATUS=$(curl -s -o "$RUNNER_TEMP/releases.served.json" -w "%{http_code}" "$URL" || true)
+        [ "$STATUS" = "200" ] || { echo "Publish verification failed: HTTP $STATUS"; exit 1; }
+        if [ -n "$EXPECT_TAG" ]; then
+          jq -e --arg tag "$EXPECT_TAG" 'any(.[]; .tag == $tag)' "$RUNNER_TEMP/releases.served.json" > /dev/null \
+            || { echo "Publish verification failed: $EXPECT_TAG is not in the served feed"; exit 1; }
+        fi

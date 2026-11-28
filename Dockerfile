@@ -153,6 +153,9 @@ COPY --from=build /usr/src/app/dist/packages/web ./dist/packages/web/
 
 ENV NODE_ENV=production
 
+ARG AP_RELEASE_TAG=""
+ENV AP_RELEASE_TAG=${AP_RELEASE_TAG}
+
 LABEL service=activepieces
 
 # WORKER containers have no HTTP server; treat them as healthy (probe only the app).

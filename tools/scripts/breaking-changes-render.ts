@@ -157,9 +157,9 @@ export const ENTRIES_DIR = 'docs/install/reference/breaking-changes/entries'
 export const PUBLISHED_DOC = 'docs/install/reference/breaking-changes.mdx'
 export const UNRELEASED_DOC = 'docs/install/reference/breaking-changes-unreleased.mdx'
 
-export const breakingChangesRender = { parseEntryFile, readEntries, renderPages, setRelease, compareVersions }
+export const breakingChangesRender = { parseEntryFile, readEntries, renderPages, setRelease, sortEntries, compareVersions }
 
-type Entry = {
+export type Entry = {
     meta: BreakingChangeEntry
     body: string
 }

@@ -1,3 +1,4 @@
+import { ReleaseFeedEntry, ReleaseKind } from '@activepieces/shared'
 import { mkdtemp, writeFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -92,3 +93,96 @@ describe('apVersionUtil.versionsAreCompatible', () => {
         expect(apVersionUtil.versionsAreCompatible({ versionA: '0.0.0', versionB: '0.0.0' })).toBe(false)
     })
 })
+
+describe('apVersionUtil.getRunningTag', () => {
+    afterEach(() => {
+        delete process.env['AP_RELEASE_TAG']
+    })
+
+    it('returns AP_RELEASE_TAG when the image sets it', async () => {
+        await writeFile(join(tempDir, 'package.json'), JSON.stringify({ version: '0.92.3' }))
+        process.env['AP_RELEASE_TAG'] = '0.92.3-hotfix.2'
+        const apVersionUtil = await loadApVersionUtil()
+        expect(apVersionUtil.getRunningTag()).toBe('0.92.3-hotfix.2')
+        expect(apVersionUtil.getCurrentRelease()).toBe('0.92.3')
+    })
+
+    it('falls back to package.json when AP_RELEASE_TAG is unset or empty', async () => {
+        await writeFile(join(tempDir, 'package.json'), JSON.stringify({ version: '0.93.0' }))
+        const apVersionUtil = await loadApVersionUtil()
+        expect(apVersionUtil.getRunningTag()).toBe('0.93.0')
+        process.env['AP_RELEASE_TAG'] = ''
+        expect(apVersionUtil.getRunningTag()).toBe('0.93.0')
+    })
+})
+
+describe('apVersionUtil.getLatestRelease', () => {
+    it('returns the highest minor or patch tag and ignores rc and hotfix tags', async () => {
+        const apVersionUtil = await loadApVersionUtil()
+        const entries = [
+            feedEntry({ tag: '0.93.0', kind: ReleaseKind.MINOR }),
+            feedEntry({ tag: '0.93.2', kind: ReleaseKind.PATCH }),
+            feedEntry({ tag: '0.94.0-rc.1', kind: ReleaseKind.RC }),
+            feedEntry({ tag: '0.93.2-hotfix.1', kind: ReleaseKind.HOTFIX }),
+            feedEntry({ tag: '0.92.10', kind: ReleaseKind.PATCH }),
+        ]
+        expect(apVersionUtil.getLatestRelease({ entries })).toBe('0.93.2')
+    })
+
+    it('skips releases marked avoid', async () => {
+        const apVersionUtil = await loadApVersionUtil()
+        const entries = [
+            { ...feedEntry({ tag: '0.93.2', kind: ReleaseKind.PATCH }), avoid: { reason: 'Upgrade to 0.93.1 or wait for 0.93.3.' } },
+            feedEntry({ tag: '0.93.1', kind: ReleaseKind.PATCH }),
+        ]
+        expect(apVersionUtil.getLatestRelease({ entries })).toBe('0.93.1')
+    })
+
+    it('returns null for an empty feed instead of 0.0.0', async () => {
+        const apVersionUtil = await loadApVersionUtil()
+        expect(apVersionUtil.getLatestRelease({ entries: [] })).toBeNull()
+    })
+})
+
+describe('apVersionUtil.getHotfixOnLine', () => {
+    it('returns the highest hotfix on the running line that is newer than the running release', async () => {
+        const apVersionUtil = await loadApVersionUtil()
+        const entries = [
+            feedEntry({ tag: '0.92.3-hotfix.1', kind: ReleaseKind.HOTFIX }),
+            feedEntry({ tag: '0.92.3-hotfix.2', kind: ReleaseKind.HOTFIX }),
+            feedEntry({ tag: '0.91.4-hotfix.1', kind: ReleaseKind.HOTFIX }),
+            feedEntry({ tag: '0.93.0', kind: ReleaseKind.MINOR }),
+        ]
+        expect(apVersionUtil.getHotfixOnLine({ entries, running: '0.92.3' })).toBe('0.92.3-hotfix.2')
+    })
+
+    it('offers nothing to an instance already running the newest hotfix', async () => {
+        const apVersionUtil = await loadApVersionUtil()
+        const entries = [
+            feedEntry({ tag: '0.92.3-hotfix.1', kind: ReleaseKind.HOTFIX }),
+            feedEntry({ tag: '0.92.3-hotfix.2', kind: ReleaseKind.HOTFIX }),
+        ]
+        expect(apVersionUtil.getHotfixOnLine({ entries, running: '0.92.3-hotfix.2' })).toBeNull()
+        expect(apVersionUtil.getHotfixOnLine({ entries, running: '0.92.3-hotfix.1' })).toBe('0.92.3-hotfix.2')
+    })
+
+    it('returns null when the only hotfixes on the line are older than the running release', async () => {
+        const apVersionUtil = await loadApVersionUtil()
+        const entries = [feedEntry({ tag: '0.92.1-hotfix.1', kind: ReleaseKind.HOTFIX })]
+        expect(apVersionUtil.getHotfixOnLine({ entries, running: '0.92.3' })).toBeNull()
+    })
+})
+
+function feedEntry({ tag, kind }: { tag: string, kind: ReleaseKind }): ReleaseFeedEntry {
+    return {
+        tag,
+        kind,
+        line: tag.split('.').slice(0, 2).join('.'),
+        releasedAt: '2026-11-24T14:00:00.000Z',
+        imageDigest: `sha256:${'a'.repeat(64)}`,
+        migrations: { blocking: 0, background: 0, breaking: [] },
+        notes: [],
+        pieceMigrations: [],
+        supportedUntil: null,
+    }
+}

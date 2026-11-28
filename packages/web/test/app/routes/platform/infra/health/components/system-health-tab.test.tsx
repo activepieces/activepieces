@@ -66,8 +66,11 @@ describe('SystemHealthTab version row', () => {
   let container: HTMLDivElement | null = null;
   let root: Root | null = null;
 
-  const readTabText = (current: string) => {
-    systemHealthMock.data = buildHealth(current);
+  const readTabText = (
+    current: string,
+    feed: Partial<FeedFields> = { latestVersion: versions.running },
+  ) => {
+    systemHealthMock.data = buildHealth({ current, ...feed });
     container = document.createElement('div');
     document.body.appendChild(container);
     root = createRoot(container);
@@ -108,6 +111,23 @@ describe('SystemHealthTab version row', () => {
     expect(text).toContain('Needs attention');
   });
 
+  it('shows Unknown instead of passing when the release feed is unavailable', () => {
+    const text = readTabText(versions.running, { latestVersion: null });
+
+    expect(text).toContain('Latest Unknown');
+    expect(text.match(/Unknown/g)).toHaveLength(2);
+    expect(text).not.toContain('Needs attention');
+  });
+
+  it('shows a hotfix released on the running line', () => {
+    const text = readTabText(versions.running, {
+      latestVersion: versions.running,
+      hotfixOnYourLine: `${versions.running}-hotfix.1`,
+    });
+
+    expect(text).toContain('Hotfix {tag} is available on your line');
+  });
+
   it('hides the version and release integrity rows on cloud edition', () => {
     editionMock.value = ApEdition.CLOUD;
 
@@ -129,9 +149,14 @@ describe('SystemHealthTab version row', () => {
   });
 });
 
-function buildHealth(current: string): GetSystemHealthChecksResponse {
+function buildHealth({
+  current,
+  latestVersion = null,
+  hotfixOnYourLine = null,
+}: { current: string } & Partial<FeedFields>): GetSystemHealthChecksResponse {
   return {
-    latestVersion: versions.running,
+    latestVersion,
+    hotfixOnYourLine,
     appCpu: true,
     appRam: true,
     disk: true,
@@ -150,3 +175,8 @@ function buildHealth(current: string): GetSystemHealthChecksResponse {
     },
   };
 }
+
+type FeedFields = Pick<
+  GetSystemHealthChecksResponse,
+  'latestVersion' | 'hotfixOnYourLine'
+>;

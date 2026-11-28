@@ -160,7 +160,7 @@
     },
     "packages/core/shared": {
       "name": "@activepieces/shared",
-      "version": "0.227.0",
+      "version": "0.228.0",
       "dependencies": {
         "@activepieces/core-execution": "workspace:*",
         "@activepieces/core-formula": "workspace:*",

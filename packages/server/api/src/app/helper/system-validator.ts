@@ -136,6 +136,7 @@ const systemPropValidators: {
     [AppSystemProp.AXIOM_DATASET]: stringValidator,
     [AppSystemProp.FRONTEND_URL]: urlValidator,
     [AppSystemProp.MCP_URL]: urlValidator,
+    [AppSystemProp.RELEASE_FEED_URL]: urlValidator,
     [AppSystemProp.CONTAINER_TYPE]: enumValidator(Object.values(ContainerType)),
     [AppSystemProp.PORT]: numberValidator,
     [AppSystemProp.CONSOLE_API_SECRET_KEY]: stringValidator,

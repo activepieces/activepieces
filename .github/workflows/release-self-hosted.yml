@@ -32,6 +32,8 @@ jobs:
     runs-on: ubuntu-24.04
     outputs:
       digest: ${{ steps.build.outputs.digest }}
+      released_at: ${{ steps.released.outputs.released_at }}
+      migrations: ${{ steps.migration-check.outputs.migrations_json }}
     environment:
       name: release
     steps:
@@ -62,6 +64,26 @@ jobs:
             echo "::error::Helm chart appVersion '$CHART_APP_VERSION' does not match package.json version '$PACKAGE_VERSION'. Bump deploy/activepieces-helm/Chart.yaml."
             exit 1
           fi
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build shared and server-utils packages
+        run: bunx turbo run build --filter=@activepieces/shared --filter=@activepieces/server-utils
+
+      - name: Count the migrations in this release
+        id: migration-check
+        env:
+          TAG: ${{ inputs.tag }}
+        run: bun tools/scripts/check-release-migrations.ts "$TAG"
 
       - name: Fail if tag already exists
         run: '! docker manifest inspect activepieces/activepieces:${{ inputs.tag }}'
@@ -108,9 +130,15 @@ jobs:
             linux/amd64
             linux/arm64
           push: true
+          build-args: |
+            AP_RELEASE_TAG=${{ inputs.tag }}
           tags: |
             activepieces/activepieces:${{ inputs.tag }}
             ghcr.io/activepieces/activepieces:${{ inputs.tag }}
+
+      - name: Record the release time
+        id: released
+        run: echo "released_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
 
       - name: Check if this release is the newest
         id: latest
@@ -215,6 +243,23 @@ jobs:
           git fetch --no-tags --depth=1 origin "refs/tags/$TAG:refs/tags/$TAG"
           bun tools/scripts/breaking-changes-rollover.ts "$TAG"
 
+      - name: Add the release to releases.json
+        env:
+          TAG: ${{ inputs.tag }}
+          DIGEST: ${{ needs.release.outputs.digest }}
+          RELEASED_AT: ${{ needs.release.outputs.released_at }}
+          MIGRATIONS: ${{ needs.release.outputs.migrations }}
+        run: bun tools/scripts/release-feed.ts append --tag "$TAG" --released-at "$RELEASED_AT" --digest "$DIGEST" --migrations "$MIGRATIONS"
+
+      - name: Publish release feed
+        uses: ./.github/actions/publish-release-feed
+        with:
+          access-key-id: ${{ secrets.CDN_S3_ACCESS_KEY_ID }}
+          secret-access-key: ${{ secrets.CDN_S3_SECRET_ACCESS_KEY }}
+          bucket: ${{ secrets.CDN_S3_BUCKET }}
+          endpoint: ${{ secrets.CDN_S3_ENDPOINT }}
+          expect-tag: ${{ inputs.tag }}
+
       - name: Check if main version is behind release
         id: compare
         env:
@@ -250,7 +295,7 @@ jobs:
           fi
           BRANCH="automated/sync-main-$TAG"
           git checkout -b "$BRANCH"
-          git add package.json docker-compose.yml deploy/activepieces-helm/Chart.yaml docs/install/reference/breaking-changes.mdx docs/install/reference/breaking-changes-unreleased.mdx docs/install/reference/breaking-changes/entries
+          git add package.json docker-compose.yml deploy/activepieces-helm/Chart.yaml releases.json docs/install/reference/breaking-changes.mdx docs/install/reference/breaking-changes-unreleased.mdx docs/install/reference/breaking-changes/entries
           git commit -m "chore(release): sync main after $TAG"
           git push -f origin "$BRANCH"
           echo "branch=$BRANCH" >> $GITHUB_OUTPUT
@@ -263,7 +308,7 @@ jobs:
           BRANCH: ${{ steps.push.outputs.branch }}
         run: |
           BODY="$(printf '%s\n' \
-            "The self-hosted release \`$TAG\` was published. This PR syncs \`package.json\` and the \`docker-compose.yml\` image pin when \`main\` is behind, and moves the breaking-change entries that \`$TAG\` contains from the hidden unreleased page under \`## $TAG\` on the Breaking Changes page. Merge before the next release. See GIT-1595 and SRE-232." \
+            "The self-hosted release \`$TAG\` was published. This PR adds \`$TAG\` to \`releases.json\` (already published to the CDN, see SRE-350), syncs \`package.json\` and the \`docker-compose.yml\` image pin when \`main\` is behind, and moves the breaking-change entries that \`$TAG\` contains from the hidden unreleased page under \`## $TAG\` on the Breaking Changes page. Merge before the next release. See GIT-1595 and SRE-232." \
             "" \
             "### Breaking change?" \
             "" \
