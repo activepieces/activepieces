@@ -3,7 +3,8 @@ import {
   Property,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { greipAuth } from '../common/auth';
+import { greipAuth } from '../auth';
+import { profanityTextDetectedOutputSchema } from '../output-schemas';
 
 export const profanityTextDetectedTrigger = createTrigger({
   name: 'profanity_text_detected',
@@ -34,6 +35,7 @@ To use this trigger, you need to manually set up a webhook in your Greip account
     }),
   },
   type: TriggerStrategy.WEBHOOK,
+  outputSchema: profanityTextDetectedOutputSchema,
   sampleData: {
     event: 'profanity',
     text: '**** *****',
@@ -41,11 +43,11 @@ To use this trigger, you need to manually set up a webhook in your Greip account
     riskScore: 1,
     isSafe: false,
   },
-  async onEnable(context) {
-    // Webhooks are set up manually in Greip dashboard
+  async onEnable() {
+    return;
   },
-  async onDisable(context) {
-    // Webhooks are removed manually in Greip dashboard
+  async onDisable() {
+    return;
   },
   async run(context) {
     return [context.payload.body];

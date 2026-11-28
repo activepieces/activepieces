@@ -1,16 +1,18 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { greipAuth } from '../common/auth';
-import { greipApiCall } from '../common/client';
+import { greipAuth } from '../auth';
+import { greipClient } from '../common/client';
+import { greipProps } from '../common/props';
+import { greipDetectProfanityOutputSchema } from '../output-schemas';
 
-export const profanityDetection = createAction({
+export const profanityDetectionAction = createAction({
   auth: greipAuth,
   name: 'profanity_detection',
+  outputSchema: greipDetectProfanityOutputSchema,
   classification: 'READ',
   displayName: 'Detect Profanity',
   description: 'Detect offensive or inappropriate language in text using machine learning',
-  audience: 'both',
-  aiMetadata: { description: 'Scan a block of text for offensive or inappropriate language and return a risk/safety assessment. Can return just the score and safety flag, or additionally list the bad words found. Use to moderate user-generated content. Read-only scoring call; safe to repeat.', idempotent: true },
+  audience: 'human',
   props: {
     text: Property.LongText({
       displayName: 'Text',
@@ -19,7 +21,7 @@ export const profanityDetection = createAction({
     }),
     scoreOnly: Property.StaticDropdown({
       displayName: 'Score Only',
-      description: 'Return only the score and safety status',
+      description: 'Legacy option: Greip API v2 ignores it and always returns the risk level and recommendation.',
       required: false,
       defaultValue: 'no',
       options: {
@@ -31,7 +33,7 @@ export const profanityDetection = createAction({
     }),
     listBadWords: Property.StaticDropdown({
       displayName: 'List Bad Words',
-      description: 'Include a list of bad words found in the text',
+      description: 'Legacy option: Greip API v2 ignores it and does not return a bad-word list.',
       required: false,
       defaultValue: 'no',
       options: {
@@ -54,55 +56,37 @@ export const profanityDetection = createAction({
         ],
       },
     }),
-    mode: Property.StaticDropdown({
-      displayName: 'Environment',
-      description: 'Environment mode for testing or production',
-      required: false,
-      defaultValue: 'live',
-      options: {
-        options: [
-          { label: 'Live', value: 'live' },
-          { label: 'Test', value: 'test' },
-        ],
-      },
-    }),
-    callback: Property.ShortText({
-      displayName: 'JSONP Callback',
-      description: 'Function name for JSONP response format',
-      required: false,
-    }),
+    mode: greipProps.mode({ required: false }),
+    callback: greipProps.callback({ required: false }),
   },
   async run(context) {
     const { text, scoreOnly, listBadWords, format, mode, callback } = context.propsValue;
 
-    const queryParams: Record<string, string> = {
+    const body: Record<string, string> = {
       text: text,
     };
 
     if (scoreOnly) {
-      queryParams['scoreOnly'] = scoreOnly;
+      body['scoreOnly'] = scoreOnly;
     }
 
     if (listBadWords) {
-      queryParams['listBadWords'] = listBadWords;
+      body['listBadWords'] = listBadWords;
     }
 
     if (format) {
-      queryParams['format'] = format;
+      body['format'] = format;
     }
 
     if (mode) {
-      queryParams['mode'] = mode;
+      body['mode'] = mode;
     }
 
-    if (callback) {
-      queryParams['callback'] = callback;
-    }
-
-    return await greipApiCall({
-      method: HttpMethod.GET,
-      path: '/scoring/profanity',
-      queryParams,
+    return await greipClient.request({
+      method: HttpMethod.POST,
+      path: '/score/text',
+      query: callback ? { callback } : undefined,
+      body,
       auth: context.auth,
     });
   },

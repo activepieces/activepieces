@@ -4315,7 +4315,7 @@
     },
     "packages/pieces/community/greip": {
       "name": "@activepieces/piece-greip",
-      "version": "0.1.9",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",

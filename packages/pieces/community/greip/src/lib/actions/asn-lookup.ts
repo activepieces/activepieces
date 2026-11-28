@@ -1,60 +1,32 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { greipAuth } from '../common/auth';
-import { greipApiCall } from '../common/client';
+import { greipAuth } from '../auth';
+import { greipClient } from '../common/client';
+import { greipProps } from '../common/props';
+import { greipAsnOutputSchema } from '../output-schemas';
 
-export const asnLookup = createAction({
+export const asnLookupAction = createAction({
   auth: greipAuth,
   name: 'asn_lookup',
   classification: 'READ',
   displayName: 'ASN Lookup',
   description: 'Look up details of an Autonomous System Number (ASN)',
-  audience: 'both',
-  aiMetadata: { description: 'Look up registration and network details for an Autonomous System Number (ASN), accepting the number with or without the "AS" prefix (e.g. AS6167 or 6167). Use to identify the organization, allocation, or routing info behind an ASN. Read-only lookup; safe to repeat.', idempotent: true },
+  audience: 'human',
+  outputSchema: greipAsnOutputSchema,
   props: {
     asn: Property.ShortText({
       displayName: 'AS Number',
       description: 'The AS Number to lookup (e.g., AS6167 or 6167)',
       required: true,
     }),
-    format: Property.StaticDropdown({
-      displayName: 'Response Format',
-      description: 'Format of the response',
-      required: false,
-      defaultValue: 'JSON',
-      options: {
-        options: [
-          { label: 'JSON', value: 'JSON' },
-          { label: 'XML', value: 'XML' },
-          { label: 'CSV', value: 'CSV' },
-          { label: 'Newline', value: 'Newline' },
-        ],
-      },
-    }),
-    mode: Property.StaticDropdown({
-      displayName: 'Environment',
-      description: 'Environment mode for testing or production',
-      required: false,
-      defaultValue: 'live',
-      options: {
-        options: [
-          { label: 'Live', value: 'live' },
-          { label: 'Test', value: 'test' },
-        ],
-      },
-    }),
-    callback: Property.ShortText({
-      displayName: 'JSONP Callback',
-      description: 'Function name for JSONP response format',
-      required: false,
-    }),
+    format: greipProps.format({ required: false }),
+    mode: greipProps.mode({ required: false }),
+    callback: greipProps.callback({ required: false }),
   },
   async run(context) {
     const { asn, format, mode, callback } = context.propsValue;
 
-    const queryParams: Record<string, string> = {
-      asn: asn,
-    };
+    const queryParams: Record<string, string> = {};
 
     if (format) {
       queryParams['format'] = format;
@@ -68,10 +40,10 @@ export const asnLookup = createAction({
       queryParams['callback'] = callback;
     }
 
-    return await greipApiCall({
+    return await greipClient.request({
       method: HttpMethod.GET,
-      path: '/lookup/asn',
-      queryParams,
+      path: `/lookup/asn/${encodeURIComponent(asn)}`,
+      query: queryParams,
       auth: context.auth,
     });
   },

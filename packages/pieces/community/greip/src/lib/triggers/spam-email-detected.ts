@@ -3,7 +3,8 @@ import {
   Property,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { greipAuth } from '../common/auth';
+import { greipAuth } from '../auth';
+import { spamEmailDetectedOutputSchema } from '../output-schemas';
 
 export const spamEmailDetectedTrigger = createTrigger({
   name: 'spam_email_detected',
@@ -34,6 +35,7 @@ To use this trigger, you need to manually set up a webhook in your Greip account
     }),
   },
   type: TriggerStrategy.WEBHOOK,
+  outputSchema: spamEmailDetectedOutputSchema,
   sampleData: {
     event: 'spam_email',
     email: 'name@domain.com',
@@ -41,11 +43,11 @@ To use this trigger, you need to manually set up a webhook in your Greip account
     reason: 'Email domain\'s SPF record is not set properly.',
     isValid: false,
   },
-  async onEnable(context) {
-    // Webhooks are set up manually in Greip dashboard
+  async onEnable() {
+    return;
   },
-  async onDisable(context) {
-    // Webhooks are removed manually in Greip dashboard
+  async onDisable() {
+    return;
   },
   async run(context) {
     return [context.payload.body];

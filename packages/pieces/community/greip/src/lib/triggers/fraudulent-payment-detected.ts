@@ -3,7 +3,8 @@ import {
   Property,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { greipAuth } from '../common/auth';
+import { greipAuth } from '../auth';
+import { fraudulentPaymentDetectedOutputSchema } from '../output-schemas';
 
 export const fraudulentPaymentDetectedTrigger = createTrigger({
   name: 'fraudulent_payment_detected',
@@ -34,6 +35,7 @@ To use this trigger, you need to manually set up a webhook in your Greip account
     }),
   },
   type: TriggerStrategy.WEBHOOK,
+  outputSchema: fraudulentPaymentDetectedOutputSchema,
   sampleData: {
     event: 'fraud_payment',
     customer_id: 'UID123',
@@ -53,11 +55,11 @@ To use this trigger, you need to manually set up a webhook in your Greip account
     rulesChecked: 6,
     rulesDetected: 2,
   },
-  async onEnable(context) {
-    // Webhooks are set up manually in Greip dashboard
+  async onEnable() {
+    return;
   },
-  async onDisable(context) {
-    // Webhooks are removed manually in Greip dashboard
+  async onDisable() {
+    return;
   },
   async run(context) {
     return [context.payload.body];

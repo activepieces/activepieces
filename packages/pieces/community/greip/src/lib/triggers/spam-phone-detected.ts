@@ -3,7 +3,8 @@ import {
   Property,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { greipAuth } from '../common/auth';
+import { greipAuth } from '../auth';
+import { spamPhoneDetectedOutputSchema } from '../output-schemas';
 
 export const spamPhoneDetectedTrigger = createTrigger({
   name: 'spam_phone_detected',
@@ -34,6 +35,7 @@ To use this trigger, you need to manually set up a webhook in your Greip account
     }),
   },
   type: TriggerStrategy.WEBHOOK,
+  outputSchema: spamPhoneDetectedOutputSchema,
   sampleData: {
     event: 'spam_phone',
     phone: '0555123456',
@@ -42,11 +44,11 @@ To use this trigger, you need to manually set up a webhook in your Greip account
     reason: 'Invalid phone number structure.',
     isValid: false,
   },
-  async onEnable(context) {
-    // Webhooks are set up manually in Greip dashboard
+  async onEnable() {
+    return;
   },
-  async onDisable(context) {
-    // Webhooks are removed manually in Greip dashboard
+  async onDisable() {
+    return;
   },
   async run(context) {
     return [context.payload.body];

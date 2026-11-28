@@ -1,16 +1,18 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { greipAuth } from '../common/auth';
-import { greipApiCall } from '../common/client';
+import { greipAuth } from '../auth';
+import { greipClient } from '../common/client';
+import { greipProps } from '../common/props';
+import { ipLookupOutputSchema } from '../output-schemas';
 
-export const ipLookup = createAction({
+export const ipLookupAction = createAction({
   auth: greipAuth,
   name: 'ip_lookup',
+  outputSchema: ipLookupOutputSchema,
   classification: 'READ',
   displayName: 'IP Lookup',
   description: 'Look up comprehensive information about an IP address including location, ISP, security, and risk factors',
-  audience: 'both',
-  aiMetadata: { description: 'Look up geolocation, ISP, timezone, currency, and security/risk signals for an IPv4 or IPv6 address. Optionally narrow the response to specific modules (security, currency, timezone, location) via a comma-separated list. Use to geolocate or fraud-screen an IP. Read-only lookup; safe to repeat.', idempotent: true },
+  audience: 'human',
   props: {
     ip: Property.ShortText({
       displayName: 'IP Address',
@@ -22,20 +24,7 @@ export const ipLookup = createAction({
       description: 'Comma-separated list of modules to include: security, currency, timezone, location (e.g., "security,timezone,currency")',
       required: false,
     }),
-    format: Property.StaticDropdown({
-      displayName: 'Response Format',
-      description: 'Format of the response',
-      required: false,
-      defaultValue: 'JSON',
-      options: {
-        options: [
-          { label: 'JSON', value: 'JSON' },
-          { label: 'XML', value: 'XML' },
-          { label: 'CSV', value: 'CSV' },
-          { label: 'Newline', value: 'Newline' },
-        ],
-      },
-    }),
+    format: greipProps.format({ required: false }),
     lang: Property.StaticDropdown({
       displayName: 'Response Language',
       description: 'Language for the response',
@@ -54,35 +43,14 @@ export const ipLookup = createAction({
         ],
       },
     }),
-    mode: Property.StaticDropdown({
-      displayName: 'Environment',
-      description: 'Environment mode for testing or production',
-      required: false,
-      defaultValue: 'live',
-      options: {
-        options: [
-          { label: 'Live', value: 'live' },
-          { label: 'Test', value: 'test' },
-        ],
-      },
-    }),
-    userID: Property.ShortText({
-      displayName: 'User Identifier',
-      description: 'Identify requests from specific users for monitoring (e.g., email, phone, user ID)',
-      required: false,
-    }),
-    callback: Property.ShortText({
-      displayName: 'JSONP Callback',
-      description: 'Function name for JSONP response format',
-      required: false,
-    }),
+    mode: greipProps.mode({ required: false }),
+    userID: greipProps.userID({ required: false }),
+    callback: greipProps.callback({ required: false }),
   },
   async run(context) {
     const { ip, params, format, lang, mode, userID, callback } = context.propsValue;
 
-    const queryParams: Record<string, string> = {
-      ip: ip,
-    };
+    const queryParams: Record<string, string> = {};
 
     if (params) {
       queryParams['params'] = params;
@@ -101,17 +69,17 @@ export const ipLookup = createAction({
     }
 
     if (userID) {
-      queryParams['userID'] = userID;
+      queryParams['user_id'] = userID;
     }
 
     if (callback) {
       queryParams['callback'] = callback;
     }
 
-    return await greipApiCall({
+    return await greipClient.request({
       method: HttpMethod.GET,
-      path: '/lookup/ip',
-      queryParams,
+      path: `/lookup/ip/${encodeURIComponent(ip)}`,
+      query: queryParams,
       auth: context.auth,
     });
   },
