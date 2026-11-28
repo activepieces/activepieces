@@ -26,7 +26,10 @@ describe.skipIf(!HAS_PROVIDER_KEY)('agent-eval regression gate (live — require
         ])
         evaluations = fixtureResults
         judgeAgreement = agreement
-    }, 180_000 * REPEATS)
+    // Fixtures and the judge-agreement pass run against live models through OpenRouter. At 180s per
+    // repeat the regression scope already used ~400s of its 540s budget and tipped over on slow
+    // provider days. 300s per repeat (15 min at REPEATS=3) still fits the job's 30-minute limit.
+    }, 300_000 * REPEATS)
 
     afterAll(async () => {
         await agentEvalRunner.cleanupAuth()
