@@ -8,7 +8,7 @@ export const getBoardItemValuesAction = createAction({
   name: 'monday_get_board_values',
   classification: 'SEARCH',
   displayName: 'Get Board Values',
-  description: "Gets a list of board's items.",
+  description: 'Gets every item on a board with its column values.',
   audience: 'human',
   aiMetadata: { description: 'Retrieves all items on a monday.com board with their column values, optionally narrowed to specific column ids. Use to read or list the rows of a board. Read-only and idempotent.', idempotent: true },
   props: {
@@ -20,11 +20,10 @@ export const getBoardItemValuesAction = createAction({
     const { board_id, column_ids } = context.propsValue;
 
     const client = makeClient(context.auth);
-    const res = await client.getBoardItemValues({
+    const items = await client.getAllBoardItemValues({
       boardId: board_id as string,
       columnIds: column_ids as string[],
     });
-    const items = res.data.boards[0].items_page.items;
 
     const result = [];
     for (const item of items) {

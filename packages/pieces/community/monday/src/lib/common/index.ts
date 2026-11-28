@@ -13,14 +13,15 @@ export const mondayCommon = {
     Property.Dropdown({    
 auth: mondayAuth,
   
-      displayName: 'Workspace ID',
+      displayName: 'Workspace',
+      width: 'half',
       required: required,
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) {
           return {
             disabled: true,
-            placeholder: 'connect your account first',
+            placeholder: 'Connect your monday.com account first.',
             options: [],
           };
         }
@@ -41,15 +42,22 @@ auth: mondayAuth,
   board_id: (required = true) =>
     Property.Dropdown({    
 auth: mondayAuth,
-      displayName: 'Board ID',
+      displayName: 'Board',
+      width: 'half',
       required: required,
       refreshers: ['workspace_id'],
       options: async ({ auth, workspace_id }) => {
-        if (!auth || !workspace_id) {
+        if (!auth) {
           return {
             disabled: true,
-            placeholder:
-              'connect your account first and select your workspace.',
+            placeholder: 'Connect your monday.com account first.',
+            options: [],
+          };
+        }
+        if (!workspace_id) {
+          return {
+            disabled: true,
+            placeholder: 'Select a workspace first.',
             options: [],
           };
         }
@@ -75,15 +83,22 @@ auth: mondayAuth,
   group_id: (required = false) =>
     Property.Dropdown({    
 auth: mondayAuth,
-      displayName: 'Board Group ID',
+      displayName: 'Group',
+      description: "Leave empty to add it to the board's top group.",
       required: required,
       refreshers: ['board_id'],
       options: async ({ auth, board_id }) => {
-        if (!auth || !board_id) {
+        if (!auth) {
           return {
             disabled: true,
-            placeholder:
-              'connect your account first and select workspace board.',
+            placeholder: 'Connect your monday.com account first.',
+            options: [],
+          };
+        }
+        if (!board_id) {
+          return {
+            disabled: true,
+            placeholder: 'Select a board first.',
             options: [],
           };
         }
@@ -106,15 +121,21 @@ auth: mondayAuth,
   item_id: (required = true) =>
     Property.Dropdown({    
 auth: mondayAuth,
-      displayName: 'Item ID',
+      displayName: 'Item',
       required: required,
       refreshers: ['board_id'],
       options: async ({ auth, board_id }) => {
-        if (!auth || !board_id) {
+        if (!auth) {
           return {
             disabled: true,
-            placeholder:
-              'connect your account first and select workspace board.',
+            placeholder: 'Connect your monday.com account first.',
+            options: [],
+          };
+        }
+        if (!board_id) {
+          return {
+            disabled: true,
+            placeholder: 'Select a board first.',
             options: [],
           };
         }
@@ -123,7 +144,7 @@ auth: mondayAuth,
           boardId: board_id as string,
         });
 
-        const items = res.data.boards[0]?.items_page.items;
+        const items = res.data.boards[0]?.items_page.items ?? [];
         return {
           disabled: false,
           options: items.map((item) => {
@@ -138,17 +159,23 @@ auth: mondayAuth,
   columnIds: (required = true) =>
     Property.MultiSelectDropdown({
       auth: mondayAuth,
-      displayName: 'Column IDs',
-      description:
-        'Limit data output by specifying column IDs; leave empty to display all columns.',
+      displayName: 'Columns to Return',
+      description: 'Leave empty to return every column.',
       required,
+      advanced: !required,
       refreshers: ['board_id'],
       options: async ({ auth, board_id }) => {
-        if (!auth || !board_id) {
+        if (!auth) {
           return {
             disabled: true,
-            placeholder:
-              'connect your account first and select workspace board.',
+            placeholder: 'Connect your monday.com account first.',
+            options: [],
+          };
+        }
+        if (!board_id) {
+          return {
+            disabled: true,
+            placeholder: 'Select a board first.',
             options: [],
           };
         }
@@ -173,10 +200,17 @@ auth: mondayAuth,
     required: true,
     refreshers: ['board_id'],
     props: async ({ auth, board_id }) => {
-      if (!auth || !board_id) {
+      if (!auth) {
         return {
           disabled: true,
-          placeholder: 'connect your account first and select workspace board.',
+          placeholder: 'Connect your monday.com account first.',
+          options: [],
+        };
+      }
+      if (!board_id) {
+        return {
+          disabled: true,
+          placeholder: 'Select a board first.',
           options: [],
         };
       }

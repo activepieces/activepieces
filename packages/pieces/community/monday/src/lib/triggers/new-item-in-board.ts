@@ -1,4 +1,6 @@
 import {
+  MarkdownVariant,
+  Property,
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
@@ -14,12 +16,17 @@ export const newItemInBoardTrigger = createTrigger({
   name: 'monday_new_item_in_board',
   classification: 'READ',
   displayName: 'New Item in Board',
-  description: 'Triggers when a new item is created in board.',
+  description: 'Fires when an item is created on a board.',
   aiMetadata: {
     description: 'Fires when a new item (row) is created on the selected monday.com board, enriching the payload with the new item\'s column values. Represents an item-creation event scoped to one board.',
   },
   outputSchema: newItemInBoardTriggerOutputSchema,
   props: {
+    info: Property.MarkDown({
+      value:
+        'Runs for each item created on this board after the flow is published.',
+      variant: MarkdownVariant.INFO,
+    }),
     workspace_id: mondayCommon.workspace_id(true),
     board_id: mondayCommon.board_id(true),
   },

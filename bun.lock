@@ -6354,7 +6354,7 @@
     },
     "packages/pieces/community/monday": {
       "name": "@activepieces/piece-monday",
-      "version": "0.4.2",
+      "version": "0.5.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6366,6 +6366,7 @@
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "5.0.5",
       },
     },
     "packages/pieces/community/mongodb": {
