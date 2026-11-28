@@ -1,0 +1,98 @@
+{
+  "name": "Run details",
+  "flows": [
+    {
+      "displayName": "Run details",
+      "schemaVersion": null,
+      "notes": null,
+      "trigger": {
+        "name": "trigger",
+        "type": "PIECE_TRIGGER",
+        "valid": true,
+        "displayName": "Catch Webhook",
+        "settings": {
+          "pieceName": "@activepieces/piece-webhook",
+          "pieceVersion": "0.1.43",
+          "triggerName": "catch_webhook",
+          "input": {
+            "authType": "none"
+          },
+          "propertySettings": {}
+        },
+        "nextAction": {
+          "name": "step_1",
+          "type": "CODE",
+          "valid": true,
+          "displayName": "Make a token",
+          "settings": {
+            "sourceCode": {
+              "code": "export const code = async () => {\n  return { token: Math.random().toString(36).slice(2) };\n};",
+              "packageJson": "{}"
+            },
+            "input": {},
+            "errorHandlingOptions": {
+              "continueOnFailure": {
+                "value": false
+              },
+              "retryOnFailure": {
+                "value": false
+              }
+            }
+          },
+          "nextAction": {
+            "name": "step_2",
+            "type": "PIECE",
+            "valid": true,
+            "displayName": "Write the token to a file",
+            "settings": {
+              "pieceName": "@activepieces/piece-file-helper",
+              "pieceVersion": "0.3.2",
+              "actionName": "createFile",
+              "input": {
+                "content": "{{step_1['output']['token']}}",
+                "fileName": "token.txt",
+                "encoding": "utf8"
+              },
+              "propertySettings": {},
+              "errorHandlingOptions": {
+                "continueOnFailure": {
+                  "value": false
+                },
+                "retryOnFailure": {
+                  "value": false
+                }
+              }
+            },
+            "nextAction": {
+              "name": "step_3",
+              "type": "CODE",
+              "valid": true,
+              "displayName": "Check the connection",
+              "settings": {
+                "sourceCode": {
+                  "code": "export const code = async (inputs) => {\n  if (!JSON.stringify(inputs.connection).includes('fixed')) {\n    throw new Error('The connection is not fixed');\n  }\n  return { version: 'v1' };\n};",
+                  "packageJson": "{}"
+                },
+                "input": {
+                  "connection": "{{connections['CONNECTION_EXTERNAL_ID']}}"
+                },
+                "errorHandlingOptions": {
+                  "continueOnFailure": {
+                    "value": false
+                  },
+                  "retryOnFailure": {
+                    "value": false
+                  }
+                }
+              },
+              "lastUpdatedDate": "2026-11-16T00:00:00.000Z"
+            },
+            "lastUpdatedDate": "2026-11-16T00:00:00.000Z"
+          },
+          "lastUpdatedDate": "2026-11-16T00:00:00.000Z"
+        },
+        "lastUpdatedDate": "2026-11-16T00:00:00.000Z"
+      }
+    }
+  ]
+}

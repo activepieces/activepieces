@@ -19,10 +19,24 @@ function describeStandardError(
     return null;
   }
   const reported = (friendlyError.apiMessage ?? friendlyError.message).trim();
-  if (reported.length === 0 || isJsonEnvelope(reported)) {
+  if (reported.length === 0) {
     return null;
   }
-  return reported;
+  return isJsonEnvelope(reported) ? messageOfEnvelope(reported) : reported;
+}
+
+function messageOfEnvelope(value: string): string | null {
+  const { data } = tryCatchSync<unknown>(() => JSON.parse(value));
+  if (
+    typeof data !== 'object' ||
+    isNil(data) ||
+    !('message' in data) ||
+    typeof data.message !== 'string'
+  ) {
+    return null;
+  }
+  const message = data.message.trim();
+  return message.length > 0 ? message : null;
 }
 
 function isJsonEnvelope(value: string): boolean {

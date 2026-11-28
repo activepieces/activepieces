@@ -9,6 +9,7 @@
   "dependencies": {},
   "devDependencies": {
     "@faker-js/faker": "10.5.0",
+    "@modelcontextprotocol/sdk": "1.32.0",
     "@playwright/test": "1.64.1",
     "checkly": "6.9.10",
     "dotenv": "17.2.3",

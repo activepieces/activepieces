@@ -1,0 +1,23 @@
+{
+  "Read Word documents (.docx) and fill Word templates in your flow, no Microsoft account needed.": "Lees Word-documenten (.docx) en vul Word-sjablonen in je flow in, zonder Microsoft-account nodig.",
+  "Extract Text": "Tekst uitpakken",
+  "Fill Template": "Sjabloon invullen",
+  "Get the text, headers and footers of a Word document (.docx).": "Haal de tekst, kopteksten en voetteksten van een Word-document (.docx) op.",
+  "Fill the {{placeholders}} in a Word template (.docx) and get a new document.": "Vul de {{placeholders}} in een Word-sjabloon (.docx) in en krijg een nieuw document.",
+  "Word Document": "Word-document",
+  "Password": "Wachtwoord",
+  "Markdown": "Markdown",
+  "Word Template": "Word-sjabloon",
+  "Fields": "Velden",
+  "Data (JSON)": "Gegevens (JSON)",
+  "File Name": "File Name",
+  "Pick a .docx file from an earlier step, such as an email attachment, or paste a URL to download.": "Kies een .docx-bestand uit een eerdere stap, zoals een e-mailbijlage, of plak een URL om te downloaden.",
+  "Only needed when the document is password-protected.": "Alleen nodig wanneer het document met een wachtwoord is beveiligd.",
+  "Type placeholders in your Word template with double braces:\n- `{{name}}` is replaced by the \"name\" value. `{{customer.city}}` reads a nested value.\n- `{{#items}}` ... `{{/items}}` repeats a table row or paragraph for each entry of the \"items\" list. Inside it, use the entry's fields, like `{{description}}`.\n- `{{#paid}}` ... `{{/paid}}` shows the text only when \"paid\" is true; `{{^paid}}` ... `{{/paid}}` only when it is false or empty.": "Typ placeholders in je Word-sjabloon met dubbele accolades:\n- `{{name}}` wordt vervangen door de waarde \"name\". `{{customer.city}}` leest een geneste waarde.\n- `{{#items}}` ... `{{/items}}` herhaalt een tabelrij of alinea voor elk item in de lijst \"items\". Gebruik daarin de velden van het item, zoals `{{description}}`.\n- `{{#paid}}` ... `{{/paid}}` toont de tekst alleen wanneer \"paid\" waar is; `{{^paid}}` ... `{{/paid}}` alleen wanneer het onwaar of leeg is.",
+  "A .docx file with {{placeholders}}, from an earlier step or a URL.": "Een .docx-bestand met {{placeholders}}, uit een eerdere stap of een URL.",
+  "One field per placeholder in the template. They appear once the template is set, or mapped from a step you have tested.": "Eén veld per placeholder in het sjabloon. Ze verschijnen zodra het sjabloon is ingesteld, of gemapt vanuit een stap die je hebt getest.",
+  "Optional. A JSON object with values for the placeholders. It overrides the fields above, and is needed for a list inside a list.": "Optioneel. Een JSON-object met waarden voor de placeholders. Dit overschrijft de bovenstaande velden en is nodig voor een lijst in een lijst.",
+  "Name of the new document. Leave empty to use the template's name.": "Naam van het nieuwe document. Laat leeg om de naam van het sjabloon te gebruiken.",
+  "Document": "Document",
+  "Word Documents": "Word-documenten"
+}

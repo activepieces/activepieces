@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import * as React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
@@ -100,26 +100,20 @@ describe('platform sidebar AI Center', () => {
     ).toEqual([]);
   });
 
-  it('shows Tiers between Providers and Capabilities on cloud', () => {
-    plan.aiProvidersEnabled = true;
-    flags.edition = 'cloud';
+  it.each(['cloud', 'ee'])(
+    'shows Tiers between Providers and Capabilities, then Usage, on %s',
+    (edition) => {
+      plan.aiProvidersEnabled = true;
+      flags.edition = edition;
 
-    renderSidebar();
+      renderSidebar();
 
-    const aiCenter = screen.getByRole('list', { name: 'AI Center' });
-    expect(
-      Array.from(aiCenter.children).map((item) =>
-        item.getAttribute('aria-label'),
-      ),
-    ).toEqual(['Providers', 'Tiers', 'Capabilities']);
-  });
-
-  it('hides Tiers on self-hosted enterprise', () => {
-    plan.aiProvidersEnabled = true;
-    flags.edition = 'ee';
-
-    renderSidebar();
-
-    expect(screen.queryAllByRole('listitem', { name: 'Tiers' })).toEqual([]);
-  });
+      const aiCenter = screen.getByRole('list', { name: 'AI Center' });
+      expect(
+        within(aiCenter)
+          .getAllByRole('listitem')
+          .map((item) => item.getAttribute('aria-label')),
+      ).toEqual(['Providers', 'Tiers', 'Capabilities', 'Usage']);
+    },
+  );
 });

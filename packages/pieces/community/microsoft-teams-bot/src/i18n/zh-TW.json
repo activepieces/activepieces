@@ -1,0 +1,16 @@
+{
+  "Send messages to Teams channels from the Activepieces Bot, once it has been installed into a team.": "Send messages to Teams channels from the Activepieces Bot, once it has been installed into a team.",
+  "Bot App ID": "Bot App ID",
+  "Bot App Secret": "Bot App Secret",
+  "Tenant ID": "Tenant ID",
+  "Your Directory (tenant) ID. Must be the same tenant you use Microsoft Teams from. The bot is single-tenant and cannot post into another tenant.": "Your Directory (tenant) ID. Must be the same tenant you use Microsoft Teams from. The bot is single-tenant and cannot post into another tenant.",
+  "\nRegister a **single-tenant** Azure Bot in your own Microsoft tenant, then paste its credentials below. Microsoft deprecated multi-tenant bots, so the bot must live in the **same tenant** you use Microsoft Teams from. Sign in to the [Azure Portal](https://portal.azure.com) with an admin of that tenant.\n\n📖 **[Full step-by-step guide (bot setup + packaging the Teams app)](https://github.com/activepieces/activepieces/blob/main/packages/pieces/community/microsoft-teams-bot/teams-app/README.md)**: the steps bel": "\n在你自己的 Microsoft tenant 中註冊一個 **單一租戶** Azure Bot，然後將其憑證貼到下方。Microsoft 已棄用多租戶 bot，因此此 bot 必須與你使用 Microsoft Teams 的 **相同 tenant** 中。請使用該 tenant 的管理員登入 [Azure Portal](https://portal.azure.com)。\n\n📖 **[完整逐步指南（bot 設定 + 封裝 Teams app）](https://github.com/activepieces/activepieces/blob/main/packages/pieces/community/microsoft-teams-bot/teams-app/README.md)**：以下步驟是簡短版本。\n\n**1. 建立 Azure Bot**\n- 建立一個 **Azure Bot** 資源 → **定價層級：Free (F0)** → **應用程式類型：單一租戶** → **建立新的 Microsoft App ID**。這會建立 App Registration。\n\n**2. 啟用 Teams 頻道**\n- 在 Bot 資源 → **Channels** → 新增 **Microsoft Teams** 並套用。（沒有這個，安裝 app 會失敗。）\n\n**3. 設定訊息端點**\n在 Bot 資源 → **Configuration** → **Messaging endpoint**，貼上：\n\n```text\n{{frontendUrl}}/api/v1/app-events/microsoft-teams-bot\n```\n\nAzure 需要一個訊息端點。此 app **必須**安裝在該 team 中，傳送才會運作。\n\n**4. 建立密鑰**\n- App Registration → **Certificates & secrets** → **New client secret** → 複製 **Value**（不是 Secret ID）。\n\n**5. 授與 Graph 權限（用於 Team 和 Channel 下拉選單）**\n- App Registration → **API permissions** → **Add → Microsoft Graph → Application permissions** → 新增 `Team.ReadBasic.All` 和 `Channel.ReadBasic.All` → **Grant admin consent**（兩者都必須顯示綠色）。\n\n**6. 在你的 team 中安裝 bot**\n- 封裝你的 Teams app（`manifest.json` 的 `botId` = 此 App ID），並將其加入你要發佈到的 team/channel。直到 bot 成為該 team 的成員前，傳送都會失敗。\n\n然後填入：\n- **Bot App ID**：Application (client) ID\n- **Bot App Secret**：client secret 的 **Value**\n- **Tenant ID**：你的 Directory (tenant) ID",
+  "Send Channel Message as Bot": "Send Channel Message as Bot",
+  "Sends a message to a channel from the Activepieces Bot. The bot must be installed in the team first.": "Sends a message to a channel from the Activepieces Bot. The bot must be installed in the team first.",
+  "Team ID": "Team ID",
+  "Channel ID": "Channel ID",
+  "Content Type": "Content Type",
+  "Message": "Message",
+  "Text": "文本",
+  "HTML": "HTML"
+}

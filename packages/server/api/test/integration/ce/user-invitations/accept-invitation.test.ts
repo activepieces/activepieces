@@ -3,6 +3,7 @@ import { InvitationStatus, InvitationType, PlatformRole } from '@activepieces/sh
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { JwtAudience, jwtUtils } from '../../../../src/app/helper/jwt-utils'
+import { userInvitationsService } from '../../../../src/app/user-invitations/user-invitation.service'
 import { db } from '../../../helpers/db'
 import {
     createMockUserInvitation,
@@ -68,6 +69,24 @@ describe('Accept User Invitation API', () => {
         // assert
         expect(response?.statusCode).toBe(StatusCodes.OK)
         expect(response?.json()?.registered).toBe(true)
+    })
+})
+
+describe('Provisioning a platform invitation', () => {
+    it('keeps the platform owner an admin when an invitation for their email is accepted', async () => {
+        const { mockPlatform, mockOwner, mockUserIdentity } = await mockAndSaveBasicSetup()
+        await db.save('user_invitation', createMockUserInvitation({
+            email: mockUserIdentity.email,
+            platformId: mockPlatform.id,
+            type: InvitationType.PLATFORM,
+            platformRole: PlatformRole.MEMBER,
+            status: InvitationStatus.ACCEPTED,
+        }))
+
+        await userInvitationsService(app!.log).provisionUserInvitation({ email: mockUserIdentity.email })
+
+        const owner = await db.findOneByOrFail<{ platformRole: PlatformRole }>('user', { id: mockOwner.id })
+        expect(owner.platformRole).toBe(PlatformRole.ADMIN)
     })
 })
 

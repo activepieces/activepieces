@@ -7,3 +7,8 @@ export type UsagePoint = {
   current: number | null;
   previous: number | null;
 };
+
+export type UsageChartPoint = UsagePoint & {
+  settled: number | null;
+  live: number | null;
+};

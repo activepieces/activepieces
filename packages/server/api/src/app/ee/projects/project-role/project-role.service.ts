@@ -23,6 +23,20 @@ export const projectRoleService = {
         return projectRole
     },
 
+    async getOneForPlatformOrThrow({ id, platformId }: GetOneForPlatformParams): Promise<ProjectRole> {
+        const projectRole = await projectRoleRepo().findOneBy([
+            { id, platformId: Equal(platformId) },
+            { id, type: RoleType.DEFAULT },
+        ])
+        if (isNil(projectRole)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityType: 'project_role', entityId: id, message: 'Project Role by id not found' },
+            })
+        }
+        return projectRole
+    },
+
     async getOne({ name, platformId, entityManager }: GetOneByNameParams): Promise<ProjectRole | null> {
         return projectRoleRepo(entityManager).createQueryBuilder('projectRole')
             .where('LOWER(projectRole.name) = LOWER(:name)', { name })
@@ -159,4 +173,9 @@ type GetOneByNameParams = {
 
 type GetOneIdParams = {
     id: ApId
+}
+
+type GetOneForPlatformParams = {
+    id: ApId
+    platformId: PlatformId
 }

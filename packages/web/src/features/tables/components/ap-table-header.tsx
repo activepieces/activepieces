@@ -122,7 +122,10 @@ export function ApTableHeader({
         <BreadcrumbSeparator />
         <BreadcrumbItem>
           <BreadcrumbPage>
-            <div className="flex items-center gap-1">
+            <div
+              className="flex items-center gap-1"
+              data-editing={isEditingTableName}
+            >
               <EditableText
                 className="hover:cursor-text"
                 value={table?.name || t('Table Editor')}

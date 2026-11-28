@@ -11,7 +11,11 @@ import { billingUtils, CreditsResetLine } from '../../utils/billing-utils';
 
 const CARD_DATE_FORMAT = 'D MMM YYYY, h:mm A';
 
-export const CreditsCard = ({ info, className }: CreditsCardProps) => {
+export const CreditsCard = ({
+  info,
+  className,
+  footerExtra,
+}: CreditsCardProps) => {
   const { plan, usage } = info;
   const remaining = usage.creditsRemaining;
   const isUnlimited = isNil(remaining);
@@ -24,7 +28,7 @@ export const CreditsCard = ({ info, className }: CreditsCardProps) => {
   const footer = resolveFooter(info);
   const switchesToPlanName =
     info.scheduledPlanName ??
-    (info.billingPortalAvailable ? info.autumnPlanName : t('Free'));
+    (info.hasPaymentMethod ? info.autumnPlanName : t('Free'));
 
   return (
     <div className={cn('flex flex-col rounded-xl border bg-panel', className)}>
@@ -69,6 +73,7 @@ export const CreditsCard = ({ info, className }: CreditsCardProps) => {
           )}
         </div>
       )}
+      {footerExtra}
     </div>
   );
 };
@@ -93,4 +98,5 @@ function resolveFooter(
 type CreditsCardProps = {
   info: PlatformBillingInformation;
   className?: string;
+  footerExtra?: React.ReactNode;
 };

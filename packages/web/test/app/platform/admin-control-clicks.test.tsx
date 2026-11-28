@@ -3,6 +3,7 @@
  */
 /* eslint-disable jest-dom/prefer-in-document -- @testing-library/jest-dom is not a dependency of packages/web */
 import { ApEdition, TelemetryEventName } from '@activepieces/shared';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen } from '@testing-library/react';
 import * as React from 'react';
 import { createPortal } from 'react-dom';
@@ -19,19 +20,22 @@ vi.mock('@/components/providers/telemetry-provider', () => ({
 
 vi.mock('@/hooks/platform-hooks', () => ({
   platformHooks: {
-    useCurrentPlatform: () => ({ platform: { plan: { ssoEnabled: true } } }),
+    useCurrentPlatform: () => ({
+      platform: { plan: { ssoEnabled: true, managePiecesEnabled: true } },
+    }),
   },
 }));
 vi.mock('@/hooks/flags-hooks', () => ({
   flagsHooks: { useFlag: () => ({ data: ApEdition.CLOUD }) },
 }));
-vi.mock('@/features/billing/hooks/billing-dialog-hooks', () => ({
-  billingDialogHooks: {
-    useManagePlanDialogStore: () => ({ openDialog: vi.fn() }),
-  },
+vi.mock('@/hooks/authorization-hooks', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  useIsPlatformAdmin: () => true,
 }));
-vi.mock('@/app/components/platform-layout', () => ({
-  PlatformLayout: ({ children }: React.PropsWithChildren) => <>{children}</>,
+vi.mock('@/app/guards/platform-admin-guard', () => ({
+  PlatformAdminGuard: ({ children }: React.PropsWithChildren) => (
+    <>{children}</>
+  ),
 }));
 vi.mock('@/app/components/page-title', () => ({
   PageTitle: ({ children }: React.PropsWithChildren) => <>{children}</>,
@@ -79,9 +83,15 @@ const PlatformRoutes = () => useRoutes(platformRoutes);
 
 const visit = (url: string) =>
   render(
-    <MemoryRouter initialEntries={[url]}>
-      <PlatformRoutes />
-    </MemoryRouter>,
+    <QueryClientProvider
+      client={
+        new QueryClient({ defaultOptions: { queries: { retry: false } } })
+      }
+    >
+      <MemoryRouter initialEntries={[url]}>
+        <PlatformRoutes />
+      </MemoryRouter>
+    </QueryClientProvider>,
   );
 
 const capturedClicks = () =>

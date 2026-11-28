@@ -16,25 +16,24 @@ import {
   RowDataWithActions,
 } from '@/components/custom/data-table';
 import { FormattedDate } from '@/components/custom/formatted-date';
-import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
+import { StatusBadge } from '@/components/custom/status-badge';
 import { Button } from '@/components/ui/button';
 import { flowApprovalsHooks } from '@/features/flow-approvals';
 import { authenticationSession } from '@/lib/authentication-session';
 
-const stateVariant = (
+const stateIcon = (
   state: FlowApprovalRequestState,
 ): {
-  variant: 'default' | 'success' | 'error';
   Icon: typeof ShieldAlert;
   text: string;
 } => {
   switch (state) {
     case FlowApprovalRequestState.PENDING:
-      return { variant: 'default', Icon: ShieldAlert, text: t('Pending') };
+      return { Icon: ShieldAlert, text: t('Pending') };
     case FlowApprovalRequestState.APPROVED:
-      return { variant: 'success', Icon: CircleCheck, text: t('Approved') };
+      return { Icon: CircleCheck, text: t('Approved') };
     case FlowApprovalRequestState.REJECTED:
-      return { variant: 'error', Icon: CircleX, text: t('Rejected') };
+      return { Icon: CircleX, text: t('Rejected') };
   }
 };
 
@@ -87,8 +86,10 @@ export function ApprovalsPage() {
       accessorKey: 'state',
       header: () => <span>{t('State')}</span>,
       cell: ({ row }) => {
-        const { variant, Icon, text } = stateVariant(row.original.state);
-        return <StatusIconWithText icon={Icon} text={text} variant={variant} />;
+        const { Icon, text } = stateIcon(row.original.state);
+        return (
+          <StatusBadge status={row.original.state} icon={Icon} text={text} />
+        );
       },
     },
     {

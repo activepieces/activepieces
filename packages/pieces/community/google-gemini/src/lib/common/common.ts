@@ -7,21 +7,15 @@ import {
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { googleGeminiAuth } from '../auth';
 
-export const defaultLLM = 'gemini-1.5-flash';
-
-export const allowedLLMs = [
-  'gemini-1.5-flash',
-  'gemini-1.5-flash-8b',
-  'gemini-1.5-pro',
-  'gemini-2.0-flash',
-  'gemini-2.0-flash-lite',
-  'gemini-2.5-flash',
-  'gemini-2.5-pro',
-  'gemini-3-pro'
+const nonTextModelMarkers = [
+  'nano-banana',
+  'live',
+  'native-audio',
+  'transcribe',
+  'robotics',
+  'omni',
+  'computer-use',
 ];
-
-const isAllowedLLM = (model: GeminiModel): boolean =>
-  allowedLLMs.some((allowed) => model.name.startsWith(`models/${allowed}`));
 
 const isTtsModel = (model: GeminiModel): boolean =>
   model.name.toLowerCase().includes('tts') ||
@@ -38,6 +32,19 @@ const isImageModel = (model: GeminiModel): boolean =>
 
 const isEmbeddingModel = (model: GeminiModel): boolean =>
   model.name.toLowerCase().includes('embedding');
+
+const isTextModel = (model: GeminiModel): boolean =>
+  model.name.startsWith('models/gemini-') &&
+  (model.supportedGenerationMethods?.includes('generateContent') ?? false) &&
+  !isTtsModel(model) &&
+  !isImageModel(model) &&
+  !isVeoModel(model) &&
+  !isEmbeddingModel(model) &&
+  !nonTextModelMarkers.some((marker) =>
+    `-${model.name.replace('models/', '').toLowerCase()}-`.includes(
+      `-${marker}-`,
+    ),
+  );
 
 export const listAllModels = async ({
   auth,
@@ -105,7 +112,7 @@ const fetchModelOptions = async ({
 };
 
 export const getGeminiModelOptions = async ({ auth }: { auth?: GeminiAuth }) =>
-  fetchModelOptions({ auth, filter: isAllowedLLM });
+  fetchModelOptions({ auth, filter: isTextModel });
 
 export const getGeminiTtsModelOptions = async ({ auth }: { auth?: GeminiAuth }) =>
   fetchModelOptions({ auth, filter: isTtsModel });
@@ -127,6 +134,8 @@ export const getGeminiEmbeddingModelOptions = async ({
 }: {
   auth?: GeminiAuth;
 }) => fetchModelOptions({ auth, filter: isEmbeddingModel });
+
+export const defaultLLM = 'gemini-3.5-flash';
 
 type GeminiAuth = AppConnectionValueForAuthProperty<typeof googleGeminiAuth>;
 

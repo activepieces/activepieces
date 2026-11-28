@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { readFile } from 'node:fs/promises'
+import { tryCatch } from '@activepieces/core-utils'
 import { CodeSandbox } from '../../core/code/code-sandbox-common'
 
 const ONE_HUNDRED_TWENTY_EIGHT_MEGABYTES = 128
@@ -63,8 +64,9 @@ export const v8IsolateCodeSandbox: CodeSandbox = {
                 isolate,
                 codeContext: JSON.parse(JSON.stringify(scriptContext)),
             })
+            const initialKeys = new Set([...Object.keys(scriptContext), ...Object.keys(functions)])
             const globalSets = new Map<string, Promise<void>>(
-                [...Object.keys(scriptContext), ...Object.keys(functions)].map((key) => [key, Promise.resolve()]),
+                [...initialKeys].map((key) => [key, Promise.resolve()]),
             )
 
             const serializedFunctions = Object.entries(functions).map(([key, value]) => `const ${key} = ${value.toString()};`).join('\n')
@@ -88,6 +90,14 @@ export const v8IsolateCodeSandbox: CodeSandbox = {
                     const newSet = isolateContext.global.set(key, new ivm.ExternalCopy(JSON.parse(JSON.stringify(value))).copyInto())
                     globalSets.set(key, newSet)
                     await newSet
+                },
+                reset: async () => {
+                    const addedKeys = [...globalSets.keys()].filter((key) => !initialKeys.has(key))
+                    await Promise.all(addedKeys.map(async (key) => {
+                        await tryCatch(async () => globalSets.get(key))
+                        globalSets.delete(key)
+                        await isolateContext.global.delete(key)
+                    }))
                 },
                 dispose: () => isolate.dispose(),
             }

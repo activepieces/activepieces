@@ -1,27 +1,24 @@
 import { ApEdition } from '@activepieces/shared';
 import { describe, expect, it } from 'vitest';
 
-import { workerGroupsLock } from '@/features/platform-admin/lib/worker-groups-lock';
+import {
+  WorkerGroupsLockReason,
+  workerGroupsLock,
+} from '@/features/platform-admin/lib/worker-groups-lock';
 
 describe('workerGroupsLock.reason', () => {
   it.each([
-    [ApEdition.CLOUD, false, null, 'cloud'],
-    [ApEdition.CLOUD, true, 'key', 'cloud'],
-    [ApEdition.COMMUNITY, false, null, 'community'],
-    [ApEdition.COMMUNITY, true, null, null],
-    [ApEdition.COMMUNITY, false, 'key', 'community'],
-    [ApEdition.ENTERPRISE, false, null, 'no-license'],
-    [ApEdition.ENTERPRISE, false, 'key', 'not-in-license'],
-    [ApEdition.ENTERPRISE, true, 'key', null],
-    [ApEdition.ENTERPRISE, true, null, null],
+    [ApEdition.CLOUD, false, WorkerGroupsLockReason.CLOUD],
+    [ApEdition.CLOUD, true, WorkerGroupsLockReason.CLOUD],
+    [ApEdition.COMMUNITY, false, WorkerGroupsLockReason.COMMUNITY],
+    [ApEdition.COMMUNITY, true, null],
+    [ApEdition.ENTERPRISE, false, WorkerGroupsLockReason.NOT_IN_PLAN],
+    [ApEdition.ENTERPRISE, true, null],
   ])(
-    'edition %s, enabled %s, license %s → %s',
-    (edition, workerGroupsEnabled, licenseKey, expected) => {
+    'edition %s, enabled %s → %s',
+    (edition, workerGroupsEnabled, expected) => {
       expect(
-        workerGroupsLock.reason({
-          edition,
-          plan: { workerGroupsEnabled, licenseKey },
-        }),
+        workerGroupsLock.reason({ edition, plan: { workerGroupsEnabled } }),
       ).toBe(expected);
     },
   );

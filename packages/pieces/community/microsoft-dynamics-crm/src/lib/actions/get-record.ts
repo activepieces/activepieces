@@ -1,9 +1,7 @@
-import {
-  PiecePropValueSchema,
-  createAction,
-} from '@activepieces/pieces-framework';
+import { Property, createAction } from '@activepieces/pieces-framework';
 import { dynamicsCRMAuth } from '../auth';
-import { DynamicsCRMCommon, makeClient } from '../common';
+import { DynamicsCRMCommon, dynamicsCommonInternals, makeClient } from '../common';
+import { recordOutputSchema } from '../common/output-schemas';
 
 export const getRecordAction = createAction({
   auth: dynamicsCRMAuth,
@@ -11,27 +9,32 @@ export const getRecordAction = createAction({
   classification: 'READ',
   displayName: 'Get Record',
   description: 'Retrieves an existing record.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
-      'Fetches a single record from a chosen Dynamics 365 / Dataverse entity type by its record ID (the entity primary-key GUID). Use to read a specific known record before updating, deleting, or referencing it. Read-only and idempotent.',
+      'Fetches a single record from a chosen Dynamics 365 / Dataverse entity type by its record ID. Read-only and idempotent.',
     idempotent: true,
   },
   props: {
     entityType: DynamicsCRMCommon.entityType(
-      'Select or map the entity name whose records you want to retrieve.'
+      'The table of the record to retrieve.'
     ),
     recordId: DynamicsCRMCommon.recordId,
+    includeFormattedValues: Property.Checkbox({
+      displayName: 'Include Readable Values',
+      description:
+        'Also return display text as <column>_formatted fields, for example statuscode_formatted = "Active".',
+      required: false,
+      defaultValue: false,
+      advanced: true,
+    }),
   },
+  outputSchema: recordOutputSchema,
   async run(context) {
-    const { entityType, recordId } = context.propsValue;
-
-    const entityUrlPath = entityType as string;
-
-    const client = makeClient(
-      context.auth
-    );
-
-    return await client.getRecord(entityUrlPath, recordId);
+    const { entityType, recordId, includeFormattedValues } = context.propsValue;
+    const formatted = includeFormattedValues === true;
+    const client = makeClient(context.auth);
+    const record = await client.getRecord({ entitySet: entityType, recordId, formatted });
+    return dynamicsCommonInternals.shapeGenericRecord({ client, entitySet: entityType, record });
   },
 });

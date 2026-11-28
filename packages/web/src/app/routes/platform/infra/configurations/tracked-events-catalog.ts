@@ -107,6 +107,14 @@ const buildEventLabels = (): Record<TelemetryEventName, TrackedEvent> => ({
     group: 'accounts',
     label: t('Invitation accepted'),
   },
+  [TelemetryEventName.INVITE_REWARD_OFFER_CLICKED]: {
+    group: 'accounts',
+    label: t('Clicked the invite reward offer'),
+  },
+  [TelemetryEventName.INVITE_REWARD_GRANTED]: {
+    group: 'accounts',
+    label: t('Earned invite reward credits'),
+  },
   [TelemetryEventName.CHECKOUT_STARTED]: {
     group: 'billing',
     label: t('Checkout started'),
@@ -126,6 +134,14 @@ const buildEventLabels = (): Record<TelemetryEventName, TrackedEvent> => ({
   [TelemetryEventName.TRIAL_STARTED]: {
     group: 'billing',
     label: t('Trial started'),
+  },
+  [TelemetryEventName.TRIAL_ENDED]: {
+    group: 'billing',
+    label: t('Trial ended'),
+  },
+  [TelemetryEventName.TRIAL_SEATS_DEACTIVATED]: {
+    group: 'billing',
+    label: t('Users deactivated after the trial'),
   },
   [TelemetryEventName.SALES_HANDOFF_CLICKED]: {
     group: 'billing',

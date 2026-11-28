@@ -5,14 +5,14 @@ import {
 import { t } from 'i18next';
 import { CircleAlert, CircleCheck, LucideIcon, Play } from 'lucide-react';
 
-function getStatusIcon(status: AgentConversationStatus): AgentRunStatusIcon {
+function getStatusIcon(status: AgentConversationStatus): LucideIcon {
   switch (status) {
     case AgentConversationStatus.STREAMING:
-      return { Icon: Play, variant: 'default' };
+      return Play;
     case AgentConversationStatus.ERROR:
-      return { Icon: CircleAlert, variant: 'error' };
+      return CircleAlert;
     case AgentConversationStatus.IDLE:
-      return { Icon: CircleCheck, variant: 'default' };
+      return CircleCheck;
   }
 }
 
@@ -39,9 +39,4 @@ export const agentRunUtils = {
   getStatusIcon,
   getStatusLabel,
   getDurationMs,
-};
-
-export type AgentRunStatusIcon = {
-  Icon: LucideIcon;
-  variant: 'default' | 'error' | 'success';
 };

@@ -41,15 +41,18 @@ async function connectMcpClient({ mcpCredentials, conversationId, log }: {
 
     const { mcpServerUrl, mcpToken } = mcpCredentials
 
-    const { data: client, error } = await tryCatch(async () => createMCPClient({
-        transport: {
-            type: 'http',
-            url: mcpServerUrl,
-            headers: {
-                'Authorization': `Bearer ${mcpToken}`,
-                [CONVERSATION_ID_HEADER]: conversationId,
+    const { data: client, error } = await tryCatch(() => retryOnceOnServerError({
+        fn: () => createMCPClient({
+            transport: {
+                type: 'http',
+                url: mcpServerUrl,
+                headers: {
+                    'Authorization': `Bearer ${mcpToken}`,
+                    [CONVERSATION_ID_HEADER]: conversationId,
+                },
             },
-        },
+        }),
+        log,
     }))
 
     if (!client) {
@@ -57,7 +60,11 @@ async function connectMcpClient({ mcpCredentials, conversationId, log }: {
         return { mcpClient: null, mcpToolSet: {} }
     }
 
-    const allMcpTools = await client.tools()
+    const { data: allMcpTools, error: listError } = await tryCatch(() => retryOnceOnServerError({ fn: () => client.tools(), log }))
+    if (!allMcpTools) {
+        await client.close().catch(() => undefined)
+        throw listError
+    }
     const mcpToolSet: Record<string, unknown> = {}
     for (const [name, tool] of Object.entries(allMcpTools)) {
         if (!agentToolPhases.isAgentHiddenTool(name)) {
@@ -65,6 +72,20 @@ async function connectMcpClient({ mcpCredentials, conversationId, log }: {
         }
     }
     return { mcpClient: client, mcpToolSet }
+}
+
+async function retryOnceOnServerError<T>({ fn, log }: {
+    fn: () => Promise<T>
+    log: FastifyBaseLogger
+}): Promise<T> {
+    return fn().catch((error: unknown) => {
+        const isServerError = (extractErrorStatus(error) ?? 0) >= 500
+        if (!isServerError) {
+            throw error
+        }
+        log.warn({ error }, 'Platform MCP request hit a server error, retrying once')
+        return fn()
+    })
 }
 
 function mcpAuthSecrets(auth: McpAuthConfig): string[] {

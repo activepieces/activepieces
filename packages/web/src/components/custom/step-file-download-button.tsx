@@ -30,6 +30,7 @@ export function StepFileDownloadButton({
         disabled={isExpired}
         onClick={() => downloadStepFile({ fileUrl, fileName })}
         className="flex items-center gap-2 p-2 max-h-[20px] text-xs"
+        data-testid="step-file-download"
       >
         {isExpired ? (
           <EyeOff className="w-4 h-4" />

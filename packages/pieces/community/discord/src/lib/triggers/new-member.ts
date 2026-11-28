@@ -1,9 +1,7 @@
 import {
   DedupeStrategy,
   HttpMethod,
-  HttpRequest,
   Polling,
-  httpClient,
   pollingHelper,
 } from '@activepieces/pieces-common';
 import {
@@ -14,6 +12,7 @@ import {
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import { discordAuth } from '../auth';
+import { discordCommon } from '../common';
 import { discordNewMemberTriggerOutputSchema } from '../output-schemas';
 
 interface Member {
@@ -26,27 +25,22 @@ interface Member {
   joined_at: string;
 }
 
-const polling: Polling<AppConnectionValueForAuthProperty<typeof discordAuth>, { guildId: string | undefined; limit: number }> =
+const MEMBERS_PAGE_SIZE = 1000;
+
+const polling: Polling<AppConnectionValueForAuthProperty<typeof discordAuth>, { guildId: string | undefined }> =
   {
     strategy: DedupeStrategy.TIMEBASED,
-    items: async ({ auth, propsValue: { guildId, limit } }) => {
+    items: async ({ auth, propsValue: { guildId } }) => {
       if (!guildId) return [];
 
-      const request: HttpRequest = {
-        method: HttpMethod.GET,
-        url: `https://discord.com/api/v9/guilds/${guildId}/members?limit=${limit}`,
-        headers: {
-           Authorization: 'Bot ' + auth.secret_text,
-        },
-      };
-
-      const res = await httpClient.sendRequest<Member[]>(request);
-
-      const items = res.body;
-      return items.map((item) => ({
-        epochMilliSeconds: dayjs(item.joined_at).valueOf(),
-        data: item,
-      }));
+      const scanStartedAt = Date.now();
+      const members = await listAllMembers({ auth, guildId });
+      return members
+        .map((item) => ({
+          epochMilliSeconds: dayjs(item.joined_at).valueOf(),
+          data: item,
+        }))
+        .filter((item) => item.epochMilliSeconds <= scanStartedAt);
     },
   };
 
@@ -69,41 +63,47 @@ export const newMember = createTrigger({
       placeholder: '123456789012345678',
       required: true,
     }),
-    limit: Property.Number({
-      displayName: 'Limit',
-      description: 'Most recent members checked each poll, up to 1000.',
-      required: false,
-      defaultValue: 50,
-      display: 'stepper',
-      min: 1,
-      max: 1000,
-      step: 1,
-      advanced: true,
-    }),
   },
   sampleData: {},
   onEnable: async (context) => {
-    await pollingHelper.onEnable(polling, { ...context, propsValue: {
-        guildId: context.propsValue.guildId,
-        limit: context.propsValue.limit ?? 50,
-      } });
+    await pollingHelper.onEnable(polling, { ...context, propsValue: { guildId: context.propsValue.guildId } });
   },
   onDisable: async (context) => {
-    await pollingHelper.onDisable(polling, { ...context, propsValue: {
-        guildId: context.propsValue.guildId,
-        limit: context.propsValue.limit ?? 50,
-      } });
+    await pollingHelper.onDisable(polling, { ...context, propsValue: { guildId: context.propsValue.guildId } });
   },
   run: async (context) => {
-    return await pollingHelper.poll(polling, { ...context, propsValue: {
-        guildId: context.propsValue.guildId,
-        limit: context.propsValue.limit ?? 50,
-      } });
+    return await pollingHelper.poll(polling, { ...context, propsValue: { guildId: context.propsValue.guildId } });
   },
   test: async (context) => {
-    return await pollingHelper.test(polling, { ...context, propsValue: {
-        guildId: context.propsValue.guildId,
-        limit: context.propsValue.limit ?? 50,
-      } });
+    return await pollingHelper.test(polling, { ...context, propsValue: { guildId: context.propsValue.guildId } });
   },
 });
+
+async function listAllMembers({
+  auth,
+  guildId,
+  after,
+}: {
+  auth: AppConnectionValueForAuthProperty<typeof discordAuth>;
+  guildId: string;
+  after?: string;
+}): Promise<Member[]> {
+  const res = await discordCommon.sendWithRateLimitRetry<Member[]>({
+    request: {
+      method: HttpMethod.GET,
+      url: `https://discord.com/api/v9/guilds/${guildId}/members`,
+      queryParams: {
+        limit: String(MEMBERS_PAGE_SIZE),
+        ...(after ? { after } : {}),
+      },
+      headers: {
+         Authorization: 'Bot ' + auth.secret_text,
+      },
+    },
+  });
+  if (res.body.length < MEMBERS_PAGE_SIZE) {
+    return res.body;
+  }
+  const rest = await listAllMembers({ auth, guildId, after: res.body[res.body.length - 1].user.id });
+  return [...res.body, ...rest];
+}

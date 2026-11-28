@@ -23,7 +23,6 @@ import {
   AdminEmpty,
   AdminPage,
   AdminPageHeader,
-  LockedCallout,
   StatusDot,
   adminPageResources,
   adminSurface,
@@ -35,11 +34,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { RequestTrial } from '@/features/billing';
+import { LockedFeatureRow } from '@/features/billing';
 import { workerGroupsLock, workersQueries } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { useTimeAgo } from '@/hooks/use-time-ago';
+import { WorkerHealth } from '@/lib/statuses';
 import { cn } from '@/lib/utils';
 
 import { SandboxesPopover } from './sandboxes-popover';
@@ -78,20 +78,13 @@ export default function WorkersPage({ section }: WorkersPageProps) {
       {section === 'health' &&
         isCloud &&
         fleetType === WorkerMachineType.SHARED && (
-          <LockedCallout
-            variant="inline"
-            icon={<Zap />}
-            title={t('Upgrade to Dedicated Workers')}
-            description={t(
-              'Your automations run on shared workers where strict sandboxing adds overhead to every execution. Dedicated workers give you your own execution pool that stays warm and ready, so your automations start much faster.',
+          <LockedFeatureRow
+            unlocked={platform.plan.workerGroupsEnabled}
+            featureKey="DEDICATED_WORKERS"
+            line={t(
+              'Dedicated workers are locked. Your automations run on shared workers.',
             )}
-          >
-            <RequestTrial
-              featureKey="DEDICATED_WORKERS"
-              buttonVariant="default"
-              buttonSize="sm"
-            />
-          </LockedCallout>
+          />
         )}
       {section === 'health' &&
         isCloud &&
@@ -264,7 +257,9 @@ function WorkerCard({ worker, index }: WorkerCardProps) {
                   )}
             </TooltipContent>
           </Tooltip>
-          <StatusDot tone={isOnline ? 'success' : 'danger'}>
+          <StatusDot
+            status={isOnline ? WorkerHealth.ONLINE : WorkerHealth.OFFLINE}
+          >
             {isOnline ? t('Online') : t('Offline')}
           </StatusDot>
           <WorkerConfigsPopover workerProps={workerProps} />

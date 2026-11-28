@@ -1,6 +1,7 @@
 import { activeCampaignAuth } from '../../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { activecampaignCommon, makeClient } from '../../common';
+import { addContactToAccountOutputSchema } from '../../common/output-schemas';
 
 export const addContactToAccountAction = createAction({
 	auth: activeCampaignAuth,
@@ -8,8 +9,9 @@ export const addContactToAccountAction = createAction({
 	classification: 'WRITE',
 	displayName: 'Add Contact to Account',
 	description: 'Adds a contact to an ActiveCampaign account.',
-	audience: 'both',
-	aiMetadata: { description: 'Associates an existing contact with an existing account (CRM organization), optionally recording the contact\'s job title at that account. Use when linking a person to a company already in the CRM. Requires both the contact ID and account ID; not idempotent, as each call creates a new association record.', idempotent: false },
+	audience: 'human',
+	aiMetadata: { description: 'Associates an existing contact with an existing account (CRM organization), optionally recording the contact\'s job title at that account. Use when linking a person to a company already in the CRM. Requires both the contact ID and account ID. Not idempotent: repeating it for a contact that is already associated is not a no-op and may fail.', idempotent: false },
+	outputSchema: addContactToAccountOutputSchema,
 	props: {
 		contactId: activecampaignCommon.contactId,
 		accountId: activecampaignCommon.accountId,
@@ -23,10 +25,6 @@ export const addContactToAccountAction = createAction({
 
 		const client = makeClient(context.auth.props);
 
-		return await client.createAccountContactAssociation(
-			Number(contactId),
-			Number(accountId),
-			jobTitle,
-		);
+		return (await client.createAccountContactAssociation({ contactId: Number(contactId), accountId: Number(accountId), jobTitle })).body;
 	},
 });

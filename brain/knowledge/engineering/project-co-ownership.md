@@ -4,7 +4,7 @@ icon: 🤝
 
 # Project Co-Ownership
 
-How an Engineering project gets a second engineer who approves the scope before the build and reviews every PR. The approach goes public before the build, so a concern comes while it is still cheap. Tracked in the Linear project P-ENG-361; in a pilot of two projects that ends on 2026-12-04.
+How an Engineering project gets a second engineer who approves the scope before the build and reviews every PR. The approach goes public before the build, so a concern comes while it is still cheap. Tracked in the Linear project P-ENG-361.
 
 **Co-owned project** — a Linear project with a label from the `Co-Owner` project label group. The group is single-select, so a project has one Co-Owner. A project without such a label keeps the old process.
 **Co-Owner label** — one label per engineer in the `Co-Owner` group, named `<Name> (@github-login)`. It names the Co-Owner, shows in the projects list, and gives agents the reviewer login. Add a label when an engineer first becomes a Co-Owner.
@@ -83,10 +83,6 @@ Start reading at: <file>
 - The breaking-change and security boxes are true.
 - No plan flag, setting, edition branch, special case or second code path that the cost check did not declare.
 
-## Pilot
-
-Two projects, ending 2026-12-04. For each concern, record where it first appears: in the approach note or in a PR. The process works when concerns move to the approach note. Also count each merge with no Co-Owner approval. If no engineer outside the project comments in the Discord posts, drop the window and keep the Co-Owner. At the end, the team keeps or removes the agent rule in `.claude/rules/linear-tickets.md`.
-
 ## Edge cases
 
 - **Co-Owner silent on a PR for 2 business days** — the Owner pings once; on day 3, one code owner of the area reviews that PR only. The Co-Owner reads it after the merge.
@@ -102,7 +98,7 @@ Two projects, ending 2026-12-04. For each concern, record where it first appears
 - **Two areas changed** — the Co-Owner comes from the area with the most change. A PR in the other area also needs that area's code owner.
 - **Large PR (migration, generated code)** — allowed; the PR body says why and names the file to read first.
 - **Work fits in one PR, a single bug, or a hotfix** — not a project. No Co-Owner and no gate: agents treat the ticket as approved in any status. Round-robin review.
-- **Rushed feature** — the gate stays but can be same-day on a short note; the window and the demo can be skipped when the PM or a founder asks and the Owner and Co-Owner agree. Decisions records each skip, and each skip gets a follow-up ticket.
+- **Rushed feature** — the project gets no Co-Owner label, so it skips the gate and the Co-Owner review. Every other gate stays. The skip needs no record.
 
 ## Gotchas
 
@@ -110,10 +106,10 @@ Two projects, ending 2026-12-04. For each concern, record where it first appears
 - The gate works on trust. Anyone can change a project label or status, and Linear does not show agents who did. An agent never changes the status, labels or description of a co-owned project, because the Linear MCP writes as the engineer. The Co-Owner's PR review is the backstop.
 - Other projects also use Ready for Development. The status means "Co-Owner approved" only on a project with a Co-Owner label.
 - The gate fails closed: an agent that cannot read the project, its labels or its status stops.
-- The ruleset accepts any code-owner approval, so GitHub does not enforce the Co-Owner. The pilot counts merges without one.
+- The ruleset accepts any code-owner approval, so GitHub does not enforce the Co-Owner.
 - GitHub round-robin picks a reviewer the moment the PR opens, before any Co-Owner request can exist, so "Count existing requests" never prevents it. The `Linear ticket check` workflow removes that pick: the first user request within 5 seconds after a team request, unless it is the Co-Owner. An author's own `--reviewer` request lands after the pick, so it stays. GitHub has already notified the pick, so the removal does not stop that email.
 - The workflow removes nothing when the Co-Owner is the author, when the Co-Owner is not in every requested team (the ruleset needs a code owner of each team), or when someone requested the pick again later.
-- The workflow cannot read team membership, so `TEAM_MEMBERS` in `tools/scripts/request-co-owner-review.ts` copies it. When a team changes, update the list from `gh api orgs/activepieces/teams/<team>/members`. A missing login fails safe: the pick stays. Delete the removal code when the pilot ends.
+- The workflow cannot read team membership, so `TEAM_MEMBERS` in `tools/scripts/request-co-owner-review.ts` copies it. When a team changes, update the list from `gh api orgs/activepieces/teams/<team>/members`. A missing login fails safe: the pick stays.
 - A Co-Owner without write access is skipped as a code owner, so the PR cannot merge on that approval.
 - An agent reads a Discord post only through the `read` tool of the Discord MCP server, when its engineer has connected it (see *discord-questions*). A window result or a concern reaches Linear only through `/decide` or the `decide` tool.
 - A concern in a private message does not count. Only the Discord post of the approach note, or the PR, is on the record.

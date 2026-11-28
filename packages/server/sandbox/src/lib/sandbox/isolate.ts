@@ -91,7 +91,7 @@ export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDire
                 .map(([key, value]) => `--env=${key}=${value}`)
 
             const dirArgs = mounts.map((m) => {
-                const suffix = m.rw ? ':rw' : m.optional ? ':maybe' : ''
+                const suffix = m.rw ? ':rw:noexec' : m.optional ? ':maybe' : ''
                 return `--dir=${m.sandboxPath}=${m.hostPath}${suffix}`
             })
 
@@ -109,7 +109,7 @@ export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDire
                 '--dir=/dev=/dev:dev',
                 // isolate uses /box internally as its initial working dir, even when --chdir overrides it.
                 // With --no-default-dirs that auto-mount disappears, so we add it back explicitly.
-                `--dir=/box=/var/local/lib/isolate/${boxId}/box:rw`,
+                `--dir=/box=/var/local/lib/isolate/${boxId}/box:rw:noexec`,
                 ...dirArgs,
                 '--share-net',
                 `--box-id=${boxId}`,

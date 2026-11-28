@@ -1,15 +1,13 @@
 import { Property, createTrigger } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import dayjs from 'dayjs';
 import { getHubspotAccessToken, hubspotAuth } from '../auth';
-import { isNil } from '@activepieces/pieces-framework';
+import { hubspotPolling } from '../common/polling';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
-import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE, MAX_SEARCH_TOTAL_RESULTS } from '../common/constants';
+import { OBJECT_TYPE } from '../common/constants';
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
 
 import { Client } from '@hubspot/api-client';
-import { FilterOperatorEnum } from '../common/types';
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 
 type Props = {
@@ -17,60 +15,24 @@ type Props = {
 };
 
 import { crmObjectOutputSchema } from '../output-schemas';
-const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
+const polling = {
 	strategy: DedupeStrategy.TIMEBASED,
-	async items({ auth, propsValue, lastFetchEpochMS }) {
+	async items({ auth, propsValue, lastFetchEpochMS, store }) {
 		const client = new Client({ accessToken: getHubspotAccessToken(auth), numberOfApiCallRetries: 3 });
 
 		const additionalProperties = propsValue.additionalPropertiesToRetrieve ?? [];
 		const defaultTaskProperties = getDefaultPropertiesForObject(OBJECT_TYPE.TASK);
 		const propertiesToRetrieve = [...defaultTaskProperties, ...additionalProperties];
 
-		const items = [];
-		let after: string | undefined;
-
-		do {
-			const isTest = lastFetchEpochMS === 0;
-			const response = await client.crm.objects.tasks.searchApi.doSearch({
-				limit: isTest ? 10 : MAX_SEARCH_PAGE_SIZE,
-				after,
-				properties: propertiesToRetrieve,
-				sorts: ['-hs_createdate'],
-				filterGroups: isTest
-					? []
-					: [
-							{
-								filters: [
-									{
-										propertyName: 'hs_createdate',
-										operator: FilterOperatorEnum.Gt,
-										value: lastFetchEpochMS.toString(),
-									},
-								],
-							},
-					  ],
-			});
-			after = response.paging?.next?.after;
-			items.push(...response.results);
-
-			// Stop fetching if it's a test
-			if (isTest) break;
-
-			// Stop fetching if it exceeds max search results or will encounter 400 status
-			if (
-				!isNil(after) &&
-				parseInt(after) + MAX_SEARCH_PAGE_SIZE > MAX_SEARCH_TOTAL_RESULTS
-			) {
-				break;
-			}
-		} while (after);
-
-		return items.map((item) => ({
-			epochMilliSeconds: dayjs(item.properties['hs_createdate']).valueOf(),
-			data: item,
-		}));
+		return hubspotPolling.pollSearchTrigger({
+			store,
+			search: (request) => client.crm.objects.tasks.searchApi.doSearch(request),
+			timestampProperty: 'hs_createdate',
+			lastFetchEpochMS,
+			properties: propertiesToRetrieve,
+		});
 	},
-};
+} satisfies Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props>;
 
 export const newTaskTrigger = createTrigger({
 	auth: hubspotAuth,
@@ -104,49 +66,33 @@ Pick more below.`,
 		await pollingHelper.onDisable(polling, context);
 	},
 	async test(context) {
-		return await pollingHelper.test(polling, context);
+		return hubspotPolling.sampleOldestToNewest({ items: await pollingHelper.test(polling, context) });
 	},
 	async run(context) {
-		return await pollingHelper.poll(polling, context);
+		return await hubspotPolling.poll({ polling, context });
 	},
 
 	sampleData: {
-		results: [
-			{
-				id: '18156543966',
-				properties: {
-					hs_created_by: '5605286',
-					hs_created_by_user_id: '5605286',
-					hs_createdate: '2023-06-13T09:42:37.557Z',
-					hs_modified_by: '5605286',
-					hs_num_associated_companies: '0',
-					hs_num_associated_contacts: '1',
-					hs_num_associated_deals: '0',
-					hs_num_associated_tickets: '0',
-					hs_product_name: null,
-					hs_read_only: null,
-					hs_repeat_status: null,
-					hs_task_body: null,
-					hs_task_completion_count: '0',
-					hs_task_completion_date: null,
-					hs_task_is_all_day: 'false',
-					hs_task_is_completed: '0',
-					hs_task_is_completed_call: '0',
-					hs_task_is_completed_email: '0',
-					hs_task_is_completed_linked_in: '0',
-					hs_task_is_completed_sequence: '0',
-					hs_task_repeat_interval: null,
-					hs_task_status: 'NOT_STARTED',
-					hs_task_subject: 'My Test Task',
-					hs_task_type: 'TODO',
-					hs_updated_by_user_id: '5605286',
-					hubspot_owner_id: '1041576162',
-					hs_timestamp: '2023-06-16T05:00:00Z',
-				},
-				createdAt: '2023-06-13T09:42:37.557Z',
-				updatedAt: '2023-06-13T10:03:41.073Z',
-				archived: false,
-			},
-		],
+		id: '18156543966',
+		properties: {
+			hs_created_by: '5605286',
+			hs_createdate: '2023-06-13T09:42:37.557Z',
+			hs_lastmodifieddate: '2023-06-13T10:03:41.073Z',
+			hs_object_id: '18156543966',
+			hs_repeat_status: null,
+			hs_task_body: null,
+			hs_task_completion_date: null,
+			hs_task_is_completed: '0',
+			hs_task_priority: 'NONE',
+			hs_task_status: 'NOT_STARTED',
+			hs_task_subject: 'My Test Task',
+			hs_task_type: 'TODO',
+			hs_queue_membership_ids: null,
+			hubspot_owner_id: '1041576162',
+			hs_timestamp: '2023-06-16T05:00:00Z',
+		},
+		createdAt: '2023-06-13T09:42:37.557Z',
+		updatedAt: '2023-06-13T10:03:41.073Z',
+		archived: false,
 	},
 });

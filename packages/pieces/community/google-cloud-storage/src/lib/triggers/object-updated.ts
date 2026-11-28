@@ -41,7 +41,7 @@ export const objectUpdated = createTrigger({
   },
   onEnable: async (context) => {
     const { projectId, bucket, prefix } = context.propsValue;
-    const auth = context.auth;
+    const accessToken = await gcsCommon.getAccessToken({ auth: context.auth, server: context.server });
 
     // Generate unique names for this trigger instance
     const triggerId = `ap-gcs-update-${bucket}-${Date.now()}`;
@@ -53,7 +53,7 @@ export const objectUpdated = createTrigger({
       await gcsCommon.makePubSubRequest(
         HttpMethod.PUT,
         `/projects/${projectId}/topics/${triggerId}`,
-        auth.access_token
+        accessToken
       );
 
       // 2. Create GCS notification configuration for metadata updates
@@ -70,7 +70,7 @@ export const objectUpdated = createTrigger({
       const notificationResponse = await gcsCommon.makeGCSRequest(
         HttpMethod.POST,
         `/b/${bucket}/notificationConfigs`,
-        auth.access_token,
+        accessToken,
         notificationConfig
       );
 
@@ -86,7 +86,7 @@ export const objectUpdated = createTrigger({
       await gcsCommon.makePubSubRequest(
         HttpMethod.PUT,
         `/projects/${projectId}/subscriptions/${triggerId}`,
-        auth.access_token,
+        accessToken,
         subscriptionConfig
       );
 
@@ -103,7 +103,7 @@ export const objectUpdated = createTrigger({
         await gcsCommon.makePubSubRequest(
           HttpMethod.DELETE,
           `/projects/${projectId}/subscriptions/${triggerId}`,
-          auth.access_token
+          accessToken
         );
       } catch (e) { /* ignore */ }
 
@@ -111,11 +111,11 @@ export const objectUpdated = createTrigger({
         await gcsCommon.makePubSubRequest(
           HttpMethod.DELETE,
           `/projects/${projectId}/topics/${triggerId}`,
-          auth.access_token
+          accessToken
         );
       } catch (e) { /* ignore */ }
 
-      throw new Error(`Failed to setup Pub/Sub notifications: ${(error as any)?.message || 'Unknown error'}`);
+      throw new Error(`Failed to setup Pub/Sub notifications: ${gcsCommon.describeApiError(error)}`);
     }
   },
   onDisable: async (context) => {
@@ -124,7 +124,7 @@ export const objectUpdated = createTrigger({
 
     const { projectId } = context.propsValue;
     const { bucket } = context.propsValue;
-    const auth = context.auth;
+    const accessToken = await gcsCommon.getAccessToken({ auth: context.auth, server: context.server });
 
     // Clean up in reverse order
     try {
@@ -132,7 +132,7 @@ export const objectUpdated = createTrigger({
       await gcsCommon.makePubSubRequest(
         HttpMethod.DELETE,
         `/projects/${projectId}/subscriptions/${triggerData.subscriptionName}`,
-        auth.access_token
+        accessToken
       );
     } catch (e) { /* ignore */ }
 
@@ -141,7 +141,7 @@ export const objectUpdated = createTrigger({
       await gcsCommon.makeGCSRequest(
         HttpMethod.DELETE,
         `/b/${bucket}/notificationConfigs/${triggerData.notificationId}`,
-        auth.access_token
+        accessToken
       );
     } catch (e) { /* ignore */ }
 
@@ -150,7 +150,7 @@ export const objectUpdated = createTrigger({
       await gcsCommon.makePubSubRequest(
         HttpMethod.DELETE,
         `/projects/${projectId}/topics/${triggerData.topicName}`,
-        auth.access_token
+        accessToken
       );
     } catch (e) { /* ignore */ }
   },

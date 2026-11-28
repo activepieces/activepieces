@@ -162,4 +162,30 @@ describe('oauth2Util.buildAuthorizationUrl', () => {
         const url = new URL(result.authorizationUrl)
         expect(url.searchParams.has('scope')).toBe(false)
     })
+
+    it('omits scope from the authorize url when the optional scope prop is only whitespace', async () => {
+        mockGetOrThrow.mockResolvedValue({
+            auth: {
+                type: PropertyType.OAUTH2,
+                authUrl: 'https://as.example.com/authorize',
+                tokenUrl: 'https://as.example.com/token',
+                scope: ['{scopes}'],
+                props: {
+                    scopes: { required: false, displayName: 'Scopes' },
+                },
+            },
+        })
+        mockResolveString.mockResolvedValue('client-id')
+
+        const result = await util.buildAuthorizationUrl({
+            platformId: 'platform',
+            pieceName: 'piece',
+            clientId: 'client-id',
+            redirectUrl: 'https://redirect',
+            props: { scopes: '   ' },
+        } as never)
+
+        const url = new URL(result.authorizationUrl)
+        expect(url.searchParams.has('scope')).toBe(false)
+    })
 })

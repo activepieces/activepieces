@@ -1,5 +1,58 @@
 import { CUSTOM_FIELD_TYPE } from './constants';
 
+function isRecord(value: unknown): value is UnknownRecord {
+	return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function recordAt({ value, key }: { value: unknown; key: string }): UnknownRecord | undefined {
+	if (!isRecord(value)) {
+		return undefined;
+	}
+	const inner = value[key];
+	return isRecord(inner) ? inner : undefined;
+}
+
+function recordsAt({ value, key }: { value: unknown; key: string }): UnknownRecord[] {
+	if (!isRecord(value)) {
+		return [];
+	}
+	const inner = value[key];
+	return Array.isArray(inner) ? inner.filter(isRecord) : [];
+}
+
+function textAt({ value, key }: { value: unknown; key: string }): string | undefined {
+	if (!isRecord(value)) {
+		return undefined;
+	}
+	const inner = value[key];
+	if (typeof inner === 'string') {
+		return inner;
+	}
+	if (typeof inner === 'number' && Number.isFinite(inner)) {
+		return String(inner);
+	}
+	return undefined;
+}
+
+function pick({ record, keys }: { record: UnknownRecord | undefined; keys: readonly string[] }): UnknownRecord {
+	const picked: UnknownRecord = {};
+	if (!record) {
+		return picked;
+	}
+	for (const key of keys) {
+		if (record[key] !== undefined) {
+			picked[key] = record[key];
+		}
+	}
+	return picked;
+}
+
+export const acData = { isRecord, recordAt, recordsAt, textAt, pick };
+
+export type UnknownRecord = Record<string, unknown>;
+
+export type CustomFieldValue = string | number | boolean | string[];
+
 export type CreateWebhookRequest = {
 	name: string;
 	url: string;
@@ -31,7 +84,7 @@ export type CreateAccountRequest = {
 	accountUrl?: string;
 	fields?: {
 		customFieldId: number;
-		fieldValue: any;
+		fieldValue: unknown;
 	}[];
 };
 
@@ -42,32 +95,10 @@ export type CreateContactRequest = {
 	phone?: string;
 	fieldValues: {
 		field: string;
-		value: any;
-	}[];
-};
-export type ListAccountsResponse = {
-	accounts: {
-		name: string;
-		id: string;
+		value: unknown;
 	}[];
 };
 
-export type ListContactsResponse = {
-	contacts: {
-		email: string;
-		firstName: string;
-		lastName: string;
-		id: string;
-	}[];
-};
-
-export type ListTagsResponse = {
-	tags: {
-		tagType: string;
-		tag: string;
-		id: string;
-	}[];
-};
 export type AccountCustomFieldsResponse = {
 	id: string;
 	fieldLabel: string;
@@ -77,7 +108,29 @@ export type AccountCustomFieldsResponse = {
 	fieldDefault?: number | string | string[];
 };
 
+export type ContactCustomField = {
+	id: string;
+	title: string;
+	type: CUSTOM_FIELD_TYPE;
+	perstag?: string;
+};
+
+export type ContactFieldOption = {
+	field: string;
+	value: string;
+	label: string;
+	id: string;
+};
+
 export type ContactCustomFieldsResponse = {
-	fieldOptions: { field: string; value: string; label: string; id: string }[];
-	fields: { id: string; title: string; type: CUSTOM_FIELD_TYPE; options: string[] }[];
+	fieldOptions: ContactFieldOption[];
+	fields: ContactCustomField[];
+};
+
+export type ListPage = {
+	items: UnknownRecord[];
+	total: number;
+	offset: number;
+	limit: number;
+	hasMore: boolean;
 };

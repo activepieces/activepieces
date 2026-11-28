@@ -8,6 +8,7 @@ import {
 	QueryParams,
 } from '@activepieces/pieces-common';
 import { getHubspotAccessToken, hubspotAuth } from '../auth';
+import { hubspotPolling } from '../common/polling';
 import {
 	createTrigger,
 	Property,
@@ -59,10 +60,11 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 			if (isTestMode) break;
 		} while (hasMore);
 
-		return emailEvents.map((item) => ({
-			epochMilliSeconds: item['created'] as number,
+		const events = emailEvents.map((item) => ({
+			epochMilliSeconds: Number(item['created']),
 			data: item,
 		}));
+		return isTestMode ? events.sort((a, b) => b.epochMilliSeconds - a.epochMilliSeconds) : events;
 	},
 };
 
@@ -136,7 +138,7 @@ export const newEmailEventTrigger = createTrigger({
 		await pollingHelper.onDisable(polling, context);
 	},
 	async test(context) {
-		return await pollingHelper.test(polling, context);
+		return hubspotPolling.sampleOldestToNewest({ items: await pollingHelper.test(polling, context) });
 	},
 	async run(context) {
 		return await pollingHelper.poll(polling, context);

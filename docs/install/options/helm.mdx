@@ -114,6 +114,7 @@ kubectl get services
 - [ ] Choose appropriate [execution mode](/install/architecture/sandboxing) for your security requirements
 - [ ] Review [environment variables](/install/reference/environment-variables) for advanced configuration
 - [ ] Consider using a [separate workers](/install/configure-operate/separate-workers) setup for better availability and security
+- [ ] If you raise `AP_FLOW_TIMEOUT_SECONDS`, set it under `activepiecesConfig` so the chart can raise `terminationGracePeriodSeconds` with it (`AP_FLOW_TIMEOUT_SECONDS` + 105 s). A flow timeout set only in a secret needs `terminationGracePeriodSeconds` set by hand, or stopping a pod cuts off longer runs. See [Scaling down is safe](/install/architecture/autoscaling#scaling-down-is-safe)
 
 ## Upgrading
 

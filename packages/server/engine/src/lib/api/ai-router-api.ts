@@ -17,8 +17,8 @@ export const aiRouterApi = {
     },
 }
 
-function bodyOf({ state, question, options, matchMode, flowId, flowRunId }: ChooseParams): Record<string, unknown> {
-    return { state, question, options, matchMode, flowId, flowRunId }
+function bodyOf({ state, question, options, matchMode, model, flowId, flowRunId }: ChooseParams): Record<string, unknown> {
+    return { state, question, options, matchMode, model, flowId, flowRunId }
 }
 
 async function post({ apiUrl, engineToken, body }: { apiUrl: string, engineToken: string, body: Record<string, unknown> }): Promise<{ response: Response, url: string, startedAt: number }> {
@@ -61,6 +61,7 @@ type ChooseParams = {
     question: string
     options: Record<string, string>
     matchMode: AiRouterMatchMode
+    model: string | undefined
     flowId: string
     flowRunId: string
 }

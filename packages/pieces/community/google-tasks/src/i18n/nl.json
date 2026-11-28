@@ -87,13 +87,17 @@
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
   "HEAD": "HOOFD",
-  "Add to": "Add to",
+  "Add to": "Toevoegen aan",
   "Task": "Opdracht",
-  "Request": "Request",
-  "Data to send": "Data to send",
+  "Request": "Verzoek",
+  "Data to send": "Gegevens om te verzenden",
   "New Task": "Nieuwe taak",
-  "Triggers when a task is added or edited in a list.": "Triggers when a task is added or edited in a list.",
+  "Triggers when a task is added to a list, or also when one is edited if you choose New and edited tasks.": "Triggers when a task is added to a list, or also when one is edited if you choose New and edited tasks.",
+  "Run on": "Uitvoeren op",
   "Markdown": "Markdown",
-  "Edits to a task fire this trigger again, so the same task can arrive more than once.": "Edits to a task fire this trigger again, so the same task can arrive more than once.",
-  "Watch": "Watch"
+  "Whether edits run the flow again. Empty means \"New and edited tasks\".": "Of bewerkingen de flow opnieuw uitvoeren. Leeg betekent \"Nieuwe en bewerkte taken\".",
+  "With **New tasks only**, renaming, editing, moving or completing a task does not run the flow again; a task moved here from another list counts as new. With **New and edited tasks**, renaming or editing a task, or completing it through the API, runs the flow again, so the same task can arrive more than once; completing a task in the Google Tasks apps hides it and does not run the flow. Upgrading this piece to a new version in the builder pre-selects **New tasks only**; choose **New and edited tasks** to kee": "Met **Alleen nieuwe taken** zorgt het hernoemen, bewerken, verplaatsen of voltooien van een taak niet voor een nieuwe uitvoering van de flow; een taak die hierheen is verplaatst vanuit een andere lijst telt als nieuw. Met **Nieuwe en bewerkte taken** zorgt het hernoemen of bewerken van een taak, of het voltooien ervan via de API, ervoor dat de flow opnieuw wordt uitgevoerd, waardoor dezelfde taak meer dan once kan binnenkomen; het voltooien van een taak in de Google Tasks-apps verbergt deze en voert de flow niet opnieuw uit. Bij het upgraden van deze piece naar een nieuwe versie in de builder wordt standaard **Alleen nieuwe taken** geselecteerd; kies **Nieuwe en bewerkte taken** om het oude gedrag te behouden.",
+  "New tasks only": "Alleen nieuwe taken",
+  "New and edited tasks": "Nieuwe en bewerkte taken",
+  "Watch": "Volgen"
 }

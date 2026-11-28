@@ -1,5 +1,5 @@
 import { apId } from '@activepieces/core-utils'
-import { PrincipalType, ProjectType } from '@activepieces/shared'
+import { PlatformRole, PrincipalType, ProjectType, UserStatus } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -388,6 +388,74 @@ describe('SCIM 2.0 API', () => {
 
             // FEATURE_DISABLED maps to PAYMENT_REQUIRED (402)
             expect(response?.statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
+        })
+    })
+
+    describe('SCIM User Provisioning · owner is protected', () => {
+        it('rejects a DELETE on the platform owner with 403', async () => {
+            const { mockOwner, bearerToken } = await setupScimPlatform()
+
+            const response = await app?.inject({
+                method: 'DELETE',
+                url: `/api/v1/scim/v2/Users/${mockOwner.id}`,
+                headers: { authorization: bearerToken },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+
+            const row = await databaseConnection().getRepository('user').findOneByOrFail({ id: mockOwner.id })
+            expect(row.platformRole).toBe(PlatformRole.ADMIN)
+            expect(row.status).toBe(UserStatus.ACTIVE)
+        })
+
+        it('ignores a PUT trying to demote or deactivate the platform owner, but still updates safe fields', async () => {
+            const { mockOwner, bearerToken } = await setupScimPlatform()
+
+            const response = await app?.inject({
+                method: 'PUT',
+                url: `/api/v1/scim/v2/Users/${mockOwner.id}`,
+                headers: { authorization: bearerToken },
+                body: {
+                    schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
+                    userName: faker.internet.email().toLowerCase().trim(),
+                    name: { givenName: 'Owner', familyName: 'Stays' },
+                    active: false,
+                    externalId: 'idp-owner-replaced',
+                    'urn:ietf:params:scim:schemas:extension:activepieces:2.0:User': {
+                        platformRole: PlatformRole.MEMBER,
+                    },
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+
+            const row = await databaseConnection().getRepository('user').findOneByOrFail({ id: mockOwner.id })
+            expect(row.platformRole).toBe(PlatformRole.ADMIN)
+            expect(row.status).toBe(UserStatus.ACTIVE)
+            expect(row.externalId).toBe('idp-owner-replaced')
+        })
+
+        it('ignores a PATCH trying to demote or deactivate the platform owner', async () => {
+            const { mockOwner, bearerToken } = await setupScimPlatform()
+
+            const response = await app?.inject({
+                method: 'PATCH',
+                url: `/api/v1/scim/v2/Users/${mockOwner.id}`,
+                headers: { authorization: bearerToken },
+                body: {
+                    schemas: ['urn:ietf:params:scim:api:messages:2.0:PatchOp'],
+                    Operations: [
+                        { op: 'replace', value: { active: false } },
+                        { op: 'add', path: 'urn:ietf:params:scim:schemas:extension:activepieces:2.0:User:platformRole', value: PlatformRole.MEMBER },
+                    ],
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+
+            const row = await databaseConnection().getRepository('user').findOneByOrFail({ id: mockOwner.id })
+            expect(row.platformRole).toBe(PlatformRole.ADMIN)
+            expect(row.status).toBe(UserStatus.ACTIVE)
         })
     })
 

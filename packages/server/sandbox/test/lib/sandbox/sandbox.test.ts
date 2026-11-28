@@ -962,5 +962,37 @@ describe('createSandbox', () => {
 
             expect(treeKillMock).toHaveBeenCalledWith(12345, 'SIGKILL', expect.any(Function))
         })
+
+        it('does not create the process when shutdown lands before start reaches it', async () => {
+            const log = createMockLogger()
+            testPM = createTestProcessMaker()
+            const shutDownSandbox = createSandbox(log, 'sb-shutdown-early', defaultOptions, testPM.maker)
+
+            const starting = shutDownSandbox.start(startOptions).catch((e: unknown) => e)
+            await shutDownSandbox.shutdown()
+
+            expect(await starting).toBeInstanceOf(ActivepiecesError)
+            expect(testPM.maker.create).not.toHaveBeenCalled()
+        })
+
+        it('kills the process when shutdown lands while it is being created', async () => {
+            const log = createMockLogger()
+            let finishCreate: (child: ChildProcess) => void = () => undefined
+            const create = vi.fn(() => new Promise<ChildProcess>((resolve) => {
+                finishCreate = resolve
+            }))
+            const shutDownSandbox = createSandbox(log, 'sb-shutdown-mid-create', defaultOptions, { create })
+
+            const starting = shutDownSandbox.start(startOptions).catch((e: unknown) => e)
+            await vi.waitFor(() => expect(create).toHaveBeenCalledTimes(1))
+            await shutDownSandbox.shutdown()
+            const lateChild = new EventEmitter() as ChildProcess & EventEmitter
+            ;(lateChild as ChildProcess).pid = 777
+            finishCreate(lateChild)
+
+            expect(await starting).toBeInstanceOf(ActivepiecesError)
+            expect(treeKillMock).toHaveBeenCalledWith(777, 'SIGKILL', expect.any(Function))
+            expect(shutDownSandbox.getPid()).toBeNull()
+        })
     })
 })

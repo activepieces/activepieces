@@ -21,9 +21,26 @@ export const addCommentToIssueAction = createAction({
 		issueId: getIssueIdDropdown({ refreshers: ['projectId'] }),
 		comment: Property.LongText({
 			displayName: 'Comment Body',
+			description: 'Plain text or Jira wiki markup.',
 			required: true,
 		}),
 	},
+	propertyGroups: [
+		{
+			key: 'issue',
+			display: 'section',
+			label: 'Issue',
+			icon: 'inbox',
+			props: ['projectId', 'issueId'],
+		},
+		{
+			key: 'comment',
+			display: 'section',
+			label: 'Comment',
+			icon: 'text',
+			props: ['comment'],
+		},
+	],
 	async run(context) {
 		const { issueId, comment } = context.propsValue;
 

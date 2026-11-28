@@ -31,6 +31,7 @@ const CanvasControlButton = ({
           size="icon"
           disabled={disabled}
           onClick={onClick}
+          aria-label={tooltip}
         >
           <Icon className={cn('size-4', iconClassName)} />
         </Button>

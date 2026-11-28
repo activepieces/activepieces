@@ -50,7 +50,7 @@ export const updateRowAction = createAction({
 
 		const client = createMSGraphClient(auth['access_token'], cloud);
 		const response = await client
-			.api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='${rangeFrom}:${rangeTo}')`)
+			.api(`${drivePath}/items/${workbookId}/workbook/worksheets/${encodeURIComponent(worksheetId)}/range(address='${rangeFrom}:${rangeTo}')`)
 			.patch(requestBody);
 
 		return response;

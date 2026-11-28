@@ -16,6 +16,7 @@ export enum WebsocketClientEvent {
     CHAT_MESSAGE_CHUNK = 'CHAT_MESSAGE_CHUNK',
     CHAT_PERSONALIZATION_PROGRESS = 'CHAT_PERSONALIZATION_PROGRESS',
     FLOW_DRAFT_UPDATED = 'FLOW_DRAFT_UPDATED',
+    TABLE_UPDATED = 'TABLE_UPDATED',
 }
 
 export enum WebsocketServerEvent {
@@ -74,9 +75,22 @@ export const PresenceUpdatedEvent = z.object({
     users: z.array(PresenceUser),
 })
 
+export enum ResourceChangeOp {
+    CREATE = 'create',
+    UPDATE = 'update',
+    DELETE = 'delete',
+}
+
 export const FlowDraftUpdatedEvent = z.object({
     flowId: z.string(),
     editorSessionId: z.string().nullable(),
+    op: z.enum(ResourceChangeOp),
+})
+
+export const TableUpdatedEvent = z.object({
+    tableId: z.string(),
+    editorSessionId: z.string().nullable(),
+    op: z.enum(ResourceChangeOp),
 })
 
 export const EDITOR_SESSION_ID_HEADER = 'x-ap-editor-session-id'
@@ -91,3 +105,4 @@ export type PresenceRequest = z.infer<typeof PresenceRequest>
 export type PresenceUser = z.infer<typeof PresenceUser>
 export type PresenceUpdatedEvent = z.infer<typeof PresenceUpdatedEvent>
 export type FlowDraftUpdatedEvent = z.infer<typeof FlowDraftUpdatedEvent>
+export type TableUpdatedEvent = z.infer<typeof TableUpdatedEvent>

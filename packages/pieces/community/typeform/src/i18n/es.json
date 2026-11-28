@@ -205,7 +205,19 @@
   "PUT": "PUT",
   "DELETE": "BORRAR",
   "HEAD": "LIMPIO",
+  "New form": "Nuevo formulario",
+  "Form content": "Contenido del formulario",
+  "Original": "Original",
+  "The copy": "La copia",
+  "Target": "Destino",
+  "Changes": "Cambios",
+  "Search in": "Buscar en",
+  "Filters": "Filtros",
+  "Results": "Resultados",
+  "Request": "Solicitud",
+  "Data to send": "Datos a enviar",
   "New Submission": "Nuevo envío",
   "Triggers when someone submits the form.": "Triggers when someone submits the form.",
-  "A webhook is added to this form in Typeform when you publish the flow, and removed when you turn it off.": "A webhook is added to this form in Typeform when you publish the flow, and removed when you turn it off."
+  "A webhook is added to this form in Typeform when you publish the flow, and removed when you turn it off.": "A webhook is added to this form in Typeform when you publish the flow, and removed when you turn it off.",
+  "Watch": "Observar"
 }

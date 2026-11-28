@@ -68,12 +68,12 @@ export const createWorksheetAction = createAction({
 
       // Add the header values to the first row of the new worksheet
       await client
-        .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${newWorksheetName}/range(address='${address}')`)
+        .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${encodeURIComponent(newWorksheetName)}/range(address='${address}')`)
         .patch({ values: [headersArray] });
 
       // Create a table from the newly added header range
       const createTableResponse = await client
-        .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${newWorksheetName}/tables/add`)
+        .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${encodeURIComponent(newWorksheetName)}/tables/add`)
         .post({ address: address, hasHeaders: true });
 
       // Return the result of the table creation

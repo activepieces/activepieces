@@ -1,10 +1,23 @@
 import { WebSearchResult } from '@activepieces/server-utils'
 import { ToolExecutionOptions } from 'ai'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { TaintState } from '../../../../../../src/lib/execute/jobs/ee/agent/tools/tool-primitives'
 import { createProviderSearchTools } from '../../../../../../src/lib/execute/jobs/ee/agent/tools/web-media-tools'
 
 describe('ap_web_search over the provider\'s own search', () => {
+    afterEach(() => {
+        vi.useRealTimers()
+    })
+
+    it('tells the model a slow search timed out after 45 seconds', async () => {
+        vi.useFakeTimers()
+        const pending = runSearch({ search: hangUntilAborted, taintState: { tainted: false } }).catch((error: Error) => error.message)
+
+        await vi.advanceTimersByTimeAsync(45_000)
+
+        expect(await pending).toMatch(/timed out after 45 seconds.*retry/)
+    })
+
     it('taints the turn before the model sees a single result', async () => {
         const taintState: TaintState = { tainted: false }
 
@@ -48,8 +61,14 @@ describe('ap_web_search over the provider\'s own search', () => {
     })
 })
 
+function hangUntilAborted({ abortSignal }: { abortSignal: AbortSignal }): Promise<WebSearchResult> {
+    return new Promise((_resolve, reject) => {
+        abortSignal.addEventListener('abort', () => reject(abortSignal.reason))
+    })
+}
+
 async function runSearch({ search, taintState, billedAtCost = false }: {
-    search: () => Promise<WebSearchResult>
+    search: (request: { abortSignal: AbortSignal }) => Promise<WebSearchResult>
     taintState: TaintState
     billedAtCost?: boolean
 }): Promise<unknown> {

@@ -123,10 +123,13 @@
                      "flows/passing-data",
                      "flows/using-formulas",
                      "flows/formula-reference",
+                     "flows/process-in-batches",
                      "flows/project-variables",
                      "flows/publishing-flows",
                      "flows/flow-approvals",
                      "flows/debugging-runs",
+                     "flows/managing-memory",
+                     "flows/managing-queues",
                     "flows/versioning",
                     "flows/template-library",
                     "flows/canvas-controls"
@@ -376,20 +379,25 @@
                     "group": "Setup",
                     "pages": [
                       "admin-guide/guides/general",
+                      "admin-guide/guides/configurations",
                       {
                         "group": "AI Center",
                         "icon": "sparkles",
                         "pages": [
                           "admin-guide/guides/setup-ai-providers",
                           "admin-guide/guides/ai-tiers",
-                          "admin-guide/guides/ai-capabilities"
+                          "admin-guide/guides/ai-capabilities",
+                          "admin-guide/guides/ai-usage"
                         ]
                       },
                       "admin-guide/guides/global-connections",
                       "admin-guide/guides/manage-pieces",
                       "admin-guide/guides/templates",
                       "admin-guide/guides/usage",
-                      "admin-guide/guides/embedding"
+                      "admin-guide/guides/billing",
+                      "admin-guide/guides/embedding",
+                      "admin-guide/guides/api-keys",
+                      "admin-guide/guides/mcp-server"
                     ]
                   },
                   {
@@ -420,6 +428,8 @@
                           "admin-guide/security/audit-logs/flow-published",
                           "admin-guide/security/audit-logs/flow-activated",
                           "admin-guide/security/audit-logs/flow-deactivated",
+                          "admin-guide/security/audit-logs/flow-pieces-upgraded",
+                          "admin-guide/security/audit-logs/flow-pieces-reverted",
                           "admin-guide/security/audit-logs/flow-approval-requested",
                           "admin-guide/security/audit-logs/flow-approval-granted",
                           "admin-guide/security/audit-logs/flow-approval-rejected",
@@ -428,7 +438,17 @@
                           "admin-guide/security/audit-logs/connection-deleted",
                           "admin-guide/security/audit-logs/flow-run-started",
                           "admin-guide/security/audit-logs/flow-run-finished",
+                          "admin-guide/security/audit-logs/flow-run-resumed",
+                          "admin-guide/security/audit-logs/flow-run-retried",
+                          "admin-guide/security/audit-logs/agent-created",
+                          "admin-guide/security/audit-logs/agent-updated",
+                          "admin-guide/security/audit-logs/agent-deleted",
+                          "admin-guide/security/audit-logs/agent-published",
+                          "admin-guide/security/audit-logs/agent-unpublished",
                           "admin-guide/security/audit-logs/agent-action-executed",
+                          "admin-guide/security/audit-logs/variable-upserted",
+                          "admin-guide/security/audit-logs/variable-deleted",
+                          "admin-guide/security/audit-logs/variable-value-revealed",
                           "admin-guide/security/audit-logs/folder-created",
                           "admin-guide/security/audit-logs/folder-updated",
                           "admin-guide/security/audit-logs/folder-deleted",
@@ -439,8 +459,29 @@
                           "admin-guide/security/audit-logs/user-invitation-sent",
                           "admin-guide/security/audit-logs/user-invitation-accepted",
                           "admin-guide/security/audit-logs/user-invitation-deleted",
+                          "admin-guide/security/audit-logs/project-role-created",
+                          "admin-guide/security/audit-logs/project-role-updated",
+                          "admin-guide/security/audit-logs/project-role-deleted",
+                          "admin-guide/security/audit-logs/project-release-created",
+                          "admin-guide/security/audit-logs/project-replaced",
                           "admin-guide/security/audit-logs/signing-key-created",
-                          "admin-guide/security/audit-logs/audit-log-retention-updated"
+                          "admin-guide/security/audit-logs/audit-log-retention-updated",
+                          "admin-guide/security/audit-logs/authentication-email-enabled",
+                          "admin-guide/security/audit-logs/authentication-email-disabled",
+                          "admin-guide/security/audit-logs/authentication-google-enabled",
+                          "admin-guide/security/audit-logs/authentication-google-disabled",
+                          "admin-guide/security/audit-logs/authentication-allowed-domain-added",
+                          "admin-guide/security/audit-logs/authentication-allowed-domain-removed",
+                          "admin-guide/security/audit-logs/authentication-allowed-domain-enforcement-enabled",
+                          "admin-guide/security/audit-logs/authentication-allowed-domain-enforcement-disabled",
+                          "admin-guide/security/audit-logs/sso-domain-added",
+                          "admin-guide/security/audit-logs/sso-domain-verified",
+                          "admin-guide/security/audit-logs/sso-domain-verification-cancelled",
+                          "admin-guide/security/audit-logs/sso-domain-removed",
+                          "admin-guide/security/audit-logs/sso-domain-expired",
+                          "admin-guide/security/audit-logs/sso-saml-connected",
+                          "admin-guide/security/audit-logs/sso-saml-replaced",
+                          "admin-guide/security/audit-logs/sso-saml-disabled"
                         ]
                       }
                     ]
@@ -459,11 +500,27 @@
                           "admin-guide/security/audit-logs/flow-published",
                           "admin-guide/security/audit-logs/flow-activated",
                           "admin-guide/security/audit-logs/flow-deactivated",
+                          "admin-guide/security/audit-logs/flow-pieces-upgraded",
+                          "admin-guide/security/audit-logs/flow-pieces-reverted",
+                          "admin-guide/security/audit-logs/flow-approval-requested",
+                          "admin-guide/security/audit-logs/flow-approval-granted",
+                          "admin-guide/security/audit-logs/flow-approval-rejected",
+                          "admin-guide/security/audit-logs/flow-approval-withdrawn",
                           "admin-guide/security/audit-logs/connection-upserted",
                           "admin-guide/security/audit-logs/connection-deleted",
                           "admin-guide/security/audit-logs/flow-run-started",
                           "admin-guide/security/audit-logs/flow-run-finished",
+                          "admin-guide/security/audit-logs/flow-run-resumed",
+                          "admin-guide/security/audit-logs/flow-run-retried",
+                          "admin-guide/security/audit-logs/agent-created",
+                          "admin-guide/security/audit-logs/agent-updated",
+                          "admin-guide/security/audit-logs/agent-deleted",
+                          "admin-guide/security/audit-logs/agent-published",
+                          "admin-guide/security/audit-logs/agent-unpublished",
                           "admin-guide/security/audit-logs/agent-action-executed",
+                          "admin-guide/security/audit-logs/variable-upserted",
+                          "admin-guide/security/audit-logs/variable-deleted",
+                          "admin-guide/security/audit-logs/variable-value-revealed",
                           "admin-guide/security/audit-logs/folder-created",
                           "admin-guide/security/audit-logs/folder-updated",
                           "admin-guide/security/audit-logs/folder-deleted",
@@ -474,8 +531,29 @@
                           "admin-guide/security/audit-logs/user-invitation-sent",
                           "admin-guide/security/audit-logs/user-invitation-accepted",
                           "admin-guide/security/audit-logs/user-invitation-deleted",
+                          "admin-guide/security/audit-logs/project-role-created",
+                          "admin-guide/security/audit-logs/project-role-updated",
+                          "admin-guide/security/audit-logs/project-role-deleted",
+                          "admin-guide/security/audit-logs/project-release-created",
+                          "admin-guide/security/audit-logs/project-replaced",
                           "admin-guide/security/audit-logs/signing-key-created",
-                          "admin-guide/security/audit-logs/audit-log-retention-updated"
+                          "admin-guide/security/audit-logs/audit-log-retention-updated",
+                          "admin-guide/security/audit-logs/authentication-email-enabled",
+                          "admin-guide/security/audit-logs/authentication-email-disabled",
+                          "admin-guide/security/audit-logs/authentication-google-enabled",
+                          "admin-guide/security/audit-logs/authentication-google-disabled",
+                          "admin-guide/security/audit-logs/authentication-allowed-domain-added",
+                          "admin-guide/security/audit-logs/authentication-allowed-domain-removed",
+                          "admin-guide/security/audit-logs/authentication-allowed-domain-enforcement-enabled",
+                          "admin-guide/security/audit-logs/authentication-allowed-domain-enforcement-disabled",
+                          "admin-guide/security/audit-logs/sso-domain-added",
+                          "admin-guide/security/audit-logs/sso-domain-verified",
+                          "admin-guide/security/audit-logs/sso-domain-verification-cancelled",
+                          "admin-guide/security/audit-logs/sso-domain-removed",
+                          "admin-guide/security/audit-logs/sso-domain-expired",
+                          "admin-guide/security/audit-logs/sso-saml-connected",
+                          "admin-guide/security/audit-logs/sso-saml-replaced",
+                          "admin-guide/security/audit-logs/sso-saml-disabled"
                         ]
                       },
                       "admin-guide/guides/event-streaming"
@@ -713,6 +791,14 @@
                                  "endpoints/ai-capabilities/set-up",
                                  "endpoints/ai-capabilities/update",
                                  "endpoints/ai-capabilities/reset"
+                              ]
+                           },
+                           {
+                              "group": "Usage",
+                              "pages": [
+                                 "endpoints/ai-usage/overview",
+                                 "endpoints/ai-usage/list-items",
+                                 "endpoints/ai-usage/get-item"
                               ]
                            },
                            {

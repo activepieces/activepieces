@@ -2,13 +2,14 @@ import { createServer } from 'http'
 import os from 'os'
 import { ActivepiecesError, isNil, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { ACTION_RUN_CACHE_ACTIVE_WINDOW_MS, cacheUtils, CODE_CACHE_FIRST_SWEEP_DELAY_MS, CODE_CACHE_SWEEP_INTERVAL_MS, codeCacheEviction, createResolver, createSandboxRuntime, markDevPiecesRebuilt, Runtime } from '@activepieces/sandbox'
-import { aiCostReporter, aiObservability, createLogger, modelCatalog, modelTierCatalog, systemUsage, wideEvent } from '@activepieces/server-utils'
+import { aiCostReporter, aiObservability, modelCatalog, modelTierCatalog, systemUsage, wideEvent } from '@activepieces/server-utils'
 import { ApEdition, ApiToWorkerContract, ConsumeJobRequest, createNotifyServer, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, LONG_RUNNING_RPC_METHODS, SandboxInformation, WebsocketClientEvent, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import { io, Socket } from 'socket.io-client'
 import { createApiToWorkerHandlers } from './api-notify-service'
 import { getApiUrl, system, WorkerSystemProp } from './config/configs'
 import { logger } from './config/logger'
+import { shutdownBudget } from './config/shutdown-budget'
 import { workerSettings } from './config/worker-settings'
 import { getHandler } from './execute/job-registry'
 import { JobContext, JobResult, JobResultKind } from './execute/types'
@@ -17,7 +18,9 @@ import { VERSION_MISMATCH_POLL_PAUSE_MS, versionChecker } from './utils/version-
 
 
 let socket: Socket | null = null
+let rpcClient: WorkerToApiContract | null = null
 let polling = false
+let stopping = false
 let connectionGeneration = 0
 
 const workerId = `worker-${nanoid()}`
@@ -35,8 +38,6 @@ let runtime: Runtime | null = null
 // still falls to the stalled-scan.
 let inFlightJobs = 0
 
-const DRAIN_TIMEOUT_MS = 25_000
-
 // Sandbox memory/state is UI-only telemetry (the workers page). Computing it needs a full
 // process-table scan (si.processes()), so it must NOT run on the poll hot path — sampling it on
 // every poll pegged worker CPU and collapsed throughput (~7x, #13497). Sample it on a slow
@@ -51,6 +52,7 @@ const POLL_WATCHDOG_INTERVAL_MS = 30_000
 const RPC_TIMEOUT_MS = 60_000
 const LONG_RUNNING_RPC_MARGIN_MS = 120_000
 const FALLBACK_FLOW_TIMEOUT_SECONDS = 600
+const BEGIN_SHUTDOWN_RPC: keyof WorkerToApiContract = 'beginShutdown'
 
 let pollLoopLiveness: PollLoopLiveness[] = []
 let pollWatchdogInterval: NodeJS.Timeout | null = null
@@ -60,6 +62,7 @@ let cacheSweepFirstRunTimeout: NodeJS.Timeout | null = null
 
 export const worker = {
     async start({ apiUrl, socketUrl, workerToken, withHealthServer = false }: WorkerStartParams): Promise<void> {
+        stopping = false
         versionChecker.assertReleaseReadable()
         modelCatalog.load().catch(() => undefined)
         await modelTierCatalog.warmUp()
@@ -74,6 +77,7 @@ export const worker = {
         })
 
         const apiClient = createRpcClient<WorkerToApiContract>(socket, rpcTimeoutMsFor)
+        rpcClient = apiClient
         aiCostReporter.install({
             log: logger,
             report: (request) => apiClient.reportAiUsage(request),
@@ -136,12 +140,21 @@ export const worker = {
     },
 
     async stop(): Promise<void> {
+        stopping = true
         polling = false
         pollLoopLiveness = []
         stopPollWatchdog()
         stopSandboxInfoSampling()
         stopCacheSweeper()
+        const client = rpcClient
+        if (!isNil(client)) {
+            const { error } = await tryCatch(() => client.beginShutdown())
+            if (error) {
+                logger.warn({ error }, 'Failed to tell the app this worker is stopping')
+            }
+        }
         await drainInFlightJobs()
+        rpcClient = null
         if (runtime) {
             await runtime.shutdown(logger)
             runtime = null
@@ -155,10 +168,18 @@ export const worker = {
     stopPolling(): void {
         polling = false
     },
+
+    forceExitAfterMs(): number {
+        return shutdownBudget.forceExitMs({ flowTimeoutMs: flowTimeoutMs() })
+    },
 }
 
 async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void> {
     if (polling) return
+    if (stopping) {
+        logger.info('Reconnected while stopping, not polling for jobs')
+        return
+    }
     polling = true
 
     const generation = connectionGeneration
@@ -228,7 +249,9 @@ async function pollAndExecute(apiClient: WorkerToApiContract, runtime: Runtime, 
     const workerLog = logger.child({ workerIndex })
     workerLog.info('Polling worker started')
 
-    while (polling && connectionGeneration === generation) {
+    const isCurrentConnection = (): boolean => polling && connectionGeneration === generation
+
+    while (isCurrentConnection()) {
         markPollLoopIteration({ workerIndex, busy: false })
         if (!versionChecker.connectedAppVersionIsCompatible(workerLog)) {
             await sleep(VERSION_MISMATCH_POLL_PAUSE_MS)
@@ -240,6 +263,10 @@ async function pollAndExecute(apiClient: WorkerToApiContract, runtime: Runtime, 
             workerLog.error({ error: machineError }, 'Failed to build machine info')
             await sleep(20000)
             continue
+        }
+
+        if (!isCurrentConnection()) {
+            break
         }
 
         const { data: job, error: pollError } = await tryCatch(() => apiClient.poll(machineInfo))
@@ -302,7 +329,11 @@ async function pollAndExecute(apiClient: WorkerToApiContract, runtime: Runtime, 
 }
 
 async function drainInFlightJobs(): Promise<void> {
-    const deadline = Date.now() + DRAIN_TIMEOUT_MS
+    const drainMs = shutdownBudget.drainMs({ flowTimeoutMs: flowTimeoutMs() })
+    if (inFlightJobs > 0) {
+        logger.info({ inFlightJobs, drainMs }, 'Waiting for in-flight jobs before stopping')
+    }
+    const deadline = Date.now() + drainMs
     while (inFlightJobs > 0 && Date.now() < deadline) {
         await sleep(100)
     }
@@ -333,6 +364,9 @@ function flowTimeoutMs(): number {
 }
 
 function rpcTimeoutMsFor(method: string): number {
+    if (method === BEGIN_SHUTDOWN_RPC) {
+        return shutdownBudget.BEGIN_SHUTDOWN_TIMEOUT_MS
+    }
     if (!LONG_RUNNING_RPC_METHODS.includes(method)) {
         return RPC_TIMEOUT_MS
     }
@@ -349,7 +383,7 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
     // Chat jobs reuse `runId` as the per-message chat run id (NOT a flow run);
     // map it to the `run`/`conversation` groups so chat logs correlate correctly.
     const isAgentJob = jobData.jobType === WorkerJobType.EXECUTE_AGENT_RUN
-    const jobLogger = createLogger({
+    const fields = {
         event: 'job.execute',
         job: { id: job.jobId, type: jobData.jobType },
         ...spreadIfDefined('requestId', 'requestId' in jobData ? jobData.requestId : 'httpRequestId' in jobData ? jobData.httpRequestId : undefined),
@@ -361,9 +395,9 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
         ...spreadIfDefined('conversation', 'conversationId' in jobData ? { id: jobData.conversationId } : undefined),
         ...spreadIfDefined('flowVersion', 'flowVersionId' in jobData ? { id: jobData.flowVersionId } : undefined),
         ...spreadIfDefined('waitpoint', 'parentWaitpointId' in jobData && jobData.parentWaitpointId != null ? { id: jobData.parentWaitpointId } : undefined),
-    })
-    return wideEvent.run({
-        logger: jobLogger,
+    }
+    return wideEvent.runJob({
+        fields,
         fn: async () => {
             const log = logger.child({ job: { id: job.jobId, type: jobData.jobType } })
             const apiUrl = getApiUrl()
@@ -390,23 +424,11 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
                 publicApiUrl,
                 log,
             }
-            try {
-                const handler = await getHandler(jobData.jobType)
-                log.debug({ handlerType: handler.jobType }, 'Executing job with handler')
-                const { data: result, error } = await tryCatch(() => handler.execute(ctx, jobData))
-                if (error) {
-                    log.error({ error }, 'Job execution failed')
-                    wideEvent.error(error)
-                    wideEvent.set({ outcome: 'failed' })
-                    throw error
-                }
-                log.debug('Job completed')
-                wideEvent.set({ outcome: 'success' })
-                return result
-            }
-            finally {
-                jobLogger.emit()
-            }
+            const handler = await getHandler(jobData.jobType)
+            log.debug({ handlerType: handler.jobType }, 'Executing job with handler')
+            const result = await handler.execute(ctx, jobData)
+            log.debug('Job completed')
+            return result
         },
     })
 }
@@ -451,7 +473,7 @@ async function fetchAndStoreSettings(sock: Socket): Promise<void> {
                 }
             }
             workerSettings.set(response)
-            aiObservability.init({ enabled: response.EDITION === ApEdition.CLOUD })
+            aiObservability.init({ enabled: response.EDITION === ApEdition.CLOUD, projectToken: response.POSTHOG_PROJECT_TOKEN ?? null })
             logger.info({ environment: response.ENVIRONMENT, executionMode: response.EXECUTION_MODE, sandboxMemoryLimitKb: response.SANDBOX_MEMORY_LIMIT }, 'Worker settings loaded')
             resolve()
         })

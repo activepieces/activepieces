@@ -5,12 +5,19 @@ import {
   ArraySubProps,
   PropertyGroup,
   PieceProperty,
+  PropertyType,
 } from '@activepieces/pieces-framework';
-import { PropertyExecutionType, PropertySettings } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  PropertyExecutionType,
+  PropertySettings,
+} from '@activepieces/shared';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { FormField } from '@/components/ui/form';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn, GAP_SIZE_FOR_STEP_SETTINGS } from '@/lib/utils';
 
 import { FilterBuilderLayout } from './filter-builder-layout';
@@ -34,7 +41,11 @@ export const GenericPropertiesForm = React.memo(
     propertyGroups,
     hiddenPropNames,
   }: GenericPropertiesFormProps) => {
-    const props = omitProps(allProps, hiddenPropNames);
+    const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+    const props = omitProps(allProps, [
+      ...(hiddenPropNames ?? []),
+      ...selfHostedOnlyPropNames({ props: allProps, edition }),
+    ]);
     const form = useFormContext();
     const groupByPropName = buildGroupByPropName(propertyGroups);
     const renderedGroups = new Set<string>();
@@ -167,6 +178,24 @@ function omitProps<T extends GenericPropertiesFormProps['props']>(
   return Object.fromEntries(
     Object.entries(props).filter(([name]) => !hiddenPropNames.includes(name)),
   ) as T;
+}
+
+function selfHostedOnlyPropNames({
+  props,
+  edition,
+}: {
+  props: GenericPropertiesFormProps['props'];
+  edition: ApEdition | null;
+}): string[] {
+  if (edition !== ApEdition.CLOUD) {
+    return [];
+  }
+  return Object.entries(props)
+    .filter(
+      ([, property]) =>
+        property.type === PropertyType.MARKDOWN && property.selfHostedOnly,
+    )
+    .map(([name]) => name);
 }
 
 function buildGroupByPropName(

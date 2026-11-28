@@ -3,7 +3,7 @@ import { realpath } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { deno, DenoPermission, DenoSession } from '@activepieces/core-utils'
+import { deno, DenoPermission, DenoSession, isNil, tryCatch } from '@activepieces/core-utils'
 import { ExecutionMode } from '@activepieces/shared'
 import { CodeSandbox } from './code-sandbox-common'
 
@@ -66,7 +66,7 @@ export function denoCodeSandbox({ permissions, codeStepMemoryLimitMb }: DenoCode
                 allowReadPaths: [stepDir],
                 resolveNodeModules: true,
                 env: buildPropagatedEnv(permissions),
-                denoDir: resolveWarmDenoDir(stepDir),
+                denoDir: resolveWarmDenoDir(dirname(stepDir)),
             })
         },
 
@@ -83,9 +83,10 @@ export function denoCodeSandbox({ permissions, codeStepMemoryLimitMb }: DenoCode
             })
         },
 
-        async createScriptSession({ scriptContext, functions }) {
-            const context: Record<string, unknown> = { ...scriptContext }
+        async createScriptSession({ scriptContext, functions, flowVersionDir }) {
+            let context: Record<string, unknown> = { ...scriptContext }
             const bootstrapBody = Object.entries(functions).map(([key, value]) => `globalThis[${JSON.stringify(key)}] = ${value.toString()};`).join('\n')
+            const sessionDenoDir = isNil(flowVersionDir) || !existsSync(flowVersionDir) ? undefined : resolveWarmDenoDir(flowVersionDir)
             let current: LiveScriptSession | null = null
             let spawnInFlight: Promise<LiveScriptSession> | null = null
             let disposed = false
@@ -103,6 +104,7 @@ export function denoCodeSandbox({ permissions, codeStepMemoryLimitMb }: DenoCode
                         bootstrapBody,
                         permissions: [],
                         cwd: tmpdir(),
+                        denoDir: sessionDenoDir,
                     }).then((session) => {
                         const live = { session, sentGlobals: new Map<string, SentGlobal>() }
                         current = live
@@ -143,10 +145,22 @@ export function denoCodeSandbox({ permissions, codeStepMemoryLimitMb }: DenoCode
                     return live.session.run({ script })
                 },
                 setGlobal: async (key: string, value: unknown, noOverwrite = true) => {
-                    if (noOverwrite && (key in context || key in functions)) {
+                    if (key in functions || (noOverwrite && key in context)) {
                         return
                     }
                     context[key] = value
+                },
+                reset: async () => {
+                    context = { ...scriptContext }
+                    const live = current
+                    if (live === null || !live.session.isAlive()) {
+                        return
+                    }
+                    const sentStepKeys = [...live.sentGlobals.keys()].filter((key) => !(key in scriptContext))
+                    await tryCatch(() => Promise.all(sentStepKeys.map((key) => {
+                        live.sentGlobals.delete(key)
+                        return live.session.setGlobal({ key, value: undefined })
+                    })))
                 },
                 dispose: () => {
                     disposed = true
@@ -161,7 +175,7 @@ export function denoCodeSandbox({ permissions, codeStepMemoryLimitMb }: DenoCode
     return sandbox
 }
 
-function resolveWarmDenoDir(stepDir: string): string | undefined {
+function resolveWarmDenoDir(flowVersionDir: string): string | undefined {
     const mode = process.env['AP_EXECUTION_MODE']
     const stepDirIsWritable = mode === ExecutionMode.SANDBOX_CODE_ONLY || mode === ExecutionMode.UNSANDBOXED
     const cacheIsMounted = process.env['AP_DENO_CACHE_MOUNTED'] === 'true'
@@ -170,7 +184,7 @@ function resolveWarmDenoDir(stepDir: string): string | undefined {
         process.umask(0)
     }
     const cacheMountAvailable = stepDirIsWritable || cacheIsMounted
-    return cacheMountAvailable ? join(dirname(stepDir), DENO_CACHE_DIR_NAME) : undefined
+    return cacheMountAvailable ? join(flowVersionDir, DENO_CACHE_DIR_NAME) : undefined
 }
 
 function buildPropagatedEnv(permissions: DenoPermission[]): Record<string, string> {

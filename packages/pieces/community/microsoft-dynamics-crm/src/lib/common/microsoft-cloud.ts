@@ -22,5 +22,6 @@ function resolveCloudHost(cloudLoginHost: string | undefined | null): string {
 }
 
 export function getMicrosoftCloudFromAuth(auth: OAuth2PropertyValue): string {
-  return resolveCloudHost(auth.props?.['cloud'] as string | undefined);
+  const cloud = auth.props?.['cloud'];
+  return resolveCloudHost(typeof cloud === 'string' ? cloud : undefined);
 }

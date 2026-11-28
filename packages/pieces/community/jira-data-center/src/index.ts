@@ -2,7 +2,7 @@ import { createPiece } from '@activepieces/pieces-framework';
 
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceCategory } from '@activepieces/pieces-framework';
-import { JiraDataCenterAuth, jiraDataCenterAuth } from './auth';
+import { jiraDataCenterAuth } from './auth';
 import { createIssueAction } from './lib/actions/create-issue';
 import { searchIssuesAction } from './lib/actions/search-issues';
 import { newIssue } from './lib/triggers/new-issue';
@@ -20,13 +20,15 @@ import { addWatcherToIssueAction } from './lib/actions/add-watcher-to-issue';
 import { linkIssuesAction } from './lib/actions/link-issues';
 import { getIssueAttachmentAction } from './lib/actions/get-issue-attachment';
 import { getIssueAction } from './lib/actions/get-issue';
+import { transitionIssueAction } from './lib/actions/transition-issue';
+import { jiraBaseUrl, jiraToken } from './lib/common';
 
 export const jiraDataCenter = createPiece({
 	displayName: 'Jira Data Center',
 	description: 'Issue tracking and project management for Jira Data Center and Server',
 
 	auth: jiraDataCenterAuth,
-	minimumSupportedRelease: '0.36.1',
+	minimumSupportedRelease: '0.88.2',
 	logoUrl: 'https://cdn.activepieces.com/pieces/jira.png',
 	categories: [PieceCategory.PRODUCTIVITY],
 	authors: [],
@@ -37,6 +39,7 @@ export const jiraDataCenter = createPiece({
 		findUserAction,
 		searchIssuesAction,
 		assignIssueAction,
+		transitionIssueAction,
 		addAttachmentToIssueAction,
 		getIssueAttachmentAction,
 		addWatcherToIssueAction,
@@ -46,15 +49,16 @@ export const jiraDataCenter = createPiece({
 		listIssueCommentsAction,
 		deleteIssueCommentAction,
 		createCustomApiCallAction({
-			baseUrl: (auth) => {
-				return auth ? `${(auth as JiraDataCenterAuth).props.instanceUrl}/rest/api/2` : '';
-			},
+			baseUrl: (auth) => (auth ? jiraBaseUrl(auth) : ''),
 			auth: jiraDataCenterAuth,
-			authMapping: async (auth) => {
-				const typedAuth = auth as JiraDataCenterAuth;
-				return {
-					Authorization: `Bearer ${typedAuth.props.personalAccessToken}`,
-				};
+			authMapping: async (auth) => ({
+				Authorization: `Bearer ${jiraToken(auth)}`,
+			}),
+			props: {
+				url: {
+					description: "Full URL, or a path relative to your Jira site's /rest/api/2.",
+					placeholder: '/issue/PROJ-123',
+				},
 			},
 		}),
 	],

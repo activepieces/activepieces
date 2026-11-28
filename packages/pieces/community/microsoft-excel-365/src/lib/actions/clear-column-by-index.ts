@@ -74,7 +74,7 @@ export const clearColumnAction = createAction({
 
     const client = createMSGraphClient(access_token, cloud);
     await client
-      .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='${columnAddress}')/clear`)
+      .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${encodeURIComponent(worksheetId)}/range(address='${columnAddress}')/clear`)
       .post({ applyTo: applyTo });
 
     // A successful request returns a 200 OK with no body.

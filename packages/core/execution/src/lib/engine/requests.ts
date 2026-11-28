@@ -90,6 +90,7 @@ export const ChooseAiRouteRequest = z.object({
     question: z.string(),
     options: z.record(z.string(), z.string()),
     matchMode: z.enum(AiRouterMatchMode),
+    model: z.string().optional(),
     flowId: z.string(),
     flowRunId: z.string(),
     waitpointId: z.string().optional(),

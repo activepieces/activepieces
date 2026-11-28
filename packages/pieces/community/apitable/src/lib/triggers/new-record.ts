@@ -3,6 +3,7 @@ import {
   AppConnectionValueForAuthProperty,
   TriggerStrategy,
   createTrigger,
+  isNil,
 } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
@@ -23,10 +24,7 @@ const polling: Polling<
     const client = makeClient(
       auth.props
     );
-    const createdAfter =
-      lastFetchEpochMS === 0
-        ? dayjs().subtract(1, 'day').valueOf()
-        : lastFetchEpochMS;
+    const createdAfter = lastFetchEpochMS;
     const createdUpTo = await findWindowEnd({
       client,
       datasheetId: datasheet_id,
@@ -86,18 +84,77 @@ export const newRecordTrigger = createTrigger({
   },
   type: TriggerStrategy.POLLING,
   async test(context) {
-    return await pollingHelper.test(polling, { ...context, propsValue: { datasheet_id: context.propsValue.datasheet_id } });
+    return await listNewestRecords({
+      client: makeClient(context.auth.props),
+      datasheetId: context.propsValue.datasheet_id,
+    });
   },
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, { ...context, propsValue: { datasheet_id: context.propsValue.datasheet_id } });
+    await pollingHelper.onEnable(polling, context);
   },
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, { ...context, propsValue: { datasheet_id: context.propsValue.datasheet_id } });
+    await pollingHelper.onDisable(polling, context);
   },
   async run(context) {
-    return await pollingHelper.poll(polling, { ...context, propsValue: { datasheet_id: context.propsValue.datasheet_id } });
+    return await pollingHelper.poll(polling, context);
   },
 });
+
+async function listNewestRecords({
+  client,
+  datasheetId,
+}: DatasheetTarget): Promise<ListedRecord[]> {
+  const now = dayjs().valueOf();
+  for (const days of [...SAMPLE_WINDOWS_DAYS, null]) {
+    const filterByFormula = isNil(days)
+      ? undefined
+      : createdBetween({
+          createdAfter: dayjs(now).subtract(days, 'day').valueOf(),
+          createdUpTo: now,
+        });
+    const probe = await client.listRecords(datasheetId, {
+      pageSize: '1',
+      ...(filterByFormula ? { filterByFormula } : {}),
+    });
+    const total = probe.data.total;
+    if (total >= SAMPLE_SIZE || isNil(days)) {
+      const records = await listTail({ client, datasheetId, filterByFormula, total });
+      return [...records]
+        .sort((a, b) => b.createdAt - a.createdAt)
+        .slice(0, SAMPLE_SIZE)
+        .reverse();
+    }
+  }
+  return [];
+}
+
+async function listTail({
+  client,
+  datasheetId,
+  filterByFormula,
+  total,
+}: DatasheetTarget & {
+  filterByFormula: string | undefined;
+  total: number;
+}): Promise<ListedRecord[]> {
+  if (total === 0) {
+    return [];
+  }
+  const lastPage = Math.ceil(total / PAGE_SIZE);
+  const pages = lastPage > 1 && total % PAGE_SIZE < SAMPLE_SIZE && total % PAGE_SIZE !== 0
+    ? [lastPage - 1, lastPage]
+    : [lastPage];
+  const results = await Promise.all(
+    pages.map((pageNum) =>
+      client.listRecords(datasheetId, {
+        pageSize: String(PAGE_SIZE),
+        pageNum: String(pageNum),
+        ...(filterByFormula ? { filterByFormula } : {}),
+      })
+    )
+  );
+  return results.flatMap((page) => page.data.records);
+}
 
 async function findWindowEnd({
   client,
@@ -215,6 +272,8 @@ function createdBetween({ createdAfter, createdUpTo }: CreatedWindow): string {
 }
 
 const PAGE_SIZE = 1000;
+const SAMPLE_SIZE = 5;
+const SAMPLE_WINDOWS_DAYS = [1, 7, 30, 365];
 const MAX_RECORDS_PER_POLL = 5000;
 
 type CreatedWindow = {

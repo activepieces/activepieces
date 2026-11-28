@@ -1,6 +1,6 @@
 import { PersonalizationUseCase } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ChevronDown, ChevronLeft, ChevronRight, Settings } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import {
   CSSProperties,
@@ -11,22 +11,121 @@ import {
   useRef,
   useState,
 } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { matchPath, useLocation } from 'react-router-dom';
 
 import { LogoPlate } from '@/components/custom/logo-plate';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePersonalization } from '@/features/chat/lib/use-personalization';
 import { DEFAULT_USE_CASES } from '@/features/chat/use-cases/default-use-cases';
+import { useCaseArtIds } from '@/features/chat/use-cases/use-case-art-ids';
 import {
   ResolvedUseCase,
   UseCaseCard,
 } from '@/features/chat/use-cases/use-case-card';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
+import { MOTION } from '@/features/workspace/lib/chat-layout';
+import {
+  chatPanelUtils,
+  useChatPanel,
+} from '@/features/workspace/lib/chat-panel-open';
+import { windowSizeHooks } from '@/features/workspace/lib/window-size-hooks';
+import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { userHooks } from '@/hooks/user-hooks';
+import { routesThatRequireProjectId } from '@/lib/route-utils';
 import { cn } from '@/lib/utils';
 
-export function EmptyState({
+import { OnboardingWelcome } from './onboarding-welcome';
+
+export function ChatEmptyState({
+  incognito,
+  hasInput,
+  onboarding,
+  showFlowCards,
+  onSend,
+  onFill,
+}: {
+  incognito: boolean;
+  hasInput: boolean;
+  onboarding: boolean;
+  showFlowCards: boolean;
+  onSend: (text: string) => void;
+  onFill: (text: string) => void;
+}) {
+  return (
+    <div className="h-full">
+      <div data-empty-state="narrow" className="h-full @chat-md/chat:hidden">
+        <NarrowEmptyState onSend={onSend} onFill={onFill} />
+      </div>
+      <div
+        data-empty-state="wide"
+        className="hidden h-full @chat-md/chat:block"
+      >
+        {onboarding ? (
+          <OnboardingWelcome />
+        ) : (
+          <WideEmptyState
+            incognito={incognito}
+            hasInput={hasInput}
+            showFlowCards={showFlowCards}
+            onSuggestionClick={onFill}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function NarrowEmptyState({
+  onSend,
+  onFill,
+}: {
+  onSend: (text: string) => void;
+  onFill: (text: string) => void;
+}) {
+  const { data: user } = userHooks.useCurrentUser();
+  const { pathname } = useLocation();
+  const onResource = RESOURCE_PAGES.some(
+    (pattern) => matchPath({ path: pattern, end: false }, pathname) !== null,
+  );
+  const name = user?.firstName;
+  const suggestions = narrowSuggestions({ onResource });
+  return (
+    <div className="flex h-full flex-col justify-end gap-3 px-3 pb-3 @chat-sm/chat:px-6">
+      <p className="text-base font-semibold text-gray-12">
+        {name
+          ? t('Hi {name}, what can I help with?', { name })
+          : t('What can I help with?')}
+      </p>
+      <div className="flex flex-col items-start gap-1.5">
+        {suggestions.map(({ text, kind }) => {
+          return (
+            <Button
+              key={text}
+              variant="ghost"
+              onClick={() => (kind === 'build' ? onFill(text) : onSend(text))}
+              className="h-auto max-w-full justify-start rounded-full border px-3 py-1.5 text-gray-11 hover:bg-gray-3 active:bg-gray-4"
+            >
+              <TextWithTooltip tooltipMessage={text}>
+                <span className="min-w-0">{text}</span>
+              </TextWithTooltip>
+            </Button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function WideEmptyState({
   onSuggestionClick,
   incognito,
   hasInput,
@@ -46,7 +145,7 @@ export function EmptyState({
 
   if (incognito) {
     return (
-      <div className="flex min-h-full flex-col justify-center px-3 pt-8 pb-6 sm:px-6">
+      <div className="flex min-h-full flex-col justify-center px-6 pt-8 pb-6">
         <div className="max-w-3xl mx-auto w-full">
           <Greeting firstName={firstName} incognito />
         </div>
@@ -55,15 +154,13 @@ export function EmptyState({
   }
 
   return (
-    <div className="flex min-h-full flex-col px-3 pt-12 pb-6 sm:px-6 sm:pt-16">
+    <div className="flex min-h-full flex-col px-6 pt-16 pb-6">
       <div className="max-w-3xl mx-auto w-full">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-8 sm:gap-10">
-          <div className="min-w-0 sm:flex-1 sm:max-w-md">
+        <div className="flex flex-row items-center gap-10">
+          <div className="min-w-0 flex-1 max-w-md">
             <Greeting firstName={firstName} incognito={false} />
           </div>
-          <div className="hidden sm:contents">
-            <AppMarquee />
-          </div>
+          <AppMarquee />
         </div>
         <CollapseOnInput collapsed={hasInput}>
           <ExampleCards cards={cards} onSuggestionClick={onSuggestionClick} />
@@ -83,7 +180,7 @@ function CollapseOnInput({
   return (
     <div
       className={cn(
-        'grid transition-all duration-300',
+        'grid transition-opacity duration-(--dur-base) ease-(--ease-ap-out) motion-reduce:transition-none',
         collapsed ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100',
       )}
     >
@@ -93,34 +190,82 @@ function CollapseOnInput({
 }
 
 export function SetupRequiredState() {
-  const navigate = useNavigate();
+  const isAdmin = useIsPlatformAdmin();
+
+  const connect = () => {
+    chatPanelUtils.openBeside({
+      route: '/platform/ai',
+      push: true,
+      name: t('AI providers'),
+    });
+    if (!windowSizeHooks.isPhone()) {
+      useChatPanel.getState().setOpen(true);
+    }
+  };
 
   return (
-    <div className="flex flex-col items-center justify-center h-full text-center gap-4 py-20 flex-1 min-w-0">
-      <div className="flex items-center justify-center h-16 w-16 rounded-xl bg-gray-3">
-        <Settings className="h-8 w-8 text-gray-11" />
-      </div>
-      <div className="space-y-2">
-        <h2 className="text-xl font-semibold">
-          {t('Set up an AI provider to get started')}
-        </h2>
-        <p className="text-gray-11 text-sm max-w-md">
-          {t(
-            'AI Chat requires an AI provider. Add your provider in the AI settings to start chatting.',
+    <ChatNotice
+      icon={<Sparkles className="size-5 text-gray-11" />}
+      title={t('Chat needs an AI provider')}
+      body={
+        isAdmin
+          ? t('Connect an AI provider to start chatting.')
+          : t('Ask an admin to connect an AI provider.')
+      }
+      action={
+        isAdmin ? (
+          <Button size="sm" onClick={connect}>
+            {t('Connect an AI provider')}
+          </Button>
+        ) : null
+      }
+    />
+  );
+}
+
+function ChatNotice({
+  icon,
+  title,
+  body,
+  action,
+}: {
+  icon: ReactNode;
+  title: string;
+  body?: string;
+  action?: ReactNode;
+}) {
+  return (
+    <div className="@container flex h-full min-w-0 flex-1 flex-col">
+      <Empty className="items-center justify-center gap-3 rounded-none px-4 pt-4 pb-6 text-center md:px-4 md:pt-4 md:pb-6 @chat-md:px-6">
+        <EmptyHeader className="items-center gap-0 text-center">
+          <EmptyMedia
+            variant="icon"
+            className="mb-3 rounded-lg @chat-md:size-12"
+          >
+            {icon}
+          </EmptyMedia>
+          <EmptyTitle
+            className="text-gray-12 @chat-md:text-xl"
+            role="heading"
+            aria-level={2}
+          >
+            {title}
+          </EmptyTitle>
+          {body && (
+            <EmptyDescription className="mt-1 max-w-md text-sm">
+              {body}
+            </EmptyDescription>
           )}
-        </p>
-      </div>
-      <Button onClick={() => navigate('/platform/ai')} className="gap-2">
-        <Settings className="h-4 w-4" />
-        {t('Go to AI Settings')}
-      </Button>
+        </EmptyHeader>
+        {action}
+      </Empty>
     </div>
   );
 }
 
 export function MessageSkeletons() {
   return (
-    <div className="space-y-8 animate-in fade-in duration-300 py-4">
+    <div className="space-y-8 animate-in fade-in duration-(--dur-base) ease-(--ease-ap-out) py-4 motion-reduce:animate-none">
       <div className="flex justify-end">
         <Skeleton className="h-10 w-48 rounded-xl" />
       </div>
@@ -140,6 +285,7 @@ function Greeting({
   firstName: string;
   incognito: boolean;
 }) {
+  const reduced = useReducedMotion();
   const headline = useMemo(
     () =>
       GREETING_HEADLINES[Math.floor(Math.random() * GREETING_HEADLINES.length)],
@@ -149,9 +295,9 @@ function Greeting({
   return (
     <motion.div
       className="flex flex-col items-start gap-3.5"
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: reduced ? 0 : 4 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
+      transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
     >
       <h1 className="text-3xl sm:text-5xl font-semibold leading-tight text-balance font-serif">
         {incognito
@@ -302,7 +448,7 @@ function ExampleCards({
           className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
           initial={reducedMotion ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.18, ease: 'easeOut' }}
+          transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
         >
           {cards.map((card) => (
             <UseCaseCard
@@ -320,7 +466,7 @@ function ExampleCards({
             <UseCaseCard
               key={card.key}
               card={card}
-              delay={0.15 + i * 0.08}
+              delay={i * CARD_STAGGER_S}
               onSelect={onSuggestionClick}
               className="min-w-[150px] flex-1 basis-0"
             />
@@ -332,12 +478,12 @@ function ExampleCards({
         <button
           type="button"
           onClick={handleToggle}
-          className="flex items-center gap-1.5 text-sm font-medium text-gray-11 transition-colors hover:text-gray-12 cursor-pointer"
+          className="flex items-center gap-1.5 text-sm font-medium text-gray-11 transition-colors duration-(--dur-micro) ease-[ease] hover:text-gray-12 cursor-pointer"
         >
           {expanded ? t('Show less') : t('More and bigger')}
           <ChevronDown
             className={cn(
-              'size-4 transition-transform duration-300',
+              'size-4 transition-transform duration-(--dur-base) ease-(--ease-ap-out) motion-reduce:transition-none',
               expanded && 'rotate-180',
             )}
           />
@@ -411,14 +557,14 @@ function CardCarousel({ children }: { children: ReactNode }) {
       <div
         aria-hidden
         className={cn(
-          'pointer-events-none absolute inset-y-0 left-0 z-20 w-16 bg-gradient-to-r from-gray-1 to-transparent transition-opacity duration-300',
+          'pointer-events-none absolute inset-y-0 left-0 z-20 w-16 bg-gradient-to-r from-gray-1 to-transparent transition-opacity duration-(--dur-base) ease-(--ease-ap-out)',
           edges.atStart ? 'opacity-0' : 'opacity-100',
         )}
       />
       <div
         aria-hidden
         className={cn(
-          'pointer-events-none absolute inset-y-0 right-0 z-20 w-16 bg-gradient-to-l from-gray-1 to-transparent transition-opacity duration-300',
+          'pointer-events-none absolute inset-y-0 right-0 z-20 w-16 bg-gradient-to-l from-gray-1 to-transparent transition-opacity duration-(--dur-base) ease-(--ease-ap-out)',
           edges.atEnd ? 'opacity-0' : 'opacity-100',
         )}
       />
@@ -470,7 +616,7 @@ function CarouselArrow({
       aria-label={direction === 'left' ? t('Scroll left') : t('Scroll right')}
       onClick={onClick}
       className={cn(
-        'absolute top-1/2 z-30 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-gray-6 bg-gray-1/90 text-gray-12 shadow-md backdrop-blur transition-colors hover:bg-gray-1',
+        'absolute top-1/2 z-30 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-gray-6 bg-gray-1/90 text-gray-12 shadow-md backdrop-blur transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-1',
         direction === 'left' ? 'left-2' : 'right-2',
       )}
     >
@@ -528,13 +674,15 @@ function resolveCards({
   researched: PersonalizationUseCase[] | null;
 }): ResolvedUseCase[] {
   if (researched && researched.length > 0) {
-    return researched.map((card) => ({
-      key: card.id,
-      imageId: card.imageId,
-      title: card.title,
-      prompt: card.prompt,
-      ...(card.kind ? { kind: card.kind } : {}),
-    }));
+    return useCaseArtIds.withUniqueArt(
+      researched.map((card) => ({
+        key: card.id,
+        imageId: card.imageId,
+        title: card.title,
+        prompt: card.prompt,
+        ...(card.kind ? { kind: card.kind } : {}),
+      })),
+    );
   }
   return DEFAULT_USE_CASES.map((card) => ({
     key: card.id,
@@ -544,4 +692,29 @@ function resolveCards({
   }));
 }
 
+function narrowSuggestions({
+  onResource,
+}: {
+  onResource: boolean;
+}): Suggestion[] {
+  const general: Suggestion[] = [
+    { text: t('Build me a flow for new leads'), kind: 'build' },
+    { text: t('Which flows saved the most time this month?'), kind: 'ask' },
+    { text: t('Why did my last run fail?'), kind: 'ask' },
+  ];
+  const all: Suggestion[] = onResource
+    ? [{ text: t('What can I do on this page?'), kind: 'ask' }, ...general]
+    : general;
+  return all.slice(0, NARROW_SUGGESTION_COUNT);
+}
+
 const COLLAPSED_CARD_COUNT = 4;
+const NARROW_SUGGESTION_COUNT = 3;
+const CARD_STAGGER_S = 0.03;
+
+const RESOURCE_PAGES = [
+  `/projects/:projectId${routesThatRequireProjectId.singleFlow}`,
+  `/projects/:projectId${routesThatRequireProjectId.singleTable}`,
+];
+
+type Suggestion = { text: string; kind: 'build' | 'ask' };

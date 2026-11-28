@@ -1,52 +1,51 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { BASE_URL, subscriberId, tagIdDropdown } from '../common/props';
 import { manychatAuth } from '../auth';
+import { ManychatApiError, manychatClient, manychatUtils } from '../common/client';
+import { manychatData, manychatInput, subscriberId, tagIdDropdown } from '../common/props';
+import { manychatOutputSchemas } from '../common/output-schemas';
 
 export const removeTagFromUserAction = createAction({
-  name: 'removeTagFromUser',
-  classification: 'WRITE',
-  displayName: 'Remove Tag from User',
-  description: 'Remove a tag from a user.',
-  audience: 'both',
-  aiMetadata: { description: 'Removes a tag from a Manychat subscriber, identified by subscriber ID and tag ID, then returns the updated subscriber info. Use to unlabel or de-segment a known contact. Idempotent: removing a tag the subscriber no longer has leaves the same state.', idempotent: true },
-  auth:manychatAuth,
-  props: {
-    subscriberId: subscriberId,
-    tagId: tagIdDropdown,
-  },
-  async run({ auth, propsValue }) {
-    const { subscriberId, tagId } = propsValue;
-    
-        const removeTagResponse = await httpClient.sendRequest<{ status: string }>({
-          url: `${BASE_URL}/subscriber/removeTag`,
-          method: HttpMethod.POST,
-          authentication: {
-            type: AuthenticationType.BEARER_TOKEN,
-            token: auth.secret_text,
-          },
-          body: {
-            subscriber_id: subscriberId,
-            tag_id: tagId,
-          },
-        });
-    
-        if (removeTagResponse.body.status !== 'success') {
-          throw Error(`Unexpected Error occured : ${JSON.stringify(removeTagResponse.body)}`);
-        }
-    
-        const userResponse = await httpClient.sendRequest<{ data: Record<string, any> }>({
-          method: HttpMethod.GET,
-          url: `${BASE_URL}/subscriber/getInfo`,
-          authentication: {
-            type: AuthenticationType.BEARER_TOKEN,
-            token: auth.secret_text,
-          },
-          queryParams: {
-            subscriber_id: subscriberId.toString(),
-          },
-        });
-    
-        return userResponse.body.data;
-  },
+	auth: manychatAuth,
+	name: 'removeTagFromUser',
+	classification: 'WRITE',
+	displayName: 'Remove Tag from User',
+	description: 'Removes a tag from a user and returns the updated user.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Removes a tag from a ManyChat subscriber by subscriber ID and tag ID, then returns the updated subscriber. Use to unlabel or de-segment a known contact; get tag IDs from "List Tags". If the subscriber already lacks the tag, ManyChat refuses the removal; the action then re-reads the subscriber and succeeds, so repeating it is safe.',
+		idempotent: true,
+	},
+	outputSchema: manychatOutputSchemas.subscriber,
+	props: {
+		subscriberId: subscriberId,
+		tagId: tagIdDropdown,
+	},
+	async run({ auth, propsValue }) {
+		const apiKey = manychatUtils.apiKeyOf(auth);
+		const id = manychatInput.subscriberIdText({ value: propsValue.subscriberId, label: 'User ID' });
+		try {
+			await manychatClient.request({
+				apiKey,
+				method: 'POST',
+				path: '/subscriber/removeTag',
+				operation: 'remove tag from subscriber',
+				body: { subscriber_id: manychatInput.apiId(id), tag_id: propsValue.tagId },
+			});
+		} catch (error) {
+			if (!(error instanceof ManychatApiError) || error.status !== 400) {
+				throw error;
+			}
+			const subscriber = await manychatData.getSubscriber({ apiKey, subscriberId: id });
+			if (hasTag({ subscriber, tagId: propsValue.tagId })) {
+				throw error;
+			}
+			return subscriber;
+		}
+		return manychatData.getSubscriber({ apiKey, subscriberId: id });
+	},
 });
+
+function hasTag({ subscriber, tagId }: { subscriber: Record<string, unknown>; tagId: unknown }): boolean {
+	return manychatUtils.recordsOf(subscriber['tags']).some((tag) => String(tag['id']) === String(tagId));
+}

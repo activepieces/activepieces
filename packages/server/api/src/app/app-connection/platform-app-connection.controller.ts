@@ -10,7 +10,7 @@ export const platformAppConnectionController: FastifyPluginAsyncZod = async (app
         const { displayName, pieceName, status, scope, cursor, limit, projectIds, ownerIds } = request.query
         return appConnectionService(request.log).listForPlatform({
             platformId: request.principal.platform.id,
-            pieceName,
+            pieceNames: pieceName,
             displayName,
             status,
             scope,

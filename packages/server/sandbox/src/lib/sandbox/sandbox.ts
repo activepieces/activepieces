@@ -74,6 +74,7 @@ export function createSandbox(
     let wsRpcToken: string | null = null
     let busy = false
     let killedByShutdown = false
+    let shutdownCount = 0
     let nativeStdOut = ''
     let nativeStdError = ''
 
@@ -149,6 +150,25 @@ export function createSandbox(
         })
     }
 
+    async function abortStartIfShutDown({ shutdownCountAtStart, createdProcess }: { shutdownCountAtStart: number, createdProcess?: ChildProcess }): Promise<void> {
+        if (shutdownCount === shutdownCountAtStart) {
+            return
+        }
+        if (!isNil(createdProcess)) {
+            await killProcess(createdProcess, log)
+        }
+        if (io) {
+            // eslint-disable-next-line @typescript-eslint/await-thenable
+            await io.close()
+            io = null
+        }
+        const reason = `Sandbox ${sandboxId} was shut down while starting`
+        throw new ActivepiecesError({
+            code: ErrorCode.SANDBOX_INTERNAL_ERROR,
+            params: { reason, standardOutput: '', standardError: '' },
+        }, reason)
+    }
+
     function isReady(): boolean {
         return !isNil(connectedSocket) && connectedSocket.connected && !isNil(childProcess) && childProcess.exitCode === null
     }
@@ -166,7 +186,9 @@ export function createSandbox(
             }, 'Starting sandbox')
 
             wsRpcToken = randomBytes(32).toString('hex')
+            const shutdownCountAtStart = shutdownCount
             const port = await createSocketServer()
+            await abortStartIfShutDown({ shutdownCountAtStart })
 
             const codeMount = buildCodeMount({ flowVersionId, reusable: options.reusable, basePath: options.basePath })
             const denoCacheMount = buildDenoCacheMount({ flowVersionId, reusable: options.reusable, basePath: options.basePath })
@@ -196,7 +218,7 @@ export function createSandbox(
                 assertSandboxPathUnderRoot(mount)
             }
 
-            childProcess = await processMaker.create({
+            const createdProcess = await processMaker.create({
                 sandboxId,
                 command: options.command ?? [],
                 mounts: allMounts,
@@ -215,6 +237,8 @@ export function createSandbox(
                     timeLimitSeconds: options.timeLimitSeconds,
                 },
             })
+            await abortStartIfShutDown({ shutdownCountAtStart, createdProcess })
+            childProcess = createdProcess
 
             nativeStdOut = ''
             nativeStdError = ''
@@ -337,6 +361,7 @@ export function createSandbox(
         getPid: () => childProcess?.pid ?? null,
         isBusy: () => busy,
         shutdown: async () => {
+            shutdownCount++
             if (!isNil(childProcess)) {
                 killedByShutdown = true
                 log.debug({ sandbox: { id: sandboxId } }, 'Shutting down sandbox')

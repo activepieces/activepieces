@@ -83,8 +83,8 @@
   "DELETE": "VERWIJDEREN",
   "HEAD": "HOOFD",
   "Post": "Plaatsen",
-  "Link Preview": "Link Preview",
-  "Post As": "Post As",
-  "Request": "Request",
-  "Data to send": "Data to send"
+  "Link Preview": "Voorbeeld van link",
+  "Post As": "Plaatsen als",
+  "Request": "Aanvraag",
+  "Data to send": "Gegevens om te verzenden"
 }

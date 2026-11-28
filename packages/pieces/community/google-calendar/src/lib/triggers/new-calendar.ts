@@ -1,84 +1,18 @@
 import {
   createTrigger,
-  AppConnectionValueForAuthProperty,
   isNil,
   Property,
+  Store,
+  TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { googleCalendarAuth } from '../common';
-import {
-  DedupeStrategy,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
 import { getCalendars } from '../common/helper';
 import { CalendarObject } from '../common/types';
 import { calendarOutputSchema } from '../output-schemas';
 
-const polling: Polling<
-  AppConnectionValueForAuthProperty<typeof googleCalendarAuth>,
-  {
-    access_role_filter: string[] | undefined;
-    calendar_name_filter: string | undefined;
-    exclude_shared: boolean | undefined;
-  }
-> = {
-  strategy: DedupeStrategy.LAST_ITEM,
-  items: async ({ auth, store, propsValue }) => {
-    const { access_role_filter, calendar_name_filter, exclude_shared } =
-      propsValue;
-
-    const currentCalendars = await getCalendars(auth);
-
-    let filteredCalendars = currentCalendars;
-
-    if (access_role_filter && access_role_filter.length > 0) {
-      filteredCalendars = filteredCalendars.filter((cal) =>
-        access_role_filter.includes(cal.accessRole)
-      );
-    }
-
-    if (calendar_name_filter && calendar_name_filter.trim()) {
-      const searchTerm = calendar_name_filter.toLowerCase().trim();
-      filteredCalendars = filteredCalendars.filter(
-        (cal) =>
-          cal.summary?.toLowerCase().includes(searchTerm) ||
-          cal.description?.toLowerCase().includes(searchTerm)
-      );
-    }
-
-    if (exclude_shared) {
-      filteredCalendars = filteredCalendars.filter(
-        (cal) => cal.accessRole === 'owner' || cal.primary
-      );
-    }
-
-    const currentCalendarIds = filteredCalendars.map((cal) => cal.id);
-
-    const oldCalendarIds = (await store.get<string[]>('calendars')) || [];
-    const oldCalendarIdsSet = new Set(oldCalendarIds);
-
-    const newCalendars = filteredCalendars.filter(
-      (cal) => !oldCalendarIdsSet.has(cal.id)
-    );
-
-    await store.put('calendars', currentCalendarIds);
-
-    return newCalendars.map((cal) => ({
-      id: cal.id,
-      data: {
-        ...cal,
-        isOwned: cal.accessRole === 'owner' || cal.primary,
-        isShared: cal.accessRole !== 'owner' && !cal.primary,
-        calendarType: cal.primary
-          ? 'primary'
-          : cal.accessRole === 'owner'
-          ? 'owned'
-          : 'shared',
-      },
-    }));
-  },
-};
+const LEGACY_KNOWN_CALENDARS_STORE_KEY = 'calendars';
+const KNOWN_CALENDARS_STORE_KEY = 'calendars_with_hidden';
+const SAMPLE_SIZE = 5;
 
 export const newCalendar = createTrigger({
   auth: googleCalendarAuth,
@@ -87,7 +21,7 @@ export const newCalendar = createTrigger({
   displayName: 'New Calendar',
   description: 'Fires when a new calendar is created or becomes accessible.',
   aiMetadata: {
-    description: 'Fires when a calendar newly appears in the connected account\'s calendar list, whether created or shared in, detected by polling. Each fired item is the new calendar. Can be filtered by access role, a name/description text match, and an option to exclude shared calendars.',
+    description: 'Fires when a calendar newly appears in the connected account\'s calendar list, whether created or shared in, detected by polling. Each fired item is the new calendar. Can be filtered by access role, a name/description text match, and an option to exclude shared calendars; changing a filter later does not fire for calendars that already existed, and hiding a calendar from the list and showing it again does not fire it.',
   },
   propertyGroups: [
     {
@@ -141,67 +75,134 @@ export const newCalendar = createTrigger({
   },
 
   async onEnable(context) {
-    if (context.isRepublish && !isNil(await context.store.get('calendars'))) {
+    if (
+      context.isRepublish &&
+      !isNil(await readKnown({ store: context.store }))
+    ) {
       return;
     }
-    const calendars = await getCalendars(context.auth);
-
-    const { access_role_filter, calendar_name_filter, exclude_shared } =
-      context.propsValue;
-    let filteredCalendars = calendars;
-
-    if (access_role_filter && access_role_filter.length > 0) {
-      filteredCalendars = filteredCalendars.filter((cal) =>
-        access_role_filter.includes(cal.accessRole)
-      );
-    }
-
-    if (calendar_name_filter && calendar_name_filter.trim()) {
-      const searchTerm = calendar_name_filter.toLowerCase().trim();
-      filteredCalendars = filteredCalendars.filter(
-        (cal) =>
-          cal.summary?.toLowerCase().includes(searchTerm) ||
-          cal.description?.toLowerCase().includes(searchTerm)
-      );
-    }
-
-    if (exclude_shared) {
-      filteredCalendars = filteredCalendars.filter(
-        (cal) => cal.accessRole === 'owner' || cal.primary
-      );
-    }
-
-    await context.store.put(
-      'calendars',
-      filteredCalendars.map((cal) => cal.id)
-    );
-
-    await pollingHelper.onEnable(polling, context);
+    const calendars = await getCalendars(context.auth, undefined, {
+      showHidden: true,
+    });
+    await saveKnown({ store: context.store, calendars });
   },
 
-  async onDisable(context) {
-    await pollingHelper.onDisable(polling, context);
+  async onDisable() {
+    return;
   },
 
   async run(context) {
-    return await pollingHelper.poll(polling, context);
+    const calendars = await getCalendars(context.auth, undefined, {
+      showHidden: true,
+    });
+    const known = await readKnown({ store: context.store });
+    if (isNil(known)) {
+      await saveKnown({ store: context.store, calendars });
+      return [];
+    }
+    const knownIds = new Set(known.ids);
+    const knownIncludesHidden = known.includesHidden;
+    const fresh = filterCalendars({
+      calendars: calendars.filter(
+        (calendar) =>
+          !knownIds.has(calendar.id) &&
+          (knownIncludesHidden || calendar.hidden !== true)
+      ),
+      filters: context.propsValue,
+    });
+    await saveKnown({ store: context.store, calendars });
+    return fresh.map((calendar) => toOutput({ calendar }));
   },
 
   async test(context) {
     const calendars = await getCalendars(context.auth);
-    const recentCalendars = calendars.slice(-1);
-    return recentCalendars.map((cal: CalendarObject) => ({
-      id: cal.id,
-      data: {
-        ...cal,
-        isOwned: cal.accessRole === 'owner' || cal.primary,
-        isShared: cal.accessRole !== 'owner' && !cal.primary,
-        calendarType: cal.primary
-          ? 'primary'
-          : cal.accessRole === 'owner'
-          ? 'owned'
-          : 'shared',
-      },
-    }));
+    return filterCalendars({ calendars, filters: context.propsValue })
+      .slice(-SAMPLE_SIZE)
+      .reverse()
+      .map((calendar) => toOutput({ calendar }));
   },
 });
+
+async function saveKnown({
+  store,
+  calendars,
+}: {
+  store: Store;
+  calendars: CalendarObject[];
+}): Promise<void> {
+  await store.put<string[]>(
+    KNOWN_CALENDARS_STORE_KEY,
+    calendars.map((calendar) => calendar.id)
+  );
+}
+
+async function readKnown({
+  store,
+}: {
+  store: Store;
+}): Promise<{ ids: string[]; includesHidden: boolean } | null> {
+  const current = await store.get<string[]>(KNOWN_CALENDARS_STORE_KEY);
+  if (Array.isArray(current)) {
+    return { ids: current, includesHidden: true };
+  }
+  const legacy = await store.get<string[]>(LEGACY_KNOWN_CALENDARS_STORE_KEY);
+  if (Array.isArray(legacy)) {
+    return { ids: legacy, includesHidden: false };
+  }
+  return null;
+}
+
+function filterCalendars({
+  calendars,
+  filters,
+}: {
+  calendars: CalendarObject[];
+  filters: CalendarFilters;
+}): CalendarObject[] {
+  const { access_role_filter, calendar_name_filter, exclude_shared } = filters;
+  const searchTerm = (calendar_name_filter ?? '').toLowerCase().trim();
+  return calendars.filter((calendar) => {
+    if (
+      access_role_filter &&
+      access_role_filter.length > 0 &&
+      !access_role_filter.includes(calendar.accessRole)
+    ) {
+      return false;
+    }
+    if (
+      searchTerm &&
+      !calendar.summary?.toLowerCase().includes(searchTerm) &&
+      !calendar.description?.toLowerCase().includes(searchTerm)
+    ) {
+      return false;
+    }
+    if (exclude_shared && !isOwned({ calendar })) {
+      return false;
+    }
+    return true;
+  });
+}
+
+function isOwned({ calendar }: { calendar: CalendarObject }): boolean {
+  return calendar.accessRole === 'owner' || calendar.primary === true;
+}
+
+function toOutput({ calendar }: { calendar: CalendarObject }) {
+  return {
+    ...calendar,
+    isOwned: isOwned({ calendar }),
+    isShared: !isOwned({ calendar }),
+    calendarType:
+      calendar.primary === true
+        ? 'primary'
+        : calendar.accessRole === 'owner'
+        ? 'owned'
+        : 'shared',
+  };
+}
+
+type CalendarFilters = {
+  access_role_filter?: string[];
+  calendar_name_filter?: string;
+  exclude_shared?: boolean;
+};

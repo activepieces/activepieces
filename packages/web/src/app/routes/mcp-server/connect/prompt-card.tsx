@@ -10,7 +10,7 @@ export function PromptCard({ prompt }: { prompt: Prompt }) {
   return (
     <button
       type="button"
-      onClick={() => copy(promptText(prompt))}
+      onClick={() => copy({ value: promptText(prompt) })}
       className="group flex w-full items-start gap-4 rounded-[14px] border bg-panel py-4.5 pl-5 pr-4.5 text-left transition-[border-color,scale] duration-100 ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-gray-8 active:scale-[0.995] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-9"
     >
       <span className="sr-only">{t('Copy prompt:')} </span>

@@ -44,26 +44,14 @@ export class NoProjectSelected extends Error {
 }
 
 export const appConnectionUtils = {
-  getStatusIcon(status: AppConnectionStatus): {
-    variant: 'default' | 'success' | 'error';
-    icon: React.ComponentType;
-  } {
+  getStatusIcon(status: AppConnectionStatus): React.ComponentType {
     switch (status) {
       case AppConnectionStatus.ACTIVE:
-        return {
-          variant: 'success',
-          icon: CheckIcon,
-        };
+        return CheckIcon;
       case AppConnectionStatus.MISSING:
-        return {
-          variant: 'default',
-          icon: UnplugIcon,
-        };
+        return UnplugIcon;
       case AppConnectionStatus.ERROR:
-        return {
-          variant: 'error',
-          icon: XIcon,
-        };
+        return XIcon;
     }
   },
   getConnectionAccountIdentifier(

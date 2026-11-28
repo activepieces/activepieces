@@ -66,6 +66,20 @@ export const ProviderModelConfig = z.object({
     modelId: z.string(),
     modelName: z.string(),
     modelType: z.enum(AIProviderModelType),
+    discovered: z.boolean().optional(),
+    metadata: z.object({
+        contextTokens: z.number().optional(),
+        maxOutputTokens: z.number().optional(),
+        releaseDate: z.string().optional(),
+        inputCostPerMillionTokens: z.number().optional(),
+        outputCostPerMillionTokens: z.number().optional(),
+        cacheReadCostPerMillionTokens: z.number().optional(),
+        cacheWriteCostPerMillionTokens: z.number().optional(),
+        supportsToolCalling: z.boolean().optional(),
+        supportsReasoning: z.boolean().optional(),
+        supportsVision: z.boolean().optional(),
+        realModelId: z.string().optional(),
+    }).optional(),
 })
 export type ProviderModelConfig = z.infer<typeof ProviderModelConfig>
 
@@ -176,6 +190,7 @@ export const AiProviderCredentials = z.discriminatedUnion('provider', [
     z.object({ provider: z.literal(AIProviderName.META), config: OpenAiCompatibleVendorConfig.partial(), auth: BaseAIProviderAuthConfig.partial() }),
     z.object({ provider: z.literal(AIProviderName.NVIDIA), config: OpenAiCompatibleVendorConfig.partial(), auth: BaseAIProviderAuthConfig.partial() }),
     z.object({ provider: z.literal(AIProviderName.COHERE), config: CohereProviderConfig.partial(), auth: CohereProviderAuthConfig.partial() }),
+    z.object({ provider: z.literal(AIProviderName.LITELLM), config: OpenAICompatibleProviderConfig.partial(), auth: OpenAICompatibleProviderAuthConfig.partial() }),
 ])
 export type AiProviderCredentials = z.infer<typeof AiProviderCredentials>
 

@@ -48,6 +48,10 @@ export function ModelDetailCard({ detail }: { detail: ModelDetail }) {
         {detail.title !== model.name && (
           <DetailRow label={t('Model')}>{model.name}</DetailRow>
         )}
+        {metadata?.realModelId !== undefined &&
+          metadata.realModelId !== model.name && (
+            <DetailRow label={t('Routes to')}>{metadata.realModelId}</DetailRow>
+          )}
         {chain.length === 1 && (
           <DetailRow label={t('Runs on')}>{detail.runsOn}</DetailRow>
         )}
@@ -127,24 +131,26 @@ export function ModelDetailCard({ detail }: { detail: ModelDetail }) {
       )}
 
       <div className="flex flex-wrap gap-1.5 border-t px-3 pt-4">
-        {capabilities.map((capability) =>
-          capability.value === true ? (
-            <span
-              key={capability.label}
-              className="flex items-center gap-1 rounded-full bg-success-3 px-2 py-0.5 text-xs text-success-11"
-            >
-              <Check className="size-3 text-success-11" />
-              {capability.label}
-            </span>
-          ) : (
-            <span
-              key={capability.label}
-              className="rounded-full bg-gray-3 px-2 py-0.5 text-xs text-gray-10 line-through"
-            >
-              {capability.label}
-            </span>
-          ),
-        )}
+        {capabilities
+          .filter((capability) => capability.value !== undefined)
+          .map((capability) =>
+            capability.value === true ? (
+              <span
+                key={capability.label}
+                className="flex items-center gap-1 rounded-full bg-success-3 px-2 py-0.5 text-xs text-success-11"
+              >
+                <Check className="size-3 text-success-11" />
+                {capability.label}
+              </span>
+            ) : (
+              <span
+                key={capability.label}
+                className="rounded-full bg-gray-3 px-2 py-0.5 text-xs text-gray-10 line-through"
+              >
+                {capability.label}
+              </span>
+            ),
+          )}
       </div>
     </div>
   );

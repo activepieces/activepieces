@@ -13,7 +13,7 @@ export const copyDocument = createAction({
 	audience: 'ai',
 	aiMetadata: {
 		description:
-			'Duplicates an existing Google Docs document into a new file with the given title. Pick this to spin a working copy off a template or snapshot a version before editing; it is distinct from Edit Template File, which merges data in place. Each call creates a new file, so it is not idempotent (retries produce duplicates).',
+			'Duplicates an existing Google Docs document into a new file with the given title. Pick this to spin a working copy off a template or snapshot a version before editing; it is distinct from Fill Template, which fills the placeholders of a template and can make its own copy. Each call creates a new file, so it is not idempotent (retries produce duplicates).',
 		idempotent: false,
 	},
 	outputSchema: copyDocumentActionOutputSchema,

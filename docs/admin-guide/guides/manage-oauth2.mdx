@@ -18,9 +18,16 @@ When users connect to services like Google Sheets or Slack, they see "Activepiec
 
 ## How to Configure
 
-1. Go to **Platform Admin → Catalogue → Pieces**
-2. Find the piece you want to configure (e.g., Google Sheets)
-3. Click the lock icon to open the OAuth2 settings
-4. Enter your own Client ID and Client Secret
+1. In the service's developer console, create an OAuth2 app. Add `<your Activepieces URL>/redirect` as its redirect URL. If you set `AP_INTERNAL_URL`, use that URL instead.
+2. Go to **Platform Admin → Catalogue → Pieces**
+3. Find the piece you want to configure (e.g., Google Sheets). Only pieces that use OAuth2 show the icon.
+4. Click the unlock icon (**Configure OAuth2 App**) to open the OAuth2 settings
+5. Enter your own Client ID and Client Secret, then click **Save**
 
 ![Manage Oauth2 apps](/resources/screenshots/manage-oauth2.png)
+
+## Remove or Change an OAuth2 App
+
+When a piece uses your OAuth2 app, its icon is a red lock. Click it (**Delete OAuth2 App**) to remove your app. The app is deleted at once, with no confirmation.
+
+To change the credentials, delete the app, then configure it again. Connections made with your app stop refreshing when you delete it or change its Client ID. Reconnect those connections.

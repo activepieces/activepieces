@@ -71,8 +71,8 @@
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
   "HEAD": "CABEÇA",
-  "Request": "Request",
-  "Data to send": "Data to send",
+  "Request": "Solicitação",
+  "Data to send": "Dados a enviar",
   "New Published Post": "Nova postagem publicada",
   "Triggers when a post is published in Postiz": "Dispara quando uma postagem é publicada em Postiz"
 }

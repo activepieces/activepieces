@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { wideEvent } from '../src/wide-event'
 import { createLogger, initLogger, mockAudit } from 'evlog'
-import type { RequestLogger } from 'evlog'
+import type { DrainContext, RequestLogger, WideEvent } from 'evlog'
 
 function makeMockLogger(): RequestLogger & {
     _sets: Record<string, unknown>[]
@@ -219,3 +219,42 @@ describe('wideEvent', () => {
         captured.restore()
     })
 })
+
+describe('wideEvent.runJob', () => {
+    it('emits one event with outcome success and returns the result', async () => {
+        const captured = captureDrainedEvents()
+        const result = await wideEvent.runJob({
+            fields: { event: 'job.test', job: { id: 'j1', type: 'test' } },
+            fn: async () => 42,
+        })
+        await new Promise(resolve => setImmediate(resolve))
+        expect(result).toBe(42)
+        expect(captured).toHaveLength(1)
+        expect(captured[0]).toMatchObject({ event: 'job.test', job: { id: 'j1', type: 'test' }, outcome: 'success', level: 'info' })
+    })
+
+    it('records the error, sets outcome failed, keeps fields set by fn, and rethrows', async () => {
+        const captured = captureDrainedEvents()
+        const job = wideEvent.runJob({
+            fields: { event: 'job.test', flowRun: { id: 'child' } },
+            fn: () => Promise.reject(new Error('boom'))
+                .finally(() => wideEvent.set({ flowRun: { id: 'child' } })),
+        })
+        await expect(job).rejects.toThrow('boom')
+        await new Promise(resolve => setImmediate(resolve))
+        expect(captured).toHaveLength(1)
+        expect(captured[0]).toMatchObject({ outcome: 'failed', level: 'error', flowRun: { id: 'child' }, error: { message: 'boom' } })
+    })
+})
+
+function captureDrainedEvents(): WideEvent[] {
+    const captured: WideEvent[] = []
+    initLogger({
+        env: { service: 'wide-event-test' },
+        silent: true,
+        drain: async (ctx: DrainContext) => {
+            captured.push({ ...ctx.event })
+        },
+    })
+    return captured
+}

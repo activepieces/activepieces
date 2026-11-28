@@ -1,6 +1,6 @@
 import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, FlowVersionId, isNil, Metadata, PlatformId, ProjectId, SeekPage, tryCatch, UserId } from '@activepieces/core-utils'
 import { apDayjs, apDayjsDuration } from '@activepieces/server-utils'
-import { CreateFlowRequest, Flow, FlowCreator, FlowOperationRequest, FlowOperationStatus, FlowOperationType, flowPieceUtil, FlowStatus, flowStructureUtil, FlowTrigger, FlowTriggerType, FlowVersion, FlowVersionState, PopulatedFlow, requiredActionsUtil, SharedTemplate, TelemetryEventName, TemplateStatus, TemplateType, TriggerSource, UncategorizedFolderId, UserWithMetaInformation } from '@activepieces/shared'
+import { CreateFlowRequest, Flow, FlowCreator, FlowOperationRequest, FlowOperationStatus, FlowOperationType, flowPieceUtil, FlowStatus, flowStructureUtil, FlowTrigger, FlowTriggerType, FlowVersion, FlowVersionState, PopulatedFlow, requiredActionsUtil, ResourceChangeOp, SharedTemplate, TelemetryEventName, TemplateStatus, TemplateType, TriggerSource, UncategorizedFolderId, UserWithMetaInformation } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In, IsNull, Not } from 'typeorm'
@@ -31,14 +31,6 @@ import { flowRepo } from './flow.repo'
 
 
 const notDeleting = { operationStatus: Not(FlowOperationStatus.DELETING) }
-
-const nonDraftOperationTypes: FlowOperationType[] = [
-    FlowOperationType.CHANGE_STATUS,
-    FlowOperationType.CHANGE_FOLDER,
-    FlowOperationType.UPDATE_METADATA,
-    FlowOperationType.UPDATE_MINUTES_SAVED,
-    FlowOperationType.UPDATE_OWNER,
-]
 
 export const flowService = (log: FastifyBaseLogger) => ({
     async create({ projectId, request, externalId, ownerId, templateId, createdBy, ip, emitEvents = true }: CreateParams): Promise<PopulatedFlow> {
@@ -96,6 +88,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 flow: createdFlow,
             })
         }
+        await flowSideEffects(log).onDraftWritten({ flowId: savedFlow.id, projectId, editorSessionId: null, op: ResourceChangeOp.CREATE })
         return createdFlow
     },
 
@@ -436,9 +429,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             }
         }
 
-        if (isDraftWrite(operation.type)) {
-            await flowSideEffects(log).onDraftWritten({ flowId: id, projectId, editorSessionId })
-        }
+        await flowSideEffects(log).onDraftWritten({ flowId: id, projectId, editorSessionId })
 
         const updatedFlow = await this.getOnePopulatedOrThrow({
             id,
@@ -586,6 +577,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         await flowExecutionCache(log).invalidate(id)
         await this.addDeleteFlowJob(flow)
         log.info({ flow: { id }, project: { id: projectId } }, 'Flow deletion requested')
+        await flowSideEffects(log).onDraftWritten({ flowId: id, projectId, editorSessionId: null, op: ResourceChangeOp.DELETE })
         if (!isNil(deletedFlow)) {
             flowSideEffects(log).onDeleted({
                 platformId: await projectService(log).getPlatformId(projectId),
@@ -757,10 +749,6 @@ export const flowService = (log: FastifyBaseLogger) => ({
     },
 })
 
-
-function isDraftWrite(type: FlowOperationType): boolean {
-    return !nonDraftOperationTypes.includes(type)
-}
 
 async function assertRequiredActionsPresent({ projectId, platformId, flowVersion, log }: AssertRequiredActionsParams): Promise<void> {
     const result = await flowPublishHooks.get(log).findMissingRequiredActions({ projectId, platformId, flowVersion })

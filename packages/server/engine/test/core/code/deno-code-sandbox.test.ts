@@ -170,16 +170,15 @@ describe('denoCodeSandbox permission boundary', () => {
             }
         })
 
-        it('with the ENV permission exposes only PATH, never the engine env', async () => {
+        it('with the ENV permission exposes only PATH and TMPDIR, never the engine env', async () => {
             const envSandbox = denoModule.denoCodeSandbox({ permissions: [denoModule.DenoPermission.ENV], codeStepMemoryLimitMb: 128 })
             const codeFilePath = path.join(stepDir, 'index.ts')
             await writeFile(codeFilePath, `export const code = async () => ({ keys: Object.keys(Deno.env.toObject()).sort(), missing: process.env.AP_EXECUTION_MODE ?? null })`)
             const result = await envSandbox.runCodeModule({ codeFilePath, inputs: {} })
-            expect(result).toEqual({ keys: ['DENO_DIR', 'PATH'], missing: null })
+            expect(result).toEqual({ keys: ['DENO_DIR', 'PATH', 'TMPDIR'], missing: null })
         })
 
         it('forwards exactly the vars listed in AP_SANDBOX_PROPAGATED_ENV_VARS when ENV is granted, and none without it', async () => {
-            const originalEnv = { ...process.env }
             try {
                 process.env.AP_SANDBOX_PROPAGATED_ENV_VARS = 'MY_PROPAGATED_SECRET,MY_MISSING_VAR'
                 process.env.MY_PROPAGATED_SECRET = 'propagated-value'
@@ -189,14 +188,16 @@ describe('denoCodeSandbox permission boundary', () => {
 
                 const envSandbox = denoModule.denoCodeSandbox({ permissions: [denoModule.DenoPermission.ENV], codeStepMemoryLimitMb: 128 })
                 const result = await envSandbox.runCodeModule({ codeFilePath, inputs: {} })
-                expect(result).toEqual({ secret: 'propagated-value', unlisted: null, keys: ['DENO_DIR', 'MY_PROPAGATED_SECRET', 'PATH'] })
+                expect(result).toEqual({ secret: 'propagated-value', unlisted: null, keys: ['DENO_DIR', 'MY_PROPAGATED_SECRET', 'PATH', 'TMPDIR'] })
 
                 await writeFile(codeFilePath, `export const code = async () => { try { Deno.env.toObject(); return 'readable' } catch { return 'blocked' } }`)
                 const lockedResult = await denoCodeSandbox.runCodeModule({ codeFilePath, inputs: {} })
                 expect(lockedResult).toBe('blocked')
             }
             finally {
-                process.env = originalEnv
+                delete process.env.AP_SANDBOX_PROPAGATED_ENV_VARS
+                delete process.env.MY_PROPAGATED_SECRET
+                delete process.env.MY_UNLISTED_SECRET
             }
         })
 
@@ -432,6 +433,50 @@ describe('denoCodeSandbox permission boundary', () => {
             }
         })
 
+        it('keeps the session deno cache next to the flow version steps and reuses it across sessions', async () => {
+            const sessionFlowDir = await mkdtemp(path.join(tmpdir(), 'ap-deno-session-'))
+            const sessionCacheDir = path.join(sessionFlowDir, '.deno-cache')
+            try {
+                await withEnv({ AP_EXECUTION_MODE: 'UNSANDBOXED', AP_DENO_CACHE_MOUNTED: undefined }, async () => {
+                    const first = await denoCodeSandbox.createScriptSession({ scriptContext: {}, functions: {}, flowVersionDir: sessionFlowDir })
+                    try {
+                        expect(await first.run('1 + 1')).toBe(2)
+                    }
+                    finally {
+                        first.dispose()
+                    }
+                    expect(existsSync(path.join(sessionCacheDir, 'main.mjs'))).toBe(true)
+                    expect(existsSync(path.join(sessionCacheDir, 'v8_code_cache_v2'))).toBe(true)
+
+                    const second = await denoCodeSandbox.createScriptSession({ scriptContext: { base: 40 }, functions: {}, flowVersionDir: sessionFlowDir })
+                    try {
+                        expect(await second.run('base + 2')).toBe(42)
+                    }
+                    finally {
+                        second.dispose()
+                    }
+                    await expect.poll(() => existsSync(sessionCacheDir), { timeout: 2000 }).toBe(true)
+                })
+            }
+            finally {
+                await rm(sessionFlowDir, { recursive: true, force: true })
+            }
+        })
+
+        it('keeps the session deno cache ephemeral when the flow version dir does not exist', async () => {
+            const missingFlowDir = path.join(tmpdir(), `ap-deno-missing-${Date.now()}`)
+            await withEnv({ AP_EXECUTION_MODE: 'UNSANDBOXED', AP_DENO_CACHE_MOUNTED: undefined }, async () => {
+                const session = await denoCodeSandbox.createScriptSession({ scriptContext: {}, functions: {}, flowVersionDir: missingFlowDir })
+                try {
+                    expect(await session.run('2 + 2')).toBe(4)
+                }
+                finally {
+                    session.dispose()
+                }
+            })
+            expect(existsSync(missingFlowDir)).toBe(false)
+        })
+
         it('runs every script of a session in one Deno process', async () => {
             const session = await denoCodeSandbox.createScriptSession({
                 scriptContext: {},
@@ -487,6 +532,48 @@ describe('denoCodeSandbox permission boundary', () => {
                 finally {
                     spawnSpy.mockRestore()
                 }
+            }
+            finally {
+                session.dispose()
+            }
+        })
+
+        it('replaces a step view when overwrite is requested, and never replaces an injected function', async () => {
+            const session = await denoCodeSandbox.createScriptSession({
+                scriptContext: {},
+                functions: { double: (n: number) => n * 2 },
+            })
+            try {
+                await session.setGlobal('step_1', { out: 5 })
+                expect(await session.run('step_1.out')).toBe(5)
+
+                await session.setGlobal('step_1', { out: 6 }, false)
+                expect(await session.run('step_1.out')).toBe(6)
+
+                await session.setGlobal('double', 1, false)
+                expect(await session.run('double(2)')).toBe(4)
+            }
+            finally {
+                session.dispose()
+            }
+        })
+
+        it('reset clears the step views that were set, and they can be set again', async () => {
+            const session = await denoCodeSandbox.createScriptSession({
+                scriptContext: { base: 1 },
+                functions: { double: (n: number) => n * 2 },
+            })
+            try {
+                await session.setGlobal('step_1', { out: 5 })
+                expect(await session.run('step_1.out + base')).toBe(6)
+
+                await session.reset()
+
+                expect(await session.run('typeof step_1')).toBe('undefined')
+                expect(await session.run('double(base)')).toBe(2)
+
+                await session.setGlobal('step_1', { out: 7 })
+                expect(await session.run('step_1.out')).toBe(7)
             }
             finally {
                 session.dispose()
@@ -587,6 +674,32 @@ describe('denoCodeSandbox permission profiles', () => {
             // readEtc 'prompt' (not 'granted') = read outside tmp is absent from the flags;
             // --no-prompt turns any such read into a hard NotCapable failure at use time.
             expect(out).toEqual({ net: 'granted', env: 'granted', run: 'granted', sys: 'granted', readEtc: 'prompt', readTmp: 'granted', writeTmp: 'granted' })
+        })
+
+        it('lets a step write a file under its own os.tmpdir() when TMPDIR is not the default', async () => {
+            const customTmp = await mkdtemp(path.join(tmpdir(), 'ap-deno-tmpdir-'))
+            const previousTmpDir = process.env.TMPDIR
+            process.env.TMPDIR = customTmp
+            try {
+                const out = await runWith(profile(), `import os from 'node:os'
+import fs from 'node:fs'
+import path from 'node:path'
+export const code = async () => {
+    const file = path.join(os.tmpdir(), 'probe.txt')
+    fs.writeFileSync(file, 'ok')
+    return { tmp: os.tmpdir(), content: fs.readFileSync(file, 'utf8') }
+}`)
+                expect(out).toEqual({ tmp: customTmp, content: 'ok' })
+            }
+            finally {
+                if (previousTmpDir === undefined) {
+                    delete process.env.TMPDIR
+                }
+                else {
+                    process.env.TMPDIR = previousTmpDir
+                }
+                await rm(customTmp, { recursive: true, force: true })
+            }
         })
     })
 

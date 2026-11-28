@@ -12,8 +12,8 @@ on:
         options:
           - deploy-staging              # Re-deploy to staging (e.g., after infra change)
 
-# One deploy run at a time, so e2e always tests the SHA it reports on. A newer
-# pending run replaces an older pending one: the latest merge still wins.
+# One deploy run at a time. A newer pending run replaces an older pending one:
+# the latest merge still wins. The Cloud gate picks a commit whose two deploy jobs passed.
 concurrency:
   group: staging-deploy
   cancel-in-progress: false
@@ -105,73 +105,39 @@ jobs:
         run: |
           ssh ops -t -t 'bash -ic "cd mrsk/stg && kamal deploy --version ${{ needs.build-image.outputs.image_tag }} --config-file=config/worker.yml --skip-push; exit"'
 
-  # Runs the Playwright suite against staging once both deploys finish. The job's
-  # check run on the commit SHA is the result the candidate cut reads.
-  # Report-only for now (continue-on-error): it never fails the workflow.
-  # Each spec deletes the flows and connections it creates; global setup deletes only `E2E `-prefixed ones older than an hour.
-  e2e-staging:
-    needs: [deploy-staging-app, deploy-staging-workers]
-    if: always() && needs.deploy-staging-app.result == 'success' && needs.deploy-staging-workers.result == 'success'
+  deploy-stg-cloud:
+    needs: build-image
+    if: always() && needs.build-image.result == 'success'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
     continue-on-error: true
-    env:
-      CI: true
-      E2E_INSTANCE_URL: https://stg.activepieces.com
-      E2E_EMAIL: ${{ secrets.STAGING_E2E_EMAIL }}
-      E2E_PASSWORD: ${{ secrets.STAGING_E2E_PASSWORD }}
-      PLAYWRIGHT_JSON_OUTPUT_FILE: ${{ github.workspace }}/packages/tests-e2e/test-results/results.json
+    environment:
+      name: stg-cloud
+      url: https://stg-cloud.activepieces.com
     steps:
-      - name: Check test account secrets
+      - name: Configure SSH
         run: |
-          if [ -z "$E2E_EMAIL" ] || [ -z "$E2E_PASSWORD" ]; then
-            echo "::error::STAGING_E2E_EMAIL and STAGING_E2E_PASSWORD must be set. Without them the suite tries to sign up on staging."
-            exit 1
-          fi
-
-      - uses: actions/checkout@v5
-
-      - name: Cache dependencies
-        uses: actions/cache@v5
-        with:
-          path: ~/.bun/install/cache
-          key: bun-e2e-${{ hashFiles('bun.lock') }}
-          restore-keys: bun-e2e-
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Install dependencies
-        run: bun install --filter tests-e2e --frozen-lockfile --ignore-scripts
-
-      - name: Install Playwright browsers
-        working-directory: packages/tests-e2e
-        run: npx playwright install --with-deps chromium
-
-      - name: Run E2E tests against staging
-        working-directory: packages/tests-e2e
-        run: npx playwright test --config=playwright.config.ts --reporter=github,json
-
-      - name: Summarize results
-        if: always()
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/ops.key
+          chmod 600 ~/.ssh/ops.key
+          cat >>~/.ssh/config <<END
+          Host ops
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/ops.key
+            StrictHostKeyChecking no
+          END
+        env:
+          SSH_USER: ${{ secrets.DEV_OPS_USERNAME }}
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.DEV_OPS_HOST }}
+      - name: Deploy to stg-cloud
         run: |
-          if [ -f "$PLAYWRIGHT_JSON_OUTPUT_FILE" ]; then
-            jq -r '.stats | "| passed | failed | flaky | skipped |\n|---|---|---|---|\n| \(.expected) | \(.unexpected) | \(.flaky) | \(.skipped) |"' "$PLAYWRIGHT_JSON_OUTPUT_FILE" >> "$GITHUB_STEP_SUMMARY"
-          fi
-
-      # Only the JSON report: traces hold the test account's password and token, and artifacts are public.
-      - name: Upload test results
-        uses: actions/upload-artifact@v6
-        if: always()
-        with:
-          name: e2e-staging-results
-          path: packages/tests-e2e/test-results/results.json
-          retention-days: 30
+          ssh ops -t -t 'bash -ic "cd mrsk/stg-cloud && kamal deploy --version ${{ needs.build-image.outputs.image_tag }} --skip-push; exit"'
+      - name: Release the stg-cloud deploy lock
+        if: cancelled()
+        run: |
+          ssh ops -t -t 'bash -ic "cd mrsk/stg-cloud && kamal lock release; exit"'
 
   # Records the deploy in the Linear "Staging" release pipeline. Never fails the workflow.
   # Piece commits are left out: pieces ship through npm, not the image.

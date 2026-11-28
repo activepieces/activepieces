@@ -191,11 +191,11 @@
   "HEAD": "頭",
   "Page": "ページ",
   "Output": "Output",
-  "Pages": "Pages",
-  "What to extract": "What to extract",
+  "Pages": "ページ",
+  "What to extract": "展開する対象",
   "Site": "サイト",
-  "Limits": "Limits",
+  "Limits": "制限",
   "Webhook": "Webhook",
-  "Request": "Request",
-  "Data to send": "Data to send"
+  "Request": "リクエスト",
+  "Data to send": "送信するデータ"
 }

@@ -4,9 +4,362 @@ description: "This list shows all versions that include breaking changes and how
 icon: "hammer"
 ---
 
+## 0.94.0
+
+### What has changed?
+
+All breaking changes in this release are in pieces.
+
+<Accordion title="Pieces (21 changes)">
+
+#### Google Sheets 0.21.0: row triggers fire for more changes, and Trigger Column must be a column letter
+
+From Google Sheets 0.21.0, **New Row Added** and **New or Updated Row** also run the flow in three cases where they stayed silent before:
+
+- A cell changed back to an earlier value within 30 seconds. Before, the second change was dropped as a duplicate of the first. The one exception: a change identical to one already delivered in the last 10 minutes (same row, same old and new values, for example a cell flipped `open` → `closed` → `open` → `closed`, or a row deleted and appended again unchanged) runs the flow only once.
+- Rows changed while the trigger renews its Google watch channel (every 12 hours). Before, that change was lost.
+- Notifications where Google reports a content change together with another change type, for example `content, permissions`. Before, these were ignored.
+
+**New or Updated Row** events now include cells past the last header column, labelled by their column letter, the same as New Row Added and the Test sample. Before, those cells were left out, and every cell was left out when row 1 was blank.
+
+**Trigger Column** must now be a column letter, such as `B` or `aa`. Lower-case letters now work. A header name like `Status` is rejected with a clear message when the flow is turned on; before, the flow turned on but never ran.
+
+#### What you need to do
+
+If a flow uses New or Updated Row with a Trigger Column, open the trigger and check that the value is a column letter, not a header name, then turn the flow on again. If a flow after a row trigger can't handle a run for a value that was changed back, or for extra keys past the last header, add a Branch step to filter those runs.
+
+#### Fireflies.ai 0.2.0: three find actions are no longer AI agent tools, and Upload Audio returns a smaller output
+
+**Find Meeting by ID**, **Find Recent Meeting** and **Find Meeting by Call Details** are now shown only in the flow builder. AI agents and MCP clients get **Get Meeting**, **Get Meeting Summary** and **Find Meetings** instead.
+
+After you upgrade:
+
+- **Upload Audio** returns `{ success, title, message }` instead of the raw `{ data: { uploadAudio: { ... } } }` response, and it fails the step when Fireflies rejects the upload (for example `paid_required` on the Free plan) instead of showing it as a successful step.
+- **Find Meeting by Call Details** reads at most 1,000 meetings (20 pages of 50). If more meetings match, the step fails and asks you to narrow the filters, instead of paging through the whole account. Its **Date** filter now covers the 24 hours starting at the date and time you give, instead of the UTC calendar day, so meetings no longer go missing when your time zone is ahead of UTC.
+- **Find Meeting by Call Details** now fails before calling Fireflies when Host Email and Participant Email are both set. Fireflies already rejected that combination, so these steps were failing before; fill in only one of the two.
+- Every action fails the step when Fireflies returns a GraphQL error, instead of returning an empty or null result.
+
+#### What you need to do
+
+- Agents that used the three find actions as tools: switch to Get Meeting, Get Meeting Summary or Find Meetings.
+- Steps that read `data.uploadAudio.success`, `data.uploadAudio.title` or `data.uploadAudio.message` from Upload Audio: read `success`, `title` and `message` instead.
+- Find Meeting by Call Details steps on large accounts: add a date range or another filter.
+
+#### Fireberry 0.2.0: record actions are no longer AI agent tools, and their output changes
+
+**Create Record**, **Update Record**, **Delete Records** and **Find Records** are now shown only in the flow builder. AI agents and MCP clients get a separate set of agent actions instead: List Object Types, List Object Fields, List Picklist Values, Search Records, Get Record, Create Record, Update Record and Delete Record.
+
+After you upgrade a step:
+
+- Create Record and Update Record return `{ id, objectSystemName, record }` instead of the raw batch response.
+- Delete Records returns `{ deletedIds, deletedCount }`.
+- The **Record Created or Updated** trigger ignores its lookback setting (it is kept only so saved flows still load). It now tracks Fireberry's own timestamps, so it no longer re-sends records changed earlier the same day. Publishing the upgraded flow starts tracking at the newest record, so records created or updated between the last poll on 0.1.x and the publish are not sent. If more than 500 records change in the same second, Fireberry's API can return only the first 500 of them; the trigger sends those, skips the rest of that second, and the next poll fails once with an error that names the second.
+
+#### What you need to do
+
+- Agents that used the old Fireberry actions as tools: switch to the new agent actions.
+- If a later step read fields from the old Create or Update output, map `id` or `record` instead.
+
+Steps keep running on the version they were built with until you upgrade them.
+
+#### ManyChat 0.2.0: Set Custom Field is no longer an agent tool
+
+From ManyChat 0.2.0, **Set Custom Field** is no longer offered to AI agents and MCP clients. It stays available as a flow step with the same inputs. Agents use the new **Set Subscriber Custom Fields** tool instead, which sets 1 to 20 fields in one call by field ID or name. Set Custom Field steps upgraded to 0.2.0 send date values as `YYYY-MM-DD` and date-time values with an explicit time zone offset, as ManyChat documents. The piece needs Activepieces 0.86.4 or later.
+
+#### What you need to do
+
+Point any Run Agent step or MCP client that used Set Custom Field at **Set Subscriber Custom Fields**. Flows that use Set Custom Field as a step keep working unchanged.
+
+#### Postgres 0.7.0: New Row no longer runs again for updated rows
+
+**New Row** now runs once per row. Before, updating a row ran the flow again for it. Rows that share the same order value as the last one delivered now run the flow instead of being skipped, rows with an empty order value are skipped instead of stopping the trigger, and timestamp columns without a time zone are compared in the database, so workers west of UTC no longer skip rows. Each check delivers at most 500 rows; the rest follow on the next checks. With Descending order on a `timestamptz` or `date` column, a row dated after the database's current time waits until that time; `timestamp` columns (without a time zone) are not held back. When upgrading, rows at the last delivered value that are already in the table don't run again.
+
+#### What you need to do
+
+Nothing for most flows; the trigger keeps its place when upgraded. If a flow relied on New Row running again when a row is updated, use a separate trigger or schedule for updates.
+
+#### RSS 0.8.0: New Item in Feed and New Items in Multiple Feeds fire on a different set of items
+
+From RSS 0.8.0, both RSS triggers keep a separate cursor for each feed URL instead of one shared marker. The output of each run is the same feed item as before, with the same keys and one value change listed below. What changes is mostly which items start a run:
+
+- Items published in the same second as the last delivered item now fire. Before, they were dropped.
+- An article that appears in two of the watched feeds (same guid, or for short ids like `42` the same guid and the same link) fires once, not once per feed.
+- Feeds that list items oldest first now fire only the new items. Before, they could fire old items again, or miss new ones.
+- A slow feed no longer holds up the other feeds: each feed gets 20 seconds. A feed that fails or times out is skipped (only the trigger log shows it) and is checked again on the next poll, without re-sending its old items. The poll fails only when every feed fails.
+- Turning a trigger off and on again starts from the feed's current items, so old items are not replayed.
+- An item whose link is relative (for example `posts/1`) in a feed that has no site link now returns a full link, resolved against the feed URL. Before, the relative path was returned.
+- Turning on New Items in Multiple Feeds now fails when none of the feeds can be loaded at that moment. Before, it turned on anyway. Turn it on again once at least one feed answers.
+- A feed served in a legacy encoding (for example ISO-8859-1 or Shift_JIS, declared in the HTTP header or the XML declaration) now returns readable text. Before, accented and non-Latin characters arrived as "�".
+- A feed (or, for Find Site Feeds, a web page) larger than 20 MB now fails with a "too large" error in both triggers and in the Read Feed, Read Multiple Feeds and Find Site Feeds actions. In New Items in Multiple Feeds only that feed is skipped.
+
+#### What you need to do
+
+Nothing is required. When an existing RSS trigger is upgraded to 0.8.0, its old marker is carried over to each feed, so items published after the last delivered one fire on the next poll and older items do not fire again. On self-hosted servers older than 0.93.0, the previous version deletes its publish-date marker when the flow is republished for the upgrade, so only the feed that holds the last delivered item carries over; the other feeds start from their current items and skip what they published since the last poll. If a flow relied on one article firing once per feed, or on old items replaying after a feed came back from an outage, change that flow.
+
+#### HubSpot 0.14.0: polling triggers fire for changes they used to miss
+
+From HubSpot 0.14.0, the polling triggers change which items they fire for:
+- Property-change triggers also fire when the watched property is cleared, and their output includes the object's default properties next to the watched one.
+- Updated Deal Stage fires for a deal that entered the stage and moved on before the next check. On custom pipelines where HubSpot has no per-stage entry date, it keeps the old behaviour.
+- New COS Blog Article set to "Both" fires again when a draft is published.
+- Search triggers deliver every record when more than 10,000 change between two checks, oldest first, across several checks.
+- Testing a trigger shows the newest item in the builder.
+
+#### What you need to do
+
+Nothing. Flows may see runs they did not get before, so check any flow that assumed a cleared property or a published draft would not start it.
+
+#### Google Calendar 0.14.0: Google Calendar triggers fire once per event and no longer miss events
+
+From Google Calendar 0.14.0, **New Event Matching Search** reads every result page and fires once for each new matching event. A new recurring series fires once, not once per occurrence. Cancelled events never fire. An event that was edited within seconds of being created still counts as new: the trigger no longer requires the created and updated times to be within 5 seconds of each other.
+
+**New Event** fires only for your own events created after the trigger was turned on. Edits, reschedules, renames, cancellations and moved occurrences of a recurring series no longer fire it, and a new series fires once.
+
+Both triggers also fire once for each new invitation from another organizer that you have not answered yet, including an invitation to a meeting created before the trigger was turned on and an invitation to a single occurrence of someone else's series. An invitation you accept or decline before the trigger sees it does not fire, and later edits, replies and republishes do not fire it again. Invitations you receive through a group address follow the own-event rule: they fire only when the meeting was created after the trigger was turned on.
+
+After upgrading, New Event Matching Search, New or Updated Event and Event Cancelled continue from where the old version stopped, but look back at most 24 hours: anything older is skipped and logged. Within those 24 hours, New Event Matching Search may fire once, late, for matching events that the old version skipped (it only read the first page of results). Invitations to meetings created before the old version's last check do not fire after the upgrade, so an invitation the old version already sent does not fire again.
+
+**New or Updated Event** no longer fires for deleted or cancelled events. Every saved change fires once, including a second edit of an event that already fired. After a long quiet period it keeps working instead of failing on Google's "too old" error. A flow that was off for so long that Google rejects its saved position restarts from now and logs the skipped period.
+
+**Event Cancelled** fires once when a whole recurring series is deleted, not once per occurrence. With **Cancellation Reasons**, each cancellation now belongs to exactly one reason, checked in this order: rescheduled, declined, deleted, other. "Event Deleted" now includes your own deleted meetings that kept their title, and "Other Cancellations" only matches what no other reason covers. With **Target Specific Event**, a cancellation fires even when Google leaves out the update time, and an event that no longer exists fires once as deleted. If Google can't be reached to read the selected event when Event Cancelled with **Target Specific Event** is turned on, the flow still turns on: the next check reads the event, records its status without firing, and fails visibly while Google keeps rejecting the request (an event that no longer exists counts as cancelled). Google errors now fail the check instead of being skipped silently.
+
+**Event Start (Time Before)** no longer fires a reminder before it is due (the old version could fire up to 5 minutes early). A reminder whose check ran late or failed fires at the next check if the event hasn't started yet; once the event has started, its reminder is dropped (with Time Before above 0). An event booked after its reminder time fires at the next check if it hasn't started. Time Before = 0 fires when the event starts, a rescheduled event fires again for its new start, and a negative Time Before is an error.
+
+With **Target Specific Event** ticked and no event selected, **Event Cancelled**, **Event Ends** and **Event Start (Time Before)** now refuse to turn on and fail each check with "Select the event to watch, or untick Target Specific Event", instead of staying on and never running. These three triggers and **New Event Matching Search** now list calendars shared with you read-only.
+
+**New Event** keeps its position across a republish of the same calendar, so meetings created just before or during the publish fire once. **New Calendar** no longer fires for a calendar that was hidden from the list and shown again.
+
+**Event Ends** fires once for every event that ends between checks, including more than one page of events and events that end at the same moment.
+
+After upgrading, Event Start (Time Before) and Event Ends do not repeat anything the old version already fired, and they fire once for all-day ends and reminders it had not fired yet. A reminder or event end that the old version skipped in the 14 hours before the upgrade may fire once, late, at the first check after the upgrade; older ones are not sent.
+
+For **Event Start (Time Before)** and **Event Ends**, all-day events start and end at midnight in the calendar's time zone, not UTC. With **Target Specific Event**, a cancelled event no longer fires, and a read error fails the check (the reminder fires at the next check) instead of being hidden.
+
+**New Calendar** fires only for calendars added after the trigger was turned on. Calendars that already existed no longer fire when you widen the filters later, or when they are renamed or their access changes so that they start to match. If you widen the filters in the same publish as this upgrade, an existing calendar that now matches can fire once.
+
+#### What you need to do
+
+If a flow relied on New Event or New Event Matching Search firing for each occurrence of a series or for edits, use **New or Updated Event** instead. If a flow used New or Updated Event to catch deletions, use **Event Cancelled**. If a flow filters Event Cancelled by reason, check the new reason order. Other flows keep working without changes.
+
+#### Gmail 0.19.0: New Email and Send Email no longer return HTTP request details
+
+This is a security fix. The output of the **New Email** trigger and the **Send Email** action included the raw HTTP request, which could expose proxy credentials. From Gmail 0.19.0, the New Email `thread` field contains only `data`; the `config`, `headers`, `request` and `status` keys are removed. Send Email now returns only `data`, `status` and `statusText`.
+
+#### What you need to do
+
+If a flow reads `thread.config`, `thread.headers`, `thread.request` or `thread.status` from New Email, or any key other than `data`, `status` and `statusText` from Send Email, update it to read from `data` instead.
+
+#### Google Drive 0.14.0: file triggers, downloads and search across shared drives
+
+From Google Drive 0.14.0, the **New File** trigger with **Include File Content** on fires for a file whose download fails. That run has a `contentError` field with the reason instead of `content`. Before, one failed download (for example a Google Form, which Drive can't download) failed the whole poll, and every new file in that poll was lost. The trigger's output can now carry the `content` and `contentError` keys.
+
+New File downloads up to 5 files at a time and stops at a deadline, so the poll ends before the trigger timeout. A file still downloading at the deadline gets a `contentError`. All three Drive triggers now detect an incomplete search across shared drives and search each drive on its own, instead of skipping files in drives Google didn't search. When one check can't search every drive in time, the next checks carry on with the drives that are left.
+
+- Exported Google Docs, Sheets and Slides are now saved as `.docx`, `.xlsx` and `.pptx`. Before, they were saved as `.gdoc`, `.gsheet` or `.gslides`, or with no extension when a name was given. In Download File, the export extension is now added to the name you give, so `invoice.pdf` for a Google Doc is saved as `invoice.pdf.docx`. This applies to Download File, Download File Content, List Files, List Folder Contents, Set Public Access and the trigger file content. A failed file lookup now fails with Google's own message.
+- The three Drive triggers now send a large backlog over several checks, oldest first: at most 500 files per check, or 50 with Include File Content on. They also fire for files that Google lists a few minutes late, except while a large backlog is still being sent.
+- With Include Team Drives on, Find File or Folder and the agent tool Search Files and Folders return files from every shared drive. When Google can't search a drive, they fail with a clear error instead of returning a partial list. Both search actions now stop with an error after 120 seconds, where before they had no limit. List Files and List Folder Contents now report `incompleteSearch` as `true` when Google could not search the whole folder.
+- Export Folder as Zip now fails when Google can't search the whole folder, instead of building a zip with files missing.
+- Search Files and Folders now escapes the search value. A value escaped by hand, like `O\'Brien`, now searches for a literal backslash: type `O'Brien` instead.
+- Find File or Folder and Search Files and Folders now fail with an error when Search By or Match isn't a Drive search term, instead of sending it to Google.
+
+#### What you need to do
+
+If a flow after New File reads `content`, check for `contentError` first (for example with a Branch step), because a run can now arrive without `content`.
+
+If a flow matches on the name of a downloaded Google Doc, Sheet or Slides file, update it for the new extension.
+
+#### Google Sheets 0.20.0: row triggers match rows by content, and the Test sample has no header row
+
+**New or Updated Row** now compares rows by their content instead of their position. Inserting, deleting or sorting rows, and changing only a column's display format, no longer runs the flow for every row below the change. A row whose cells are all cleared now runs the flow once with blank values, unless it is the last row of data. With a Trigger Column, a new row runs the flow once that column is filled, not while it is still empty. **New Row Added** runs only for rows added below the last row it has seen; rows inserted higher up, sorting and edits do not run it. Both row triggers now work on tabs named like a cell (for example `Q1` or `FY24`), and their Test sample no longer shows the header row as data. **New Worksheet** no longer runs for the spreadsheet's first tab when the flow is turned on. **Get Next Rows** no longer skips rows after a blank row, the last row of a full sheet, or a batch that failed to read.
+
+#### What you need to do
+
+Nothing for most flows. Upgrading republishes the flow, which takes a fresh baseline of the sheet, so a change made while the flow is being republished does not run it (same as today). If a flow relied on New or Updated Row running for every row after a sort or insert, or on New Row Added running for edited rows, use New or Updated Row with a Trigger Column instead.
+
+#### Google Tasks 0.8.0: New Task can ignore edits
+
+**New Task** has a new **Run on** setting. **New tasks only** runs the flow once per task; renaming, editing, moving or completing a task no longer runs it again. **New and edited tasks** keeps the old behaviour. Steps keep running the old code until you upgrade them to 0.8.0. On upgraded steps, tasks found in one check are delivered newest first, and an edit made within a minute of the previous check is no longer lost.
+
+#### What you need to do
+
+Upgrading a New Task step to 0.8.0 in the builder pre-selects **New tasks only**. To keep running the flow on edits, choose **New and edited tasks** when you upgrade the step.
+
+#### GitHub 0.12.0: Update Issue (Agent) no longer clears labels and assignees
+
+When an AI agent used **Update Issue (Agent)** to change something else, such as the title, the agent path filled the **Labels** and **Assignees** lists it left out with empty lists and sent them. Each such update removed every label and every assignee from the issue. From GitHub 0.12.0 an empty Labels or Assignees list is not sent, so the issue keeps its current labels and assignees. Two new fields, **Clear Labels** and **Clear Assignees**, remove them on purpose.
+
+#### What you need to do
+
+If an agent or a flow step relied on an empty Labels or Assignees list to clear an issue, set **Clear Labels** or **Clear Assignees** instead. If an agent ran this action on an earlier GitHub version, check that your issues still have the labels and assignees you expect. Agents run the latest GitHub version available on your instance, so existing agents switch to the new behaviour as soon as GitHub 0.12.0 is installed, without an upgrade.
+
+#### beehiiv 0.5.0: four subscription actions are no longer agent tools, and List Posts returns posts
+
+From beehiiv 0.5.0, **Create Subscription**, **Update Subscription**, **Delete Subscription** and **List Subscriptions** are no longer offered to AI agents and MCP clients. They stay available as flow steps. Agents use the new tools instead: **Create Subscription (AI)**, **Update Subscription (AI)**, **Unsubscribe Subscriber**, **Delete Subscription (AI)** and **List Subscriptions (AI)**, which take plain publication and subscription IDs or emails. **List Publications** returns the publication ID. **Add Subscription to Automation**, **List Automations** and **List Posts** stay available to both flows and agents.
+
+Steps upgraded to 0.5.0 also behave differently. **List Posts** now returns posts (before, it returned automations), as an object with `items` and paging fields. **List Automations** and **List Posts** with Limit and Page empty fail past 10,000 items (1,000 for List Posts when Expand Results includes content) instead of silently stopping. **Create Subscription** and **Add Subscription to Automation** reject a Double Opt-in Override other than `on`, `off` or `not_set`. **List Subscriptions** with Limit and Cursor empty fails when more than 5,000 subscribers match. **Delete Subscription** returns `deleted` and `subscription_id` instead of an empty result. The piece needs Activepieces 0.88.2 or later.
+
+#### What you need to do
+
+Point any Run Agent step or MCP client that used the four subscription actions at the matching new tool. Update flows that read List Posts output to use `items`, and set Limit and Page or Cursor on list steps that read very large lists.
+
+#### Google Forms 0.8.0: New Response can ignore edited responses
+
+**New Response** has a new **Run on** setting. **New responses only** runs the flow once per response, even when the respondent edits it later. **New and edited responses** keeps the old behaviour. Steps saved before 0.8.0 keep running on edits.
+
+#### What you need to do
+
+Upgrading a New Response step to 0.8.0 in the builder pre-selects **New responses only**. To keep running the flow when a respondent edits an answer, choose **New and edited responses** when you upgrade the step.
+
+#### Buffer 0.2.0: Create Post is no longer an agent tool
+
+From Buffer 0.2.0, **Create Post** is no longer offered to AI agents and MCP clients. It stays available as a flow step with the same inputs and the same `posts` output. Agents use the new **Create a Post** tool instead, which creates one post on one channel per call and takes a strict ISO 8601 schedule time.
+
+Create Post steps upgraded to 0.2.0 also send **Link URL** differently, because Buffer removes link assets on December 15, 2026. On Facebook, LinkedIn, Threads, Bluesky and Substack posts without images, the link is sent as a link card; on other services, or when images are attached, it is appended to the post text. Facebook posts are now sent as the `post` type.
+
+#### What you need to do
+
+Point any Run Agent step or MCP client that used Create Post at **Create a Post**, calling it once per channel. Check flows that set Link URL, since the link now shows as a card or as text at the end of the post.
+
+#### Stability AI 0.4.0: Text to Image is no longer an AI agent tool
+
+**Text to Image** (the legacy SDXL 1.0 action) is now shown only in the flow builder. AI agents and MCP clients get the new **Generate Image** tool (`generate_image`) instead, which uses Stable Image Ultra, Core or Stable Diffusion 3.5. Text to Image also now rejects `steps` above 50, `samples` outside 1–10 and width × height pairs SDXL 1.0 does not support before calling Stability AI, and it sends a `weight` of 0 instead of replacing it with 1. The engine picker offers only SDXL 1.0; the other six engines are no longer in Stability AI's documentation.
+
+#### What you need to do
+
+If a Run Agent step or MCP client uses Text to Image as a tool, switch it to Generate Image. If a flow uses an engine other than `stable-diffusion-xl-1024-v1-0`, choose SDXL 1.0 or move the step to Generate Image. Steps keep running on the version they were built with until you upgrade them.
+
+#### YouTrack 0.3.0: calls to YouTrack now verify the TLS certificate
+
+From YouTrack 0.3.0, the piece checks the certificate of your YouTrack server on the connection check, triggers, dropdowns and every dedicated action, including attachment downloads. Before, certificate checks were skipped, so a self-hosted YouTrack Server behind a self-signed, private-CA or expired certificate worked. With 0.3.0 these calls fail with a certificate error for such servers. The **Custom API Call** action is the exception: it still uses the shared HTTP client and does not check the certificate. YouTrack Cloud (`*.youtrack.cloud`) and servers with a publicly trusted certificate are not affected.
+
+#### What you need to do
+
+If you self-host YouTrack on a self-signed or private-CA certificate, give it a publicly trusted certificate (for example from Let's Encrypt), or add your CA to Activepieces before upgrading YouTrack steps or connections to 0.3.0. To add the CA, set both `NODE_EXTRA_CA_CERTS` and `AP_SANDBOX_PROPAGATED_ENV_VARS=NODE_EXTRA_CA_CERTS` on the container. Only the path is passed to the engine, so the file must be readable at that path where pieces run.
+
+With `AP_EXECUTION_MODE` set to `SANDBOX_PROCESS` or `SANDBOX_CODE_AND_PROCESS`, pieces run in an isolate sandbox that sees only `/bin`, `/lib`, `/usr/bin`, `/usr/lib`, `/usr/local` and `/usr/src/node_modules` from the container, and its `/etc` is replaced. Put the CA file under `/usr/local` in the image, for example:
+
+```dockerfile
+FROM activepieces/activepieces:<version>
+COPY my-ca.pem /usr/local/share/ca-certificates/my-ca.pem
+ENV NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/my-ca.pem
+ENV AP_SANDBOX_PROPAGATED_ENV_VARS=NODE_EXTRA_CA_CERTS
+```
+
+In the other execution modes, any path in the container works.
+
+#### Spotify 0.7.0: Update Playlist is no longer an agent tool, and Get Playback State returns an object when nothing is playing
+
+From Spotify 0.7.0, **Update Playlist** is no longer offered to AI agents and MCP clients. It stays available as a flow step with the same inputs and outputs. Agents use the new **Update Playlist Details** tool instead, which takes Public and Collaborative as yes/no choices and leaves any field it is not given unchanged.
+
+Once a **Get Playback State** step is upgraded to 0.7.0, it returns `{ "is_playing": false, "device": null, "item": null }` when nothing is playing, instead of an empty string.
+
+#### What you need to do
+
+Point any Run Agent step or MCP client that used Update Playlist at **Update Playlist Details**. If a flow checks Get Playback State for an empty result, check `is_playing` (or `item` being empty) instead before upgrading the step to 0.7.0.
+
+#### ActiveCampaign 0.2.0: the existing actions are no longer AI agent tools, and webhook triggers skip duplicate deliveries
+
+The 7 existing ActiveCampaign actions are now shown only in the flow builder: Create Contact, Update Contact, Add Tag to Contact, Add Contact to Account, Create Account, Update Account and Subscribe or Unsubscribe Contact From List. AI agents and MCP clients get new tools instead: **Create or Update Contact (AI)** (replaces Create Contact and Update Contact), **Add Tag to Contact (AI)**, **Associate Contact with Account (AI)**, **Create Account (AI)**, **Update Account (AI)**, and **Subscribe Contact to List** plus **Unsubscribe Contact from List** (together they replace Subscribe or Unsubscribe Contact From List). The new tools take IDs as text and accept a contact's email in place of its ID.
+
+The ActiveCampaign webhook triggers now ignore a delivery whose content is identical to one received in the previous 15 minutes (every field, including the event time and the record's values). Each trigger remembers up to 5,000 deliveries, so a trigger that receives more than 5,000 events within 15 minutes can run a late retry again. ActiveCampaign sends no delivery ID, so two genuinely separate events with identical content in the same second now run the flow once.
+
+ActiveCampaign requests now always verify the server's TLS certificate, and an API URL that starts with `http://` is sent to `https://` on the same host.
+
+#### What you need to do
+
+- If an agent or MCP client used one of the 7 actions as a tool, switch it to the matching new tool listed above.
+- If your self-hosted instance reaches ActiveCampaign through a proxy that inspects TLS traffic, add the proxy's CA certificate to `NODE_EXTRA_CA_CERTS`, or ActiveCampaign steps fail with a certificate error.
+- Flow steps that use these actions keep working unchanged. Steps keep running on the version they were built with until you upgrade them.
+
+#### Microsoft Dynamics CRM 0.5.0: four actions are no longer AI agent tools
+
+Microsoft Dynamics CRM "Create Record", "Get Record", "Update Record" and "Delete Record" are now available in the flow builder only, not as agent/MCP tools. Agents should use the new AI tools instead: "List Entities", "Describe Entity", "Search Records", "Get Record", "Create Record", "Update Record" and "Delete Record" (AI versions), which look up the entity and its columns first.
+
+"Update Record" now fails with a "record not found" error when the record ID does not exist. Before, it silently created a new record.
+
+#### What you need to do
+
+- If an agent or MCP client used one of the 4 actions as a tool, switch it to the matching new AI tool listed above.
+- If a flow relied on "Update Record" creating a missing record, use "Create Record" for that case instead.
+- If your self-hosted instance reaches Dynamics 365 through a proxy that inspects TLS traffic, add the proxy's CA certificate to `NODE_EXTRA_CA_CERTS`, or Dynamics CRM steps fail with a certificate error.
+- Flow steps that use these actions keep working unchanged otherwise. Steps keep running on the version they were built with until you upgrade them.
+
+</Accordion>
+
 ## 0.93.0
 
 ### What has changed?
+
+#### Background migrations need a dedicated Postgres role when a `statement_timeout` applies
+
+This release adds background migrations for slow backfills, `CREATE INDEX CONCURRENTLY` and `DROP INDEX CONCURRENTLY`. They run on the app's database connection. If that connection has a `statement_timeout`, Postgres cancels these statements at the cap and they never finish.
+
+#### What you need to do
+
+Nothing if `SHOW statement_timeout;` returns `0` on the app's connection (the Postgres default). Otherwise, create a role without a timeout:
+
+```sql
+CREATE ROLE ap_migrator WITH LOGIN PASSWORD '<generated>';
+ALTER  ROLE ap_migrator SET  statement_timeout = 0;
+GRANT  <app_role> TO ap_migrator;
+```
+
+`<app_role>` is the role `AP_POSTGRES_URL` connects as. Then set `AP_POSTGRES_MIGRATION_URL=postgres://ap_migrator:<password>@<host>:<port>/<database>` on the API. Behind a connection pooler, give this role its own small pool (size 3) and use that pool's URL. `SET statement_timeout = 0` from the app does not work behind a transaction pooler.
+
+#### Code steps run on Deno by default
+
+Code steps without an explicit `useDeno` flag now run on Deno instead of the legacy Node sandbox. This applies to every existing flow. Code is transpiled to CommonJS, so `require`, `module.exports`, `__dirname` and `package.json` dependencies still work.
+
+What changes depends on `AP_EXECUTION_MODE`:
+
+- `UNSANDBOXED` (the default) or `SANDBOX_PROCESS`: steps see no environment variables except `PATH`, can read and write files only under `os.tmpdir()`, and cannot spawn processes.
+- `SANDBOX_CODE_ONLY` or `SANDBOX_CODE_AND_PROCESS`: nothing new is blocked. A step over the 128 MB heap cap now fails with a process signal error instead of an isolate memory error.
+- In every mode, a step with top-level `await` runs as a strict ES module. Assigning to an undeclared variable throws, and `exports`, `module`, `__dirname` and `__filename` are undefined. Low-level Node APIs (`process.binding`, `node:vm`, `node:cluster`) and native addons that predate Node-API may not work.
+
+#### What you need to do
+
+- To pass environment variables to code steps, list their names in `AP_SANDBOX_PROPAGATED_ENV_VARS` on the API container and set the values on the worker container.
+- Write scratch files under `os.tmpdir()`.
+- In steps with top-level `await`, move the awaited call inside `code` or declare the variables.
+- If you don't use the official Docker images, install Deno and set `AP_DENO_PATH`. Without it, every code step fails.
+- Update alerts that match the old isolate memory error.
+
+To find affected steps, search the logs for the `Code step failed` warning, which names the flow run, step, runtime (`codeRuntime: deno|legacy`) and error. To move a flow back to the legacy runtime while you fix it, set `AP_API_KEY` and call `POST /v1/admin/flows/revert-from-deno` with the `api-key` header and a body of exactly one of `flowIds`, `projectId` or `platformId`.
+
+#### Helm chart 0.5.0 uses the cluster's default StorageClass again
+
+Earlier charts put the cache volume on the `local-path` StorageClass when `persistence.storageClassName` was unset. Chart 0.5.0 uses the cluster's default StorageClass instead. A StatefulSet's volume class cannot change after creation.
+
+#### What you need to do
+
+This applies if your cache volume uses `local-path` (check with `kubectl get pvc`), you never set `persistence.storageClassName`, and you deploy by rendering the chart without a cluster connection (Argo CD, `helm template | kubectl apply`). Pin the class before upgrading, or every sync fails with `updates to statefulset spec ... are forbidden`:
+
+```yaml
+persistence:
+  storageClassName: "local-path"
+```
+
+A direct `helm upgrade` needs no change.
+
+#### Republishing no longer restarts polling triggers
+
+When you republish a flow and its polling trigger is unchanged (same piece, version, trigger and inputs), the trigger keeps running. `onDisable` and `onEnable` don't run, and the stored state is kept. When the piece moves to a newer version with the same inputs, only the new version's `onEnable` runs, with `context.isRepublish` set to `true`. The old version's `onDisable` doesn't run.
+
+#### What you need to do
+
+Nothing for official pieces. If a custom polling piece creates something outside the store in `onEnable`, such as a resource in a third-party app, save its ID in the store and reuse it when `context.isRepublish` is `true`. Otherwise each upgrade creates a second one. To reset a polling trigger with bad state, turn the flow off and on. Republishing no longer resets it.
+
+#### Agent MCP tools no longer follow redirects to another host, and the built-in MCP server limits request size
+
+Agents no longer follow a redirect from an external MCP server to a different scheme, host or port, so API keys never reach a host you didn't configure. Redirects on the same host still work.
+
+The built-in MCP server (`/mcp` and `/mcp/platform`) rejects request bodies over 4 MiB with `413 Payload Too Large`. It returns a tool error, and does not run the tool, when the arguments hold more than 50,000 values (array items and object keys combined).
+
+#### What you need to do
+
+If an agent's MCP tool uses an `http://` URL or an old domain that redirects, replace it with the server's final `https://` URL. Split very large MCP tool calls into smaller ones.
+
+<Accordion title="Pieces (63 changes)">
 
 #### Rendex 0.2.0: Render to Image is no longer an agent tool
 
@@ -283,19 +636,6 @@ If you self-host with your own Figma OAuth app, add `current_user:read`, `file_v
 
 Reconnect existing Figma connections so they get the new scopes; a step that needs a missing scope stops with a message that says to reconnect. Re-enable flows that use a Figma trigger so their webhook gets a passcode. Agents that used Get File now get Get File Outline. Steps keep running on the version they were built with until you upgrade them.
 
-#### MCP connections no longer follow redirects to another host, and the built-in MCP server limits request size
-
-When Activepieces connects to an MCP server, it no longer follows a redirect to a different host or port. That redirect now fails the connection, so headers such as API keys are never sent to a host you did not configure.
-
-This applies to MCP servers added as tools to an AI agent as soon as you upgrade. For the **MCP Client** piece it applies from version 0.0.8; steps keep running on the version they were built with until you upgrade them.
-
-The built-in MCP server (`/mcp` and `/mcp/platform`) now rejects a request body larger than 4 MiB with `413 Payload Too Large`. It also rejects a tool call whose arguments hold more than 50,000 values (array items and object keys combined) and returns a tool error instead of running the tool.
-
-#### What you need to do
-
-- Configure each MCP server with its final URL, including `https`, so that reaching it needs no redirect.
-- If an MCP client sends very large tool calls to Activepieces, split them into smaller calls.
-
 #### Webflow 0.4.0: moves to Webflow API v2, connections need reconnecting, and step outputs change
 
 Webflow switched off its v1 API, which every Webflow action and the New Submission trigger used. They now call v2, and the connection asks for the v2 permissions (CMS, sites, pages, forms, assets, custom code, comments, components and ecommerce).
@@ -316,15 +656,6 @@ After you upgrade a Webflow step:
 - Turn flows that use New Submission off and on again so the webhook is registered through v2.
 
 Steps keep running on the version they were built with until you upgrade them.
-
-#### Audit logs: SAML and embedded sign-ins no longer send `user.signed.up` on every sign-in
-
-`user.signed.up` used to fire on every SAML and embedded (JWT) sign-in, even for existing members. It now fires once, when the member is created. Later SAML sign-ins, and sign-ins with email or Google, send the new `user.signed.in` event, which carries the sign-in method. Later embedded sign-ins send no event.
-
-#### What you need to do
-
-- If an Event Streaming destination used `user.signed.up` to track SAML logins, subscribe it to `user.signed.in` as well.
-- Embedded logins of existing members are no longer streamed. Track them in your own app, which issues the JWT.
 
 #### RabbitMQ 0.2.0: the Send Message actions are no longer AI agent tools, and their output changes
 
@@ -490,17 +821,6 @@ From Bannerbear 0.6.0, **Create Image** is no longer offered as a tool to AI age
 
 Steps keep running on the version they were built with until you upgrade them. After upgrading, change any later step that reads `template` from Create Image to read `template_uid`, and stop reading `modifications`, `width` or `height`. Point Run Agent steps that used Create Image at **Create Image from JSON**. If a Custom API Call creates images, poll **Get Image** (or use the **New Image Completed** trigger) until the image is completed before using its URL.
 
-#### Republishing no longer restarts polling triggers
-
-Republishing a running flow without changing its polling trigger (same piece, version, trigger and inputs) now leaves the trigger running: `onDisable` and `onEnable` don't run and its stored state is kept, so events created around the republish are no longer lost. When a piece is upgraded to a newer version with the same inputs, only the new version's `onEnable` runs, with `context.isRepublish` set to `true`. The old version's `onDisable` doesn't run.
-
-#### What you need to do
-
-Nothing for flows built on official pieces. If you maintain custom polling pieces:
-- To reset a polling trigger whose state has gone bad, turn the flow off and on. Republishing no longer resets it.
-- A polling trigger's `onDisable` still runs when the flow is turned off or deleted, but not on an upgrade, because the trigger keeps running. If `onEnable` creates something outside the store, save its id in the store and, when `context.isRepublish` is `true` and the id exists, reuse it instead of creating another. If the trigger needs to register and unregister with every version, make it a webhook trigger: those run both hooks on every republish.
-- Pass the whole `context` to `pollingHelper` (`pollingHelper.onEnable(polling, context)`), and in `onEnable` keep any state you store yourself when `context.isRepublish` is `true`. Otherwise the trigger starts from scratch on an upgrade. See [When the hooks run](/build-pieces/piece-reference/triggers/overview#when-the-hooks-run).
-
 #### Apache Kafka 0.1.0: Publish messages is no longer an AI agent tool
 
 **Publish messages** (several messages in one request) is no longer offered to AI agents as a tool; flow steps that use it keep working unchanged. Agents publish with **Publish message**, one message per call, so there is one agent tool for publishing.
@@ -579,14 +899,6 @@ Tags typed by name that match no tag in the workspace now stop the step with a "
 #### What you need to do
 
 Before you upgrade a Create Task step to 0.8.0, check that every tag name it types exists in the workspace. If a later step reads the created task's `due_at`, read `due_on` instead when the Due Date is a plain date.
-
-#### Worker group ids can no longer contain a colon
-
-Worker group ids with `:` in them are no longer routable. The assignment endpoints reject them, and a project or flow already assigned to such a group is treated as unassigned: its runs fall back to the project, platform or shared queue instead of the group's dedicated queue, and the group disappears from the worker groups page.
-
-#### What you need to do
-
-Rename any worker group whose id contains `:`: update `AP_WORKER_GROUP_ID` on its workers, then re-assign its projects and flows to the new name from the worker groups page.
 
 #### GitHub 0.11.0: Update Repository (Agent) no longer makes private repositories public
 
@@ -740,94 +1052,6 @@ Update Post used to send an empty list when **Categories** or **Tags** was clear
 
 Nothing for most flows. If a flow cleared a post's tags or categories by sending an empty list, it no longer does: pick the categories to keep instead, or use the Custom API Call with `POST /posts/<id>` and `{"tags": []}` in the body.
 
-#### Background migrations need a dedicated Postgres role when a `statement_timeout` applies
-
-The app's background migration track (slow data backfills, `CREATE INDEX CONCURRENTLY`, `DROP INDEX CONCURRENTLY`) runs through whichever database connection the app itself uses. When a `statement_timeout` applies to that connection, every long DDL statement a background migration issues is cancelled at that cap and never completes. The retry loop leaves `INVALID` index artifacts behind that an `IF NOT EXISTS` on the next deploy silently skips.
-
-The app now reads `AP_POSTGRES_MIGRATION_URL` and, when set, runs background migrations through that connection instead of the main one. The connection string should point at a Postgres role whose `statement_timeout` is `0`.
-
-A `SET statement_timeout = 0` at runtime from the app can't substitute: in transaction-pooling mode (the default on managed poolers) the `SET` lands on one backend and the actual DDL on another, so the cap stays in force on the DDL and the `SET` leaks to normal app traffic on the first backend. The role-level default stays with the backend from its startup and never leaks.
-
-#### What you need to do
-
-Nothing if no `statement_timeout` applies to the app's connection (`SHOW statement_timeout;` as the app returns `0` — the Postgres default and the common self-host case). Background migrations keep running on the main connection.
-
-If a `statement_timeout` applies, provision a dedicated migration role and tell the app about it:
-
-```sql
-CREATE ROLE ap_migrator WITH LOGIN PASSWORD '<generated>';
-ALTER  ROLE ap_migrator SET  statement_timeout = 0;
-
--- Make ap_migrator a member of the role that owns the app's tables (usually
--- the same role your AP_POSTGRES_URL connects as — call it <app_role>).
--- Membership gives ap_migrator ownership privileges on every table <app_role>
--- owns, including CREATE INDEX / DROP INDEX / REINDEX, which GRANT ALL does
--- NOT. Covers future tables too, since they inherit the same ownership.
-GRANT  <app_role> TO ap_migrator;
-```
-
-Then set `AP_POSTGRES_MIGRATION_URL=postgres://ap_migrator:<password>@<host>:<port>/<database>` on the API deployment. On managed Postgres with a connection pooler, create a small pool (size 3) scoped to this role and use that pool's URL.
-
-#### Code steps run on Deno by default
-
-A code step without an explicit `useDeno` flag now executes in the Deno runtime instead of the legacy Node sandbox — effectively migrating every existing flow automatically, with no data rewrite. The legacy executors are still shipped: setting `useDeno: false` on a step keeps it on the previous Node/v8-isolate path, and the admin `revert-from-deno` endpoint writes exactly that flag, so individual flows can still be opted out. Failed code steps are now also logged as structured `Code step failed` warnings (flow run, flow version, project, step name, runtime, and the error message) so they can be found and analyzed in centralized logs.
-
-#### What you need to do
-
-Most code steps keep working unchanged: sources are transpiled to CommonJS, so Node-style code (`require`, `exports`, `module.exports`, `__dirname`, even undeclared variable assignments) runs as before, and dependencies from the step's `package.json` install and resolve as before. What actually changes depends on your `AP_EXECUTION_MODE` — the two legacy sandboxes were very different, so the review lists differ.
-
-**If you run `UNSANDBOXED` or `SANDBOX_PROCESS`** — the legacy sandbox here was an unrestricted Node child process, so this is where restrictions are new:
-
-- **Environment variables are no longer inherited.** The legacy sandbox exposed the worker container's entire environment to `process.env`; the Deno sandbox exposes only `PATH`. A code step that reads a custom env var now gets `undefined`. To pass variables through, set `AP_SANDBOX_PROPAGATED_ENV_VARS` (a comma-separated list of names) on the **API** container — it ships the list to workers — and make sure the variables themselves are set in the **worker** container's environment, where their values are read. In a single-container deployment, set both on that container.
-- **Filesystem access is confined to the OS temp directory.** Legacy code steps could read and write any path the worker could; Deno grants read/write only under `os.tmpdir()`. Reads or writes elsewhere fail with a `NotCapable` permission error. Write scratch files with `os.tmpdir()` + `path.join` instead of hardcoded absolute paths.
-- **Spawning processes is denied.** `child_process` (`spawn`, `exec`, …) worked before; the Deno sandbox has no run permission, so it fails with `NotCapable`.
-- Network access and memory stay as they were: outbound requests are allowed, and the step's heap is uncapped.
-
-**If you run `SANDBOX_CODE_ONLY` or `SANDBOX_CODE_AND_PROCESS`** — the legacy sandbox here was a v8 isolate with no Node APIs at all, so little is newly restricted and steps gain capabilities:
-
-- Filesystem, network, environment and process access stay denied, exactly as in the isolate.
-- The 128MB heap cap is unchanged, but an over-limit step now dies with a process signal error instead of an isolate memory error — update any alerting that matches on the old message.
-- Steps gain working `require` of their installed `package.json` dependencies and of Node built-ins for pure computation (`node:crypto`, `node:path`, …), which the isolate could not do.
-
-**In every mode:**
-
-- **Steps using top-level `await` run as strict ES modules** (they cannot be transpiled to CommonJS). Inside such a step: assigning to an undeclared variable throws `ReferenceError` instead of creating a global, and `exports`, `module`, `__dirname`, `__filename` are unavailable (`require` keeps working — the sandbox provides it as a global). For example, this step ran on the legacy sandbox and now fails — the `await` outside `code` is what forces strict ES module mode, and the first undeclared assignment then throws:
-
-  ```ts
-  const settings = await fetch('https://example.com/settings.json').then((res) => res.json())
-
-  export const code = async (inputs) => {
-    total = settings.base + inputs.amount    // ReferenceError: total is not defined
-    const where = __dirname                  // ReferenceError: __dirname is not defined
-    module.exports.extra = total             // ReferenceError: module is not defined
-    return { total }
-  }
-  ```
-
-  Moving the awaited call inside `code` lets the step transpile to CommonJS again, where all of the above keep working; declaring the variable is the fix that works in both modes:
-
-  ```ts
-  export const code = async (inputs) => {
-    const settings = await fetch('https://example.com/settings.json').then((res) => res.json())
-    const total = settings.base + inputs.amount
-    return { total }
-  }
-  ```
-- **Exotic Node internals may be missing.** Deno's Node compatibility layer covers the standard library that pieces and typical steps use, but low-level APIs (`process.binding`, `node:vm`, `node:cluster`, parts of `node:worker_threads`) and native addons that predate Node-API are not guaranteed. Steps or dependencies relying on them need review.
-- **Custom deployments** that do not use the official Docker images must provide a Deno binary and point `AP_DENO_PATH` at it; without it every code step fails at spawn.
-
-To find affected steps after upgrading, search your logs for the structured `Code step failed` warning — it carries the flow run, flow version, project, step name, the runtime that executed the step (`codeRuntime: deno|legacy`), and the error message, so you can group failures by step and error. To pin a misbehaving step to the legacy runtime while you fix it (available on every edition), set `AP_API_KEY` in your environment and call `POST /v1/admin/flows/revert-from-deno` with the `api-key` header and a body of exactly one of `flowIds`, `projectId`, or `platformId`; this sets `useDeno: false` on the affected steps, and `migrate-to-deno` moves them back.
-
-#### Each chat keeps the AI model and key it started on
-
-A chat used to run on whatever the platform's default key was at the time of each message. Now a chat remembers the key and model it first ran on. Changing the **Default chat model** affects new chats only. An existing chat moves to the new default only when its key is deleted, or no longer covers the chat's project or model.
-
-Message credits for AI agent turns, in chat, agents and flow steps, now follow the key that actually answered the turn. A turn answered by your own key costs one message credit, and a turn answered by Activepieces AI credits costs none (its AI usage is billed as before), whatever the Default chat model is.
-
-#### What you need to do
-
-Nothing to configure or migrate. To move an existing chat to another model, pick it in the chat. If you switch the Default chat model to stop using a key, delete that key or narrow its projects so existing chats move too.
-
 #### Firecrawl's Scrape Website stops reusing cached pages, and Crawl keeps its pages when a screenshot fails
 
 Three changes in Firecrawl 0.6.0 alter what an existing step does once it is upgraded to that version. Steps keep running on the version they were built with until you upgrade them.
@@ -869,21 +1093,6 @@ Get File used to return a `file_url` that contained the bot token, which put the
 #### What you need to do
 
 If a flow branches on Get Chat or Get Chat Member returning `ok: false`, handle the failure with the step's error handling options instead. If a later step reads Get File's `file_url`, turn on **Download File** and use `file_content_base64`. Steps keep running on the version they were built with until you upgrade them.
-
-#### Helm chart 0.5.0 uses the cluster's default StorageClass again
-
-Chart 0.4.0 set the app's cache volume to the `local-path` StorageClass whenever `persistence.storageClassName` was unset, which only exists on k3s-style clusters, so new installs elsewhere stayed `Pending`. From 0.5.0 an unset value uses the cluster's default StorageClass again, as chart 0.3.x did. A StatefulSet's volume class cannot change after it is created, so `helm upgrade` keeps the class your release already uses.
-
-#### What you need to do
-
-If your release was created with chart 0.4.0, you never set `persistence.storageClassName`, and you deploy by rendering the chart without a cluster connection (Argo CD, `helm template | kubectl apply`), pin the class your StatefulSet was created with before upgrading, or every sync fails with `updates to statefulset spec ... are forbidden`:
-
-```yaml
-persistence:
-  storageClassName: "local-path"
-```
-
-Direct `helm upgrade` needs no change. A new install on a cluster with no default StorageClass (`kubectl get storageclass` shows none marked `(default)`) must set `persistence.storageClassName`, or the cache volume and the app pod stay `Pending`.
 
 #### Zoho CRM Read File and Custom API Call only send the token to the connection's Zoho CRM hosts
 
@@ -930,6 +1139,8 @@ The whole piece also moves to Graph API `v23.0`, via a single `WHATSAPP_API_BASE
 #### What you need to do
 
 Update any step that reads the output of `Send Message` or `Send Media`. Drop the `body.` prefix: `{{step.body.messages[0].id}}` becomes `{{step.messages[0].id}}`. Steps that only send and ignore the output need no change, and no connection has to be re-authorised.
+
+</Accordion>
 
 ## 0.92.0
 

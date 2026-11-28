@@ -102,6 +102,7 @@ export default function ImpactPage() {
       featureKey="ANALYTICS"
       locked={!platform.plan.analyticsEnabled}
       lockTitle={t('Unlock Impact Analytics')}
+      pageTitle={<h1 className="text-sm font-medium">{t('Impact')}</h1>}
       lockDescription={t(
         'View impact analytics and metrics for the active flows across your platform',
       )}
@@ -134,6 +135,8 @@ export default function ImpactPage() {
                     <Button
                       variant="ghost"
                       size="icon-xs"
+                      aria-label={t('Refresh analytics')}
+                      data-testid="impact-refresh"
                       onClick={() =>
                         refreshAnalytics(undefined, {
                           onSuccess: () =>

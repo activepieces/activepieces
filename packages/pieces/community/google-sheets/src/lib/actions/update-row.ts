@@ -1,5 +1,5 @@
 import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
-import { areSheetIdsValid, createGoogleClient, Dimension, objectToArray, ValueInputOption } from '../common/common';
+import { areSheetIdsValid, createGoogleClient, Dimension, objectToArray, ValueInputOption, googleSheetsCommon } from '../common/common';
 import { googleSheetsAuth } from '../common/common';
 import { getWorkSheetName } from '../triggers/helpers';
 import { sheets as googleSheets } from '@googleapis/sheets';
@@ -99,7 +99,7 @@ export const updateRowAction = createAction({
 
     if (formattedValues.length > 0) {
       const response = await sheets.spreadsheets.values.update({
-        range: `${sheetName}!A${rowId}:ZZZ${rowId}`,
+        range: googleSheetsCommon.sheetRange({ sheetName, range: `A${rowId}:ZZZ${rowId}` }),
         spreadsheetId: spreadsheetId,
         valueInputOption: ValueInputOption.USER_ENTERED,
         requestBody: {

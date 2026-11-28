@@ -124,6 +124,12 @@ const ProviderConfigUnion = z.discriminatedUnion('provider', [
         config: CohereProviderConfig,
         auth: strictAuth(CohereProviderAuthConfig),
     }),
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.LITELLM),
+        config: OpenAICompatibleProviderConfig,
+        auth: strictAuth(OpenAICompatibleProviderAuthConfig),
+    }),
 ])
 
 const StrictAIProviderAuthConfig = z.union([
@@ -195,6 +201,7 @@ export const AIProviderModelMetadata = z.object({
     supportsToolCalling: z.boolean().optional(),
     supportsReasoning: z.boolean().optional(),
     supportsVision: z.boolean().optional(),
+    realModelId: z.string().optional(),
 })
 export type AIProviderModelMetadata = z.infer<typeof AIProviderModelMetadata>
 

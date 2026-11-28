@@ -3,7 +3,7 @@ import { PieceMetadata } from '@activepieces/pieces-framework'
 import { ApEdition, ApEnvironment, AppConnection, AppConnectionId, AppConnectionOwners, AppConnectionScope, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, ConnectionState, EngineResponse, EngineResponseStatus, ExecuteResolveConnectionIdentifierResponse, ExecuteValidateAuthResponse, MAX_PLATFORM_APP_CONNECTION_OWNERS, OAuth2GrantType, PlatformAppConnectionOwner, PlatformAppConnectionOwnersResponse, PlatformAppConnectionProjectInfo, PlatformAppConnectionsListItem, PlatformRole, UpsertAppConnectionRequestBody, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import semver from 'semver'
-import { ArrayContains, Equal, FindOperator, FindOptionsWhere, ILike, In } from 'typeorm'
+import { ArrayContains, FindOperator, FindOptionsWhere, ILike, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { projectMemberService } from '../../ee/projects/project-members/project-member.service'
 import { containsSecretManagerReference, secretManagersService } from '../../ee/secret-managers/secret-managers.service'
@@ -339,7 +339,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         projectId,
         projectIds,
         ownerIds,
-        pieceName,
+        pieceNames,
         cursorRequest,
         displayName,
         status,
@@ -364,8 +364,8 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('scope', scope),
             platformId,
         }
-        if (!isNil(pieceName)) {
-            querySelector.pieceName = Equal(pieceName)
+        if (!isNil(pieceNames)) {
+            querySelector.pieceName = In(pieceNames)
         }
         if (!isNil(displayName)) {
             querySelector.displayName = ILike(`%${displayName}%`)
@@ -470,7 +470,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
     async listForPlatform(params: ListForPlatformParams): Promise<SeekPage<PlatformAppConnectionsListItem>> {
         const service = appConnectionService(log)
         const page = await service.list({
-            pieceName: params.pieceName,
+            pieceNames: params.pieceNames,
             displayName: params.displayName,
             status: params.status,
             scope: params.scope,
@@ -934,7 +934,7 @@ type ListParams = {
     projectIds?: ProjectId[]
     ownerIds?: string[]
     platformId: string
-    pieceName: string | undefined
+    pieceNames: string[] | undefined
     cursorRequest: Cursor | null
     scope: AppConnectionScope | undefined
     displayName: string | undefined
@@ -945,7 +945,7 @@ type ListParams = {
 
 type ListForPlatformParams = {
     platformId: string
-    pieceName: string | undefined
+    pieceNames: string[] | undefined
     displayName: string | undefined
     status: AppConnectionStatus[] | undefined
     scope: AppConnectionScope | undefined

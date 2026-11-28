@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/core-utils';
+import { isNil, tryCatchSync } from '@activepieces/core-utils';
 import {
   AuthenticationResponse,
   Principal,
@@ -17,7 +17,11 @@ const tokenKey = 'token';
 const projectIdKey = 'projectId';
 export const authenticationSession = {
   setProjectId(projectId: string) {
-    ApStorage.getInstance().setItem(projectIdKey, projectId);
+    saveProjectId(projectId);
+  },
+  subscribe(listener: () => void): () => void {
+    window.addEventListener('storage', listener);
+    return () => window.removeEventListener('storage', listener);
   },
   saveResponse(response: AuthenticationResponse, isEmbedding: boolean) {
     if (isEmbedding) {
@@ -51,12 +55,21 @@ export const authenticationSession = {
     if (isNil(token)) {
       return null;
     }
-    const projectId = ApStorage.getInstance().getItem(projectIdKey);
-    if (!isNil(projectId)) {
-      return projectId;
+    const tabProjectId = window.sessionStorage.getItem(tabProjectIdKey());
+    if (!isNil(tabProjectId)) {
+      return tabProjectId;
+    }
+    const lastUsedProjectId = ApStorage.getInstance().getItem(projectIdKey);
+    if (!isNil(lastUsedProjectId)) {
+      window.sessionStorage.setItem(tabProjectIdKey(), lastUsedProjectId);
+      return lastUsedProjectId;
     }
     const decodedJwt = getDecodedJwt(token);
-    if ('projectId' in decodedJwt && typeof decodedJwt.projectId === 'string') {
+    if (
+      !isNil(decodedJwt) &&
+      'projectId' in decodedJwt &&
+      typeof decodedJwt.projectId === 'string'
+    ) {
       return decodedJwt.projectId;
     }
     return null;
@@ -66,8 +79,7 @@ export const authenticationSession = {
     if (isNil(token)) {
       return null;
     }
-    const decodedJwt = getDecodedJwt(token);
-    return decodedJwt.id;
+    return getDecodedJwt(token)?.id ?? null;
   },
   appendProjectRoutePrefix(path: string): string {
     const projectId = this.getProjectId();
@@ -83,7 +95,7 @@ export const authenticationSession = {
       return null;
     }
     const decodedJwt = getDecodedJwt(token);
-    if ('platform' in decodedJwt && decodedJwt.platform) {
+    if (!isNil(decodedJwt) && 'platform' in decodedJwt && decodedJwt.platform) {
       return decodedJwt.platform.id;
     }
     return null;
@@ -93,8 +105,7 @@ export const authenticationSession = {
     if (isNil(token)) {
       return false;
     }
-    const decodedJwt = jwtDecode<{ type: string }>(token);
-    return decodedJwt.type === PrincipalType.ONBOARDING;
+    return getDecodedJwt(token)?.type === PrincipalType.ONBOARDING;
   },
   async switchToPlatform(platformId: string) {
     if (authenticationSession.getPlatformId() === platformId) {
@@ -111,7 +122,7 @@ export const authenticationSession = {
     if (authenticationSession.getProjectId() === projectId) {
       return;
     }
-    ApStorage.getInstance().setItem(projectIdKey, projectId);
+    saveProjectId(projectId);
     window.dispatchEvent(new Event('storage'));
   },
   isLoggedIn(): boolean {
@@ -122,8 +133,9 @@ export const authenticationSession = {
     return !this.isJwtExpired(token);
   },
   clearSession() {
-    ApStorage.getInstance().removeItem(projectIdKey);
+    removeProjectId();
     ApStorage.getInstance().removeItem(tokenKey);
+    window.dispatchEvent(new Event('storage'));
   },
   logOut() {
     const hadSession = !isNil(this.getToken());
@@ -135,14 +147,28 @@ export const authenticationSession = {
   },
 };
 
-function getDecodedJwt(token: string): Principal {
-  return jwtDecode<Principal>(token);
+function getDecodedJwt(token: string): Principal | null {
+  return tryCatchSync(() => jwtDecode<Principal>(token)).data ?? null;
 }
 
 function saveProjectIdOrClear(projectId: string | null | undefined): void {
   if (isNil(projectId)) {
-    ApStorage.getInstance().removeItem(projectIdKey);
+    removeProjectId();
     return;
   }
+  saveProjectId(projectId);
+}
+
+function saveProjectId(projectId: string): void {
+  window.sessionStorage.setItem(tabProjectIdKey(), projectId);
   ApStorage.getInstance().setItem(projectIdKey, projectId);
+}
+
+function removeProjectId(): void {
+  window.sessionStorage.removeItem(tabProjectIdKey());
+  ApStorage.getInstance().removeItem(projectIdKey);
+}
+
+function tabProjectIdKey(): string {
+  return `${projectIdKey}:${authenticationSession.getPlatformId()}:${authenticationSession.getCurrentUserId()}`;
 }

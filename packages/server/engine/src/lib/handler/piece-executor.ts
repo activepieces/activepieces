@@ -1,6 +1,6 @@
 import { isNil, isObject } from '@activepieces/core-utils'
 import { ActionContext, backwardCompatabilityContextUtils, CreateWaitpointHook, CreateWaitpointParams, CreateWaitpointResult, InputPropertyMap, PieceAuthProperty, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager, WaitForWaitpointHook } from '@activepieces/pieces-framework'
-import { AUTHENTICATION_PROPERTY_NAME, EngineGenericError, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, PausedFlowTimeoutError, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
+import { AUTHENTICATION_PROPERTY_NAME, EngineGenericError, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, PausedFlowTimeoutError, PieceAction, RespondResponse, RunEnvironment, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { engineRunApi } from '../api/engine-run-api'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
@@ -266,7 +266,7 @@ function createWaitpointHook({ constants, waitpointKey, hookParams }: { constant
 }
 
 async function submitWaitpoint({ constants, waitpointKey, hookParams, req }: { constants: EngineConstants, waitpointKey: string, hookParams: { hookResponse: HookResponse }, req: CreateWaitpointParams }): Promise<CreateWaitpointResult> {
-    const resumeDateTime = cappedForTestFlow({ resumeDateTime: req.resumeDateTime, maxTestWaitMs: req.maxTestWaitMs, isTestFlow: constants.isTestFlow })
+    const resumeDateTime = cappedForTestRun({ resumeDateTime: req.resumeDateTime, maxTestWaitMs: req.maxTestWaitMs, isTestRun: constants.runEnvironment === RunEnvironment.TESTING })
     assertDelayWithinTimeout(resumeDateTime)
     if (!isNil(req.responseToSend)) {
         hookParams.hookResponse = { ...hookParams.hookResponse, responseToSend: req.responseToSend }
@@ -310,8 +310,8 @@ function assertActionRunCannotSuspend(constants: EngineConstants): void {
     }
 }
 
-function cappedForTestFlow({ resumeDateTime, maxTestWaitMs, isTestFlow }: { resumeDateTime?: string, maxTestWaitMs?: number, isTestFlow: boolean }): string | undefined {
-    const noShorterTestWaitAsked = isNil(resumeDateTime) || isNil(maxTestWaitMs) || !isTestFlow
+function cappedForTestRun({ resumeDateTime, maxTestWaitMs, isTestRun }: { resumeDateTime?: string, maxTestWaitMs?: number, isTestRun: boolean }): string | undefined {
+    const noShorterTestWaitAsked = isNil(resumeDateTime) || isNil(maxTestWaitMs) || !isTestRun
     if (noShorterTestWaitAsked) {
         return resumeDateTime
     }

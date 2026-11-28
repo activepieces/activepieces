@@ -146,6 +146,7 @@ export const safeHttp = {
     createAxios,
     createRetryingAxios,
     postForStatus,
+    isSsrfFilterError,
     get axios(): AxiosInstance {
         lazyDefaultAxios ??= createAxios()
         return lazyDefaultAxios

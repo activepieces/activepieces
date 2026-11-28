@@ -18,7 +18,7 @@ Serialize each step output across the process boundary **once per session** inst
 
 ## Consequences
 
-The sandbox interface (`run` / `setGlobal` / `dispose`) is unchanged, so callers are untouched. The process runs with the same empty permission set and 128 MB V8 cap as the old per-run spawns. State now persists within a session: a script that mutates step data, pollutes a built-in, or leaves background work affects later expressions **in the same resolve()** — but only within that one flow's own input resolution, and the default noOp sandbox already shares mutable context the same way (Deno is actually safer: it mutates only its in-child copy, never the engine's live step view). If the child dies mid-session the sandbox respawns and replays the globals before the next run, preserving the old per-spawn isolation across runs.
+The sandbox interface was `run` / `setGlobal` / `dispose` and has since gained `reset`, which every `ScriptSession` implementation must provide; `setGlobal` never overwrites an injected function, even when asked to overwrite. The process runs with the same empty permission set and 128 MB V8 cap as the old per-run spawns. State now persists within a session: a script that mutates step data, pollutes a built-in, or leaves background work affects later expressions **in the same resolve()**. Since the session became one per engine operation (shared by every step of a run), `resolve()` ends with `reset()`, which sends each step view again with no value so the child deletes it and step data never crosses the resolve boundary. Anything else a script does to the child (its own globals, overwritten built-ins, timers, prototype pollution) now lasts until the run ends; we accepted that rather than snapshot and restore the child's globals. All of this stays within that one flow's own input resolution, and the default noOp sandbox already shares mutable context the same way (Deno is actually safer: it mutates only its in-child copy, never the engine's live step view). If the child dies mid-session the sandbox respawns and replays the globals before the next run, preserving the old per-spawn isolation across runs.
 
 ## Gotchas
 
@@ -34,4 +34,5 @@ The sandbox interface (`run` / `setGlobal` / `dispose`) is unchanged, so callers
 
 - `packages/core/utils/src/lib/deno.ts` — `deno.createSession` (the process + protocol), `buildSessionProgram` (the child program)
 - `packages/server/engine/src/lib/core/code/deno-code-sandbox.ts` — `createScriptSession` (lazy spawn, respawn-on-death, `syncGlobals` send-once)
-- `packages/server/engine/src/lib/variables/props-resolver.ts` — one session per `resolve()`, shared by the resolved + censored passes
+- `packages/server/engine/src/lib/variables/props-resolver.ts` — uses the operation's session and resets it after each `resolve()`; creates and disposes its own when none is passed
+- `packages/server/engine/src/lib/handler/context/engine-constants.ts` — `getScriptSession`, one session per operation, disposed through `operationScope`

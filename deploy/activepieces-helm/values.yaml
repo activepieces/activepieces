@@ -111,6 +111,13 @@ autoscaling:
   targetCPUUtilizationPercentage: 80
   # targetMemoryUtilizationPercentage: 80
 
+# How long Kubernetes waits after SIGTERM before it kills a pod. Leave it empty to have the chart
+# compute it as AP_FLOW_TIMEOUT_SECONDS + 105 (705 with the default 600 s flow timeout), reading the
+# flow timeout from activepiecesConfig. A stopping worker gets no new jobs and finishes the ones it
+# has, so a shorter value cuts off runs longer than it. Set it by hand if you set
+# AP_FLOW_TIMEOUT_SECONDS only in a secret.
+terminationGracePeriodSeconds: ""
+
 rollout:
   blueGreen:
     autoPromotionEnabled: true

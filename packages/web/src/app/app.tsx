@@ -6,7 +6,6 @@ import { ApErrorDialog } from '@/components/custom/ap-error-dialog/ap-error-dial
 import { EmbeddingProvider } from '@/components/providers/embed-provider';
 import TelemetryProvider from '@/components/providers/telemetry-provider';
 import { ThemeProvider } from '@/components/providers/theme-provider';
-import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { RefreshAnalyticsProvider } from '@/features/platform-admin';
 
@@ -32,7 +31,6 @@ export function App() {
                     <ThemeProvider storageKey="vite-ui-theme">
                       <React.Fragment key={i18n.language}>
                         <ApRouter />
-                        <Toaster position="bottom-right" />
                         <ApErrorDialog />
                       </React.Fragment>
                     </ThemeProvider>

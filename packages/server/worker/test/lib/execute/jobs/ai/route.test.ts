@@ -1,5 +1,5 @@
 import { AIProviderName } from '@activepieces/core-utils'
-import { AiRouterMatchMode, AiStepAction, ResolveAiProviderResponse, RouteJobData } from '@activepieces/shared'
+import { aiRouterModels, AiRouterMatchMode, AiStepAction, ResolveAiProviderResponse, RouteJobData } from '@activepieces/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const { post, reportFixedCredits, reportProviderCost } = vi.hoisted(() => ({
@@ -118,6 +118,16 @@ describe('routeStep asks OpenRouter\'s decisions endpoint', () => {
             generationId: 'gen-2',
         })
         expect(reportFixedCredits).not.toHaveBeenCalled()
+    })
+
+    it.each(aiRouterModels.all.map((model) => model.id))('routes on %s and bills the cost OpenRouter reports for it', async (modelId) => {
+        post.mockResolvedValue({ data: { id: 'gen-4', answers: { route: { type: 'choice', choice: 'Sales', confidence: 0.8, probabilities: { Billing: 0.2, Sales: 0.8 } } }, usage: { input_tokens: 120, output_tokens: 0, cost: 0.00001 } } })
+
+        const answer = await routeStep({ data: routeJob({ modelId }), resolved: MANAGED, billing: BILLING })
+
+        expect(sentBody()).toMatchObject({ model: modelId })
+        expect(answer).toEqual({ matched: ['Sales'], probabilities: { Billing: 0.2, Sales: 0.8 } })
+        expect(reportProviderCost).toHaveBeenCalledWith(expect.objectContaining({ modelId, costUsd: 0.00001 }))
     })
 
     it('bills one fixed credit when the call ran on the platform\'s own OpenRouter key', async () => {

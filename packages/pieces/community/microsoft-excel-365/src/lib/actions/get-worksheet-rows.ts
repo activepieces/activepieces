@@ -136,7 +136,7 @@ dayjs.extend(isSameOrBefore);
 		}
 		const drivePath = getDrivePath(storageSource, siteId as string, documentId as string);
 
-		let url = `${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/`;
+		let url = `${drivePath}/items/${workbookId}/workbook/worksheets/${encodeURIComponent(worksheetId)}/`;
 
 		if (!range) {
 			url += 'usedRange(valuesOnly=true)';

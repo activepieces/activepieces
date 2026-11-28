@@ -287,6 +287,12 @@
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
   "HEAD": "CABEÇA",
+  "Caption": "Legenda",
+  "Output": "Saída",
+  "Search for": "Pesquisar por",
+  "Results": "Resultados",
+  "Request": "Solicitação",
+  "Data to send": "Dados a enviar",
   "New Video In Channel": "Novo vídeo no canal",
   "Runs when a new video is added to a YouTube channel.": "Executa quando um novo vídeo é adicionado a um canal do YouTube.",
   "Paste the channel's URL, its @handle, or its ID.": "Paste the channel's URL, its @handle, or its ID."

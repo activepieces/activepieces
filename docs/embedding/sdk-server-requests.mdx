@@ -25,7 +25,7 @@ You can use the embedded SDK to send requests to your instance and retrieve data
 
         ```html
         <script> 
-        activepieces.request({path:'/flows',method:'GET'}).then(console.log);
+        activepieces.request({path:'/flows',method:'GET',queryParams:{projectId:'ACTIVEPIECES_PROJECT_ID'}}).then(console.log);
         </script>
         ```
 

@@ -90,8 +90,8 @@
   "PUT": "PUT",
   "DELETE": "BORRAR",
   "HEAD": "LIMPIO",
-  "Request": "Request",
-  "Data to send": "Data to send",
+  "Request": "Solicitud",
+  "Data to send": "Datos a enviar",
   "New Testimonial Created": "New Testimonial Created",
   "Triggers when a new testimonial is created in your Trust workspace.": "Triggers when a new testimonial is created in your Trust workspace."
 }

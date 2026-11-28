@@ -1,15 +1,10 @@
 import {
-  DedupeStrategy,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
-import {
-  AppConnectionValueForAuthProperty,
   FilesService,
   Property,
-  StaticPropsValue,
   TriggerStrategy,
   createTrigger,
+  isNil,
+  tryCatch,
 } from '@activepieces/pieces-framework';
 
 import {
@@ -21,8 +16,13 @@ import {
 } from '../common';
 import { newEmailTriggerOutputSchema } from '../output-schemas';
 
+const FILE_SIZE_ERROR_NAME = 'FileSizeError';
+const LAST_POLL_KEY = 'lastPoll';
+const LAST_POLL_UIDS_KEY = 'lastPollUids';
+const TEST_SAMPLE_SIZE = 5;
+
 const filterInstructions =
-  'New emails in this folder start the flow. An email whose sent date is older than the last check is skipped. To act on only some, add a **Router** step after this trigger.';
+  'New emails in this folder start the flow, in the order they arrived. To act on only some, add a **Router** step after this trigger.';
 
 const props = {
   mailbox: mailboxDropdown({
@@ -33,34 +33,6 @@ const props = {
   filterInstructions: Property.MarkDown({
     value: filterInstructions,
   }),
-};
-
-const polling: Polling<
- AppConnectionValueForAuthProperty<typeof imapAuth>,
-  StaticPropsValue<typeof props>
-> = {
-  strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, propsValue, lastFetchEpochMS: lastPoll }) => {
-    const { mailbox } = propsValue;
-    const records = await fetchEmails({
-      auth,
-      lastPoll,
-      mailbox: mailbox as string,
-    });
-
-    return records.map((record) => ({
-      epochMilliSeconds: record.epochMilliSeconds,
-      data: record,
-    }));
-  },
-};
-
-const testPolling: typeof polling = {
-  ...polling,
-  items: async (...args) => {
-    const messages = await polling.items(...args);
-    return messages.reverse();
-  },
 };
 
 export const newEmail = createTrigger({
@@ -77,21 +49,61 @@ export const newEmail = createTrigger({
   type: TriggerStrategy.POLLING,
 
   async test(context) {
-    const messages = await pollingHelper.test(testPolling, context);
-    return enrichAttachments(messages as Message[], context.files);
+    const messages = await fetchEmails({
+      auth: context.auth,
+      lastPoll: 0,
+      lastPollUids: [],
+      mailbox: context.propsValue.mailbox as string,
+    });
+    return Promise.all(
+      messages
+        .reverse()
+        .slice(0, TEST_SAMPLE_SIZE)
+        .map((message) => withStoredAttachments({ message, files: context.files }))
+    );
   },
 
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, context);
+    if (context.isRepublish && !isNil(await context.store.get(LAST_POLL_KEY))) {
+      return;
+    }
+    await context.store.put(LAST_POLL_KEY, Date.now());
+    await context.store.put<number[]>(LAST_POLL_UIDS_KEY, []);
   },
 
-  async onDisable(context) {
-    await pollingHelper.onDisable(polling, context);
+  async onDisable() {
+    return;
   },
 
   async run(context) {
-    const messages = await pollingHelper.poll(polling, context);
-    return enrichAttachments(messages as Message[], context.files);
+    const storedLastPoll = await context.store.get<number>(LAST_POLL_KEY);
+    const lastPoll = Math.min(storedLastPoll ?? Date.now(), Date.now());
+    const lastPollUids =
+      (await context.store.get<number[]>(LAST_POLL_UIDS_KEY)) ?? [];
+    const newMessages = await fetchEmails({
+      auth: context.auth,
+      lastPoll,
+      lastPollUids,
+      mailbox: context.propsValue.mailbox as string,
+    });
+    const items = await Promise.all(
+      newMessages.map((message) =>
+        withStoredAttachments({ message, files: context.files })
+      )
+    );
+    const nextLastPoll = newMessages.reduce(
+      (latest, message) => Math.max(latest, message.epochMilliSeconds),
+      lastPoll
+    );
+    const nextLastPollUids = [
+      ...(nextLastPoll === lastPoll ? lastPollUids : []),
+      ...newMessages
+        .filter((message) => message.epochMilliSeconds === nextLastPoll)
+        .map((message) => message.data.uid),
+    ];
+    await context.store.put(LAST_POLL_KEY, nextLastPoll);
+    await context.store.put<number[]>(LAST_POLL_UIDS_KEY, nextLastPollUids);
+    return items;
   },
 
   sampleData: {
@@ -131,32 +143,45 @@ export const newEmail = createTrigger({
   },
 });
 
-export async function convertAttachment(
-  attachments: Attachment[],
-  files: FilesService
-) {
-  const promises = attachments.map(async (attachment) => {
-    return files.write({
-      fileName: attachment.filename ?? `attachment-${Date.now()}`,
-      data: attachment.content,
-    });
-  });
-
-  return Promise.all(promises);
+async function withStoredAttachments({
+  message,
+  files,
+}: {
+  message: Message;
+  files: FilesService;
+}) {
+  return {
+    ...message.data,
+    attachments: await storeAttachments({
+      attachments: message.data.attachments,
+      files,
+    }),
+  };
 }
 
-async function enrichAttachments(items: Message[], files: FilesService) {
-  return Promise.all(
-    items.map(async (item) => {
-      const { attachments, ...rest } = item.data;
-      const convertedAttachments = attachments
-        ? await convertAttachment(attachments, files)
-        : [];
-
-      return {
-        ...rest,
-        attachments: convertedAttachments,
-      };
+async function storeAttachments({
+  attachments,
+  files,
+}: {
+  attachments: Attachment[];
+  files: FilesService;
+}): Promise<string[]> {
+  const stored = await Promise.all(
+    attachments.map(async (attachment) => {
+      const { data, error } = await tryCatch(() =>
+        files.write({
+          fileName: attachment.filename ?? `attachment-${Date.now()}`,
+          data: attachment.content,
+        })
+      );
+      if (error === null) {
+        return [data];
+      }
+      if (error.name === FILE_SIZE_ERROR_NAME) {
+        return [];
+      }
+      throw error;
     })
   );
+  return stored.flat();
 }

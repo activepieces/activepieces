@@ -15,7 +15,7 @@ You can do two things with these events: **view them in the audit log table** fo
 
 ## View them in the audit log
 
-Open **Platform Admin → Security → Audit Logs** to browse the full table. Filter by action, user, project, or date range to find a specific event, and click any row to see the full payload.
+Open **Platform Admin → Security → Audit Logs → Events** to browse the full table. Filter by **Action**, **Performed By**, **Project**, or **Created** date to find a specific event, and click the eye icon on a row to see the full payload.
 
 ![Audit Logs](/resources/screenshots/audit-logs.png)
 
@@ -25,7 +25,7 @@ To react to events in real time — get a Slack alert when a flow fails, forward
 
 ## Keep events for a set period
 
-Audit events are kept forever by default. To keep the table small, open **Platform Admin → Security → Audit Logs**, click the **Retention** button at the top right, and choose how long to keep events: 30 days, 90 days, 6 months, 1 year, or forever. The dialog also shows the date of your oldest event, so you can see when the cleanup has caught up.
+Audit events are kept forever by default. To keep the table small, open **Platform Admin → Security → Audit Logs → Events**, click the **Retention** button at the top right, and choose how long to keep events: 30 days, 90 days, 6 months, 1 year, or forever. The dialog also shows the date of your oldest event, so you can see when the cleanup has caught up.
 
 - Events older than that period are deleted every hour, oldest first, in small batches with a pause after each one, so your database keeps serving traffic while the cleanup runs.
 - Each hourly run deletes up to 1 million events. A large backlog takes several runs: 100 million expired events take about four days. While a platform is behind, the server logs a warning that names it.
@@ -53,13 +53,36 @@ The full list of documented events. We add new ones as the platform grows; the s
 - [Flow created](/admin-guide/security/audit-logs/flow-created)
 - [Flow updated](/admin-guide/security/audit-logs/flow-updated)
 - [Flow deleted](/admin-guide/security/audit-logs/flow-deleted)
+- [Flow published](/admin-guide/security/audit-logs/flow-published)
+- [Flow activated](/admin-guide/security/audit-logs/flow-activated)
+- [Flow deactivated](/admin-guide/security/audit-logs/flow-deactivated)
+- [Flow pieces upgraded](/admin-guide/security/audit-logs/flow-pieces-upgraded)
+- [Flow pieces reverted](/admin-guide/security/audit-logs/flow-pieces-reverted)
+
+### Flow approvals
+- [Flow approval requested](/admin-guide/security/audit-logs/flow-approval-requested)
+- [Flow approval granted](/admin-guide/security/audit-logs/flow-approval-granted)
+- [Flow approval rejected](/admin-guide/security/audit-logs/flow-approval-rejected)
+- [Flow approval withdrawn](/admin-guide/security/audit-logs/flow-approval-withdrawn)
 
 ### Flow runs
 - [Flow run started](/admin-guide/security/audit-logs/flow-run-started)
 - [Flow run finished](/admin-guide/security/audit-logs/flow-run-finished)
+- [Flow run resumed](/admin-guide/security/audit-logs/flow-run-resumed)
+- [Flow run retried](/admin-guide/security/audit-logs/flow-run-retried)
 
 ### Agents
+- [Agent created](/admin-guide/security/audit-logs/agent-created)
+- [Agent updated](/admin-guide/security/audit-logs/agent-updated)
+- [Agent deleted](/admin-guide/security/audit-logs/agent-deleted)
+- [Agent published](/admin-guide/security/audit-logs/agent-published)
+- [Agent unpublished](/admin-guide/security/audit-logs/agent-unpublished)
 - [Agent action executed](/admin-guide/security/audit-logs/agent-action-executed)
+
+### Variables
+- [Variable saved](/admin-guide/security/audit-logs/variable-upserted)
+- [Variable deleted](/admin-guide/security/audit-logs/variable-deleted)
+- [Variable value revealed](/admin-guide/security/audit-logs/variable-value-revealed)
 
 ### Folders
 - [Folder created](/admin-guide/security/audit-logs/folder-created)
@@ -78,6 +101,31 @@ The full list of documented events. We add new ones as the platform grows; the s
 - [User invitation sent](/admin-guide/security/audit-logs/user-invitation-sent)
 - [User invitation accepted](/admin-guide/security/audit-logs/user-invitation-accepted)
 - [User invitation deleted](/admin-guide/security/audit-logs/user-invitation-deleted)
+
+### Projects
+- [Project role created](/admin-guide/security/audit-logs/project-role-created)
+- [Project role updated](/admin-guide/security/audit-logs/project-role-updated)
+- [Project role deleted](/admin-guide/security/audit-logs/project-role-deleted)
+- [Project release created](/admin-guide/security/audit-logs/project-release-created)
+- [Project replaced](/admin-guide/security/audit-logs/project-replaced)
+
+### Authentication & SSO
+- [Email sign-in turned on](/admin-guide/security/audit-logs/authentication-email-enabled)
+- [Email sign-in turned off](/admin-guide/security/audit-logs/authentication-email-disabled)
+- [Google sign-in turned on](/admin-guide/security/audit-logs/authentication-google-enabled)
+- [Google sign-in turned off](/admin-guide/security/audit-logs/authentication-google-disabled)
+- [Allowed domain added](/admin-guide/security/audit-logs/authentication-allowed-domain-added)
+- [Allowed domain removed](/admin-guide/security/audit-logs/authentication-allowed-domain-removed)
+- [Allowed domain enforcement turned on](/admin-guide/security/audit-logs/authentication-allowed-domain-enforcement-enabled)
+- [Allowed domain enforcement turned off](/admin-guide/security/audit-logs/authentication-allowed-domain-enforcement-disabled)
+- [SSO domain added](/admin-guide/security/audit-logs/sso-domain-added)
+- [SSO domain verified](/admin-guide/security/audit-logs/sso-domain-verified)
+- [SSO domain verification cancelled](/admin-guide/security/audit-logs/sso-domain-verification-cancelled)
+- [SSO domain removed](/admin-guide/security/audit-logs/sso-domain-removed)
+- [SSO domain expired](/admin-guide/security/audit-logs/sso-domain-expired)
+- [SAML connected](/admin-guide/security/audit-logs/sso-saml-connected)
+- [SAML connection replaced](/admin-guide/security/audit-logs/sso-saml-replaced)
+- [Single sign-on disabled](/admin-guide/security/audit-logs/sso-saml-disabled)
 
 ### Platform
 - [Signing key created](/admin-guide/security/audit-logs/signing-key-created)

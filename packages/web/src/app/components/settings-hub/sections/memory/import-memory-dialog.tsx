@@ -83,7 +83,7 @@ function ImportMemoryContent({
               {EXPORT_PROMPT}
             </p>
             <CopyButton
-              textToCopy={EXPORT_PROMPT}
+              value={EXPORT_PROMPT}
               variant="outline"
               size="icon-sm"
               className="absolute right-3 top-3"

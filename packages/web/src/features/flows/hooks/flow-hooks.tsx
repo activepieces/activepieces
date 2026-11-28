@@ -406,16 +406,15 @@ export const flowHooks = {
     isForManualTrigger: boolean;
   }) => {
     const socket = useSocket();
-    return useMutation<void>({
-      mutationFn: () =>
-        flowRunsApi.subscribeToTestFlowOrManualRun(
+    return useMutation<void, Error, AbortSignal>({
+      mutationFn: (signal) =>
+        flowRunsApi.subscribeToTestFlowOrManualRun({
           socket,
-          {
-            flowVersionId,
-          },
-          onUpdateRun,
+          request: { flowVersionId },
+          onUpdate: onUpdateRun,
           isForManualTrigger,
-        ),
+          signal,
+        }),
     });
   },
 

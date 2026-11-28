@@ -1,4 +1,4 @@
-import { ActionErrorHandlingOptions, AiRouterAction, AiRouterMatchMode, BeginExecuteFlowOperation, BranchCondition, BranchExecutionType, CodeAction, ExecutionType, FlowAction, FlowActionType, FlowVersionState, LoopOnItemsAction, PieceAction, PropertyExecutionType, RouterExecutionType, RunEnvironment, StreamStepProgress } from '@activepieces/shared'
+import { ActionErrorHandlingOptions, AiRouterAction, AiRouterMatchMode, BeginExecuteFlowOperation, BranchCondition, BranchExecutionType, CodeAction, ExecutionType, FlowAction, FlowActionType, FlowVersionState, LoopOnItemsAction, PieceAction, ProcessInBatchesAction, PropertyExecutionType, RouterExecutionType, RunEnvironment, StreamStepProgress } from '@activepieces/shared'
 import { EngineConstants, ResolvedBeginExecuteFlowOperation } from '../../src/lib/handler/context/engine-constants'
 
 export const generateMockEngineConstants = (params?: Partial<EngineConstants>): EngineConstants => {
@@ -56,6 +56,37 @@ export function buildSimpleLoopAction({
     }
 }
 
+export function buildProcessInBatchesAction({
+    name,
+    items,
+    batchSize,
+    firstLoopAction,
+    continueOnFailure,
+}: {
+    name: string
+    items: string
+    batchSize?: number
+    firstLoopAction?: FlowAction
+    continueOnFailure?: boolean
+}): ProcessInBatchesAction {
+    return {
+        name,
+        displayName: 'Process in Batches',
+        type: FlowActionType.PROCESS_IN_BATCHES,
+        skip: false,
+        settings: {
+            items,
+            batchSize: batchSize ?? 10,
+            errorHandlingOptions: {
+                continueOnFailure: { value: continueOnFailure ?? false },
+                retryOnFailure: { value: false },
+            },
+        },
+        firstLoopAction,
+        valid: true,
+    }
+}
+
 export function buildRouterWithOneCondition({ children, conditions, executionType, skip }: { children: FlowAction[], conditions: (BranchCondition | null)[], executionType: RouterExecutionType, skip?: boolean }): FlowAction {
     return {
         name: 'router',
@@ -83,7 +114,7 @@ export function buildRouterWithOneCondition({ children, conditions, executionTyp
     }
 }
 
-export function buildAiRouter({ children, routes, fallback, minConfidence, matchMode, text }: { children: (FlowAction | null)[], routes: { branchName: string, description?: string }[], fallback?: { branchName: string, description?: string }, minConfidence?: number, matchMode?: AiRouterMatchMode, text?: string }): AiRouterAction {
+export function buildAiRouter({ children, routes, fallback, minConfidence, matchMode, text, model }: { children: (FlowAction | null)[], routes: { branchName: string, description?: string }[], fallback?: { branchName: string, description?: string }, minConfidence?: number, matchMode?: AiRouterMatchMode, text?: string, model?: string }): AiRouterAction {
     const fallbackBranches = fallback === undefined ? [] : [{
         branchType: BranchExecutionType.FALLBACK as const,
         branchName: fallback.branchName,
@@ -107,6 +138,7 @@ export function buildAiRouter({ children, routes, fallback, minConfidence, match
                 ...fallbackBranches,
             ],
             minConfidence,
+            model,
         },
         children,
         valid: true,

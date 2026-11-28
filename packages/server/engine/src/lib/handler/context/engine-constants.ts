@@ -1,8 +1,12 @@
+import path from 'node:path'
 import { ensureTrailingSlash, isNil, PlatformId, ProjectId } from '@activepieces/core-utils'
 import { ContextVersion } from '@activepieces/pieces-framework'
 import { BaseEngineOperation, BeginExecuteFlowOperation, DEFAULT_MCP_DATA, EngineGenericError, ExecutePropsOptions, ExecuteTriggerOperation, ExecutionState, ExecutionType, flowStructureUtil, FlowTrigger, FlowVersionState, Project, ResumeExecuteFlowOperation, ResumePayload, RunEnvironment, StreamStepProgress, TriggerHookType } from '@activepieces/shared'
 import { retryFetch } from '../../api/retry-fetch'
+import { SharedScriptSession } from '../../core/code/shared-script-session'
+import { operationScope } from '../../helper/operation-scope'
 import { createPropsResolver, PropsResolver } from '../../variables/props-resolver'
+import { scriptEvaluator } from '../../variables/script-evaluator'
 
 type RetryConstants = {
     maxAttempts: number
@@ -74,12 +78,13 @@ export class EngineConstants {
     public readonly stepNames: string[] = []
     public readonly actionRunMode: boolean
     private project: Project | null = null
+    private scriptSession: SharedScriptSession | null = null
 
     public get isRunningApTests(): boolean {
         return EngineConstants.TEST_MODE
     }
 
-    public get isTestFlow(): boolean {
+    public get isStreamingToBuilder(): boolean {
         return this.streamStepProgress === StreamStepProgress.WEBSOCKET
     }
 
@@ -175,7 +180,15 @@ export class EngineConstants {
             contextVersion,
             stepNames: this.stepNames,
             pieceName,
+            scriptSession: this.getScriptSession(),
         })
+    }
+    private getScriptSession(): SharedScriptSession {
+        if (isNil(this.scriptSession)) {
+            this.scriptSession = scriptEvaluator.initSession({ flowVersionDir: path.resolve(this.baseCodeDirectory, this.flowVersionId) })
+            operationScope.track(this.scriptSession)
+        }
+        return this.scriptSession
     }
     private async getProject(): Promise<Project> {
         if (this.project) {

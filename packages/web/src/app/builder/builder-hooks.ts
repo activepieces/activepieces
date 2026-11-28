@@ -3,6 +3,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { createContext, useContext } from 'react';
 import { Socket } from 'socket.io-client';
 import { create, createStore, useStore } from 'zustand';
+import { useShallow } from 'zustand/react/shallow';
 
 import { CanvasState, createCanvasState } from './state/canvas-state';
 import { ChatState, createChatState } from './state/chat-state';
@@ -27,7 +28,7 @@ export function useBuilderStore(): BuilderStore {
 export function useBuilderStateContext<T>(
   selector: (state: BuilderState) => T,
 ): T {
-  return useStore(useBuilderStore(), selector);
+  return useStore(useBuilderStore(), useShallow(selector));
 }
 
 export function useOptionalBuilderStateContext<T>(

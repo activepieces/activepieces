@@ -8,15 +8,15 @@ Streams platform/project activity events to webhook URLs in real time. Internal 
 
 ### Entities & services
 - **EventDestination**: one URL receiving a chosen subset of the `ApplicationEventName` events, at PLATFORM or PROJECT scope.
-- **Scope**: PLATFORM (all platform events) or PROJECT (currently only `FLOW_RUN_FINISHED`).
+- **Scope**: PLATFORM (all platform events) or PROJECT (currently only `FLOW_RUN_FINISHED`). No endpoint creates a PROJECT row: `create()` always writes PLATFORM.
 - **Format**: how a destination encodes each event on the wire — `RAW` (the event JSON, the default and what every pre-format destination sends), `OTLP_JSON`, or `OTLP_PROTOBUF` (an OTLP/HTTP logs `ExportLogsServiceRequest`, built by `otlpLogs` in `@activepieces/server-utils` on top of evlog's `toOTLPLogRecord`).
 - Delivery via BullMQ queue (`WorkerJobType.EVENT_DESTINATION`).
 
 ### How it works
-- `eventDestinationService.trigger()` finds matching destinations and classifies each URL as internal vs external.
+- `eventDestinationService.trigger()` finds matching destinations and classifies each URL as internal vs external. It adds `flowDisplayName` and the project name to the four `flow.run.*` events first (`enrichFlowRunEvent`); if that fails it sends the event as is.
 - **Internal** (URL origin == instance's public API origin, path under `/v1/webhooks/<flowId>`, any route suffix): dispatched directly via `webhookService.handleWebhook` — no outbound HTTP, so the SSRF filter never sees a self-referential private-IP call (GIT-1539). A `/draft` URL runs the latest version; a `/test` URL only saves sample data and does not run the flow.
 - **External**: queued as ONE_TIME jobs, POSTed via `safeHttp.postForStatus` (SSRF-protected, reads only the status); delivery failures logged at error level.
-- Endpoints: `POST/GET/DELETE /v1/event-destinations` (+ `POST /:id` and `PATCH /:id`), and `POST /test` sends a mock event (defaults to `FLOW_CREATED`, format `RAW`) built by `buildMockEvent()`.
+- Endpoints under `/v1/event-destinations`: `POST /`, `GET /`, `POST /:id`, `PATCH /:id`, `DELETE /:id`, and `POST /test`, which sends a mock event (defaults to `FLOW_CREATED`, format `RAW`) built by `buildMockEvent()`. All are platform-admin only; `POST /test` accepts a user principal only, not an API key.
 
 ### Gotchas
 - **A header value is decrypted in exactly one function, `decryptBoundHeaders`, and only on the way out.** Two callers: `resolveDeliveryHeaders`, the method the worker calls over RPC just before an external POST, and the internal dispatch to a handler flow. The `headers` column stores the URL the values were saved for and a *per-key* map of ciphertexts (`{ url, values: { [name]: {iv,data} } }`), not one blob over the whole map, so the key names are readable without the key. That is what lets `maskHeaders` be pure and synchronous, lets `update()` keep a value by copying its ciphertext, and stops one unreadable row from 500-ing the whole list endpoint. `grep decryptString packages/server/api/src/app/event-destinations` should return one line. An `EVENT_DESTINATION` job carries the destination id, never the headers — copying `resolveAiProvider`, because the worker has no database and no `AP_ENCRYPTION_KEY`.
@@ -55,4 +55,4 @@ Entry point: `eventDestinationService`, a log-scoped factory wired up in `platfo
 - `packages/web/src/app/routes/platform/infra/event-destinations/` — the listing tab, the three-step destination form (Destination, Events, Connection), its TanStack DB collection, and the handler-flow builder
 - `packages/server/api/test/integration/cloud/event-destinations/` — integration tests covering CRUD and trigger dispatch
 
-Paths verified 2026-09-23.
+Paths verified 2026-11-16.

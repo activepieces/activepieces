@@ -1,9 +1,9 @@
-import { sheets as googleSheets } from '@googleapis/sheets';
+import { sheets as googleSheets, sheets_v4 } from '@googleapis/sheets';
 import { drive as googleDrive, drive_v3 } from '@googleapis/drive';
 import { nanoid } from 'nanoid';
 import dayjs from 'dayjs';
 import crypto from 'crypto';
-import { columnToLabel, createGoogleClient, GoogleSheetsAuthValue } from '../common/common';
+import { columnToLabel, createGoogleClient, GoogleSheetsAuthValue, googleSheetsCommon } from '../common/common';
 import { isNil } from '@activepieces/pieces-framework';
 
 export async function getWorkSheetName(
@@ -45,18 +45,27 @@ export async function getWorkSheetGridSize(
 	return sheetRange
 }
 
-export async function getWorkSheetValues(
-	auth: GoogleSheetsAuthValue,
-	spreadsheetId: string,
-	range?: string,
-) {
+export async function getWorkSheetValues({
+	auth,
+	spreadsheetId,
+	sheetName,
+	range,
+	valueRenderOption = 'FORMATTED_VALUE',
+}: {
+	auth: GoogleSheetsAuthValue;
+	spreadsheetId: string;
+	sheetName: string;
+	range?: string;
+	valueRenderOption?: SheetValueRenderOption;
+}): Promise<SheetCellValue[][]> {
 	const authClient = await createGoogleClient(auth);
 
 	const sheets = googleSheets({ version: 'v4', auth: authClient });
 
 	const res = await sheets.spreadsheets.values.get({
 		spreadsheetId: spreadsheetId,
-		range: range,
+		range: googleSheetsCommon.sheetRange({ sheetName, range }),
+		valueRenderOption,
 	});
 
 	return res.data.values ?? [];
@@ -67,13 +76,12 @@ export async function createFileNotification(
 	fileId: string,
 	url: string,
 	includeTeamDrives?: boolean,
+	channelId: string = nanoid(),
 ): Promise<{ data: drive_v3.Schema$Channel }> {
 	const authClient = await createGoogleClient(auth);
 
 	const drive = googleDrive({ version: 'v3', auth: authClient });
 
-	// create unique UUID for channel
-	const channelId = nanoid();
 	return await drive.files.watch({
 		fileId: fileId,
 		supportsAllDrives: includeTeamDrives,
@@ -103,16 +111,90 @@ export async function deleteFileNotification(
 	});
 }
 
+export async function readSheetGrid({
+	auth,
+	spreadsheetId,
+	sheetName,
+}: {
+	auth: GoogleSheetsAuthValue;
+	spreadsheetId: string;
+	sheetName: string;
+}): Promise<SheetGrid> {
+	const authClient = await createGoogleClient(auth);
+	const sheets = googleSheets({ version: 'v4', auth: authClient });
+	const res = await sheets.spreadsheets.get({
+		spreadsheetId,
+		ranges: [googleSheetsCommon.sheetRange({ sheetName })],
+		includeGridData: true,
+		fields: 'sheets(properties(sheetId,title),data(startRow,rowData(values(effectiveValue,formattedValue))))',
+	});
+	const data = res.data.sheets?.[0]?.data?.[0];
+	return sheetGridFromRowData({ rowData: data?.rowData ?? [], startRow: data?.startRow ?? 0 });
+}
+
+export function sheetGridFromRowData({
+	rowData,
+	startRow,
+}: {
+	rowData: sheets_v4.Schema$RowData[];
+	startRow: number;
+}): SheetGrid {
+	const raw: SheetCellValue[][] = [];
+	const display: string[][] = [];
+	for (let index = 0; index < startRow; index++) {
+		raw.push([]);
+		display.push([]);
+	}
+	for (const row of rowData) {
+		const cells = row.values ?? [];
+		const rawRow = cells.map((cell) => unformattedValue(cell));
+		const displayRow = cells.map((cell) => cell.formattedValue ?? '');
+		let end = cells.length;
+		while (end > 0 && rawRow[end - 1] === '' && displayRow[end - 1] === '') {
+			end -= 1;
+		}
+		raw.push(rawRow.slice(0, end));
+		display.push(displayRow.slice(0, end));
+	}
+	let rows = raw.length;
+	while (rows > 0 && raw[rows - 1].length === 0) {
+		rows -= 1;
+	}
+	return { raw: raw.slice(0, rows), display: display.slice(0, rows) };
+}
+
+function unformattedValue(cell: sheets_v4.Schema$CellData): SheetCellValue {
+	const value = cell.effectiveValue;
+	if (isNil(value)) {
+		return '';
+	}
+	if (!isNil(value.numberValue)) {
+		return value.numberValue;
+	}
+	if (!isNil(value.boolValue)) {
+		return value.boolValue;
+	}
+	if (!isNil(value.stringValue)) {
+		return value.stringValue;
+	}
+	if (!isNil(value.errorValue)) {
+		return cell.formattedValue ?? '#ERROR!';
+	}
+	return '';
+}
+
 export function isSyncMessage(headers: Record<string, string>) {
 	return headers['x-goog-resource-state'] === 'sync';
 }
 
 export function isChangeContentMessage(headers: Record<string, string>) {
-	// https://developers.google.com/drive/api/guides/push#respond-to-notifications
-	return (
-		headers['x-goog-resource-state'] === 'update' &&
-		['content', 'properties', 'content,properties'].includes(headers['x-goog-changed'])
-	);
+	if (headers['x-goog-resource-state'] !== 'update') {
+		return false;
+	}
+	const changed = (headers['x-goog-changed'] ?? '')
+		.split(',')
+		.map((entry) => entry.trim().toLowerCase());
+	return changed.includes('content') || changed.includes('properties');
 }
 
 export function hashObject(obj: Record<string, unknown>): string {
@@ -147,6 +229,19 @@ export function mapRowsToColumnLabels(rowValues: any[][], oldRowCount: number, h
 	return result;
 }
 
+export function sheetIdentity({
+	spreadsheetId,
+	sheetId,
+}: {
+	spreadsheetId: string | null | undefined;
+	sheetId: string | number | null | undefined;
+}): { spreadsheetId: string; sheetId: number } {
+	if (isNil(spreadsheetId) || spreadsheetId === '' || isNil(sheetId) || sheetId === '') {
+		throw new Error('Please select a spreadsheet and sheet first.');
+	}
+	return { spreadsheetId, sheetId: Number(sheetId) };
+}
+
 export interface WebhookInformation {
 	kind?: string | null;
 	id?: string | null;
@@ -154,3 +249,12 @@ export interface WebhookInformation {
 	resourceUri?: string | null;
 	expiration?: string | null;
 }
+
+export type SheetValueRenderOption = 'FORMATTED_VALUE' | 'UNFORMATTED_VALUE';
+
+export type SheetCellValue = string | number | boolean | null | undefined;
+
+export type SheetGrid = {
+	raw: SheetCellValue[][];
+	display: string[][];
+};

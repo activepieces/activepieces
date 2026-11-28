@@ -1,9 +1,4 @@
-import {
-  createPiece,
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/pieces-framework';
+import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
 import { newDealAddedOrUpdatedTrigger } from './lib/triggers/new-deal-added-or-updated';
 import { createAccountAction } from './lib/actions/accounts/create-account';
 import { updateAccountAction } from './lib/actions/accounts/update-account';
@@ -12,7 +7,14 @@ import { createContactAction } from './lib/actions/contacts/create-contact';
 import { updateContactAction } from './lib/actions/contacts/update-contact';
 import { addContactToAccountAction } from './lib/actions/contacts/add-contact-to-account';
 import { addTagToContactAction } from './lib/actions/contacts/add-tag-to-contact';
-import { makeClient } from './lib/common';
+import { findContactAction } from './lib/actions/contacts/find-contact';
+import { removeTagFromContactAction } from './lib/actions/contacts/remove-tag-from-contact';
+import { addContactToAutomationAction } from './lib/actions/contacts/add-contact-to-automation';
+import { createDealAction } from './lib/actions/deals/create-deal';
+import { updateDealAction } from './lib/actions/deals/update-deal';
+import { createNoteAction } from './lib/actions/notes/create-note';
+import { createTaskAction } from './lib/actions/tasks/create-task';
+import { activeCampaignAiActions } from './lib/actions/ai';
 import { newDealNoteTrigger } from './lib/triggers/new-deal-note';
 import { newDealTaskTrigger } from './lib/triggers/new-deal-task';
 import { dealTaskCompletedTrigger } from './lib/triggers/deal-task-completed';
@@ -21,25 +23,21 @@ import { newOrUpdatedAccountTrigger } from './lib/triggers/new-or-updated-accoun
 import { newContactNoteTrigger } from './lib/triggers/new-contact-note';
 import { newContactTaskTrigger } from './lib/triggers/new-contact-task';
 import { updatedContactTrigger } from './lib/triggers/updated-contact';
+import { campaignLinkClickedTrigger } from './lib/triggers/campaign-link-clicked';
+import { newCampaignBounceTrigger } from './lib/triggers/new-campaign-bounce';
+import { newContactSubscribedTrigger } from './lib/triggers/new-contact-subscribed';
+import { contactUnsubscribedTrigger } from './lib/triggers/contact-unsubscribed';
 import { activeCampaignAuth } from './lib/auth';
-
-const authGuide = `
-To obtain your ActiveCampaign API URL and Key, follow these steps:
-
-1. Log in to your ActiveCampaign account.
-2. Navigate to **Settings->Developer** section.
-3. Under **API Access** ,you'll find your API URL and Key.
-`;
 
 export const activecampaign = createPiece({
   displayName: 'ActiveCampaign',
   description:
     'Email marketing, marketing automation, and CRM tools you need to create incredible customer experiences.',
   auth: activeCampaignAuth,
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.86.4',
   logoUrl: 'https://cdn.activepieces.com/pieces/activecampaign.png',
   categories: [PieceCategory.MARKETING, PieceCategory.SALES_AND_CRM],
-  authors: ["kishanprmr","abuaboud"],
+  authors: ["kishanprmr","abuaboud","OdaiAhmed99"],
   actions: [
     addContactToAccountAction,
     addTagToContactAction,
@@ -48,6 +46,14 @@ export const activecampaign = createPiece({
     updateAccountAction,
     updateContactAction,
     subscribeOrUnsubscribeContactFromListAction,
+    findContactAction,
+    removeTagFromContactAction,
+    addContactToAutomationAction,
+    createDealAction,
+    updateDealAction,
+    createNoteAction,
+    createTaskAction,
+    ...activeCampaignAiActions,
   ],
   triggers: [
     dealTaskCompletedTrigger,
@@ -59,5 +65,9 @@ export const activecampaign = createPiece({
     newDealTaskTrigger,
     newtagAddedOrRemovedFromContactTrigger,
     updatedContactTrigger,
+    campaignLinkClickedTrigger,
+    newCampaignBounceTrigger,
+    newContactSubscribedTrigger,
+    contactUnsubscribedTrigger,
   ],
 });

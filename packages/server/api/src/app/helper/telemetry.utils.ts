@@ -1,5 +1,5 @@
 import { AIProviderName, isNil, omit, ProjectId, spreadIfDefined, UserId } from '@activepieces/core-utils'
-import { apVersionUtil, POSTHOG_HOST, POSTHOG_PROJECT_TOKEN } from '@activepieces/server-utils'
+import { apVersionUtil, posthogConfig } from '@activepieces/server-utils'
 import { ApEdition, ApEnvironment, AppInstance, AttributionParams, attributionUtils, DeploymentConfig, DeploymentKind, FlowRunStatus, GetDiagnosticsResponse, GetSystemHealthChecksResponse, isCloudOnlyTelemetryEvent, MachineInformation, pickTelemetryPii, RunEnvironment, SignUpMethod, TelemetryEvent, User, UserIdentity } from '@activepieces/shared'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { instrument } from '@posthog/mcp'
@@ -12,15 +12,26 @@ import { system } from './system/system'
 import { AppSystemProp } from './system/system-props'
 
 let posthogInstance: PostHog | null = null
+let meteringPosthogInstance: PostHog | null = null
 let mcpPosthogInstance: PostHog | null = null
-function getPostHog(): PostHog {
-    if (!posthogInstance) {
-        posthogInstance = new PostHog(POSTHOG_PROJECT_TOKEN, {
-            host: POSTHOG_HOST,
-            maxQueueSize: POSTHOG_MAX_QUEUE_SIZE,
-        })
+function getPostHog(): PostHog | null {
+    const projectToken = posthogConfig.projectToken()
+    if (isNil(projectToken)) {
+        return null
     }
+    posthogInstance ??= new PostHog(projectToken, {
+        host: posthogConfig.host,
+        maxQueueSize: POSTHOG_MAX_QUEUE_SIZE,
+    })
     return posthogInstance
+}
+
+function getMeteringPostHog(): PostHog {
+    meteringPosthogInstance ??= new PostHog(posthogConfig.meteringProjectToken, {
+        host: posthogConfig.host,
+        maxQueueSize: POSTHOG_MAX_QUEUE_SIZE,
+    })
+    return meteringPosthogInstance
 }
 
 export const LICENSE_KEY_EVENTS_FLUSH_BATCH_SIZE = 5_000
@@ -31,7 +42,7 @@ export const telemetry = (log: FastifyBaseLogger) => ({
         if (!await platformConfigurationService(log).isProductTelemetryEnabled({ platformId })) {
             return
         }
-        getPostHog().identify({
+        getPostHog()?.identify({
             distinctId: user?.id ?? identity.id,
             properties: {
                 ...pickTelemetryPii({
@@ -50,7 +61,7 @@ export const telemetry = (log: FastifyBaseLogger) => ({
         if (!await platformConfigurationService(log).isProductTelemetryEnabled({ platformId })) {
             return
         }
-        getPostHog().identify({
+        getPostHog()?.identify({
             distinctId: userId,
             properties: {
                 $set_once: {
@@ -67,13 +78,13 @@ export const telemetry = (log: FastifyBaseLogger) => ({
         if (!await platformConfigurationService(log).isProductTelemetryEnabled({ platformId })) {
             return
         }
-        getPostHog().alias({ distinctId: userId, alias: identityId })
+        getPostHog()?.alias({ distinctId: userId, alias: identityId })
     },
     async identifyPlatformGroup({ platformId, properties }: IdentifyPlatformGroupParams): Promise<void> {
         if (!await platformConfigurationService(log).isProductTelemetryEnabled({ platformId })) {
             return
         }
-        getPostHog().groupIdentify({
+        getPostHog()?.groupIdentify({
             groupType: PLATFORM_GROUP_TYPE,
             groupKey: platformId,
             properties: {
@@ -116,23 +127,24 @@ export const telemetry = (log: FastifyBaseLogger) => ({
 })
 
 export function captureLicenseKeyEvent({ licenseKey, event, properties }: CaptureLicenseKeyEventParams): void {
-    getPostHog().capture({
+    getMeteringPostHog().capture({
         distinctId: licenseKey,
         event,
         properties,
     })
 }
 export async function flushLicenseKeyPostHogEvents(): Promise<void> {
-    if (posthogInstance !== null) {
-        await posthogInstance.flush()
+    if (meteringPosthogInstance !== null) {
+        await meteringPosthogInstance.flush()
     }
 }
 
 export function instrumentMcpServer({ server, userId, platformId }: InstrumentMcpServerParams): void {
-    if (system.getEdition() !== ApEdition.CLOUD) {
+    const projectToken = posthogConfig.projectToken()
+    if (system.getEdition() !== ApEdition.CLOUD || isNil(projectToken)) {
         return
     }
-    mcpPosthogInstance ??= new PostHog(POSTHOG_PROJECT_TOKEN, { host: POSTHOG_HOST })
+    mcpPosthogInstance ??= new PostHog(projectToken, { host: posthogConfig.host })
     instrument(server, mcpPosthogInstance, {
         identify: isNil(userId) ? null : { distinctId: userId, groups: isNil(platformId) ? undefined : { [PLATFORM_GROUP_TYPE]: platformId } },
         context: false,
@@ -143,7 +155,7 @@ export function instrumentMcpServer({ server, userId, platformId }: InstrumentMc
 }
 
 export async function shutdownTelemetry(): Promise<void> {
-    await Promise.all([posthogInstance?.shutdown(), mcpPosthogInstance?.shutdown()])
+    await Promise.all([posthogInstance?.shutdown(), meteringPosthogInstance?.shutdown(), mcpPosthogInstance?.shutdown()])
 }
 
 const DEDUPE_MAX_ENTRIES = 50_000
@@ -167,6 +179,10 @@ async function captureUserEvent({ userId, platformId, event, log }: CaptureUserE
     if (isCloudOnlyTelemetryEvent(event.name) && system.getEdition() !== ApEdition.CLOUD) {
         return
     }
+    const posthog = getPostHog()
+    if (isNil(posthog)) {
+        return
+    }
     const payloadEvent = {
         distinctId: userId,
         event: event.name,
@@ -178,7 +194,7 @@ async function captureUserEvent({ userId, platformId, event, log }: CaptureUserE
         ...spreadIfDefined('groups', isNil(platformId) ? null : { platform: platformId }),
     }
     log.info(payloadEvent, '[Telemetry#captureUserEvent] sending event')
-    getPostHog().capture(payloadEvent)
+    posthog.capture(payloadEvent)
 }
 
 async function getMetadata() {

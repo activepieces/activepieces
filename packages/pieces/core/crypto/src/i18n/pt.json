@@ -51,10 +51,10 @@
   "SHA384": "SHA384",
   "Alphanumeric": "Alphanumeric",
   "With Symbols": "With Symbols",
-  "Hash": "Hash",
-  "Signing key": "Signing key",
-  "Signature": "Signature",
-  "Password": "Password",
-  "Encrypt for recipient": "Encrypt for recipient",
+  "Hash": "Hashar",
+  "Signing key": "Chave de Assinatura",
+  "Signature": "Assinatura",
+  "Password": "Senha",
+  "Encrypt for recipient": "Criptografar para o destinatário",
   "Crypto": "Crypto"
 }

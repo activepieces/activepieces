@@ -17,7 +17,7 @@ export {
 export { AuditLogRetentionButton } from './components/audit-log-retention-dialog';
 export { auditLogRetentionUtils } from './lib/audit-log-retention-utils';
 export { workerGroupsLock } from './lib/worker-groups-lock';
-export type { WorkerGroupsLockReason } from './lib/worker-groups-lock';
+export { WorkerGroupsLockReason } from './lib/worker-groups-lock';
 export { NewSigningKeyDialog } from './components/new-signing-key-dialog';
 export { platformAnalyticsHooks } from './hooks/analytics-hooks';
 export {

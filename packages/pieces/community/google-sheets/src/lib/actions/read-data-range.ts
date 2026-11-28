@@ -5,6 +5,7 @@ import {
 	createGoogleClient,
 	Dimension,
 	googleSheetsAuth,
+	googleSheetsCommon,
 } from '../common/common';
 import { commonProps } from '../common/props';
 import { getWorkSheetName } from '../triggers/helpers';
@@ -90,7 +91,7 @@ export const readDataRangeAction = createAction({
 		const authClient = await createGoogleClient(auth);
 		const sheets = googleSheets({ version: 'v4', auth: authClient });
 
-		const a1Range = range && range.trim().length > 0 ? `${sheetName}!${range}` : sheetName;
+		const a1Range = googleSheetsCommon.sheetRange({ sheetName, range: range?.trim() });
 
 		const response = await sheets.spreadsheets.values.get({
 			spreadsheetId: spreadsheetId as string,

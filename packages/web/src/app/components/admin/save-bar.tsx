@@ -3,6 +3,7 @@ import { ReactNode } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { SaveBarStatus } from '@/lib/statuses';
 import { cn } from '@/lib/utils';
 
 import { adminLayout } from './admin-layout';
@@ -39,12 +40,15 @@ export function SaveBar({
         <div role="status" className="flex min-w-0 flex-1 items-center">
           {status ??
             (locked ? (
-              <StatusDot tone="accent" className="text-gray-11">
+              <StatusDot status={SaveBarStatus.LOCKED} className="text-gray-11">
                 {locked.message}
               </StatusDot>
             ) : (
               dirty && (
-                <StatusDot tone="warning" className="text-gray-11">
+                <StatusDot
+                  status={SaveBarStatus.UNSAVED}
+                  className="text-gray-11"
+                >
                   {t('You have unsaved changes')}
                 </StatusDot>
               )

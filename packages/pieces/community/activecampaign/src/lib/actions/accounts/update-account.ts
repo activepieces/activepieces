@@ -1,6 +1,7 @@
 import { activeCampaignAuth } from '../../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { activecampaignCommon, makeClient } from '../../common';
+import { accountOutputSchema } from '../../common/output-schemas';
 import { CreateAccountRequest } from '../../common/types';
 
 export const updateAccountAction = createAction({
@@ -9,8 +10,9 @@ export const updateAccountAction = createAction({
 	classification: 'WRITE',
 	displayName: 'Update Account',
 	description: 'Updates an account.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Updates an existing ActiveCampaign account identified by account ID, changing its name, URL, and/or custom field values. Use when you already have the target account ID and want to modify its details. Idempotent: re-running with the same input leaves the account in the same state.', idempotent: true },
+	outputSchema: accountOutputSchema,
 	props: {
 		accountId: activecampaignCommon.accountId,
 		name: Property.ShortText({
@@ -36,6 +38,6 @@ export const updateAccountAction = createAction({
 		});
 
 		const client = makeClient(context.auth.props);
-		return await client.updateAccount(Number(accountId), updateAccountParams);
+		return await client.updateAccount({ accountId, account: updateAccountParams });
 	},
 });

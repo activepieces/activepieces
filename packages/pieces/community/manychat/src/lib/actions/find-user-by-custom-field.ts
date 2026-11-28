@@ -1,52 +1,24 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { BASE_URL } from '../common/props';
 import { manychatAuth } from '../auth';
+import { manychatClient, manychatUtils } from '../common/client';
+import { manychatProps } from '../common/props';
+import { manychatOutputSchemas } from '../common/output-schemas';
 
 export const findUserByCustomFieldAction = createAction({
 	auth: manychatAuth,
 	name: 'findUserByCustomField',
 	classification: 'SEARCH',
 	displayName: 'Find User by Custom Field',
-	description: 'Finds a user by custom field.',
+	description: 'Finds users whose text or number custom field equals a value. ManyChat returns at most 100 matches.',
 	audience: 'both',
-	aiMetadata: { description: 'Searches Manychat subscribers by a custom field (text or number type) matching a given value, returning whether any matched and the list of matches. Use to look up a subscriber by a stored attribute when you do not have their subscriber ID. Read-only and idempotent.', idempotent: true },
-	props: {
-		field: Property.Dropdown({
-			auth: manychatAuth,
-	displayName: 'Custom Field',
-	refreshers: [],
-	required: true,
-	options: async ({ auth }) => {
-		if (!auth) {
-			return {
-				placeholder: 'Please connect your account.',
-				disabled: true,
-				options: [],
-			};
-		}
-
-		const response = await httpClient.sendRequest<{
-			data: Array<{ id: number; name: string; type: string }>;
-		}>({
-			url: `${BASE_URL}/page/getCustomFields`,
-			method: HttpMethod.GET,
-			authentication: {
-				type: AuthenticationType.BEARER_TOKEN,
-				token: auth.secret_text
-			},
-		});
-		return {
-			disabled: false,
-			options: response.body.data
-				.filter((field) => ['text', 'number'].includes(field.type))
-				.map((field) => ({
-					label: field.name,
-					value: field.id,
-				})),
-		};
+	aiMetadata: {
+		description:
+			'Searches ManyChat subscribers whose text or number custom field equals a value and returns whether any matched plus up to 100 matches (ManyChat limit, no paging). Use when you know a stored attribute but not the subscriber ID; for email or phone use "Find Subscriber by Email or Phone". Read-only.',
+		idempotent: true,
 	},
-}),
+	outputSchema: manychatOutputSchemas.searchResult,
+	props: {
+		field: manychatProps.customFieldDropdown({ allowedTypes: ['text', 'number'] }),
 		value: Property.ShortText({
 			displayName: 'Value',
 			description: 'The value to search for.',
@@ -54,27 +26,14 @@ export const findUserByCustomFieldAction = createAction({
 		}),
 	},
 	async run({ auth, propsValue }) {
-		const { field, value } = propsValue;
-
-		const response = await httpClient.sendRequest<{
-			status: string;
-			data: Array<Record<string, any>>;
-		}>({
-			method: HttpMethod.GET,
-			url: `${BASE_URL}/subscriber/findByCustomField`,
-			queryParams: {
-				field_id: field.toString(),
-				field_value: value,
-			},
-			authentication: {
-				type: AuthenticationType.BEARER_TOKEN,
-				token: auth.secret_text,
-			},
+		const body = await manychatClient.request({
+			apiKey: manychatUtils.apiKeyOf(auth),
+			method: 'GET',
+			path: '/subscriber/findByCustomField',
+			operation: 'find subscribers by custom field',
+			query: { field_id: String(propsValue.field), field_value: propsValue.value },
 		});
-
-		return {
-			found: response.body.status === 'success' && response.body.data.length > 0,
-			result: response.body.data,
-		};
+		const result = manychatUtils.recordsOf(manychatUtils.dataOf(body));
+		return { found: result.length > 0, result };
 	},
 });

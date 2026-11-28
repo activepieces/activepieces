@@ -7,19 +7,16 @@ import {
 import { t } from 'i18next';
 import { ReactNode } from 'react';
 
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { LoadingSpinner } from '@/components/custom/spinner';
-import { billingQueries } from '@/features/billing';
+import { billingQueries, enterpriseDocs } from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import { LockedFeatureGuard } from './locked-feature-guard';
 
-const LOCK_DOCUMENTATION_URL =
-  'https://www.activepieces.com/docs/install/configuration/overview#enterprise-edition-optional';
-
 export function BillingPageShell({
   lockTitle,
-  errorMessage,
   children,
 }: BillingPageShellProps) {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
@@ -27,44 +24,41 @@ export function BillingPageShell({
   return (
     <LockedFeatureGuard
       featureKey="BILLING"
-      showContactSales={false}
       locked={edition === ApEdition.COMMUNITY}
       lockTitle={lockTitle}
       lockDescription={t(
         'Switch to the Enterprise edition to access billing and usage management.',
       )}
-      lockDocumentationUrl={LOCK_DOCUMENTATION_URL}
+      guide={{
+        url: enterpriseDocs.switchToEnterpriseUrl,
+        label: t('How to switch to the Enterprise edition'),
+      }}
+      showContactSales={false}
     >
-      <BillingPageContent errorMessage={errorMessage}>
-        {children}
-      </BillingPageContent>
+      <BillingPageContent>{children}</BillingPageContent>
     </LockedFeatureGuard>
   );
 }
 
-function BillingPageContent({
-  errorMessage,
-  children,
-}: BillingPageContentProps) {
+function BillingPageContent({ children }: BillingPageContentProps) {
   const { platform } = platformHooks.useCurrentPlatform();
   const {
     data: info,
-    isLoading,
     isError,
+    refetch,
   } = billingQueries.usePlatformSubscription(platform.id);
 
-  if (isLoading || isNil(info)) {
+  if (isNil(info)) {
     return (
       <div className="h-full flex items-center justify-center w-full">
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
-  if (isError) {
-    return (
-      <div className="h-full flex items-center justify-center w-full">
-        {errorMessage}
+        {isError ? (
+          <DataFetchErrorState
+            entity={t('billing information')}
+            onRetry={refetch}
+          />
+        ) : (
+          <LoadingSpinner />
+        )}
       </div>
     );
   }
@@ -82,7 +76,6 @@ type BillingPageShellRenderParams = {
 };
 
 type BillingPageContentProps = {
-  errorMessage: string;
   children: (params: BillingPageShellRenderParams) => ReactNode;
 };
 

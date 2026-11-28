@@ -29,7 +29,8 @@ export const flowRunController: FastifyPluginAsyncZod = async (app) => {
             flowRunIds: request.query.flowRunIds,
             includeArchived: request.query.includeArchived,
             parentWaitpointId: request.query.parentWaitpointId,
-            environment: RunEnvironment.PRODUCTION,
+            dispatchIndex: request.query.dispatchIndex,
+            environment: isNil(request.query.parentWaitpointId) ? RunEnvironment.PRODUCTION : undefined,
         })
     })
 

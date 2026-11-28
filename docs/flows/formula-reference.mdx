@@ -16,6 +16,9 @@ function_name(arg1; arg2; arg3)
 - Argument types are checked while you edit; type mismatches show up in the preview panel under the input.
 - Functions can be nested freely — any argument can be another function.
 - **Quotes around text arguments are optional** (`combine(John; Smith)` and `combine("John"; "Smith")` both work), **except** for empty or whitespace-only values — use `""` for an empty string and `" "` for a single-space separator.
+- Compare values with `==`, `!=`, `>`, `>=`, `<` or `<=`. A single `=` does not compare. Put text in quotes inside a comparison, like `"US" == "US"`.
+- In the examples, `[a;b;c]` stands for a list, and a date like `2025-01-15` or a name like `orders` stands for a value inserted from a previous step. To build a list by hand, use `split_text_to_list`. To type a date by hand, put it in quotes (`"2025-01-15"`) — an unquoted `2025-01-15` is read as a subtraction.
+- The examples put a space after each `;` so they are easy to read. In the editor, unquoted text keeps a space you type, so leave it out before unquoted text.
 
 ## Text
 
@@ -23,7 +26,7 @@ Functions that work with strings of text.
 
 | Function | Signature | Description | Example |
 |---|---|---|---|
-| `combine` | `combine(text1; text2; separator)` | Joins two or more values into one piece of text. | `combine(John; Smith; " ")` → `John Smith` |
+| `combine` | `combine(text1; text2; separator)` | Joins two values into one piece of text, with an optional separator between them. | `combine(John; Smith; " ")` → `John Smith` |
 | `uppercase` | `uppercase(text)` | Changes all characters to uppercase. | `uppercase(acme inc)` → `ACME INC` |
 | `lowercase` | `lowercase(text)` | Changes all characters to lowercase. | `lowercase(John@ACME.com)` → `john@acme.com` |
 | `titlecase` | `titlecase(text)` | Capitalizes the first letter of every word. | `titlecase(john smith)` → `John Smith` |
@@ -65,7 +68,7 @@ Functions for arithmetic and formatting numeric values.
 | `round_up` | `round_up(number)` | Always rounds up to the next whole number. | `round_up(7.1)` → `8` |
 | `round_down` | `round_down(number)` | Always rounds down to the previous whole number. | `round_down(7.9)` → `7` |
 | `absolute` | `absolute(number)` | Returns the positive version of a number, removing any minus sign. | `absolute(-42.00)` → `42` |
-| `percentage` | `percentage(value; total)` | Calculates what percentage the value is of the total. | `percentage(75; 100)` → `75%` |
+| `percentage` | `percentage(value; total)` | Calculates what percentage the value is of the total. | `percentage(75; 100)` → `75` |
 | `format_number` | `format_number(number; decimals)` | Adds thousand separators so large numbers are easier to read. | `format_number(1250000; 2)` → `1,250,000.00` |
 | `format_currency` | `format_currency(number; symbol)` | Adds a currency symbol and formats the number. | `format_currency(49.99; "$")` → `$49.99` |
 | `cents_to_dollars` | `cents_to_dollars(number)` | Converts a value stored in cents into dollars. | `cents_to_dollars(4999)` → `$49.99` |
@@ -87,27 +90,27 @@ Functions for working with dates and times.
 | Function | Signature | Description | Example |
 |---|---|---|---|
 | `format_date` | `format_date(date; format)` | Changes how a date looks using a format you pick. | `format_date(2025-01-15; MMM DD, YYYY)` → `Jan 15, 2025` |
-| `format_date_long` | `format_date_long(date)` | Shows the full date written out in plain language. | `format_date_long(2025-01-15)` → `Friday, January 15, 2025` |
+| `format_date_long` | `format_date_long(date)` | Shows the full date written out in plain language. | `format_date_long(2025-01-15)` → `Wednesday, January 15, 2025` |
 | `format_time` | `format_time(date; format)` | Pulls the time out of a date and formats it. | `format_time(2025-01-15T14:30:00Z; h:mm A)` → `2:30 PM` |
 | `relative_time` | `relative_time(date)` | Shows how long ago or how far away a date is. | `relative_time(2025-01-12)` → `3 days ago` |
-| `add_days` | `add_days(date; n)` | Adds a number of days to a date. | `add_days(2025-01-15; 30)` → `Feb 14, 2025` |
-| `subtract_days` | `subtract_days(date; n)` | Goes back a number of days from a date. | `subtract_days(2025-01-15; 7)` → `Jan 08, 2025` |
-| `add_hours` | `add_hours(date; n)` | Adds a number of hours to a date and time. | `add_hours(2025-01-15T14:30:00Z; 2)` → `2025-01-15T16:30:00Z` |
+| `add_days` | `add_days(date; n)` | Adds a number of days to a date. | `add_days(2025-01-15; 30)` → `2025-02-14T00:00:00.000Z` |
+| `subtract_days` | `subtract_days(date; n)` | Goes back a number of days from a date. | `subtract_days(2025-01-15; 7)` → `2025-01-08T00:00:00.000Z` |
+| `add_hours` | `add_hours(date; n)` | Adds a number of hours to a date and time. | `add_hours(2025-01-15T14:30:00Z; 2)` → `2025-01-15T16:30:00.000Z` |
 | `days_between` | `days_between(date1; date2)` | Counts how many days are between two dates. | `days_between(2025-01-01; 2025-01-15)` → `14` |
 | `get_day` | `get_day(date)` | Returns the day number from a date (1–31). | `get_day(2025-01-15)` → `15` |
 | `get_month` | `get_month(date)` | Returns the month from a date. | `get_month(2025-01-15)` → `January` |
 | `get_year` | `get_year(date)` | Returns the year from a date. | `get_year(2025-01-15)` → `2025` |
 | `get_day_of_week` | `get_day_of_week(date)` | Returns the name of the day of the week. | `get_day_of_week(2025-01-15)` → `Wednesday` |
-| `start_of_month` | `start_of_month(date)` | Returns the first day of the same month. | `start_of_month(2025-01-15)` → `Jan 01, 2025` |
-| `end_of_month` | `end_of_month(date)` | Returns the last day of the same month. | `end_of_month(2025-01-15)` → `Jan 31, 2025` |
-| `convert_timezone` | `convert_timezone(date; timezone)` | Converts a date and time from one timezone to another. | `convert_timezone(2025-01-15T14:30:00Z; America/New_York)` → `Jan 15, 9:30 AM EST` |
-| `now` | `now()` | Returns the current date and time at the moment the flow runs. | `now()` → `2025-01-15T14:30:00Z` |
+| `start_of_month` | `start_of_month(date)` | Returns the first day of the same month. | `start_of_month(2025-01-15)` → `2025-01-01T00:00:00.000Z` |
+| `end_of_month` | `end_of_month(date)` | Returns the last day of the same month. | `end_of_month(2025-01-15)` → `2025-01-31T23:59:59.999Z` |
+| `convert_timezone` | `convert_timezone(date; timezone)` | Converts a date and time from one timezone to another. | `convert_timezone(2025-01-15T14:30:00Z; America/New_York)` → `2025-01-15T09:30:00-05:00` |
+| `now` | `now()` | Returns the current date and time at the moment the flow runs. | `now()` → `2025-01-15T14:30:00.000Z` |
 | `today` | `today()` | Returns today's date with no time attached. | `today()` → `2025-01-15` |
-| `to_date` | `to_date(text)` | Turns a text value into a proper date the flow can work with. | `to_date(January 15, 2025)` → `2025-01-15T00:00:00Z` |
-| `add_minutes` | `add_minutes(date; n)` | Adds a number of minutes to a date and time. | `add_minutes(2025-01-15T14:30:00Z; 15)` → `2025-01-15T14:45:00Z` |
+| `to_date` | `to_date(text)` | Turns a text value into a proper date the flow can work with. | `to_date(January 15, 2025)` → `2025-01-15T00:00:00.000Z` |
+| `add_minutes` | `add_minutes(date; n)` | Adds a number of minutes to a date and time. | `add_minutes(2025-01-15T14:30:00Z; 15)` → `2025-01-15T14:45:00.000Z` |
 | `hours_between` | `hours_between(date1; date2)` | Counts how many hours are between two dates. | `hours_between(2025-01-15T09:00:00Z; 2025-01-15T17:30:00Z)` → `8` |
-| `start_of_day` | `start_of_day(date)` | Returns the date at midnight (the start of that day). | `start_of_day(2025-01-15T14:30:00Z)` → `2025-01-15T00:00:00Z` |
-| `end_of_day` | `end_of_day(date)` | Returns the date at one moment before midnight (the end of that day). | `end_of_day(2025-01-15T14:30:00Z)` → `2025-01-15T23:59:59Z` |
+| `start_of_day` | `start_of_day(date)` | Returns the date at midnight (the start of that day). | `start_of_day(2025-01-15T14:30:00Z)` → `2025-01-15T00:00:00.000Z` |
+| `end_of_day` | `end_of_day(date)` | Returns the date at one moment before midnight (the end of that day). | `end_of_day(2025-01-15T14:30:00Z)` → `2025-01-15T23:59:59.999Z` |
 | `is_before` | `is_before(date1; date2)` | Checks if the first date is before the second date. | `is_before(2025-01-01; 2025-02-01)` → `TRUE` |
 | `is_after` | `is_after(date1; date2)` | Checks if the first date is after the second date. | `is_after(2025-02-01; 2025-01-01)` → `TRUE` |
 | `is_same_day` | `is_same_day(date1; date2)` | Checks if two dates land on the same calendar day, ignoring the time. | `is_same_day(2025-01-15T09:00:00Z; 2025-01-15T21:00:00Z)` → `TRUE` |
@@ -119,12 +122,12 @@ Functions for working with collections (arrays of items).
 | Function | Signature | Description | Example |
 |---|---|---|---|
 | `filter_list` | `filter_list(list; field; value)` | Keeps only the items where a field matches a value. | `filter_list(tickets; status; open)` → `[3 of 10 items]` |
-| `sort_list` | `sort_list(list; field; order)` | Sorts a list from highest to lowest, or A to Z, by a field. | `sort_list(orders; amount; desc)` → `[sorted: 500, 200, 50]` |
+| `sort_list` | `sort_list(list; field; order)` | Sorts a list by a field: `asc` for lowest to highest or A to Z, `desc` for the reverse. | `sort_list(orders; amount; desc)` → `[sorted: 500, 200, 50]` |
 | `pluck` | `pluck(list; field)` | Picks one field out of every item in a list. | `pluck(users; email)` → `[ana@x.com, bob@x.com]` |
 | `join_list` | `join_list(list; separator)` | Turns a list into a single piece of text with a separator. | `join_list([bug;urgent;backend]; ", ")` → `bug, urgent, backend` |
 | `first_item` | `first_item(list)` | Returns the first item in a list. | `first_item([apple;banana;cherry])` → `apple` |
 | `last_item` | `last_item(list)` | Returns the last item in a list. | `last_item([apple;banana;cherry])` → `cherry` |
-| `item_at` | `item_at(list; index)` | Returns the item at a specific position in a list. | `item_at([apple;banana;cherry]; 1)` → `banana` |
+| `item_at` | `item_at(list; index)` | Returns the item at a specific position in a list (the first item is 0). | `item_at([apple;banana;cherry]; 1)` → `banana` |
 | `count` | `count(list)` | Counts how many items are in a list. | `count([bug;urgent;backend])` → `3` |
 | `sum` | `sum(list; field)` | Adds up a number field across all items in a list. | `sum(orders; amount)` → `4820.5` |
 | `average` | `average(list; field)` | Calculates the average of a number field across all items. | `average(scores; value)` → `82.4` |
@@ -149,8 +152,8 @@ Functions for conditionals, comparisons, and fallbacks.
 | `is_empty` | `is_empty(value)` | Checks if a field has no value. | `is_empty("")` → `TRUE` |
 | `is_not_empty` | `is_not_empty(value)` | Checks if a field has any value in it. | `is_not_empty(john@acme.com)` → `TRUE` |
 | `is_equal` | `is_equal(value1; value2)` | Checks if two values are exactly the same. | `is_equal(active; active)` → `TRUE` |
-| `and` | `and(condition1; condition2)` | Returns true only if both conditions are true at the same time. | `and(25 >= 18; US = US)` → `TRUE` |
-| `or` | `or(condition1; condition2)` | Returns true if at least one of the conditions is true. | `or(standard = vip; 600 > 500)` → `TRUE` |
+| `and` | `and(condition1; condition2)` | Returns true only if both conditions are true at the same time. | `and(25 >= 18; "US" == "US")` → `TRUE` |
+| `or` | `or(condition1; condition2)` | Returns true if at least one of the conditions is true. | `or("standard" == "vip"; 600 > 500)` → `TRUE` |
 | `not` | `not(condition)` | Flips a true to false, or a false to true. | `not(is_empty(john@acme.com))` → `TRUE` |
 | `coalesce` | `coalesce(value1; value2; value3; ...)` | Returns the first field that has a value, skipping any empty ones. | `coalesce(""; John; User)` → `John` |
 | `is_number` | `is_number(value)` | Checks if the value is a number (text that looks numeric returns false). | `is_number(42)` → `TRUE` |

@@ -267,7 +267,7 @@
   "Send": "Enviar",
   "Request": "Request",
   "Data to send": "Data to send",
-  "Press Enter after each address. Reply To receives replies instead of the sender.": "Press Enter after each address. Reply To receives replies instead of the sender.",
+  "Press Enter after each address. Reply To receives replies instead of the sender.": "Presione Enter después de cada dirección. Responder a recibe las respuestas en lugar del remitente.",
   "New Event": "New Event",
   "Triggers when a selected email, domain or contact event happens.": "Triggers when a selected email, domain or contact event happens.",
   "The Resend webhook is created for you when the flow is published.": "The Resend webhook is created for you when the flow is published.",

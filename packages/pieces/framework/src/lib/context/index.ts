@@ -95,6 +95,7 @@ type WebhookTriggerHookContext<
   webhookUrl: string;
   payload: TriggerPayload;
   server: ServerContext;
+  isRepublish?: boolean;
 };
 export type TriggerHookContext<
   PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined,

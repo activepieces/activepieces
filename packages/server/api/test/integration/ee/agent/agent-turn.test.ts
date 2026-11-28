@@ -1,5 +1,5 @@
 import { AIProviderName, apId, ErrorCode } from '@activepieces/core-utils'
-import { AgentConversationStatus, AgentIcon, AgentRunSource, AgentToolType, ColorName, Flow, FlowStatus, FlowTriggerType, FlowVersion, FlowVersionState, McpPropertyType, WorkerJobType } from '@activepieces/shared'
+import { AgentAbortReason, AgentConversationStatus, AgentIcon, AgentRunSource, AgentToolType, ColorName, Flow, FlowStatus, FlowTriggerType, FlowVersion, FlowVersionState, McpPropertyType, WorkerJobType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -281,6 +281,41 @@ describe('the flow tools a chat turn hands to the worker', () => {
         const after = await agentHelpers.conversationRepo().findOneByOrFail({ id: conversation.id })
         expect(after.activeRunId).not.toBe(concurrentRunId)
         expect(after.status).toBe(AgentConversationStatus.IDLE)
+        expect((await agentApprovalGate.getCancel({ conversationId: conversation.id, runId: concurrentRunId }))?.reason).toBe(AgentAbortReason.PREEMPTED)
+    })
+
+    it('records a Stop as a user cancel so the run is not counted as a failure', async () => {
+        const ctx = await context()
+        await enableForChat(ctx.platform.id, AIProviderName.OPENROUTER)
+        const agent = await createAgent(ctx, { provider: AIProviderName.OPENROUTER, modelName: CONFIGURED_MODEL })
+        const conversation = await startConversation(ctx, agent.id)
+        const streamingRunId = apId()
+        await agentHelpers.conversationRepo().update(conversation.id, {
+            status: AgentConversationStatus.STREAMING,
+            activeRunId: streamingRunId,
+        })
+
+        const response = await ctx.post(`${CONVERSATIONS_URL}/${conversation.id}/cancel`, {})
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        expect((await agentApprovalGate.getCancel({ conversationId: conversation.id, runId: streamingRunId }))?.reason).toBe(AgentAbortReason.USER_CANCEL)
+    })
+
+    it('cancels the streaming run itself when its chat is deleted', async () => {
+        const ctx = await context()
+        await enableForChat(ctx.platform.id, AIProviderName.OPENROUTER)
+        const agent = await createAgent(ctx, { provider: AIProviderName.OPENROUTER, modelName: CONFIGURED_MODEL })
+        const conversation = await startConversation(ctx, agent.id)
+        const streamingRunId = apId()
+        await agentHelpers.conversationRepo().update(conversation.id, {
+            status: AgentConversationStatus.STREAMING,
+            activeRunId: streamingRunId,
+        })
+
+        const response = await ctx.delete(`${CONVERSATIONS_URL}/${conversation.id}`)
+
+        expect(response.statusCode).toBeLessThan(300)
+        expect((await agentApprovalGate.getCancel({ conversationId: conversation.id, runId: streamingRunId }))?.reason).toBe(AgentAbortReason.CONVERSATION_DELETED)
     })
 
     it('leaves a newer run alone when its own cancellation cleanup lands late', async () => {

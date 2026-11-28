@@ -24,6 +24,8 @@
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
   "HEAD": "CABEÇA",
+  "Request": "Solicitação",
+  "Data to send": "Dados a enviar",
   "Booking Canceled": "Reserva Cancelada",
   "New Booking": "Nova Reserva",
   "New Contact": "Novo Contato",

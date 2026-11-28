@@ -1,6 +1,7 @@
 import { AIProviderName } from '@activepieces/core-utils';
 import {
   AIProviderConfig,
+  AIProviderModelType,
   AIProviderWithoutSensitiveData,
   CreateAIProviderRequest,
   ProviderModelConfig,
@@ -79,6 +80,18 @@ function buildCreateRequest({
         },
         auth: { apiKey: value('apiKey') },
       };
+    case AIProviderName.LITELLM:
+      return {
+        provider,
+        displayName,
+        config: {
+          baseUrl: value('baseUrl'),
+          apiKeyHeader: value('apiKeyHeader'),
+          defaultHeaders: Object.keys(headers).length > 0 ? headers : undefined,
+          models: withTypedModels({ models, typed: value('typedModels') }),
+        },
+        auth: { apiKey: value('apiKey') },
+      };
     case AIProviderName.OPENAI:
     case AIProviderName.ANTHROPIC:
     case AIProviderName.GOOGLE:
@@ -137,6 +150,33 @@ function existingModelsOf({
     return existingConfig.models;
   }
   return [];
+}
+
+function withTypedModels({
+  models,
+  typed,
+}: {
+  models: ProviderModelConfig[];
+  typed: string;
+}): ProviderModelConfig[] {
+  const typedIds = [
+    ...new Set(
+      typed
+        .split(',')
+        .map((modelId) => modelId.trim())
+        .filter((modelId) => modelId.length > 0),
+    ),
+  ];
+  return [
+    ...models,
+    ...typedIds
+      .filter((modelId) => !models.some((model) => model.modelId === modelId))
+      .map((modelId) => ({
+        modelId,
+        modelName: modelId,
+        modelType: AIProviderModelType.TEXT,
+      })),
+  ];
 }
 
 export const providerRequestUtils = {

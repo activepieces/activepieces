@@ -74,6 +74,7 @@ const configFor: Partial<Record<AIProviderName, unknown>> = {
     [AIProviderName.AZURE]: { resourceName: 'res', apiVersion: '2024-01-01' },
     [AIProviderName.BEDROCK]: { region: 'us-east-1' },
     [AIProviderName.CUSTOM]: { apiKeyHeader: 'x-api-key', baseUrl: 'https://example.test/v1', models: [] },
+    [AIProviderName.LITELLM]: { apiKeyHeader: 'authorization', baseUrl: 'https://example.test/v1', models: [] },
     [AIProviderName.VERTEX]: { project: 'gcp-project', region: 'europe-west4', models: [] },
 }
 

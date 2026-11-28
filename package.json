@@ -1,6 +1,6 @@
 {
   "name": "activepieces",
-  "version": "0.94.0",
+  "version": "0.95.0",
   "packageManager": "bun@1.4.4",
   "trustedDependencies": [
     "sqlite3",
@@ -38,7 +38,8 @@
     "test-api": "turbo run check-migrations test-ce test-ee test-cloud --filter=api --concurrency=1",
     "agent-evals": "set -a && . ./.env.dev && set +a && tsx --tsconfig packages/server/worker/test/lib/agent-eval/cli/tsconfig.json packages/server/worker/test/lib/agent-eval/cli/index.ts",
     "agent-evals:ci": "if [ -f ./.env.dev ]; then set -a && . ./.env.dev && set +a; fi && vitest run --config packages/server/worker/vitest.config.ts packages/server/worker/test/lib/agent-eval",
-    "agent-evals:live": "set -a && . ./.env.dev && set +a && tsx --tsconfig packages/server/worker/test/lib/agent-eval/cli/tsconfig.json packages/server/worker/test/lib/agent-eval/live/run.ts",
+    "evals": "tsx --tsconfig packages/server/worker/test/lib/evals/tsconfig.json packages/server/worker/test/lib/evals/cli.ts",
+    "agent-evals:live":"set -a && . ./.env.dev && set +a && tsx --tsconfig packages/server/worker/test/lib/agent-eval/cli/tsconfig.json packages/server/worker/test/lib/agent-eval/live/run.ts",
     "cli": "npx ts-node -r tsconfig-paths/register --project packages/cli/tsconfig.json  packages/cli/src/index.ts",
     "create-piece": "npx ts-node -r tsconfig-paths/register --project packages/cli/tsconfig.json  packages/cli/src/index.ts pieces create",
     "create-action": "npx ts-node -r tsconfig-paths/register --project packages/cli/tsconfig.json  packages/cli/src/index.ts actions create",
@@ -65,6 +66,7 @@
   "devDependencies": {
     "@commitlint/cli": "17.7.1",
     "@commitlint/config-conventional": "17.7.0",
+    "@crowdin/crowdin-api-client": "1.60.0",
     "@playwright/test": "1.64.1",
     "@types/node": "24.11.0",
     "@types/semver": "7.5.6",

@@ -1,8 +1,9 @@
 import { activeCampaignAuth } from '../auth';
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
-import { makeClient } from '../common';
-import { CreateWebhookResponse } from '../common/types';
-import { WEBHOOK_SOURCES } from '../common/constants';
+import { activeCampaignWebhook } from '../common/webhook';
+import { campaignBounceTriggerOutputSchema } from '../common/output-schemas';
+
+const STORE_KEY = 'activecampaign_new_campaign_bounce';
 
 export const newCampaignBounceTrigger = createTrigger({
 	auth: activeCampaignAuth,
@@ -13,75 +14,62 @@ export const newCampaignBounceTrigger = createTrigger({
 	aiMetadata: {
 		description: 'Fires when a contact email address bounces from a sent campaign. Represents the bounce event with the affected contact and the campaign that triggered it.',
 	},
+	outputSchema: campaignBounceTriggerOutputSchema,
 	type: TriggerStrategy.WEBHOOK,
 	props: {},
 	async onEnable(context) {
-		const client = makeClient(context.auth.props);
-		const res = await client.subscribeWebhook({
-			name: `Activepieces Campaign Bounce Hook`,
-			url: context.webhookUrl,
+		await activeCampaignWebhook.enable({
+			auth: context.auth.props,
+			store: context.store,
+			storeKey: STORE_KEY,
+			webhookUrl: context.webhookUrl,
+			hookName: 'Activepieces Campaign Bounce Hook',
 			events: ['bounce'],
-			sources: WEBHOOK_SOURCES,
 		});
-		await context.store.put<CreateWebhookResponse>('activecampaign_new_campaign_bounce', res);
 	},
 	async run(context) {
-		return [context.payload.body];
+		return activeCampaignWebhook.run({ store: context.store, storeKey: STORE_KEY, body: context.payload.body });
 	},
 	async onDisable(context) {
-		const webhook = await context.store.get<CreateWebhookResponse>(
-			'activecampaign_new_campaign_bounce',
-		);
-		if (webhook != null) {
-			const client = makeClient(context.auth.props);
-			await client.unsubscribeWebhook(webhook.webhook.id);
-		}
+		await activeCampaignWebhook.disable({ auth: context.auth.props, store: context.store, storeKey: STORE_KEY });
 	},
 	sampleData: {
-		type: 'deal_update',
-		date_time: '2024-02-28T04:45:41-06:00',
-		initiated_from: 'admin',
-		initiated_by: 'admin',
-		list: '0',
+		type: 'bounce',
+		date_time: '2026-11-08T05:44:01-06:00',
+		initiated_from: 'system',
+		initiated_by: 'system',
+		list: [
+			{
+				id: '3',
+				name: 'Master Contact List',
+			},
+		],
+		campaign: {
+			id: '4',
+			status: '5',
+			name: 'AP trigger test',
+			type: 'single',
+			recipients: '4',
+		},
+		bounce: {
+			type: 'hard',
+			code: '5.1.1',
+			description: 'The email account that you tried to reach does not exist. Please try double-checking the recipient\'s email address for typos or unnecessary spaces. For more information, go to  https://support.google.com/mail/?p=NoSuchUser <trace-id> - gsmtp',
+		},
 		contact: {
-			id: '3',
-			email: 'code.test@gmail.com',
-			first_name: 'John',
-			last_name: 'Wick',
+			id: '9',
+			email: 'bounce.test@example.com',
+			first_name: 'Bounce',
+			last_name: 'Test',
 			phone: '',
 			ip: '0.0.0.0',
-			tags: '1233',
+			tags: '',
 			customer_acct_name: '',
 			orgname: '',
 		},
 		customer_acct_name: '',
 		customer_acct_id: '0',
 		orgname: '',
-		deal: {
-			id: '1',
-			title: 'Test Deal',
-			create_date: '2024-02-28 04:36:09',
-			create_date_iso: '2024-02-28T04:36:09-06:00',
-			orgid: '1',
-			orgname: 'John Wick',
-			stageid: '1',
-			stage_title: 'To Contact',
-			pipelineid: '1',
-			pipeline_title: 'Test Pipeline',
-			value: '1,044,055.00',
-			value_raw: '1044055',
-			currency: 'usd',
-			currency_symbol: '$',
-			owner: '1',
-			owner_firstname: 'John',
-			owner_lastname: 'Wick',
-			contactid: '3',
-			contact_email: 'code.test@gmail.com',
-			contact_firstname: 'John',
-			contact_lastname: 'Wick',
-			status: '0',
-			fields: [{ id: '1', key: 'Forecasted Close Date', value: '2024-02-08 00:00:00' }],
-		},
-		updated_fields: ['value'],
+		account_id: '1000001',
 	},
 });

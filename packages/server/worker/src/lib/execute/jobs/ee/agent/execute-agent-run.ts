@@ -1,9 +1,10 @@
 import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, AiCallContext, AIProviderName, AiUsageEnvironment, ErrorCode, formatPieceError, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { aiUtils, wideEvent } from '@activepieces/server-utils'
-import { AGENT_RUN_USAGE_ORIGIN, AgentConfigResponse, AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentModelCandidate, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, agentToolSkills, AgentToolType, AiProviderCredentials, apErrorOf, chatBilling, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentMessageSchema, PersistedAgentPart, PersistedAgentPartType, PersistedAgentRole, ResolvedAgentFlowTool, RpcTimeoutError, SaveAgentMessagesRequest, SkillSurface, WorkerJobType } from '@activepieces/shared'
+import { AGENT_RUN_USAGE_ORIGIN, AgentAbortReason, AgentConfigResponse, AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentModelCandidate, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, agentToolSkills, AgentToolType, AiProviderCredentials, apErrorOf, chatBilling, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentMessageSchema, PersistedAgentPart, PersistedAgentPartType, PersistedAgentRole, ResolvedAgentFlowTool, RpcTimeoutError, SaveAgentMessagesRequest, SkillSurface, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, LanguageModel, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { toResolvedAiFile } from '../../ai/ai-files'
+import { agentAbort } from './agent-abort'
 import { agentMcpClient, McpConnection } from './agent-mcp-client'
 import { stepResultFrom } from './agent-step-result'
 import { agentTitle } from './agent-title'
@@ -102,6 +103,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 conversationId, runId, platformId, userId, userMessage, modelName, files,
                 ...spreadIfDefined('source', jobSource),
                 ...spreadIfDefined('messageSource', data.messageSource),
+                ...spreadIfDefined('pageContext', data.pageContext),
                 ...spreadIfDefined('agentId', data.agentId),
                 ...spreadIfDefined('flowRunId', flowRunId),
                 ...spreadIfDefined('waitpointId', waitpointId),
@@ -140,24 +142,27 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             wideEvent.set({
                 ...spreadIfDefined('user', isNil(userId) ? undefined : { id: userId }),
                 ...spreadIfDefined('project', isNil(billing.projectId) ? undefined : { id: billing.projectId }),
+                agentRun: { source, tierId: config.platformTier?.id ?? config.tier.id, tierModel: config.modelId },
             })
+            const metadata: ModelMetadata = { platformId, conversationId, runId, surface: source === AgentRunSource.AGENT || source === AgentRunSource.FLOW_STEP ? 'agent' : 'chat' }
             const model = aiUtils.createModel({
                 credentials, modelId: config.modelId,
-                metadata: { platformId, conversationId, runId },
+                metadata,
                 billing,
                 turnAlreadyCharged: true,
                 ...spreadIfDefined('providerConfigId', config.providerConfigId),
             })
             const fastModel = aiUtils.createModel({
                 credentials, modelId: config.fastModelId,
+                metadata,
                 billing,
                 turnAlreadyCharged: true,
                 ...spreadIfDefined('providerConfigId', config.providerConfigId),
             })
-            const turnModels = turnModelsFor({ config, model, billing, metadata: { platformId, conversationId, runId } })
+            const turnModels = turnModelsFor({ config, model, billing, metadata })
             const fastTurnModel: TurnModel | undefined = isNil(config.platformTier)
                 ? { model: fastModel, provider, modelId: config.fastModelId, thinkingBudget: config.tier.thinkingBudget }
-                : isNil(config.fastCandidate) ? undefined : candidateTurnModel({ candidate: config.fastCandidate, billing })
+                : isNil(config.fastCandidate) ? undefined : candidateTurnModel({ candidate: config.fastCandidate, billing, metadata })
             let answering: TurnModel = turnModels[0]
             const runKey = (): RunKey => ({ provider: answering.provider, providerConfigId: answering.key?.providerConfigId ?? config.providerConfigId, modelId: answering.modelId })
 
@@ -184,7 +189,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             // idle watchdog, so it lands in the existing cancel-save branch (status → IDLE).
             turnWallClockTimer = setTimeout(() => {
                 log.error({ conversation: { id: conversationId }, maxTurnMs: MAX_AGENT_TURN_WALL_CLOCK_MS }, 'Chat turn exceeded max wall-clock — aborting')
-                abortController.abort()
+                agentAbort.abortTurn({ abortController, reason: AgentAbortReason.WALL_CLOCK })
             }, MAX_AGENT_TURN_WALL_CLOCK_MS)
 
             const checkCancelled = async () => {
@@ -192,7 +197,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                     toolName: '__cancel_check', toolInput: { conversationId, runId }, platformId, userId, source,
                 }))
                 if (response?.result === true) {
-                    abortController.abort()
+                    agentAbort.abortTurn({ abortController, reason: agentAbort.parseReason(response.cancelReason) })
                 }
             }
 
@@ -218,6 +223,9 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
 
             const phaseState: { phase: AgentPhase } = { phase: 'discovery' }
             const taintState = agentWorkerTools.createTaintState({ carried: source === AgentRunSource.FLOW_STEP || agentWorkerTools.previousReplyReadData(config.previousUiMessages) })
+            if (config.readsData === true) {
+                taintState.tainted = true
+            }
 
             const readImage = async (fileId: string) => toResolvedAiFile({
                 stored: await ctx.apiClient.readAgentFile({ platformId, conversationId, fileId, ...spreadIfDefined('projectId', projectId ?? undefined) }),
@@ -335,11 +343,14 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                                     fn: () => ctx.apiClient.updateAgentProgress({
                                         conversationId,
                                         runId,
-                                        uiMessages: [
-                                            ...(config.previousUiMessages as PersistedAgentMessage[]),
-                                            { role: PersistedAgentRole.ASSISTANT, parts: uiParts, thinkingDurationMs: Date.now() - thinkingStartTime, tainted: taintState.readInThisReply() },
-                                        ],
-                                        messages: [...(config.allMessages as ModelMessage[]), ...responseMessages],
+                                        turn: {
+                                            baseMessageCount: config.allMessages.length,
+                                            messages: responseMessages,
+                                            baseUiMessageCount: config.previousUiMessages.length,
+                                            uiMessages: [
+                                                { role: PersistedAgentRole.ASSISTANT, parts: uiParts, thinkingDurationMs: Date.now() - thinkingStartTime, tainted: taintState.readInThisReply() },
+                                            ],
+                                        },
                                     }),
                                     maxAttempts: 2,
                                     log,
@@ -357,7 +368,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 if (streamError) {
                     log.warn({ error: streamError, conversation: { id: conversationId } }, 'Stream error occurred during abort')
                 }
-                log.info({ conversation: { id: conversationId }, completedSteps: accumulatedResponseMessages.length }, 'Chat agent cancelled by user')
+                log.info({ conversation: { id: conversationId }, completedSteps: accumulatedResponseMessages.length }, 'Chat agent turn aborted')
                 const thinkingDurationMs = Date.now() - thinkingStartTime
                 const cancelSavePayload = {
                     conversationId,

@@ -51,8 +51,8 @@
   "PUT": "PUT",
   "DELETE": "削除",
   "HEAD": "頭",
-  "Request": "Request",
-  "Data to send": "Data to send",
+  "Request": "リクエスト",
+  "Data to send": "送信するデータ",
   "New Record": "新しいレコード",
   "Triggers when a new record is created in a table.": "テーブルに新しいレコードが作成されたときにトリガーされます。"
 }

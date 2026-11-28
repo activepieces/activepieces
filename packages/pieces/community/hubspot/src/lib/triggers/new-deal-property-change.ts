@@ -1,17 +1,14 @@
 import { getHubspotAccessToken, hubspotAuth } from '../auth';
+import { hubspotPolling } from '../common/polling';
 import {
 	createTrigger,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { standardObjectPropertiesDropdown } from '../common/props';
-import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE, MAX_SEARCH_TOTAL_RESULTS } from '../common/constants';
+import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
+import { OBJECT_TYPE } from '../common/constants';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/pieces-framework';
-import { chunk } from '@activepieces/pieces-framework';
 
 import { Client } from '@hubspot/api-client';
-import dayjs from 'dayjs';
-import { FilterOperatorEnum } from '../common/types';
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 
 type Props = {
@@ -19,109 +16,24 @@ type Props = {
 };
 
 import { crmObjectOutputSchema } from '../output-schemas';
-const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
+const polling = {
 	strategy: DedupeStrategy.TIMEBASED,
-	async items({ auth, propsValue, lastFetchEpochMS }) {
+	async items({ auth, propsValue, lastFetchEpochMS, store }) {
 		const client = new Client({ accessToken: getHubspotAccessToken(auth), numberOfApiCallRetries: 3 });
-
 		const propertyToCheck = propsValue.propertyName as string;
+		const propertiesToRetrieve = [...getDefaultPropertiesForObject(OBJECT_TYPE.DEAL), propertyToCheck];
 
-		const propertiesToRetrieve = [propertyToCheck];
-
-		const items = [];
-		// For test, we only fetch 10 deals
-		if (lastFetchEpochMS === 0) {
-			const response = await client.crm.deals.searchApi.doSearch({
-				limit: 10,
-				properties: propertiesToRetrieve,
-				sorts: ['-hs_lastmodifieddate'],
-			});
-			items.push(...response.results);
-			return items.map((item) => ({
-				epochMilliSeconds: dayjs(item.properties['hs_lastmodifieddate']).valueOf(),
-				data: item,
-			}));
-		}
-		//fetch updated deals
-		const updatedDeals = [];
-		let after: string | undefined;
-		do {
-			const response = await client.crm.deals.searchApi.doSearch({
-				limit: MAX_SEARCH_PAGE_SIZE,
-				after,
-				sorts: ['-hs_lastmodifieddate'],
-				filterGroups: [
-					{
-						filters: [
-							{
-								propertyName: propertyToCheck,
-								operator: FilterOperatorEnum.HasProperty,
-							},
-							{
-								propertyName: 'hs_lastmodifieddate',
-								operator: FilterOperatorEnum.Gt,
-								value: lastFetchEpochMS.toString(),
-							},
-						],
-					},
-				],
-			});
-			after = response.paging?.next?.after;
-			updatedDeals.push(...response.results);
-
-			// Stop fetching if it exceeds max search results or will encounter 400 status
-			if (
-				!isNil(after) &&
-				parseInt(after) + MAX_SEARCH_PAGE_SIZE > MAX_SEARCH_TOTAL_RESULTS
-			) {
-				break;
-			}
-		} while (after);
-
-		if (updatedDeals.length === 0) {
-			return [];
-		}
-
-    // Avoid VALIDATION_ERROR: The maximum number of inputs supported in a batch request for property histories is 50
-    const batchApiChunks = chunk(updatedDeals, 50);
-
-    // Fetch deals with property history
-    const batchApiResps = await Promise.all(
-      batchApiChunks.map((batch) => {
-        return client.crm.deals.batchApi.read({
-          propertiesWithHistory: [propertyToCheck],
-          properties: propertiesToRetrieve,
-          inputs: batch.map((deal) => {
-            return {
-              id: deal.id,
-            };
-          }),
-        });
-      })
-    );
-
-    const updatedDealsWithPropertyHistory = batchApiResps.flatMap(
-      (resp) => resp.results
-    );
-
-		for (const deal of updatedDealsWithPropertyHistory) {
-			const history = deal.propertiesWithHistory?.[propertyToCheck];
-			if (!history || history.length === 0) {
-				continue;
-			}
-			const propertyLastModifiedDateTimeStamp = dayjs(history[0].timestamp).valueOf();
-			if (propertyLastModifiedDateTimeStamp > lastFetchEpochMS) {
-				const { propertiesWithHistory, ...item } = deal;
-				items.push(item);
-			}
-		}
-
-		return items.map((item) => ({
-			epochMilliSeconds: dayjs(item.properties['hs_lastmodifieddate']).valueOf(),
-			data: item,
-		}));
+		return hubspotPolling.pollPropertyChanges({
+			search: (request) => client.crm.deals.searchApi.doSearch(request),
+			readWithHistory: (request) => client.crm.deals.batchApi.read(request),
+			store,
+			timestampProperty: 'hs_lastmodifieddate',
+			watchedProperty: propertyToCheck,
+			properties: propertiesToRetrieve,
+			lastFetchEpochMS,
+		});
 	},
-};
+} satisfies Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props>;
 
 export const newDealPropertyChangeTrigger = createTrigger({
 	auth: hubspotAuth,
@@ -131,7 +43,7 @@ export const newDealPropertyChangeTrigger = createTrigger({
 	description: 'Triggers when a specified property is updated on a deal.',
 	aiMetadata: {
 		description:
-			'Fires when the value of a chosen property changes on a HubSpot deal. Polls the CRM deals API for deals modified since the last check, then inspects each deal\'s property history to confirm the selected property was actually updated, emitting the deal record only when that property\'s most recent change is newer than the last poll. Represents a tracked field (e.g. deal stage, amount, close date) being modified on an existing deal.',
+			'Fires when the value of a chosen property changes on a HubSpot deal. Polls the CRM deals API for deals modified since the last check, then inspects each deal\'s property history to confirm the selected property was actually updated, emitting the deal with its default properties and the watched property only when that property\'s most recent change is newer than the last poll. Clearing the watched property also fires. Represents a tracked field (e.g. deal stage, amount, close date) being modified on an existing deal.',
 	},
 	props: {
 		propertyName: standardObjectPropertiesDropdown(
@@ -153,10 +65,10 @@ export const newDealPropertyChangeTrigger = createTrigger({
 		await pollingHelper.onDisable(polling, context);
 	},
 	async test(context) {
-		return await pollingHelper.test(polling, context);
+		return hubspotPolling.sampleOldestToNewest({ items: await pollingHelper.test(polling, context) });
 	},
 	async run(context) {
-		return await pollingHelper.poll(polling, context);
+		return await hubspotPolling.poll({ polling, context });
 	},
 	sampleData: {
 		createdAt: '2024-12-23T08:19:21.614Z',

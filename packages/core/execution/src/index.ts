@@ -2,6 +2,7 @@
 // (flows, flow-run, engine operations, agents, workers). See SRE-163.
 
 export * from './lib/flows/actions/action'
+export * from './lib/flows/actions/ai-router-models'
 export * from './lib/flows/operations'
 export * from './lib/flows/operations/paste-operations'
 export * from './lib/flows/triggers/trigger'

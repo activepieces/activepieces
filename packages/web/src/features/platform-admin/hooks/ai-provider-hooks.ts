@@ -6,7 +6,7 @@ import {
   CreateAIProviderRequest,
   UpdateAIProviderRequest,
 } from '@activepieces/shared';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
 
 import { authenticationSession } from '@/lib/authentication-session';
@@ -60,6 +60,28 @@ export const aiProviderMutations = {
     return useMutation({
       mutationFn: (providerId: string) => aiProviderApi.recheck(providerId),
       onSuccess,
+      onError,
+    });
+  },
+  useRefreshAiProviderModels: ({
+    onSuccess,
+    onError,
+  }: {
+    onSuccess: () => void;
+    onError: (
+      error: AxiosError<{ message?: string; params?: { message: string } }>,
+    ) => void;
+  }) => {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: (providerId: string) =>
+        aiProviderApi.refreshModels(providerId),
+      onSuccess: async () => {
+        await queryClient.invalidateQueries({
+          queryKey: aiProviderKeys.configModels(),
+        });
+        onSuccess();
+      },
       onError,
     });
   },

@@ -8,6 +8,7 @@ import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { WorkerHealth, workerHealthUtils } from '@/lib/statuses';
 import { cn } from '@/lib/utils';
 
 import { groupUtils } from './hooks';
@@ -222,7 +223,8 @@ function CardStatus({
   waiting: number;
   inUse: boolean;
 }) {
-  const down = online === 0 && inUse;
+  const health = workerHealthUtils.ofGroup({ online, inUse });
+  const down = health === WorkerHealth.OFFLINE;
   const waitingText =
     waiting > 0
       ? t('{count, plural, =1 {1 run waiting} other {# runs waiting}}', {
@@ -249,9 +251,7 @@ function CardStatus({
   return (
     <p className="flex min-w-0 items-center gap-2 text-sm">
       <span className={ROW_GLYPH}>
-        <StatusDot
-          tone={down ? 'danger' : online > 0 ? 'success' : 'neutral'}
-        />
+        <StatusDot status={health} />
       </span>
       <span
         className={cn(

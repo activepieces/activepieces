@@ -166,7 +166,7 @@ function scopeHint({ scope }: { scope: AiUsageScope }): string {
     case 'testing':
       return t('Test runs from the builders');
     case 'all':
-      return t('Production and testing together');
+      return t('Published and testing together');
   }
 }
 
@@ -177,7 +177,7 @@ const SCOPE_ICONS: Record<AiUsageScope, LucideIcon> = {
   production: Activity,
   testing: FlaskConical,
 };
-const DEFAULT_PERIOD: AiUsagePeriod = 'this-month';
+const DEFAULT_PERIOD: AiUsagePeriod = '7d';
 const DEFAULT_SCOPE: AiUsageScope = 'production';
 
 export type UsageView = {

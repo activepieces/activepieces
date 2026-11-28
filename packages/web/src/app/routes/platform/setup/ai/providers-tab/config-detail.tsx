@@ -1,3 +1,4 @@
+import { AIProviderName } from '@activepieces/core-utils';
 import {
   AIProviderModelType,
   AIProviderWithoutSensitiveData,
@@ -5,6 +6,7 @@ import {
   AiProviderProjectScope,
   CloudflareGatewayProviderConfig,
   formErrors,
+  isNil,
   OpenAICompatibleProviderConfig,
   PlatformModelTier,
   Project,
@@ -16,6 +18,7 @@ import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { KeyRound, RefreshCw, Trash2 } from 'lucide-react';
 import { ReactNode, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { z } from 'zod';
 
 import {
@@ -52,7 +55,10 @@ import {
   modelMeta,
 } from '@/features/agents/ai-model/model-meta';
 import { aiProviderApi, aiProviderKeys } from '@/features/platform-admin';
-import { aiProviderQueries } from '@/features/platform-admin/hooks/ai-provider-hooks';
+import {
+  aiProviderMutations,
+  aiProviderQueries,
+} from '@/features/platform-admin/hooks/ai-provider-hooks';
 import { platformModelTierQueries } from '@/features/platform-admin/hooks/platform-model-tier-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { formatUtils } from '@/lib/format-utils';
@@ -95,13 +101,30 @@ export function ConfigDetail({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [scopeImpact, setScopeImpact] = useState<KeyScopeImpact[]>([]);
   const { data: tiers } = platformModelTierQueries.useAdminList();
-  const { data: allConfigs } = aiProviderQueries.useAiProviderConfigs();
+  const { data: allConfigs, refetch: refetchConfigs } =
+    aiProviderQueries.useAiProviderConfigs();
   const leavingOnPurpose = useRef(false);
   const saveInFlight = useRef(false);
 
   const manualModels = providerCredentials.usesManualModels({
     provider: config.provider,
   });
+  const syncsModels = config.provider === AIProviderName.LITELLM;
+  const { mutate: refreshModels, isPending: isRefreshing } =
+    aiProviderMutations.useRefreshAiProviderModels({
+      onSuccess: async () => {
+        await refetchConfigs();
+        toast.success(t('Models refreshed'));
+      },
+      onError: (error) => {
+        const data = error.response?.data;
+        toast.error(
+          data?.params?.message ??
+            data?.message ??
+            t('Could not refresh the models'),
+        );
+      },
+    });
   const { data: models = [], isLoading: isLoadingModels } = useQuery({
     queryKey: aiProviderKeys.configModels(config.id),
     queryFn: () => aiProviderApi.listModelsForConfig(config.id),
@@ -195,7 +218,11 @@ export function ConfigDetail({
         displayName: draft.name.trim(),
         modelScope: draft.modelScope,
         modelIds: manualModels
-          ? draft.models.map((model) => model.modelId)
+          ? manualModelIdsToSave({
+              draft,
+              config,
+              sendsConfig: !isNil(manualConfig),
+            })
           : draft.modelIds,
         projectScope: draft.projectScope,
         projectIds: draft.projectIds,
@@ -285,7 +312,22 @@ export function ConfigDetail({
                 modelScope: draft.modelScope,
                 modelIds: draft.modelIds,
               }}
-              isLoading={isLoadingModels}
+              isLoading={isLoadingModels || isRefreshing}
+              action={
+                syncsModels && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    loading={isRefreshing}
+                    disabled={dirty}
+                    title={dirty ? t('Save your changes first') : undefined}
+                    onClick={() => refreshModels(config.id)}
+                  >
+                    <RefreshCw className="size-4" />
+                    {t('Refresh models')}
+                  </Button>
+                )
+              }
               onChange={(selection) => setDraft({ ...draft, ...selection })}
             />
           )}
@@ -580,12 +622,31 @@ function draftOf(config: AIProviderWithoutSensitiveData): ConfigDraft {
   return {
     name: config.name,
     modelScope: config.modelScope,
-    modelIds: config.modelIds,
+    modelIds: manualModels ? [] : config.modelIds,
     models:
       manualModels && 'models' in config.config ? config.config.models : [],
     projectScope: config.projectScope,
     projectIds: config.projectIds,
   };
+}
+
+function manualModelIdsToSave({
+  draft,
+  config,
+  sendsConfig,
+}: {
+  draft: ConfigDraft;
+  config: AIProviderWithoutSensitiveData;
+  sendsConfig: boolean;
+}): string[] {
+  const savedModels = 'models' in config.config ? config.config.models : [];
+  return draft.models
+    .map((model) => model.modelId)
+    .filter((modelId) =>
+      savedModels.some((model) => model.modelId === modelId)
+        ? draft.modelScope === 'all' || config.modelIds.includes(modelId)
+        : sendsConfig,
+    );
 }
 
 const ManualProviderConfig = z.union([

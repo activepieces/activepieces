@@ -12,6 +12,17 @@ export interface AirtableRecord {
   createdTime: Date;
   id: string;
 }
+export interface AirtableRawRecord {
+  id: string;
+  createdTime: string;
+  fields: Record<string, unknown>;
+}
+
+export interface ResolvedField {
+  id?: string;
+  name: string;
+}
+
 export interface AirtableField {
   id: string;
   name: string;

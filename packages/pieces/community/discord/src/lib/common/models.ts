@@ -10,6 +10,7 @@ export interface Guild {
 export interface Channel {
   id: string;
   name: string;
+  type: number;
 }
 
 export interface Member {

@@ -21,7 +21,7 @@ export const googleCloudStorage = createPiece({
   displayName: "Google Cloud Storage",
   description: "Automate file storage operations with Google Cloud Storage. Upload, download, manage buckets, set permissions, and monitor changes with real-time triggers.",
   auth: googleCloudStorageAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.90.1',
   logoUrl: "https://cdn.activepieces.com/pieces/google-cloud-storage.png",
   authors: ["sparkybug"],
   categories: [PieceCategory.CONTENT_AND_FILES],

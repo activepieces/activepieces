@@ -71,8 +71,8 @@
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
   "HEAD": "HOOFD",
-  "Request": "Request",
-  "Data to send": "Data to send",
+  "Request": "Verzoek",
+  "Data to send": "Gegevens om te verzenden",
   "New Published Post": "Nieuw gepubliceerd bericht",
   "Triggers when a post is published in Postiz": "Triggert wanneer een bericht wordt gepubliceerd in Postiz"
 }

@@ -1,5 +1,6 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { spotifyCommon, makeClient } from '../common';
+import { spotifyCommon, makeClient, spotifyValidate } from '../common';
+import { spotifyOutputSchemas } from '../output-schemas';
 
 export default createAction({
   name: 'create_playlist',
@@ -8,10 +9,11 @@ export default createAction({
   description: 'Creates a new playlist for the current user',
   audience: 'both',
   aiMetadata: {
-    description: "Creates a new empty playlist owned by the current user with the given name and optional description, public, and collaborative flags. Use it to set up a playlist before adding items. Not idempotent: each call creates a separate playlist even with identical input.",
+    description: "Creates a new empty playlist owned by the current user with the given name and optional description. Set Public to true for a public playlist; when an agent leaves it unset or false the playlist is private. Collaborative needs Public false. Use it to set up a playlist before adding items. Not idempotent: each call creates a separate playlist even with identical input. Spotify's own reads may still report public: true for a playlist that was set private, so do not use a follow-up read to confirm visibility.",
     idempotent: false,
   },
   auth: spotifyCommon.authentication,
+  outputSchema: spotifyOutputSchemas['createdPlaylist'],
   props: {
     name: Property.ShortText({
       displayName: 'Name',
@@ -23,22 +25,29 @@ export default createAction({
     }),
     public: Property.Checkbox({
       displayName: 'Public',
+      description: "Show the playlist on your profile. Leave unset for Spotify's default.",
       required: false,
     }),
     collaborative: Property.Checkbox({
       displayName: 'Collaborative',
+      description: 'Let others edit the playlist. Only works when Public is off.',
       required: false,
     }),
   },
   async run({ auth, propsValue }) {
+    const name = spotifyValidate.optionalText(propsValue.name);
+    if (name === undefined) {
+      throw new Error('Name is required.');
+    }
+    if (propsValue.collaborative === true && propsValue.public !== false) {
+      throw new Error('A collaborative playlist must be private: turn Public off (set it to false) when Collaborative is on.');
+    }
     const client = makeClient({ auth });
-    const user = await client.getCurrentUser();
-    const res = await client.createPlaylist(user.id, {
-      name: propsValue.name,
-      description: propsValue.description,
+    return client.createPlaylist({
+      name,
+      description: spotifyValidate.optionalText(propsValue.description),
       public: propsValue.public,
       collaborative: propsValue.collaborative,
     });
-    return res;
   },
 });

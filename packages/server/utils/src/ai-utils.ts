@@ -9,6 +9,8 @@ import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { createOpenRouter, OpenRouterChatSettings } from '@openrouter/ai-sdk-provider'
 import { EmbeddingModel, generateText, ImageModel, LanguageModel, ToolSet } from 'ai'
 import { billedEmbeddingModel, billedLanguageModel } from './activepieces-ai-cost'
+import { agentAiUtils } from './agent-ai-utils'
+import { agentProviderOptions } from './agent-provider-options'
 import { keyHealthReporterFor } from './ai-provider-key-health'
 import { modelTierCatalog } from './model-tier-catalog'
 
@@ -83,9 +85,11 @@ async function searchWeb({ credentials, modelId, providerConfigId, billing, turn
     const { text, sources } = await generateText({
         model: createModel({ credentials, modelId, billing, turnAlreadyCharged, usageOnly, webSearchEnabled: true, ...spreadIfDefined('providerConfigId', providerConfigId) }),
         tools: buildWebSearchTools({ provider: credentials.provider, model: modelId }),
+        providerOptions: agentProviderOptions.buildProviderOptions({ provider: credentials.provider, thinkingBudget: 0, modelId, disableThinking: true }),
         system,
         prompt,
         abortSignal,
+        ...agentAiUtils.buildTelemetry({ functionId: 'web-search', ...spreadIfDefined('billing', billing) }),
     })
     const pages = sources.flatMap((source) => source.sourceType === 'url' ? [{ url: source.url, title: source.title ?? '' }] : [])
     return { text, sources: [...new Map(pages.map((page) => [page.url, page])).values()] }
@@ -214,10 +218,36 @@ function buildModel({ credentials, modelId, metadata, flowStep, webSearchEnabled
         options: {
             openRouterSettings: openRouterModelSettings({ provider, webSearchEnabled, options: webSearchOptions }),
             mistralViaOpenRouter: isNil(flowStep),
-            ...spreadIfDefined('extraHeaders', flowStepMetadataHeaders(flowStep) ?? managedProviderMetadataHeaders({ provider, metadata })),
+            ...spreadIfDefined('extraHeaders', extraHeadersFor({ provider, flowStep, metadata })),
             ...spreadIfDefined('onOutcome', onOutcome),
         },
     })
+}
+
+function extraHeadersFor({ provider, flowStep, metadata }: { provider: AIProviderName, flowStep?: FlowStepMetadata, metadata?: ChatModelMetadata }): Record<string, string> | undefined {
+    const metadataHeaders = flowStepMetadataHeaders(flowStep) ?? managedProviderMetadataHeaders({ provider, metadata })
+    const spendHeaders = litellmSpendHeaders({ provider, flowStep, metadata })
+    return isNil(metadataHeaders) && isNil(spendHeaders) ? undefined : { ...metadataHeaders, ...spendHeaders }
+}
+
+function litellmSpendHeaders({ provider, flowStep, metadata }: { provider: AIProviderName, flowStep?: FlowStepMetadata, metadata?: ChatModelMetadata }): Record<string, string> | undefined {
+    if (provider !== AIProviderName.LITELLM) {
+        return undefined
+    }
+    if (!isNil(flowStep)) {
+        return {
+            'x-litellm-customer-id': flowStep.projectId,
+            'x-litellm-trace-id': flowStep.runId,
+            'x-litellm-tags': `ap-surface:flow,ap-platform:${flowStep.platformId}`,
+        }
+    }
+    if (isNil(metadata)) {
+        return undefined
+    }
+    return {
+        'x-litellm-trace-id': metadata.conversationId,
+        'x-litellm-tags': `ap-surface:${metadata.surface ?? 'chat'},ap-platform:${metadata.platformId}`,
+    }
 }
 
 function cloudflareGatewayMetadata(flowStep?: FlowStepMetadata): CloudflareGatewayMetadata | undefined {
@@ -239,11 +269,13 @@ function flowStepMetadataHeaders(flowStep?: FlowStepMetadata): Record<string, st
     }
 }
 
-function createModelForImages({ credentials, modelId, flowStep, adminChosenImageModelId }: {
+function createModelForImages({ credentials, modelId, flowStep, adminChosenImageModelId, platformId, providerConfigId }: {
     credentials: AiProviderCredentials
     modelId: string
     flowStep?: FlowStepMetadata
     adminChosenImageModelId?: string
+    platformId?: string
+    providerConfigId?: string
 }): ImageModel | undefined {
     assertManagedModelAllowed({ provider: credentials.provider, modelId, image: true, ...spreadIfDefined('adminChosenModelId', adminChosenImageModelId) })
     if (credentials.provider === AIProviderName.CLOUDFLARE_GATEWAY) {
@@ -255,7 +287,14 @@ function createModelForImages({ credentials, modelId, flowStep, adminChosenImage
             ...spreadIfDefined('metadata', cloudflareGatewayMetadata(flowStep)),
         })
     }
-    return createImageModel({ credentials, modelId })
+    return createImageModel({
+        credentials,
+        modelId,
+        options: {
+            ...spreadIfDefined('extraHeaders', extraHeadersFor({ provider: credentials.provider, flowStep })),
+            ...spreadIfDefined('onOutcome', keyHealthReporterFor({ platformId, providerConfigId })),
+        },
+    })
 }
 
 function toStorageEmbedding(embedding: number[]): number[] {
@@ -347,6 +386,7 @@ export const aiUtils = {
     buildWebSearchTools,
     buildWebSearchToolsOrThrow,
     searchWeb,
+    litellmSpendHeaders,
 }
 
 type NativeWebSearchToolParams = {
@@ -384,6 +424,7 @@ type ChatModelMetadata = {
     platformId: string
     conversationId: string
     runId?: string
+    surface?: 'chat' | 'agent'
 }
 
 type WebSearchResult = {

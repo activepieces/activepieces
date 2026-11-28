@@ -98,6 +98,7 @@ async function request<T>({
   path,
   queryParams,
   body,
+  timeout,
 }: WordpressRequestParams): Promise<HttpResponse<T>> {
   const url = `${siteBaseUrl({ auth })}${path}`;
   try {
@@ -106,6 +107,7 @@ async function request<T>({
       url,
       queryParams,
       body,
+      timeout,
       authentication: {
         type: AuthenticationType.BASIC,
         username: auth.props.username,
@@ -159,16 +161,19 @@ async function list<T>({
   auth,
   path,
   queryParams,
+  timeout,
 }: {
   auth: WordpressAuthValue;
   path: string;
   queryParams: QueryParams;
+  timeout?: number;
 }): Promise<WordpressListResult<T>> {
   const response = await request<T[]>({
     auth,
     method: HttpMethod.GET,
     path,
     queryParams,
+    timeout,
   });
   const items = Array.isArray(response.body) ? response.body : [];
   return {
@@ -297,6 +302,7 @@ export type WordpressRequestParams = {
   path: string;
   queryParams?: QueryParams;
   body?: unknown;
+  timeout?: number;
 };
 
 export type WordpressListResult<T> = {

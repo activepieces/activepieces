@@ -1,4 +1,4 @@
-import { ApId, BaseModelSchema, DateOrString, Nullable } from '@activepieces/core-utils'
+import { ApId, BaseModelSchema, DateOrString, formErrors, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { FederatedAuthnProviderConfig, FederatedAuthnProviderConfigWithoutSensitiveData } from '../../core/federated-authn'
 import { SsoDomainVerification } from './sso-domain-verification'
@@ -28,6 +28,7 @@ export enum PlanName {
     ENTERPRISE = 'enterprise',
     APPSUMO = 'appsumo',
     FREE_LEGACY = 'free_legacy',
+    SELF_SERVE_TRIAL = 'self_serve_trial',
 }
 
 export enum AiCreditsAutoTopUpState {
@@ -46,6 +47,10 @@ export enum UnconsumableFeatureId {
     ACTIVE_FLOWS_LIMIT = 'activeFlowsLimit',
 }
 
+export enum RewardFeatureId {
+    REWARDED_INVITES = 'rewarded_invites_count',
+}
+
 export enum FeatureFlagId {
     BILLING_ENFORCED = 'billingEnforced',
     TABLES_ENABLED = 'tablesEnabled',
@@ -60,6 +65,7 @@ export enum FeatureFlagId {
     AGENTS_ENABLED = 'agentsEnabled',
     WORKER_GROUPS_ENABLED = 'workerGroupsEnabled',
     MANAGE_PIECES_ENABLED = 'managePiecesEnabled',
+    CUSTOM_PIECES_ENABLED = 'customPiecesEnabled',
     MANAGE_TEMPLATES_ENABLED = 'manageTemplatesEnabled',
     CUSTOM_APPEARANCE_ENABLED = 'customAppearanceEnabled',
     PROJECT_ROLES_ENABLED = 'projectRolesEnabled',
@@ -120,6 +126,7 @@ export const PlatformPlan = z.object({
     agentsEnabled: z.boolean(),
     workerGroupsEnabled: z.boolean(),
     managePiecesEnabled: z.boolean(),
+    customPiecesEnabled: z.boolean(),
     manageTemplatesEnabled: z.boolean(),
     customAppearanceEnabled: z.boolean(),
     billedTeamProjectsLimit: Nullable(z.number()),
@@ -156,7 +163,7 @@ export type PlatformPlanWithOnlyLimits = PlatformPlanLimits
 
 export const HEX_COLOR_PATTERN = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/
 
-export const ThemeHexColor = z.string().regex(HEX_COLOR_PATTERN, 'invalidHexColor')
+export const ThemeHexColor = z.string().regex(HEX_COLOR_PATTERN, formErrors.invalidHexColor)
 
 export const PlatformThemeColors = z.object({
     avatar: ThemeHexColor.optional(),
@@ -240,11 +247,44 @@ export const Platform = z.object({
 export type Platform = z.infer<typeof Platform>
 export type PlatformWithoutFederatedAuth = Omit<Platform, 'federatedAuthProviders'>
 
+export const SelfServeTrialDates = z.object({
+    startedAt: z.string(),
+    endsAt: z.string(),
+})
+export type SelfServeTrialDates = z.infer<typeof SelfServeTrialDates>
+
+export enum SelfServeTrialState {
+    ELIGIBLE = 'eligible',
+    INELIGIBLE = 'ineligible',
+    ACTIVE = 'active',
+    ENDED = 'ended',
+}
+
+export const StartedSelfServeTrial = z.object({
+    state: z.enum([SelfServeTrialState.ACTIVE, SelfServeTrialState.ENDED]),
+    startedAt: z.string(),
+    endsAt: z.string(),
+    seatGraceEndsAt: z.string().nullable(),
+})
+export type StartedSelfServeTrial = z.infer<typeof StartedSelfServeTrial>
+
+export const NotStartedSelfServeTrial = z.object({
+    state: z.enum([SelfServeTrialState.ELIGIBLE, SelfServeTrialState.INELIGIBLE]),
+    startedAt: z.null(),
+    endsAt: z.null(),
+    seatGraceEndsAt: z.null(),
+})
+export type NotStartedSelfServeTrial = z.infer<typeof NotStartedSelfServeTrial>
+
+export const SelfServeTrialInfo = z.discriminatedUnion('state', [StartedSelfServeTrial, NotStartedSelfServeTrial])
+export type SelfServeTrialInfo = z.infer<typeof SelfServeTrialInfo>
+
 export const PlatformWithoutSensitiveData = z.object({
     federatedAuthProviders: Nullable(FederatedAuthnProviderConfigWithoutSensitiveData),
     plan: PlatformPlanLimits,
     usage: PlatformUsage.optional(),
     billingEnforced: z.boolean().optional(),
+    selfServeTrial: StartedSelfServeTrial.optional(),
     id: z.string(),
     created: DateOrString,
     updated: DateOrString,
@@ -337,10 +377,12 @@ export const PlatformBillingInformation = z.object({
     creditsFeature: Nullable(CreditsBillableFeature),
     appSumoCreditsFeature: Nullable(AppSumoCreditsBillableFeature),
     seatsFeature: Nullable(SeatsBillableFeature),
-    billingPortalAvailable: z.boolean(),
+    hasPaymentMethod: z.boolean(),
     billingEnforced: z.boolean(),
     billingUnavailable: z.boolean(),
     includedSeats: Nullable(z.number()),
     additionalSeats: Nullable(z.number()),
+    selfServeTrial: SelfServeTrialInfo,
+    rewardedInvitesLeft: Nullable(z.number()),
 })
 export type PlatformBillingInformation = z.infer<typeof PlatformBillingInformation>

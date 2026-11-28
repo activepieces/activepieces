@@ -315,6 +315,8 @@
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
   "HEAD": "CABEÇA",
+  "Request": "Solicitação",
+  "Data to send": "Dados para enviar",
   "New Call": "Nova Ligação",
   "Call Ended": "Call Ended",
   "Call Analyzed": "Call Analyzed",

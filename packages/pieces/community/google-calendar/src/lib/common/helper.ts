@@ -3,14 +3,15 @@ import {
   httpClient,
   HttpMethod,
   HttpRequest,
+  HttpResponse,
 } from '@activepieces/pieces-common';
+import { isNil } from '@activepieces/pieces-framework';
 import { randomUUID } from 'crypto';
 import { googleCalendarCommon, GoogleCalendarAuthValue, getAccessToken } from '.';
 import {
   GoogleWatchResponse,
   GoogleWatchType,
   CalendarObject,
-  CalendarList,
   GoogleCalendarEvent,
   GoogleCalendarEventList,
   GetColorsResponse,
@@ -19,6 +20,9 @@ import {
 const SYNC_SERIES_PARAMS: Record<string, string> = {
   maxResults: '2500',
 };
+const CALENDAR_LIST_PAGE_SIZE = '250';
+const REQUEST_TIMEOUT_MS = 10_000;
+const SAMPLE_LOOKBACK_MS = 7 * 24 * 60 * 60 * 1000;
 
 export async function stopWatchEvent(
   body: GoogleWatchResponse,
@@ -36,7 +40,7 @@ export async function stopWatchEvent(
       token: await getAccessToken(authProp),
     },
   };
-  await httpClient.sendRequest<any>(request);
+  await httpClient.sendRequest<unknown>(request);
 }
 
 export async function watchEvent(
@@ -47,7 +51,9 @@ export async function watchEvent(
   const sixDaysFromNowMs = Date.now() + 6 * 24 * 60 * 60 * 1000;
   const request: HttpRequest = {
     method: HttpMethod.POST,
-    url: `${googleCalendarCommon.baseUrl}/calendars/${calendarId}/events/watch`,
+    url: `${googleCalendarCommon.baseUrl}/calendars/${encodeURIComponent(
+      calendarId
+    )}/events/watch`,
     body: {
       id: randomUUID(),
       type: GoogleWatchType.WEBHOOK,
@@ -68,37 +74,75 @@ export async function watchEvent(
 export async function getInitialSyncToken({
   calendarId,
   authProp,
+  deadlineMs,
 }: {
   calendarId: string;
   authProp: GoogleCalendarAuthValue;
+  deadlineMs?: number;
 }): Promise<string | undefined> {
+  const { nextSyncToken } = await listEventsForFullSync({
+    calendarId,
+    authProp,
+    withItems: false,
+    deadlineMs,
+  });
+  return nextSyncToken;
+}
+
+export async function listEventsForFullSync({
+  calendarId,
+  authProp,
+  withItems,
+  keepItem,
+  deadlineMs,
+}: {
+  calendarId: string;
+  authProp: GoogleCalendarAuthValue;
+  withItems: boolean;
+  keepItem?: (event: GoogleCalendarEvent) => boolean;
+  deadlineMs?: number;
+}): Promise<{
+  items: GoogleCalendarEvent[];
+  nextSyncToken: string | undefined;
+  complete: boolean;
+}> {
   const accessToken = await getAccessToken(authProp);
-  const qParams: Record<string, string> = {
-    ...SYNC_SERIES_PARAMS,
-    fields: 'nextPageToken,nextSyncToken',
-  };
+  const qParams: Record<string, string> = withItems
+    ? { ...SYNC_SERIES_PARAMS }
+    : { ...SYNC_SERIES_PARAMS, fields: 'nextPageToken,nextSyncToken' };
   let pageToken = '';
   let nextSyncToken: string | undefined;
+  const items: GoogleCalendarEvent[] = [];
   do {
+    if (!isNil(deadlineMs) && deadlineMs - Date.now() < REQUEST_TIMEOUT_MS) {
+      return { items, nextSyncToken: undefined, complete: false };
+    }
     if (pageToken) {
       qParams['pageToken'] = pageToken;
     }
     const request: HttpRequest = {
       method: HttpMethod.GET,
-      url: `${googleCalendarCommon.baseUrl}/calendars/${calendarId}/events`,
+      url: `${googleCalendarCommon.baseUrl}/calendars/${encodeURIComponent(calendarId)}/events`,
       queryParams: qParams,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: accessToken,
       },
+      timeout: REQUEST_TIMEOUT_MS,
     };
     const { body: res } = await httpClient.sendRequest<GoogleCalendarEventList>(
       request
     );
+    if (withItems) {
+      const pageItems = res.items ?? [];
+      items.push(
+        ...(keepItem ? pageItems.filter(keepItem) : pageItems)
+      );
+    }
     pageToken = res.nextPageToken;
     nextSyncToken = res.nextSyncToken;
   } while (pageToken);
-  return nextSyncToken;
+  return { items, nextSyncToken, complete: true };
 }
 
 export async function listEventsWithSyncToken({
@@ -128,7 +172,7 @@ export async function listEventsWithSyncToken({
     }
     const request: HttpRequest = {
       method: HttpMethod.GET,
-      url: `${googleCalendarCommon.baseUrl}/calendars/${calendarId}/events`,
+      url: `${googleCalendarCommon.baseUrl}/calendars/${encodeURIComponent(calendarId)}/events`,
       queryParams: qParams,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
@@ -157,26 +201,41 @@ export async function listEventsWithSyncToken({
 
 export async function getCalendars(
   authProp: GoogleCalendarAuthValue,
-  minAccessRole?: 'writer'
+  minAccessRole?: 'writer',
+  options: { showHidden?: boolean } = {}
 ): Promise<CalendarObject[]> {
-  // docs: https://developers.google.com/calendar/api/v3/reference/calendarList/list
-  const queryParams: Record<string, string> = {
-    showDeleted: 'false',
-  };
-  if (minAccessRole) {
-    queryParams['minAccessRole'] = minAccessRole;
-  }
-  const request: HttpRequest = {
-    method: HttpMethod.GET,
-    url: `${googleCalendarCommon.baseUrl}/users/me/calendarList`,
-    queryParams: queryParams,
-    authentication: {
-      type: AuthenticationType.BEARER_TOKEN,
-      token: await getAccessToken(authProp),
-    },
-  };
-  const response = await httpClient.sendRequest<CalendarList>(request);
-  return response.body.items;
+  const token = await getAccessToken(authProp);
+  const calendars: CalendarObject[] = [];
+  let pageToken: string | undefined = undefined;
+  do {
+    const queryParams: Record<string, string> = {
+      showDeleted: 'false',
+      maxResults: CALENDAR_LIST_PAGE_SIZE,
+    };
+    if (minAccessRole) {
+      queryParams['minAccessRole'] = minAccessRole;
+    }
+    if (options.showHidden) {
+      queryParams['showHidden'] = 'true';
+    }
+    if (pageToken) {
+      queryParams['pageToken'] = pageToken;
+    }
+    const response: HttpResponse<CalendarListPage> =
+      await httpClient.sendRequest<CalendarListPage>({
+        method: HttpMethod.GET,
+        url: `${googleCalendarCommon.baseUrl}/users/me/calendarList`,
+        queryParams,
+        authentication: {
+          type: AuthenticationType.BEARER_TOKEN,
+          token,
+        },
+        timeout: REQUEST_TIMEOUT_MS,
+      });
+    calendars.push(...(response.body.items ?? []));
+    pageToken = response.body.nextPageToken;
+  } while (pageToken);
+  return calendars;
 }
 
 export async function getColors(
@@ -194,58 +253,26 @@ export async function getColors(
   return response.body;
 }
 
-export async function getEvents(
-  calendarId: string,
-  expandRecurringEvent: boolean,
-  authProp: GoogleCalendarAuthValue,
-  minUpdated?: Date
-): Promise<GoogleCalendarEvent[]> {
-  // docs: https://developers.google.com/calendar/api/v3/reference/events/list
-  const now = new Date();
-  const yesterday = new Date();
-  yesterday.setDate(now.getDate() - 1);
-
-  const qParams: Record<string, string> = {
-    updatedMin: minUpdated?.toISOString() ?? yesterday.toISOString(),
-    maxResults: '2500', // Modified
-    orderBy: 'updated',
-    singleEvents: expandRecurringEvent ? 'true' : 'false',
-    showDeleted: 'true',
-  };
-
-  const accessToken = await getAccessToken(authProp);
-  const request: HttpRequest = {
-    method: HttpMethod.GET,
-    url: `${googleCalendarCommon.baseUrl}/calendars/${calendarId}/events`,
-    queryParams: qParams,
-    authentication: {
-      type: AuthenticationType.BEARER_TOKEN,
-      token: accessToken,
-    },
-  };
-
-  let eventList: GoogleCalendarEvent[] = [];
-  let pageToken = '';
-  do {
-    qParams['pageToken'] = pageToken;
-    const { body: res } = await httpClient.sendRequest<GoogleCalendarEventList>(
-      request
-    );
-    if (res.items.length > 0) {
-      eventList = [...eventList, ...res.items];
-    }
-    pageToken = res.nextPageToken;
-  } while (pageToken);
-
-  return eventList;
-}
-
-export async function getLatestEvent(
-  calendarId: string,
-  authProp: GoogleCalendarAuthValue
-): Promise<GoogleCalendarEvent | null> {
-  const eventList = await getEvents(calendarId, false, authProp);
-  return eventList.length > 0 ? eventList[eventList.length - 1] : null;
+export async function listRecentLiveEvents({
+  calendarId,
+  authProp,
+  keep,
+  limit,
+}: {
+  calendarId: string;
+  authProp: GoogleCalendarAuthValue;
+  keep: (event: GoogleCalendarEvent) => boolean;
+  limit: number;
+}): Promise<GoogleCalendarEvent[]> {
+  const events = await listEventsUpdatedSince({
+    calendarId,
+    authProp,
+    updatedMinMs: Date.now() - SAMPLE_LOOKBACK_MS,
+  });
+  return events
+    .filter((event) => event.status !== 'cancelled' && keep(event))
+    .sort((left, right) => updatedTimeOf(right) - updatedTimeOf(left))
+    .slice(0, limit);
 }
 
 export async function getEventsForDropdown(
@@ -321,3 +348,58 @@ export async function getEventsForDropdown(
     return [];
   }
 }
+
+async function listEventsUpdatedSince({
+  calendarId,
+  authProp,
+  updatedMinMs,
+}: {
+  calendarId: string;
+  authProp: GoogleCalendarAuthValue;
+  updatedMinMs: number;
+}): Promise<GoogleCalendarEvent[]> {
+  const accessToken = await getAccessToken(authProp);
+  const eventList: GoogleCalendarEvent[] = [];
+  let pageToken: string | undefined = undefined;
+  do {
+    const qParams: Record<string, string> = {
+      updatedMin: new Date(updatedMinMs).toISOString(),
+      maxResults: '2500',
+      orderBy: 'updated',
+      singleEvents: 'false',
+      showDeleted: 'true',
+    };
+    if (pageToken) {
+      qParams['pageToken'] = pageToken;
+    }
+    const response: HttpResponse<EventListPage> =
+      await httpClient.sendRequest<EventListPage>({
+        method: HttpMethod.GET,
+        url: `${googleCalendarCommon.baseUrl}/calendars/${encodeURIComponent(calendarId)}/events`,
+        queryParams: qParams,
+        authentication: {
+          type: AuthenticationType.BEARER_TOKEN,
+          token: accessToken,
+        },
+        timeout: REQUEST_TIMEOUT_MS,
+      });
+    eventList.push(...(response.body.items ?? []));
+    pageToken = response.body.nextPageToken;
+  } while (pageToken);
+  return eventList;
+}
+
+function updatedTimeOf(event: GoogleCalendarEvent): number {
+  const updatedMs = Date.parse(event.updated);
+  return Number.isNaN(updatedMs) ? 0 : updatedMs;
+}
+
+type CalendarListPage = {
+  items?: CalendarObject[];
+  nextPageToken?: string;
+};
+
+type EventListPage = {
+  items?: GoogleCalendarEvent[];
+  nextPageToken?: string;
+};

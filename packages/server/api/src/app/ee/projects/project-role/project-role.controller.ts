@@ -16,8 +16,9 @@ const DEFAULT_LIMIT_SIZE = 10
 export const projectRoleController: FastifyPluginAsyncZod = async (app) => {
     
     app.get('/:id', GetProjectRoleRequest, async (req) => {
-        return projectRoleService.getOneOrThrowById({
+        return projectRoleService.getOneForPlatformOrThrow({
             id: req.params.id,
+            platformId: req.principal.platform.id,
         })
     })
 
@@ -158,7 +159,7 @@ const DeleteProjectRoleRequest = {
 
 const ListProjectMembersForProjectRoleRequest = {
     config: {
-        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         tags: ['project-members'],

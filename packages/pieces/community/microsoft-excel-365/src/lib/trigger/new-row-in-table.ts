@@ -48,7 +48,7 @@ const polling: Polling<
     }
 > = {
     strategy: DedupeStrategy.LAST_ITEM,
-    items: async ({ auth, propsValue, lastItemId, store }) => {
+    items: async ({ auth, propsValue, lastItemId }) => {
         const { storageSource, siteId, documentId, workbookId, worksheetId, tableId } = propsValue;
         const drivePath = getDrivePath(storageSource, siteId, documentId);
         const rows = await getTableRows(auth, workbookId, tableId, drivePath);
@@ -57,26 +57,16 @@ const polling: Polling<
             return [];
         }
 
-        const cachedHeaders = await store.get<string[]>('table_headers');
-        let headers: string[] = [];
-
-        if (cachedHeaders && cachedHeaders.length > 0) {
-            headers = cachedHeaders
-        } else {
-            try {
-                headers = await excelCommon.getTableHeaders(
-                    drivePath,
-                    workbookId,
-                    auth.access_token,
-                    worksheetId,
-                    tableId
-                );
-                await store.put('table_headers', headers);
-            } catch (error) {
-                headers = []
-            }
-        }
-        
+        const headers = propsValue.has_headers
+            ? await excelCommon.getTableHeaders({
+                drivePath,
+                workbookId,
+                accessToken: auth.access_token,
+                worksheetId,
+                tableId,
+                cloud: auth.props?.['cloud'] as string | undefined,
+            })
+            : [];
 
         const processedRows = rows.map(row => {
             let rowData: Record<string, unknown> = {};

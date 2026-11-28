@@ -1,3 +1,4 @@
+import { PlanName, UnconsumableFeatureId } from '@activepieces/shared'
 import { describe, expect, it } from 'vitest'
 import { autumnUtils } from '../../../../src/app/ee/platform/platform-plan/billing-providers/autumn-utils'
 
@@ -184,6 +185,7 @@ describe('mapAutumnFeaturesToPlatformPlan', () => {
             grantedFeatureIds,
             balances: {},
             scheduledUsersLimit: null,
+            activeSelfServeTrialAddOn: null,
         })
         expect(projection).toMatchObject({
             plan: 'appsumo',
@@ -200,6 +202,7 @@ describe('mapAutumnFeaturesToPlatformPlan', () => {
             chatEnabled: false,
             workerGroupsEnabled: false,
             managePiecesEnabled: false,
+            customPiecesEnabled: false,
             manageTemplatesEnabled: false,
             customAppearanceEnabled: false,
             projectRolesEnabled: false,
@@ -211,17 +214,116 @@ describe('mapAutumnFeaturesToPlatformPlan', () => {
         })
     })
 
+    it('projects customPiecesEnabled only when an attached plan grants it', () => {
+        const project = (featureIds: string[]) => autumnUtils.mapAutumnFeaturesToPlatformPlan({
+            planId: 'plus',
+            grantedFeatureIds: autumnUtils.toGrantedFeatureIds({
+                subscriptions: [subscription({ planId: 'plus', featureIds })],
+                purchases: [],
+            }),
+            balances: {},
+            scheduledUsersLimit: null,
+            activeSelfServeTrialAddOn: null,
+        })
+        expect(project([...PLUS_FLAGS, 'customPiecesEnabled']).customPiecesEnabled).toBe(true)
+        expect(project(PLUS_FLAGS).customPiecesEnabled).toBe(false)
+    })
+
     it('never projects billingEnforced, which has no platform plan column', () => {
         const projection = autumnUtils.mapAutumnFeaturesToPlatformPlan({
             planId: 'free',
             grantedFeatureIds: new Set(FREE_FLAGS),
             balances: {},
             scheduledUsersLimit: null,
+            activeSelfServeTrialAddOn: null,
         })
         expect(projection).not.toHaveProperty('billingEnforced')
         expect(projection.showPoweredBy).toBe(true)
     })
+
+    it.each([
+        { name: 'drops', activeSelfServeTrialAddOn: { startedAt: 1, endsAt: 2 }, expected: null },
+        { name: 'keeps', activeSelfServeTrialAddOn: null, expected: 5 },
+    ])('$name a scheduled seat reduction depending on whether a self-serve trial runs', ({ activeSelfServeTrialAddOn, expected }) => {
+        const projection = autumnUtils.mapAutumnFeaturesToPlatformPlan({
+            planId: 'team',
+            grantedFeatureIds: new Set(FREE_FLAGS),
+            balances: {},
+            scheduledUsersLimit: 5,
+            activeSelfServeTrialAddOn,
+        })
+        expect(projection.scheduledUsersLimit).toBe(expected)
+    })
 })
+
+describe('withoutExpiredSelfServeTrialAddOn', () => {
+    const TRIAL_FLAGS = ['auditLogEnabled', 'ssoEnabled']
+    const HOUR_MS = 60 * 60 * 1000
+
+    function customerOnFreeWithTrial({ trialEndsAt }: { trialEndsAt: number }) {
+        return {
+            subscriptions: [
+                { ...subscription({ planId: PlanName.FREE, featureIds: FREE_FLAGS }), trialEndsAt: null },
+                { ...subscription({ planId: PlanName.SELF_SERVE_TRIAL, featureIds: TRIAL_FLAGS, addOn: true }), trialEndsAt },
+            ],
+            purchases: [],
+            balances: {
+                [UnconsumableFeatureId.USERS_LIMIT]: balance([
+                    grant({ planId: PlanName.FREE, includedGrant: 1 }),
+                    grant({ planId: PlanName.SELF_SERVE_TRIAL, unlimited: true }),
+                ]),
+                [UnconsumableFeatureId.TEAM_PROJECTS_LIMIT]: balance([
+                    grant({ planId: PlanName.SELF_SERVE_TRIAL, unlimited: true }),
+                ]),
+            },
+        }
+    }
+
+    it('drops a trial that Autumn still shows as active after its end date', () => {
+        const customer = customerOnFreeWithTrial({ trialEndsAt: Date.now() - HOUR_MS })
+
+        const trimmed = autumnUtils.withoutExpiredSelfServeTrialAddOn(customer as never)
+
+        expect([...autumnUtils.toGrantedFeatureIds(trimmed)].sort()).toEqual([...FREE_FLAGS].sort())
+        expect(trimmed.balances[UnconsumableFeatureId.USERS_LIMIT]).toMatchObject({ granted: 1, unlimited: false })
+        expect(trimmed.balances).not.toHaveProperty(UnconsumableFeatureId.TEAM_PROJECTS_LIMIT)
+    })
+
+    it('keeps a trial that is still running', () => {
+        const customer = customerOnFreeWithTrial({ trialEndsAt: Date.now() + HOUR_MS })
+
+        expect(autumnUtils.withoutExpiredSelfServeTrialAddOn(customer as never)).toBe(customer)
+    })
+})
+
+function balance(breakdown: Grant[]) {
+    return {
+        granted: breakdown.reduce((sum, entry) => sum + entry.includedGrant, 0),
+        remaining: 0,
+        usage: 0,
+        unlimited: breakdown.some((entry) => entry.unlimited),
+        breakdown,
+    }
+}
+
+function grant({ planId, includedGrant = 0, unlimited = false }: GrantParams): Grant {
+    return { planId, includedGrant, prepaidGrant: 0, remaining: includedGrant, usage: 0, unlimited }
+}
+
+type Grant = {
+    planId: string
+    includedGrant: number
+    prepaidGrant: number
+    remaining: number
+    usage: number
+    unlimited: boolean
+}
+
+type GrantParams = {
+    planId: string
+    includedGrant?: number
+    unlimited?: boolean
+}
 
 type PlanItems = {
     addOn: boolean

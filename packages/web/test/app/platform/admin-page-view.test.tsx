@@ -3,7 +3,8 @@
  */
 /* eslint-disable jest-dom/prefer-in-document -- @testing-library/jest-dom is not a dependency of packages/web */
 import { ApEdition, TelemetryEventName } from '@activepieces/shared';
-import { render, screen } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { render, screen, waitFor } from '@testing-library/react';
 import * as React from 'react';
 import { MemoryRouter, useRoutes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -19,19 +20,22 @@ vi.mock('@/components/providers/telemetry-provider', () => ({
 
 vi.mock('@/hooks/platform-hooks', () => ({
   platformHooks: {
-    useCurrentPlatform: () => ({ platform: { plan: { ssoEnabled } } }),
+    useCurrentPlatform: () => ({
+      platform: { plan: { ssoEnabled, managePiecesEnabled: true } },
+    }),
   },
 }));
 vi.mock('@/hooks/flags-hooks', () => ({
   flagsHooks: { useFlag: () => ({ data: ApEdition.CLOUD }) },
 }));
-vi.mock('@/features/billing/hooks/billing-dialog-hooks', () => ({
-  billingDialogHooks: {
-    useManagePlanDialogStore: () => ({ openDialog: vi.fn() }),
-  },
+vi.mock('@/hooks/authorization-hooks', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  useIsPlatformAdmin: () => true,
 }));
-vi.mock('@/app/components/platform-layout', () => ({
-  PlatformLayout: ({ children }: React.PropsWithChildren) => <>{children}</>,
+vi.mock('@/app/guards/platform-admin-guard', () => ({
+  PlatformAdminGuard: ({ children }: React.PropsWithChildren) => (
+    <>{children}</>
+  ),
 }));
 vi.mock('@/app/components/page-title', () => ({
   PageTitle: ({ children }: React.PropsWithChildren) => <>{children}</>,
@@ -56,9 +60,15 @@ const PlatformRoutes = () => useRoutes(platformRoutes);
 
 const visit = (url: string) =>
   render(
-    <MemoryRouter initialEntries={[url]}>
-      <PlatformRoutes />
-    </MemoryRouter>,
+    <QueryClientProvider
+      client={
+        new QueryClient({ defaultOptions: { queries: { retry: false } } })
+      }
+    >
+      <MemoryRouter initialEntries={[url]}>
+        <PlatformRoutes />
+      </MemoryRouter>
+    </QueryClientProvider>,
   );
 
 const capturedViews = () =>
@@ -78,37 +88,51 @@ describe('admin page view telemetry', () => {
   it('names the page by its route, never by the id in the URL', async () => {
     visit('/platform/pieces/piece-sets/ps_42');
     expect(await screen.findByText('piece set')).toBeDefined();
-    expect(capturedViews()).toEqual([
-      { page: '/platform/pieces/piece-sets/:id', locked: false },
-    ]);
+    await waitFor(() =>
+      expect(capturedViews()).toEqual([
+        { page: '/platform/pieces/piece-sets/:id', locked: false },
+      ]),
+    );
   });
 
   it('counts only the page /platform redirects to', async () => {
     visit('/platform');
     expect(await screen.findByText('projects')).toBeDefined();
-    expect(capturedViews()).toEqual([
-      { page: '/platform/projects', locked: false },
-    ]);
+    await waitFor(() =>
+      expect(capturedViews()).toEqual([
+        { page: '/platform/projects', locked: false },
+      ]),
+    );
   });
 
   it('counts only the sub-page a released ?tab= link redirects to', async () => {
     visit('/platform/health?tab=runs');
     expect(await screen.findByText('runs health')).toBeDefined();
-    expect(capturedViews()).toEqual([
-      { page: '/platform/health/runs', locked: false },
-    ]);
+    await waitFor(() =>
+      expect(capturedViews()).toEqual([
+        { page: '/platform/health/runs', locked: false },
+      ]),
+    );
   });
 
   it('counts only the page an old folder URL redirects to', async () => {
     visit('/platform/security/sso');
     expect(await screen.findByText('sso')).toBeDefined();
-    expect(capturedViews()).toEqual([{ page: '/platform/sso', locked: false }]);
+    await waitFor(() =>
+      expect(capturedViews()).toEqual([
+        { page: '/platform/sso', locked: false },
+      ]),
+    );
   });
 
   it('marks a page shown under the sample overlay as locked', async () => {
     ssoEnabled = false;
     visit('/platform/sso');
     expect(await screen.findByText('sso')).toBeDefined();
-    expect(capturedViews()).toEqual([{ page: '/platform/sso', locked: true }]);
+    await waitFor(() =>
+      expect(capturedViews()).toEqual([
+        { page: '/platform/sso', locked: true },
+      ]),
+    );
   });
 });

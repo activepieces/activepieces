@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
+import { clipboardUtils } from '@/components/custom/clipboard/use-copy-to-clipboard';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
@@ -49,6 +50,7 @@ import { errorReporting } from '@/lib/error-reporting';
 import { formatUtils } from '@/lib/format-utils';
 
 import { userInvitationsHooks } from '../../hooks/user-invitations-hooks';
+import { InviteRewardHint } from '../invite-reward/invite-reward-hint';
 
 import { DefaultProjectsNote } from './default-projects-note';
 import { InvitedProjectSelect } from './invited-project-select';
@@ -127,7 +129,8 @@ const InviteUserDialogInternal = ({
     UserInvitationWithLink[]
   >([]);
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
-  const { platform } = platformHooks.useCurrentPlatform();
+  const { platform, refetch: refetchPlatform } =
+    platformHooks.useCurrentPlatform();
   const { activeDefaultProjectIds, personalProjectsActive } =
     platformHooks.useNewMemberSettings();
   const { data: teamProjects } = projectCollectionUtils.useAllPlatformProjects({
@@ -212,6 +215,7 @@ const InviteUserDialogInternal = ({
         toast.success(toastMessage, { duration: 3000 });
       }
       refetch();
+      refetchPlatform().catch(() => undefined);
       onInviteSuccess?.();
     },
     onError: (error) => {
@@ -345,15 +349,10 @@ const InviteUserDialogInternal = ({
     mutate({ ...data, emails: emailsToInvite });
   };
 
-  const copyAllLinks = () => {
-    const text = resultsWithLinks
-      .map((r) => `${r.email}: ${r.link}`)
-      .join('\n');
-    navigator.clipboard.writeText(text);
-    toast.success(t('All invitation links copied successfully'), {
-      duration: 3000,
+  const copyAllLinks = () =>
+    clipboardUtils.copy({
+      value: resultsWithLinks.map((r) => `${r.email}: ${r.link}`).join('\n'),
     });
-  };
 
   const downloadCsv = () => {
     const rows = [
@@ -413,6 +412,7 @@ const InviteUserDialogInternal = ({
               <DialogTitle>{dialogTitle}</DialogTitle>
               <DialogDescription>{dialogDescription}</DialogDescription>
             </DialogHeader>
+            {!hasLinks && <InviteRewardHint />}
 
             {!hasLinks ? (
               <Form {...form}>

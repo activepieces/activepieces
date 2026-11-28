@@ -85,7 +85,7 @@ export async function buildMcpServer({ mcp, userId, platformId, platformDisabled
             ? await resolveChecker({ userId, projectId, log })
             : ALLOW_ALL
         const activityContext: McpActivityContext | null = isNil(platformId) || isNil(userId) ? null : { platformId, projectId, userId, clientKey }
-        registerFlowTools({ server, mcp, projectId, permissionChecker, billing, log })
+        registerFlowTools({ server, mcp, projectId, permissionChecker, billing, isInAppChat, log })
         registerStaticTools({ server, mcp, projectId, userId, platformDisabledTools, permissionChecker, activityContext, billing, log })
     }
     else if (!isNil(mcp.platformId) && !isNil(userId) && !isNil(resolveProjectMcp)) {
@@ -204,7 +204,7 @@ function noProjectSelectedResult(): McpToolResult {
     return deny(`No project selected. Use ${SET_PROJECT_CONTEXT_TOOL_NAME} to select a project first.`)
 }
 
-function registerFlowTools({ server, mcp, projectId, permissionChecker, billing, log }: RegisterToolsParams): void {
+function registerFlowTools({ server, mcp, projectId, permissionChecker, billing, isInAppChat, log }: RegisterToolsParams & { isInAppChat: boolean }): void {
     const enabledFlows = mcp.flows.filter((flow) => flow.status === FlowStatus.ENABLED)
     for (const flow of enabledFlows) {
         const { toolName: mcpToolNameInput, toolDescription, mcpInputs, returnsResponse } = extractMcpTriggerInput(flow)
@@ -225,13 +225,15 @@ function registerFlowTools({ server, mcp, projectId, permissionChecker, billing,
 
             const result = await runFlowAsTool({ flow, properties: mcpInputs, payload: args, returnsResponse, log })
 
-            rejectedPromiseHandler(telemetry(log).trackProject({
-                projectId,
-                event: {
-                    name: TelemetryEventName.MCP_TOOL_CALLED,
-                    payload: { mcpId: projectId, toolName },
-                },
-            }), log)
+            if (!isInAppChat) {
+                rejectedPromiseHandler(telemetry(log).trackProject({
+                    projectId,
+                    event: {
+                        name: TelemetryEventName.MCP_TOOL_CALLED,
+                        payload: { mcpId: projectId, toolName },
+                    },
+                }), log)
+            }
 
             return result
         })

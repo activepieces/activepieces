@@ -1,6 +1,6 @@
 import { toError } from '@activepieces/core-utils'
 import { AsyncLocalStorage } from 'node:async_hooks'
-import { audit as standaloneAudit, AuditInput, log, RequestLogger, withAuditMethods } from 'evlog'
+import { createLogger, audit as standaloneAudit, AuditInput, log, RequestLogger, withAuditMethods } from 'evlog'
 
 const als = new AsyncLocalStorage<RequestLogger>()
 const sealedLoggers = new WeakMap<RequestLogger, Record<string, unknown>>()
@@ -9,6 +9,24 @@ const trackedLoggers = new WeakSet<RequestLogger>()
 function run<T>({ logger, fn }: { logger: RequestLogger, fn: () => T }): T {
     trackSeal(logger)
     return als.run(logger, fn)
+}
+
+function runJob<T>({ fields, fn }: { fields: Record<string, unknown>, fn: () => Promise<T> }): Promise<T> {
+    const logger = createLogger(fields)
+    return run({
+        logger,
+        fn: () => fn()
+            .then((result) => {
+                set({ outcome: 'success' })
+                return result
+            })
+            .catch((err: unknown) => {
+                error(err)
+                set({ outcome: 'failed' })
+                throw err
+            })
+            .finally(() => logger.emit()),
+    })
 }
 
 function set(fields: Record<string, unknown>): void {
@@ -84,6 +102,7 @@ function trackSeal(logger: RequestLogger): void {
 
 export const wideEvent = {
     run,
+    runJob,
     set,
     error,
     timed,
