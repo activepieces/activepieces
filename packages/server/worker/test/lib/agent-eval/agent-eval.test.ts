@@ -10,6 +10,18 @@ const HAS_PROVIDER_KEY = agentEvalRunner.hasProviderKey()
 const REPEATS = agentEvalRunner.repeatsFromEnv()
 const RESULTS_PATH = process.env.CHAT_EVAL_RESULTS_PATH
 const SCOPE = process.env.CHAT_EVAL_SCOPE ?? 'all'
+// Repeats run one after another. Worst case per repeat is a 5-min agent turn plus a 2-min judge call.
+// 4 min per repeat covers normal runs; past that the fixture fails with the stage it was stuck in.
+const FIXTURE_DEADLINE_MS = 4 * 60_000 * REPEATS
+const HOOK_MARGIN_MS = 60_000
+
+function withDeadline<T>({ promise, onTimeout }: { promise: Promise<T>, onTimeout: () => Error }): Promise<T> {
+    let timer: NodeJS.Timeout | undefined
+    const deadline = new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(onTimeout()), FIXTURE_DEADLINE_MS)
+    })
+    return Promise.race([promise, deadline]).finally(() => clearTimeout(timer))
+}
 
 describe.skipIf(!HAS_PROVIDER_KEY)('agent-eval regression gate (live — requires a provider API key)', () => {
     let evaluations: EvalReportEntry[] = []
@@ -20,16 +32,26 @@ describe.skipIf(!HAS_PROVIDER_KEY)('agent-eval regression gate (live — require
     beforeAll(async () => {
         const fixtures = evalFixtures.load().filter((fixture) => SCOPE === 'all' || fixture.kind === 'regression')
         const [fixtureResults, agreement] = await Promise.all([
-            Promise.all(fixtures.map((fixture) => agentEvalRunner.evaluateFixture({ fixture, repeats: REPEATS })
-                .catch((error: unknown) => agentEvalRunner.failedEntry({ fixture, error })))),
-            agentEvalRunner.measureJudgeAgreement().catch(() => null),
+            Promise.all(fixtures.map((fixture) => {
+                let lastStage = 'starting'
+                const evaluation = agentEvalRunner.evaluateFixture({ fixture, repeats: REPEATS, onStage: (stage) => {
+                    lastStage = stage
+                } })
+                return withDeadline({
+                    promise: evaluation,
+                    onTimeout: () => new Error(`Fixture did not finish within ${FIXTURE_DEADLINE_MS / 1000}s (last stage: ${lastStage})`),
+                }).catch((error: unknown) => agentEvalRunner.failedEntry({ fixture, error }))
+            })),
+            withDeadline({
+                promise: agentEvalRunner.measureJudgeAgreement(),
+                onTimeout: () => new Error('Judge agreement did not finish in time'),
+            }).catch(() => null),
         ])
         evaluations = fixtureResults
         judgeAgreement = agreement
-    // Fixtures and the judge-agreement pass run against live models through OpenRouter. At 180s per
-    // repeat the regression scope already used ~400s of its 540s budget and tipped over on slow
-    // provider days. 300s per repeat (15 min at REPEATS=3) still fits the job's 30-minute limit.
-    }, 300_000 * REPEATS)
+    // Each fixture gets its own deadline so a slow or stuck one is reported as a failed fixture with
+    // the stage it was in, instead of the whole hook timing out with no report at all.
+    }, FIXTURE_DEADLINE_MS + HOOK_MARGIN_MS)
 
     afterAll(async () => {
         await agentEvalRunner.cleanupAuth()
