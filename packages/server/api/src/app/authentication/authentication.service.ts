@@ -240,7 +240,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
         if (isNil(governingPlatform)) {
             return
         }
-        const methods = authenticationUtils(log).getSignInMethods({ platform: governingPlatform })
+        const methods = authenticationUtils(log).getSignInMethods({ platform: governingPlatform, hasVerifiedDomain: true })
         const enabled: Record<SignInMethod, boolean> = {
             EMAIL: methods.email,
             GOOGLE: methods.google,

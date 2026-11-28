@@ -75,6 +75,7 @@ export enum FeatureFlagId {
     SSO_ENABLED = 'ssoEnabled',
     SECRET_MANAGERS_ENABLED = 'secretManagersEnabled',
     SCIM_ENABLED = 'scimEnabled',
+    MULTIPLE_EMAIL_DOMAINS_ENABLED = 'multipleEmailDomainsEnabled',
 }
 
 export type FeatureId = ConsumableFeatureId | UnconsumableFeatureId | FeatureFlagId
@@ -139,6 +140,7 @@ export const PlatformPlan = z.object({
     ssoEnabled: z.boolean(),
     secretManagersEnabled: z.boolean(),
     scimEnabled: z.boolean(),
+    multipleEmailDomainsEnabled: z.boolean(),
     licenseKey: Nullable(z.string()),
     licenseExpiresAt: Nullable(DateOrString),
 

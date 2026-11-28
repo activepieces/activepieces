@@ -1,18 +1,14 @@
-import { resolveTxt } from 'dns/promises'
-import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, isNil, PlatformId, spreadIfDefined, tryCatch, UserId } from '@activepieces/core-utils'
-import { ApEdition, SAMLAuthnProviderConfig, SsoDomainVerification, SsoDomainVerificationRecordType, SsoDomainVerificationStatus, UserIdentityProvider } from '@activepieces/shared'
+import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, PlatformId, UserId } from '@activepieces/core-utils'
+import { ApEdition, EmailDomain, SAMLAuthnProviderConfig, SsoDomainVerification, SsoDomainVerificationStatus, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { EntityManager, Not } from 'typeorm'
-import { z } from 'zod'
 import { AuthenticationResult } from '../../../authentication/authentication-utils'
 import { authenticationService } from '../../../authentication/authentication.service'
 import { domainHelper } from '../../../helper/domain-helper'
 import { system } from '../../../helper/system/system'
-import { platformSideEffects } from '../../../platform/platform-side-effects'
 import { platformRepo, platformService } from '../../../platform/platform.service'
 import { platformUtils } from '../../../platform/platform.utils'
 import { platformPlanService } from '../../platform/platform-plan/platform-plan.service'
-import { emailDomainRepo } from '../email-domain/email-domain.service'
+import { emailDomainRepo, emailDomainService } from '../email-domain/email-domain.service'
 import { createSamlClient, IdpLoginResponse } from './saml-client'
 
 export const authnSsoSamlService = (log: FastifyBaseLogger) => {
@@ -80,47 +76,17 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
             return plan.ssoEnabled ? verifiedDomain.platformId : null
         },
         async updateSsoDomain({ platformId, ssoDomain, userId, ip }: UpdateSsoDomainParams): Promise<SsoDomainState> {
-            const normalized = ssoDomain?.trim().toLowerCase() ?? null
-            const value = normalized && normalized.length > 0 ? normalized : null
-            if (!isNil(value)) {
-                if (!z.hostname().safeParse(value).success || !value.includes('.')) {
-                    throw new ActivepiecesError({
-                        code: ErrorCode.VALIDATION,
-                        params: {
-                            message: 'SSO domain must be a valid lowercase domain (e.g. acme.com)',
-                        },
-                    })
-                }
-                const claimedByAnotherPlatform = await emailDomainRepo().existsBy({ domain: value, platformId: Not(platformId) })
-                if (claimedByAnotherPlatform) {
-                    throw new ActivepiecesError({
-                        code: ErrorCode.VALIDATION,
-                        params: {
-                            message: 'This SSO domain is already in use',
-                        },
-                    })
-                }
+            const value = ssoDomain?.trim().toLowerCase() || null
+            const shownDomain = await findShownDomain(platformId)
+            if (value === (shownDomain?.domain ?? null)) {
+                return getSsoDomainState(platformId)
             }
-
-            const current = await platformService(log).getOneOrThrow(platformId)
-            const verification = computeNextVerification({ nextDomain: value, currentDomain: current.ssoDomain ?? null, currentVerification: current.ssoDomainVerification ?? null })
-
-            const removesVerifiedDomain = isNil(value) && current.ssoDomainVerification?.status === SsoDomainVerificationStatus.VERIFIED
-            const removesSaml = removesVerifiedDomain && await platformService(log).hasSamlConfigured(platformId)
-            await platformService(log).update({
-                id: platformId,
-                ssoDomain: value,
-                ssoDomainVerification: verification,
-                ...spreadIfDefined('federatedAuthProviders', removesSaml ? { saml: null } : undefined),
-                userId,
-                ip,
-                saveInSameTransaction: (entityManager) => replacePlatformEmailDomain({ entityManager, platformId, domain: value, verification }),
-            })
-            return { ssoDomain: value, ssoDomainVerification: verification }
+            await emailDomainService(log).replace({ platformId, removedId: shownDomain?.id ?? null, addedDomain: value, userId, ip })
+            return getSsoDomainState(platformId)
         },
         async verifySsoDomain({ platformId, userId, ip }: VerifySsoDomainParams): Promise<SsoDomainState> {
-            const platform = await platformService(log).getOneOrThrow(platformId)
-            if (isNil(platform.ssoDomain) || isNil(platform.ssoDomainVerification)) {
+            const shownDomain = await findShownDomain(platformId)
+            if (isNil(shownDomain)) {
                 throw new ActivepiecesError({
                     code: ErrorCode.VALIDATION,
                     params: {
@@ -128,128 +94,24 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
                     },
                 })
             }
-            if (platform.ssoDomainVerification.status === SsoDomainVerificationStatus.VERIFIED) {
-                return { ssoDomain: platform.ssoDomain, ssoDomainVerification: platform.ssoDomainVerification }
-            }
-
-            const matched = await txtRecordMatches({ name: platform.ssoDomainVerification.record.name, expected: platform.ssoDomainVerification.record.value, log })
-            if (!matched) {
-                return { ssoDomain: platform.ssoDomain, ssoDomainVerification: platform.ssoDomainVerification }
-            }
-
-            const verified: SsoDomainVerification = {
-                ...platform.ssoDomainVerification,
-                status: SsoDomainVerificationStatus.VERIFIED,
-            }
-            const domain = platform.ssoDomain
-            const recordValue = platform.ssoDomainVerification.record.value
-            const updated = await platformService(log).update({
-                id: platformId,
-                ssoDomainVerification: verified,
-                userId,
-                ip,
-                saveInSameTransaction: async (entityManager) => {
-                    await assertDomainUnchangedSinceLookup({ entityManager, platformId, domain, recordValue })
-                    await replacePlatformEmailDomain({ entityManager, platformId, domain, verification: verified })
-                },
-            })
-            return { ssoDomain: updated.ssoDomain ?? null, ssoDomainVerification: updated.ssoDomainVerification ?? null }
-        },
-        async expirePendingSsoDomains(): Promise<void> {
-            const rows: unknown = await platformRepo().query(`
-                WITH expired AS (
-                    SELECT id, "ssoDomain" FROM "platform"
-                    WHERE "ssoDomain" IS NOT NULL
-                      AND "ssoDomainVerification"->>'status' = $1
-                      AND ("ssoDomainVerification"->>'createdAt')::timestamptz < NOW() - make_interval(days => $2)
-                    FOR UPDATE SKIP LOCKED
-                ), cleared AS (
-                    UPDATE "platform" p
-                    SET "ssoDomain" = NULL, "ssoDomainVerification" = NULL
-                    FROM expired
-                    WHERE p.id = expired.id
-                    RETURNING p.id AS "platformId", expired."ssoDomain" AS "domain"
-                ), removed AS (
-                    DELETE FROM "email_domain" e
-                    USING cleared
-                    WHERE e."platformId" = cleared."platformId"
-                )
-                SELECT "platformId", "domain" FROM cleared
-            `, [SsoDomainVerificationStatus.PENDING_VERIFICATION, PENDING_DOMAIN_TTL_DAYS])
-            const expired = ExpiredSsoDomainRows.parse(rows)
-            for (const { platformId, domain } of expired) {
-                platformSideEffects(log).onSsoDomainExpired({ platformId, domain })
-            }
-            if (expired.length > 0) {
-                log.info({ affected: expired.length }, 'Expired pending SSO domain verifications')
-            }
+            await emailDomainService(log).verify({ platformId, id: shownDomain.id, userId, ip })
+            return getSsoDomainState(platformId)
         },
     }
 }
 
-const PENDING_DOMAIN_TTL_DAYS = 7
-
-const ExpiredSsoDomainRows = z.array(z.object({
-    platformId: z.string(),
-    domain: z.string(),
-}))
-
-function computeNextVerification({ nextDomain, currentDomain, currentVerification }: { nextDomain: string | null, currentDomain: string | null, currentVerification: SsoDomainVerification | null }): SsoDomainVerification | null {
-    if (isNil(nextDomain)) {
+async function findShownDomain(platformId: PlatformId): Promise<EmailDomain | null> {
+    const platform = await platformRepo().findOneByOrFail({ id: platformId })
+    if (isNil(platform.ssoDomain)) {
         return null
     }
-    if (nextDomain === currentDomain && !isNil(currentVerification)) {
-        return currentVerification
-    }
-    return {
-        status: SsoDomainVerificationStatus.PENDING_VERIFICATION,
-        record: {
-            type: SsoDomainVerificationRecordType.TXT,
-            name: `${VERIFICATION_NAME_PREFIX}.${nextDomain}`,
-            value: `${VERIFICATION_VALUE_PREFIX}=${apId()}`,
-        },
-        createdAt: new Date().toISOString(),
-    }
+    return emailDomainRepo().findOneBy({ platformId, domain: platform.ssoDomain })
 }
 
-async function replacePlatformEmailDomain({ entityManager, platformId, domain, verification }: ReplacePlatformEmailDomainParams): Promise<void> {
-    await emailDomainRepo(entityManager).delete({ platformId })
-    if (isNil(domain) || isNil(verification)) {
-        return
-    }
-    await emailDomainRepo(entityManager).insert({
-        id: apId(),
-        created: verification.createdAt,
-        platformId,
-        domain: domain.toLowerCase(),
-        verificationStatus: verification.status,
-        verificationRecordValue: verification.record.value,
-    })
+async function getSsoDomainState(platformId: PlatformId): Promise<SsoDomainState> {
+    const platform = await platformRepo().findOneByOrFail({ id: platformId })
+    return { ssoDomain: platform.ssoDomain ?? null, ssoDomainVerification: platform.ssoDomainVerification ?? null }
 }
-
-async function assertDomainUnchangedSinceLookup({ entityManager, platformId, domain, recordValue }: AssertDomainUnchangedSinceLookupParams): Promise<void> {
-    const unchanged = await emailDomainRepo(entityManager).existsBy({ platformId, domain: domain.toLowerCase(), verificationRecordValue: recordValue })
-    if (!unchanged) {
-        throw new ActivepiecesError({
-            code: ErrorCode.VALIDATION,
-            params: {
-                message: 'The SSO domain changed while it was being verified. Reload and try again.',
-            },
-        })
-    }
-}
-
-async function txtRecordMatches({ name, expected, log }: { name: string, expected: string, log: FastifyBaseLogger }): Promise<boolean> {
-    const lookup = await tryCatch(() => resolveTxt(name))
-    if (lookup.error) {
-        log.warn({ name, error: lookup.error }, 'TXT record lookup failed for SSO domain verification')
-        return false
-    }
-    return lookup.data.some((chunks) => chunks.join('').trim() === expected)
-}
-
-const VERIFICATION_NAME_PREFIX = '_activepieces-verify'
-const VERIFICATION_VALUE_PREFIX = 'activepieces-verify'
 
 type LoginResponse = {
     redirectUrl: string
@@ -279,20 +141,6 @@ type VerifySsoDomainParams = {
     platformId: PlatformId
     userId: UserId
     ip: string
-}
-
-type ReplacePlatformEmailDomainParams = {
-    entityManager: EntityManager
-    platformId: PlatformId
-    domain: string | null
-    verification: SsoDomainVerification | null
-}
-
-type AssertDomainUnchangedSinceLookupParams = {
-    entityManager: EntityManager
-    platformId: PlatformId
-    domain: string
-    recordValue: string
 }
 
 type SsoDomainState = {

@@ -14,3 +14,16 @@ export const EmailDomain = z.object({
 })
 
 export type EmailDomain = z.infer<typeof EmailDomain>
+
+export const EmailDomainWithUsage = EmailDomain.extend({
+    verificationRecordName: z.string(),
+    peopleCount: z.number(),
+})
+
+export type EmailDomainWithUsage = z.infer<typeof EmailDomainWithUsage>
+
+export const AddEmailDomainRequest = z.object({
+    domain: z.string().max(253),
+})
+
+export type AddEmailDomainRequest = z.infer<typeof AddEmailDomainRequest>

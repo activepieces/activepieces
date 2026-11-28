@@ -24,6 +24,7 @@ import { setPlatformOAuthService } from './app-connection/app-connection-service
 import { appConnectionModule } from './app-connection/app-connection.module'
 import { platformAppConnectionModule } from './app-connection/platform-app-connection.module'
 import { authenticationModule } from './authentication/authentication.module'
+import { emailDomainHooks } from './authentication/email-domain-hooks'
 import { otpModule } from './authentication/otp/otp-module'
 import { passwordlessAuthModule } from './authentication/passwordless-auth.module'
 import { verifiedDomainHooks } from './authentication/verified-domain-hooks'
@@ -45,6 +46,8 @@ import { apiKeyModule } from './ee/api-keys/api-key-module'
 import { platformOAuth2Service } from './ee/app-connections/platform-oauth2-service'
 import { appSumoModule } from './ee/appsumo/appsumo.module'
 import { auditEventModule } from './ee/audit-logs/audit-event-module'
+import { emailDomainModule } from './ee/authentication/email-domain/email-domain.module'
+import { emailDomainService } from './ee/authentication/email-domain/email-domain.service'
 import { enterpriseLocalAuthnModule } from './ee/authentication/enterprise-local-authn/enterprise-local-authn-module'
 import { federatedAuthModule } from './ee/authentication/federated-authn/federated-authn-module'
 import { rbacMiddleware } from './ee/authentication/project-role/rbac-middleware'
@@ -371,6 +374,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(appSumoModule)
             await app.register(signingKeyModule)
             await app.register(authnSsoSamlModule)
+            await app.register(emailDomainModule)
             await app.register(managedAuthnModule)
             await app.register(oauthAppModule)
             await app.register(platformPieceModule)
@@ -408,6 +412,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
                 getPublicApiBaseUrl: (params) => embedSubdomainService(log).getPublicApiBaseUrl(params),
             }))
             verifiedDomainHooks.set(authnSsoSamlService)
+            emailDomainHooks.set(emailDomainService)
             flowPublishHooks.set((log) => ({ assertReferencesResolve: assertAgentsResolveInProject, findMissingRequiredActions: (params) => pieceSetRequiredActions(log).findMissing(params) }))
             aiUsageHooks.set(agentConversationCreditsHooks)
             eventDestinationHooks.set(eventDestinationEntitlementHooks)
@@ -423,6 +428,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(projectMemberModule)
             await app.register(signingKeyModule)
             await app.register(authnSsoSamlModule)
+            await app.register(emailDomainModule)
             await app.register(managedAuthnModule)
             await app.register(oauthAppModule)
             await app.register(platformPieceModule)
@@ -461,6 +467,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             flowPublishHooks.set((log) => ({ assertReferencesResolve: assertAgentsResolveInProject, findMissingRequiredActions: (params) => pieceSetRequiredActions(log).findMissing(params) }))
             aiUsageHooks.set(agentConversationCreditsHooks)
             eventDestinationHooks.set(eventDestinationEntitlementHooks)
+            emailDomainHooks.set(emailDomainService)
             break
         case ApEdition.COMMUNITY:
             await app.register(denoMigrationModule)

@@ -673,6 +673,7 @@ function toPlatformPlanFlags(grantedFeatureIds: ReadonlySet<string>): PlatformPl
         ssoEnabled: grantedFeatureIds.has(FeatureFlagId.SSO_ENABLED),
         secretManagersEnabled: grantedFeatureIds.has(FeatureFlagId.SECRET_MANAGERS_ENABLED),
         scimEnabled: grantedFeatureIds.has(FeatureFlagId.SCIM_ENABLED),
+        multipleEmailDomainsEnabled: grantedFeatureIds.has(FeatureFlagId.MULTIPLE_EMAIL_DOMAINS_ENABLED),
     }
 }
 

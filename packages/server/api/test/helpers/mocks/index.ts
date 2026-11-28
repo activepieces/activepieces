@@ -191,6 +191,7 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         plan: platformPlan?.plan,
         secretManagersEnabled: platformPlan?.secretManagersEnabled ?? false,
         scimEnabled: platformPlan?.scimEnabled ?? false,
+        multipleEmailDomainsEnabled: platformPlan?.multipleEmailDomainsEnabled ?? false,
         canary: platformPlan?.canary ?? false,
         customDomainsEnabled: false,
     }
