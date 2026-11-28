@@ -106,7 +106,6 @@ const newVideoTriggerFields: Fields = [
       { key: 'pubdate', label: 'Channel Created At', format: 'datetime' },
     ],
   },
-  { key: '_dedupe_key', label: 'Deduplication Key' },
 ];
 
 const thumbnailFields: Fields = [
