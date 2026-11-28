@@ -1,43 +1,50 @@
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-} from '@activepieces/pieces-common';
-import { Property } from '@activepieces/pieces-framework';
-import { BASE_URL } from './auth';
-import { cometApiAuth } from './auth';
+import { DropdownState, Property } from '@activepieces/pieces-framework';
+import { cometApiAuth } from '../auth';
+import { cometApiApi } from './api';
 
-export const modelIdDropdown = Property.Dropdown({
-  displayName: 'Model',
-  auth: cometApiAuth,
-  refreshers: [],
-  required: true,
-  options: async ({ auth }) => {
-    if (!auth) {
+function model<R extends boolean>({
+  required,
+  displayName = 'Model',
+  description,
+}: PropParams<R>) {
+  return Property.Dropdown({
+    displayName,
+    description,
+    auth: cometApiAuth,
+    refreshers: [],
+    required,
+    options: async ({ auth }) => {
+      if (!auth) {
+        return disabledOptions({
+          placeholder: 'Please connect your account first.',
+        });
+      }
+
+      const models = await cometApiApi.listModels({ auth });
+
       return {
-        placeholder: 'Please connect your account first.',
-        disabled: true,
-        options: [],
+        disabled: false,
+        options: models.map((model) => ({
+          label: `${model.id} (${model.owned_by})`,
+          value: model.id,
+        })),
       };
-    }
+    },
+  });
+}
 
-    const response = await httpClient.sendRequest<{
-      data: Array<{ id: string; owned_by: string }>;
-    }>({
-      url: BASE_URL + '/models',
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: auth.secret_text,
-      },
-      method: HttpMethod.GET,
-    });
+function disabledOptions({
+  placeholder,
+}: {
+  placeholder: string;
+}): DropdownState<never> {
+  return { disabled: true, options: [], placeholder };
+}
 
-    return {
-      disabled: false,
-      options: response.body.data.map((model) => ({
-        label: `${model.id} (${model.owned_by})`,
-        value: model.id,
-      })),
-    };
-  },
-});
+export const cometApiProps = { model };
+
+export type PropParams<R extends boolean> = {
+  required: R;
+  displayName?: string;
+  description?: string;
+};

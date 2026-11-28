@@ -1,9 +1,5 @@
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-} from '@activepieces/pieces-common';
-import { PieceAuth } from '@activepieces/pieces-framework';
+import { AppConnectionType, PieceAuth } from '@activepieces/pieces-framework';
+import { cometApiApi } from './common/api';
 
 const markdownDescription = `
 Follow these instructions to get your CometAPI Key:
@@ -13,21 +9,14 @@ Follow these instructions to get your CometAPI Key:
 3. Copy the key and paste it below.
 `;
 
-export const BASE_URL = 'https://api.cometapi.com/v1';
-
 export const cometApiAuth = PieceAuth.SecretText({
   description: markdownDescription,
   displayName: 'API Key',
   required: true,
   validate: async ({ auth }) => {
     try {
-      await httpClient.sendRequest({
-        url: BASE_URL + '/models',
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: auth,
-        },
-        method: HttpMethod.GET,
+      await cometApiApi.listModels({
+        auth: { type: AppConnectionType.SECRET_TEXT, secret_text: auth },
       });
 
       return { valid: true };

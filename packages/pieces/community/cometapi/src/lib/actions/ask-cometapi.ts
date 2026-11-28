@@ -1,54 +1,30 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  HttpMethod,
-  HttpRequest,
-  httpClient,
-  propsValidation,
-} from '@activepieces/pieces-common';
-import { cometApiAuth } from '../common/auth';
-import * as z from 'zod/mini'
-import { modelIdDropdown } from '../common/props';
-
-interface CometApiChatResponse {
-  id: string;
-  object: string;
-  created: number;
-  model: string;
-  choices: {
-    index: number;
-    message: {
-      role: string;
-      content: string;
-    };
-    finish_reason: string;
-  }[];
-  usage: {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
-  };
-}
-
-interface ChatMessage {
-  role: 'system' | 'user' | 'assistant';
-  content: string;
-}
+import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
+import * as z from 'zod/mini';
+import { cometApiAuth } from '../auth';
+import { cometApiClient } from '../common/client';
+import { cometApiProps } from '../common/props';
+import { askCometApiOutputSchema } from '../output-schemas';
+import type {
+  CometApiChatMessage,
+  CometApiChatResponse,
+} from '../common/types';
 
 export const askCometApiAction = createAction({
-  audience: 'both',
+  audience: 'human',
   name: 'ask-cometapi',
   classification: 'READ',
   displayName: 'Ask CometAPI',
   description: 'Sends a prompt to any AI model supported by CometAPI.',
   aiMetadata: {
     description:
-      'Sends a single-turn chat completion (one prompt plus an optional system message, with no multi-turn history) to any model in the CometAPI catalog, which fronts OpenAI, Anthropic, Gemini and other vendors behind one key. Requires a model id chosen from CometAPI\'s live model list, and accepts temperature, top_p and max tokens as optional sampling controls; pick it when the model should be selectable at runtime rather than fixed to a single vendor, and use this piece\'s Custom API Call for any other CometAPI endpoint such as image generation or embeddings. Not idempotent: each call runs a fresh generation and consumes tokens.',
+      "Sends a single-turn chat completion (one prompt plus an optional system message, with no multi-turn history) to any model in the CometAPI catalog, which fronts OpenAI, Anthropic, Gemini and other vendors behind one key. Requires a model id chosen from CometAPI's live model list, and accepts temperature, top_p and max tokens as optional sampling controls; pick it when the model should be selectable at runtime rather than fixed to a single vendor, and use this piece's Custom API Call for any other CometAPI endpoint such as image generation or embeddings. Not idempotent: each call runs a fresh generation and consumes tokens.",
     idempotent: false,
   },
   auth: cometApiAuth,
+  outputSchema: askCometApiOutputSchema,
   props: {
-    model: modelIdDropdown,
+    model: cometApiProps.model({ required: true }),
     prompt: Property.LongText({
       displayName: 'Prompt',
       required: true,
@@ -81,7 +57,6 @@ export const askCometApiAction = createAction({
   },
 
   async run(context) {
-    // Validate input parameters
     await propsValidation.validateZod(context.propsValue, {
       temperature: z.optional(z.number().check(z.minimum(0), z.maximum(2))),
       topP: z.optional(z.number().check(z.minimum(0), z.maximum(1))),
@@ -91,8 +66,7 @@ export const askCometApiAction = createAction({
     const { model, prompt, systemMessage, temperature, maxTokens, topP } =
       context.propsValue;
 
-    // Build messages array
-    const messages: ChatMessage[] = [];
+    const messages: CometApiChatMessage[] = [];
 
     if (systemMessage) {
       messages.push({
@@ -106,48 +80,37 @@ export const askCometApiAction = createAction({
       content: prompt,
     });
 
-    // Build request body
     const requestBody: Record<string, unknown> = {
       model: model,
       messages: messages,
     };
 
-    // Add optional parameters
     if (temperature !== undefined) requestBody['temperature'] = temperature;
     if (maxTokens !== undefined) requestBody['max_tokens'] = maxTokens;
     if (topP !== undefined) requestBody['top_p'] = topP;
 
-    // Build request
-    const request: HttpRequest = {
-      url: 'https://api.cometapi.com/v1/chat/completions',
-      method: HttpMethod.POST,
-      body: requestBody,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth.secret_text,
-      },
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    };
-
     try {
-      const response = await httpClient.sendRequest<CometApiChatResponse>(
-        request
-      );
+      const response = await cometApiClient.request<CometApiChatResponse>({
+        auth: context.auth,
+        method: HttpMethod.POST,
+        path: '/chat/completions',
+        body: requestBody,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-      const responseContent = response.body.choices[0]?.message?.content;
+      const responseContent = response.choices[0]?.message?.content;
       if (!responseContent) {
         throw new Error('No response content received from API');
       }
 
       return {
         response: responseContent.trim(),
-        model: response.body.model,
-        usage: response.body.usage,
+        model: response.model,
+        usage: response.usage,
       };
     } catch (error: unknown) {
-      // Detailed error handling
       const errorObj = error as {
         response?: { status?: number; body?: { error?: { message?: string } } };
         message?: string;
