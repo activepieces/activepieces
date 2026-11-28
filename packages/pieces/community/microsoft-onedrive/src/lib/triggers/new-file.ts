@@ -15,7 +15,7 @@ export const newFile = createTrigger({
 	classification: 'READ',
 	displayName: 'New File',
 	outputSchema: newFileTriggerOutputSchema,
-	description: 'Trigger when a new file is uploaded.',
+	description: 'Triggers when a new file is added to a folder.',
 	aiMetadata: {
 		description: 'Fires when a new file appears in the watched Microsoft OneDrive folder, polling by file creation time. Scope it to a specific folder via the parent folder ID, or leave it empty to watch the drive root; subfolders are not included and folders themselves do not trigger it.',
 	},

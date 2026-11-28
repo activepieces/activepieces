@@ -17,26 +17,43 @@ export const uploadFile = createAction({
   auth: oneDriveAuth,
   name: 'upload_onedrive_file',
   classification: 'WRITE',
-  description: 'Upload a file to your Microsoft OneDrive with chunked upload if the file is larger than 4MiB',
+  description: 'Upload a file to OneDrive. Large files upload in chunks.',
   audience: 'human',
   aiMetadata: { description: 'Upload a file to a Microsoft OneDrive folder, given a target file name, the file content, and an optional parent folder (defaults to the drive root). Large files (over 4MiB) are uploaded in chunks automatically. Idempotent: uploading the same file name to the same folder overwrites the existing item rather than creating a duplicate.', idempotent: true },
-  displayName: 'Upload file',
+  displayName: 'Upload File',
   outputSchema: uploadFileOutputSchema,
   props: {
-    fileName: Property.ShortText({
-      displayName: 'File name',
-      description: 'The name the file should be saved as (e.g. file.txt)',
-      required: true,
-    }),
     file: Property.File({
       displayName: 'File',
-      description: 'The file URL or base64 to upload',
+      description: 'The file to upload.',
       required: true,
       streaming: true,
+    }),
+    fileName: Property.ShortText({
+      displayName: 'File Name',
+      description: 'Name to save the file as, with its extension.',
+      placeholder: 'report.pdf',
+      required: true,
     }),
     markdown:oneDriveCommon.parentFolderInfo,
     parentId: oneDriveCommon.parentFolder,
   },
+  propertyGroups: [
+    {
+      key: 'file',
+      display: 'section',
+      label: 'File to Upload',
+      icon: 'paperclip',
+      props: ['file', 'fileName'],
+    },
+    {
+      key: 'destination',
+      display: 'section',
+      label: 'Save To',
+      icon: 'send',
+      props: ['markdown', 'parentId'],
+    },
+  ],
   async run(context) {
     const fileData = context.propsValue.file;
     const mimeTypeLookup = mime.lookup(
@@ -46,7 +63,7 @@ export const uploadFile = createAction({
       ? mimeTypeLookup
       : 'application/octet-stream';
     const encodedFilename = encodeURIComponent(context.propsValue.fileName);
-    const parentId = context.propsValue.parentId ?? 'root';
+    const parentId = context.propsValue.parentId || 'root';
     const cloud = getCloudProp(context.auth);
     const baseUrl = oneDriveCommon.getBaseUrl(cloud);
 

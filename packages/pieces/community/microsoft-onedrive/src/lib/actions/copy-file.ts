@@ -28,13 +28,12 @@ export const copyFile = createAction({
     markdown: oneDriveCommon.parentFolderInfo,
     sourceFolderId: oneDriveCommon.folderDropdown({
       displayName: 'Source Folder',
-      description: 'The folder containing the file to copy. Leave empty to browse files in the root folder.',
+      description: 'Folder to browse for the file. Empty: the root folder.',
     }),
     fileId: Property.Dropdown({
       auth: oneDriveAuth,
       displayName: 'File',
-      description:
-        'The file to copy. If the file is not listed (up to 1000 files are fetched), toggle the dynamic input (F) and enter the file ID directly.',
+      description: 'Lists files in the Source Folder, up to 1,000.',
       required: true,
       refreshers: ['sourceFolderId'],
       options: async ({ auth, sourceFolderId }) => {
@@ -42,7 +41,7 @@ export const copyFile = createAction({
           return {
             disabled: true,
             options: [],
-            placeholder: 'Please authenticate first',
+            placeholder: 'Please connect your account first',
           };
         }
 
@@ -78,29 +77,48 @@ export const copyFile = createAction({
       },
     }),
     destinationFolderId: oneDriveCommon.folderDropdown({
-      displayName: 'Destination Folder',
-      description: 'The folder to copy the file into. Leave empty to copy it into the same folder as the source file.',
+      displayName: 'Folder',
+      description: 'Empty: same folder as the original. Not listed? Use ƒ.',
+      width: 'half',
     }),
     newName: Property.ShortText({
       displayName: 'New Name',
-      description: 'A new name for the copied file (e.g. report-copy.xlsx). If left empty, the original name is used.',
+      description: 'Leave empty to keep the original name.',
+      placeholder: 'report-copy.xlsx',
+      width: 'half',
       required: false,
     }),
     conflictBehavior: Property.StaticDropdown({
-      displayName: 'Conflict Behavior',
-      description:
-        'What to do if a file with the same name already exists in the destination folder. Note: personal OneDrive (consumer) accounts do not support this option and may fail on name conflicts regardless of the selection.',
+      displayName: 'If the Name Is Taken',
+      description: 'Not supported on personal OneDrive; a name clash may fail.',
+      display: 'cards',
       required: true,
       defaultValue: 'rename',
       options: {
         options: [
-          { label: 'Rename with a number', value: 'rename' },
-          { label: 'Overwrite existing file', value: 'replace' },
-          { label: 'Fail on conflict', value: 'fail' },
+          { label: 'Rename', value: 'rename', description: 'Add a number', icon: 'tag' },
+          { label: 'Overwrite', value: 'replace', description: 'Replace it', icon: 'file' },
+          { label: 'Fail', value: 'fail', description: 'Stop', icon: 'blank' },
         ],
       },
     }),
   },
+  propertyGroups: [
+    {
+      key: 'source',
+      display: 'section',
+      label: 'File to Copy',
+      icon: 'file',
+      props: ['markdown', 'sourceFolderId', 'fileId'],
+    },
+    {
+      key: 'destination',
+      display: 'section',
+      label: 'Copy To',
+      icon: 'send',
+      props: ['destinationFolderId', 'newName', 'conflictBehavior'],
+    },
+  ],
   async run(context) {
     const { fileId, destinationFolderId, newName, conflictBehavior } = context.propsValue;
     const cloud = getCloudProp(context.auth);

@@ -19,12 +19,12 @@ vi.mock('@activepieces/pieces-common', async (importOriginal) => {
 
 type UploadFileContext = Parameters<typeof uploadFile.run>[0];
 
-function buildContext(file: ApFile | { body: Readable; filename: string; extension?: string; size?: number }): UploadFileContext {
+function buildContext(file: ApFile | { body: Readable; filename: string; extension?: string; size?: number }, parentId = 'root'): UploadFileContext {
   const base = createMockActionContext({
     propsValue: {
       fileName: 'report.xlsx',
       file,
-      parentId: 'root',
+      parentId,
       markdown: undefined,
     },
   });
@@ -96,5 +96,14 @@ describe('OneDrive upload file on engines without streaming file support', () =>
     const request = sendRequest.mock.calls[0][0];
     expect(request.headers['Content-length']).toBe(String(data.length));
     expect(await readableToBuffer(request.body)).toEqual(data);
+  });
+
+  test('falls back to the drive root when the parent folder is empty', async () => {
+    const data = Buffer.from('small-file');
+    const file = new ApFile('report.xlsx', data, 'xlsx');
+
+    await uploadFile.run(buildContext(file, ''));
+
+    expect(sendRequest.mock.calls[0][0].url).toContain('/items/root:/');
   });
 });

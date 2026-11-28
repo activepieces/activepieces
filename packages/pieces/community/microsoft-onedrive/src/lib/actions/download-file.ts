@@ -14,7 +14,7 @@ export const downloadFile = createAction({
   auth: oneDriveAuth,
   name: 'download_file',
   classification: 'READ',
-  description: 'Get and download a file using a File ID or filename.',
+  description: 'Get a file and its content by ID or name.',
   audience: 'human',
   aiMetadata: { description: 'Retrieve a single file from Microsoft OneDrive and download its content, looking it up either by its File ID or by its exact file name (a name lookup searches the drive and resolves to the matching file). Use when you need the file bytes plus its metadata; when only metadata is needed prefer a list action. Read-only and idempotent.', idempotent: true },
   displayName: 'Get File',
@@ -24,17 +24,18 @@ export const downloadFile = createAction({
       displayName: 'Look Up By',
       required: true,
       defaultValue: 'id',
+      display: 'cards',
       options: {
         options: [
-          { label: 'File ID', value: 'id' },
-          { label: 'File Name', value: 'name' },
+          { label: 'File ID', value: 'id', description: 'Exact ID', icon: 'tag' },
+          { label: 'File Name', value: 'name', description: 'Exact name', icon: 'text' },
         ],
       },
     }),
     fileIdentifier: Property.ShortText({
-      displayName: 'File ID / File Name',
-      description:
-        'Enter the File ID or the exact filename depending on the "Look Up By" selection',
+      displayName: 'File ID or Name',
+      description: 'File ID, or exact file name searched across your OneDrive.',
+      placeholder: 'report.xlsx',
       required: true,
     }),
   },
