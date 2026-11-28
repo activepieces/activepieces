@@ -8998,6 +8998,20 @@
         "vitest": "5.0.5",
       },
     },
+    "packages/pieces/community/sprinklr": {
+      "name": "@activepieces/piece-sprinklr",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+        "vitest": "5.0.5",
+      },
+    },
     "packages/pieces/community/square": {
       "name": "@activepieces/piece-square",
       "version": "1.0.3",
@@ -12913,6 +12927,8 @@
     "@activepieces/piece-splitwise": ["@activepieces/piece-splitwise@workspace:packages/pieces/community/splitwise"],
 
     "@activepieces/piece-spotify": ["@activepieces/piece-spotify@workspace:packages/pieces/community/spotify"],
+
+    "@activepieces/piece-sprinklr": ["@activepieces/piece-sprinklr@workspace:packages/pieces/community/sprinklr"],
 
     "@activepieces/piece-square": ["@activepieces/piece-square@workspace:packages/pieces/community/square"],
 

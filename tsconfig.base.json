@@ -1343,6 +1343,9 @@
       "@activepieces/piece-spotify": [
         "packages/pieces/community/spotify/src/index.ts"
       ],
+      "@activepieces/piece-sprinklr": [
+        "packages/pieces/community/sprinklr/src/index.ts"
+      ],
       "@activepieces/piece-square": [
         "packages/pieces/community/square/src/index.ts"
       ],
