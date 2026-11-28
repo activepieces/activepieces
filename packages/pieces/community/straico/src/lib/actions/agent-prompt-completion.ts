@@ -13,19 +13,30 @@ export const agentPromptCompletion = createAction({
   auth: straicoAuth,
   name: 'agent_prompt_completion',
   displayName: 'Agent Prompt Completion',
-  description: 'Prompt an agent with a message and get a response',
+  description: 'Ask a saved agent a question and get its reply.',
   aiMetadata: { description: 'Runs a prompt against a saved Straico agent, which supplies its own custom system prompt, default LLM and attached RAG base, so no model has to be chosen at call time. Pick this when the persona and knowledge are already configured server-side; prefer RAG Prompt Completion to query a knowledge base directly with an explicit model, or Ask AI for a plain one-off completion with no agent or retrieval. Requires the agent id and a prompt; the retrieval controls (search type similarity, mmr or similarity score threshold, plus k, fetch k, lambda mult and score threshold) only matter when the agent has a RAG attached. Not idempotent: each call spends credits and produces a fresh answer.', idempotent: false },
+  propertyGroups: [
+    {
+      key: 'query',
+      display: 'section',
+      label: 'Query',
+      icon: 'send',
+      props: ['agentId', 'prompt'],
+    },
+  ],
   props: {
-    agentId: agentIdDropdown('Agent','Select the agent to prompt.'),
+    agentId: agentIdDropdown('Agent','The agent to ask.'),
     prompt: Property.LongText({
-      displayName: 'Prompt',
+      displayName: 'Question',
       required: true,
-      description: 'The text prompt for the agent',
+      description: 'What to ask the agent.',
+      placeholder: 'e.g. What is our refund policy?',
     }),
     searchType: Property.StaticDropdown({
       displayName: 'Search Type',
       required: false,
-      description: 'The search type to use for RAG model',
+      description: "How passages are picked from the agent's knowledge base.",
+      advanced: true,
       options:  {
         disabled:false,
           options: [
@@ -37,24 +48,28 @@ export const agentPromptCompletion = createAction({
       },
     }),
     k: Property.Number({
-      displayName: 'Number of Documents',
+      displayName: 'Number of Passages',
       required: false,
-      description: 'Number of documents to return',
+      description: 'How many passages to use.',
+      advanced: true,
     }),
     fetchK: Property.Number({
       displayName: 'Fetch K',
       required: false,
-      description: 'Amount of documents to pass to MMR algorithm',
+      description: 'MMR only. Passages considered before picking.',
+      advanced: true,
     }),
     lambdaMult: Property.Number({
       displayName: 'Lambda Mult',
       required: false,
-      description: 'Diversity of results returned by MMR (0 for minimum, 1 for maximum)',
+      description: 'MMR only. From 0 to 1. Lower gives more varied passages.',
+      advanced: true,
     }),
     scoreThreshold: Property.Number({
       displayName: 'Score Threshold',
       required: false,
-      description: 'Minimum relevance threshold for similarity_score_threshold',
+      description: 'Similarity Score Threshold only. Minimum relevance, 0 to 1.',
+      advanced: true,
     }),
   },
   async run({ auth, propsValue }) {

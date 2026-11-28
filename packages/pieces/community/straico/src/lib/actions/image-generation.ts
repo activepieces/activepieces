@@ -13,14 +13,13 @@ export const imageGeneration = createAction({
   auth: straicoAuth,
   name: 'image_generation',
   displayName: 'Image Generation',
-  description: 'Enables users to generate high-quality images based on textual descriptions.',
+  description: 'Create images from a text description.',
   aiMetadata: { description: 'Generates one to four new images from a text description using a Straico image model such as DALL-E 3, in square, landscape or portrait shape, and returns their hosted URLs plus a zip. This is the only image-producing action in the piece; use Ask AI instead when the goal is text, including describing or reasoning about an image that has already been uploaded. Requires a model, a size, an image count and a detailed description; each generated image is billed separately. Not idempotent: every call renders fresh images even for an identical prompt.', idempotent: false },
   props: {
     variations: Property.StaticDropdown({
       displayName: 'Number of Images',
       required: true,
-      description:
-        'Number of images to generate.',
+      description: 'How many images to create. Each one is billed.',
       defaultValue: 1,
       options: {
         disabled: false,
@@ -37,7 +36,7 @@ export const imageGeneration = createAction({
 
       displayName: 'Model',
       required: true,
-      description: 'Select the image generation model.',
+      description: 'The Straico image model.',
       defaultValue: 'openai/dall-e-3',
       refreshers: ['auth'],
       refreshOnSearch: true,
@@ -45,6 +44,7 @@ export const imageGeneration = createAction({
         if (!auth) {
           return {
             disabled: true,
+            placeholder: 'Connect your Straico account first',
             options: [],
           };
         }
@@ -89,25 +89,25 @@ export const imageGeneration = createAction({
       },
     }),
     size: Property.StaticDropdown({
-      displayName: 'Image Dimensions',
+      displayName: 'Shape',
       required: true,
-      description:
-        'The desired image dimensions.',
+      description: "The image's aspect ratio.",
       defaultValue: 'square',
+      display: 'cards',
       options: {
         disabled: false,
         options: [
-          { value: 'square', label: 'square' },
-          { value: 'landscape', label: 'landscape' },
-          { value: 'portrait', label: 'portrait' }
+          { value: 'square', label: 'Square', description: '1:1' },
+          { value: 'landscape', label: 'Landscape', description: 'Wide' },
+          { value: 'portrait', label: 'Portrait', description: 'Tall' }
         ],
       },
     }),
     description: Property.LongText({
       displayName: 'Description',
       required: true,
-      description:
-      'A detailed textual description of the image to be generated.',
+      description: 'What the image should show, in as much detail as you like.',
+      placeholder: 'e.g. A watercolor fox in a snowy forest at dawn',
     }),
   },
   async run({ auth, propsValue }) {

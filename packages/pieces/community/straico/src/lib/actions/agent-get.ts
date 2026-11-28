@@ -29,7 +29,7 @@ export const agentGet = createAction({
   auth: straicoAuth,
   name: 'agent_get',
   displayName: 'Get Agent Details',
-  description: 'Retrieve details of a specific agent',
+  description: "Get an agent's settings.",
   aiMetadata: { description: 'Fetches the full configuration of one Straico agent by id, including its custom prompt, default LLM, status, visibility and any attached RAG base. Use it to inspect or verify a single agent before prompting or updating it; prefer List Agents when the id is not known yet or when several agents must be compared. Requires the agent id. Read-only and idempotent.', idempotent: true },
   props: {
     agentId:agentIdDropdown('Agent','Select the agent to get details for.')

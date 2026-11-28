@@ -1,13 +1,13 @@
 import { straicoAuth } from '../auth';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import {
   AuthenticationType,
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
 import { baseUrlv0, baseUrlv1 } from '../common/common';
+import { agentIdDropdown } from '../common/props';
 
-// Interface for agent update request body
 interface AgentUpdateRequestBody {
   name?: string;
   description?: string;
@@ -17,7 +17,6 @@ interface AgentUpdateRequestBody {
   visibility?: 'private' | 'public';
 }
 
-// Interface for agent update response data
 interface AgentUpdateResponse {
   _id: string;
   uuid4: string;
@@ -42,86 +41,57 @@ export const agentUpdate = createAction({
   auth: straicoAuth,
   name: 'agent_update',
   displayName: 'Update Agent',
-  description: 'Update the details of a specific agent',
+  description: "Change an agent's details, model or status.",
   aiMetadata: { description: 'Edits an existing Straico agent in place, changing any subset of its name, description, custom prompt, default LLM, status (active or inactive) and visibility (private or public). Use it to retune or pause an agent instead of recreating it with Create Agent, and use Add RAG to Agent when the change is attaching a knowledge base rather than editing these fields. Requires the agent id plus at least one field to change, otherwise the call fails. Idempotent: sending the same values leaves the agent in the same state.', idempotent: true },
+  propertyGroups: [
+    {
+      key: 'target',
+      display: 'section',
+      label: 'Agent to Update',
+      icon: 'user',
+      props: ['agentId'],
+    },
+    {
+      key: 'changes',
+      display: 'section',
+      label: 'Changes',
+      icon: 'sliders',
+      props: ['changesInfo', 'name', 'description', 'customPrompt', 'defaultLlm', 'status', 'visibility'],
+    },
+  ],
   props: {
-    agentId: Property.Dropdown({
-  auth: straicoAuth,
-
-      displayName: 'Agent',
-      required: true,
-      description: 'Select the agent to update',
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Please authenticate first',
-            options: [],
-          };
-        }
-
-        const response = await httpClient.sendRequest<{
-          success: boolean;
-          data: Array<{
-            _id: string;
-            name: string;
-          }>;
-        }>({
-          url: `${baseUrlv0}/agent`,
-          method: HttpMethod.GET,
-          authentication: {
-            type: AuthenticationType.BEARER_TOKEN,
-            token: auth.secret_text,
-          },
-        });
-
-        if (response.body.success && response.body.data) {
-          return {
-            options: response.body.data.map((agent) => {
-              return {
-                label: agent.name,
-                value: agent._id,
-              };
-            }),
-          };
-        }
-
-        return {
-          disabled: true,
-          placeholder: 'No agents found',
-          options: [],
-        };
-      },
+    agentId: agentIdDropdown('Agent','The agent to change.'),
+    changesInfo: Property.MarkDown({
+      value: 'Only the fields you fill in are changed.',
+      variant: MarkdownVariant.INFO,
     }),
     name: Property.ShortText({
       displayName: 'Name',
       required: false,
-      description: 'New name for the agent',
+      description: "The agent's new name.",
     }),
     description: Property.LongText({
       displayName: 'Description',
       required: false,
-      description: 'New description for the agent',
+      description: "The agent's new description.",
     }),
     customPrompt: Property.LongText({
-      displayName: 'Custom Prompt',
+      displayName: 'Instructions',
       required: false,
-      description: 'New custom prompt for the agent',
+      description: 'New instructions for the agent.',
     }),
     defaultLlm: Property.Dropdown({
   auth: straicoAuth,
 
       displayName: 'Default LLM',
       required: false,
-      description: 'New default LLM for the agent',
+      description: 'The chat model the agent uses.',
       refreshers: ['auth'],
-      defaultValue: 'openai/gpt-4o-mini',
       options: async ({ auth }) => {
         if (!auth) {
           return {
             disabled: true,
-            placeholder: 'Enter your API key first',
+            placeholder: 'Connect your Straico account first',
             options: [],
           };
         }
@@ -163,7 +133,8 @@ export const agentUpdate = createAction({
     status: Property.StaticDropdown({
       displayName: 'Status',
       required: false,
-      description: 'New status for the agent',
+      description: 'Whether the agent is active.',
+      width: 'half',
       options:  {
         disabled:false,
           options: [
@@ -176,7 +147,8 @@ export const agentUpdate = createAction({
     visibility: Property.StaticDropdown({
       displayName: 'Visibility',
       required: false,
-      description: 'New visibility setting for the agent',
+      description: 'Who can see the agent.',
+      width: 'half',
       options:  {
         disabled:false,
           options: [
@@ -204,15 +176,13 @@ export const agentUpdate = createAction({
 
     const requestBody: AgentUpdateRequestBody = {};
     
-    // Add properties to request body only if they are defined
-    if (name !== undefined) requestBody.name = name;
-    if (description !== undefined) requestBody.description = description;
-    if (customPrompt !== undefined) requestBody.custom_prompt = customPrompt;
-    if (defaultLlm !== undefined) requestBody.default_llm = defaultLlm;
-    if (status !== undefined) requestBody.status = status as 'active' | 'inactive';
-    if (visibility !== undefined) requestBody.visibility = visibility as 'private' | 'public';
+    if (name !== undefined && name !== '') requestBody.name = name;
+    if (description !== undefined && description !== '') requestBody.description = description;
+    if (customPrompt !== undefined && customPrompt !== '') requestBody.custom_prompt = customPrompt;
+    if (defaultLlm !== undefined && defaultLlm !== '') requestBody.default_llm = defaultLlm;
+    if (status !== undefined && status !== '') requestBody.status = status as 'active' | 'inactive';
+    if (visibility !== undefined && visibility !== '') requestBody.visibility = visibility as 'private' | 'public';
 
-    // Only proceed if at least one property to update was provided
     if (Object.keys(requestBody).length === 0) {
       throw new Error('At least one property to update must be provided');
     }

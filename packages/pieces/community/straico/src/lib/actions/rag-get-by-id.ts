@@ -12,13 +12,14 @@ export const getRagById = createAction({
   auth: straicoAuth,
   name: 'get_rag_by_id',
   displayName: 'Get RAG by ID',
-  description: 'Retrieve a specific RAG (Retrieval-Augmented Generation) base by its ID.',
+  description: "Get a knowledge base's details by its ID.",
   aiMetadata: { description: 'Fetches the stored configuration of one RAG knowledge base, including its name, source filename and chunking settings. Use it to confirm a base exists or inspect how it was indexed before querying it; prefer List RAGs to discover ids or compare bases, and RAG Prompt Completion to actually search its contents, since this returns metadata only and no document text. Requires a raw RAG id typed as text. Read-only and idempotent.', idempotent: true },
   props: {
     ragId: Property.ShortText({
       displayName: 'RAG ID',
       required: true,
-      description: 'The ID of the RAG base to retrieve.',
+      description: 'The knowledge base (RAG) ID. Find it with the List RAGs action.',
+      placeholder: 'e.g. 66a1f0c2b3d4e5f6a7b8c9d0',
     }),
   },
   async run({ auth, propsValue }) {

@@ -35,7 +35,7 @@ Follow these instructions to get your Straico API Key:
 export const straico = createPiece({
   displayName: 'Straico',
   auth: straicoAuth,
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/straico.png',
   deprecated: true,
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
@@ -61,6 +61,12 @@ export const straico = createPiece({
     createCustomApiCallAction({
       auth: straicoAuth,
       baseUrl: () => baseUrlv1,
+      props: {
+        url: {
+          description: 'Full URL, or a path relative to https://api.straico.com/v1',
+          placeholder: '/models',
+        },
+      },
       authMapping: async (auth) => {
         return {
           Authorization: `Bearer ${auth.secret_text}`,

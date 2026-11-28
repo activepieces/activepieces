@@ -13,31 +13,53 @@ export const createRag = createAction({
   auth: straicoAuth,
   name: 'create_rag',
   displayName: 'Create RAG',
-  description: 'Create a new RAG (Retrieval-Augmented Generation) base in the database.',
+  description: 'Create a searchable knowledge base (RAG) from a file.',
   aiMetadata: { description: 'Ingests one uploaded document into a brand new RAG knowledge base that can then be queried with RAG Prompt Completion or attached to an agent, chunking it by fixed size, recursive, markdown, python or semantic strategy. Use it to stand up a new searchable corpus; prefer Update RAG to add another file to a base that already exists, and Upload File when the document only needs a URL to pass into Ask AI rather than being indexed. Requires a name, a description and a file (pdf, docx, csv, txt, xlsx or py); the chunking options apply only to the matching method. Not idempotent: each call creates another RAG base and consumes credits for the ingest.', idempotent: false },
+  propertyGroups: [
+    {
+      key: 'base',
+      display: 'section',
+      label: 'Knowledge Base',
+      icon: 'file',
+      props: ['name', 'description', 'file'],
+    },
+    {
+      key: 'chunking',
+      display: 'section',
+      label: 'Chunking',
+      icon: 'sliders',
+      props: ['chunkingMethod', 'chunkSize', 'chunkOverlap'],
+    },
+    {
+      key: 'method',
+      display: 'section',
+      label: 'Method Options',
+      icon: 'filter',
+      props: ['separator', 'separators', 'breakpointThresholdType', 'bufferSize'],
+    },
+  ],
   props: {
     name: Property.ShortText({
       displayName: 'Name',
       required: true,
-      description: 'Represents the name of the RAG base',
+      description: 'A name to find the knowledge base by.',
     }),
     description: Property.LongText({
       displayName: 'Description',
       required: true,
-      description: 'Represents the description of the agent',
+      description: 'What the knowledge base contains.',
     }),
     file: Property.File({
 			displayName: 'File',
 			required: true,
-			description:
-				'Represents the file to be attached. Accepted file extensions are: pdf, docx, csv, txt, xlsx, py',
+			description: 'A PDF, DOCX, CSV, TXT, XLSX or PY file.',
 		}),
     chunkingMethod: Property.Dropdown({
   auth: straicoAuth,
 
       displayName: 'Chunking Method',
       required: false,
-      description: 'Represents the chunking method to be used for generating the RAG base. The default value is fixed_size',
+      description: 'How the file is split into pieces. Empty: Fixed Size.',
       defaultValue: 'fixed_size',
       refreshers: [],
       options: async () => {
@@ -56,29 +78,32 @@ export const createRag = createAction({
     chunkSize: Property.Number({
       displayName: 'Chunk Size',
       required: false,
-      description: 'The size of each chunk (default: 1000)',
+      width: 'half',
+      description: 'Characters per piece.',
       defaultValue: 1000,
     }),
     chunkOverlap: Property.Number({
       displayName: 'Chunk Overlap',
       required: false,
-      description: 'The overlap between chunks (default: 50)',
+      width: 'half',
+      description: 'Characters shared between pieces.',
       defaultValue: 50,
     }),
     separator: Property.ShortText({
       displayName: 'Separator',
       required: false,
-      description: 'The separator to use for fixed_size chunking method'
+      description: 'Fixed Size only. Text to split on.'
     }),
     separators: Property.Array({
       displayName: 'Separators',
       required: false,
-      description: 'The separators to use for recursive chunking method'
+      description: 'Recursive only. Texts to split on, tried in order.'
     }),
     breakpointThresholdType: Property.StaticDropdown({
-      displayName: 'Breakpoint Threshold Type',
+      displayName: 'Breakpoint Type',
       required: false,
-      description: 'The breakpoint threshold type for semantic chunking method',
+      width: 'half',
+      description: 'Semantic only.',
       options: {
         disabled: false,
           options: [
@@ -93,7 +118,8 @@ export const createRag = createAction({
     bufferSize: Property.Number({
       displayName: 'Buffer Size',
       required: false,
-      description: 'The buffer size for semantic chunking method'
+      width: 'half',
+      description: 'Semantic only. Sentences grouped per comparison.'
     }),
   },
   async run({ auth, propsValue }) {
