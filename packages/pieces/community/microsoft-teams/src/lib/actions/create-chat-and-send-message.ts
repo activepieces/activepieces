@@ -19,22 +19,23 @@ export const createChatAndSendMessageAction = createAction({
 		idempotent: false,
 	},
 	props: {
-		teamId: microsoftTeamsProps.teamId({ required: true }),
+		teamId: microsoftTeamsProps.teamId({ required: true, description: 'Only used to list the members you can add.' }),
 		members:microsoftTeamsProps.memberIds({ required: true }),
 		contentType: Property.StaticDropdown({
-			displayName: 'Message Content Type',
+			displayName: 'Format',
 			required: true,
 			defaultValue: 'text',
+			display: 'cards',
 			options: {
 				disabled: false,
 				options: [
-					{ label: 'Text', value: 'text' },
-					{ label: 'HTML', value: 'html' },
+					{ label: 'Text', value: 'text', description: 'Plain text', icon: 'text' },
+					{ label: 'HTML', value: 'html', description: 'HTML tags', icon: 'code' },
 				],
 			},
 		}),
 		content: Property.LongText({
-			displayName: 'Initial Message',
+			displayName: 'First Message',
 			required: true,
 		}),
 	},

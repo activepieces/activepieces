@@ -10,8 +10,7 @@ export const getMeetingRecordingAction = createAction({
 	name: 'microsoft_teams_get_meeting_recording',
 	classification: 'SEARCH',
 	displayName: 'Get Meeting Recording',
-	description:
-		'Retrieves recordings for a Teams meeting. Provide a Recording to fetch its metadata; omit it to list all available recordings.',
+	description: 'Gets one meeting recording, or lists all of them.',
 	audience: 'human',
 	outputSchema: microsoftTeamsGetMeetingRecordingOutputSchema,
 	aiMetadata: {
@@ -21,7 +20,7 @@ export const getMeetingRecordingAction = createAction({
 	props: {
 		meetingIdentifierType: microsoftTeamsProps.meetingIdentifierType({ required: true }),
 		meetingIdentifierValue: microsoftTeamsProps.meetingIdentifierValue({ required: true }),
-		recordingId: microsoftTeamsProps.recordingId({ required: false }),
+		recordingId: microsoftTeamsProps.recordingId({ required: false, description: 'Leave empty to list all recordings.' }),
 	},
 	async run(context) {
 		const { meetingIdentifierType, meetingIdentifierValue, recordingId } = context.propsValue;

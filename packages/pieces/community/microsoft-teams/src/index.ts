@@ -52,6 +52,12 @@ export const microsoftTeams = createPiece({
     ...microsoftTeamsAiActions,
     createCustomApiCallAction({
       auth: microsoftTeamsAuth,
+      props: {
+        url: {
+          description: 'Full URL, or a path relative to the Graph /v1.0/teams endpoint.',
+          placeholder: '/{team-id}/channels',
+        },
+      },
       baseUrl: (auth) => (auth ? microsoftTeamsClient.baseUrl({ auth }) : ''),
       authMapping: async (auth) => ({
         Authorization: `Bearer ${auth.access_token}`,

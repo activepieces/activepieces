@@ -16,23 +16,28 @@ export const replyToChannelMessageAction = createAction({
 		description: 'Posts a reply under an existing channel message thread in Microsoft Teams, identified by team ID, channel ID, and the parent message ID. Use to respond within a thread rather than start a new top-level message. Not idempotent — each call adds another reply.',
 		idempotent: false,
 	},
+	propertyGroups: [
+		{ key: 'destination', display: 'section', label: 'Reply To', icon: 'reply', props: ['teamId', 'channelId', 'messageId'] },
+		{ key: 'message', display: 'section', label: 'Message', icon: 'text', props: ['contentType', 'content'] },
+	],
 	props: {
 		teamId: microsoftTeamsProps.teamId({ required: true }),
 		channelId: microsoftTeamsProps.channelId({ required: true }),
 		messageId: Property.ShortText({
 			displayName: 'Message ID',
 			required: true,
-			description: 'ID of the parent message to reply to.'
+			description: 'The ID of the message to reply to.',
 		}),
 		contentType: Property.StaticDropdown({
-			displayName: 'Content Type',
+			displayName: 'Format',
 			required: true,
 			defaultValue: 'text',
+			display: 'cards',
 			options: {
 				disabled: false,
 				options: [
-					{ label: 'Text', value: 'text' },
-					{ label: 'HTML', value: 'html' },
+					{ label: 'Text', value: 'text', description: 'Plain text', icon: 'text' },
+					{ label: 'HTML', value: 'html', description: 'HTML tags', icon: 'code' },
 				],
 			},
 		}),

@@ -12,8 +12,7 @@ export const requestApprovalDirectMessage = createAction({
   outputSchema: requestApprovalDirectMessageOutputSchema,
   classification: 'WRITE',
   displayName: 'Request Approval from a User',
-  description:
-    'Send approval message to a user and then wait until the message is approved or disapproved',
+  description: 'Sends an approval request to a chat and waits for the answer.',
   audience: 'both',
   aiMetadata: {
     description: 'Posts an adaptive card with a single button linking to a confirmation page (where the recipient chooses Approve or Disapprove) into a Microsoft Teams chat (by chat ID) and pauses the flow until they respond, then resumes reporting whether it was approved. Use as a human-in-the-loop gate targeting a specific person via direct chat; for a channel-wide gate use Request Approval in Channel instead. Not idempotent — each call posts another approval message and creates a new wait.',
@@ -24,6 +23,7 @@ export const requestApprovalDirectMessage = createAction({
     message: Property.LongText({
       displayName: 'Message',
       required: true,
+      description: 'HTML tags are allowed.',
     }),
   },
   async run(context) {

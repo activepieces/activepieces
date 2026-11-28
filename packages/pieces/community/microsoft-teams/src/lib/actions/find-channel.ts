@@ -11,7 +11,7 @@ export const findChannelAction = createAction({
 	outputSchema: microsoftTeamsFindChannelOutputSchema,
 	classification: 'SEARCH',
 	displayName: 'Find Channel',
-	description: 'Finds channels by name.',
+	description: 'Finds a channel in a team by its exact name.',
 	audience: 'human',
 	aiMetadata: {
 		description: 'Searches the channels of a Microsoft Teams team (by team ID) for ones whose display name exactly matches the given name. Use to resolve a channel name to its ID before posting or reading. Idempotent read-only lookup; match is exact, not a substring search.',
@@ -22,16 +22,18 @@ export const findChannelAction = createAction({
 		channelName: Property.ShortText({
 			displayName: 'Channel Name',
 			required: true,
+			placeholder: 'General',
 		}),
 	},
 	async run(context) {
 		const { teamId, channelName } = context.propsValue;
 
 		const client = microsoftTeamsClient.create({ auth: context.auth });
+		const escapedChannelName = channelName.replace(/'/g, "''");
 
 		const response: MicrosoftTeamsPage<Channel> = await client
 			.api(`/teams/${teamId}/allChannels`)
-			.filter(`displayName eq '${channelName}'`)
+			.filter(`displayName eq '${escapedChannelName}'`)
 			.get();
 
 		return {

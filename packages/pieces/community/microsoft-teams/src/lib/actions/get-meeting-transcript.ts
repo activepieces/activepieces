@@ -11,8 +11,7 @@ export const getMeetingTranscriptAction = createAction({
 	name: 'microsoft_teams_get_meeting_transcript',
 	classification: 'SEARCH',
 	displayName: 'Get Meeting Transcript',
-	description:
-		'Retrieves transcripts for a Teams meeting. Provide a Transcript to fetch its text content; omit it to list all available transcripts.',
+	description: "Gets a transcript's text, or lists all transcripts.",
 	audience: 'human',
 	outputSchema: microsoftTeamsGetMeetingTranscriptOutputSchema,
 	aiMetadata: {
@@ -22,7 +21,7 @@ export const getMeetingTranscriptAction = createAction({
 	props: {
 		meetingIdentifierType: microsoftTeamsProps.meetingIdentifierType({ required: true }),
 		meetingIdentifierValue: microsoftTeamsProps.meetingIdentifierValue({ required: true }),
-		transcriptId: microsoftTeamsProps.transcriptId({ required: false }),
+		transcriptId: microsoftTeamsProps.transcriptId({ required: false, description: 'Leave empty to list all transcripts.' }),
 	},
 	async run(context) {
 		const { meetingIdentifierType, meetingIdentifierValue, transcriptId } = context.propsValue;

@@ -10,7 +10,7 @@ export const getChatMessageAction = createAction({
 	outputSchema: microsoftTeamsGetChatMessageOutputSchema,
 	classification: 'READ',
 	displayName: 'Get Chat Message',
-	description: 'Fetch a specific chat message by chat and message ID.',
+	description: 'Gets one message from a chat.',
 	audience: 'human',
 	aiMetadata: {
 		description: 'Retrieves a single message from a Microsoft Teams chat by chat ID and message ID. Use to read the content or metadata of a known chat message. Idempotent read-only lookup.',

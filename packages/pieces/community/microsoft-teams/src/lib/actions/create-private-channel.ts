@@ -10,7 +10,7 @@ export const createPrivateChannelAction = createAction({
 	outputSchema: microsoftTeamsCreatePrivateChannelOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Create Private Channel',
-	description: 'Create a new private channel in a team.',
+	description: 'Creates a private channel that only invited members can see.',
 	audience: 'human',
 	aiMetadata: {
 		description: 'Creates a new private (membership-restricted) channel inside a Microsoft Teams team, identified by team ID, with a display name and optional description. Use when access should be limited to specific members; for a standard open channel use Create Channel instead. Not idempotent — each call adds another channel.',
@@ -21,9 +21,11 @@ export const createPrivateChannelAction = createAction({
 		channelDisplayName: Property.ShortText({
 			displayName: 'Channel Name',
 			required: true,
+			placeholder: 'Marketing',
 		}),
 		channelDescription: Property.LongText({
-			displayName: 'Channel Description',
+			displayName: 'Description',
+			description: 'Shown under the channel name in Teams.',
 			required: false,
 		}),
 	},

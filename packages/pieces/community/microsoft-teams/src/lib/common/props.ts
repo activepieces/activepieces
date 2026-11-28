@@ -1,4 +1,5 @@
 import { DropdownOption, DropdownState, Property } from '@activepieces/pieces-framework';
+import type { AadUserConversationMember } from '@microsoft/microsoft-graph-types';
 
 import { microsoftTeamsAuth } from '../auth';
 import { microsoftTeamsApi } from './api';
@@ -14,7 +15,7 @@ import type {
   Team,
 } from './types';
 
-function teamId<R extends boolean>({ required, displayName = 'Team ID', description }: PropParams<R>) {
+function teamId<R extends boolean>({ required, displayName = 'Team', description }: PropParams<R>) {
   return Property.Dropdown({
     auth: microsoftTeamsAuth,
     displayName,
@@ -43,7 +44,7 @@ function teamId<R extends boolean>({ required, displayName = 'Team ID', descript
   });
 }
 
-function channelId<R extends boolean>({ required, displayName = 'Channel ID', description }: PropParams<R>) {
+function channelId<R extends boolean>({ required, displayName = 'Channel', description }: PropParams<R>) {
   return Property.Dropdown({
     auth: microsoftTeamsAuth,
     displayName,
@@ -51,8 +52,11 @@ function channelId<R extends boolean>({ required, displayName = 'Channel ID', de
     refreshers: ['teamId'],
     required,
     options: async ({ auth, teamId }) => {
-      if (!auth || !teamId) {
-        return disabledOptions({ placeholder: 'Please connect your account first and select team.' });
+      if (!auth) {
+        return disabledOptions({ placeholder: 'Please connect your account first.' });
+      }
+      if (!teamId) {
+        return disabledOptions({ placeholder: 'Select a team first.' });
       }
       const { items, error } = await microsoftTeamsClient.paginate<Channel>({
         auth,
@@ -72,7 +76,7 @@ function channelId<R extends boolean>({ required, displayName = 'Channel ID', de
   });
 }
 
-function memberIds<R extends boolean>({ required, displayName = 'Member', description }: PropParams<R>) {
+function memberIds<R extends boolean>({ required, displayName = 'Members', description }: PropParams<R>) {
   return Property.MultiSelectDropdown({
     auth: microsoftTeamsAuth,
     displayName,
@@ -80,10 +84,13 @@ function memberIds<R extends boolean>({ required, displayName = 'Member', descri
     refreshers: ['teamId'],
     required,
     options: async ({ auth, teamId }) => {
-      if (!auth || !teamId) {
-        return disabledOptions({ placeholder: 'Please connect your account first and select team.' });
+      if (!auth) {
+        return disabledOptions({ placeholder: 'Please connect your account first.' });
       }
-      const { items, error } = await microsoftTeamsClient.paginate<ConversationMember>({
+      if (!teamId) {
+        return disabledOptions({ placeholder: 'Select a team first.' });
+      }
+      const { items, error } = await microsoftTeamsClient.paginate<AadUserConversationMember>({
         auth,
         path: `/teams/${teamId}/members`,
         maxItems: DROPDOWN_LIST_MAX,
@@ -95,13 +102,15 @@ function memberIds<R extends boolean>({ required, displayName = 'Member', descri
 
       return {
         disabled: false,
-        options: items.map((member) => ({ label: member.displayName ?? '', value: member.id ?? '' })),
+        options: items.flatMap((member) =>
+          member.userId ? [{ label: member.displayName ?? '', value: member.userId }] : [],
+        ),
       };
     },
   });
 }
 
-function chatId<R extends boolean>({ required, displayName = 'Chat ID', description }: PropParams<R>) {
+function chatId<R extends boolean>({ required, displayName = 'Chat', description }: PropParams<R>) {
   return Property.Dropdown({
     auth: microsoftTeamsAuth,
     displayName,
@@ -110,7 +119,7 @@ function chatId<R extends boolean>({ required, displayName = 'Chat ID', descript
     required,
     options: async ({ auth }) => {
       if (!auth) {
-        return disabledOptions({ placeholder: 'Please connect your account first and select team.' });
+        return disabledOptions({ placeholder: 'Please connect your account first.' });
       }
       const { items, error } = await microsoftTeamsClient.paginate<Chat>({
         auth,
@@ -133,8 +142,9 @@ function chatId<R extends boolean>({ required, displayName = 'Chat ID', descript
               ?.filter((member: ConversationMember) => member.displayName)
               .map((member: ConversationMember) => member.displayName)
               .join(',');
+          const typePrefix = chat.chatType ? `(${CHAT_TYPE[chat.chatType]} Chat) ` : '';
           return {
-            label: `(${chat.chatType ? CHAT_TYPE[chat.chatType] : undefined} Chat) ${chatName || '(no title)'}`,
+            label: `${typePrefix}${chatName || '(no title)'}`,
             value: chat.id ?? '',
           };
         }),
@@ -145,20 +155,21 @@ function chatId<R extends boolean>({ required, displayName = 'Chat ID', descript
 
 function meetingIdentifierType<R extends boolean>({
   required,
-  displayName = 'Meeting Identifier Type',
-  description = 'Choose how to identify the meeting.',
+  displayName = 'Find Meeting By',
+  description = 'How you will identify the meeting.',
 }: PropParams<R>) {
   return Property.StaticDropdown({
     displayName,
     description,
     required,
     defaultValue: 'meetingId',
+    display: 'cards',
     options: {
       disabled: false,
       options: [
-        { label: 'Meeting ID', value: 'meetingId' },
-        { label: 'Join Web URL', value: 'joinWebUrl' },
-        { label: 'Join Meeting ID', value: 'joinMeetingId' },
+        { label: 'Meeting ID', value: 'meetingId', description: 'Graph ID', icon: 'tag' },
+        { label: 'Join Web URL', value: 'joinWebUrl', description: 'Meeting link', icon: 'paperclip' },
+        { label: 'Join ID', value: 'joinMeetingId', description: 'Numeric ID', icon: 'calendar' },
       ],
     },
   });
@@ -166,8 +177,8 @@ function meetingIdentifierType<R extends boolean>({
 
 function meetingIdentifierValue<R extends boolean>({
   required,
-  displayName = 'Meeting Identifier Value',
-  description,
+  displayName = 'Meeting',
+  description = 'The meeting ID, join link or join ID chosen above.',
 }: PropParams<R>) {
   return Property.ShortText({ displayName, description, required });
 }
@@ -180,14 +191,16 @@ function transcriptId<R extends boolean>({ required, displayName = 'Transcript',
     refreshers: ['meetingIdentifierType', 'meetingIdentifierValue'],
     required,
     options: async ({ auth, meetingIdentifierType, meetingIdentifierValue }) => {
+      if (!auth) {
+        return disabledOptions({ placeholder: 'Please connect your account first.' });
+      }
       if (
-        !auth ||
         !meetingIdentifierType ||
         !meetingIdentifierValue ||
         typeof meetingIdentifierType !== 'string' ||
         typeof meetingIdentifierValue !== 'string'
       ) {
-        return disabledOptions({ placeholder: 'Please connect your account first and select a meeting.' });
+        return disabledOptions({ placeholder: 'Enter the meeting first.' });
       }
       const client = microsoftTeamsClient.create({ auth });
       const options: DropdownOption<string>[] = [];
@@ -227,14 +240,16 @@ function recordingId<R extends boolean>({ required, displayName = 'Recording', d
     refreshers: ['meetingIdentifierType', 'meetingIdentifierValue'],
     required,
     options: async ({ auth, meetingIdentifierType, meetingIdentifierValue }) => {
+      if (!auth) {
+        return disabledOptions({ placeholder: 'Please connect your account first.' });
+      }
       if (
-        !auth ||
         !meetingIdentifierType ||
         !meetingIdentifierValue ||
         typeof meetingIdentifierType !== 'string' ||
         typeof meetingIdentifierValue !== 'string'
       ) {
-        return disabledOptions({ placeholder: 'Please connect your account first and select a meeting.' });
+        return disabledOptions({ placeholder: 'Enter the meeting first.' });
       }
       const client = microsoftTeamsClient.create({ auth });
       const options: DropdownOption<string>[] = [];

@@ -12,10 +12,11 @@ async function resolveMeetingId({
   identifierValue: string;
 }): Promise<string> {
   if (identifierType === 'meetingId') return identifierValue;
+  const escapedValue = identifierValue.replace(/'/g, "''");
   const filter =
     identifierType === 'joinWebUrl'
-      ? `JoinWebUrl eq '${identifierValue}'`
-      : `joinMeetingIdSettings/joinMeetingId eq '${identifierValue}'`;
+      ? `JoinWebUrl eq '${escapedValue}'`
+      : `joinMeetingIdSettings/joinMeetingId eq '${escapedValue}'`;
   const response: MicrosoftTeamsPage<{ id: string }> = await client
     .api('/me/onlineMeetings')
     .filter(filter)
