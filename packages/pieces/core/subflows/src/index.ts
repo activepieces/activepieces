@@ -7,9 +7,9 @@ import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const flows = createPiece({
   displayName: 'Sub Flows',
-  description: 'Trigger and call another sub flow.',
+  description: 'Call other flows and return their results.',
   auth: PieceAuth.None(),
-  minimumSupportedRelease: '0.82.0',
+  minimumSupportedRelease: '0.88.2',
   categories: [PieceCategory.CORE, PieceCategory.FLOW_CONTROL],
   logoUrl: 'https://cdn.activepieces.com/pieces/new-core/subflows.svg',
   authors: ['hazemadelkhalel'],

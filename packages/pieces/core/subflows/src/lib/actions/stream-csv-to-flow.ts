@@ -13,45 +13,49 @@ export const streamCsvToSubflows = createAction({
   classification: 'WRITE',
   displayName: 'Stream CSV to Subflows',
   description:
-    'Stream a CSV and call a subflow once per batch of rows, without loading the whole file into memory.',
+    'Call a subflow once per batch of CSV rows, reading the file as a stream.',
   aiMetadata: { description: 'Streams a CSV (a URL, an uploaded file, or a file from a previous step) and dispatches one subflow run per batch of rows. Pick it over Call Flow when the CSV is too large to hold in memory, since it is parsed as a stream and batches are fanned out with bounded concurrency. Rows per batch must be an integer between 1 and 10000 and the target subflow must be published with a "Callable Flow" trigger; not idempotent, since every batch dispatches a new subflow run.', idempotent: false },
   props: {
     file: Property.File({
       displayName: 'CSV File',
-      description:
-        'The CSV to stream. Accepts a URL, an uploaded file, or a file from a previous step. It is streamed, not loaded into memory.',
+      description: 'A URL, an uploaded file, or a file from a previous step.',
       required: true,
       streaming: true,
     }),
     subflow: subflowDropdown({
       displayName: 'Subflow',
-      description:
-        'The subflow to call for each batch. Published flows with a "Callable Flow" trigger appear here; disabled flows are marked "(inactive)".',
+      description: 'Called once per batch. Inactive flows must be enabled first.',
     }),
     batchSize: Property.Number({
-      displayName: 'Rows per batch',
-      description: `How many CSV rows to send in each subflow call. Between 1 and ${MAX_BATCH_SIZE}.`,
+      displayName: 'Rows per Batch',
+      description: `Between 1 and ${MAX_BATCH_SIZE} rows per subflow call.`,
       required: true,
       defaultValue: 100,
     }),
     delimiter: Property.StaticDropdown({
       displayName: 'Delimiter',
+      description: 'How columns are separated in the file.',
       required: true,
       defaultValue: ',',
+      display: 'cards',
       options: {
         options: [
-          { label: 'Comma', value: ',' },
-          { label: 'Tab', value: '\t' },
+          { label: 'Comma', value: ',', description: 'a,b,c' },
+          { label: 'Tab', value: '\t', description: 'Tab key' },
         ],
       },
     }),
     extraData: Property.Json({
       displayName: 'Extra Data',
-      description:
-        'Optional data sent to every subflow call alongside the batch rows. Reference the output of a previous step.',
+      description: 'Sent with every batch alongside the rows.',
       required: false,
+      advanced: true,
     }),
   },
+  propertyGroups: [
+    { key: 'csv', display: 'section', label: 'CSV', icon: 'file', props: ['file', 'delimiter'] },
+    { key: 'subflow', display: 'section', label: 'Subflow', icon: 'send', props: ['subflow', 'batchSize'] },
+  ],
   async run(context) {
     const { file, batchSize, delimiter, extraData } = context.propsValue;
     const { body } = streamUtils.toStreamingBody(file);

@@ -1,6 +1,7 @@
 import {
   createTrigger,
   DynamicPropsValue,
+  MarkdownVariant,
   PieceAuth,
   Property,
   StoreScope,
@@ -12,26 +13,35 @@ export const callableFlow = createTrigger({
   name: 'callableFlow',
   classification: 'READ',
   displayName: 'Callable Flow',
-  description: 'Waiting to be triggered from another flow',
+  description: 'Starts when another flow calls this one.',
   aiMetadata: {
     description: 'Fires when another flow invokes this one through the Sub Flows "Call Flow" or "Stream CSV to Subflows" action, making this flow a reusable subroutine; the event represents a single invocation and carries the payload the caller passed in. The Sample Data entered here (key-value in Simple mode or JSON in Advanced mode) defines the payload shape offered to callers, and adding a "Return Response" action lets a waiting caller receive a result.',
   },
   props: {
+    info: Property.MarkDown({
+      value: 'Other flows run this one with **Call Flow** or **Stream CSV to Subflows**. Add **Return Response** to send data back.',
+      variant: MarkdownVariant.INFO,
+    }),
     mode: Property.StaticDropdown({
-      displayName: 'Mode',
+      displayName: 'Data Format',
       required: true,
-      description: 'Choose Simple for key-value or Advanced for JSON.',
+      description: 'How you enter the data: key-value pairs or raw JSON.',
       defaultValue: 'simple',
+      display: 'cards',
       options: {
         disabled: false,
         options: [
           {
             label: 'Simple',
             value: 'simple',
+            description: 'Key-value',
+            icon: 'sliders',
           },
           {
             label: 'Advanced',
             value: 'advanced',
+            description: 'Raw JSON',
+            icon: 'code',
           },
         ],
       },
@@ -39,7 +49,7 @@ export const callableFlow = createTrigger({
     exampleData: Property.DynamicProperties({
       auth: PieceAuth.None(),
       displayName: 'Sample Data',
-      description: 'The schema to be passed to the flow',
+      description: 'An example of the data callers send.',
       required: true,
       refreshers: ['mode'],
       props: async (propsValue) => {
@@ -48,11 +58,13 @@ export const callableFlow = createTrigger({
         if (mode === 'simple') {
           fields['sampleData'] = Property.Object({
             displayName: 'Sample Data',
+            description: 'Callers see this as the starting payload in Call Flow.',
             required: true,
           });
         } else {
           fields['sampleData'] = Property.Json({
             displayName: 'Sample Data',
+            description: 'Callers see this as the starting payload in Call Flow.',
             required: true,
           });
         }
