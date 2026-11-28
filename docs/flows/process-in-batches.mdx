@@ -20,6 +20,10 @@ independent of the others. If the items must be handled in order, or each one de
 3. Batches run as separate runs, in parallel, up to whatever your project can run at once.
 4. The step waits for all of them, then continues with a summary.
 
+![A flow on the canvas with a Process in Batches step. The steps nested inside it sit in a framed region below the step](/resources/screenshots/process-in-batches-canvas.png)
+
+![The Process in Batches settings panel with List to process, Items per Batch, and a summary of 24 items, 6 per batch, 4 batches](/resources/screenshots/process-in-batches-settings.png)
+
 Inside the body, a batch's items are on the batch step's own output — `{{ step_1.items }}` if the step is
 named `step_1`. Loop over that list with a **Loop on Items** step to handle one item at a time; a batch
 runs its items sequentially.
@@ -94,6 +98,8 @@ A failed batch re-runs **all** of its items. Retrying the run from the failed st
 Open the run and select the Process in Batches step. Its batches are listed there, and each one opens its
 own logs — the same run detail view, for that batch's run. Batches do not appear in the main runs list;
 they are reached from their parent.
+
+![Run details for a Process in Batches step: the Batches tab with counts of expected, succeeded, failed and running batches, and a list of four batches](/resources/screenshots/process-in-batches-run.png)
 
 ## Retrying and cancelling
 
