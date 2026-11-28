@@ -12,7 +12,7 @@ const markdown = `
   \`{{webhookUrl}}\`
 `;
 
-export const newPost = createTrigger({
+export const newPostTrigger = createTrigger({
   name: 'new_post_on_beamer',
   classification: 'READ',
   displayName: 'New Beamer Post',
@@ -28,11 +28,11 @@ export const newPost = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   sampleData: {},
 
-  async onEnable(context) {
-    // IGNORED
+  async onEnable() {
+    return;
   },
-  async onDisable(context) {
-    // IGNORED
+  async onDisable() {
+    return;
   },
   async run(context) {
     return [context.payload.body];

@@ -1,13 +1,10 @@
 import { beamerAuth } from '../auth';
-import {
-  HttpMethod,
-  HttpRequest,
-  httpClient,
-} from '@activepieces/pieces-common';
+import { createNewFeatureRequestOutputSchema } from '../output-schemas';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { beamerCommon } from '../common';
+import { beamerClient } from '../common/client';
 
-export const createNewFeatureRequest = createAction({
+export const createFeatureRequestAction = createAction({
   auth: beamerAuth,
   name: 'create_new_feature_request',
   classification: 'WRITE',
@@ -18,6 +15,7 @@ export const createNewFeatureRequest = createAction({
     description: 'Creates a feature request on a Beamer feedback board, attributed to a user by email, with a category (bug, feature request, or improvement), a status (under review, planned, in progress, or completed), and public or internal visibility. Use to log product feedback or roadmap items. Creates a new request on each call (not idempotent).',
     idempotent: false,
   },
+  outputSchema: createNewFeatureRequestOutputSchema,
   props: {
     title: Property.ShortText({
       displayName: 'Title',
@@ -103,15 +101,10 @@ export const createNewFeatureRequest = createAction({
   },
 
   async run(context) {
-    const apiKey = context.auth.secret_text;
-
-    const request: HttpRequest = {
+    return await beamerClient.request<unknown>({
+      auth: context.auth,
       method: HttpMethod.POST,
-      url: `${beamerCommon.baseUrl}/requests`,
-      headers: {
-        'Beamer-Api-Key': `${apiKey}`,
-        'Content-Type': 'application/json',
-      },
+      path: '/requests',
       body: {
         title: [context.propsValue.title],
         content: [context.propsValue.content],
@@ -120,9 +113,6 @@ export const createNewFeatureRequest = createAction({
         status: context.propsValue.status,
         userEmail: context.propsValue.requestedby,
       },
-    };
-    const res = await httpClient.sendRequest<any>(request);
-
-    return res.body;
+    });
   },
 });

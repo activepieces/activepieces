@@ -1,19 +1,17 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import {
-  HttpRequest,
-  HttpMethod,
-  httpClient,
-} from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { beamerAuth } from '../auth';
-import { beamerCommon } from '../common';
+import { beamerClient } from '../common/client';
+import { createBeamerPostOutputSchema } from '../output-schemas';
 
-export const createBeamerPost = createAction({
+export const createPostAction = createAction({
   auth: beamerAuth,
   name: 'create_beamer_post',
+  outputSchema: createBeamerPostOutputSchema,
   classification: 'WRITE',
   displayName: 'Create Beamer Post ',
   description: 'Create a new post in Beamer',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description: 'Publishes a new announcement post to a Beamer account, attributed to a user by email and tagged with a category (new, fix, coming soon, announcement, or improvement). Use to broadcast product news or changelog entries to users. Creates a distinct post on each call (not idempotent).',
     idempotent: false,
@@ -132,15 +130,10 @@ export const createBeamerPost = createAction({
   },
 
   async run(context) {
-    const apiKey = context.auth.secret_text;
-
-    const request: HttpRequest = {
+    return await beamerClient.request<unknown>({
+      auth: context.auth,
       method: HttpMethod.POST,
-      url: `${beamerCommon.baseUrl}/posts`,
-      headers: {
-        'Beamer-Api-Key': `${apiKey}`,
-        'Content-Type': 'application/json',
-      },
+      path: '/posts',
       body: {
         title: [context.propsValue.title],
         content: [context.propsValue.description],
@@ -158,9 +151,6 @@ export const createBeamerPost = createAction({
         userEmail: context.propsValue.userEmail,
         fixedBoostedAnnouncement: true,
       },
-    };
-    const res = await httpClient.sendRequest<any>(request);
-
-    return res.body;
+    });
   },
 });
