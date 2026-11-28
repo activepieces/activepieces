@@ -304,6 +304,20 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/adaptlypost": {
+      "name": "@activepieces/piece-adaptlypost",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+        "vitest": "5.0.5",
+      },
+    },
     "packages/pieces/community/add-event": {
       "name": "@activepieces/piece-add-event",
       "version": "0.1.4",
@@ -11631,6 +11645,8 @@
     "@activepieces/piece-acuity-scheduling": ["@activepieces/piece-acuity-scheduling@workspace:packages/pieces/community/acuity-scheduling"],
 
     "@activepieces/piece-acumbamail": ["@activepieces/piece-acumbamail@workspace:packages/pieces/community/acumbamail"],
+
+    "@activepieces/piece-adaptlypost": ["@activepieces/piece-adaptlypost@workspace:packages/pieces/community/adaptlypost"],
 
     "@activepieces/piece-add-event": ["@activepieces/piece-add-event@workspace:packages/pieces/community/add-event"],
 

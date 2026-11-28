@@ -42,6 +42,9 @@
       "@activepieces/piece-acumbamail": [
         "packages/pieces/community/acumbamail/src/index.ts"
       ],
+      "@activepieces/piece-adaptlypost": [
+        "packages/pieces/community/adaptlypost/src/index.ts"
+      ],
       "@activepieces/piece-add-event": [
         "packages/pieces/community/add-event/src/index.ts"
       ],
