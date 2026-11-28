@@ -1737,7 +1737,8 @@
         "form-data": "4.0.6",
       },
       "devDependencies": {
-        "tslib": "^2.3.0",
+        "tslib": "2.6.2",
+        "vitest": "5.0.5",
       },
     },
     "packages/pieces/community/chargebee": {
