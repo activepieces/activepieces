@@ -164,6 +164,12 @@ export const ghostcms = createPiece({
     createCustomApiCallAction({
       baseUrl: (auth) => (auth ? ghostClient.adminUrl(auth) : ''),
       auth: ghostAuth,
+      props: {
+        url: {
+          description: 'A path like /members/, relative to your Admin API URL.',
+          placeholder: '/members/',
+        },
+      },
       authMapping: async (auth, propsValue) => {
         assertGhostUrl({ auth, propsValue });
         return {

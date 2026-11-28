@@ -18,6 +18,8 @@ export const findUser = createAction({
   props: {
     email: Property.ShortText({
       displayName: 'Email',
+      description: 'Email of a staff user, not a member.',
+      placeholder: 'jane@example.com',
       required: true,
     }),
   },

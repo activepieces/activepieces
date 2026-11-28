@@ -1,4 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  MarkdownVariant,
+  Property,
+} from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
 import { ghostAuth } from '../auth';
@@ -14,21 +18,48 @@ export const updateMember = createAction({
   audience: 'human',
   aiMetadata: { description: 'Updates an existing Ghost member identified by member id, changing any supplied fields (email, name, note, newsletter subscriptions); omitted fields are left unchanged. Use to edit a known member. Requires the target member id. Idempotent: re-applying the same field values yields the same member state.', idempotent: true },
   auth: ghostAuth,
+  propertyGroups: [
+    {
+      key: 'member',
+      display: 'section',
+      label: 'Member',
+      icon: 'user',
+      props: ['member'],
+    },
+    {
+      key: 'changes',
+      display: 'section',
+      label: 'Changes',
+      icon: 'text',
+      props: ['changes_info', 'email', 'name', 'note', 'newsletters'],
+    },
+  ],
   props: {
     member: common.properties.member(),
+    changes_info: Property.MarkDown({
+      value:
+        'Empty fields keep their current value; Newsletters replaces the list.',
+      variant: MarkdownVariant.INFO,
+    }),
     email: Property.ShortText({
       displayName: 'Email',
+      width: 'half',
       required: false,
     }),
     name: Property.ShortText({
       displayName: 'Full Name',
+      width: 'half',
       required: false,
     }),
     note: Property.ShortText({
       displayName: 'Note',
+      description: 'Private note, visible only to staff.',
       required: false,
     }),
-    newsletters: common.properties.newsletters(false),
+    newsletters: common.properties.newsletters({
+      required: false,
+      description: "Replaces the member's current newsletters.",
+    }),
   },
 
   async run(context) {
