@@ -3,9 +3,11 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../core/security/authorization/fastify-security'
+import { platformAdminApi } from '../mcp/platform-admin/platform-admin-api'
 import { aiToolConfigService } from './ai-tool-config-service'
 
 export const aiToolConfigController: FastifyPluginAsyncZod = async (app) => {
+    app.addHook('onRoute', platformAdminApi.page('admin-guide/guides/ai-capabilities'))
     app.get('/', ListAiToolConfigs, async (request) => {
         const platformId = request.principal.platform.id
         return aiToolConfigService(app.log).list(platformId)

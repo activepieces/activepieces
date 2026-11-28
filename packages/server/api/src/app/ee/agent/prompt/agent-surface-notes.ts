@@ -1,9 +1,9 @@
 import { isNil } from '@activepieces/core-utils'
-import { AgentRunSource, agentToolSkills, SKILLS_NOTE_HEADING, SubagentTask } from '@activepieces/shared'
+import { AgentRunSource, agentToolSkills, PLATFORM_ADMIN_SKILL_NAME, SKILLS_NOTE_HEADING, SubagentTask } from '@activepieces/shared'
 import { agentPrompt } from './agent-prompt'
 import { agentUserIdentity, UserIdentity } from './agent-user-identity'
 
-function buildRunNotes({ source, currentDate, searchAvailable, fetchAvailable, scrapeAvailable, imageAvailable, imageEditAvailable, emailAvailable, agentsAvailable, tasksAvailable, tasks, userEmail, userIdentity, connections, memory }: {
+function buildRunNotes({ source, currentDate, searchAvailable, fetchAvailable, scrapeAvailable, imageAvailable, imageEditAvailable, emailAvailable, agentsAvailable, tasksAvailable, platformAdminAvailable, tasks, userEmail, userIdentity, connections, memory }: {
     source: AgentRunSource
     currentDate: string
     searchAvailable: boolean
@@ -14,6 +14,7 @@ function buildRunNotes({ source, currentDate, searchAvailable, fetchAvailable, s
     emailAvailable: boolean
     agentsAvailable: boolean
     tasksAvailable: boolean
+    platformAdminAvailable: boolean
     tasks?: ConversationTask[]
     userEmail: string
     userIdentity: UserIdentity | null
@@ -42,7 +43,7 @@ function buildRunNotes({ source, currentDate, searchAvailable, fetchAvailable, s
         + (isChat ? buildMemoryNote(memory) : '')
         + (source === AgentRunSource.AGENT ? RECONNECT_NOTE : '')
         + ((source === AgentRunSource.AGENT || isChat) && agentsAvailable ? SELF_EDIT_NOTE : '')
-        + (isNil(skillSurface) ? '' : agentToolSkills.renderSkillsNote({ surface: skillSurface }))
+        + (isNil(skillSurface) ? '' : agentToolSkills.renderSkillsNote({ surface: skillSurface, excludedSkills: platformAdminAvailable ? [] : [PLATFORM_ADMIN_SKILL_NAME] }))
 }
 
 const SELF_EDIT_NOTE = [

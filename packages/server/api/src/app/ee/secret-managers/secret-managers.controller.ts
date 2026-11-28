@@ -5,12 +5,14 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { platformAdminApi } from '../../mcp/platform-admin/platform-admin-api'
 import { userService } from '../../user/user-service'
 import { rbacService } from '../authentication/project-role/rbac-service'
 import { secretManagerCache } from './secret-manager-cache'
 import { secretManagersService } from './secret-managers.service'
 
 export const secretManagersController: FastifyPluginAsyncZod = async (app) => {
+    app.addHook('onRoute', platformAdminApi.page('admin-guide/guides/secret-managers/overview'))
     const service = secretManagersService(app.log)
 
     app.get('/', ListSecretManagerConnections, async (request) => {

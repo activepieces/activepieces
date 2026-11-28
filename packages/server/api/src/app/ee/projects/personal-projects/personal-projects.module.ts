@@ -3,6 +3,7 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
+import { platformAdminApi } from '../../../mcp/platform-admin/platform-admin-api'
 import { platformMustHaveFeatureEnabled } from '../../authentication/ee-authorization'
 import { personalProjectsService } from './personal-projects.service'
 
@@ -11,6 +12,7 @@ export const personalProjectsModule: FastifyPluginAsyncZod = async (app) => {
 }
 
 const personalProjectsController: FastifyPluginAsyncZod = async (app) => {
+    app.addHook('onRoute', platformAdminApi.page('admin-guide/guides/structure-projects'))
     app.get('/summary', SummaryRequest, async (request, reply) => {
         await platformMustHaveFeatureEnabled((platform) => platform.plan.projectRolesEnabled).call(app, request, reply)
         return personalProjectsService(request.log).summary({ platformId: request.principal.platform.id })

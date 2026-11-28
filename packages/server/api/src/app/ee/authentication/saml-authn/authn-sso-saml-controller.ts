@@ -7,11 +7,13 @@ import { securityAccess } from '../../../core/security/authorization/fastify-sec
 import { networkUtils } from '../../../helper/network-utils'
 import { rejectedPromiseHandler } from '../../../helper/promise-handler'
 import { telemetry } from '../../../helper/telemetry.utils'
+import { platformAdminApi } from '../../../mcp/platform-admin/platform-admin-api'
 import { platformUtils } from '../../../platform/platform.utils'
 import { platformMustHaveFeatureEnabled } from '../ee-authorization'
 import { authnSsoSamlService } from './authn-sso-saml-service'
 
 export const authnSsoSamlController: FastifyPluginAsyncZod = async (app) => {
+    app.addHook('onRoute', platformAdminApi.page('admin-guide/guides/sso'))
     app.get('/login', LoginRequest, async (req, res) => {
         const platformId = req.query.platformId ?? await platformUtils.getPlatformIdForRequest(req)
         assertNotNullOrUndefined(platformId, 'Platform Id should not be null')
@@ -116,6 +118,7 @@ const DiscoverRequest = {
 const UpdateSsoDomainRequest = {
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+        mcp: { deny: true },
     },
     preHandler: platformMustHaveFeatureEnabled((platform) => platform.plan.ssoEnabled),
     schema: {
@@ -128,6 +131,7 @@ const UpdateSsoDomainRequest = {
 const VerifySsoDomainRequest = {
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+        mcp: { deny: true },
     },
     preHandler: platformMustHaveFeatureEnabled((platform) => platform.plan.ssoEnabled),
 }

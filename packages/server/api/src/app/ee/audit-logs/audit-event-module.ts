@@ -4,6 +4,7 @@ import { securityAccess } from '../../core/security/authorization/fastify-securi
 import { SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
+import { platformAdminApi } from '../../mcp/platform-admin/platform-admin-api'
 import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 import { auditLogService } from './audit-event-service'
 import { auditLogRetention } from './audit-log-retention'
@@ -29,6 +30,7 @@ export const auditEventModule: FastifyPluginAsyncZod = async (app) => {
 }
 
 const auditEventController: FastifyPluginAsyncZod = async (app) => {
+    app.addHook('onRoute', platformAdminApi.page('admin-guide/security/audit-logs/overview'))
 
     app.get('/', ListAuditEventsRequestEndpoint, async (request) => {
         return auditLogService(request.log).list({

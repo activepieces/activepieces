@@ -18,12 +18,14 @@ import { system } from '../helper/system/system'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
 import { userIdentityHelper } from '../helper/user-identity-helper'
+import { platformAdminApi } from '../mcp/platform-admin/platform-admin-api'
 import { userService } from '../user/user-service'
 import { billingProvider } from './billing-provider'
 import { platformService } from './platform.service'
 
 const edition = system.getEdition()
 export const platformController: FastifyPluginAsyncZod = async (app) => {
+    app.addHook('onRoute', platformAdminApi.page('admin-guide/guides/general'))
     app.post('/', CreatePlatformEndpoint, async (req) => {
         const isOnboarding = req.principal.type === PrincipalType.ONBOARDING
         if (!isOnboarding && edition !== ApEdition.CLOUD) {
@@ -214,6 +216,7 @@ async function addSelfServeTrialToPlatform<T extends PlatformWithoutSensitiveDat
 const CreatePlatformEndpoint = {
     config: {
         security: securityAccess.unscoped([PrincipalType.ONBOARDING, PrincipalType.USER]),
+        mcp: { deny: true },
     },
     schema: {
         body: CreatePlatformRequest,
@@ -226,6 +229,7 @@ const CreatePlatformEndpoint = {
 const UpdatePlatformRequest = {
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+        mcp: { redact: ['plan.licenseKey'] },
     },
     preValidation: attachMultipartFieldsToBody,
     schema: {
@@ -243,6 +247,7 @@ const UpdatePlatformRequest = {
 const GetPlatformRequest = {
     config: {
         security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
+        mcp: { redact: ['plan.licenseKey'] },
     },
     schema: {
         tags: ['platforms'],
@@ -260,6 +265,7 @@ const GetPlatformRequest = {
 const DeletePlatformRequest = {
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+        mcp: { deny: true },
     },
     schema: {
         params: z.object({

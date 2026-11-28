@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { transaction } from '../../../core/db/transaction'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { applicationEvents } from '../../../helper/application-events'
+import { platformAdminApi } from '../../../mcp/platform-admin/platform-admin-api'
 import { userInvitationsService } from '../../../user-invitations/user-invitation.service'
 import { platformMustHaveFeatureEnabled } from '../../authentication/ee-authorization'
 import { projectMemberService } from '../project-members/project-member.service'
@@ -14,6 +15,7 @@ import { projectRoleService } from './project-role.service'
 const DEFAULT_LIMIT_SIZE = 10
 
 export const projectRoleController: FastifyPluginAsyncZod = async (app) => {
+    app.addHook('onRoute', platformAdminApi.page('admin-guide/guides/permissions'))
     
     app.get('/:id', GetProjectRoleRequest, async (req) => {
         return projectRoleService.getOneForPlatformOrThrow({
@@ -119,6 +121,7 @@ const ListProjectRolesRequest = {
 const CreateProjectRoleRequest = {
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+        mcp: { deny: true },
     },
     schema: {
         body: CreateProjectRoleRequestBody,
@@ -131,6 +134,7 @@ const CreateProjectRoleRequest = {
 const UpdateProjectRoleRequest = {
     config: {   
         security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+        mcp: { deny: true },
     },
     schema: {
         body: UpdateProjectRoleRequestBody,
@@ -146,6 +150,7 @@ const UpdateProjectRoleRequest = {
 const DeleteProjectRoleRequest = {
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+        mcp: { deny: true },
     },
     schema: {
         params: z.object({

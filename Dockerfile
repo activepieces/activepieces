@@ -148,6 +148,8 @@ COPY --from=build /usr/src/app/dist/packages/engine/ ./dist/packages/engine/
 RUN --mount=type=cache,target=/root/.bun/install/cache \
     bun install --production
 
+COPY --from=build /usr/src/app/docs/admin-guide ./docs/admin-guide
+
 # Copy frontend files
 COPY --from=build /usr/src/app/dist/packages/web ./dist/packages/web/
 

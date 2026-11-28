@@ -31,10 +31,15 @@ const DELETE_TOOLS = new Set([
 function tierOf({
   name,
   locked,
+  platformOnly,
 }: {
   name: string;
   locked: boolean;
+  platformOnly: boolean;
 }): McpToolTier {
+  if (platformOnly) {
+    return 'admin';
+  }
   if (locked) {
     return 'read';
   }
@@ -50,11 +55,16 @@ function groupByTier(categories: ToolCategory[]): McpToolTierGroup[] {
     draft: [],
     live: [],
     delete: [],
+    admin: [],
   };
   for (const category of categories) {
     for (const tool of category.tools) {
       buckets[
-        tierOf({ name: tool.name, locked: category.locked === true })
+        tierOf({
+          name: tool.name,
+          locked: category.locked === true,
+          platformOnly: category.platformOnly === true,
+        })
       ].push(tool);
     }
   }
@@ -103,6 +113,13 @@ function copyOf(tier: McpToolTier): McpToolTierCopy {
         label: t('Delete'),
         description: t('Permanently delete flows, tables, fields and records.'),
       };
+    case 'admin':
+      return {
+        label: t('Platform admin'),
+        description: t(
+          'Read and change platform settings from connected clients. Only platform admins get these. Changing settings is off until you turn it on.',
+        ),
+      };
   }
 }
 
@@ -111,7 +128,7 @@ function titleOf(toolName: string): string {
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
-const TIER_ORDER: McpToolTier[] = ['read', 'draft', 'live', 'delete'];
+const TIER_ORDER: McpToolTier[] = ['read', 'draft', 'live', 'delete', 'admin'];
 
 export const mcpToolTiers = {
   groupByTier,
@@ -120,7 +137,7 @@ export const mcpToolTiers = {
   titleOf,
 };
 
-export type McpToolTier = 'read' | 'draft' | 'live' | 'delete';
+export type McpToolTier = 'read' | 'draft' | 'live' | 'delete' | 'admin';
 
 export type McpToolTierGroup = {
   id: McpToolTier;

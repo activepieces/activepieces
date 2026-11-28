@@ -4,6 +4,7 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { securityAccess } from '../core/security/authorization/fastify-security'
 import { attachMultipartFieldsToBody } from '../helper/multipart-body'
+import { platformAdminApi } from '../mcp/platform-admin/platform-admin-api'
 import { pieceInstallService } from './piece-install-service'
 
 export const communityPiecesModule: FastifyPluginAsyncZod = async (app) => {
@@ -11,6 +12,7 @@ export const communityPiecesModule: FastifyPluginAsyncZod = async (app) => {
 }
 
 const communityPiecesController: FastifyPluginAsyncZod = async (app) => {
+    app.addHook('onRoute', platformAdminApi.page('admin-guide/guides/manage-pieces'))
     app.post(
         '/',
         {

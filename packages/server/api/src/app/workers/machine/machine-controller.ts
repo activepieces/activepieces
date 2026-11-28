@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { websocketService } from '../../core/websockets.service'
 import { system } from '../../helper/system/system'
+import { platformAdminApi } from '../../mcp/platform-admin/platform-admin-api'
 import { QueueName } from '../job'
 import { jobBroker } from '../job-queue/job-broker'
 import { jobQueue } from '../job-queue/job-queue'
@@ -14,6 +15,7 @@ import { workerGroupQueues } from '../worker-groups/worker-group-queues'
 import { machineService } from './machine-service'
 
 export const workerMachineController: FastifyPluginAsyncZod = async (app) => {
+    app.addHook('onRoute', platformAdminApi.page('admin-guide/guides/workers'))
 
     websocketService.addListener(PrincipalType.WORKER, WebsocketServerEvent.FETCH_WORKER_SETTINGS, (socket) => {
         return async (request: WorkerMachineHealthcheckRequest, _principal, _projectId, callback?: (data: unknown) => void) => {

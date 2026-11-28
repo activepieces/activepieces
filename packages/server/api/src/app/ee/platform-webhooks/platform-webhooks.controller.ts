@@ -6,8 +6,10 @@ import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { eventDestinationTestRateLimit } from '../../core/security/rate-limit'
 import { eventDestinationService } from '../../event-destinations/event-destinations.service'
+import { platformAdminApi } from '../../mcp/platform-admin/platform-admin-api'
 
 export const platformWebhooksController: FastifyPluginAsyncZod = async (app) => {
+    app.addHook('onRoute', platformAdminApi.page('admin-guide/guides/event-streaming'))
     app.post('/', CreateEventDestinationRequest, async (req) => {
         return eventDestinationService(req.log).create({
             request: req.body,

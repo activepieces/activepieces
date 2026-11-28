@@ -3,6 +3,7 @@ export type ToolCategory = {
   label: string;
   tools: ToolMeta[];
   locked?: boolean;
+  platformOnly?: boolean;
 };
 
 // NOTE: Keep this list in sync with ALL_CONTROLLABLE_TOOL_NAMES and LOCKED_TOOL_NAMES in
@@ -253,19 +254,39 @@ const TOOL_CATEGORIES: ToolCategory[] = [
       },
     ],
   },
+  {
+    label: 'Platform admin',
+    platformOnly: true,
+    tools: [
+      {
+        name: 'ap_platform_read',
+        description: 'Read platform admin settings, users, projects and usage',
+      },
+      {
+        name: 'ap_platform_write',
+        description:
+          'Change platform admin settings, with approval in the in-app chat',
+      },
+    ],
+  },
 ];
 
 const TOOL_SEARCH_TOOL_NAMES = ['ap_search_actions', 'ap_search_triggers'];
 
 export function getToolCategories({
   toolSearchEnabled,
+  scope = 'project',
 }: {
   toolSearchEnabled: boolean;
+  scope?: 'platform' | 'project';
 }): ToolCategory[] {
+  const categories = TOOL_CATEGORIES.filter(
+    (category) => scope === 'platform' || category.platformOnly !== true,
+  );
   if (toolSearchEnabled) {
-    return TOOL_CATEGORIES;
+    return categories;
   }
-  return TOOL_CATEGORIES.map((category) => ({
+  return categories.map((category) => ({
     ...category,
     tools: category.tools.filter(
       (tool) => !TOOL_SEARCH_TOOL_NAMES.includes(tool.name),

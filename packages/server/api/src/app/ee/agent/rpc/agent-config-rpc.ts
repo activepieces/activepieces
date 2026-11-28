@@ -1,6 +1,6 @@
 import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, ActivepiecesError, AIProviderName, ErrorCode, isFallbackWorthy, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { agentAiUtils, aiProviderSignal, aiUtils, modelCatalog } from '@activepieces/server-utils'
-import { AgentConfigResponse, AgentConversation, AgentRunSource, aiProviderUtils, GetAgentConfigRequest, GetEnabledAiToolsResponse, GetProviderConfigResponse, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole } from '@activepieces/shared'
+import { AgentConfigResponse, AgentConversation, AgentRunSource, aiProviderUtils, GetAgentConfigRequest, GetEnabledAiToolsResponse, GetProviderConfigResponse, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole, PlatformRole } from '@activepieces/shared'
 import { LanguageModel, ModelMessage, TextPart, UserContent } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { agentApprovalGate } from '.././agent-approval-gate'
@@ -216,6 +216,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             emailAvailable: !forTask && emailEnabled,
             agentsAvailable: !forTask && agentsAvailable,
             tasksAvailable: !forTask && tasksAvailable,
+            platformAdminAvailable: !forTask && runUser?.platformRole === PlatformRole.ADMIN,
             tasks: conversationTasks,
             userEmail: runUserEmail,
             userIdentity,

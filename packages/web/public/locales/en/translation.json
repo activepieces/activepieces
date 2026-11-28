@@ -793,6 +793,8 @@
   "Publish and run": "Publish and run",
   "Publish, test and run flows and actions, and change tables.": "Publish, test and run flows and actions, and change tables.",
   "Permanently delete flows, tables, fields and records.": "Permanently delete flows, tables, fields and records.",
+  "Platform admin": "Platform admin",
+  "Read and change platform settings from connected clients. Only platform admins get these. Changing settings is off until you turn it on.": "Read and change platform settings from connected clients. Only platform admins get these. Changing settings is off until you turn it on.",
   "Always on. Other tools need these to work.": "Always on. Other tools need these to work.",
   "Turn a tool off to stop MCP clients from calling it.": "Turn a tool off to stop MCP clients from calling it.",
   "Turn all off": "Turn all off",

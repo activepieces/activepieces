@@ -5,6 +5,7 @@ import { repoFactory } from '../core/db/repo-factory'
 import { flowService } from '../flows/flow/flow.service'
 import { McpServerEntity } from './mcp-entity'
 import { buildMcpServer } from './mcp-server-builder'
+import { PLATFORM_WRITE_TOOL_NAME } from './platform-admin/platform-admin-tools'
 
 export const mcpServerRepository = repoFactory(McpServerEntity)
 
@@ -12,14 +13,14 @@ export const mcpServerService = (log: FastifyBaseLogger) => ({
     getByProjectId: async (projectId: string): Promise<McpServerSchema> => {
         return getOrCreate({
             where: { projectId },
-            defaults: { type: McpServerType.PROJECT, projectId, platformId: null },
+            defaults: { type: McpServerType.PROJECT, projectId, platformId: null, disabledTools: [] },
         })
     },
 
     getByPlatformId: async (platformId: string): Promise<McpServerSchema> => {
         return getOrCreate({
             where: { platformId },
-            defaults: { type: McpServerType.PLATFORM, platformId, projectId: null },
+            defaults: { type: McpServerType.PLATFORM, platformId, projectId: null, disabledTools: [PLATFORM_WRITE_TOOL_NAME] },
         })
     },
 
@@ -86,7 +87,7 @@ export const mcpServerService = (log: FastifyBaseLogger) => ({
 
 async function getOrCreate({ where, defaults }: {
     where: { projectId: string } | { platformId: string }
-    defaults: { type: McpServerType, projectId: string | null, platformId: string | null }
+    defaults: { type: McpServerType, projectId: string | null, platformId: string | null, disabledTools: string[] }
 }): Promise<McpServerSchema> {
     const existing = await mcpServerRepository().findOneBy(where)
     if (!isNil(existing)) return existing
@@ -95,7 +96,6 @@ async function getOrCreate({ where, defaults }: {
             id: apId(),
             ...defaults,
             token: apId(72),
-            disabledTools: [],
         }),
     )
     if (error) {

@@ -26,6 +26,7 @@ import { system } from './helper/system/system'
 import { AppSystemProp } from './helper/system/system-props'
 import { mcpOAuthHttpController, mcpPlatformHttpController } from './mcp/oauth/mcp-oauth.controller'
 import { mcpOAuthRootModule } from './mcp/oauth/mcp-oauth.module'
+import { platformAdminApi } from './mcp/platform-admin/platform-admin-api'
 
 
 export let app: FastifyInstance | undefined = undefined
@@ -43,6 +44,7 @@ export const setupServer = async (): Promise<FastifyInstance> => {
     }
 
     await app.register(async (apiApp) => {
+        platformAdminApi.collectRoutes(apiApp)
         await apiApp.register(healthModule)
         if (system.isApp()) {
             await setupApp(apiApp)

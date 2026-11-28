@@ -1,5 +1,5 @@
 import { isNil, Permission } from '@activepieces/core-utils'
-import { FlowStatus, McpOAuthClientKey, McpProperty, McpServer as McpServerSchema, McpToolDefinition, mcpToolNameUtils, McpToolResult, McpTrigger, PopulatedFlow, PopulatedMcpServer, ProjectScopedMcpServer, TelemetryEventName } from '@activepieces/shared'
+import { FlowStatus, McpOAuthClientKey, McpProperty, McpServer as McpServerSchema, McpToolDefinition, mcpToolNameUtils, McpToolResult, McpTrigger, PlatformRole, PopulatedFlow, PopulatedMcpServer, ProjectScopedMcpServer, TelemetryEventName } from '@activepieces/shared'
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { FastifyBaseLogger } from 'fastify'
 import { flowService } from '../flows/flow/flow.service'
@@ -7,6 +7,7 @@ import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { instrumentMcpServer, telemetry } from '../helper/telemetry.utils'
+import { userService } from '../user/user-service'
 import { WebhookFlowVersionToRun, webhookService } from '../webhooks/webhook.service'
 import { McpActivityContext, withActivityRecording } from './activity/mcp-activity-recorder'
 import { mcpAccess } from './mcp-access'
@@ -14,6 +15,7 @@ import { ALLOW_ALL, deny, PermissionChecker, resolveMcpPermissionChecker, resolv
 import { mcpProjectSelection, ProjectSelectionScope } from './mcp-project-selection'
 import { mcpToolInput } from './mcp-tool-input'
 import { McpCallBilling, mcpUsageTracker, withCallBilling } from './mcp-usage-tracker'
+import { PLATFORM_WRITE_TOOL_NAME, platformAdminTools } from './platform-admin/platform-admin-tools'
 import { activepiecesTools, ALL_CONTROLLABLE_TOOL_NAMES, LOCKED_TOOL_NAMES, PLATFORM_LEVEL_TOOL_NAMES } from './tools'
 import { apSetProjectContextTool, SET_PROJECT_CONTEXT_TOOL_NAME } from './tools/ap-set-project-context'
 
@@ -87,9 +89,15 @@ export async function buildMcpServer({ mcp, userId, platformId, platformDisabled
         const activityContext: McpActivityContext | null = isNil(platformId) || isNil(userId) ? null : { platformId, projectId, userId, clientKey }
         registerFlowTools({ server, mcp, projectId, permissionChecker, billing, isInAppChat, log })
         registerStaticTools({ server, mcp, projectId, userId, platformDisabledTools, permissionChecker, activityContext, billing, log })
+        const isInAppChatUser = isInAppChat && !isNil(userId)
+        if (isInAppChatUser) {
+            const chatDisabledTools = platformDisabledTools.filter((name) => name !== PLATFORM_WRITE_TOOL_NAME)
+            await registerPlatformAdminTools({ server, userId, disabledTools: chatDisabledTools, log })
+        }
     }
     else if (!isNil(mcp.platformId) && !isNil(userId) && !isNil(resolveProjectMcp)) {
         registerPlatformTools({ server, mcp, platformId: mcp.platformId, userId, clientKey, selectionScope: { platformId: mcp.platformId, userId, clientId }, resolveProjectMcp, billing, log })
+        await registerPlatformAdminTools({ server, userId, disabledTools: mcp.disabledTools, log })
     }
     else {
         registerPlaceholderTools(server)
@@ -97,6 +105,21 @@ export async function buildMcpServer({ mcp, userId, platformId, platformDisabled
 
     registerEmptyResourcesAndPrompts(server)
     return server
+}
+
+async function registerPlatformAdminTools({ server, userId, disabledTools, log }: {
+    server: McpServer
+    userId: string
+    disabledTools: string[] | null
+    log: FastifyBaseLogger
+}): Promise<void> {
+    const user = await userService(log).getOneOrFail({ id: userId })
+    if (user.platformRole !== PlatformRole.ADMIN) {
+        return
+    }
+    filterEnabledTools({ tools: platformAdminTools({ userId, log }), disabledTools }).forEach((tool) => {
+        server.registerTool(tool.title, buildToolConfig(tool), (args: Record<string, unknown>) => tool.execute(args))
+    })
 }
 
 function registerPlatformTools({ server, mcp, platformId, userId, clientKey, selectionScope, resolveProjectMcp, billing, log }: {

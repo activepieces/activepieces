@@ -16,6 +16,7 @@ The tools are grouped by what they can do:
 - **Edit flows**: Create, rename and duplicate flows, and edit drafts.
 - **Publish and run**: Publish, test and run flows and actions, and change tables.
 - **Delete**: Permanently delete flows, tables, fields and records.
+- **Platform admin**: Read and change platform settings. Only platform admins get these tools. Changing settings (**ap_platform_write**) is off until you switch it on.
 
 Switch a group or a single tool off, and it's off for every project and every connected client. A project admin can switch off more tools in their own project, but can't switch back on a tool the platform switched off.
 
@@ -25,4 +26,6 @@ Switch a group or a single tool off, and it's off for every project and every co
 
 ### **Who can connect**
 
-Each person connects their own AI client and signs in with their own account. A client can never do more than the person who connected it.
+Each person connects their own AI client and signs in with their own account. A client can never do more than the person who connected it. In the in-app chat, every change to platform settings waits for the person to approve it.
+
+Some changes are never available to AI clients: billing, API key and signing key creation, user roles, project roles and SSO domains. License keys and the MCP token are hidden from what they read.

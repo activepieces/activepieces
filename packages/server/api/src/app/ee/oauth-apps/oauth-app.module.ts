@@ -4,6 +4,7 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { platformAdminApi } from '../../mcp/platform-admin/platform-admin-api'
 import { oauthAppService } from './oauth-app.service'
 
 export const oauthAppModule: FastifyPluginAsyncZod = async (app) => {
@@ -11,6 +12,7 @@ export const oauthAppModule: FastifyPluginAsyncZod = async (app) => {
 }
 
 const oauthAppController: FastifyPluginAsyncZod = async (app) => {
+    app.addHook('onRoute', platformAdminApi.page('admin-guide/guides/manage-oauth2'))
     app.get(
         '/',
         {

@@ -92,7 +92,7 @@ export function wrapDeleteGate({ mcpTools, waitForApproval, storePendingGate, ev
                 if (decision.outcome === 'approved') {
                     return originalExecute(args, options)
                 }
-                const text = decision.outcome === 'timeout' ? gateNoResponseMessage('delete approval') : 'The user declined this delete. Do not retry it; ask what they want instead.'
+                const text = decision.outcome === 'timeout' ? gateNoResponseMessage('delete approval') : `The user declined "${label}". Do not retry it; ask what they want instead.`
                 return { content: [{ type: 'text', text }] }
             },
         })]]
@@ -115,6 +115,7 @@ const DELETE_GATES: Record<string, { labelOf: (toolInput: Record<string, unknown
     },
     ap_delete_table: { labelOf: (toolInput) => `Delete table ${textField({ toolInput, key: 'tableId' })}`, deletes: () => true },
     ap_delete_flow: { labelOf: (toolInput) => `Delete flow ${textField({ toolInput, key: 'flowId' })}`, deletes: () => true },
+    ap_platform_write: { labelOf: (toolInput) => `${textField({ toolInput, key: 'method' })} ${textField({ toolInput, key: 'path' })}`, deletes: () => true },
     ap_manage_fields: {
         labelOf: (toolInput) => `Delete field ${textField({ toolInput, key: 'fieldId' })} from table ${textField({ toolInput, key: 'tableId' })}`,
         deletes: (toolInput) => toolInput['operation'] === 'DELETE',

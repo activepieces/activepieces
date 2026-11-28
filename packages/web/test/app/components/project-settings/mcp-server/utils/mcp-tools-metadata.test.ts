@@ -34,4 +34,17 @@ describe('getToolCategories', () => {
       'ap_search_triggers',
     ]);
   });
+
+  it('shows the platform admin tools only on the platform page', () => {
+    const adminTools = ['ap_platform_read', 'ap_platform_write'];
+
+    expect(
+      toolNames(
+        getToolCategories({ toolSearchEnabled: true, scope: 'platform' }),
+      ),
+    ).toEqual(expect.arrayContaining(adminTools));
+    expect(
+      toolNames(getToolCategories({ toolSearchEnabled: true })),
+    ).not.toEqual(expect.arrayContaining(['ap_platform_read']));
+  });
 });

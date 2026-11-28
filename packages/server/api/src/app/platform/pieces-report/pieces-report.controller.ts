@@ -4,6 +4,7 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { flowRepo } from '../../flows/flow/flow.repo'
+import { platformAdminApi } from '../../mcp/platform-admin/platform-admin-api'
 
 const BATCH_SIZE = 200
 
@@ -21,6 +22,7 @@ const CSV_HEADER = [
 ]
 
 export const piecesReportController: FastifyPluginAsyncZod = async (app) => {
+    app.addHook('onRoute', platformAdminApi.page('admin-guide/guides/manage-pieces'))
     app.get('/pieces-report.csv', PiecesReportRequest, async (req, reply) => {
         const platformId = req.principal.platform.id
         const today = new Date().toISOString().slice(0, 10)
@@ -129,5 +131,6 @@ type FetchBatchParams = {
 const PiecesReportRequest = {
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+        mcp: { deny: true },
     },
 }

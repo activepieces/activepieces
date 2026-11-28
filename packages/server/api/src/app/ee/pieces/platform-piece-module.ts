@@ -5,10 +5,12 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { attachMultipartFieldsToBody } from '../../helper/multipart-body'
+import { platformAdminApi } from '../../mcp/platform-admin/platform-admin-api'
 import { pieceInstallService } from '../../pieces/piece-install-service'
 import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 
 export const platformPieceModule: FastifyPluginAsyncZod = async (app) => {
+    app.addHook('onRoute', platformAdminApi.page('admin-guide/guides/manage-pieces'))
     app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.customPiecesEnabled))
     await app.register(platformPieceController, { prefix: '/v1/pieces' })
 }

@@ -15,5 +15,6 @@ dev
 Dockerfile
 dist
 **/dist
-docs
+docs/*
+!docs/admin-guide
 **/node_modules

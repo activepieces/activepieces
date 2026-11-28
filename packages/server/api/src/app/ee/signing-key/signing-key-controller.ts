@@ -5,9 +5,11 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { applicationEvents } from '../../helper/application-events'
+import { platformAdminApi } from '../../mcp/platform-admin/platform-admin-api'
 import { signingKeyService } from './signing-key-service'
 
 export const signingKeyController: FastifyPluginAsyncZod = async (app) => {
+    app.addHook('onRoute', platformAdminApi.page('admin-guide/guides/embedding'))
     app.post('/', AddSigningKeyRequest, async (req, res) => {
         const platformId = req.principal.platform.id
         const newSigningKey = await signingKeyService.add({
@@ -74,6 +76,7 @@ const ListSigningKeysRequest = {
 const AddSigningKeyRequest = {
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+        mcp: { deny: true },
     },
     schema: {
         body: AddSigningKeyRequestBody,

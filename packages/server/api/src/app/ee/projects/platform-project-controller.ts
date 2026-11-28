@@ -6,6 +6,7 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { ProjectResourceType } from '../../core/security/authorization/common'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { platformAdminApi } from '../../mcp/platform-admin/platform-admin-api'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
@@ -15,6 +16,7 @@ import { platformProjectService } from './platform-project-service'
 const DEFAULT_LIMIT_SIZE = 50
 
 export const platformProjectController: FastifyPluginAsyncZod = async (app) => {
+    app.addHook('onRoute', platformAdminApi.page('admin-guide/guides/structure-projects'))
 
     app.get('/:id', GetProjectRequest, async (request) => {
         return platformProjectService(request.log).getWithPlanAndUsageOrThrow(request.projectId)
