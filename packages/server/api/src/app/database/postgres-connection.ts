@@ -470,6 +470,7 @@ import { AddImportNudgeShownAtToUserMemory1880000000000 } from './migration/post
 import { ClearAiUsageCopiedFromSharedCustomers1881000000000 } from './migration/postgres/1881000000000-ClearAiUsageCopiedFromSharedCustomers'
 import { AddCustomPiecesEnabledToPlatformPlan1882000000000 } from './migration/postgres/1882000000000-AddCustomPiecesEnabledToPlatformPlan'
 import { AddEmailDomainAndSsoProviderTables1883000000000 } from './migration/postgres/1883000000000-AddEmailDomainAndSsoProviderTables'
+import { BackfillEmailDomainFromPlatform1884000000000 } from './migration/postgres/1884000000000-BackfillEmailDomainFromPlatform'
 import { AddAgentConversationProviderConfigIdIndex1869000000000 } from './migration/postgres/background/1869000000000-AddAgentConversationProviderConfigIdIndex'
 import { ReshapeFlowRunListIndexesForBarrierChildren1871000000000 } from './migration/postgres/background/1871000000000-ReshapeFlowRunListIndexesForBarrierChildren'
 import { BackfillPieceTranslation1874000000000 } from './migration/postgres/background/1874000000000-BackfillPieceTranslation'
@@ -967,6 +968,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         ClearAiUsageCopiedFromSharedCustomers1881000000000,
         AddCustomPiecesEnabledToPlatformPlan1882000000000,
         AddEmailDomainAndSsoProviderTables1883000000000,
+        BackfillEmailDomainFromPlatform1884000000000,
     ]
     return migrations
 }

@@ -2,7 +2,7 @@ import { SsoDomainVerificationRecordType, SsoDomainVerificationStatus } from '@a
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { createMockPlatform, createMockPlatformPlan, createMockUser, createMockUserIdentity, mockAndSaveBasicSetup } from '../../../helpers/mocks'
+import { createMockPlatform, createMockPlatformPlan, createMockUser, createMockUserIdentity, mockAndSaveBasicSetup, saveEmailDomainOfMockPlatform } from '../../../helpers/mocks'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
@@ -46,6 +46,7 @@ describe('SAML Discover API', () => {
                 },
             })
             await databaseConnection().getRepository('platform').save(mockPlatform)
+            await saveEmailDomainOfMockPlatform(mockPlatform)
 
             mockOwner.platformId = mockPlatform.id
             await databaseConnection().getRepository('user').save(mockOwner)
@@ -102,6 +103,7 @@ describe('SAML Discover API', () => {
                 federatedAuthProviders: { saml: null },
             })
             await databaseConnection().getRepository('platform').save(mockPlatform)
+            await saveEmailDomainOfMockPlatform(mockPlatform)
 
             mockOwner.platformId = mockPlatform.id
             await databaseConnection().getRepository('user').save(mockOwner)
