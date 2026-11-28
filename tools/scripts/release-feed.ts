@@ -1,6 +1,7 @@
-import { readFileSync, writeFileSync } from 'fs'
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'fs'
+import { join } from 'path'
 import { parseArgs } from 'util'
-import { ReleaseFeed, ReleaseFeedEntry, ReleaseKind, ReleaseMigrations, ReleaseNote, ReleaseTag } from '../../packages/core/shared/src/lib/core/release-feed'
+import { ReleaseFeed, ReleaseFeedEntry, ReleaseKind, ReleaseMigrations, ReleaseNote, ReleaseNoteFile, ReleaseTag } from '../../packages/core/shared/src/lib/core/release-feed'
 import { breakingChangesRender, Entry, ENTRIES_DIR } from './breaking-changes-render'
 
 function kindOf({ tag }: { tag: string }): ReleaseKind {
@@ -45,15 +46,54 @@ function buildEntry({ tag, releasedAt, imageDigest, migrations, entries }: Build
     })
 }
 
-function append({ feed, entry }: { feed: ReleaseFeed, entry: ReleaseFeedEntry }): ReleaseFeed {
-    const existing = feed.find((candidate) => candidate.tag === entry.tag)
-    const next = existing?.avoid === undefined ? entry : { ...entry, avoid: existing.avoid }
-    return sortFeed({ feed: [...feed.filter((candidate) => candidate.tag !== entry.tag), next] })
+function append({ feed, entry, releaseNotes }: { feed: ReleaseFeed, entry: ReleaseFeedEntry, releaseNotes: WrittenReleaseNote[] }): ReleaseFeed {
+    return rebuild({ feed: [...feed.filter((candidate) => candidate.tag !== entry.tag), entry], releaseNotes })
 }
 
-function merge({ repo, cdn }: { repo: ReleaseFeed, cdn: ReleaseFeed }): ReleaseFeed {
+function merge({ repo, cdn, releaseNotes }: { repo: ReleaseFeed, cdn: ReleaseFeed, releaseNotes: WrittenReleaseNote[] }): ReleaseFeed {
     const repoTags = new Set(repo.map((entry) => entry.tag))
-    return sortFeed({ feed: [...repo, ...cdn.filter((entry) => !repoTags.has(entry.tag))] })
+    return rebuild({ feed: [...repo, ...cdn.filter((entry) => !repoTags.has(entry.tag))], releaseNotes })
+}
+
+function rebuild({ feed, releaseNotes }: { feed: ReleaseFeed, releaseNotes: WrittenReleaseNote[] }): ReleaseFeed {
+    const byVersion = new Map(releaseNotes.map((note) => [note.version, note]))
+    return sortFeed({
+        feed: feed.map(({ avoid: _avoid, releaseNotes: _releaseNotes, ...entry }) => {
+            const note = byVersion.get(entry.tag)
+            return {
+                ...entry,
+                ...(note?.avoid === undefined ? {} : { avoid: { reason: note.avoid } }),
+                ...(note?.body === undefined ? {} : { releaseNotes: note.body }),
+            }
+        }),
+    })
+}
+
+function parseReleaseNoteFile({ fileName, text }: { fileName: string, text: string }): WrittenReleaseNote {
+    const match = /^---\n([\s\S]*?)\n---\n?([\s\S]*)$/.exec(text)
+    if (!match) {
+        throw new Error(`${fileName}: missing YAML front-matter between --- lines`)
+    }
+    const parsed = ReleaseNoteFile.safeParse(Bun.YAML.parse(match[1]))
+    if (!parsed.success) {
+        throw new Error(`${fileName}: ${parsed.error.issues.map((issue) => `${issue.path.join('.') || '(root)'}: ${issue.message}`).join('; ')}`)
+    }
+    if (`${parsed.data.version}.md` !== fileName) {
+        throw new Error(`${fileName}: version "${parsed.data.version}" must match the file name`)
+    }
+    kindOf({ tag: parsed.data.version })
+    const body = match[2].trim()
+    return { version: parsed.data.version, avoid: parsed.data.avoid, body: body.length === 0 ? undefined : body }
+}
+
+function readReleaseNoteFiles({ dir }: { dir: string }): WrittenReleaseNote[] {
+    if (!existsSync(dir)) {
+        return []
+    }
+    return readdirSync(dir)
+        .filter((fileName) => fileName.endsWith('.md'))
+        .sort()
+        .map((fileName) => parseReleaseNoteFile({ fileName, text: readFileSync(join(dir, fileName), 'utf-8') }))
 }
 
 function sortFeed({ feed }: { feed: ReleaseFeed }): ReleaseFeed {
@@ -109,8 +149,10 @@ function main(): void {
             migrations: ReleaseMigrations.parse(JSON.parse(migrations)),
             entries: breakingChangesRender.readEntries({ dir: ENTRIES_DIR }),
         })
-        writeFileSync(file, serialize({ feed: append({ feed: readFeed({ file }), entry }) }))
-        console.log(`${file}: ${entry.tag} (${entry.kind}, line ${entry.line}) with ${entry.notes.length} note(s), ${entry.migrations.blocking} blocking and ${entry.migrations.background} background migration(s).`)
+        const feed = append({ feed: readFeed({ file }), entry, releaseNotes: readReleaseNoteFiles({ dir: RELEASE_NOTES_DIR }) })
+        writeFileSync(file, serialize({ feed }))
+        const written = feed.find((candidate) => candidate.tag === entry.tag)
+        console.log(`${file}: ${entry.tag} (${entry.kind}, line ${entry.line}) with ${entry.notes.length} note(s), ${entry.migrations.blocking} blocking and ${entry.migrations.background} background migration(s), ${written?.releaseNotes === undefined ? 'no' : 'with'} written release notes${written?.avoid === undefined ? '' : ', marked avoid'}.`)
         return
     }
     if (command === 'merge') {
@@ -118,9 +160,15 @@ function main(): void {
         if (cdn === undefined || out === undefined) {
             fail({ message: USAGE })
         }
-        const merged = merge({ repo: readFeed({ file }), cdn: readFeed({ file: cdn }) })
+        const releaseNotes = readReleaseNoteFiles({ dir: RELEASE_NOTES_DIR })
+        const merged = merge({ repo: readFeed({ file }), cdn: readFeed({ file: cdn }), releaseNotes })
         writeFileSync(out, serialize({ feed: merged }))
-        console.log(`${out}: ${merged.length} release(s) from ${file} merged with ${cdn}.`)
+        console.log(`${out}: ${merged.length} release(s) from ${file} merged with ${cdn}, releaseNotes and avoid rebuilt from ${releaseNotes.length} file(s) in ${RELEASE_NOTES_DIR}.`)
+        return
+    }
+    if (command === 'check-notes') {
+        const releaseNotes = readReleaseNoteFiles({ dir: RELEASE_NOTES_DIR })
+        console.log(`${RELEASE_NOTES_DIR}: ${releaseNotes.length} release note file(s) match the schema.`)
         return
     }
     if (command === 'check') {
@@ -145,11 +193,19 @@ const USAGE = [
     '  bun tools/scripts/release-feed.ts append --tag <tag> --released-at <iso> --digest <sha256:...> --migrations <json> [--file releases.json]',
     '  bun tools/scripts/release-feed.ts merge --cdn <cdn copy> --out <merged file> [--file releases.json]',
     '  bun tools/scripts/release-feed.ts check [--file releases.json]',
+    '  bun tools/scripts/release-feed.ts check-notes',
 ].join('\n')
 
 export const RELEASES_FILE = 'releases.json'
+export const RELEASE_NOTES_DIR = 'docs/install/reference/releases'
 
-export const releaseFeed = { kindOf, lineOf, notesFor, buildEntry, append, merge, parseFeed, serialize }
+export const releaseFeed = { kindOf, lineOf, notesFor, buildEntry, append, merge, rebuild, parseReleaseNoteFile, readReleaseNoteFiles, parseFeed, serialize }
+
+export type WrittenReleaseNote = {
+    version: string
+    avoid: string | undefined
+    body: string | undefined
+}
 
 type BuildEntryParams = {
     tag: string

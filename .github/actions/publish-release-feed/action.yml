@@ -1,5 +1,5 @@
 name: Publish release feed
-description: Merges releases.json with the published copy by tag (the repo wins for tags it has, tags only the published copy has are kept), uploads it to https://cdn.activepieces.com/releases/releases.json and verifies it is served. Needs bun and the repo dependencies installed.
+description: Merges releases.json with the published copy by tag (the repo wins for tags it has, tags only the published copy has are kept), rebuilds releaseNotes and avoid from docs/install/reference/releases/, uploads it to https://cdn.activepieces.com/releases/releases.json and verifies it is served. Needs bun and the repo dependencies installed.
 
 inputs:
   access-key-id:

@@ -42,6 +42,7 @@ export const ReleaseFeedEntry = z.object({
     avoid: z.object({
         reason: z.string().min(1),
     }).optional(),
+    releaseNotes: z.string().min(1).optional(),
     migrations: ReleaseMigrations,
     notes: z.array(ReleaseNote),
     pieceMigrations: z.array(ReleasePieceMigration),
@@ -49,6 +50,11 @@ export const ReleaseFeedEntry = z.object({
 })
 
 export const ReleaseFeed = z.array(ReleaseFeedEntry)
+
+export const ReleaseNoteFile = z.strictObject({
+    version: ReleaseTag,
+    avoid: z.string().min(1).optional(),
+})
 
 export const GetReleaseFeedResponse = z.object({
     fetchedAt: z.iso.datetime().nullable(),
@@ -60,4 +66,5 @@ export type ReleaseMigrations = z.infer<typeof ReleaseMigrations>
 export type ReleasePieceMigration = z.infer<typeof ReleasePieceMigration>
 export type ReleaseFeedEntry = z.infer<typeof ReleaseFeedEntry>
 export type ReleaseFeed = z.infer<typeof ReleaseFeed>
+export type ReleaseNoteFile = z.infer<typeof ReleaseNoteFile>
 export type GetReleaseFeedResponse = z.infer<typeof GetReleaseFeedResponse>

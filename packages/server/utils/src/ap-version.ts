@@ -60,12 +60,16 @@ export const apVersionUtil = {
     getCurrentRelease(): string {
         return readCurrentRelease()
     },
-    getLatestRelease({ entries }: { entries: ReleaseFeedEntry[] }): string | null {
-        return highestTag({ entries: entries.filter((entry) => LATEST_RELEASE_KINDS.includes(entry.kind)) })
+    getRunningTag(): string {
+        const releaseTag = process.env[RELEASE_TAG_ENV]
+        return isNil(releaseTag) || releaseTag.length === 0 ? readCurrentRelease() : releaseTag
     },
-    getHotfixOnLine({ entries, current }: { entries: ReleaseFeedEntry[], current: string }): string | null {
-        const line = current.split('.').slice(0, 2).join('.')
-        return highestTag({ entries: entries.filter((entry) => entry.kind === ReleaseKind.HOTFIX && entry.line === line && compareTags({ a: entry.tag, b: current }) > 0) })
+    getLatestRelease({ entries }: { entries: ReleaseFeedEntry[] }): string | null {
+        return highestTag({ entries: entries.filter((entry) => LATEST_RELEASE_KINDS.includes(entry.kind) && isNil(entry.avoid)) })
+    },
+    getHotfixOnLine({ entries, running }: { entries: ReleaseFeedEntry[], running: string }): string | null {
+        const line = running.split('.').slice(0, 2).join('.')
+        return highestTag({ entries: entries.filter((entry) => entry.kind === ReleaseKind.HOTFIX && entry.line === line && compareTags({ a: entry.tag, b: running }) > 0) })
     },
     compareTags,
     //could be null if the other is running on something older than 0.85.0
@@ -80,6 +84,7 @@ export const apVersionUtil = {
     },
 }
 
+const RELEASE_TAG_ENV = 'AP_RELEASE_TAG'
 const LATEST_RELEASE_KINDS: ReleaseKind[] = [ReleaseKind.MINOR, ReleaseKind.PATCH]
 
 export const UNKNOWN_VERSION = '0.0.0'

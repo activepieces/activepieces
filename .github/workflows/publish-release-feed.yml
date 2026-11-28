@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - releases.json
+      - docs/install/reference/releases/**
   workflow_dispatch:
 
 permissions:
@@ -31,8 +32,10 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
 
-      - name: Check releases.json
-        run: bun tools/scripts/release-feed.ts check
+      - name: Check releases.json and the release note files
+        run: |
+          bun tools/scripts/release-feed.ts check
+          bun tools/scripts/release-feed.ts check-notes
 
       - name: Publish release feed
         uses: ./.github/actions/publish-release-feed

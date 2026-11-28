@@ -2,10 +2,9 @@ import assert from 'assert'
 import { execFileSync } from 'child_process'
 import { existsSync, readFileSync } from 'fs'
 import { basename } from 'path'
-import { isDeepStrictEqual } from 'util'
-import { ReleaseFeed, ReleaseFeedEntry } from '../../packages/core/shared/src/lib/core/release-feed'
+import { ReleaseFeed } from '../../packages/core/shared/src/lib/core/release-feed'
 import { breakingChangesRender, ENTRIES_DIR, PUBLISHED_DOC, UNRELEASED_DOC } from './breaking-changes-render'
-import { RELEASES_FILE, releaseFeed } from './release-feed'
+import { RELEASE_NOTES_DIR, RELEASES_FILE, releaseFeed } from './release-feed'
 
 const BREAKING_LABEL = '⛓️‍💥 breaking-change'
 const ENTRIES_REQUIRING_IMPACT_FROM = '2026-11-25'
@@ -53,32 +52,18 @@ function readEntry({ file }: { file: string }): CheckedEntry {
     }
 }
 
-function releaseFeedViolations({ base, head, author }: { base: ReleaseFeed, head: ReleaseFeed, author: string }): string[] {
+function releaseFeedViolations({ baseHasFile, head, author }: { baseHasFile: boolean, head: ReleaseFeed, author: string }): string[] {
     if (author === RELEASE_BOT_LOGIN) {
         return []
     }
-    const headByTag = new Map(head.map((entry) => [entry.tag, entry]))
-    const baseTags = new Set(base.map((entry) => entry.tag))
-    const removed = base.filter((entry) => !headByTag.has(entry.tag)).map((entry) => `${RELEASES_FILE}: ${entry.tag} is removed. Release entries are written by the release workflow; a PR may only change "avoid" on an existing entry.`)
-    const added = head.filter((entry) => !baseTags.has(entry.tag)).map((entry) => `${RELEASES_FILE}: ${entry.tag} is added. Only the release workflow (${RELEASE_BOT_LOGIN}) adds release entries.`)
-    const edited = base.filter((entry) => {
-        const headEntry = headByTag.get(entry.tag)
-        return headEntry !== undefined && !isDeepStrictEqual(withoutAvoid({ entry }), withoutAvoid({ entry: headEntry }))
-    }).map((entry) => `${RELEASES_FILE}: ${entry.tag} changes fields other than "avoid". A PR may only change "avoid" on an existing entry.`)
-    return [...removed, ...added, ...edited]
-}
-
-function withoutAvoid({ entry }: { entry: ReleaseFeedEntry }): Omit<ReleaseFeedEntry, 'avoid'> {
-    const { avoid: _avoid, ...rest } = entry
-    return rest
-}
-
-function readBaseFeed({ baseRef }: { baseRef: string }): ReleaseFeed {
-    const listing = execFileSync('git', ['ls-tree', '--name-only', `origin/${baseRef}`, RELEASES_FILE], { encoding: 'utf-8' })
-    if (listing.trim().length === 0) {
+    if (!baseHasFile && head.length === 0) {
         return []
     }
-    return releaseFeed.parseFeed({ text: execFileSync('git', ['show', `origin/${baseRef}:${RELEASES_FILE}`], { encoding: 'utf-8' }), source: `origin/${baseRef}:${RELEASES_FILE}` })
+    return [`${RELEASES_FILE} is written only by the release workflow (${RELEASE_BOT_LOGIN}). Change avoid or the written notes in ${RELEASE_NOTES_DIR}/<version>.md instead.`]
+}
+
+function baseHasReleasesFile({ baseRef }: { baseRef: string }): boolean {
+    return execFileSync('git', ['ls-tree', '--name-only', `origin/${baseRef}`, RELEASES_FILE], { encoding: 'utf-8' }).trim().length > 0
 }
 
 function checkReleaseFeed({ baseRef, author }: { baseRef: string, author: string }): string[] {
@@ -90,11 +75,25 @@ function checkReleaseFeed({ baseRef, author }: { baseRef: string, author: string
     }
     try {
         const head = releaseFeed.parseFeed({ text: readFileSync(RELEASES_FILE, 'utf-8'), source: RELEASES_FILE })
-        return releaseFeedViolations({ base: readBaseFeed({ baseRef }), head, author })
+        return releaseFeedViolations({ baseHasFile: baseHasReleasesFile({ baseRef }), head, author })
     }
     catch (error) {
         return [error instanceof Error ? error.message : String(error)]
     }
+}
+
+function checkReleaseNoteFiles({ baseRef }: { baseRef: string }): string[] {
+    return changedFiles({ baseRef, filter: 'AM', path: `${RELEASE_NOTES_DIR}/` })
+        .filter((file) => file.endsWith('.md') && existsSync(file))
+        .flatMap((file) => {
+            try {
+                releaseFeed.parseReleaseNoteFile({ fileName: basename(file), text: readFileSync(file, 'utf-8') })
+                return []
+            }
+            catch (error) {
+                return [error instanceof Error ? error.message : String(error)]
+            }
+        })
 }
 
 function stalePages(): string[] {
@@ -158,6 +157,7 @@ function main(): void {
         }
     }
     errors.push(...checkReleaseFeed({ baseRef, author }))
+    errors.push(...checkReleaseNoteFiles({ baseRef }))
     if (errors.length === 0) {
         const stale = stalePages()
         if (stale.length > 0) {
@@ -185,14 +185,13 @@ function runSelfCheck(): void {
     assert(sectionChoice({ body: '### Breaking change?\n- [x] no\n- [x] yes — technical', heading: /^#{2,3}\s*Breaking change\?/im }) === 'multiple', 'two ticked boxes are rejected')
     assert(ENTRIES_REQUIRING_IMPACT_FROM > '2026-11-09', 'converted entries stay exempt from impact and affects')
     const released = releaseFeed.buildEntry({ tag: '0.94.0', releasedAt: '2026-11-24T14:00:00Z', imageDigest: `sha256:${'a'.repeat(64)}`, migrations: { blocking: 1, background: 0, breaking: [] }, entries: [] })
-    const avoided = { ...released, avoid: { reason: 'Upgrade to 0.94.1 instead.' } }
-    const next = { ...released, tag: '0.94.1', kind: releaseFeed.kindOf({ tag: '0.94.1' }) }
-    assert.deepStrictEqual(releaseFeedViolations({ base: [released], head: [avoided], author: 'a-human' }), [], 'a human may set avoid on an existing entry')
-    assert.deepStrictEqual(releaseFeedViolations({ base: [avoided], head: [released], author: 'a-human' }), [], 'a human may clear avoid on an existing entry')
-    assert(releaseFeedViolations({ base: [released], head: [next, released], author: 'a-human' }).length === 1, 'a human may not add a release entry')
-    assert(releaseFeedViolations({ base: [released], head: [{ ...released, imageDigest: `sha256:${'b'.repeat(64)}` }], author: 'a-human' }).length === 1, 'a human may not edit a field other than avoid')
-    assert(releaseFeedViolations({ base: [released], head: [], author: 'a-human' }).length === 1, 'a human may not remove a release entry')
-    assert.deepStrictEqual(releaseFeedViolations({ base: [released], head: [next, released], author: RELEASE_BOT_LOGIN }), [], 'the release bot adds release entries')
+    assert(releaseFeedViolations({ baseHasFile: true, head: [released], author: 'a-human' }).length === 1, 'a human may not change releases.json')
+    assert(releaseFeedViolations({ baseHasFile: true, head: [{ ...released, avoid: { reason: 'Skip it.' } }], author: 'a-human' }).length === 1, 'a human may not set avoid in releases.json')
+    assert(releaseFeedViolations({ baseHasFile: false, head: [released], author: 'a-human' }).length === 1, 'a human may not create releases.json with entries')
+    assert.deepStrictEqual(releaseFeedViolations({ baseHasFile: false, head: [], author: 'a-human' }), [], 'the PR that introduces releases.json adds it empty')
+    assert.deepStrictEqual(releaseFeedViolations({ baseHasFile: true, head: [released], author: RELEASE_BOT_LOGIN }), [], 'the release bot writes releases.json')
+    assert.doesNotThrow(() => releaseFeed.parseReleaseNoteFile({ fileName: '0.94.0.md', text: '---\nversion: 0.94.0\navoid: Wait for 0.94.1.\n---\nNotes.\n' }), 'a valid release note file parses')
+    assert.throws(() => releaseFeed.parseReleaseNoteFile({ fileName: '0.94.1.md', text: '---\nversion: 0.94.0\n---\nNotes.\n' }), 'a release note file must be named after its version')
     console.log('breaking-change-check self-check passed')
 }
 

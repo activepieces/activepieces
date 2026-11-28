@@ -58,7 +58,7 @@ export const healthStatusService = (log: FastifyBaseLogger) => ({
 
         return {
             latestVersion: apVersionUtil.getLatestRelease({ entries: releaseFeed.entries }),
-            hotfixOnYourLine: apVersionUtil.getHotfixOnLine({ entries: releaseFeed.entries, current: release.current }),
+            hotfixOnYourLine: apVersionUtil.getHotfixOnLine({ entries: releaseFeed.entries, running: apVersionUtil.getRunningTag() }),
             appCpu: await systemUsage.getCpuCores() >= APP_MIN_CPU_CORES,
             appRam: (await systemUsage.getContainerMemoryUsage()).totalRamInBytes >= gigaBytes(APP_MIN_RAM_GB),
             disk: (await systemUsage.getDiskInfo()).total >= gigaBytes(APP_MIN_DISK_GB),

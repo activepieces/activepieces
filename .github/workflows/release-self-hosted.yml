@@ -130,6 +130,8 @@ jobs:
             linux/amd64
             linux/arm64
           push: true
+          build-args: |
+            AP_RELEASE_TAG=${{ inputs.tag }}
           tags: |
             activepieces/activepieces:${{ inputs.tag }}
             ghcr.io/activepieces/activepieces:${{ inputs.tag }}
