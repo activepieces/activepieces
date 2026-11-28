@@ -1,94 +1,65 @@
 name: Chat Evals
 
-# Regression gate for the AI agent prompt + agent loop.
-#   gate — every PR touching agent/prompt/eval files: deterministic replay + assertion
-#          tests, no key, hermetic. Blocks the PR.
-#   live — nightly + weekly + manual: fixtures against the real model + LLM-judge, key from secrets.
-#          Nightly runs the regression fixtures only (cheap + stable); Sunday 07:00 UTC runs the
-#          full suite so the Config Console can trend the agent score; run the full suite
-#          on demand via the workflow_dispatch "scope" input. Not a PR blocker.
-
 on:
-  pull_request:
+  push:
+    branches:
+      - main
     paths:
       - packages/server/worker/src/lib/execute/jobs/ee/agent/**
-      - packages/server/worker/test/lib/agent-eval/**
+      - packages/server/worker/test/lib/evals/**
       - packages/server/api/src/app/ee/agent/**
+      - packages/server/api/src/app/mcp/**
       - packages/server/api/src/assets/prompts/**
       - packages/core/shared/src/lib/ee/agent/**
       - packages/server/utils/src/agent-ai-utils.ts
       - packages/server/utils/src/agent-provider-options.ts
       - packages/core/piece-types/src/lib/ai-providers.ts
+      - benchmark/docker-compose.yml
       - .github/workflows/agent-evals.yml
-  schedule:
-    - cron: '0 6 * * *'
-    - cron: '0 7 * * 0'
   workflow_dispatch:
     inputs:
-      scope:
-        description: 'Live gate fixture scope'
-        type: choice
-        options: [regression, all]
-        default: regression
+      model:
+        description: 'OpenRouter model id to run, e.g. anthropic/claude-sonnet-5.5. Empty uses the CLI default.'
+        type: string
+        default: ''
 
 permissions:
-  actions: read
   contents: read
 
+concurrency:
+  group: chat-evals-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  gate:
-    name: Deterministic gate
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v5
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - run: bun install
-
-      - name: Turbo Cache
-        uses: rharkor/caching-for-turbo@v2.4.2
-        with:
-          provider: s3
-          s3-bucket: ${{ secrets.TURBO_CACHE_S3_BUCKET }}
-          s3-region: auto
-          s3-endpoint: ${{ secrets.TURBO_CACHE_S3_ENDPOINT }}
-          s3-access-key-id: ${{ secrets.TURBO_CACHE_S3_ACCESS_KEY_ID }}
-          s3-secret-access-key: ${{ secrets.TURBO_CACHE_S3_SECRET_ACCESS_KEY }}
-          max-age: 3w
-          max-size: 20gb
-
-      # The eval tests import @activepieces/* packages by their built dist/, which
-      # bun install alone does not produce.
-      - name: Build worker dependency graph
-        run: npx turbo run build --filter=worker
-
-      - name: Run deterministic agent evals
-        run: npm run agent-evals:ci
-
-      - name: Run the tests covering the gated provider code
-        run: npx turbo run test --filter=@activepieces/server-utils --filter=@activepieces/core-piece-types
-
-  live:
-    name: Live judge gate
-    if: github.event_name != 'pull_request' && github.repository == 'activepieces/activepieces'
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+  evals:
+    if: github.repository == 'activepieces/activepieces'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    environment: ${{ github.event_name == 'push' && 'evals-baseline' || '' }}
     env:
+      COMPOSE_FILE: benchmark/docker-compose.yml
+      AP_EDITION: ee
+      AP_ENVIRONMENT: dev
+      AP_LICENSE_KEY: ${{ secrets.E2E_LICENSE_KEY }}
+      AP_EVAL_BASE_URL: http://localhost:8080/api
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      CHAT_EVAL_SCOPE: ${{ github.event.inputs.scope || (github.event.schedule == '0 7 * * 0' && 'all') || 'regression' }}
-      CHAT_EVAL_REPEATS: 3
-      CHAT_EVAL_RESULTS_PATH: ${{ github.workspace }}/eval-results.json
+      AP_POSTHOG_API_KEY: ${{ secrets.POSTHOG_EVALS_API_KEY }}
+      UPLOAD: ${{ github.event_name == 'push' && '--upload' || '' }}
+      MODEL: ${{ inputs.model && format('--model={0}', inputs.model) || '' }}
     steps:
       - uses: actions/checkout@v5
+
+      - name: Generate the server API key
+        run: |
+          KEY=$(openssl rand -hex 32)
+          echo "::add-mask::$KEY"
+          echo "AP_API_KEY=$KEY" >> "$GITHUB_ENV"
+
+      - name: Build the image from this commit
+        run: docker build -t activepieces-benchmark:local .
+
+      - name: Start stack
+        run: docker compose up -d
 
       - uses: actions/setup-node@v6
         with:
@@ -98,7 +69,7 @@ jobs:
         with:
           bun-version: latest
 
-      - run: bun install
+      - run: bun install --frozen-lockfile
 
       - name: Turbo Cache
         uses: rharkor/caching-for-turbo@v2.4.2
@@ -115,24 +86,32 @@ jobs:
       - name: Build worker dependency graph
         run: npx turbo run build --filter=worker
 
-      - name: Run live chat evals (scope=${{ env.CHAT_EVAL_SCOPE }})
-        run: npm run agent-evals:ci
-
-      - name: Publish results to CDN
-        if: always() && hashFiles('eval-results.json') != ''
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.CDN_S3_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.CDN_S3_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: us-east-1
-          AWS_REQUEST_CHECKSUM_CALCULATION: when_required
-          AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
-          BUCKET: ${{ secrets.CDN_S3_BUCKET }}
-          ENDPOINT: ${{ secrets.CDN_S3_ENDPOINT }}
+      - name: Wait for the app
         run: |
-          KEY="ai/evals/runs/$(date -u +%Y-%m-%dT%H-%M-%SZ)-${GITHUB_SHA::10}.json"
-          aws s3 cp "$CHAT_EVAL_RESULTS_PATH" "s3://$BUCKET/$KEY" \
-            --endpoint-url "$ENDPOINT" \
-            --content-type "application/json" \
-            --cache-control "max-age=31536000, immutable" \
-            --acl public-read
-          echo "Published https://cdn.activepieces.com/$KEY"
+          for i in $(seq 1 60); do
+            if curl -sf "$AP_EVAL_BASE_URL/v1/flags" > /dev/null; then
+              echo "App is up after $((i * 5)) s"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::App did not answer on $AP_EVAL_BASE_URL within 5 minutes"
+          exit 1
+
+      - name: Run chat evals
+        shell: bash
+        run: |
+          npm run evals -- $MODEL $UPLOAD 2>&1 | tee "$RUNNER_TEMP/eval-output.txt"
+
+      - name: Summarize results
+        if: always()
+        run: |
+          if [ -f "$RUNNER_TEMP/eval-output.txt" ]; then
+            { echo '```'; tail -n 60 "$RUNNER_TEMP/eval-output.txt"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Show app and worker logs on failure
+        if: failure() || cancelled()
+        run: |
+          docker compose ps -a
+          docker compose logs --tail=2000 app worker

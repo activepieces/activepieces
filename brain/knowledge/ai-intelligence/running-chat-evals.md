@@ -44,7 +44,9 @@ All of these need `--dataset <name>`:
 
 ## Gotchas
 
-- `--upload` writes the run to PostHog as the main baseline. The CLI refuses it unless HEAD is `origin/main`, the worktree is clean and `--repeats` is at least 3. Upload by hand after main changes; the evals don't run in CI.
+- `--upload` writes the run to PostHog as the main baseline. The CLI refuses it unless HEAD is `origin/main`, the worktree is clean and `--repeats` is at least 3. CI does it: `.github/workflows/agent-evals.yml` uploads after each push to main that touches agent, prompt, MCP or eval code. A manual run of that workflow (optional `model` input) never uploads.
+- In CI the server is the commit's image on the `benchmark/docker-compose.yml` stack with `AP_EDITION=ee` and `AP_ENVIRONMENT=dev`. The eval routes 404 outside dev, and dev mode's seed creates the platform owner and project the CLI runs in.
+- The PostHog key comes from secret `POSTHOG_EVALS_API_KEY`: read-only at repo level, the write key in the `evals-baseline` environment, which only push runs on main use.
 - A full run costs about $0.03 per run, which comes to cases × 5 × $0.03.
 - Web and catalog reads (`LIVE_TOOLS` in `replay.ts`: web search, fetch and scrape, piece search and props, skills, tool schemas, setup guides) always run live with your branch's code and ignore their recordings, since their answer doesn't depend on the user. Every run makes real web searches. Workspace reads (flows, runs, connections, tables, dropdown options) stay recorded because the dev server doesn't have the user's data.
 - A workspace read with no recording replies "unavailable" and the agent carries on. A write ends the turn when it isn't recorded or its input differs from the recording. That stop never fails the tool-call gate, even on the case's target tool: the input passed the tool's schema, so the judge grades whether it was right. Use `--record` to fill a missing read.
