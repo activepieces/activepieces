@@ -4,12 +4,15 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 
-import { boxAuth } from '../..';
-import { WebhookInformation, common } from '../common';
+import { boxAuth } from '../auth';
+import { boxApi } from '../common/api';
+import type { BoxWebhook, BoxWebhookTarget } from '../common/types';
+import { newFolderOutputSchema } from '../output-schemas';
 
-export const newFolder = createTrigger({
+export const newFolderTrigger = createTrigger({
   auth: boxAuth,
   name: 'new_folder',
+  outputSchema: newFolderOutputSchema,
   classification: 'READ',
   displayName: 'New Folder',
   description: 'Triggers when a folder is created',
@@ -28,12 +31,13 @@ export const newFolder = createTrigger({
   },
 
   async onEnable(context) {
-    const target: any = {
+    const target: BoxWebhookTarget = {
       id: context.propsValue.folder,
       type: 'folder',
     };
 
-    const webhook = await common.subscribeWebhook(context.auth, {
+    const webhook = await boxApi.createWebhook({
+      auth: context.auth,
       event: 'FOLDER.CREATED',
       target: target,
       webhookUrl: context.webhookUrl,
@@ -42,12 +46,12 @@ export const newFolder = createTrigger({
   },
 
   async onDisable(context) {
-    const webhook = await context.store.get<WebhookInformation>(
+    const webhook = await context.store.get<BoxWebhook>(
       `_new_folder_trigger`
     );
 
     if (webhook) {
-      await common.unsubscribeWebhook(context.auth, webhook.id);
+      await boxApi.deleteWebhook({ auth: context.auth, webhookId: webhook.id });
     }
   },
 

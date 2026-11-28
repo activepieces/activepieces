@@ -4,12 +4,15 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 
-import { boxAuth } from '../..';
-import { WebhookInformation, common } from '../common';
+import { boxAuth } from '../auth';
+import { boxApi } from '../common/api';
+import type { BoxWebhook, BoxWebhookTarget } from '../common/types';
+import { newCommentOutputSchema } from '../output-schemas';
 
-export const newComment = createTrigger({
+export const newCommentTrigger = createTrigger({
   auth: boxAuth,
   name: 'new_comment',
+  outputSchema: newCommentOutputSchema,
   classification: 'READ',
   displayName: 'New Comment',
   description: 'Triggers when a comment is created',
@@ -38,12 +41,13 @@ export const newComment = createTrigger({
   },
 
   async onEnable(context) {
-    const target: any = {
+    const target: BoxWebhookTarget = {
       id: context.propsValue.id,
       type: context.propsValue.type,
     };
 
-    const webhook = await common.subscribeWebhook(context.auth, {
+    const webhook = await boxApi.createWebhook({
+      auth: context.auth,
       event: 'COMMENT.CREATED',
       target: target,
       webhookUrl: context.webhookUrl,
@@ -52,12 +56,12 @@ export const newComment = createTrigger({
   },
 
   async onDisable(context) {
-    const webhook = await context.store.get<WebhookInformation>(
+    const webhook = await context.store.get<BoxWebhook>(
       `_new_comment_trigger`
     );
 
     if (webhook) {
-      await common.unsubscribeWebhook(context.auth, webhook.id);
+      await boxApi.deleteWebhook({ auth: context.auth, webhookId: webhook.id });
     }
   },
 
