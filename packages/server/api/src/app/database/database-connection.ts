@@ -20,6 +20,8 @@ import { AlertEntity } from '../ee/alerts/alerts-entity'
 import { ApiKeyEntity } from '../ee/api-keys/api-key-entity'
 import { AppSumoEntity } from '../ee/appsumo/appsumo.entity'
 import { AuditEventEntity } from '../ee/audit-logs/audit-event-entity'
+import { EmailDomainEntity } from '../ee/authentication/email-domain/email-domain.entity'
+import { SsoProviderEntity } from '../ee/authentication/sso-provider/sso-provider.entity'
 import { EmbedSubdomainEntity } from '../ee/embed-subdomain/embed-subdomain.entity'
 import { FlowApprovalRequestEntity } from '../ee/flows/flow-approval/flow-approval-request.entity'
 import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
@@ -143,6 +145,8 @@ function getEntities(): EntitySchema<unknown>[] {
         ProjectReleaseEntity,
         PlatformAnalyticsReportEntity,
         EmbedSubdomainEntity,
+        EmailDomainEntity,
+        SsoProviderEntity,
         FlowApprovalRequestEntity,
         // CLOUD
         AppSumoEntity,
