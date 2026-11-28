@@ -97,13 +97,3 @@ jobs:
           AP_CLOUD_API_KEY: ${{ secrets.AP_CLOUD_API_KEY }}
           NODE_OPTIONS: "--max-old-space-size=8192"
           CHANGED_PIECES: ${{ steps.changed.outputs.changed_dirs }}
-
-      - name: Notify Discord on failure
-        if: failure()
-        env:
-          FAILED_STEP: ${{ steps.metadata.outcome == 'failure' && 'update pieces metadata. Re-run the failed job now. npm publish already succeeded, so Cloud is missing some of these versions. A later Release Pieces run only picks them up while the version is still the one on main.' || steps.publish.outcome == 'failure' && 'publish pieces packages. Cloud metadata was not pushed for any piece in this run.' || 'setup, find changed pieces or build. Nothing was published.' }}
-        run: |
-          curl -H "Content-Type: application/json" \
-            -X POST \
-            -d "{\"content\": \"🚨 **Release Pieces Workflow Failed** 🚨\\n\\n**Repository:** ${{ github.repository }}\\n**Branch:** ${{ github.ref_name }}\\n**Commit:** ${{ github.sha }}\\n**Action URL:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\\n**Failed step:** ${FAILED_STEP}\"}" \
-            ${{ secrets.DISCORD_ON_CALL_WEBHOOK }}
