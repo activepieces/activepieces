@@ -709,6 +709,9 @@
       "@activepieces/piece-imeetify": [
         "packages/pieces/community/imeetify/src/index.ts"
       ],
+      "@activepieces/piece-inkly": [
+        "packages/pieces/community/inkly/src/index.ts"
+      ],
       "@activepieces/piece-insighto-ai": [
         "packages/pieces/community/insighto-ai/src/index.ts"
       ],
