@@ -20,7 +20,7 @@ export const listForms = createAction({
   classification: 'SEARCH',
   outputSchema: kitFormListOutputSchema,
   displayName: 'List Forms',
-  description: 'Returns a list of all forms',
+  description: 'Get every form in your account.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -46,17 +46,33 @@ export const addSubscriberToForm = createAction({
   classification: 'WRITE',
   outputSchema: kitSubscriptionOutputSchema,
   displayName: 'Add Subscriber To Form',
-  description: 'Add a subscriber to a form',
+  description: 'Subscribe an email address to a form.',
   audience: 'human',
   aiMetadata: {
     description:
       'Subscribes an email address to a specific form, optionally setting first name, tags, and custom field values. This is the standard way to add a new subscriber in ConvertKit. Effectively idempotent — re-subscribing the same email to the same form upserts rather than creating a duplicate.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'target',
+      display: 'section',
+      label: 'Form',
+      icon: 'send',
+      props: ['formId'],
+    },
+    {
+      key: 'subscriber',
+      display: 'section',
+      label: 'Subscriber',
+      icon: 'user',
+      props: ['email', 'firstName', 'tags', 'fields'],
+    },
+  ],
   props: {
     formId,
-    email: subscriberEmail,
-    firstName: subscriberFirstName,
+    email: { ...subscriberEmail, width: 'half' },
+    firstName: { ...subscriberFirstName, width: 'half' },
     tags,
     fields: allFieldsRequiredRefreshers,
   },
@@ -95,7 +111,7 @@ export const listFormSubscriptions = createAction({
   name: 'forms_list_form_subscriptions',
   classification: 'SEARCH',
   displayName: 'List Form Subscriptions',
-  description: 'List form subscriptions',
+  description: 'Get the subscribers of a form.',
   audience: 'human',
   aiMetadata: {
     description:

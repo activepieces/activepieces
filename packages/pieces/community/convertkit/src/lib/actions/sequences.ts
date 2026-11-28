@@ -21,7 +21,7 @@ export const listSequences = createAction({
   classification: 'SEARCH',
   outputSchema: kitSequenceListOutputSchema,
   displayName: 'List Sequences',
-  description: 'Returns a list of all sequences',
+  description: 'Get every sequence in your account.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -40,17 +40,33 @@ export const addSubscriberToSequence = createAction({
   classification: 'WRITE',
   outputSchema: kitSubscriptionOutputSchema,
   displayName: 'Add Subscriber To Sequence',
-  description: 'Add a subscriber to a sequence',
+  description: 'Subscribe an email address to a sequence.',
   audience: 'human',
   aiMetadata: {
     description:
       'Enrolls an email address in a sequence so it starts receiving that automated email course, optionally setting first name, tags, and custom field values. Effectively idempotent — re-subscribing the same email to the same sequence upserts instead of duplicating the enrollment.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'target',
+      display: 'section',
+      label: 'Sequence',
+      icon: 'send',
+      props: ['sequenceId'],
+    },
+    {
+      key: 'subscriber',
+      display: 'section',
+      label: 'Subscriber',
+      icon: 'user',
+      props: ['email', 'firstName', 'tags', 'fields'],
+    },
+  ],
   props: {
     sequenceId: sequenceIdDropdown,
-    email: subscriberEmail,
-    firstName: subscriberFirstName,
+    email: { ...subscriberEmail, width: 'half' },
+    firstName: { ...subscriberFirstName, width: 'half' },
     tags,
     fields: allFields,
   },
@@ -91,7 +107,7 @@ export const listSubscriptionsToSequence = createAction({
   classification: 'SEARCH',
   outputSchema: kitSubscriptionListOutputSchema,
   displayName: 'List Subscriptions To Sequence',
-  description: 'List all subscriptions to a sequence',
+  description: 'Get the subscribers of a sequence.',
   audience: 'human',
   aiMetadata: {
     description:

@@ -1,15 +1,15 @@
 import { Property } from '@activepieces/pieces-framework';
 
 export const broadcastId = Property.ShortText({
-  displayName: 'Broadcast Id',
-  description: 'The broadcast id',
+  displayName: 'Broadcast ID',
+  description: "Find it in the broadcast's URL in Kit.",
+  placeholder: '1234567',
   required: true,
 });
 
 export const broadcastPageNumber = Property.Number({
   displayName: 'Page',
-  description:
-    'Page number. Each page of results will contain up to 50 broadcasts.',
+  description: 'Up to 50 broadcasts per page.',
   required: false,
   defaultValue: 1,
 });
@@ -17,58 +17,55 @@ export const broadcastPageNumber = Property.Number({
 export const broadcastContent = Property.ShortText({
   displayName: 'Content',
   description:
-    "The broadcast's email content - this can contain text and simple HTML markdown (such as h1, img or p tags)",
+    'The email body. Simple HTML such as p, h1 and img tags works.',
   required: false,
 });
 export const description = Property.ShortText({
-  displayName: 'Description',
-  description: 'An internal description of this broadcast',
+  displayName: 'Internal Description',
+  description: 'Only visible to you in Kit.',
   required: false,
 });
 export const broadcastEmailAddress = Property.ShortText({
-  displayName: 'Email Address',
-  description:
-    "Sending email address; leave blank to use your account's default sending email address",
+  displayName: 'From Email',
+  description: "Sending address. Empty: your account's default.",
+  placeholder: 'you@example.com',
   required: false,
 });
 export const emailLayoutTemplate = Property.ShortText({
-  displayName: 'Email Layout Template',
-  description:
-    "Name of the email template to use; leave blank to use your account's default email template",
+  displayName: 'Email Template',
+  description: "Template name. Empty: your account's default.",
   required: false,
 });
 export const isPublic = Property.Checkbox({
   displayName: 'Public',
-  description: 'Specifies whether or not this is a public post',
+  description:
+    'Also publish this broadcast as a post on your Creator Profile.',
   required: false,
   defaultValue: false,
 });
 export const publishedAt = Property.DateTime({
   displayName: 'Published At',
-  description:
-    'Specifies the time that this post was published (applicable only to public posts)',
+  description: 'Date shown on the public post.',
   required: false,
 });
 export const sendAt = Property.DateTime({
   displayName: 'Send At',
-  description:
-    'Time that this broadcast should be sent; leave blank to create a draft broadcast. If set to a future time, this is the time that the broadcast will be scheduled to send.',
+  description: 'Empty saves a draft; a future time schedules the send.',
   required: false,
 });
 export const subject = Property.ShortText({
   displayName: 'Subject',
-  description: "The broadcast email's subject",
+  description: 'The email subject line.',
   required: false,
 });
 export const thumbnailAlt = Property.ShortText({
-  displayName: 'Thumbnail Alt',
-  description:
-    'Specify the ALT attribute of the public thumbnail image (applicable only to public posts)',
+  displayName: 'Thumbnail Alt Text',
+  description: 'Describes the thumbnail for screen readers.',
   required: false,
 });
 export const thumbnailUrl = Property.ShortText({
-  displayName: 'Thumbnail Url',
-  description:
-    'Specify the URL of the thumbnail image to accompany the broadcast post (applicable only to public posts)',
+  displayName: 'Thumbnail URL',
+  description: 'Image shown with the public post.',
+  placeholder: 'https://example.com/cover.png',
   required: false,
 });

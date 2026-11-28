@@ -4,21 +4,21 @@ import { fetchCustomFields } from '../service';
 import { convertkitAuth } from '../../auth';
 
 export const fieldsArray = Property.Array({
-  displayName: 'Fields',
-  description: 'The custom fields',
+  displayName: 'Field Labels',
+  description: 'One label per new custom field.',
   required: true,
 });
 
 export const label = Property.Dropdown({
   auth: convertkitAuth,
-  displayName: 'Custom Label',
+  displayName: 'Custom Field',
   required: true,
   refreshers: ['auth'],
   options: async ({ auth }) => {
     if (!auth) {
       return {
         disabled: true,
-        placeholder: 'Connect your account',
+        placeholder: 'Connect your account first',
         options: [],
       };
     }
@@ -43,23 +43,19 @@ export const label = Property.Dropdown({
 
 export const new_label = Property.ShortText({
   displayName: 'New Label',
-  description: 'The new label for the custom field',
+  description: 'The name shown for this field in Kit.',
   required: true,
 });
 
 export const allFields = Property.DynamicProperties({
   auth: convertkitAuth,
   displayName: 'Custom Fields',
-  description: 'The custom fields',
+  description: 'Values for your Kit custom fields.',
   required: false,
   refreshers: ['auth'],
   props: async ({ auth }) => {
     if (!auth) {
-      return {
-        disabled: true,
-        placeholder: 'Connect your account',
-        options: [],
-      };
+      return {};
     }
 
     const fields: DynamicPropsValue = {};

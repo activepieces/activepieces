@@ -37,7 +37,7 @@ export const listTags = createAction({
   classification: 'SEARCH',
   outputSchema: kitTagListOutputSchema,
   displayName: 'List Tags',
-  description: 'Returns a list of all tags',
+  description: 'Get every tag in your account.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -56,7 +56,7 @@ export const createTag = createAction({
   classification: 'WRITE',
   outputSchema: kitTagOutputSchema,
   displayName: 'Create Tag',
-  description: 'Create a tag',
+  description: 'Create a tag.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -99,18 +99,33 @@ export const tagSubscriber = createAction({
   classification: 'WRITE',
   outputSchema: kitSubscriptionOutputSchema,
   displayName: 'Tag Subscriber',
-  description: 'Tag a subscriber',
+  description: 'Add tags to a subscriber, creating the subscriber if new.',
   audience: 'human',
   aiMetadata: {
     description:
       'Applies one or more existing tags to a subscriber by email address (subscribing the email to the first tag and attaching the rest), optionally setting first name and custom fields; at least one tag is required. Effectively idempotent — re-applying the same tags converges to the same state.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'tags',
+      display: 'section',
+      label: 'Tags',
+      icon: 'tag',
+      props: ['tags'],
+    },
+    {
+      key: 'subscriber',
+      display: 'section',
+      label: 'Subscriber',
+      icon: 'user',
+      props: ['email', 'firstName', 'fields'],
+    },
+  ],
   props: {
-    email: subscriberEmail,
-    // tagId: tag,
-    firstName: subscriberFirstName,
     tags: tagsRequired,
+    email: { ...subscriberEmail, width: 'half' },
+    firstName: { ...subscriberFirstName, width: 'half' },
     fields: allFields,
   },
   async run(context) {
@@ -154,7 +169,7 @@ export const removeTagFromSubscriberByEmail = createAction({
   classification: 'WRITE',
   outputSchema: kitTagOutputSchema,
   displayName: 'Remove Tag From Subscriber By Email',
-  description: 'Remove a tag from a subscriber by email',
+  description: 'Remove a tag from a subscriber found by email.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -195,8 +210,8 @@ export const removeTagFromSubscriberById = createAction({
   name: 'tags_remove_tag_from_subscriber_by_id',
   classification: 'WRITE',
   outputSchema: kitTagOutputSchema,
-  displayName: 'Remove Tag From Subscriber By Id',
-  description: 'Remove a tag from a subscriber by id',
+  displayName: 'Remove Tag From Subscriber By ID',
+  description: 'Remove a tag from a subscriber found by ID.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -233,7 +248,7 @@ export const listSubscriptionsToATag = createAction({
   classification: 'SEARCH',
   outputSchema: kitSubscriptionListOutputSchema,
   displayName: 'List Subscriptions To Tag',
-  description: 'List all subscriptions to a tag',
+  description: 'Get one page of subscribers with a tag.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -242,8 +257,8 @@ export const listSubscriptionsToATag = createAction({
   },
   props: {
     tagId: tag,
-    page: tagsPageNumber,
-    sortOrder,
+    page: { ...tagsPageNumber, advanced: true },
+    sortOrder: { ...sortOrder, advanced: true },
     subscriberState,
   },
   async run(context) {

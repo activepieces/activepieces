@@ -10,20 +10,20 @@ import { Tag } from '../types';
 import { convertkitAuth } from '../../auth';
 
 export const tagId = Property.ShortText({
-  displayName: 'Tag Id',
-  description: 'The tag id',
+  displayName: 'Tag ID',
+  description: "The tag's ID in Kit.",
   required: true,
 });
 
 export const name = Property.ShortText({
-  displayName: 'Name',
-  description: 'The name of the tag',
+  displayName: 'Tag Name',
+  placeholder: 'Customers',
   required: true,
 });
 
 export const tags = Property.MultiSelectDropdown({
   displayName: 'Tags',
-  description: 'Choose the Tags',
+  description: 'Tags to add to the subscriber.',
   required: false,
   refreshers: ['auth'],
   auth: convertkitAuth,
@@ -31,7 +31,7 @@ export const tags = Property.MultiSelectDropdown({
     if (!auth) {
       return {
         disabled: true,
-        placeholder: 'Connect your account',
+        placeholder: 'Connect your account first',
         options: [],
       };
     }
@@ -53,7 +53,6 @@ export const tagsRequired = { ...tags, required: true };
 
 export const tag = Property.Dropdown({
   displayName: 'Tag',
-  description: 'Choose a Tag',
   required: true,
   refreshers: ['auth'],
   auth: convertkitAuth,
@@ -61,7 +60,7 @@ export const tag = Property.Dropdown({
     if (!auth) {
       return {
         disabled: true,
-        placeholder: 'Connect your account',
+        placeholder: 'Connect your account first',
         options: [],
       };
     }
@@ -84,13 +83,12 @@ export const tag = Property.Dropdown({
 
 export const tagsPageNumber = Property.Number({
   displayName: 'Page',
-  description: 'Each page of results will contain up to 50 tags.',
+  description: 'Up to 50 subscriptions per page.',
   required: false,
   defaultValue: 1,
 });
 export const sortOrder = Property.StaticDropdown({
   displayName: 'Sort Order',
-  description: 'Sort order',
   required: false,
   options: {
     options: [
@@ -101,7 +99,7 @@ export const sortOrder = Property.StaticDropdown({
 });
 export const subscriberState = Property.StaticDropdown({
   displayName: 'Subscriber State',
-  description: 'Subscriber state',
+  description: "Active or cancelled subscriptions. Empty: Kit's default.",
   required: false,
   options: {
     options: [
@@ -116,7 +114,7 @@ export const subscriberState = Property.StaticDropdown({
 
 export const tagIdByEmail = Property.Dropdown({
   displayName: 'Tag',
-  description: 'The tag to remove',
+  description: 'Tags this subscriber has now.',
   required: true,
   refreshers: ['auth', 'email'],
   auth: convertkitAuth,
@@ -125,33 +123,33 @@ export const tagIdByEmail = Property.Dropdown({
     if (!auth) {
       return {
         disabled: true,
-        placeholder: 'Connect your account.',
+        placeholder: 'Connect your account first',
         options: [],
       };
     }
     if (!email) {
       return {
         disabled: true,
-        placeholder: 'Provide a subscriber email address.',
+        placeholder: "Enter the subscriber's email first",
         options: [],
       };
     }
     const subscriber = await fetchSubscriberByEmail(
-      auth.toString(),
+      auth.secret_text,
       email.toString()
     );
 
     if (!subscriber) {
       return {
         disabled: true,
-        placeholder: 'No subscribers found for this email address.',
+        placeholder: 'No subscriber with this email',
         options: [],
       };
     }
 
     const subscriberId = subscriber.id;
     const tags = await fetchSubscribedTags(
-      auth.toString(),
+      auth.secret_text,
       subscriberId.toString()
     );
 
@@ -173,7 +171,7 @@ export const tagIdByEmail = Property.Dropdown({
 
 export const tagIdBySubscriberId = Property.Dropdown({
   displayName: 'Tag',
-  description: 'The tag to remove',
+  description: 'Tags this subscriber has now.',
   required: true,
   auth: convertkitAuth,
   refreshers: ['auth', 'subscriberId'],
@@ -181,7 +179,7 @@ export const tagIdBySubscriberId = Property.Dropdown({
     if (!auth) {
       return {
         disabled: true,
-        placeholder: 'Connect your account and',
+        placeholder: 'Connect your account first',
         options: [],
       };
     }
@@ -189,7 +187,7 @@ export const tagIdBySubscriberId = Property.Dropdown({
     if (!subscriberId) {
       return {
         disabled: true,
-        placeholder: 'Provide a subscriber id.',
+        placeholder: 'Enter the subscriber ID first',
         options: [],
       };
     }
@@ -202,7 +200,7 @@ export const tagIdBySubscriberId = Property.Dropdown({
       if (!tags) {
         return {
           disabled: true,
-          placeholder: 'Something went wrong.',
+          placeholder: 'Could not load tags. Check the subscriber ID.',
           options: [],
         };
       }

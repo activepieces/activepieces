@@ -4,12 +4,14 @@ import { convertkitAuth } from '../../auth';
 
 export const sequenceId = Property.ShortText({
   displayName: 'Sequence ID',
-  description: 'The sequence ID',
+  description: "Find it in the sequence's URL in Kit.",
+  placeholder: '1234567',
   required: true,
 });
 
 export const sequenceIdDropdown = Property.Dropdown({
   displayName: 'Sequence',
+  description: 'A sequence in your Kit account.',
   required: true,
   refreshers: ['auth'],
   auth: convertkitAuth,
@@ -17,7 +19,7 @@ export const sequenceIdDropdown = Property.Dropdown({
     if (!auth) {
       return {
         disabled: true,
-        placeholder: 'Connect your account',
+        placeholder: 'Connect your account first',
         options: [],
       };
     }

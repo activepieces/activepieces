@@ -7,3 +7,11 @@ hidden: true
 Entries here move to [Breaking Changes](/install/reference/breaking-changes) automatically when the release that contains them is tagged. Add new entries at the top, right under the heading below.
 
 ## What has changed?
+
+#### ConvertKit 0.5.0: Link Clicked and Product Purchased run the flow once per event
+
+From ConvertKit 0.5.0, **Link Clicked** and **Product Purchased** run the flow once per event, with the subscriber as the trigger output. Before, each event also started a second run whose trigger output was only the watched link URL or the product ID.
+
+#### What you need to do
+
+If a flow on Link Clicked or Product Purchased handled that second run on purpose, read the link URL or product ID from the trigger's settings instead.

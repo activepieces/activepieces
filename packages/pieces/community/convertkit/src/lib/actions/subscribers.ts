@@ -1,4 +1,8 @@
-import { createAction } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  MarkdownVariant,
+  Property,
+} from '@activepieces/pieces-framework';
 import { HttpMethod, HttpRequest } from '@activepieces/pieces-common';
 import { Subscriber } from '../common/types';
 import { convertkitAuth } from '../auth';
@@ -38,8 +42,8 @@ export const getSubscriberById = createAction({
   name: 'subscribers_get_subscriber_by_id',
   classification: 'READ',
   outputSchema: kitSubscriberOutputSchema,
-  displayName: 'Get Subscriber By Id',
-  description: 'Returns data for a single subscriber',
+  displayName: 'Get Subscriber By ID',
+  description: 'Find a subscriber by their Kit ID.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -61,7 +65,7 @@ export const getSubscriberByEmail = createAction({
   classification: 'READ',
   outputSchema: kitSubscriberOutputSchema,
   displayName: 'Get Subscriber By Email',
-  description: 'Returns data for a single subscriber',
+  description: 'Find a subscriber by email address.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -83,22 +87,39 @@ export const listSubscribers = createAction({
   classification: 'SEARCH',
   outputSchema: kitSubscriberListOutputSchema,
   displayName: 'List Subscribers',
-  description: 'Returns a list of all subscribers',
+  description: 'Get one page of subscribers, with optional filters.',
   audience: 'human',
   aiMetadata: {
     description:
       'Lists subscribers with optional filters (created/updated date ranges, email address), paging, and sorting. Use it for bulk audits or fuzzy searches; for one known subscriber prefer the Get Subscriber actions. Read-only and idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'filters',
+      display: 'section',
+      label: 'Filters',
+      icon: 'filter',
+      props: ['emailAddress', 'from', 'to', 'updatedFrom', 'updatedTo'],
+    },
+  ],
   props: {
-    page: subscribersPageNumber,
-    sortOrder,
-    sortField,
-    from,
-    to,
-    updatedFrom,
-    updatedTo,
-    emailAddress: subscriberEmail,
+    emailAddress: subscriberEmailOptional,
+    from: { ...from, width: 'half' },
+    to: { ...to, width: 'half' },
+    updatedFrom: { ...updatedFrom, width: 'half' },
+    updatedTo: { ...updatedTo, width: 'half' },
+    sortOrder: {
+      ...sortOrder,
+      description: 'Direction of the sort.',
+    },
+    sortField: {
+      ...sortField,
+      description: 'Field to sort by.',
+      placeholder: 'id',
+      advanced: true,
+    },
+    page: { ...subscribersPageNumber, advanced: true },
   },
   async run(context) {
     const {
@@ -147,17 +168,37 @@ export const updateSubscriber = createAction({
   classification: 'WRITE',
   outputSchema: kitSubscriberOutputSchema,
   displayName: 'Update Subscriber',
-  description: 'Update a subscriber',
+  description: "Change a subscriber's email, name or custom fields.",
   audience: 'human',
   aiMetadata: {
     description:
       'Updates a subscriber email address, first name, or custom field values by numeric subscriber ID. Idempotent — repeating the same update leaves the subscriber in the same state. It cannot change subscription status; use Unsubscribe Subscriber for that.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'subscriber',
+      display: 'section',
+      label: 'Subscriber',
+      icon: 'user',
+      props: ['changesInfo', 'subscriberId'],
+    },
+    {
+      key: 'changes',
+      display: 'section',
+      label: 'Changes',
+      icon: 'text',
+      props: ['emailAddress', 'firstName', 'fields'],
+    },
+  ],
   props: {
+    changesInfo: Property.MarkDown({
+      value: 'Empty fields keep their current value.',
+      variant: MarkdownVariant.INFO,
+    }),
     subscriberId,
-    emailAddress: subscriberEmailOptional,
-    firstName: subscriberFirstName,
+    emailAddress: { ...subscriberEmailOptional, width: 'half' },
+    firstName: { ...subscriberFirstName, width: 'half' },
     fields: allFields,
   },
   async run(context) {
@@ -196,7 +237,7 @@ export const unsubscribeSubscriber = createAction({
   classification: 'DESTRUCTIVE',
   outputSchema: kitSubscriberOutputSchema,
   displayName: 'Unsubscribe Subscriber',
-  description: 'Unsubscribe a subscriber',
+  description: 'Unsubscribe an email address from all Kit emails.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -235,8 +276,8 @@ export const listTagsBySubscriberId = createAction({
   name: 'subscribers_list_tags_by_subscriber_id',
   classification: 'SEARCH',
   outputSchema: kitTagListOutputSchema,
-  displayName: 'List Tags By Subscriber Id',
-  description: 'Returns a list of all subscribed tags',
+  displayName: 'List Tags By Subscriber ID',
+  description: 'Get the tags on a subscriber, by ID.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -258,7 +299,7 @@ export const listSubscriberTagsByEmail = createAction({
   classification: 'SEARCH',
   outputSchema: kitTagListOutputSchema,
   displayName: 'List Tags By Email',
-  description: 'Returns a list of all subscribed tags',
+  description: 'Get the tags on a subscriber, by email.',
   audience: 'human',
   aiMetadata: {
     description:

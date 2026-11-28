@@ -4,6 +4,7 @@ import { convertkitAuth } from '../../auth';
 
 export const formId = Property.Dropdown({
   displayName: 'Form',
+  description: 'A form in your Kit account.',
   required: true,
   refreshers: ['auth'],
   auth: convertkitAuth,
@@ -11,7 +12,7 @@ export const formId = Property.Dropdown({
     if (!auth) {
       return {
         disabled: true,
-        placeholder: 'Connect your account',
+        placeholder: 'Connect your account first',
         options: [],
       };
     }

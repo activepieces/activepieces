@@ -18,7 +18,7 @@ export const listFields = createAction({
   classification: 'SEARCH',
   outputSchema: kitCustomFieldListOutputSchema,
   displayName: 'List Custom Fields',
-  description: 'Returns a list of all custom fields',
+  description: 'Get every custom field in your account.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -37,7 +37,7 @@ export const createField = createAction({
   classification: 'WRITE',
   outputSchema: kitCustomFieldOutputSchema,
   displayName: 'Create Custom Field',
-  description: 'Create a new custom field',
+  description: 'Create one custom field per label.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -75,8 +75,8 @@ export const updateField = createAction({
   name: 'custom_fields_update_field',
   classification: 'WRITE',
   outputSchema: kitRequestStatusOutputSchema,
-  displayName: 'Custom Fields: Update Field',
-  description: 'Update a custom field',
+  displayName: 'Update Custom Field',
+  description: 'Rename a custom field.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -117,8 +117,8 @@ export const deleteField = createAction({
   name: 'custom_fields_delete_field',
   classification: 'DESTRUCTIVE',
   outputSchema: kitRequestStatusOutputSchema,
-  displayName: 'Custom Fields: Delete Field',
-  description: 'Delete a custom field',
+  displayName: 'Delete Custom Field',
+  description: 'Delete a custom field and its stored values.',
   audience: 'human',
   aiMetadata: {
     description:

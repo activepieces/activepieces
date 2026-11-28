@@ -2,13 +2,15 @@ import { Property } from '@activepieces/pieces-framework';
 
 export const subscriberId = Property.ShortText({
   displayName: 'Subscriber ID',
-  description: 'The subscriber ID',
+  description: "Find it in the subscriber's URL in Kit.",
+  placeholder: '1234567',
   required: true,
 });
 
 export const subscriberEmail = Property.ShortText({
   displayName: 'Email',
-  description: 'The email of the subscriber',
+  description: "The subscriber's email address.",
+  placeholder: 'jane@example.com',
   required: true,
 });
 
@@ -19,45 +21,40 @@ export const subscriberEmailOptional = {
 
 export const subscriberFirstName = Property.ShortText({
   displayName: 'First Name',
-  description: 'The first name of the subscriber',
+  placeholder: 'Jane',
   required: false,
 });
 
 export const subscribersPageNumber = Property.Number({
   displayName: 'Page',
-  description:
-    'Page number. Each page of results will contain up to 50 subscribers.',
+  description: 'Up to 50 subscribers per page.',
   required: false,
   defaultValue: 1,
 });
 
 export const from = Property.DateTime({
-  displayName: 'From',
-  description: 'Return subscribers created after this date',
+  displayName: 'Created After',
   required: false,
 });
 
 export const to = Property.DateTime({
-  displayName: 'To',
-  description: 'Return subscribers created before this date',
+  displayName: 'Created Before',
   required: false,
 });
 
 export const updatedFrom = Property.DateTime({
-  displayName: 'Updated From',
-  description: 'Return subscribers updated after this date',
+  displayName: 'Updated After',
   required: false,
 });
 
 export const updatedTo = Property.DateTime({
-  displayName: 'Updated To',
-  description: 'Return subscribers updated before this date',
+  displayName: 'Updated Before',
   required: false,
 });
 
 export const sortOrder = Property.StaticDropdown({
   displayName: 'Sort Order',
-  description: 'Sort order',
+  description: 'Direction of the sort.',
   required: true,
   defaultValue: 'asc',
   options: {
@@ -70,6 +67,7 @@ export const sortOrder = Property.StaticDropdown({
 
 export const sortField = Property.ShortText({
   displayName: 'Sort Field',
-  description: 'Sort field',
+  description: 'Field to sort by.',
+  placeholder: 'id',
   required: false,
 });
